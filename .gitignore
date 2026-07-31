@@ -1,0 +1,9 @@
+wr.sh
+dump.txt
+node_modules
+dist
+target
+.env
+local.db
+.next
+reddit-session.json

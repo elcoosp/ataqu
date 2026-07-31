@@ -1,0 +1,92 @@
+import 'dotenv/config';
+import { db } from '../src/db/client';
+import { rawSignals, insights } from '../src/db/schema';
+import { eq } from 'drizzle-orm';
+import { classifySignal } from '../src/agents/classifier';
+import { extractLeadData } from '../src/agents/lead_agent';
+import { extractProductData } from '../src/agents/product_agent';
+
+const BATCH_SIZE = 10;
+
+async function analyzeNewSignals() {
+  console.log('🧠 Démarrage de l\'analyse des signaux...');
+
+  let processed = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const signals = await db.query.rawSignals.findMany({
+      where: (fields, { eq }) => eq(fields.status, 'new'),
+      limit: BATCH_SIZE,
+    });
+
+    if (signals.length === 0) {
+      hasMore = false;
+      break;
+    }
+
+    for (const signal of signals) {
+      console.log(`   🔍 Analyse du signal ${signal.id}...`);
+
+      try {
+        // 1. Classifier
+        const classification = await classifySignal(signal.raw_text);
+        if (!classification.is_complaint || classification.confidence < 0.6) {
+          await db.update(rawSignals)
+            .set({ status: 'analyzed' })
+            .where(eq(rawSignals.id, signal.id));
+          console.log(`   ⏭️ Signal ignoré (pas une plainte)`);
+          continue;
+        }
+
+        console.log(`   ✅ Plainte détectée pour ${classification.competitor}`);
+
+        // 2. Extraire Lead
+        const leadData = await extractLeadData(signal.raw_text);
+
+        // 3. Extraire Produit
+        const productData = await extractProductData(signal.raw_text);
+
+        // 4. Calcul du score global
+        const leadScore = (leadData.urgency_score + leadData.buying_intent_score + leadData.frequency_score) / 3;
+
+        // 5. Insertion des insights
+        await db.insert(insights).values({
+          signal_id: signal.id,
+          buyer_segment: leadData.buyer_segment,
+          workflow: leadData.workflow,
+          current_workaround: leadData.current_workaround,
+          direct_quote: leadData.direct_quote,
+          root_cause: productData.root_cause,
+          competitor: classification.competitor || '',
+          feature_gap: productData.feature_gap,
+          pricing_complaint: productData.pricing_complaint,
+          ux_friction: productData.ux_friction,
+          urgency: leadData.urgency_score,
+          buying_intent: leadData.buying_intent_score,
+          frequency: leadData.frequency_score,
+          overall_lead_score: Math.round(leadScore * 10) / 10,
+          feature_impact: productData.feature_impact_score,
+          human_reviewed: false,
+        });
+
+        // 6. Mettre à jour le signal
+        await db.update(rawSignals)
+          .set({ status: 'analyzed', analyzed_at: new Date() })
+          .where(eq(rawSignals.id, signal.id));
+
+        processed++;
+        console.log(`   ✅ Analyse terminée (Lead Score: ${leadScore.toFixed(1)})`);
+
+      } catch (error) {
+        console.error(`   ❌ Erreur sur le signal ${signal.id}:`, (error as Error).message);
+        // On ne marque pas comme analysé pour permettre une reprise ultérieure
+      }
+    }
+  }
+
+  console.log(`✅ Analyse terminée. ${processed} signaux traités.`);
+  process.exit(0);
+}
+
+analyzeNewSignals().catch(console.error);
