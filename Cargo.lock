@@ -298,6 +298,12 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-domain-cinq"
 version = "0.1.0"
+dependencies = [
+ "ataqu-kernel",
+ "chrono",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-dial"
