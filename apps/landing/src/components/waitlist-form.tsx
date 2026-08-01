@@ -19,16 +19,56 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const APP_OPTIONS = [
-  { id: "pivot", label: "PIVOT" },
-  { id: "dial", label: "DIAL" },
-  { id: "spark", label: "SPARK" },
-  { id: "tempo", label: "TEMPO" },
-  { id: "sond", label: "SOND" },
-  { id: "cinq", label: "CINQ" },
-  { id: "vault", label: "VAULT" },
-  { id: "pause", label: "PAUSE" },
-  { id: "aegis", label: "AEGIS" },
-  { id: "vista", label: "VISTA" },
+  {
+    id: "pivot",
+    label: "PIVOT",
+    description: "Docs & databases — like Notion but faster"
+  },
+  {
+    id: "dial",
+    label: "DIAL",
+    description: "Team chat & customer support — Slack + Intercom"
+  },
+  {
+    id: "spark",
+    label: "SPARK",
+    description: "Automation — Zapier without the task limits"
+  },
+  {
+    id: "tempo",
+    label: "TEMPO",
+    description: "Scheduling — Calendly built into your CRM"
+  },
+  {
+    id: "sond",
+    label: "SOND",
+    description: "Forms & surveys — Typeform without the limits"
+  },
+  {
+    id: "cinq",
+    label: "CINQ",
+    description: "CRM & sales pipeline — HubSpot at 1/10th the price"
+  },
+  {
+    id: "vault",
+    label: "VAULT",
+    description: "Inventory management — Cin7 without the lock‑in"
+  },
+  {
+    id: "pause",
+    label: "PAUSE",
+    description: "HR & leave management — Personio simplified"
+  },
+  {
+    id: "aegis",
+    label: "AEGIS",
+    description: "SSO & security — Okta for $3/mo"
+  },
+  {
+    id: "vista",
+    label: "VISTA",
+    description: "Analytics & BI — Tableau without the ETL"
+  },
 ];
 
 export function WaitlistForm() {
@@ -113,18 +153,23 @@ export function WaitlistForm() {
         </span>
         <div className="mt-2 flex flex-wrap gap-2">
           {APP_OPTIONS.map((app) => (
-            <button
-              key={app.id}
-              type="button"
-              onClick={() => toggleApp(app.id)}
-              className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                selectedApps.includes(app.id)
-                  ? "border-primary bg-primary/20 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/50"
-              }`}
-            >
-              {app.label}
-            </button>
+            <div key={app.id} className="relative group">
+              <button
+                type="button"
+                onClick={() => toggleApp(app.id)}
+                className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                  selectedApps.includes(app.id)
+                    ? "border-primary bg-primary/20 text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/50"
+                }`}
+              >
+                {app.label}
+              </button>
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-card border border-border rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                {app.description}
+              </div>
+            </div>
           ))}
         </div>
         {errors.apps && <p className="mt-1 text-sm text-error">{errors.apps.message}</p>}
