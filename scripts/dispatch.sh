@@ -38,21 +38,29 @@ if [ ! -f "$TASK_FILE" ]; then
 fi
 
 # ---------- Extract Execution Boundaries ----------
-BOUNDARIES=$(grep -A20 "^## Execution Boundaries" "$TASK_FILE" | grep -E "^\s*[-*]\s+\`" | sed 's/^[-*]\s*`//' | sed 's/`.*$//' || true)
+# Extracts all lines starting with - or * under the header, then strips markdown to get raw paths
+BOUNDARIES=$(awk '/^## Execution Boundaries/{f=1; next} /^## /{f=0} f' "$TASK_FILE" | grep -E '^[[:space:]]*[-*][[:space:]]+' | sed -E 's/^[[:space:]]*[-*][[:space:]]+//' | sed -E 's/^`//' | sed -E 's/`.*$//' | sed -E 's/[[:space:]]*$//' || true)
 
 if [ -z "$BOUNDARIES" ]; then
   echo "ERROR: No 'Execution Boundaries' section found in task file."
+  echo "Ensure the section exists and uses the format: - \`path/to/file\`"
   exit 1
 fi
 
-CRATES=$(echo "$BOUNDARIES" | grep 'crates/' | sed 's|/.*||' | sort -u)
-APPS=$(echo "$BOUNDARIES" | grep 'apps/' | sed 's|apps/||' | sed 's|/.*||' | sort -u)
+# Append || true so grep doesn't abort the script if no crates/apps are found
+CRATES=$(echo "$BOUNDARIES" | grep '^crates/' | cut -d'/' -f2 | sort -u || true)
+APPS=$(echo "$BOUNDARIES" | grep '^apps/' | cut -d'/' -f2 | sort -u || true)
 
 # ---------- Build Codebase Context ----------
 CONTEXT=""
 
 # 1. Inject files from boundaries (existing code the agent is allowed to touch)
 for path in $BOUNDARIES; do
+  # Skip text that isn't a file path (like "All 27 crate Cargo.toml files")
+  if [[ "$path" == *" "* ]]; then
+    continue
+  fi
+
   full_path="$REPO_ROOT/$path"
   if [ -f "$full_path" ]; then
     LANG=$(echo "$path" | grep -q '\.rs$' && echo "rust" || echo "typescript")
@@ -60,17 +68,17 @@ for path in $BOUNDARIES; do
 ### File: $path
 \`\`\`$LANG
 // File: $path
-$(cat "$full_path")
+ $(cat "$full_path")
 \`\`\`
 "
   elif [ -d "$full_path" ]; then
-    file_list=$(find "$full_path" -maxdepth 1 -type f \( -name '*.rs' -o -name '*.ts' -o -name '*.tsx' \) 2>/dev/null | sed "s|^$REPO_ROOT/||" | head -20)
+    file_list=$(find "$full_path" -type f \( -name '*.rs' -o -name '*.ts' -o -name '*.tsx' \) 2>/dev/null | sed "s|^$REPO_ROOT/||" | head -50 || true)
     if [ -n "$file_list" ]; then
       CONTEXT+="
 ### Directory: $path
 Files found:
 \`\`\`
-$file_list
+ $file_list
 \`\`\`
 "
     fi
@@ -78,109 +86,83 @@ $file_list
 done
 
 # 2. Inject dependencies (Cargo.toml) for affected crates
-for crate in $CRATES; do
-  cargo_file="$REPO_ROOT/$crate/Cargo.toml"
-  if [ -f "$cargo_file" ]; then
-    CONTEXT+="
+if [ -n "$CRATES" ]; then
+  for crate in $CRATES; do
+    cargo_file="$REPO_ROOT/crates/$crate/Cargo.toml"
+    if [ -f "$cargo_file" ]; then
+      CONTEXT+="
 ### Dependencies for crate: $crate
 \`\`\`toml
-# File: $crate/Cargo.toml
-$(cat "$cargo_file")
-\`\`\`
-"
-  fi
-  test_dir="$REPO_ROOT/$crate/tests"
-  if [ -d "$test_dir" ]; then
-    tests=$(find "$test_dir" -name '*.rs' -exec basename {} \; 2>/dev/null | head -10)
-    if [ -n "$tests" ]; then
-      CONTEXT+="
-### Existing tests in $crate/tests/
-\`\`\`
-$tests
+# File: crates/$crate/Cargo.toml
+ $(cat "$cargo_file")
 \`\`\`
 "
     fi
-  fi
-done
+  done
+fi
 
 # 3. Inject package.json for frontend apps
-for app in $APPS; do
-  pkg_file="$REPO_ROOT/apps/$app/package.json"
-  if [ -f "$pkg_file" ]; then
-    CONTEXT+="
+if [ -n "$APPS" ]; then
+  for app in $APPS; do
+    pkg_file="$REPO_ROOT/apps/$app/package.json"
+    if [ -f "$pkg_file" ]; then
+      CONTEXT+="
 ### Dependencies for frontend app: $app
 \`\`\`json
 // File: apps/$app/package.json
-$(cat "$pkg_file")
+ $(cat "$pkg_file")
 \`\`\`
 "
-  fi
-done
+    fi
+  done
+fi
 
 # 4. INJECT BACKEND CODE FOR FRONTEND TASKS
-# If the task touches any app, we inject the corresponding domain crate,
-# service, and API handler so the frontend agent knows the API.
 if [ -n "$APPS" ]; then
-  # Always include the contracts crate (all events/commands)
   CONTRACTS_CRATE="$REPO_ROOT/crates/ataqu-contracts"
   if [ -d "$CONTRACTS_CRATE" ]; then
     CONTEXT+="
 ### Backend contracts (ataqu-contracts) – all events and commands
 \`\`\`
-$(find "$CONTRACTS_CRATE/src" -name '*.rs' -exec echo "// File: {}" \; -exec cat {} \; 2>/dev/null)
+ $(find "$CONTRACTS_CRATE/src" -name '*.rs' -exec echo "// File: {}" \; -exec cat {} \; 2>/dev/null || true)
 \`\`\`
 "
   fi
 
   for app in $APPS; do
-    # Map app name to domain crate
     domain_crate="ataqu-domain-$app"
     domain_path="$REPO_ROOT/crates/$domain_crate"
     if [ -d "$domain_path" ]; then
       CONTEXT+="
-### Backend domain crate: $domain_crate (pure logic, models, repository traits)
+### Backend domain crate: $domain_crate
 \`\`\`
-$(find "$domain_path/src" -name '*.rs' -exec echo "// File: {}" \; -exec cat {} \; 2>/dev/null)
+ $(find "$domain_path/src" -name '*.rs' -exec echo "// File: {}" \; -exec cat {} \; 2>/dev/null || true)
 \`\`\`
 "
     fi
 
-    # Inject the application service file (if exists)
     service_file="$REPO_ROOT/crates/ataqu-application/src/${app}_service.rs"
     if [ -f "$service_file" ]; then
       CONTEXT+="
 ### Backend application service: ataqu-application/src/${app}_service.rs
 \`\`\`rust
 // File: crates/ataqu-application/src/${app}_service.rs
-$(cat "$service_file")
+ $(cat "$service_file")
 \`\`\`
 "
     fi
 
-    # Inject the API handler file (if exists)
     handler_file="$REPO_ROOT/crates/ataqu-api/src/handlers/${app}.rs"
     if [ -f "$handler_file" ]; then
       CONTEXT+="
 ### Backend API handler: ataqu-api/src/handlers/${app}.rs
 \`\`\`rust
 // File: crates/ataqu-api/src/handlers/${app}.rs
-$(cat "$handler_file")
+ $(cat "$handler_file")
 \`\`\`
 "
     fi
   done
-
-  # Also inject the ApiEmail serializer if it exists (for PII)
-  api_email_file="$REPO_ROOT/crates/ataqu-api/src/serializers/api_email.rs"
-  if [ -f "$api_email_file" ]; then
-    CONTEXT+="
-### Backend PII serializer: ataqu-api/src/serializers/api_email.rs
-\`\`\`rust
-// File: crates/ataqu-api/src/serializers/api_email.rs
-$(cat "$api_email_file")
-\`\`\`
-"
-  fi
 fi
 
 # ---------- Assemble the Final Prompt ----------
@@ -196,30 +178,30 @@ You always include tests for new functionality and edge cases.
 # ====================================================================
 #                   TECH STACK (from docs/tech-stack.md)
 # ====================================================================
-$(cat "$TECH_STACK_FILE")
+ $(cat "$TECH_STACK_FILE")
 
 # ====================================================================
 #                   PROJECT ARCHITECTURE (from docs/project.md)
 # ====================================================================
-$(cat "$PROJECT_MD_FILE" 2>/dev/null || echo "WARNING: project.md not found")
+ $(cat "$PROJECT_MD_FILE" 2>/dev/null || echo "WARNING: project.md not found")
 
 # ====================================================================
 #                   AGENT PROTOCOL
 # ====================================================================
-$(cat "$PROTOCOL_FILE")
+ $(cat "$PROTOCOL_FILE")
 
 # ====================================================================
 #                   CODEBASE CONTEXT
 # ====================================================================
-## Affected Crates: $CRATES
-## Affected Frontend Apps: $APPS
+## Affected Crates: ${CRATES:-None}
+## Affected Frontend Apps: ${APPS:-None}
 
-$CONTEXT
+ $CONTEXT
 
 # ====================================================================
 #                   TASK TO EXECUTE
 # ====================================================================
-$(cat "$TASK_FILE")
+ $(cat "$TASK_FILE")
 "
 
 # ---------- Copy to clipboard ----------
@@ -245,7 +227,7 @@ echo ""
 echo "📋 Extracted Boundaries:"
 echo "$BOUNDARIES" | sed 's/^/  - /'
 echo ""
-echo "📦 Detected Rust Crates: $CRATES"
-echo "📱 Detected Frontend Apps: $APPS"
+echo "📦 Detected Rust Crates: ${CRATES:-None}"
+echo "📱 Detected Frontend Apps: ${APPS:-None}"
 echo ""
 echo "✅ Prompt ready. Paste it into your conversation with the agent."
