@@ -49,18 +49,18 @@ It is structured by Phases (which map to your 4 weeks). It tells you exactly whe
 
 ### Phase 3: Migrations & Repositories (Parallel - 10 Agents)
 *Prerequisite: Phase 2 domain traits must be merged to main.*
-- [ ] **START PARALLEL:** Dispatch Tasks 021 to 030 to 10 agents.
-- [ ] **TASK-021:** Repo + Migration: AEGIS
-- [ ] **TASK-022:** Repo + Migration: CINQ
-- [ ] **TASK-023:** Repo + Migration: DIAL
-- [ ] **TASK-024:** Repo + Migration: PIVOT
-- [ ] **TASK-025:** Repo + Migration: SPARK
-- [ ] **TASK-026:** Repo + Migration: TEMPO
-- [ ] **TASK-027:** Repo + Migration: SOND
-- [ ] **TASK-028:** Repo + Migration: VAULT
-- [ ] **TASK-029:** Repo + Migration: PAUSE
-- [ ] **TASK-030:** Repo + Migration: VISTA
-- [ ] **[MERGE TO MAIN]:** Merge all Phase 3 tasks. Run `cargo test -p ataqu-infra-migration` to verify DB schema.
+- [x] **START PARALLEL:** Dispatch Tasks 021 to 030 to 10 agents.
+- [x] **TASK-021:** Repo + Migration: AEGIS
+- [x] **TASK-022:** Repo + Migration: CINQ
+- [x] **TASK-023:** Repo + Migration: DIAL
+- [x] **TASK-024:** Repo + Migration: PIVOT
+- [x] **TASK-025:** Repo + Migration: SPARK
+- [x] **TASK-026:** Repo + Migration: TEMPO
+- [x] **TASK-027:** Repo + Migration: SOND
+- [x] **TASK-028:** Repo + Migration: VAULT
+- [x] **TASK-029:** Repo + Migration: PAUSE
+- [x] **TASK-030:** Repo + Migration: VISTA
+- [x] **[MERGE TO MAIN]:** Merge all Phase 3 tasks. Run `cargo test -p ataqu-infra-migration` to verify DB schema.
 
 ### Phase 4: Application Services (Parallel - 10 Agents)
 *Prerequisite: Phase 3 repository implementations must be merged to main.*
