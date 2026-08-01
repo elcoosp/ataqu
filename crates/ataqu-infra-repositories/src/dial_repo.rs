@@ -8,7 +8,7 @@ use sea_orm::{DatabaseTransaction, EntityTrait, Set};
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::batch::{BatchResult, DLQEntry};
+use crate::batch::BatchResult;
 
 // ----------------------------------------------------------------------
 // Domain trait stubs (temporary – should be moved to ataqu-domain-dial)

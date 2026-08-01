@@ -1,5 +1,5 @@
 use sea_orm_migration::prelude::*;
-use sea_orm_migration::sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
+use sea_orm_migration::sea_orm::ConnectionTrait;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -10,15 +10,11 @@ impl MigrationTrait for Migration {
         let conn = manager.get_connection();
 
         // Create schema
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
-            "CREATE SCHEMA IF NOT EXISTS dial".to_owned(),
-        ))
-        .await?;
+        conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS dial")
+            .await?;
 
         // Create channels table
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
+        conn.execute_unprepared(
             r#"
             CREATE TABLE IF NOT EXISTS dial.channels (
                 id UUID PRIMARY KEY,
@@ -28,12 +24,11 @@ impl MigrationTrait for Migration {
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
             "#,
-        ))
+        )
         .await?;
 
         // Create messages table
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
+        conn.execute_unprepared(
             r#"
             CREATE TABLE IF NOT EXISTS dial.messages (
                 id UUID PRIMARY KEY,
@@ -45,20 +40,14 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
             "#,
-        ))
+        )
         .await?;
 
         // Enable RLS
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
-            "ALTER TABLE dial.channels ENABLE ROW LEVEL SECURITY",
-        ))
-        .await?;
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
-            "ALTER TABLE dial.messages ENABLE ROW LEVEL SECURITY",
-        ))
-        .await?;
+        conn.execute_unprepared("ALTER TABLE dial.channels ENABLE ROW LEVEL SECURITY")
+            .await?;
+        conn.execute_unprepared("ALTER TABLE dial.messages ENABLE ROW LEVEL SECURITY")
+            .await?;
 
         // Create policies (IF NOT EXISTS)
         let policies = [("dial.channels", "channels"), ("dial.messages", "messages")];
@@ -82,26 +71,22 @@ impl MigrationTrait for Migration {
                            USING (tenant_id = current_setting('app.tenant_id')::uuid)"#
                     )
                 };
-                conn.execute(Statement::from_string(DatabaseBackend::Postgres, sql))
-                    .await?;
+                conn.execute_unprepared(&sql).await?;
             }
         }
 
         // Create indexes
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
+        conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_channels_tenant ON dial.channels (tenant_id)",
-        ))
+        )
         .await?;
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
+        conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_messages_tenant_channel ON dial.messages (tenant_id, channel_id)",
-        ))
+        )
         .await?;
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
+        conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_messages_sent_at ON dial.messages (sent_at)",
-        ))
+        )
         .await?;
 
         Ok(())
@@ -109,16 +94,10 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
-            "DROP TABLE IF EXISTS dial.messages",
-        ))
-        .await?;
-        conn.execute(Statement::from_string(
-            DatabaseBackend::Postgres,
-            "DROP TABLE IF EXISTS dial.channels",
-        ))
-        .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS dial.messages")
+            .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS dial.channels")
+            .await?;
         Ok(())
     }
 }
