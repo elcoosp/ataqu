@@ -209,16 +209,16 @@ msgid "Annual"
 msgstr ""
 
 #: src/components/architecture-proof.tsx:136
-msgid "App A issues pg_notify('outbox_event') on the same transaction"
-msgstr ""
+#~ msgid "App A issues pg_notify('outbox_event') on the same transaction"
+#~ msgstr ""
 
 #: src/components/architecture-proof.tsx:135
-msgid "App A persists data → inserts event into core.outbox"
-msgstr ""
+#~ msgid "App A persists data → inserts event into core.outbox"
+#~ msgstr ""
 
 #: src/components/architecture-proof.tsx:139
-msgid "App B processes event idempotently (advisory locks guarantee exactly-once)"
-msgstr ""
+#~ msgid "App B processes event idempotently (advisory locks guarantee exactly-once)"
+#~ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:137
 msgid "Apps don't share a native database – integrations are slow"
@@ -237,6 +237,10 @@ msgstr ""
 #: src/components/header.tsx:45
 #: src/components/header.tsx:93
 msgid "Blog"
+msgstr ""
+
+#: src/components/architecture-proof.tsx:72
+msgid "Bounded Contexts"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:192
@@ -339,6 +343,10 @@ msgstr ""
 msgid "Compare pricing"
 msgstr ""
 
+#: src/components/architecture-proof.tsx:38
+msgid "Compile‑time Security"
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:276
 msgid "Complex admin UI that frustrates users"
 msgstr ""
@@ -405,12 +413,12 @@ msgid "DIAL unifies internal chat and customer support in one workspace"
 msgstr ""
 
 #: src/components/architecture-proof.tsx:138
-msgid "Dispatcher routes event to App B via outbox consumer"
-msgstr ""
+#~ msgid "Dispatcher routes event to App B via outbox consumer"
+#~ msgstr ""
 
 #: src/components/architecture-proof.tsx:137
-msgid "Dispatcher wakes via LISTEN, polls pending events with FOR UPDATE SKIP LOCKED"
-msgstr ""
+#~ msgid "Dispatcher wakes via LISTEN, polls pending events with FOR UPDATE SKIP LOCKED"
+#~ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:35
 msgid "Drop the CSV into Ataqu CINQ"
@@ -422,6 +430,10 @@ msgstr ""
 
 #: src/components/waitlist-form.tsx:138
 msgid "Email address"
+msgstr ""
+
+#: src/components/architecture-proof.tsx:84
+msgid "Exactly‑once Delivery"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:86
@@ -528,7 +540,7 @@ msgstr ""
 msgid "How Ataqu Solves It"
 msgstr ""
 
-#: src/components/architecture-proof.tsx:132
+#: src/components/architecture-proof.tsx:49
 msgid "How cross-app events work"
 msgstr ""
 
@@ -554,8 +566,8 @@ msgid "Human support with 24h SLA"
 msgstr ""
 
 #: src/components/architecture-proof.tsx:107
-msgid "Idempotency"
-msgstr ""
+#~ msgid "Idempotency"
+#~ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:287
 msgid "Import into AEGIS"
@@ -617,6 +629,10 @@ msgstr ""
 msgid "Modern dark‑mode UI, built for 2026"
 msgstr ""
 
+#: src/components/architecture-proof.tsx:19
+msgid "Monolithic, modular, and compiled to native code. No microservices, no overhead."
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:67
 #: src/components/kill-sheet-content.tsx:95
 #: src/components/kill-sheet-content.tsx:123
@@ -633,6 +649,10 @@ msgstr ""
 #: src/components/architecture-proof.tsx:29
 #~ msgid "MVCC, JSONB, outbox with LISTEN/NOTIFY – true concurrency."
 #~ msgstr ""
+
+#: src/components/architecture-proof.tsx:30
+msgid "MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events."
+msgstr ""
 
 #: src/components/waitlist-form.tsx:180
 msgid "Name (optional)"
@@ -795,9 +815,13 @@ msgstr ""
 msgid "Personio is a compliance silo. PAUSE connects HR to operations."
 msgstr ""
 
-#: src/components/architecture-proof.tsx:119
-msgid "PII Security"
+#: src/components/architecture-proof.tsx:41
+msgid "PII redacted at compile time; JSON serialization isolated to the API layer."
 msgstr ""
+
+#: src/components/architecture-proof.tsx:119
+#~ msgid "PII Security"
+#~ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:112
 msgid "PIVOT uses PostgreSQL tsvector with GIN indexes – sub‑50ms search"
@@ -806,6 +830,10 @@ msgstr ""
 #: src/components/architecture-proof.tsx:26
 #~ msgid "PostgreSQL native"
 #~ msgstr ""
+
+#: src/components/architecture-proof.tsx:27
+msgid "PostgreSQL Native"
+msgstr ""
 
 #: src/components/architecture-proof.tsx:40
 #~ msgid "PostgreSQL tsvector with GIN indexes, updated asynchronously."
@@ -817,6 +845,10 @@ msgstr ""
 
 #: src/components/footer.tsx:21
 msgid "Product"
+msgstr ""
+
+#: src/components/architecture-proof.tsx:96
+msgid "Real‑time Outbox"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:227
@@ -837,6 +869,10 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:302
 msgid "Requires data engineering – ETL pipelines are complex and fragile"
+msgstr ""
+
+#: src/components/architecture-proof.tsx:108
+msgid "Resource Efficiency"
 msgstr ""
 
 #: src/components/footer.tsx:24
@@ -861,20 +897,28 @@ msgstr ""
 msgid "Select your trigger (e.g., 'CINQ deal won')"
 msgstr ""
 
-#: src/components/architecture-proof.tsx:145
-msgid "Single binary · Single Tokio runtime · 8 GB VPS · 1 s RPO via wal-g"
+#: src/components/architecture-proof.tsx:120
+msgid "Single binary · Single Tokio runtime · 1s RPO via wal‑g"
 msgstr ""
+
+#: src/components/architecture-proof.tsx:145
+#~ msgid "Single binary · Single Tokio runtime · 8 GB VPS · 1 s RPO via wal-g"
+#~ msgstr ""
 
 #: src/components/architecture-proof.tsx:18
 #~ msgid "Single binary, no bloat, compile‑time safety."
 #~ msgstr ""
 
-#: src/components/architecture-proof.tsx:58
-#~ msgid "Single database, unified outbox with LISTEN/NOTIFY – instant cross‑app events"
-#~ msgstr ""
+#: src/components/architecture-proof.tsx:62
+msgid "Single database, unified outbox with LISTEN/NOTIFY – instant cross‑app events"
+msgstr ""
 
 #: src/components/architecture-proof.tsx:83
-msgid "Single PostgreSQL 18.4"
+#~ msgid "Single PostgreSQL 18.4"
+#~ msgstr ""
+
+#: src/components/architecture-proof.tsx:16
+msgid "Single Rust Binary"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:42
@@ -967,8 +1011,8 @@ msgid "Typeform charges for success. SOND gives you unlimited responses."
 msgstr ""
 
 #: src/components/architecture-proof.tsx:95
-msgid "Unified Outbox"
-msgstr ""
+#~ msgid "Unified Outbox"
+#~ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:224
 msgid "VAULT updates stock atomically with PostgreSQL CHECK constraints – no overselling"
