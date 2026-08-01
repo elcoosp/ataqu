@@ -10,11 +10,17 @@ export type Post = {
   title: string;
   excerpt: string;
   date: string;
-  content: string; // raw MDX content
+  content: string;
   readingTime: string;
 };
 
 export function getAllPosts(): Post[] {
+  // Ensure directory exists
+  if (!fs.existsSync(postsDirectory)) {
+    fs.mkdirSync(postsDirectory, { recursive: true });
+    return [];
+  }
+
   const fileNames = fs.readdirSync(postsDirectory);
   const allPosts = fileNames.map((fileName) => {
     const slug = fileName.replace(/\.mdx?$/, "");
@@ -36,6 +42,10 @@ export function getAllPosts(): Post[] {
 }
 
 export function getPostBySlug(slug: string): Post | null {
+  if (!fs.existsSync(postsDirectory)) {
+    return null;
+  }
+
   const fileNames = fs.readdirSync(postsDirectory);
   const fileName = fileNames.find((f) => f.replace(/\.mdx?$/, "") === slug);
   if (!fileName) return null;
