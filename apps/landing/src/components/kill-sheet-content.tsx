@@ -362,8 +362,8 @@ export function KillSheetContent({ slug }: Props) {
       <div className="max-w-4xl mx-auto">
         {/* Navigation dropdown */}
         <div className="mb-8 flex flex-col items-start space-y-3">
-          <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-            <span>←</span> Home
+          <a href="/" className="text-sm font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+            <span className="text-primary">←</span> Back to Home
           </a>
           <Select
             value={slug}
@@ -372,7 +372,7 @@ export function KillSheetContent({ slug }: Props) {
             }}
           >
             <SelectTrigger className="w-[180px] sm:w-[180px]">
-              <SelectValue placeholder="Compare competitors" />
+              <span className="text-sm font-medium truncate">{name}</span>
             </SelectTrigger>
             <SelectContent>
               {COMPETITOR_SLUGS.map((item) => (
