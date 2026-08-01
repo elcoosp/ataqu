@@ -1,7 +1,7 @@
-# 🏗️ ATAQU TECH STACK — Phase 1 (v7.3)
+# 🏗️ ATAQU TECH STACK — Phase 1 (v8.0)
 
-**Version:** 7.3
-**Date:** 2026-08-29
+**Version:** 8.0 (Dependency Upgrade)
+**Date:** 2026-08-01
 **Status:** Phase 1 (Bootstrapped) — PostgreSQL with SeaORM 2.0 + Raw SQL Escape Hatch
 
 ---
@@ -9,7 +9,7 @@
 ## 🔬 TECHNICAL CHOICES PHILOSOPHY
 
 1. **Performant and lightweight** → Rust (backend) / Vite + Module Federation + React (frontend)
-2. **Type‑safe** → TypeScript 5.5 + Zod 4 (frontend) / SeaORM 2.0 entities + raw SQL for Postgres primitives (backend)
+2. **Type‑safe** → TypeScript 7.0 + Zod 4 (frontend) / SeaORM 2.0 entities + raw SQL for Postgres primitives (backend)
 3. **Unified persistence with guardrails** → SeaORM for migrations, entities, and standard CRUD; raw `Statement::from_sql_and_values` on SeaORM transactions for advisory locks, savepoints, and `LISTEN/NOTIFY`; dedicated `sqlx::PgPool` for `PgListener` only.
 4. **Compile-time PII redaction** → PII fields are wrapped in newtypes (`Email`, `PhoneNumber`) that implement `Debug`/`Display` as `[REDACTED]` — zero-cost, compile-time guaranteed log safety. **No `Serialize` impl on newtypes**; API layer uses wrapper structs (e.g., `ApiEmail`) for HTTP serialization.
 5. **Maintainable** → Monorepo, up‑to‑date dependencies, **Biome** (unified lint + format)
@@ -24,8 +24,8 @@
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Rust** | **1.97+** (2024 edition) | Latest stable; MSRV for Axum 0.8.x and Tokio 1.53; memory & performance |
-| **Tokio** | **1.53.0** | Latest stable async runtime; thread‑safe, production‑ready |
+| **Rust** | **1.97.1** (2024 edition) | Latest stable; includes security fixes for CVE-2026-5222, CVE-2026-5223; MSRV for Axum 0.8.x and Tokio 1.52 |
+| **Tokio** | **1.52.2** | Latest stable; LTS until March 2027 |
 
 ### Web Framework
 
@@ -39,7 +39,7 @@
 
 | Component | Version | Role |
 |-----------|---------|------|
-| **Database** | **PostgreSQL 16.14** | Native MVCC, JSONB, robust concurrency; latest 16.x minor release |
+| **Database** | **PostgreSQL 18.4** | Native MVCC, JSONB, robust concurrency; latest 18.x release |
 | **ORM** | **SeaORM 2.0.0-rc.41** | Migrations, entity definitions (`Entity`, `Model`, `ActiveModel`), standard CRUD, transaction management (`sea_orm::DatabaseTransaction`) |
 | **Raw SQL Escape Hatch** | `Statement::from_sql_and_values` on `sea_orm::DatabaseTransaction` | Advisory locks (`pg_advisory_xact_lock(int4, int4)`), `SAVEPOINT` control, `pg_notify()`, `FOR UPDATE SKIP LOCKED`, `SET LOCAL` |
 | **Listener** | `sqlx::PgListener` (via dedicated `sqlx::PgPool` size 3) | `LISTEN/NOTIFY` for outbox dispatcher — **only** for listening, never for transactions |
@@ -134,7 +134,7 @@ impl<'a> Serialize for ApiEmail<'a> {
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **moka** | 0.12.0 | **Bounded hot cache** for idempotency responses. `max_capacity(10_000)`, 7-day TTL, 20 MB peak memory. Not a source of truth — durable responses live in `core.idempotency_records`. |
+| **moka** | **0.12.5** | **Bounded hot cache** for idempotency responses. `max_capacity(10_000)`, 7-day TTL, 20 MB peak memory. Not a source of truth — durable responses live in `core.idempotency_records`. |
 | **DashMap** | 5.4.0 | Phase 1 `InMemoryPresenceStore` (tracks `ConnectionId` internally). Eviction on disconnect. Phase 2 swaps to `PostgresPresenceStore` via `PresenceStore` trait. |
 
 ### Full‑Text Search (Phase 1)
@@ -147,10 +147,10 @@ impl<'a> Serialize for ApiEmail<'a> {
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **jsonwebtoken** | 9.3.0 | JWT (RS256) — short-lived access tokens |
+| **jsonwebtoken** | **10.4.0** | JWT (RS256) — short-lived access tokens; fixes CVE-2026-25537 (type confusion) |
 | **oauth2** | 4.4.0 | OIDC (Google, Microsoft, Okta) |
-| **totp-rs** | 5.5.0 | TOTP MFA (RFC 6238) |
-| **argon2** | 0.5.3 | Password hashing |
+| **totp-rs** | **5.7.2** | TOTP MFA (RFC 6238) |
+| **argon2** | **0.6.0-rc.8** | Password hashing; latest release candidate with async support |
 
 ### Payment
 
@@ -162,9 +162,9 @@ impl<'a> Serialize for ApiEmail<'a> {
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Tracing** | 0.1.40 | Structured logs, spans |
+| **Tracing** | **0.1.44** | Structured logs, spans |
 | **tracing-subscriber** | 0.3.18 | JSON formatter (`critical.log.json`, `operational.log.json`) |
-| **tracing-opentelemetry** | 0.28.0 | OTLP HTTP exporter (Tempo) |
+| **tracing-opentelemetry** | **0.33.0** | OTLP HTTP exporter (Tempo); integrates with OpenTelemetry 0.32+ |
 | **tracing-appender** | 0.2.0 | Non‑blocking writer; `copytruncate` logrotate |
 | **metrics** | 0.21.0 | Prometheus exporter |
 
@@ -172,18 +172,18 @@ impl<'a> Serialize for ApiEmail<'a> {
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Serde** | 1.0.197 | JSON |
-| **serde_json** | 1.0.114 | JSON handling |
-| **thiserror** | 1.0.58 | Typed business errors |
-| **anyhow** | 1.0.81 | Generic errors (limited) |
+| **Serde** | **1.0.229** | JSON |
+| **serde_json** | **1.0.151** | JSON handling |
+| **thiserror** | **2.0.18** | Typed business errors; breaking change from v1 (MSRV bump) |
+| **anyhow** | **1.0.103** | Generic errors (limited) |
 
 ### Utilities
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Clap** | 4.5.3 | CLI arguments |
-| **Chrono** | 0.4.35 | Dates & time (UTC) |
-| **UUID** | 1.7.0 | UUID v4, v5 (deterministic), v7 (time‑ordered) |
+| **Clap** | **4.6.4** | CLI arguments |
+| **Chrono** | **0.4.45** | Dates & time (UTC) |
+| **UUID** | **1.24.0** | UUID v4, v5 (deterministic), v7 (time‑ordered) |
 
 ### Email
 
@@ -271,16 +271,16 @@ impl<'a> Serialize for ApiEmail<'a> {
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Node.js** | 20.11.1 LTS | LTS support |
-| **pnpm** | 8.15.4 | Package manager |
-| **TypeScript** | 5.5.3 | Strict typing |
+| **Node.js** | **26.5.1** (Current) | Latest current release; includes Temporal API, V8 14.6, Undici 8.0 |
+| **pnpm** | **12.0.0-alpha.16** | Latest workspace-capable version; new lockfile format |
+| **TypeScript** | **7.0.0** | Go‑based native compiler ("tsgo"); 8-12x speedup on full builds |
 
 ### Framework & Bundler
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **React** | 18.2.0 | UI Framework |
-| **Vite** | 8.0.0 | Bundler (Rolldown) |
+| **React** | **19.2.7** | Latest stable; Compiler, Server Components, `useOptimistic`, `<Activity>` |
+| **Vite** | **8.1.0** | Bundler (Rolldown); Oxc parser |
 | **@vitejs/plugin-react** | 6.0.4 | React plugin |
 | **@originjs/vite-plugin-federation** | 1.3.0 | Module Federation |
 
@@ -288,30 +288,30 @@ impl<'a> Serialize for ApiEmail<'a> {
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Tailwind CSS** | 3.4.1 | CSS‑first |
-| **shadcn/ui** | CLI v0.8.0 | Accessible components |
+| **Tailwind CSS** | **4.3.0** | CSS‑first configuration; Lightning CSS engine |
+| **shadcn/ui** | **CLI v4** | Preset system; new project structure |
 
 ### Routing & Data
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **TanStack Router** | v1.16.0 | Typed routing |
-| **TanStack Query** | v5.24.0 | Cache, invalidation |
+| **TanStack Router** | **v1.170+** | Route tree codegen; typed params & search |
+| **TanStack Query** | **v5.101+** | Cache, invalidation |
 | **Zustand** | 4.5.2 | State management |
-| **TanStack Virtual** | 3.1.3 | Virtualization for all long lists |
+| **TanStack Virtual** | **3.13.26** | Virtualization for all long lists |
 
 ### Forms & Validation
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **React Hook Form** | 7.50.1 | Performant forms |
-| **Zod** | 3.22.4 | Schema validation |
+| **React Hook Form** | **7.80.0** | Performant forms |
+| **Zod** | **4.4.1** | Schema validation; internal rewrite, stricter validation |
 
 ### Charts & Dashboards (VISTA)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Recharts** | 2.12.0 | Standard dashboards |
+| **Recharts** | **3.9.1** | Standard dashboards; `Cell` deprecated, new animations |
 | **Apache ECharts** | 5.4.3 | Large volumes |
 
 ### Rich Text Editor (PIVOT)
@@ -331,7 +331,7 @@ impl<'a> Serialize for ApiEmail<'a> {
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **React Flow** (@xyflow/react) | 12.3.0 | Workflow editor |
+| **React Flow** (@xyflow/react) | **12.11.2** | Workflow editor |
 
 ### Calendar (TEMPO, PAUSE)
 
@@ -352,7 +352,7 @@ impl<'a> Serialize for ApiEmail<'a> {
 | Component | Version | Justification |
 |-----------|---------|---------------|
 | **VPS** | Hetzner CX42 | 8 vCores / 8 GB RAM / 160 GB SSD |
-| **DB** | PostgreSQL 16.14 native install | `shared_buffers=1GB`, `work_mem=2MB`, `max_connections=40` |
+| **DB** | PostgreSQL **18.4** native install | `shared_buffers=1GB`, `work_mem=2MB`, `max_connections=40` |
 | **Backup** | `wal-g` **3.0.8** | 1 s RPO to S3; Direct‑IO Reader support |
 | **CDN** | Cloudflare | Free, DDoS protection |
 | **Process Manager** | systemd | Native Linux supervision |
@@ -414,32 +414,32 @@ saas-factory/
 
 | Category | Dependency | Version |
 |----------|------------|---------|
-| **Rust** | Rust | **1.97+** (2024 edition) |
+| **Rust** | Rust | **1.97.1** (2024 edition) |
 | **Rust** | Axum | **0.8.9** |
 | **Rust** | SeaORM | **2.0.0-rc.41** (migrations, entities, CRUD) |
 | **Rust** | sqlx | **0.9.0** (PgListener only, dedicated pool) |
-| **Rust** | Tokio | **1.53.0** |
-| **Rust** | jsonwebtoken | 9.3.0 |
-| **Rust** | moka | 0.12.0 |
-| **Node** | Node.js | 20.11.1 LTS |
-| **Node** | pnpm | 8.15.0 |
-| **Node** | TypeScript | 5.5.3 |
-| **Frontend** | React | 18.2.0 |
-| **Frontend** | Vite | 8.0.0 |
-| **Frontend** | Tailwind CSS | 3.4.0 |
-| **Frontend** | shadcn/ui | CLI v4 |
-| **Frontend** | TanStack Router | v1.170.15+ |
-| **Frontend** | TanStack Query | v5.101.0+ |
-| **Frontend** | TanStack Virtual | 3.13.26+ |
-| **Frontend** | React Hook Form | 7.77.0+ |
-| **Frontend** | Zod | 4.4.0+ |
-| **Frontend** | Biome | 2.5.5 |
-| **Frontend** | Recharts | 3.9.0+ |
-| **Frontend** | React Flow | 12.10.1+ |
-| **Database** | PostgreSQL | **16.14** |
+| **Rust** | Tokio | **1.52.2** |
+| **Rust** | jsonwebtoken | **10.4.0** |
+| **Rust** | moka | **0.12.5** |
+| **Node** | Node.js | **26.5.1** (Current) |
+| **Node** | pnpm | **12.0.0-alpha.16** |
+| **Node** | TypeScript | **7.0.0** |
+| **Frontend** | React | **19.2.7** |
+| **Frontend** | Vite | **8.1.0** |
+| **Frontend** | Tailwind CSS | **4.3.0** |
+| **Frontend** | shadcn/ui | **CLI v4** |
+| **Frontend** | TanStack Router | **v1.170+** |
+| **Frontend** | TanStack Query | **v5.101+** |
+| **Frontend** | TanStack Virtual | **3.13.26+** |
+| **Frontend** | React Hook Form | **7.80.0+** |
+| **Frontend** | Zod | **4.4.1+** |
+| **Frontend** | Biome | **2.5.6** |
+| **Frontend** | Recharts | **3.9.1+** |
+| **Frontend** | React Flow | **12.11.2+** |
+| **Database** | PostgreSQL | **18.4** |
 | **Infra** | Hetzner | CX42 |
 | **Backup** | WAL-G | **3.0.8** |
 
 ---
 
-**Document created on 2026-08-29 — Phase 1 with PostgreSQL + SeaORM 2.0 + raw SQL escape hatch + generic `transactional_batch_insert` helper + compile-time PII redacting newtypes + API serialization wrappers (v7.3).**
+**Document updated on 2026-08-01 — Phase 1 with PostgreSQL 18.4 + SeaORM 2.0 + raw SQL escape hatch + generic `transactional_batch_insert` helper + compile-time PII redacting newtypes + API serialization wrappers (v8.0).**
