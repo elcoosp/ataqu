@@ -4,3 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+sea-orm-migration = { version = "2.0.0-rc.41", features = ["cli"] }
+async-trait = "0.1"
