@@ -35,9 +35,7 @@ export function Header() {
           <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
             <Trans>Home</Trans>
           </Link>
-          <Link href="/alternatives" className="text-muted-foreground hover:text-foreground transition-colors">
-            <Trans>Alternatives</Trans>
-          </Link>
+
           <Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors">
             <Trans>Roadmap</Trans>
           </Link>
@@ -83,9 +81,7 @@ export function Header() {
             <Link href="/" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
               <Trans>Home</Trans>
             </Link>
-            <Link href="/alternatives" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-              <Trans>Alternatives</Trans>
-            </Link>
+
             <Link href="/roadmap" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
               <Trans>Roadmap</Trans>
             </Link>
