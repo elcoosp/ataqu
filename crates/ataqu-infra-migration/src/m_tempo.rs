@@ -1,6 +1,6 @@
 use sea_orm::Statement;
 use sea_orm_migration::prelude::*;
-use async_trait::async_trait;
+use sea_orm_migration::async_trait::async_trait;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
