@@ -11,6 +11,8 @@
   --color-card-foreground: #F8F9FA;
   --color-border: #1E2A3A;
   --color-ring: #F59E0B;
+  --color-success: #10B981;
+  --color-error: #EF4444;
   --font-sans: Inter, system-ui, -apple-system, sans-serif;
   --font-display: Unbounded, system-ui, sans-serif;
   --font-mono: JetBrains Mono, monospace;
@@ -24,6 +26,14 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 }
 
 @layer utilities {
@@ -33,5 +43,24 @@ body {
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  .section-padding {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+
+  @media (min-width: 768px) {
+    .section-padding {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-padding {
+      padding-top: 8rem;
+      padding-bottom: 8rem;
+    }
   }
 }

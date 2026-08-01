@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Unbounded, JetBrains_Mono } from "next/font/google";
-import { LinguiProvider } from "@/components/LinguiProvider";
+import { LinguiProvider } from "@/components/lingui-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,7 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Ataqu – The Calm Predator of Productivity",
-  description: "10 essential apps, one unified price. No lock-in, no per‑user fees. Join the waitlist.",
+  description: "10 essential apps, one unified price. No lock‑in, no per‑user fees. Join the waitlist.",
 };
 
 export default function RootLayout({
