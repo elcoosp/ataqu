@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
-use sea_orm::{DatabaseTransaction, DbBackend, Statement};
+use sea_orm::{ActiveValue::Set, DatabaseTransaction, DbBackend, Statement};
 use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
@@ -74,20 +74,21 @@ fn map_form(m: form_entity::Model) -> Form {
         tenant_id: m.tenant_id,
         title: m.title,
         description: m.description,
-        schema_json: m.schema_json.into(),
+        schema_json: m.schema_json,
         is_active: m.is_active,
         created_at: m.created_at.into(),
         updated_at: m.updated_at.into(),
     }
 }
 
+#[allow(dead_code)]
 fn map_submission(m: submission_entity::Model) -> Submission {
     Submission {
         id: m.id,
         tenant_id: m.tenant_id,
         form_id: m.form_id,
         respondent_id: m.respondent_id,
-        response_data: m.response_data.into(),
+        response_data: m.response_data,
         submitted_at: m.submitted_at.into(),
     }
 }
@@ -169,7 +170,7 @@ impl SondRepository for SeaOrmSondRepository {
             tenant_id: Set(form.tenant_id),
             title: Set(form.title.clone()),
             description: Set(form.description.clone()),
-            schema_json: Set(form.schema_json.clone().into()),
+            schema_json: Set(form.schema_json.clone()),
             is_active: Set(form.is_active),
             created_at: Set(form.created_at.into()),
             updated_at: Set(form.updated_at.into()),
@@ -219,7 +220,7 @@ impl SondRepository for SeaOrmSondRepository {
         let chunk_size: usize = 100;
 
         for chunk in submissions.chunks(chunk_size) {
-            txn.execute(Statement::from_sql_and_values(
+            txn.execute_raw(Statement::from_sql_and_values(
                 DbBackend::Postgres,
                 "SAVEPOINT chunk_sp",
                 [],
@@ -228,7 +229,7 @@ impl SondRepository for SeaOrmSondRepository {
 
             match insert_submission_chunk(txn, chunk).await {
                 Ok(_) => {
-                    txn.execute(Statement::from_sql_and_values(
+                    txn.execute_raw(Statement::from_sql_and_values(
                         DbBackend::Postgres,
                         "RELEASE SAVEPOINT chunk_sp",
                         [],
@@ -237,7 +238,7 @@ impl SondRepository for SeaOrmSondRepository {
                     successes.extend(chunk.iter().map(|s| s.id));
                 }
                 Err(e) => {
-                    txn.execute(Statement::from_sql_and_values(
+                    txn.execute_raw(Statement::from_sql_and_values(
                         DbBackend::Postgres,
                         "ROLLBACK TO SAVEPOINT chunk_sp",
                         [],
@@ -250,7 +251,7 @@ impl SondRepository for SeaOrmSondRepository {
                     }
 
                     for item in chunk {
-                        txn.execute(Statement::from_sql_and_values(
+                        txn.execute_raw(Statement::from_sql_and_values(
                             DbBackend::Postgres,
                             "SAVEPOINT item_sp",
                             [],
@@ -258,7 +259,7 @@ impl SondRepository for SeaOrmSondRepository {
                         .await?;
                         match insert_submission_chunk(txn, std::slice::from_ref(item)).await {
                             Ok(_) => {
-                                txn.execute(Statement::from_sql_and_values(
+                                txn.execute_raw(Statement::from_sql_and_values(
                                     DbBackend::Postgres,
                                     "RELEASE SAVEPOINT item_sp",
                                     [],
@@ -267,7 +268,7 @@ impl SondRepository for SeaOrmSondRepository {
                                 successes.push(item.id);
                             }
                             Err(item_err) => {
-                                txn.execute(Statement::from_sql_and_values(
+                                txn.execute_raw(Statement::from_sql_and_values(
                                     DbBackend::Postgres,
                                     "ROLLBACK TO SAVEPOINT item_sp",
                                     [],
@@ -301,7 +302,7 @@ async fn insert_submission_chunk(
             tenant_id: Set(s.tenant_id),
             form_id: Set(s.form_id),
             respondent_id: Set(s.respondent_id),
-            response_data: Set(s.response_data.clone().into()),
+            response_data: Set(s.response_data.clone()),
             submitted_at: Set(s.submitted_at.into()),
         })
         .collect();
@@ -312,20 +313,11 @@ async fn insert_submission_chunk(
 }
 
 fn is_data_level_error(e: &sea_orm::DbErr) -> bool {
-    match e {
-        sea_orm::DbErr::Query(sqlx_err) => {
-            if let sqlx::Error::Database(db_err) = sqlx_err {
-                db_err
-                    .code()
-                    .map(|c| c.to_string())
-                    .unwrap_or_default()
-                    .starts_with("23")
-            } else {
-                false
-            }
-        }
-        _ => false,
-    }
+    let err_str = e.to_string().to_lowercase();
+    err_str.contains("unique violation")
+        || err_str.contains("foreign key violation")
+        || err_str.contains("check violation")
+        || err_str.contains("violates not-null")
 }
 
 #[cfg(test)]
