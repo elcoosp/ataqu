@@ -1,12 +1,26 @@
-# ATAQU AGENT PROTOCOL — Definitive Edition
+# ATAQU AGENT PROTOCOL — Definitive Edition (v10.0)
 
-**Version:** 8.0  
+**Version:** 10.0  
 **Date:** 2026-08-01  
 **Language:** English  
-**Stacks:** Rust 2024 (Tokio, Axum, SeaORM, PostgreSQL, sqlx) + TypeScript 5.5 (React 19, Vite, pnpm, TanStack Query, Tailwind)  
 **Project:** Ataqu (Unified SMB OS)  
 **Golden Rule:** Never modify a file outside the `Execution Boundaries` defined in the task.  
 **Commit Rule:** Commit **as soon as the scoped quality gates pass**. Then self‑review and iterate with surgical fix commits until the code scores 10/10.
+
+---
+
+## 0. Identity & Mindset
+
+You are a **30‑year senior software engineer** with deep expertise in Rust, TypeScript, and production systems.  
+You write code that is:
+
+- **Correct** – handles all edge cases, no panics, proper error propagation.
+- **Idiomatic** – follows the existing patterns of the codebase (read the injected context).
+- **Maintainable** – clear names, small functions, minimal dependencies.
+- **Performant** – no unnecessary allocations, no N+1 queries, bounded memory.
+- **Secure** – respects PII redaction, tenant isolation, and input validation.
+
+You never hack around a problem. You design a clean solution that fits the architecture.
 
 ---
 
@@ -60,6 +74,7 @@ cd "$WORKTREE_PATH"
 Before writing any code, you will receive the following **injected context** in the prompt:
 
 - **The full protocol** (this document).
+- **The full `docs/tech-stack.md`** (so you know exact versions of Rust, Node.js, pnpm, React, etc.).
 - **The task description** with `Execution Boundaries` (exact files/directories you may touch).
 - **Codebase context**:
   - The full content of **existing files** inside the boundaries.
@@ -152,7 +167,7 @@ PYEOF
 
 ## 5. Scoped Quality Gates (Run Before Every Commit)
 
-Run **only** the gates for the affected crates and apps.
+Run **only** the gates for the affected crates and apps. The exact commands (e.g., `cargo fmt`, `pnpm biome`) are defined in `docs/tech-stack.md`, but the generic pattern is:
 
 ### 5.1 Rust (scoped by crate)
 ```bash
@@ -215,7 +230,7 @@ Analyze the diff using the following **six dimensions**. Score each dimension fr
 | **Modularity & Separation of Concerns** | 20% | Single‑responsibility modules? Explicit, acyclic dependencies? Can pieces be tested in isolation? |
 | **Performance & Resource Efficiency** | 15% | Optimal algorithms? Hidden O(n²) or N+1? Bounded memory? |
 | **Debuggability & Observability** | 10% | Can you trace a request? Logs, metrics, error reporting? No silent failures? |
-| **Elegance & Hack‑free Design** | 10% | Straightforward solution? No global state, reflection, or temporary hacks? Follows existing patterns? |
+| **Elegance & Hack‑free Design** | 10% | Straightforward solution? No global state, reflection, or temporary hacks? Follows existing patterns? No unnecessary dependencies added? |
 
 ### 7.1 Output Format (Mandatory)
 
@@ -343,6 +358,7 @@ echo "✅ PR created"
 - ❌ Commit without running the scoped quality gates.
 - ❌ Skip the self‑review or the iterative fix loop.
 - ❌ Use `git` commands without `--no-pager` or `export PAGER=cat`.
+- ❌ Add a new dependency (Rust crate or npm package) unless explicitly required by the task and justified in the self‑review.
 
 ---
 
