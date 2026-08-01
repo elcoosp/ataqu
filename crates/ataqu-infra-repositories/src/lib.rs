@@ -1,8 +1,11 @@
 pub mod aegis_repo;
 pub mod batch_helper;
+pub mod cinq_contact_repo;
+pub mod cinq_csv_import;
+pub mod cinq_deal_repo;
 pub mod cinq_repo;
-
+pub mod email_tracking_writer;
+pub mod entities;
 pub mod generic_batch;
-
-mod m_pivot;
 mod m_aegis;
+mod m_pivot;
