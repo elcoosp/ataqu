@@ -3,3 +3,5 @@ pub mod batch_helper;
 pub mod cinq_repo;
 
 pub mod generic_batch;
+
+pub mod pivot_repo;
