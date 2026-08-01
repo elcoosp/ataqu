@@ -141,7 +141,7 @@ export function WaitlistForm() {
           id="email"
           type="email"
           {...register("email")}
-          className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/50"
+          className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
           placeholder={i18n._(t`you@company.com`)}
         />
         {errors.email && <p className="mt-1 text-sm text-error">{errors.email.message}</p>}
@@ -183,7 +183,7 @@ export function WaitlistForm() {
           id="name"
           type="text"
           {...register("name")}
-          className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/50"
+          className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
           placeholder={i18n._(t`Your name`)}
         />
       </div>
@@ -196,7 +196,7 @@ export function WaitlistForm() {
           id="role"
           type="text"
           {...register("role")}
-          className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/50"
+          className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
           placeholder={i18n._(t`CEO, CTO, Head of Ops…`)}
         />
       </div>

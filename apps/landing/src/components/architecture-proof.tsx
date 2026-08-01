@@ -18,11 +18,11 @@ import {
 
 export function ArchitectureProof() {
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Flow diagram - visual representation */}
       <div className="relative">
         {/* Top row: SPAs */}
-        <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+        <div className="flex flex-wrap justify-center gap-1.5 mb-3">
           <span className="px-3 py-1 rounded-md bg-card/50 border border-border text-xs font-mono text-foreground">PIVOT</span>
           <span className="px-3 py-1 rounded-md bg-card/50 border border-border text-xs font-mono text-foreground">DIAL</span>
           <span className="px-3 py-1 rounded-md bg-card/50 border border-border text-xs font-mono text-foreground">SPARK</span>
@@ -36,12 +36,12 @@ export function ArchitectureProof() {
         </div>
 
         {/* Arrow down */}
-        <div className="flex justify-center mb-2">
+        <div className="flex justify-center mb-3">
           <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
         </div>
 
         {/* Middle: Rust API + Application Layer */}
-        <div className="flex flex-wrap justify-center gap-2 mb-2">
+        <div className="flex flex-wrap justify-center gap-2 mb-3">
           <div className="px-4 py-1.5 rounded-md border border-border bg-card/30 text-xs font-mono text-foreground">Axum 0.8 (HTTP/WS)</div>
           <div className="px-4 py-1.5 rounded-md border border-border bg-card/30 text-xs font-mono text-foreground">Tokio 1.52</div>
           <div className="px-4 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-xs font-mono text-primary">Idempotency Guard</div>
@@ -49,7 +49,7 @@ export function ArchitectureProof() {
         </div>
 
         {/* Arrow down */}
-        <div className="flex justify-center mb-2">
+        <div className="flex justify-center mb-3">
           <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
         </div>
 
@@ -63,14 +63,14 @@ export function ArchitectureProof() {
             <span className="px-2 py-0.5 rounded bg-background/50 border border-border">dial</span>
             <span className="px-2 py-0.5 rounded bg-background/50 border border-border">vista</span>
           </div>
-          <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs">
-            <span className="px-3 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono flex items-center gap-1">
+          <div className="mt-2 flex flex-wrap justify-center gap-1.5 text-xs">
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono flex items-center gap-1">
               <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               RLS + ENUM
             </span>
-            <span className="px-3 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono">unified outbox</span>
-            <span className="px-3 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono">LISTEN/NOTIFY</span>
-            <span className="px-3 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono">advisory locks</span>
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono">outbox</span>
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono">LISTEN/NOTIFY</span>
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono">advisory locks</span>
           </div>
         </div>
       </div>
