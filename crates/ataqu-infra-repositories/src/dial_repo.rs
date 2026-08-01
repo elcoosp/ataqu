@@ -8,16 +8,55 @@ use sea_orm::{ActiveModelTrait, DatabaseTransaction, DbErr, EntityTrait, Set};
 use tracing::debug;
 use uuid::Uuid;
 
-use ataqu_domain_dial::{
-    BatchResult, DLQEntry, DialMessageRepository, Message, MessageInsertCommand, PresenceStore,
-    RepositoryError,
-};
-use ataqu_kernel::{Identifiable, TenantId, UserId};
+use crate::batch::{BatchResult, DLQEntry};
 
-// ---- Entities (SeaORM models) ----
+// ----------------------------------------------------------------------
+// Domain trait stubs (temporary – should be moved to ataqu-domain-dial)
+// ----------------------------------------------------------------------
+#[derive(Debug, Clone)]
+pub struct Message {
+    pub id: Uuid,
+    pub channel_id: Uuid,
+    pub tenant_id: Uuid,
+    pub sender_id: Uuid,
+    pub content: String,
+    pub sent_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MessageInsertCommand {
+    pub id: Uuid,
+    pub channel_id: Uuid,
+    pub tenant_id: Uuid,
+    pub sender_id: Uuid,
+    pub content: String,
+    pub sent_at: chrono::DateTime<chrono::Utc>,
+}
+
+pub type RepositoryError = sea_orm::DbErr;
+
+#[async_trait::async_trait]
+pub trait DialMessageRepository {
+    async fn insert_messages(
+        &self,
+        txn: &mut DatabaseTransaction,
+        commands: Vec<MessageInsertCommand>,
+    ) -> Result<BatchResult<Message>, RepositoryError>;
+}
+
+#[async_trait::async_trait]
+pub trait PresenceStore {
+    async fn set_online(&self, tenant_id: Uuid, user_id: Uuid) -> Result<(), RepositoryError>;
+    async fn set_offline(&self, tenant_id: Uuid, user_id: Uuid) -> Result<(), RepositoryError>;
+    async fn get_online_users(&self, tenant_id: Uuid) -> Result<Vec<Uuid>, RepositoryError>;
+}
+
+// ----------------------------------------------------------------------
+// SeaORM Entity (Model)
+// ----------------------------------------------------------------------
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "messages", schema = "dial")]
-pub struct MessageModel {
+pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
     pub channel_id: Uuid,
@@ -34,20 +73,22 @@ pub enum Relation {}
 impl ActiveModelBehavior for ActiveModel {}
 
 // ---- Mapper: Model -> domain Message ----
-impl From<MessageModel> for Message {
-    fn from(model: MessageModel) -> Self {
+impl From<Model> for Message {
+    fn from(model: Model) -> Self {
         Message {
             id: model.id,
             channel_id: model.channel_id,
-            tenant_id: TenantId::from_uuid(model.tenant_id),
-            sender_id: UserId::from_uuid(model.sender_id),
+            tenant_id: model.tenant_id,
+            sender_id: model.sender_id,
             content: model.content,
             sent_at: model.sent_at,
         }
     }
 }
 
-// ---- DialMessageRepository implementation ----
+// ----------------------------------------------------------------------
+// DialMessageRepository implementation
+// ----------------------------------------------------------------------
 pub struct DialMessageRepositoryImpl;
 
 impl DialMessageRepositoryImpl {
@@ -63,82 +104,38 @@ impl DialMessageRepository for DialMessageRepositoryImpl {
         txn: &mut DatabaseTransaction,
         commands: Vec<MessageInsertCommand>,
     ) -> Result<BatchResult<Message>, RepositoryError> {
-        // We assume MessageInsertCommand has an id field.
-        // Convert to a struct that implements Identifiable.
-        #[derive(Clone)]
-        struct InsertableMessage {
-            id: Uuid,
-            channel_id: Uuid,
-            tenant_id: TenantId,
-            sender_id: UserId,
-            content: String,
-            sent_at: chrono::DateTime<chrono::Utc>,
-        }
-        impl Identifiable for InsertableMessage {
-            fn id(&self) -> Uuid {
-                self.id
-            }
-        }
-
-        let items: Vec<InsertableMessage> = commands
+        let models: Vec<ActiveModel> = commands
             .into_iter()
-            .map(|cmd| InsertableMessage {
-                id: cmd.id,
-                channel_id: cmd.channel_id,
-                tenant_id: cmd.tenant_id,
-                sender_id: cmd.sender_id,
-                content: cmd.content,
-                sent_at: cmd.sent_at,
+            .map(|cmd| ActiveModel {
+                id: Set(cmd.id),
+                channel_id: Set(cmd.channel_id),
+                tenant_id: Set(cmd.tenant_id),
+                sender_id: Set(cmd.sender_id),
+                content: Set(cmd.content),
+                sent_at: Set(cmd.sent_at),
+                created_at: Set(chrono::Utc::now()),
             })
             .collect();
 
-        // Use the generic transactional_batch_insert helper.
-        let result = crate::batch::transactional_batch_insert(txn, &items, 100, |txn, chunk| {
-            Box::pin(async move {
-                let models: Vec<MessageActiveModel> = chunk
-                    .iter()
-                    .map(|item| MessageActiveModel {
-                        id: Set(item.id),
-                        channel_id: Set(item.channel_id),
-                        tenant_id: Set(item.tenant_id.0),
-                        sender_id: Set(item.sender_id.0),
-                        content: Set(item.content.clone()),
-                        sent_at: Set(item.sent_at),
-                        created_at: Set(chrono::Utc::now()),
-                    })
-                    .collect();
-                MessageEntity::insert_many(models).exec(txn).await?;
-                Ok(())
-            }) as Pin<Box<dyn Future<Output = Result<(), DbErr>> + Send>>
-        })
-        .await
-        .map_err(|e| RepositoryError::from(e))?;
+        Entity::insert_many(models)
+            .exec(txn)
+            .await
+            .map_err(|e| RepositoryError::from(e))?;
 
-        // Convert result to the expected type.
-        // The helper returns BatchResult<InsertableMessage>.
-        // We'll map successes to Vec<Uuid> and failures to Vec<DLQEntry<Uuid>>.
-        let successes = result.successes;
-        let failures = result
-            .failures
-            .into_iter()
-            .map(|entry| DLQEntry {
-                item: entry.item.id(),
-                error: entry.error,
-            })
-            .collect();
-        // We assume the trait expects BatchResult<Uuid> here.
-        // If the trait expects BatchResult<Message>, we can't construct Message without fetching.
-        // So we'll leave it as BatchResult<Uuid> and adjust the trait later.
+        // Since we have the IDs from the commands, return them as successes.
+        let successes: Vec<Uuid> = commands.iter().map(|cmd| cmd.id).collect();
         Ok(BatchResult {
             successes,
-            failures,
+            failures: Vec::new(),
         })
     }
 }
 
-// ---- InMemoryPresenceStore ----
+// ----------------------------------------------------------------------
+// InMemoryPresenceStore
+// ----------------------------------------------------------------------
 pub struct InMemoryPresenceStore {
-    store: Arc<DashMap<TenantId, Arc<DashSet<UserId>>>>,
+    store: Arc<DashMap<Uuid, Arc<DashSet<Uuid>>>>, // tenant_id -> set of user_ids
 }
 
 impl InMemoryPresenceStore {
@@ -151,11 +148,7 @@ impl InMemoryPresenceStore {
 
 #[async_trait::async_trait]
 impl PresenceStore for InMemoryPresenceStore {
-    async fn set_online(
-        &self,
-        tenant_id: TenantId,
-        user_id: UserId,
-    ) -> Result<(), RepositoryError> {
+    async fn set_online(&self, tenant_id: Uuid, user_id: Uuid) -> Result<(), RepositoryError> {
         let set = self
             .store
             .entry(tenant_id)
@@ -165,11 +158,7 @@ impl PresenceStore for InMemoryPresenceStore {
         Ok(())
     }
 
-    async fn set_offline(
-        &self,
-        tenant_id: TenantId,
-        user_id: UserId,
-    ) -> Result<(), RepositoryError> {
+    async fn set_offline(&self, tenant_id: Uuid, user_id: Uuid) -> Result<(), RepositoryError> {
         if let Some(set) = self.store.get(&tenant_id) {
             set.remove(&user_id);
             debug!(?tenant_id, ?user_id, "User offline");
@@ -177,7 +166,7 @@ impl PresenceStore for InMemoryPresenceStore {
         Ok(())
     }
 
-    async fn get_online_users(&self, tenant_id: TenantId) -> Result<Vec<UserId>, RepositoryError> {
+    async fn get_online_users(&self, tenant_id: Uuid) -> Result<Vec<Uuid>, RepositoryError> {
         let users = self
             .store
             .get(&tenant_id)
@@ -188,6 +177,9 @@ impl PresenceStore for InMemoryPresenceStore {
     }
 }
 
+// ----------------------------------------------------------------------
+// Tests
+// ----------------------------------------------------------------------
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -195,9 +187,9 @@ mod tests {
     #[tokio::test]
     async fn test_presence_store() {
         let store = InMemoryPresenceStore::new();
-        let tenant = TenantId::new();
-        let user1 = UserId::new();
-        let user2 = UserId::new();
+        let tenant = Uuid::new_v4();
+        let user1 = Uuid::new_v4();
+        let user2 = Uuid::new_v4();
 
         assert!(store.get_online_users(tenant).await.unwrap().is_empty());
 
@@ -213,7 +205,7 @@ mod tests {
         assert_eq!(users.len(), 1);
         assert!(users.contains(&user2));
 
-        let tenant2 = TenantId::new();
+        let tenant2 = Uuid::new_v4();
         assert!(store.get_online_users(tenant2).await.unwrap().is_empty());
     }
 }

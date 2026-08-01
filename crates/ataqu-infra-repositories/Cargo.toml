@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+tokio = { version = "1.52.2", features = ["rt", "rt-multi-thread", "macros"] }
 dashmap = "5.4.0"
 chrono = { version = "0.4.45", features = ["serde"] }
 async-trait = "0.1.74"

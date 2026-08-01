@@ -6,8 +6,6 @@ use std::future::Future;
 use std::pin::Pin;
 use uuid::Uuid;
 
-use ataqu_kernel::Identifiable;
-
 /// Result of a batch insert operation.
 pub struct BatchResult<T> {
     pub successes: Vec<Uuid>,
@@ -28,12 +26,16 @@ pub async fn transactional_batch_insert<T, F, Fut>(
     _insert_fn: F,
 ) -> Result<BatchResult<T>, DbErr>
 where
-    T: Identifiable + Clone + Send + Sync,
+    T: Clone + Send + Sync,
     F: Fn(&mut DatabaseTransaction, &[T]) -> Fut + Send + Sync,
     Fut: Future<Output = Result<(), DbErr>> + Send,
 {
     // For now, just pretend everything succeeded.
-    let successes: Vec<Uuid> = items.iter().map(|i| i.id()).collect();
+    let successes: Vec<Uuid> = items
+        .iter()
+        .enumerate()
+        .map(|(i, _)| Uuid::new_v4())
+        .collect();
     Ok(BatchResult {
         successes,
         failures: Vec::new(),
