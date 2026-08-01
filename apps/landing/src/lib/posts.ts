@@ -15,9 +15,7 @@ export type Post = {
 };
 
 export function getAllPosts(): Post[] {
-  // Ensure directory exists
   if (!fs.existsSync(postsDirectory)) {
-    fs.mkdirSync(postsDirectory, { recursive: true });
     return [];
   }
 

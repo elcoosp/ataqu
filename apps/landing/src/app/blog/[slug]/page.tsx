@@ -1,38 +1,62 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
+"use client";
+
 import { Trans } from "@lingui/react/macro";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import { getPostBySlug, getAllPosts } from "@/lib/posts";
+import type { Post } from "@/lib/posts";
 
-type PageProps = {
-  params: Promise<{ slug: string }>;
-};
+export default function BlogPostPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const post = getPostBySlug(slug);
-  if (!post) return { title: "Not Found" };
-  return {
-    title: post.title,
-    description: post.excerpt,
-  };
-}
+  useEffect(() => {
+    if (!slug) return;
+    async function fetchPost() {
+      try {
+        const res = await fetch(`/api/posts/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPost(data);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPost();
+  }, [slug]);
 
-export async function generateStaticParams() {
-  const posts = getAllPosts();
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
-}
+  if (loading) {
+    return (
+      <div className="container section-padding max-w-3xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-muted/30 rounded w-32"></div>
+          <div className="h-12 bg-muted/30 rounded w-3/4"></div>
+          <div className="h-4 bg-muted/20 rounded w-1/3"></div>
+          <div className="h-64 bg-muted/20 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
-export default async function BlogPostPage({ params }: PageProps) {
-  const { slug } = await params;
-  const post = getPostBySlug(slug);
-  if (!post) notFound();
+  if (!post) {
+    return (
+      <div className="container section-padding max-w-3xl mx-auto text-center">
+        <h1 className="font-display text-2xl font-bold">Post not found</h1>
+        <Link href="/blog" className="text-primary hover:underline mt-4 inline-block">
+          <Trans>← Back to blog</Trans>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="container section-padding max-w-3xl mx-auto">
