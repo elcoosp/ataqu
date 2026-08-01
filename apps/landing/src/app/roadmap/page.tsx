@@ -4,32 +4,42 @@ import { Trans } from "@lingui/react/macro";
 
 const PHASES = [
   {
-    name: "Phase 1: Foundation & Revenue",
+    name: "Foundation",
     tasks: [
-      { name: "AEGIS (SSO, MFA, Auth)", status: "done" },
-      { name: "CINQ (CRM, Pipeline)", status: "done" },
-      { name: "VAULT (Inventory)", status: "done" },
-      { name: "SOND (Forms)", status: "done" },
-      { name: "PIVOT (Docs & Databases)", status: "done" },
+      { name: "User Authentication (SSO, MFA)", status: "done" },
+      { name: "CRM: Contacts, Deals & Pipeline", status: "done" },
+      { name: "Forms & Surveys", status: "done" },
+      { name: "Documents & Databases", status: "done" },
+      { name: "Inventory Management", status: "done" },
     ],
   },
   {
-    name: "Phase 2: Collaboration & Real‑time",
+    name: "Collaboration & Automation",
     tasks: [
-      { name: "DIAL (Chat & Support)", status: "in-progress" },
-      { name: "SPARK (Automation)", status: "in-progress" },
-      { name: "TEMPO (Scheduling)", status: "planned" },
-      { name: "PAUSE (HR & Leave)", status: "planned" },
-      { name: "VISTA (Analytics & BI)", status: "planned" },
+      { name: "Team Chat & Support", status: "done" },
+      { name: "Workflow Automation", status: "done" },
+      { name: "Scheduling & Calendar", status: "done" },
+      { name: "HR & Leave Management", status: "done" },
+      { name: "Analytics & Dashboards", status: "done" },
     ],
   },
   {
-    name: "Phase 3: Polish & Launch",
+    name: "Integration & Polish",
     tasks: [
-      { name: "GDPR Compliance", status: "planned" },
-      { name: "Load Testing (k6)", status: "planned" },
+      { name: "Landing Page & Marketing Site", status: "done" },
+      { name: "Engineering Blog", status: "done" },
+      { name: "Competitor Comparison Pages", status: "done" },
+      { name: "Public Roadmap", status: "done" },
+      { name: "About & Manifesto", status: "done" },
+    ],
+  },
+  {
+    name: "Launch Readiness",
+    tasks: [
+      { name: "GDPR Compliance & Data Privacy", status: "planned" },
+      { name: "Performance & Load Testing", status: "planned" },
       { name: "CI/CD Pipeline", status: "planned" },
-      { name: "Documentation & Runbooks", status: "planned" },
+      { name: "Documentation & Help Center", status: "planned" },
       { name: "Public Launch", status: "planned" },
     ],
   },
