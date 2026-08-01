@@ -1,5 +1,5 @@
 use ataqu_kernel::TenantId;
-
+use ataqu_security::{Email, PhoneNumber};
 use uuid::Uuid;
 
 use crate::contact::CreateContactCommand;
@@ -24,16 +24,11 @@ pub fn validate_contact_row(row: &[String]) -> CinqResult<CreateContactCommand> 
             "Name cannot be empty".to_string(),
         ));
     }
-    let email = row[2].clone();
-    // For simplicity, we assume Email newtype validates; if not, we could add a method.
+    let email = Email::new(row[2].clone());
     let phone = if row[3].is_empty() {
         None
     } else {
-        if row[3].is_empty() {
-            None
-        } else {
-            Some(row[3].clone())
-        }
+        Some(PhoneNumber::new(row[3].clone()))
     };
     Ok(CreateContactCommand {
         tenant_id,

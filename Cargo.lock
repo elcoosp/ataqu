@@ -306,6 +306,7 @@ name = "ataqu-domain-cinq"
 version = "0.1.0"
 dependencies = [
  "ataqu-kernel",
+ "ataqu-security",
  "chrono",
  "thiserror",
  "uuid",

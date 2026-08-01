@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 ataqu-kernel = { path = "../ataqu-kernel" }
+ataqu-security = { path = "../ataqu-security" }
 uuid = { version = "1.0", features = ["v7"] }
 chrono = { version = "0.4" }
 thiserror = "2.0"

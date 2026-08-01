@@ -2,6 +2,7 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 use chrono::{DateTime, Utc};
 
+use ataqu_security::{Email, PhoneNumber};
 use uuid::Uuid;
 
 use crate::error::{CinqDomainError, CinqResult};
@@ -12,8 +13,8 @@ pub struct Contact {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: String,
-    pub email: String,
-    pub phone: Option<String>,
+    pub email: Email,
+    pub phone: Option<PhoneNumber>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -23,8 +24,8 @@ pub struct Contact {
 pub struct CreateContactCommand {
     pub tenant_id: TenantId,
     pub name: String,
-    pub email: String,
-    pub phone: Option<String>,
+    pub email: Email,
+    pub phone: Option<PhoneNumber>,
 }
 
 #[derive(Debug, Clone)]
@@ -32,8 +33,8 @@ pub struct UpdateContactCommand {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: Option<String>,
-    pub email: Option<String>,
-    pub phone: Option<Option<String>>, // None = no change, Some(None) = clear
+    pub email: Option<Email>,
+    pub phone: Option<Option<PhoneNumber>>, // None = no change, Some(None) = clear
 }
 
 // ---------- Events ----------
@@ -42,8 +43,8 @@ pub struct ContactCreated {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: String,
-    pub email: String,
-    pub phone: Option<String>,
+    pub email: Email,
+    pub phone: Option<PhoneNumber>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -52,8 +53,8 @@ pub struct ContactUpdated {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: Option<String>,
-    pub email: Option<String>,
-    pub phone: Option<Option<String>>,
+    pub email: Option<Email>,
+    pub phone: Option<Option<PhoneNumber>>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -97,13 +98,13 @@ pub fn validate_contact_name(name: &str) -> CinqResult<()> {
     Ok(())
 }
 
-pub fn validate_contact_email(_email: &str) -> CinqResult<()> {
+pub fn validate_contact_email(_email: &Email) -> CinqResult<()> {
     // Email newtype already validates on construction? We assume it's valid.
     // Additional domain-specific rules can go here.
     Ok(())
 }
 
-pub fn validate_contact_phone(_phone: &Option<String>) -> CinqResult<()> {
+pub fn validate_contact_phone(_phone: &Option<PhoneNumber>) -> CinqResult<()> {
     // Assume Phone newtype is valid.
     Ok(())
 }
@@ -114,10 +115,8 @@ pub fn validate_contact_phone(_phone: &Option<String>) -> CinqResult<()> {
 mod tests {
     use super::*;
     use ataqu_kernel::{Clock, IdGenerator};
-    use chrono::TimeZone;
-    use chrono::{DateTime, Utc};
+    use chrono::{DateTime, TimeZone, Utc};
 
-    // Simple mock implementations
     struct MockIdGenerator {
         next: Uuid,
     }
@@ -156,7 +155,7 @@ mod tests {
         let cmd = CreateContactCommand {
             tenant_id: TenantId::new(Uuid::new_v4()),
             name: "Alice".to_string(),
-            email: "alice@example.com".to_string(),
+            email: Email::new("alice@example.com".to_string()),
             phone: None,
         };
         let mut id_gen = MockIdGenerator::new();
@@ -182,7 +181,7 @@ mod tests {
             tenant_id: TenantId::new(Uuid::new_v4()),
             name: Some("Bob".to_string()),
             email: None,
-            phone: Some(Some("+1234567890".to_string())),
+            phone: Some(Some(PhoneNumber::new("+1234567890".to_string()))),
         };
         let clock = MockClock::new(Utc.with_ymd_and_hms(2026, 8, 1, 13, 0, 0).unwrap());
 
