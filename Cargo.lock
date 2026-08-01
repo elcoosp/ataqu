@@ -450,7 +450,10 @@ name = "ataqu-infra-migration"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "chrono",
+ "sea-orm",
  "sea-orm-migration",
+ "uuid",
 ]
 
 [[package]]
@@ -480,9 +483,15 @@ dependencies = [
 name = "ataqu-infra-repositories"
 version = "0.1.0"
 dependencies = [
+ "ataqu-domain-aegis",
+ "ataqu-kernel",
+ "ataqu-security",
+ "chrono",
+ "once_cell",
  "sea-orm",
  "serde_json",
  "sqlx",
+ "tokio",
  "tracing",
  "uuid",
 ]
@@ -2416,6 +2425,9 @@ dependencies = [
  "glob",
  "indoc",
  "regex",
+ "sea-schema",
+ "sqlx",
+ "tokio",
  "tracing",
  "tracing-subscriber",
  "url",
