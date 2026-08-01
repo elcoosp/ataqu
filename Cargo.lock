@@ -485,6 +485,7 @@ dependencies = [
  "serde_json",
  "serial_test",
  "sqlx",
+ "thiserror",
  "tokio",
  "tracing",
  "uuid",
