@@ -1,4 +1,5 @@
 use sea_orm_migration::prelude::*;
+use async_trait::async_trait;
 use sea_orm_migration::sea_orm::ConnectionTrait;
 
 #[derive(DeriveMigrationName)]
