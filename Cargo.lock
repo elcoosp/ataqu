@@ -290,6 +290,12 @@ dependencies = [
 [[package]]
 name = "ataqu-domain-aegis"
 version = "0.1.0"
+dependencies = [
+ "ataqu-kernel",
+ "ataqu-security",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-billing"
