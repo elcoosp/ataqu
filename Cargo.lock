@@ -367,6 +367,12 @@ dependencies = [
 [[package]]
 name = "ataqu-infra-repositories"
 version = "0.1.0"
+dependencies = [
+ "sea-orm",
+ "sqlx",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-infra-sagas"
