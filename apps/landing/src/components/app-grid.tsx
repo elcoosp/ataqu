@@ -25,7 +25,7 @@ export function AppGrid() {
         >
           <div className="w-12 h-12 rounded-full overflow-hidden mb-2 border border-primary/20">
             <Image
-              src={`/apps/${app.id}.png`}
+              src={`/apps/${app.id}.svg`}
               alt={app.name}
               width={48}
               height={48}
