@@ -322,6 +322,12 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-domain-spark"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "ataqu-kernel",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-tempo"
