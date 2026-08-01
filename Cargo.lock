@@ -490,6 +490,7 @@ dependencies = [
  "chrono",
  "once_cell",
  "sea-orm",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",

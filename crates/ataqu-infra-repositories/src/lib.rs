@@ -4,4 +4,5 @@ pub mod cinq_repo;
 
 pub mod generic_batch;
 
+pub mod pause_repo;
 pub mod tempo_repo;
