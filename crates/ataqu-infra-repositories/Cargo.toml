@@ -14,3 +14,4 @@ uuid = { version = "1.24.0", features = ["v4", "serde"] }
 sqlx = { version = "0.9.0", features = ["postgres"] }
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "with-uuid", "with-chrono"] }
 tokio = { version = "1.53.1", features = ["rt", "rt-multi-thread"] }
+async-trait = "0.1"

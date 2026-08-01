@@ -449,6 +449,7 @@ dependencies = [
 name = "ataqu-infra-migration"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "sea-orm",
  "sea-orm-migration",
@@ -482,6 +483,7 @@ dependencies = [
 name = "ataqu-infra-repositories"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-domain-aegis",
  "ataqu-kernel",
  "ataqu-security",

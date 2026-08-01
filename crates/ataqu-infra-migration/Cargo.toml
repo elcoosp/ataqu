@@ -8,3 +8,4 @@ sea-orm-migration = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "run
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "with-uuid", "with-chrono"] }
 uuid = { version = "1.24.0", features = ["v4", "serde"] }
 chrono = { version = "0.4.45", features = ["serde"] }
+async-trait = "0.1"
