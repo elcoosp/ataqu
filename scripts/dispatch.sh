@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dispatch.sh - Prepares the full agent prompt (protocol + tech-stack + context + task)
+# dispatch.sh - Prepares the full agent prompt (protocol + tech-stack + project + context + task)
 # Usage: ./scripts/dispatch.sh TASK-001
 
 set -euo pipefail
@@ -10,6 +10,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 PROTOCOL_FILE="$REPO_ROOT/docs/protocol/agent-protocol.md"
 TECH_STACK_FILE="$REPO_ROOT/docs/tech-stack.md"
+PROJECT_MD_FILE="$REPO_ROOT/docs/project.md"
 TASKS_DIR="$REPO_ROOT/docs/tasks"
 
 if [ ! -f "$PROTOCOL_FILE" ]; then
@@ -19,6 +20,9 @@ fi
 if [ ! -f "$TECH_STACK_FILE" ]; then
   echo "ERROR: Tech-stack file not found at $TECH_STACK_FILE"
   exit 1
+fi
+if [ ! -f "$PROJECT_MD_FILE" ]; then
+  echo "WARNING: project.md not found at $PROJECT_MD_FILE – continuing without it"
 fi
 
 TASK_ID="${1:-}"
@@ -47,6 +51,7 @@ APPS=$(echo "$BOUNDARIES" | grep 'apps/' | sed 's|apps/||' | sed 's|/.*||' | sor
 # ---------- Build Codebase Context ----------
 CONTEXT=""
 
+# 1. Inject files from boundaries (existing code the agent is allowed to touch)
 for path in $BOUNDARIES; do
   full_path="$REPO_ROOT/$path"
   if [ -f "$full_path" ]; then
@@ -72,6 +77,7 @@ $file_list
   fi
 done
 
+# 2. Inject dependencies (Cargo.toml) for affected crates
 for crate in $CRATES; do
   cargo_file="$REPO_ROOT/$crate/Cargo.toml"
   if [ -f "$cargo_file" ]; then
@@ -97,6 +103,7 @@ $tests
   fi
 done
 
+# 3. Inject package.json for frontend apps
 for app in $APPS; do
   pkg_file="$REPO_ROOT/apps/$app/package.json"
   if [ -f "$pkg_file" ]; then
@@ -109,6 +116,72 @@ $(cat "$pkg_file")
 "
   fi
 done
+
+# 4. INJECT BACKEND CODE FOR FRONTEND TASKS
+# If the task touches any app, we inject the corresponding domain crate,
+# service, and API handler so the frontend agent knows the API.
+if [ -n "$APPS" ]; then
+  # Always include the contracts crate (all events/commands)
+  CONTRACTS_CRATE="$REPO_ROOT/crates/ataqu-contracts"
+  if [ -d "$CONTRACTS_CRATE" ]; then
+    CONTEXT+="
+### Backend contracts (ataqu-contracts) – all events and commands
+\`\`\`
+$(find "$CONTRACTS_CRATE/src" -name '*.rs' -exec echo "// File: {}" \; -exec cat {} \; 2>/dev/null)
+\`\`\`
+"
+  fi
+
+  for app in $APPS; do
+    # Map app name to domain crate
+    domain_crate="ataqu-domain-$app"
+    domain_path="$REPO_ROOT/crates/$domain_crate"
+    if [ -d "$domain_path" ]; then
+      CONTEXT+="
+### Backend domain crate: $domain_crate (pure logic, models, repository traits)
+\`\`\`
+$(find "$domain_path/src" -name '*.rs' -exec echo "// File: {}" \; -exec cat {} \; 2>/dev/null)
+\`\`\`
+"
+    fi
+
+    # Inject the application service file (if exists)
+    service_file="$REPO_ROOT/crates/ataqu-application/src/${app}_service.rs"
+    if [ -f "$service_file" ]; then
+      CONTEXT+="
+### Backend application service: ataqu-application/src/${app}_service.rs
+\`\`\`rust
+// File: crates/ataqu-application/src/${app}_service.rs
+$(cat "$service_file")
+\`\`\`
+"
+    fi
+
+    # Inject the API handler file (if exists)
+    handler_file="$REPO_ROOT/crates/ataqu-api/src/handlers/${app}.rs"
+    if [ -f "$handler_file" ]; then
+      CONTEXT+="
+### Backend API handler: ataqu-api/src/handlers/${app}.rs
+\`\`\`rust
+// File: crates/ataqu-api/src/handlers/${app}.rs
+$(cat "$handler_file")
+\`\`\`
+"
+    fi
+  done
+
+  # Also inject the ApiEmail serializer if it exists (for PII)
+  api_email_file="$REPO_ROOT/crates/ataqu-api/src/serializers/api_email.rs"
+  if [ -f "$api_email_file" ]; then
+    CONTEXT+="
+### Backend PII serializer: ataqu-api/src/serializers/api_email.rs
+\`\`\`rust
+// File: crates/ataqu-api/src/serializers/api_email.rs
+$(cat "$api_email_file")
+\`\`\`
+"
+  fi
+fi
 
 # ---------- Assemble the Final Prompt ----------
 PROMPT="
@@ -124,6 +197,11 @@ You always include tests for new functionality and edge cases.
 #                   TECH STACK (from docs/tech-stack.md)
 # ====================================================================
 $(cat "$TECH_STACK_FILE")
+
+# ====================================================================
+#                   PROJECT ARCHITECTURE (from docs/project.md)
+# ====================================================================
+$(cat "$PROJECT_MD_FILE" 2>/dev/null || echo "WARNING: project.md not found")
 
 # ====================================================================
 #                   AGENT PROTOCOL
