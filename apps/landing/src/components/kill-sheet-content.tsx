@@ -303,7 +303,7 @@ export function KillSheetContent({ slug }: Props) {
     <main className="container section-padding space-y-12 md:space-y-16">
       <div className="max-w-4xl mx-auto">
         {/* Navigation dropdown */}
-        <div className="mb-8 flex justify-end">
+        <div className="mb-8 flex justify-end items-center">
           <Select
             value={slug}
             onValueChange={(value) => {
