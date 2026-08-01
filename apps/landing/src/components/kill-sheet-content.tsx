@@ -361,7 +361,7 @@ export function KillSheetContent({ slug }: Props) {
     <main className="container section-padding space-y-12 md:space-y-16">
       <div className="max-w-4xl mx-auto">
         {/* Navigation dropdown */}
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col items-start space-y-3">
           <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
             <span>←</span> Home
           </a>
