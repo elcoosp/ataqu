@@ -1,5 +1,5 @@
 use sea_orm_migration::prelude::*;
-mod m20250101_000001_core;
+
 mod m_aegis;
 mod m_dial;
 mod m_spark;
@@ -11,7 +11,6 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
-            Box::new(m20250101_000001_core::Migration),
             Box::new(m_aegis::Migration),
             Box::new(m_dial::Migration),
             Box::new(m_spark::Migration),
