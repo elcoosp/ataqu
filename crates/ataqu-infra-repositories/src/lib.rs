@@ -7,4 +7,5 @@ pub mod cinq_repo;
 pub mod email_tracking_writer;
 pub mod entities;
 pub mod generic_batch;
-pub mod transactional_batch_insert;
+pub mod pause_repo;
+pub mod tempo_repo;
