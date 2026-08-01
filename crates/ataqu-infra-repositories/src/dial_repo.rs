@@ -171,7 +171,7 @@ impl PresenceStore for InMemoryPresenceStore {
         let users = self
             .store
             .get(&tenant_id)
-            .map(|set| set.iter().map(|r| *r).collect())
+            .map(|set| set.iter().map(|r| *r).collect::<Vec<Uuid>>())
             .unwrap_or_default();
         debug!(?tenant_id, count = users.len(), "Retrieved online users");
         Ok(users)
