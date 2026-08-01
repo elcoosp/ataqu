@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use dashmap::{DashMap, DashSet};
 use sea_orm::entity::prelude::*;
-use sea_orm::{ActiveModelTrait, DatabaseTransaction, DbErr, EntityTrait, Set};
+use sea_orm::{DatabaseTransaction, EntityTrait, Set};
 use tracing::debug;
 use uuid::Uuid;
 
