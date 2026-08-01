@@ -1,10 +1,14 @@
 # TASK-018: Domain: VAULT Pure Logic
 
-## Execution Boundaries (STRICT)
- crates/ataqu-domain-vault/src/*
+## Execution Boundaries
+ - `crates/ataqu-domain-vault/src/*`
 
 ## Step-by-Step Implementation Details
- 1. Implement pure functions for products, variants, stock movements, reservations.\n2. Define `InventoryRepository` trait.\n3. Implement overflow protection logic (CHECK stock_quantity >= 0, ADR-023).\n4. NO I/O or async.
+ 1. Implement pure functions for products, variants, stock movements, reservations.
+2. Define `InventoryRepository` trait.
+3. Implement overflow protection logic (CHECK stock_quantity >= 0, ADR-023).
+4. NO I/O or async.
 
 ## Success Criteria & Verification
- - [ ] Functions compile.\n- [ ] Stock validation prevents negative quantities.
+ - [ ] Functions compile.
+- [ ] Stock validation prevents negative quantities.

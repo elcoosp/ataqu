@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-PROTOCOL_FILE="$REPO_ROOT/docs/protocol/agent-protocol.md"
+PROTOCOL_FILE="$REPO_ROOT/docs/agent-protocol.md"
 TECH_STACK_FILE="$REPO_ROOT/docs/tech-stack.md"
 PROJECT_MD_FILE="$REPO_ROOT/docs/project.md"
 TASKS_DIR="$REPO_ROOT/docs/tasks"
