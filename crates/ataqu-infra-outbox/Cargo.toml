@@ -4,3 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+sqlx = { version = "0.9.0", features = ["postgres", "runtime-tokio", "tls-native-tls", "chrono", "uuid", "json"], default-features = false }
+chrono = { version = "0.4.45", features = ["serde"] }
+uuid = { version = "1.24.0", features = ["v4", "v7", "serde"] }
+tracing = "0.1.44"
+thiserror = "2.0.18"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+tokio = { version = "1.52.2", features = ["macros", "rt", "time"] }
+
+[dev-dependencies]
+tokio = { version = "1.52.2", features = ["rt", "time", "test-util", "macros"] }
