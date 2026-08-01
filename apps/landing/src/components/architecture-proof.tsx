@@ -1,7 +1,7 @@
 "use client";
 
 import { Trans } from "@lingui/react/macro";
-import { Cpu, Database, Zap, Layers, ArrowRight } from "lucide-react";
+import { Cpu, Database, Zap, ArrowRight } from "lucide-react";
 
 export function ArchitectureProof() {
   return (
