@@ -1,4 +1,4 @@
-import { Trans } from "@lingui/macro";
+import { Trans } from "@lingui/react/macro";
 import { WaitlistForm } from "@/components/waitlist-form";
 
 export default function HomePage() {
