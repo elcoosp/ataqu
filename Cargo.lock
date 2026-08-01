@@ -274,6 +274,9 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-contracts"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "ataqu-domain-aegis"
