@@ -1,36 +1,41 @@
 [workspace]
-resolver = "2"
 members = [
+    "crates/ataqu-admin",
+    "crates/ataqu-api",
+    "crates/ataqu-application",
     "crates/ataqu-bin",
-    "crates/ataqu-kernel",
-    "crates/ataqu-security",
     "crates/ataqu-contracts",
     "crates/ataqu-domain-aegis",
     "crates/ataqu-domain-billing",
-    "crates/ataqu-domain-vault",
-    "crates/ataqu-domain-dial",
     "crates/ataqu-domain-cinq",
-    "crates/ataqu-domain-spark",
-    "crates/ataqu-domain-sond",
-    "crates/ataqu-domain-pivot",
-    "crates/ataqu-domain-pause",
-    "crates/ataqu-domain-tempo",
-    "crates/ataqu-domain-vista",
+    "crates/ataqu-domain-dial",
     "crates/ataqu-domain-gdpr",
+    "crates/ataqu-domain-pause",
+    "crates/ataqu-domain-pivot",
+    "crates/ataqu-domain-sond",
+    "crates/ataqu-domain-spark",
+    "crates/ataqu-domain-tempo",
+    "crates/ataqu-domain-vault",
+    "crates/ataqu-domain-vista",
+    "crates/ataqu-infra-cron",
+    "crates/ataqu-infra-idempotency",
+    "crates/ataqu-infra-migration",
+    "crates/ataqu-infra-outbox",
     "crates/ataqu-infra-pools",
     "crates/ataqu-infra-repositories",
-    "crates/ataqu-infra-outbox",
-    "crates/ataqu-infra-idempotency",
     "crates/ataqu-infra-sagas",
-    "crates/ataqu-infra-cron",
     "crates/ataqu-infra-storage",
-    "crates/ataqu-infra-migration",
-    "crates/ataqu-application",
-    "crates/ataqu-api",
-    "crates/ataqu-admin",
+    "crates/ataqu-kernel",
+    "crates/ataqu-security",
 ]
 
-[workspace.package]
-edition = "2024"
-version = "0.1.0"
-authors = ["Ataqu"]
+# Optional profile settings
+[profile.dev]
+opt-level = 0
+debug = true
+split-debuginfo = 'unpacked'
+
+[profile.release]
+opt-level = 3
+debug = false
+lto = true

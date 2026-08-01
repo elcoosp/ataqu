@@ -1,3 +1,11 @@
+[package]
+name = "ataqu-infra-migration"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
 async-trait = "0.1.91"
 sea-orm-migration = { version = "2.0.0", features = ["sqlx-postgres"] }
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "with-uuid", "with-chrono"] }
+uuid = { version = "1.24.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.45", features = ["serde"] }
