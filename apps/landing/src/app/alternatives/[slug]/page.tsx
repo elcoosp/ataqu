@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { KillSheetContent } from "@/components/kill-sheet-content";
 
-// Raw data for metadata only (no translations needed here)
+// Raw data for metadata only
 const COMPETITOR_NAMES: Record<string, string> = {
   hubspot: "HubSpot",
   slack: "Slack",

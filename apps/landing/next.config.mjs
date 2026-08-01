@@ -18,11 +18,6 @@ const nextConfig = {
       },
     ],
   },
-  // i18n routing (kept for compatibility, but we use Lingui)
-  i18n: {
-    locales: ["en", "fr", "de", "es", "pt"],
-    defaultLocale: "en",
-  },
 };
 
 const withMDX = createMDX({
