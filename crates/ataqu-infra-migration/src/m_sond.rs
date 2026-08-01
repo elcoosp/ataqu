@@ -1,5 +1,4 @@
 use sea_orm::{DbBackend, Statement};
-use sea_orm_migration::async_trait::async_trait;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
