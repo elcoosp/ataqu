@@ -5,6 +5,7 @@ import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Link from "next/link";
 
 // All translatable strings are defined here using the t macro so they get extracted.
 function getCompetitorData(slug: string) {
