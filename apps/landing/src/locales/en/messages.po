@@ -1,0 +1,74 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-08-01 18:39+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. js-lingui-explicit-id
+#: src/app/page.tsx:16
+msgid "home.subtitle"
+msgstr "home.subtitle"
+
+#: src/components/waitlist-form.tsx:164
+msgid "CEO, CTO, Head of Ops…"
+msgstr "CEO, CTO, Head of Ops…"
+
+#: src/components/waitlist-form.tsx:103
+msgid "Email address"
+msgstr "Email address"
+
+#: src/components/waitlist-form.tsx:173
+msgid "Join the waitlist"
+msgstr "Join the waitlist"
+
+#: src/components/waitlist-form.tsx:144
+msgid "Name (optional)"
+msgstr "Name (optional)"
+
+#: src/components/waitlist-form.tsx:77
+msgid "Network error. Please check your connection."
+msgstr "Network error. Please check your connection."
+
+#: src/components/waitlist-form.tsx:177
+msgid "No credit card required. Early access only."
+msgstr "No credit card required. Early access only."
+
+#: src/components/waitlist-form.tsx:157
+msgid "Role (optional)"
+msgstr "Role (optional)"
+
+#: src/components/waitlist-form.tsx:74
+msgid "Something went wrong. Please try again."
+msgstr "Something went wrong. Please try again."
+
+#: src/components/waitlist-form.tsx:173
+msgid "Submitting…"
+msgstr "Submitting…"
+
+#. js-lingui-explicit-id
+#: src/app/page.tsx:9
+msgid "home.heading"
+msgstr "The <0>Calm Predator</0> of Productivity"
+
+#: src/components/waitlist-form.tsx:90
+msgid "We'll send you early access and exclusive updates."
+msgstr "We'll send you early access and exclusive updates."
+
+#: src/components/waitlist-form.tsx:119
+msgid "Which apps interest you?"
+msgstr "Which apps interest you?"
+
+#: src/components/waitlist-form.tsx:87
+msgid "You're on the list!"
+msgstr "You're on the list!"
+
+#: src/components/waitlist-form.tsx:110
+msgid "you@company.com"
+msgstr "you@company.com"
+
+#: src/components/waitlist-form.tsx:151
+msgid "Your name"
+msgstr "Your name"

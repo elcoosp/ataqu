@@ -1,0 +1,25 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# Next.js
+.next
+out
+build
+
+# Lingui compiled catalogs
+src/locales/**/*.js
+src/locales/**/*.d.ts
+!src/locales/**/messages.po
+
+# environment
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
