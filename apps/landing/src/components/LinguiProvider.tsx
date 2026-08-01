@@ -5,7 +5,6 @@ import { I18nProvider } from "@lingui/react";
 import { i18n } from "@lingui/core";
 import { usePathname } from "next/navigation";
 
-// Supported locales from lingui.config.ts
 const SUPPORTED_LOCALES = ["en", "fr", "de", "es", "pt"];
 
 function getLocaleFromPath(pathname: string): string {
@@ -14,7 +13,7 @@ function getLocaleFromPath(pathname: string): string {
   if (firstSegment && SUPPORTED_LOCALES.includes(firstSegment)) {
     return firstSegment;
   }
-  return "en"; // fallback to default
+  return "en";
 }
 
 export function LinguiProvider({ children }: { children: React.ReactNode }) {
@@ -31,7 +30,6 @@ export function LinguiProvider({ children }: { children: React.ReactNode }) {
         setLoaded(true);
       } catch (err) {
         console.error("Failed to load catalog for locale:", locale, err);
-        // fallback to English
         const { messages } = await import(`@/locales/en/messages`);
         i18n.load("en", messages);
         i18n.activate("en");

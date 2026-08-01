@@ -13,6 +13,6 @@ export default defineConfig({
   format: formatter(),
   runtimeConfigModule: {
     i18n: ["@lingui/core", "i18n"],
-    Trans: ["@lingui/react/macro", "Trans"],
+    Trans: ["@lingui/react", "Trans"],
   },
 });

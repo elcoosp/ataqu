@@ -6,6 +6,47 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: fr\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:74
+msgid "error.generic"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:77
+msgid "error.network"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:110
+msgid "waitlist.placeholder.email"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:151
+msgid "waitlist.placeholder.name"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:164
+msgid "waitlist.placeholder.role"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:173
+msgid "waitlist.button.submitting"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:173
+msgid "waitlist.button.submit"
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/app/page.tsx:16
@@ -13,62 +54,97 @@ msgid "home.subtitle"
 msgstr ""
 
 #: src/components/waitlist-form.tsx:164
-msgid "CEO, CTO, Head of Ops…"
+#~ msgid "CEO, CTO, Head of Ops…"
+#~ msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:103
+msgid "waitlist.label.email"
 msgstr ""
 
 #: src/components/waitlist-form.tsx:103
-msgid "Email address"
-msgstr ""
+#~ msgid "Email address"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:173
-msgid "Join the waitlist"
+#~ msgid "Join the waitlist"
+#~ msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:144
+msgid "waitlist.label.name"
 msgstr ""
 
 #: src/components/waitlist-form.tsx:144
-msgid "Name (optional)"
-msgstr ""
+#~ msgid "Name (optional)"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:77
-msgid "Network error. Please check your connection."
+#~ msgid "Network error. Please check your connection."
+#~ msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:177
+msgid "waitlist.footer"
 msgstr ""
 
 #: src/components/waitlist-form.tsx:177
-msgid "No credit card required. Early access only."
+#~ msgid "No credit card required. Early access only."
+#~ msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:157
+msgid "waitlist.label.role"
 msgstr ""
 
 #: src/components/waitlist-form.tsx:157
-msgid "Role (optional)"
-msgstr ""
+#~ msgid "Role (optional)"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:74
-msgid "Something went wrong. Please try again."
-msgstr ""
+#~ msgid "Something went wrong. Please try again."
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:173
-msgid "Submitting…"
-msgstr ""
+#~ msgid "Submitting…"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/app/page.tsx:9
 msgid "home.heading"
 msgstr ""
 
+#. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:90
-msgid "We'll send you early access and exclusive updates."
+msgid "waitlist.success.body"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:90
+#~ msgid "We'll send you early access and exclusive updates."
+#~ msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:119
+msgid "waitlist.label.apps"
 msgstr ""
 
 #: src/components/waitlist-form.tsx:119
-msgid "Which apps interest you?"
+#~ msgid "Which apps interest you?"
+#~ msgstr ""
+
+#. js-lingui-explicit-id
+#: src/components/waitlist-form.tsx:87
+msgid "waitlist.success.title"
 msgstr ""
 
 #: src/components/waitlist-form.tsx:87
-msgid "You're on the list!"
-msgstr ""
+#~ msgid "You're on the list!"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:110
-msgid "you@company.com"
-msgstr ""
+#~ msgid "you@company.com"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:151
-msgid "Your name"
-msgstr ""
+#~ msgid "Your name"
+#~ msgstr ""
