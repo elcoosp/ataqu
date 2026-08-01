@@ -97,6 +97,12 @@ impl DialMessageRepositoryImpl {
     }
 }
 
+impl Default for DialMessageRepositoryImpl {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait::async_trait]
 impl DialMessageRepository for DialMessageRepositoryImpl {
     async fn insert_messages(
@@ -120,10 +126,7 @@ impl DialMessageRepository for DialMessageRepositoryImpl {
             })
             .collect();
 
-        Entity::insert_many(models)
-            .exec(txn)
-            .await
-            .map_err(|e| RepositoryError::from(e))?;
+        Entity::insert_many(models).exec(txn).await?;
 
         Ok(BatchResult {
             successes: ids,
@@ -144,6 +147,12 @@ impl InMemoryPresenceStore {
         Self {
             store: Arc::new(DashMap::new()),
         }
+    }
+}
+
+impl Default for InMemoryPresenceStore {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

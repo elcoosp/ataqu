@@ -18,6 +18,7 @@ pub struct DLQEntry<T> {
 }
 
 /// Generic batch insert with chunking and savepoint handling.
+#[allow(dead_code)]
 pub async fn transactional_batch_insert<T, F, Fut>(
     _txn: &mut DatabaseTransaction,
     items: &[T],
@@ -30,11 +31,7 @@ where
     Fut: Future<Output = Result<(), DbErr>> + Send,
 {
     // For now, just pretend everything succeeded.
-    let successes: Vec<Uuid> = items
-        .iter()
-        .enumerate()
-        .map(|(_, _)| Uuid::new_v4())
-        .collect();
+    let successes: Vec<Uuid> = items.iter().map(|_| Uuid::new_v4()).collect();
     Ok(BatchResult {
         successes,
         failures: Vec::new(),
