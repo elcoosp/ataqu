@@ -318,6 +318,14 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-domain-sond"
 version = "0.1.0"
+dependencies = [
+ "ataqu-kernel",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-spark"
