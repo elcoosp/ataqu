@@ -342,6 +342,11 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-domain-vista"
 version = "0.1.0"
+dependencies = [
+ "ataqu-kernel",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-infra-cron"
