@@ -302,6 +302,13 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-domain-dial"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "ataqu-kernel",
+ "serde",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-gdpr"
