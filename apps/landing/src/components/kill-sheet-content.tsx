@@ -4,7 +4,6 @@ import { useLingui } from "@lingui/react";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { WaitlistForm } from "@/components/waitlist-form";
-import { PricingComparison } from "@/components/pricing-comparison";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // All translatable strings are defined here using the t macro so they get extracted.
@@ -13,6 +12,11 @@ function getCompetitorData(slug: string) {
     hubspot: {
       name: t`HubSpot`,
       tagline: t`HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total.`,
+      tcoRows: [
+        { name: "HubSpot", price: "$1,200/mo", contract: "3‑year lock‑in", note: "+ $200/mo for reporting", highlight: false },
+        { name: "Zapier (integration)", price: "$79/mo", contract: "Monthly", note: "750 tasks/mo", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Everything included", highlight: true },
+      ],
       painPoints: [
         t`3‑year lock‑in contracts that auto‑renew at higher prices`,
         t`Hidden paywalls for reporting and automation`,
@@ -36,6 +40,11 @@ function getCompetitorData(slug: string) {
     slack: {
       name: t`Slack`,
       tagline: t`Slack taxes your team. DIAL gives you chat and support for one flat price.`,
+      tcoRows: [
+        { name: "Slack", price: "$15/user/mo", contract: "Monthly", note: "30% price hike in 2025", highlight: false },
+        { name: "Intercom (support)", price: "$100+/mo", contract: "Monthly", note: "Separate tool", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Chat + support included", highlight: true },
+      ],
       painPoints: [
         t`Per‑user pricing – grows with your team`,
         t`30% price hike in 2025 with no warning`,
@@ -59,6 +68,11 @@ function getCompetitorData(slug: string) {
     zapier: {
       name: t`Zapier`,
       tagline: t`Zapier is a brittle bridge. SPARK is the native foundation.`,
+      tcoRows: [
+        { name: "Zapier", price: "$79/mo", contract: "Monthly", note: "750 tasks/mo limit", highlight: false },
+        { name: "Webhook maintenance", price: "$200/mo", contract: "‑", note: "Developer time", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Unlimited tasks", highlight: true },
+      ],
       painPoints: [
         t`Per‑task pricing – costs skyrocket as you scale`,
         t`Brittle webhooks that break when APIs change`,
@@ -82,6 +96,11 @@ function getCompetitorData(slug: string) {
     notion: {
       name: t`Notion`,
       tagline: t`Notion is a blank canvas graveyard. PIVOT is an operational database.`,
+      tcoRows: [
+        { name: "Notion", price: "$18/user/mo", contract: "Monthly", note: "$360/mo for 20 users", highlight: false },
+        { name: "Zapier (integration)", price: "$79/mo", contract: "Monthly", note: "To connect CRM", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Docs + CRM + more", highlight: true },
+      ],
       painPoints: [
         t`2‑5 second search – lagging behind your work`,
         t`Data trapped in Notion's proprietary format`,
@@ -105,6 +124,11 @@ function getCompetitorData(slug: string) {
     "zoho-one": {
       name: t`Zoho One`,
       tagline: t`Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps.`,
+      tcoRows: [
+        { name: "Zoho One", price: "$37/user/mo", contract: "Annual", note: "$740/mo for 20 users", highlight: false },
+        { name: "Integrations", price: "$200/mo", contract: "‑", note: "Custom API work", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "10 apps included", highlight: true },
+      ],
       painPoints: [
         t`45 apps – but most are outdated or useless`,
         t`Clunky 2012‑era UI`,
@@ -128,6 +152,11 @@ function getCompetitorData(slug: string) {
     calendly: {
       name: t`Calendly`,
       tagline: t`Calendly is a scheduling island. TEMPO is built into your OS.`,
+      tcoRows: [
+        { name: "Calendly", price: "$15/user/mo", contract: "Monthly", note: "$300/mo for 20 users", highlight: false },
+        { name: "Zapier (CRM sync)", price: "$79/mo", contract: "Monthly", note: "To update CRM", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "CRM + Scheduling", highlight: true },
+      ],
       painPoints: [
         t`No native CRM integration – requires Zapier to update deals`,
         t`No‑show detection takes a day – too late to follow up`,
@@ -151,6 +180,11 @@ function getCompetitorData(slug: string) {
     typeform: {
       name: t`Typeform`,
       tagline: t`Typeform charges for success. SOND gives you unlimited responses.`,
+      tcoRows: [
+        { name: "Typeform", price: "$40/mo", contract: "Monthly", note: "10 free responses only", highlight: false },
+        { name: "Email notifications", price: "$20/mo", contract: "Monthly", note: "Paid add‑on", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Unlimited responses", highlight: true },
+      ],
       painPoints: [
         t`10 free responses per month – a joke for any business`,
         t`Notifications email are a paid add‑on`,
@@ -174,6 +208,11 @@ function getCompetitorData(slug: string) {
     cin7: {
       name: t`Cin7`,
       tagline: t`Cin7 is a siloed warehouse. VAULT connects inventory to your CRM.`,
+      tcoRows: [
+        { name: "Cin7", price: "$79+/mo", contract: "Annual", note: "AI bloat added", highlight: false },
+        { name: "CRM integration", price: "$200/mo", contract: "‑", note: "Custom middleware", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Inventory + CRM", highlight: true },
+      ],
       painPoints: [
         t`No native CRM integration – orders and stock don't sync`,
         t`AI bloat that adds complexity without value`,
@@ -197,6 +236,11 @@ function getCompetitorData(slug: string) {
     personio: {
       name: t`Personio`,
       tagline: t`Personio is a compliance silo. PAUSE connects HR to operations.`,
+      tcoRows: [
+        { name: "Personio", price: "$15/user/mo", contract: "Annual", note: "$300/mo for 20 users", highlight: false },
+        { name: "AEGIS (deprovision)", price: "$15/user/mo", contract: "Annual", note: "Separate SSO", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "HR + SSO included", highlight: true },
+      ],
       painPoints: [
         t`No native integration with AEGIS – deprovisioning is manual`,
         t`Payroll complexity that SMBs don't need`,
@@ -220,6 +264,11 @@ function getCompetitorData(slug: string) {
     okta: {
       name: t`Okta`,
       tagline: t`Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation.`,
+      tcoRows: [
+        { name: "Okta", price: "$15/user/mo", contract: "Annual", note: "$300/mo for 20 users", highlight: false },
+        { name: "HR integration", price: "$200/mo", contract: "‑", note: "Custom work", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "SSO + HR + more", highlight: true },
+      ],
       painPoints: [
         t`Per‑user fees – $15/user/mo just for SSO`,
         t`SSO is a standalone product – no native integration with HR`,
@@ -243,6 +292,11 @@ function getCompetitorData(slug: string) {
     tableau: {
       name: t`Tableau`,
       tagline: t`Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data.`,
+      tcoRows: [
+        { name: "Tableau", price: "$85/user/mo", contract: "Annual", note: "$1,700/mo for 20 users", highlight: false },
+        { name: "ETL pipeline", price: "$500/mo", contract: "‑", note: "Data engineering", highlight: false },
+        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "No ETL needed", highlight: true },
+      ],
       painPoints: [
         t`Requires data engineering – ETL pipelines are complex and fragile`,
         t`Expensive per‑user licensing – $70‑100/user/mo`,
@@ -294,10 +348,13 @@ export function KillSheetContent({ slug }: Props) {
   // Translate all fields at runtime
   const name = i18n._(data.name);
   const tagline = i18n._(data.tagline);
+  const tcoRows = data.tcoRows.map((row: any) => ({
+    ...row,
+    name: row.name === "Ataqu" ? row.name : i18n._(row.name) // translate competitor names
+  }));
   const painPoints = data.painPoints.map((p: any) => i18n._(p));
   const ataquAdvantage = data.ataquAdvantage.map((a: any) => i18n._(a));
   const migrationSteps = data.migrationSteps.map((s: any) => i18n._(s));
-  const contract = i18n._(data.contract);
 
   return (
     <main className="container section-padding space-y-12 md:space-y-16">
@@ -328,13 +385,47 @@ export function KillSheetContent({ slug }: Props) {
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">{tagline}</p>
 
-        {/* 3‑Year TCO Table */}
+        {/* 3‑Year TCO Table - custom per competitor */}
         <div className="mt-8">
           <h2 className="font-display text-2xl font-bold">
             <Trans>3‑year Total Cost of Ownership</Trans>
           </h2>
-          <div className="mt-4">
-            <PricingComparison />
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
+                    <Trans>Tool</Trans>
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
+                    <Trans>Monthly Cost</Trans>
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
+                    <Trans>Contract</Trans>
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
+                    <Trans>Notes</Trans>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {tcoRows.map((row: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className={`border-b border-border/50 ${row.highlight ? "bg-primary/5" : ""}`}
+                  >
+                    <td className={`py-3 px-4 font-display text-sm ${row.highlight ? "text-primary font-bold" : "text-foreground"}`}>
+                      {row.name}
+                    </td>
+                    <td className={`py-3 px-4 font-mono text-sm ${row.highlight ? "text-primary" : "text-foreground"}`}>
+                      {row.price}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{row.contract}</td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{row.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
