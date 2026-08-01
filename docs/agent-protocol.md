@@ -48,7 +48,7 @@ export PAGER=cat
 
 REPO_ROOT="<ABSOLUTE_PATH_TO_REPO>"   # e.g., /home/user/ataqu
 BRANCH="<task-identifier>"            # e.g., agent-1/dial-pagination
-WORKTREE_PATH="../ataqu-${BRANCH}"    # e.g., ../ataqu-agent-1-dial-pagination
+WORKTREE_PATH="../ataqu-wt/ataqu-${BRANCH}"    # e.g., ../ataqu-agent-1-dial-pagination
 
 cd "$REPO_ROOT"
 if [ -d "$WORKTREE_PATH" ]; then
@@ -63,7 +63,6 @@ echo "✅ Worktree ready: $WORKTREE_PATH"
 
 All subsequent scripts must start with:
 ```bash
-source /tmp/ataqu-wt.env || exit 1
 cd "$WORKTREE_PATH"
 ```
 
@@ -280,7 +279,6 @@ Required Fixes: <bullet list of actionable items>
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-source /tmp/ataqu-wt.env || exit 1
 cd "$WORKTREE_PATH"
 
 echo "🔧 Adding missing empty‑check guard in next_cursor"
@@ -312,7 +310,6 @@ Only after the weighted score is **10/10**:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-source /tmp/ataqu-wt.env || exit 1
 cd "$WORKTREE_PATH"
 
 # Final gate check (optional, but good practice)
