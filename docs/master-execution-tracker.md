@@ -30,18 +30,18 @@ It is structured by Phases (which map to your 4 weeks). It tells you exactly whe
 - [x] **[MERGE TO MAIN]:** Merge all Phase 1 tasks. Resolve any minor `Cargo.toml` dependency conflicts.
 
 ### Phase 2: Domain Logic (Parallel - 10 Agents)
-- [ ] **START PARALLEL:** Dispatch Tasks 011 to 020 to 10 agents.
-- [ ] **TASK-011:** Domain: AEGIS Pure Logic
-- [ ] **TASK-012:** Domain: CINQ Pure Logic
-- [ ] **TASK-013:** Domain: DIAL Pure Logic
-- [ ] **TASK-014:** Domain: PIVOT Pure Logic
-- [ ] **TASK-015:** Domain: SPARK Pure Logic
-- [ ] **TASK-016:** Domain: TEMPO Pure Logic
-- [ ] **TASK-017:** Domain: SOND Pure Logic
-- [ ] **TASK-018:** Domain: VAULT Pure Logic
-- [ ] **TASK-019:** Domain: PAUSE Pure Logic
-- [ ] **TASK-020:** Domain: VISTA Pure Logic
-- [ ] **[MERGE TO MAIN]:** Merge all Phase 2 tasks. Verify `cargo check --workspace` passes.
+- [x] **START PARALLEL:** Dispatch Tasks 011 to 020 to 10 agents.
+- [x] **TASK-011:** Domain: AEGIS Pure Logic
+- [x] **TASK-012:** Domain: CINQ Pure Logic
+- [x] **TASK-013:** Domain: DIAL Pure Logic
+- [x] **TASK-014:** Domain: PIVOT Pure Logic
+- [x] **TASK-015:** Domain: SPARK Pure Logic
+- [x] **TASK-016:** Domain: TEMPO Pure Logic
+- [x] **TASK-017:** Domain: SOND Pure Logic
+- [x] **TASK-018:** Domain: VAULT Pure Logic
+- [x] **TASK-019:** Domain: PAUSE Pure Logic
+- [x] **TASK-020:** Domain: VISTA Pure Logic
+- [x] **[MERGE TO MAIN]:** Merge all Phase 2 tasks. Verify `cargo check --workspace` passes.
 
 ---
 
