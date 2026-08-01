@@ -13,21 +13,21 @@ It is structured by Phases (which map to your 4 weeks). It tells you exactly whe
 ## WEEK 1: Foundation & Domain Logic
 
 ### Phase 0: Workspace Skeleton (Sequential - 1 Agent)
-- [ ] **TASK-001:** Monorepo Skeleton & Empty Modules
-- [ ] **[MERGE TO MAIN]:** Merge Task 001. This establishes the empty `mod.rs` files to prevent future merge conflicts.
+- [x] **TASK-001:** Monorepo Skeleton & Empty Modules
+- [x] **[MERGE TO MAIN]:** Merge Task 001. This establishes the empty `mod.rs` files to prevent future merge conflicts.
 
 ### Phase 1: Infrastructure (Parallel - 9 Agents)
-- [ ] **START PARALLEL:** Dispatch Tasks 002 to 010 to 9 agents.
-- [ ] **TASK-002:** ataqu-kernel (Core Types)
-- [ ] **TASK-003:** ataqu-security (PII & Crypto)
-- [ ] **TASK-004:** ataqu-contracts (AEGIS & CINQ Events)
-- [ ] **TASK-005:** ataqu-contracts (DIAL & VAULT Events)
-- [ ] **TASK-006:** ataqu-infra-migration (Core Schema & Outbox)
-- [ ] **TASK-007:** ataqu-infra-pools (Connection Setup)
-- [ ] **TASK-008:** ataqu-infra-idempotency (Guard & Moka)
-- [ ] **TASK-009:** ataqu-infra-outbox (Dispatcher)
-- [ ] **TASK-010:** ataqu-infra-repositories (Generic Batch Helper)
-- [ ] **[MERGE TO MAIN]:** Merge all Phase 1 tasks. Resolve any minor `Cargo.toml` dependency conflicts.
+- [x] **START PARALLEL:** Dispatch Tasks 002 to 010 to 9 agents.
+- [x] **TASK-002:** ataqu-kernel (Core Types)
+- [x] **TASK-003:** ataqu-security (PII & Crypto)
+- [x] **TASK-004:** ataqu-contracts (AEGIS & CINQ Events)
+- [x] **TASK-005:** ataqu-contracts (DIAL & VAULT Events)
+- [x] **TASK-006:** ataqu-infra-migration (Core Schema & Outbox)
+- [x] **TASK-007:** ataqu-infra-pools (Connection Setup)
+- [x] **TASK-008:** ataqu-infra-idempotency (Guard & Moka)
+- [x] **TASK-009:** ataqu-infra-outbox (Dispatcher)
+- [x] **TASK-010:** ataqu-infra-repositories (Generic Batch Helper)
+- [x] **[MERGE TO MAIN]:** Merge all Phase 1 tasks. Resolve any minor `Cargo.toml` dependency conflicts.
 
 ### Phase 2: Domain Logic (Parallel - 10 Agents)
 - [ ] **START PARALLEL:** Dispatch Tasks 011 to 020 to 10 agents.
