@@ -93,6 +93,11 @@ msgstr ""
 #~ msgid "waitlist.success.title"
 #~ msgstr "waitlist.success.title"
 
+#. placeholder {0}: new Date().getFullYear()
+#: src/components/footer.tsx:55
+msgid "© {0} Ataqu. All rights reserved."
+msgstr "© {0} Ataqu. All rights reserved."
+
 #: src/components/escape-hatch.tsx:14
 msgid "1‑click cancel"
 msgstr "1‑click cancel"
@@ -112,6 +117,10 @@ msgstr "1‑click data export – your identity data belongs to you"
 #: src/components/kill-sheet-content.tsx:114
 msgid "1‑click export to CSV, JSON, and Markdown"
 msgstr "1‑click export to CSV, JSON, and Markdown"
+
+#: src/components/footer.tsx:16
+msgid "10 apps, one price, zero lock‑in."
+msgstr "10 apps, one price, zero lock‑in."
 
 #: src/components/home-content.tsx:63
 msgid "10 apps. One suite. Natively integrated."
@@ -161,6 +170,12 @@ msgstr "45 apps – but most are outdated or useless"
 msgid "5‑15 minute polling delays"
 msgstr "5‑15 minute polling delays"
 
+#: src/components/footer.tsx:26
+#: src/components/header.tsx:48
+#: src/components/header.tsx:96
+msgid "About"
+msgstr "About"
+
 #: src/components/kill-sheet-content.tsx:93
 msgid "Activate – no webhooks needed"
 msgstr "Activate – no webhooks needed"
@@ -176,6 +191,14 @@ msgstr "AEGIS is built into the OS – SSO is a feature, not a product"
 #: src/components/kill-sheet-content.tsx:219
 msgid "AI bloat that adds complexity without value"
 msgstr "AI bloat that adds complexity without value"
+
+#: src/components/footer.tsx:23
+#: src/components/header.tsx:39
+#: src/components/header.tsx:52
+#: src/components/header.tsx:87
+#: src/components/header.tsx:99
+msgid "Alternatives"
+msgstr "Alternatives"
 
 #: src/components/kill-sheet-content.tsx:151
 #: src/components/kill-sheet-content.tsx:235
@@ -201,10 +224,20 @@ msgstr "App B processes event idempotently (advisory locks guarantee exactly-onc
 msgid "Apps don't share a native database – integrations are slow"
 msgstr "Apps don't share a native database – integrations are slow"
 
+#: src/app/alternatives/page.tsx:22
+msgid "Ataqu vs. the Fragmented Stack"
+msgstr "Ataqu vs. the Fragmented Stack"
+
 #: src/components/home-content.tsx:102
 #: src/components/kill-sheet-content.tsx:489
 msgid "Be first to access the suite. No credit card required."
 msgstr "Be first to access the suite. No credit card required."
+
+#: src/components/footer.tsx:25
+#: src/components/header.tsx:45
+#: src/components/header.tsx:93
+msgid "Blog"
+msgstr "Blog"
 
 #: src/components/kill-sheet-content.tsx:192
 msgid "Branding removal requires a higher plan"
@@ -298,6 +331,10 @@ msgstr "CINQ gives you a full CRM, including reporting and automation, for a fla
 msgid "Clunky 2012‑era UI"
 msgstr "Clunky 2012‑era UI"
 
+#: src/app/alternatives/page.tsx:42
+msgid "Compare →"
+msgstr "Compare →"
+
 #: src/components/home-content.tsx:37
 msgid "Compare pricing"
 msgstr "Compare pricing"
@@ -305,6 +342,10 @@ msgstr "Compare pricing"
 #: src/components/kill-sheet-content.tsx:276
 msgid "Complex admin UI that frustrates users"
 msgstr "Complex admin UI that frustrates users"
+
+#: src/components/footer.tsx:39
+msgid "Connect"
+msgstr "Connect"
 
 #: src/components/kill-sheet-content.tsx:64
 msgid "Connect DIAL to CINQ for native CRM integration"
@@ -478,6 +519,11 @@ msgstr "Form submissions create CINQ leads and trigger SPARK workflows automatic
 msgid "Hidden paywalls for reporting and automation"
 msgstr "Hidden paywalls for reporting and automation"
 
+#: src/components/header.tsx:36
+#: src/components/header.tsx:84
+msgid "Home"
+msgstr "Home"
+
 #: src/components/kill-sheet-content.tsx:451
 msgid "How Ataqu Solves It"
 msgstr "How Ataqu Solves It"
@@ -550,6 +596,10 @@ msgstr "Join the waitlist"
 #: src/components/kill-sheet-content.tsx:253
 msgid "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
 msgstr "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
+
+#: src/components/footer.tsx:31
+msgid "Legal"
+msgstr "Legal"
 
 #: src/components/kill-sheet-content.tsx:277
 msgid "Lock‑in – difficult to export identity data"
@@ -761,6 +811,14 @@ msgstr "PIVOT uses PostgreSQL tsvector with GIN indexes – sub‑50ms search"
 #~ msgid "PostgreSQL tsvector with GIN indexes, updated asynchronously."
 #~ msgstr "PostgreSQL tsvector with GIN indexes, updated asynchronously."
 
+#: src/components/footer.tsx:34
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
+
+#: src/components/footer.tsx:21
+msgid "Product"
+msgstr "Product"
+
 #: src/components/kill-sheet-content.tsx:227
 msgid "Real‑time stock movements visible in VISTA dashboards"
 msgstr "Real‑time stock movements visible in VISTA dashboards"
@@ -781,6 +839,12 @@ msgstr "Replace your fragmented stack with a single, unified operating system."
 msgid "Requires data engineering – ETL pipelines are complex and fragile"
 msgstr "Requires data engineering – ETL pipelines are complex and fragile"
 
+#: src/components/footer.tsx:24
+#: src/components/header.tsx:42
+#: src/components/header.tsx:90
+msgid "Roadmap"
+msgstr "Roadmap"
+
 #: src/components/waitlist-form.tsx:193
 msgid "Role (optional)"
 msgstr "Role (optional)"
@@ -788,6 +852,10 @@ msgstr "Role (optional)"
 #: src/components/home-content.tsx:55
 msgid "See full comparison →"
 msgstr "See full comparison →"
+
+#: src/app/alternatives/page.tsx:25
+msgid "See how Ataqu compares to each competitor. We expose the pricing flaws, lock‑in clauses, and architectural gaps – and show you a better way."
+msgstr "See how Ataqu compares to each competitor. We expose the pricing flaws, lock‑in clauses, and architectural gaps – and show you a better way."
 
 #: src/components/kill-sheet-content.tsx:91
 msgid "Select your trigger (e.g., 'CINQ deal won')"
@@ -873,9 +941,17 @@ msgstr "Tableau is an ETL nightmare. VISTA is real‑time analytics, natively co
 msgid "TEMPO creates CINQ activities and DIAL notifications automatically"
 msgstr "TEMPO creates CINQ activities and DIAL notifications automatically"
 
+#: src/components/footer.tsx:33
+msgid "Terms of Service"
+msgstr "Terms of Service"
+
 #: src/components/home-content.tsx:16
 msgid "The <0>Calm Predator</0> of Productivity"
 msgstr "The <0>Calm Predator</0> of Productivity"
+
+#: src/components/header.tsx:74
+msgid "Toggle menu"
+msgstr "Toggle menu"
 
 #: src/components/kill-sheet-content.tsx:402
 #: src/components/pricing-comparison.tsx:45

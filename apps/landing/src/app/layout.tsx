@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Unbounded, JetBrains_Mono } from "next/font/google";
 import { LinguiProvider } from "@/components/lingui-provider";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,8 +46,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${unbounded.variable} ${jetbrainsMono.variable}`}>
-      <body>
-        <LinguiProvider>{children}</LinguiProvider>
+      <body className="min-h-screen flex flex-col">
+        <LinguiProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </LinguiProvider>
       </body>
     </html>
   );

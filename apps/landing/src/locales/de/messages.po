@@ -93,6 +93,11 @@ msgstr ""
 #~ msgid "waitlist.success.title"
 #~ msgstr ""
 
+#. placeholder {0}: new Date().getFullYear()
+#: src/components/footer.tsx:55
+msgid "© {0} Ataqu. All rights reserved."
+msgstr ""
+
 #: src/components/escape-hatch.tsx:14
 msgid "1‑click cancel"
 msgstr ""
@@ -111,6 +116,10 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:114
 msgid "1‑click export to CSV, JSON, and Markdown"
+msgstr ""
+
+#: src/components/footer.tsx:16
+msgid "10 apps, one price, zero lock‑in."
 msgstr ""
 
 #: src/components/home-content.tsx:63
@@ -161,6 +170,12 @@ msgstr ""
 msgid "5‑15 minute polling delays"
 msgstr ""
 
+#: src/components/footer.tsx:26
+#: src/components/header.tsx:48
+#: src/components/header.tsx:96
+msgid "About"
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:93
 msgid "Activate – no webhooks needed"
 msgstr ""
@@ -175,6 +190,14 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:219
 msgid "AI bloat that adds complexity without value"
+msgstr ""
+
+#: src/components/footer.tsx:23
+#: src/components/header.tsx:39
+#: src/components/header.tsx:52
+#: src/components/header.tsx:87
+#: src/components/header.tsx:99
+msgid "Alternatives"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:151
@@ -201,9 +224,19 @@ msgstr ""
 msgid "Apps don't share a native database – integrations are slow"
 msgstr ""
 
+#: src/app/alternatives/page.tsx:22
+msgid "Ataqu vs. the Fragmented Stack"
+msgstr ""
+
 #: src/components/home-content.tsx:102
 #: src/components/kill-sheet-content.tsx:489
 msgid "Be first to access the suite. No credit card required."
+msgstr ""
+
+#: src/components/footer.tsx:25
+#: src/components/header.tsx:45
+#: src/components/header.tsx:93
+msgid "Blog"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:192
@@ -298,12 +331,20 @@ msgstr ""
 msgid "Clunky 2012‑era UI"
 msgstr ""
 
+#: src/app/alternatives/page.tsx:42
+msgid "Compare →"
+msgstr ""
+
 #: src/components/home-content.tsx:37
 msgid "Compare pricing"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:276
 msgid "Complex admin UI that frustrates users"
+msgstr ""
+
+#: src/components/footer.tsx:39
+msgid "Connect"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:64
@@ -478,6 +519,11 @@ msgstr ""
 msgid "Hidden paywalls for reporting and automation"
 msgstr ""
 
+#: src/components/header.tsx:36
+#: src/components/header.tsx:84
+msgid "Home"
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:451
 msgid "How Ataqu Solves It"
 msgstr ""
@@ -549,6 +595,10 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:253
 msgid "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
+msgstr ""
+
+#: src/components/footer.tsx:31
+msgid "Legal"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:277
@@ -761,6 +811,14 @@ msgstr ""
 #~ msgid "PostgreSQL tsvector with GIN indexes, updated asynchronously."
 #~ msgstr ""
 
+#: src/components/footer.tsx:34
+msgid "Privacy Policy"
+msgstr ""
+
+#: src/components/footer.tsx:21
+msgid "Product"
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:227
 msgid "Real‑time stock movements visible in VISTA dashboards"
 msgstr ""
@@ -781,12 +839,22 @@ msgstr ""
 msgid "Requires data engineering – ETL pipelines are complex and fragile"
 msgstr ""
 
+#: src/components/footer.tsx:24
+#: src/components/header.tsx:42
+#: src/components/header.tsx:90
+msgid "Roadmap"
+msgstr ""
+
 #: src/components/waitlist-form.tsx:193
 msgid "Role (optional)"
 msgstr ""
 
 #: src/components/home-content.tsx:55
 msgid "See full comparison →"
+msgstr ""
+
+#: src/app/alternatives/page.tsx:25
+msgid "See how Ataqu compares to each competitor. We expose the pricing flaws, lock‑in clauses, and architectural gaps – and show you a better way."
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:91
@@ -873,8 +941,16 @@ msgstr ""
 msgid "TEMPO creates CINQ activities and DIAL notifications automatically"
 msgstr ""
 
+#: src/components/footer.tsx:33
+msgid "Terms of Service"
+msgstr ""
+
 #: src/components/home-content.tsx:16
 msgid "The <0>Calm Predator</0> of Productivity"
+msgstr ""
+
+#: src/components/header.tsx:74
+msgid "Toggle menu"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:402
