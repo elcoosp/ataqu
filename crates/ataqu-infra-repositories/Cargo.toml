@@ -1,20 +1,21 @@
-[dependencies]
-ataqu-kernel = { path = "../ataqu-kernel" }
-ataqu-security = { path = "../ataqu-security" }
-ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
-chrono = { version = "0.4.45", features = ["serde"] }
-once_cell = "1.20.3"
-serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-tokio = { version = "1.53.1", features = ["rt", "rt-multi-thread"] }
-sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "with-uuid", "with-chrono"] }
-sqlx = { version = "0.9.0", features = ["postgres"] }
-tracing = "0.1.44"
-uuid = { version = "1.24.0", features = ["v4", "serde"] }
-dashmap = "5.4.0"
-rust_decimal = { version = "1.30.0", features = ["serde"] }
-anyhow = "1.0.103"
 [package]
 name = "ataqu-infra-repositories"
 version = "0.1.0"
 edition = "2024"
+
+[dependencies]
+tracing = { version = "0.1.44", features = ["attributes"] }
+uuid = { version = "1.24.0", features = ["v4", "serde"] }
+sqlx = { version = "0.9.0", features = ["postgres"] }
+sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "with-uuid", "with-chrono"] }
+chrono = { version = "0.4.45", features = ["serde"] }
+serde_json = "1.0.151"
+thiserror = "2.0.19"
+once_cell = "1.20.3"
+ataqu-security = { path = "../ataqu-security" }
+ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
+ataqu-kernel = { path = "../ataqu-kernel" }
+
+[dev-dependencies]
+serial_test = "4.0.1"
+tokio = { version = "1.53.1", features = ["rt", "rt-multi-thread", "time", "test-util", "macros"] }
