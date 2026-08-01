@@ -353,6 +353,10 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-domain-tempo"
 version = "0.1.0"
+dependencies = [
+ "ataqu-kernel",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-vault"
