@@ -10,7 +10,7 @@ export type Post = {
   title: string;
   excerpt: string;
   date: string;
-  content: string;
+  content: string; // raw MDX content
   readingTime: string;
 };
 
