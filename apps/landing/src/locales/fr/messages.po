@@ -15,136 +15,144 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:74
-msgid "error.generic"
-msgstr ""
+#~ msgid "error.generic"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:77
-msgid "error.network"
-msgstr ""
+#~ msgid "error.network"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:110
-msgid "waitlist.placeholder.email"
-msgstr ""
+#~ msgid "waitlist.placeholder.email"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:151
-msgid "waitlist.placeholder.name"
-msgstr ""
+#~ msgid "waitlist.placeholder.name"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:164
-msgid "waitlist.placeholder.role"
-msgstr ""
+#~ msgid "waitlist.placeholder.role"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:173
-msgid "waitlist.button.submitting"
-msgstr ""
+#~ msgid "waitlist.button.submitting"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:173
-msgid "waitlist.button.submit"
-msgstr ""
+#~ msgid "waitlist.button.submit"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/app/page.tsx:16
-msgid "home.subtitle"
-msgstr ""
-
-#: src/components/waitlist-form.tsx:164
-#~ msgid "CEO, CTO, Head of Ops…"
+#~ msgid "home.subtitle"
 #~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:103
-msgid "waitlist.label.email"
-msgstr ""
-
-#: src/components/waitlist-form.tsx:103
-#~ msgid "Email address"
-#~ msgstr ""
-
-#: src/components/waitlist-form.tsx:173
-#~ msgid "Join the waitlist"
+#~ msgid "waitlist.label.email"
 #~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:144
-msgid "waitlist.label.name"
-msgstr ""
-
-#: src/components/waitlist-form.tsx:144
-#~ msgid "Name (optional)"
-#~ msgstr ""
-
-#: src/components/waitlist-form.tsx:77
-#~ msgid "Network error. Please check your connection."
+#~ msgid "waitlist.label.name"
 #~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:177
-msgid "waitlist.footer"
-msgstr ""
-
-#: src/components/waitlist-form.tsx:177
-#~ msgid "No credit card required. Early access only."
+#~ msgid "waitlist.footer"
 #~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:157
-msgid "waitlist.label.role"
-msgstr ""
-
-#: src/components/waitlist-form.tsx:157
-#~ msgid "Role (optional)"
-#~ msgstr ""
-
-#: src/components/waitlist-form.tsx:74
-#~ msgid "Something went wrong. Please try again."
-#~ msgstr ""
-
-#: src/components/waitlist-form.tsx:173
-#~ msgid "Submitting…"
+#~ msgid "waitlist.label.role"
 #~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/app/page.tsx:9
-msgid "home.heading"
-msgstr ""
+#~ msgid "home.heading"
+#~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:90
-msgid "waitlist.success.body"
-msgstr ""
-
-#: src/components/waitlist-form.tsx:90
-#~ msgid "We'll send you early access and exclusive updates."
+#~ msgid "waitlist.success.body"
 #~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:119
-msgid "waitlist.label.apps"
-msgstr ""
-
-#: src/components/waitlist-form.tsx:119
-#~ msgid "Which apps interest you?"
+#~ msgid "waitlist.label.apps"
 #~ msgstr ""
 
 #. js-lingui-explicit-id
 #: src/components/waitlist-form.tsx:87
-msgid "waitlist.success.title"
+#~ msgid "waitlist.success.title"
+#~ msgstr ""
+
+#: src/app/page.tsx:14
+msgid "10 essential apps, one unified price. No per‑user fees, no lock‑in. Join the waitlist and be first to access the suite."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:87
-#~ msgid "You're on the list!"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:165
+msgid "CEO, CTO, Head of Ops…"
+msgstr ""
 
-#: src/components/waitlist-form.tsx:110
-#~ msgid "you@company.com"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:104
+msgid "Email address"
+msgstr ""
 
-#: src/components/waitlist-form.tsx:151
-#~ msgid "Your name"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:174
+msgid "Join the waitlist"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:145
+msgid "Name (optional)"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:78
+msgid "Network error. Please check your connection."
+msgstr ""
+
+#: src/components/waitlist-form.tsx:178
+msgid "No credit card required. Early access only."
+msgstr ""
+
+#: src/components/waitlist-form.tsx:158
+msgid "Role (optional)"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:75
+msgid "Something went wrong. Please try again."
+msgstr ""
+
+#: src/components/waitlist-form.tsx:174
+msgid "Submitting…"
+msgstr ""
+
+#: src/app/page.tsx:9
+msgid "The <0>Calm Predator</0> of Productivity"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:91
+msgid "We'll send you early access and exclusive updates."
+msgstr ""
+
+#: src/components/waitlist-form.tsx:120
+msgid "Which apps interest you?"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:88
+msgid "You're on the list!"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:111
+msgid "you@company.com"
+msgstr ""
+
+#: src/components/waitlist-form.tsx:152
+msgid "Your name"
+msgstr ""

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useLingui } from "@lingui/react";
-import { Trans } from "@lingui/react";
+import { Trans } from "@lingui/react/macro";
+import { t } from "@lingui/core/macro";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -71,10 +72,10 @@ export function WaitlistForm() {
       if (res.ok) {
         setSuccess(true);
       } else {
-        alert(i18n._("error.generic"));
+        alert(i18n._(t`Something went wrong. Please try again.`));
       }
     } catch {
-      alert(i18n._("error.network"));
+      alert(i18n._(t`Network error. Please check your connection.`));
     } finally {
       setIsSubmitting(false);
     }
@@ -84,10 +85,10 @@ export function WaitlistForm() {
     return (
       <div className="p-6 rounded-lg border border-primary/30 bg-card/50 text-center">
         <h3 className="text-xl font-display text-primary">
-          <Trans id="waitlist.success.title" message="You're on the list!" />
+          <Trans>You're on the list!</Trans>
         </h3>
         <p className="mt-2 text-muted-foreground">
-          <Trans id="waitlist.success.body" message="We'll send you early access and exclusive updates." />
+          <Trans>We'll send you early access and exclusive updates.</Trans>
         </p>
       </div>
     );
@@ -100,14 +101,14 @@ export function WaitlistForm() {
     >
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-foreground">
-          <Trans id="waitlist.label.email" message="Email address" />
+          <Trans>Email address</Trans>
         </label>
         <input
           id="email"
           type="email"
           {...register("email")}
           className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-          placeholder={i18n._("waitlist.placeholder.email")}
+          placeholder={i18n._(t`you@company.com`)}
         />
         {errors.email && (
           <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
@@ -116,7 +117,7 @@ export function WaitlistForm() {
 
       <div>
         <span className="block text-sm font-medium text-foreground">
-          <Trans id="waitlist.label.apps" message="Which apps interest you?" />
+          <Trans>Which apps interest you?</Trans>
         </span>
         <div className="mt-2 flex flex-wrap gap-2">
           {APP_OPTIONS.map((app) => (
@@ -141,27 +142,27 @@ export function WaitlistForm() {
 
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-foreground">
-          <Trans id="waitlist.label.name" message="Name (optional)" />
+          <Trans>Name (optional)</Trans>
         </label>
         <input
           id="name"
           type="text"
           {...register("name")}
           className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-          placeholder={i18n._("waitlist.placeholder.name")}
+          placeholder={i18n._(t`Your name`)}
         />
       </div>
 
       <div>
         <label htmlFor="role" className="block text-sm font-medium text-foreground">
-          <Trans id="waitlist.label.role" message="Role (optional)" />
+          <Trans>Role (optional)</Trans>
         </label>
         <input
           id="role"
           type="text"
           {...register("role")}
           className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-          placeholder={i18n._("waitlist.placeholder.role")}
+          placeholder={i18n._(t`CEO, CTO, Head of Ops…`)}
         />
       </div>
 
@@ -170,11 +171,11 @@ export function WaitlistForm() {
         disabled={isSubmitting}
         className="w-full rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
       >
-        {isSubmitting ? i18n._("waitlist.button.submitting") : i18n._("waitlist.button.submit")}
+        {isSubmitting ? i18n._(t`Submitting…`) : i18n._(t`Join the waitlist`)}
       </button>
 
       <p className="text-xs text-muted-foreground text-center">
-        <Trans id="waitlist.footer" message="No credit card required. Early access only." />
+        <Trans>No credit card required. Early access only.</Trans>
       </p>
     </form>
   );
