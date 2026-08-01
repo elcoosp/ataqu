@@ -1,61 +1,156 @@
-# 🏗️ SAAS FACTORY — DEFINITIVE TECH STACK (v3)
+# 🏗️ ATAQU TECH STACK — Phase 1 (v7.3)
 
-**Version:** 3.2
-**Date:** 2026-07-28
-**Status:** Finalized (Ready for Implementation)
+**Version:** 7.3
+**Date:** 2026-08-29
+**Status:** Phase 1 (Bootstrapped) — PostgreSQL with SeaORM 2.0 + Raw SQL Escape Hatch
 
 ---
 
 ## 🔬 TECHNICAL CHOICES PHILOSOPHY
 
-1. **Performant and lightweight** → Rust (backend) / Vite + Rolldown + React (frontend)
-2. **Type-safe** → TypeScript 5.9 + Zod 4 (frontend) / SeaORM 2.0 + Serde (backend)
-3. **Maintainable** → Monorepo, up-to-date dependencies, **Biome** (unified lint + format)
-4. **Smooth UX** → shadcn/ui + Tailwind 4, TanStack Query & Router, **TanStack Virtual**
-5. **Modern** → React 19, Vite 8 (Rolldown), Rust 2024 edition
+1. **Performant and lightweight** → Rust (backend) / Vite + Module Federation + React (frontend)
+2. **Type‑safe** → TypeScript 5.5 + Zod 4 (frontend) / SeaORM 2.0 entities + raw SQL for Postgres primitives (backend)
+3. **Unified persistence with guardrails** → SeaORM for migrations, entities, and standard CRUD; raw `Statement::from_sql_and_values` on SeaORM transactions for advisory locks, savepoints, and `LISTEN/NOTIFY`; dedicated `sqlx::PgPool` for `PgListener` only.
+4. **Compile-time PII redaction** → PII fields are wrapped in newtypes (`Email`, `PhoneNumber`) that implement `Debug`/`Display` as `[REDACTED]` — zero-cost, compile-time guaranteed log safety. **No `Serialize` impl on newtypes**; API layer uses wrapper structs (e.g., `ApiEmail`) for HTTP serialization.
+5. **Maintainable** → Monorepo, up‑to‑date dependencies, **Biome** (unified lint + format)
+6. **Smooth UX** → shadcn/ui + Tailwind 4, TanStack Query & Router, **TanStack Virtual**
+7. **Modern** → React 19, Vite 8 (Rolldown), Rust 2024 edition
 
 ---
 
-## 🦀 BACKEND — RUST STACK
+## 🦀 BACKEND — RUST STACK (Phase 1)
 
 ### Runtime & Language
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Rust** | 1.75.0+ | Stable, 2021 edition, memory & performance |
-| **Tokio** | 1.36.0 | Async runtime, thread-safe, production-ready |
+| **Rust** | **1.97+** (2024 edition) | Latest stable; MSRV for Axum 0.8.x and Tokio 1.53; memory & performance |
+| **Tokio** | **1.53.0** | Latest stable async runtime; thread‑safe, production‑ready |
 
 ### Web Framework
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Axum** | 0.7.5+ | Type-safe, ergonomic, WebSocket-ready |
+| **Axum** | **0.8.9** | Latest stable; type‑safe, ergonomic, WebSocket‑ready |
 | **Tower** | 0.4.13 | Middleware stack (logging, CORS, auth) |
 | **Tower-HTTP** | 0.5.2 | Trace, compression, rate limiting |
 
-### Database & ORM
+### Database (Phase 1 — PostgreSQL + SeaORM + Raw SQL Escape Hatch)
+
+| Component | Version | Role |
+|-----------|---------|------|
+| **Database** | **PostgreSQL 16.14** | Native MVCC, JSONB, robust concurrency; latest 16.x minor release |
+| **ORM** | **SeaORM 2.0.0-rc.41** | Migrations, entity definitions (`Entity`, `Model`, `ActiveModel`), standard CRUD, transaction management (`sea_orm::DatabaseTransaction`) |
+| **Raw SQL Escape Hatch** | `Statement::from_sql_and_values` on `sea_orm::DatabaseTransaction` | Advisory locks (`pg_advisory_xact_lock(int4, int4)`), `SAVEPOINT` control, `pg_notify()`, `FOR UPDATE SKIP LOCKED`, `SET LOCAL` |
+| **Listener** | `sqlx::PgListener` (via dedicated `sqlx::PgPool` size 3) | `LISTEN/NOTIFY` for outbox dispatcher — **only** for listening, never for transactions |
+
+**Configuration:**
+- `shared_buffers = 1GB`
+- `work_mem = 2MB` (safe for 35 concurrent connections; VISTA uses `SET LOCAL 8MB`)
+- `max_connections = 40` (35 app + 5 headroom)
+- `synchronous_commit = on`
+- `autovacuum = on`
+
+**Pool Management (8 pools total):**
+- **6 domain-specific `sea_orm::DatabaseConnection` instances** (one per schema): `max_connections(5)` — handles HTTP requests + background workers per domain. Total 30.
+- **1 dispatcher `sqlx::PgPool`**: `max_connections(3)` — **only** for `PgListener` and outbox polling (no transactions, no CRUD).
+- **1 admin `sea_orm::DatabaseConnection`**: `max_connections(2)` — CLI admin + migrations.
+- **Total:** 35 application connections. `max_connections=40` in PostgreSQL provides 5 headroom.
+
+**Single Transaction Rule:** `sea_orm::DatabaseTransaction` is the **only** transaction object. It is passed by mutable reference to repository methods. Raw SQL is executed on it via `txn.execute(Statement::from_sql_and_values(...))`. This guarantees atomicity between SeaORM CRUD and raw SQL.
+
+**Never use `execute_unprepared`** — always use `Statement::from_sql_and_values` so PostgreSQL caches the query plan.
+
+### Unified Outbox with Type‑safe `schema` ENUM, RLS, and Column‑Level Privileges
+
+All domains write to a single `core.outbox` table. The `schema` column is a PostgreSQL ENUM (`app_schema`) providing database‑level type safety. RLS policies enforce that each domain role can only insert rows with its own `schema` value. The dispatcher role can only UPDATE tracking columns (`status`, `attempts`, `locked_until`, `completed_at`, `vista_consumed_at`) but cannot modify `payload`, `event_type`, or `schema`.
+
+```sql
+CREATE TYPE app_schema AS ENUM ('core', 'collab_crm', 'collab_ops', 'vault', 'dial', 'vista');
+
+CREATE TABLE core.outbox (
+    id BIGSERIAL PRIMARY KEY,
+    schema app_schema NOT NULL,          -- Type-safe ENUM
+    event_type TEXT NOT NULL,
+    aggregate_id UUID,
+    payload JSONB NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    priority TEXT NOT NULL DEFAULT 'normal',
+    attempts INT NOT NULL DEFAULT 0,
+    locked_until TIMESTAMPTZ,
+    vista_consumed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+-- RLS enabled
+ALTER TABLE core.outbox ENABLE ROW LEVEL SECURITY;
+-- Per-domain INSERT policies with schema checks
+GRANT INSERT ON core.outbox TO cinq_role;
+CREATE POLICY outbox_cinq_insert ON core.outbox FOR INSERT TO cinq_role WITH CHECK (schema = 'collab_crm');
+-- ... similar for each domain
+-- Dispatcher role gets SELECT and column-level UPDATE on tracking columns (not payload)
+GRANT SELECT ON core.outbox TO dispatcher_role;
+GRANT UPDATE (status, attempts, locked_until, completed_at, vista_consumed_at) ON core.outbox TO dispatcher_role;
+```
+
+### Compile‑Time PII Redaction via Redacting Newtypes & API-Layer Serialization Wrappers
+
+PII fields are wrapped in domain newtypes (`Email`, `PhoneNumber`) that explicitly implement `fmt::Debug` and `fmt::Display` to output `[REDACTED]`. This provides zero‑cost, compile‑time guaranteed redaction without runtime serialization overhead.
+
+**Crucially, the newtypes do NOT implement `serde::Serialize`.** This ensures `serde_json::to_string(&email)` fails to compile everywhere. To serialize PII for HTTP responses, the `ataqu-api` layer defines wrapper structs (e.g., `ApiEmail<'a>`) that implement `Serialize` by calling `reveal(&key)` on the inner PII newtype.
+
+```rust
+// ataqu-security/src/pii.rs
+pub struct Email(String);
+impl Email {
+    pub fn new(value: String) -> Self { Self(value) }
+    pub fn reveal(&self, _key: &PiiAccessKey) -> &str { &self.0 }
+}
+impl std::fmt::Debug for Email {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[REDACTED]")
+    }
+}
+impl std::fmt::Display for Email {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[REDACTED]")
+    }
+}
+// No Serialize impl here.
+
+// ataqu-api/src/serializers.rs
+pub struct ApiEmail<'a>(pub &'a Email);
+impl<'a> Serialize for ApiEmail<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        let key = PiiAccessKey::new();
+        serializer.serialize_str(self.0.reveal(&key))
+    }
+}
+```
+
+### Cache & State
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Database** | Local PostgreSQL | 16 | Native RLS, high concurrency, managed backups, connection pooling |
-| **SeaORM** | 1.1.13+ | Async, Entity First Workflow, migrations |
-| **SQLx** | 0.9.0 | DB Connector (compatible with SeaORM) |
-| **sea-orm-migration** | 2.0.0-rc.31 | Versioned migration management |
+| **moka** | 0.12.0 | **Bounded hot cache** for idempotency responses. `max_capacity(10_000)`, 7-day TTL, 20 MB peak memory. Not a source of truth — durable responses live in `core.idempotency_records`. |
+| **DashMap** | 5.4.0 | Phase 1 `InMemoryPresenceStore` (tracks `ConnectionId` internally). Eviction on disconnect. Phase 2 swaps to `PostgresPresenceStore` via `PresenceStore` trait. |
+
+### Full‑Text Search (Phase 1)
+
+| Component | Version | Justification |
+|-----------|---------|---------------|
+| **PostgreSQL tsvector** | Built‑in | GIN indexes, generated columns, asynchronous outbox updates via dedicated consumers. |
 
 ### Authentication & Security
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **jsonwebtoken** | 9.2.0 | JWT (RS256) |
+| **jsonwebtoken** | 9.3.0 | JWT (RS256) — short-lived access tokens |
 | **oauth2** | 4.4.0 | OIDC (Google, Microsoft, Okta) |
-| **totp-rs** | 3.0.0 | TOTP MFA (RFC 6238) |
+| **totp-rs** | 5.5.0 | TOTP MFA (RFC 6238) |
 | **argon2** | 0.5.3 | Password hashing |
-
-### Full-Text Search
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **Tantivy** | 0.21.0 | Full-text search (PIVOT, DIAL) |
 
 ### Payment
 
@@ -68,31 +163,105 @@
 | Component | Version | Justification |
 |-----------|---------|---------------|
 | **Tracing** | 0.1.40 | Structured logs, spans |
-| **tracing-subscriber** | 0.3.18 | Formatted logs for env/prod |
+| **tracing-subscriber** | 0.3.18 | JSON formatter (`critical.log.json`, `operational.log.json`) |
+| **tracing-opentelemetry** | 0.28.0 | OTLP HTTP exporter (Tempo) |
+| **tracing-appender** | 0.2.0 | Non‑blocking writer; `copytruncate` logrotate |
+| **metrics** | 0.21.0 | Prometheus exporter |
 
 ### Serialization & Errors
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Serde** | 1.0.197 | JSON (Syn 3) |
+| **Serde** | 1.0.197 | JSON |
 | **serde_json** | 1.0.114 | JSON handling |
 | **thiserror** | 1.0.58 | Typed business errors |
-| **anyhow** | 1.0.81 | Generic errors |
+| **anyhow** | 1.0.81 | Generic errors (limited) |
 
 ### Utilities
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
 | **Clap** | 4.5.3 | CLI arguments |
-| **Chrono** | 0.4.35 | Dates & time |
-| **UUID** | 1.7.0 | UUID v4 |
+| **Chrono** | 0.4.35 | Dates & time (UTC) |
+| **UUID** | 1.7.0 | UUID v4, v5 (deterministic), v7 (time‑ordered) |
 
 ### Email
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Managed External Provider** | N/A (e.g., SendGrid/Postmark) | Offloads SMTP overhead from VPS, better deliverability. Stalwart completely removed. |
-| **lettre** | latest | Sending emails via Rust (API integration with provider) |
+| **lettre** | 0.10.0 | Rust email library |
+| **SendGrid / Postmark** | – | Managed external provider |
+
+---
+
+## 🧱 BACKEND WORKSPACE CRATES (27 Total — SeaORM + Raw SQL Escape Hatch)
+
+| # | Crate | Layer | Responsibility | Persistence |
+|---|-------|-------|----------------|-------------|
+| 1 | `ataqu-bin` | Binary | Entry point, runtime setup, background task spawning | — |
+| 2 | `ataqu-kernel` | Shared | Core types (`TenantId` private field, `Identifiable` trait, `IdGenerator` trait, `Clock` trait), error types | — |
+| 3 | `ataqu-security` | Shared | PII newtypes (`Email`, `PhoneNumber` — no `Serialize`), `PiiAccessKey`, crypto, JWT | — |
+| 4 | `ataqu-contracts` | Shared | Event definitions, commands, DTOs | — |
+| 5 | `ataqu-domain-aegis` | Domain | AEGIS pure logic (auth, SSO, MFA) | — |
+| 6 | `ataqu-domain-billing` | Domain | Billing pure logic | — |
+| 7 | `ataqu-domain-vault` | Domain | VAULT pure logic (inventory) | — |
+| 8 | `ataqu-domain-dial` | Domain | DIAL pure logic + `PresenceStore` trait (no `ConnectionId`) | — |
+| 9 | `ataqu-domain-cinq` | Domain | CINQ pure logic + `ContactRepository` trait | — |
+| 10 | `ataqu-domain-spark` | Domain | SPARK pure logic (automation) | — |
+| 11 | `ataqu-domain-sond` | Domain | SOND pure logic (forms) | — |
+| 12 | `ataqu-domain-pivot` | Domain | PIVOT pure logic (docs) | — |
+| 13 | `ataqu-domain-pause` | Domain | PAUSE pure logic (HR) | — |
+| 14 | `ataqu-domain-tempo` | Domain | TEMPO pure logic (schedules) | — |
+| 15 | `ataqu-domain-vista` | Domain | VISTA pure logic (analytics + aggregation) | — |
+| 16 | `ataqu-domain-gdpr` | Domain | GDPR saga state machine + compiled table registry | — |
+| 17 | `ataqu-infra-pools` | Infra | 6 SeaORM pools + 1 `sqlx` dispatcher pool + 1 SeaORM admin pool | SeaORM / `sqlx` |
+| 18 | `ataqu-infra-repositories` | Infra | SeaORM entity impls, mappers, **generic `transactional_batch_insert` helper** (`Identifiable` bound, chunked fallback, transient error classification), presence stores | SeaORM + raw SQL |
+| 19 | `ataqu-infra-outbox` | Infra | `OutboxDispatcher` (`sqlx::PgListener` + `SKIP LOCKED` on `core.outbox`) | `sqlx` listener |
+| 20 | `ataqu-infra-idempotency` | Infra | `IdempotencyGuard` (2× int4 advisory locks, durable response in `core.idempotency_records`, bounded Moka) | SeaORM + raw SQL |
+| 21 | `ataqu-infra-sagas` | Infra | Generic saga state machines, fenced leases | SeaORM |
+| 22 | `ataqu-infra-cron` | Infra | `cron_worker` (`SKIP LOCKED`, deterministic `command_id`) | SeaORM + raw SQL |
+| 23 | `ataqu-infra-storage` | Infra | S3 presigned URLs, chunked orphan reaper, CSV streaming | SeaORM |
+| 24 | `ataqu-infra-migration` | Infra | `sea-orm-migration` migration crate (Rust-native migrations) | SeaORM |
+| 25 | `ataqu-application` | Application | Service orchestration (calls domain with injected `IdGenerator`/`Clock`, delegates to infra) | — |
+| 26 | `ataqu-api` | API | Axum handlers, middleware, Moka cache, `Idempotency-Key` parsing, **API serialization wrappers (`ApiEmail`)** | — |
+| 27 | `ataqu-admin` | Admin | CLI binary, UDS client, audit logging | SeaORM |
+
+**Dependency direction:** `api → application → {domain, infra}`. Domain depends on nothing. Infra depends on domain traits. No circular dependencies. SeaORM `Model`/`ActiveModel` confined to `ataqu-infra-repositories` (mapped to pure domain structs at boundary).
+
+---
+
+## 🔐 COMPILER-ENFORCED & CI-ENFORCED PATTERNS
+
+### Type-State Transaction Discipline
+- `ataqu-api` validates input → produces `UnvalidatedCommand`.
+- `ataqu-domain` pure validation → produces `ValidatedCommand` using injected `IdGenerator` and `Clock`.
+- `ataqu-application` orchestrates: acquires `IdempotencyGuard` (which starts a SeaORM transaction), calls domain pure function, delegates to repositories.
+- `ataqu-infra-repositories` accepts `ValidatedCommand` and executes SeaORM CRUD + raw SQL on `sea_orm::DatabaseTransaction`, using the generic `transactional_batch_insert` helper for ingestion.
+
+### PII Protection (Compile-Time Redacting Newtypes + API Serialization Wrappers)
+- PII fields are wrapped in `Email`, `PhoneNumber` newtypes.
+- `Debug`/`Display` impls output `[REDACTED]` — zero-cost, compile-time guaranteed log safety.
+- **Newtypes do NOT implement `Serialize`** — `serde_json::to_string(&email)` fails to compile everywhere.
+- `reveal()` requires a `PiiAccessKey` (capability token) for encryption-at-rest in infrastructure.
+- API layer uses wrapper structs (e.g., `ApiEmail`) that implement `Serialize` by calling `reveal(&key)`.
+- CI lint ensures only approved crates enable `infra-pii-access` feature.
+- Domain never uses `reveal()`.
+
+### Tenant Isolation
+- Every `Repository` method requires `tenant_id: &TenantId`.
+- PostgreSQL Roles, RLS, Column-Level Privileges, and `schema` ENUM enforce physical schema isolation.
+- Cross-schema queries are prevented at the database level.
+
+### Entity Boundary Lint
+- CI fails if any `sea_orm::Model` or `sea_orm::ActiveModel` type appears in a `ataqu-domain-*` crate's public API.
+- Mappers convert `Model` → pure domain structs in `ataqu-infra-repositories`.
+
+### IdGenerator & Clock
+- Domain functions receive `&impl IdGenerator` and `&impl Clock`.
+- `IdGenerator` is used only for UUIDs; `Clock` only for high-precision `SystemTime`.
+- Both are impure capabilities injected purely for testability.
+- Domain never reads system clock or RNG directly.
+- `MockIdGenerator`/`MockClock` for deterministic tests.
 
 ---
 
@@ -102,163 +271,95 @@
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Node.js** | 20.11.1 LTS | Support until April 2026 |
-| **pnpm** | 8.15.4 | Package manager, workspaces, fast |
-| **TypeScript** | 5.3.3 | Strict typing, import defer support |
-
-### Linting & Formatting
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **Biome** | 1.5.3 | **Replaces ESLint + Prettier** — 10× faster, single config |
+| **Node.js** | 20.11.1 LTS | LTS support |
+| **pnpm** | 8.15.4 | Package manager |
+| **TypeScript** | 5.5.3 | Strict typing |
 
 ### Framework & Bundler
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
 | **React** | 18.2.0 | UI Framework |
-| **Vite** | 8.0.0 | Bundler (Rolldown) — 10-30x faster builds |
-| **@vitejs/plugin-react** | 6.0.4 | React plugin for Vite |
+| **Vite** | 8.0.0 | Bundler (Rolldown) |
+| **@vitejs/plugin-react** | 6.0.4 | React plugin |
+| **@originjs/vite-plugin-federation** | 1.3.0 | Module Federation |
 
 ### UI & Styling
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Tailwind CSS** | 3.4.1 | CSS-first, centralized config, shared tokens |
-| **shadcn/ui** | CLI v0.8.0 | Accessible components, Base UI default, presets system |
-| **@tailwindcss/vite** | 0.9.0 | Tailwind 3 + Vite integration |
+| **Tailwind CSS** | 3.4.1 | CSS‑first |
+| **shadcn/ui** | CLI v0.8.0 | Accessible components |
 
 ### Routing & Data
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **TanStack Router** | v1.16.0 | Typed, type-safe, suspense-ready |
-| **TanStack Query** | v5.24.0 | Cache, invalidation, mutations |
-| **Zustand** | 4.5.2 | Lightweight state management (stores) |
-| **TanStack Virtual** | 3.1.3 | **Virtualization for all long lists** (optimized iOS perf) |
-
-**TanStack Virtual — App Usage:**
-| App | Usage |
-|-----|-------|
-| PIVOT | Long lists of tasks, docs |
-| DIAL | Message history |
-| CINQ | List of deals/leads |
-| VAULT | Product catalog |
-| VISTA | Large data tables |
-
-### Tables & Data Grids (PIVOT, CINQ, VAULT, VISTA)
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **TanStack Table** | v8.11.7 | Headless, tree-shakable, improved state management |
+| **TanStack Router** | v1.16.0 | Typed routing |
+| **TanStack Query** | v5.24.0 | Cache, invalidation |
+| **Zustand** | 4.5.2 | State management |
+| **TanStack Virtual** | 3.1.3 | Virtualization for all long lists |
 
 ### Forms & Validation
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **React Hook Form** | 7.50.1 | Performant, uncontrolled |
-| **Zod** | 3.22.4 | Schema validation (integrated RHF) |
-| **@hookform/resolvers** | 3.3.4 | Bridge RHF + Zod |
-
-### Internationalization
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **Lingui** | 4.5.0 | Extraction, compilation |
-
----
-
-## 🧩 FRONTEND — BY FEATURE (Single Selection)
+| **React Hook Form** | 7.50.1 | Performant forms |
+| **Zod** | 3.22.4 | Schema validation |
 
 ### Charts & Dashboards (VISTA)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Recharts** | 2.12.0 | Standard dashboards (80% of cases), new animations |
-| **Apache ECharts** | 5.4.3 | Large volumes & advanced interactions |
+| **Recharts** | 2.12.0 | Standard dashboards |
+| **Apache ECharts** | 5.4.3 | Large volumes |
 
-### Rich Text Editor (PIVOT — Docs)
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **BlockNote** | latest (0.21+) | Notion-like editor (blocks, slash menu) — closest to Notion UX, built on ProseMirror & Tiptap |
-
-### Kanban Board (PIVOT)
+### Rich Text Editor (PIVOT)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **@dnd-kit/core** | 6.1.0+ | Accessible drag & drop, hooks-based, tactile |
-| **@dnd-kit/sortable** | 7.0.2+ | Multi-list drag & drop |
-
-### Form Builder (SOND)
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **SurveyJS** | v3.0.0-beta.8+ | Dynamic forms, surveys, quizzes — MIT, unified styling |
+| **BlockNote** | latest | Notion‑like editor |
 
 ### Chat UI (DIAL)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **assistant-ui** | 0.12.1+ | ChatGPT-like UI — streaming, auto-scroll, accessible |
-| **TanStack Virtual** | 3.13.26+ | **Message history virtualization** |
+| **assistant-ui** | 0.12.1+ | ChatGPT‑like UI |
+| **TanStack Virtual** | 3.13.26+ | Message history virtualization |
 
 ### Workflow Builder (SPARK)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **React Flow** (@xyflow/react) | 12.3.0 | Reference for workflow editors (n8n, Langflow) — integrates shadcn/ui |
+| **React Flow** (@xyflow/react) | 12.3.0 | Workflow editor |
 
-### Calendar / Scheduler (TEMPO, PAUSE)
+### Calendar (TEMPO, PAUSE)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **@ilamy/calendar** | latest | Tailwind 4 + shadcn/ui, RFC 5545 recurring events, drag & drop |
+| **@ilamy/calendar** | latest | Tailwind 4 + shadcn/ui |
 
 ### Authentication UI (AEGIS)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Custom (shadcn/ui)** | — | In-house UI with shadcn/ui |
-
-### Email Editor (CINQ)
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **react-email** | 1.6.1 | Email components — unified package |
-
-### Common Utilities
-
-| Component | Version | Usage |
-|-----------|---------|-------|
-| **react-day-picker** | 10.0.1 | Date picker (forms) |
-| **@kalyx/react** | 1.0.1 | Date/Time picker headless, SSR-safe |
-| **react-toaster-message** | latest | Toasts with Framer Motion |
-| **@files-ui/react** | latest | File upload (drag & drop, validation) |
-| **TanStack Virtual** | 3.13.26+ | **Virtualization for all long lists** |
+| **Custom (shadcn/ui)** | — | In‑house |
 
 ---
 
-## 🖥️ DESKTOP (OPTIONAL — V2)
+## 🏗️ INFRASTRUCTURE (Phase 1)
 
 | Component | Version | Justification |
 |-----------|---------|---------------|
-| **Tauri** | 1.5.11 | Lightweight desktop app, Rust backend, React frontend |
-
----
-
-## 🏗️ INFRASTRUCTURE
-
-| Component | Version | Justification |
-|-----------|---------|---------------|
-| **VPS** | IONOS XL | 8 vCPU / 16 GB RAM / 160 GB SSD — 25€/month (~30$) |
-| **CDN** | Cloudflare | Free, DDoS protection, SSL |
-| **Process Manager** | systemd | Native Linux process supervision, zero daemon overhead |
-| **Reverse Proxy** | Caddy | Automatic HTTPS, native systemd integration, low RAM footprint |
+| **VPS** | Hetzner CX42 | 8 vCores / 8 GB RAM / 160 GB SSD |
+| **DB** | PostgreSQL 16.14 native install | `shared_buffers=1GB`, `work_mem=2MB`, `max_connections=40` |
+| **Backup** | `wal-g` **3.0.8** | 1 s RPO to S3; Direct‑IO Reader support |
+| **CDN** | Cloudflare | Free, DDoS protection |
+| **Process Manager** | systemd | Native Linux supervision |
+| **Reverse Proxy** | Caddy | Automatic HTTPS |
 | **CI/CD** | GitHub Actions | Pipeline build → test → deploy |
-| **Storage** | Cloudflare R2 | S3-compatible, zero egress fees, managed |
-| **Email** | Managed External Provider (e.g., SendGrid/Postmark) | Offloaded from VPS, better deliverability |
-| **Monitoring** | Rustrak | Self-hosted, lightweight |
+| **Storage** | Hetzner Storage Box | S3‑compatible |
+| **Email** | SendGrid / Postmark | Offloaded |
 
 ---
 
@@ -266,23 +367,21 @@
 
 ```
 saas-factory/
-├── Cargo.toml                          # Rust Workspace (centralized deps)
+├── Cargo.toml                          # Rust Workspace
 ├── pnpm-workspace.yaml                 # Frontend workspace
-├── biome.json                          # Biome Configuration (lint + format)
-├── crates/                             # Shared Rust crates
-│   ├── shared-core/                    # Base types
-│   ├── shared-db/                      # SeaORM + migrations
-│   ├── shared-auth/                    # JWT, OAuth2, middlewares
-│   ├── shared-billing/                 # Stripe
-│   ├── shared-email/                   # Stalwart + templating
-│   ├── shared-observability/           # Tracing + logging
-│   ├── shared-storage/                 # Garage (S3)
-│   └── shared-queue/                   # (optional)
+├── biome.json                          # Biome Configuration
+├── crates/                             # 27 Rust crates
+│   ├── ataqu-bin/
+│   ├── ataqu-api/
+│   ├── ataqu-kernel/
+│   ├── ataqu-security/
+│   ├── ataqu-infra-migration/          # SeaORM migrations
+│   └── ... (all domain, infra, application crates)
 ├── packages/                           # Shared frontend
-│   ├── ui/                             # shadcn/ui + components
-│   ├── tailwind-config/                # Shared Tailwind tokens
-│   ├── shared-hooks/                   # React Hooks
-│   └── shared-utils/                   # Utilities
+│   ├── ui/
+│   ├── tailwind-config/
+│   ├── shared-hooks/
+│   └── shared-utils/
 └── apps/                               # 10 applications
     ├── aegis/
     ├── pivot/
@@ -298,39 +397,49 @@ saas-factory/
 
 ---
 
-## ✅ SUMMARY — KEY VERSIONS
+## 🔮 FUTURE PHASE 2 UPGRADES (Triggered at 200+ tenants)
+
+| Component | Phase 1 | Phase 2 |
+|-----------|---------|---------|
+| **Database** | PostgreSQL on VPS | Managed PostgreSQL (Neon/RDS) |
+| **Cache** | `moka` | Upstash Redis |
+| **Search** | PostgreSQL tsvector | Quickwit / Meilisearch |
+| **Presence** | `InMemoryPresenceStore` (DashMap) | `PostgresPresenceStore` (no domain changes — `PresenceStore` trait) |
+| **Admin** | UDS | mTLS HTTP endpoint |
+| **Infra** | Hetzner CX42 | Larger VPS or dedicated |
+
+---
+
+## ✅ SUMMARY — KEY VERSIONS (Phase 1)
 
 | Category | Dependency | Version |
 |----------|------------|---------|
-| **Rust** | Rust | 1.75.0+ (2021 edition) |
-| **Rust** | Axum | 0.7.0+ |
-| **Rust** | SeaORM | 1.1.0+ |
-| **Rust** | Tokio | 1.36.0 |
-| **Rust** | jsonwebtoken | 9.2.0 |
-| **Rust** | anyhow | 1.0.79 |
+| **Rust** | Rust | **1.97+** (2024 edition) |
+| **Rust** | Axum | **0.8.9** |
+| **Rust** | SeaORM | **2.0.0-rc.41** (migrations, entities, CRUD) |
+| **Rust** | sqlx | **0.9.0** (PgListener only, dedicated pool) |
+| **Rust** | Tokio | **1.53.0** |
+| **Rust** | jsonwebtoken | 9.3.0 |
+| **Rust** | moka | 0.12.0 |
 | **Node** | Node.js | 20.11.1 LTS |
 | **Node** | pnpm | 8.15.0 |
-| **Node** | TypeScript | 5.3.3 |
+| **Node** | TypeScript | 5.5.3 |
 | **Frontend** | React | 18.2.0 |
-| **Frontend** | Vite | 5.0.0 |
+| **Frontend** | Vite | 8.0.0 |
 | **Frontend** | Tailwind CSS | 3.4.0 |
 | **Frontend** | shadcn/ui | CLI v4 |
 | **Frontend** | TanStack Router | v1.170.15+ |
 | **Frontend** | TanStack Query | v5.101.0+ |
-| **Frontend** | TanStack Table | v9 (beta) |
 | **Frontend** | TanStack Virtual | 3.13.26+ |
 | **Frontend** | React Hook Form | 7.77.0+ |
 | **Frontend** | Zod | 4.4.0+ |
-| **Frontend** | Lingui | 6.5.0 |
 | **Frontend** | Biome | 2.5.5 |
 | **Frontend** | Recharts | 3.9.0+ |
-| **Frontend** | Apache ECharts | 6.1.0+ |
 | **Frontend** | React Flow | 12.10.1+ |
-| **Frontend** | @ilamy/calendar | latest |
-| **Frontend** | react-email | 6.9.0 |
-| **Desktop** | Tauri | 2.11.5 |
+| **Database** | PostgreSQL | **16.14** |
+| **Infra** | Hetzner | CX42 |
+| **Backup** | WAL-G | **3.0.8** |
 
 ---
 
-**Document created on 2026-07-28 — Ready for implementation.**
-
+**Document created on 2026-08-29 — Phase 1 with PostgreSQL + SeaORM 2.0 + raw SQL escape hatch + generic `transactional_batch_insert` helper + compile-time PII redacting newtypes + API serialization wrappers (v7.3).**

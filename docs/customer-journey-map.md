@@ -1,4 +1,4 @@
-# 🗺️ ATAQU CUSTOMER JOURNEY MAP & FRICTION AUDIT — Version 1.4 (Phase 1)
+# 🗺️ ATAQU CUSTOMER JOURNEY MAP & FRICTION AUDIT — Version 1.5 (Phase 1)
 ### The "Zero-Bloat" Blueprint from First Touch to SaaS Decommissioning
 
 > **Executive Note:** A brand’s promise is only as strong as the friction in its customer journey. If we promise "no bullshit" but force users through a 5‑step email verification process, we are liars. This document maps every touchpoint a user has with Ataqu—from the first Hacker News post to their 1‑click cancellation—and audits it for SaaS bloat. Our goal is not just to acquire users, but to systematically eliminate every micro‑friction point that prevents them from decommissioning our competitors.
@@ -16,34 +16,6 @@ This journey is mapped primarily for **Sam (The CTO)** and **Alex (The CEO)**. S
 ---
 
 ## 2. THE 6 PHASES OF THE ATAQU JOURNEY
-
-
-### Phase 0: Pre-Awareness & Discovery (The Micro-Tool Entry Point)
-**The Goal:** Capture users through free, high-value tools before they even know Ataqu exists.
-
-*   **Touchpoints:**
-    *   **SaaS Cost Calculator** (`/tools/saas-cost-calculator`) — Users enter their current tools, see their 3‑year spend vs. Ataqu.
-    *   **HubSpot Migration Checker** (`/tools/hubspot-migration-checker`) — Users upload a CSV export, see data quality issues and migration readiness.
-    *   **SaaS Stack Audit** (`/tools/saas-stack-audit`) — Users list their tools, get a report on duplicates, waste, and savings opportunities.
-    *   **Programmatic SEO Pages** (`/alternatives/*`, `/comparisons/*`) — Users searching for "alternative to [competitor]" land on a detailed Kill Sheet.
-    *   **LinkedIn/Twitter Content** — Users see a "build in public" post or a pricing punch that resonates.
-*   **Emotional State:** Curious, skeptical, but pain-aware. "Is there actually a better way?"
-*   **❌ The Standard SaaS Friction:** Gated content ("Enter your email to see results"), generic landing pages with no real value, or pushy sales CTAs.
-*   **✅ The Ataqu Reality:** The tool delivers immediate value without requiring an email. Only after seeing results does the user see: *"Want to replace your entire stack? Ataqu does it for $49/mo."* No friction. No gatekeeping. Just value.
-
-**Key Micro-Tools (Zero Budget):**
-
-| Tool | Problem Solved | Lead Capture Point |
-|------|----------------|-------------------|
-| **SaaS Cost Calculator** | "How much am I really spending?" | After results: "See how much Ataqu could save you" |
-| **HubSpot Migration Checker** | "Is my data clean enough to leave?" | After scan: "Ready to migrate? Try CINQ free" |
-| **SaaS Stack Audit** | "Where am I wasting money?" | After audit: "Replace duplicates with Ataqu" |
-
-**The Viral Loop:** Each tool has a "Share your results" button. Users share their savings on LinkedIn, driving organic traffic back to the tool. This creates a self-sustaining acquisition loop.
-
-**Friction Audit Metric:** *Micro-Tool → Ataqu Website Conversion Rate.* (Target: >25% of tool users visit the Ataqu homepage).
-
-
 
 ### Phase 1: Awareness & Discovery (The Trigger)
 **The Goal:** Intercept the buyer actively experiencing SaaS pain.
