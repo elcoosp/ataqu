@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 
 const APPS = [
   { id: "pivot", name: "PIVOT", desc: "Docs & databases" },
@@ -19,23 +20,33 @@ export function AppGrid() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {APPS.map((app) => (
-        <div
-          key={app.id}
-          className="flex flex-col items-center p-4 rounded-lg border border-border bg-card/30 hover:bg-card/60 transition-colors"
-        >
-          <div className="w-12 h-12 rounded-full overflow-hidden mb-2 border border-primary/20">
-            <Image
-              src={`/apps/${app.id}.svg`}
-              alt={app.name}
-              width={48}
-              height={48}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span className="font-display text-sm font-semibold">{app.name}</span>
-          <span className="text-xs text-muted-foreground mt-0.5">{app.desc}</span>
-        </div>
+        <AppCard key={app.id} app={app} />
       ))}
+    </div>
+  );
+}
+
+function AppCard({ app }: { app: { id: string; name: string; desc: string } }) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div className="flex flex-col items-center p-4 rounded-lg border border-border bg-card/30 hover:bg-card/60 transition-colors">
+      <div className="w-12 h-12 rounded-full overflow-hidden mb-2 border border-primary/20 flex items-center justify-center bg-background">
+        {!imgError ? (
+          <Image
+            src={`/apps/${app.id}.png`}
+            alt={app.name}
+            width={48}
+            height={48}
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <span className="text-primary font-display text-sm font-bold">{app.name.charAt(0)}</span>
+        )}
+      </div>
+      <span className="font-display text-sm font-semibold">{app.name}</span>
+      <span className="text-xs text-muted-foreground mt-0.5">{app.desc}</span>
     </div>
   );
 }
