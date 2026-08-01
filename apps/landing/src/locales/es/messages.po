@@ -98,221 +98,221 @@ msgid "1‑click cancel"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:51
-msgid "1‑click cancel and full data export"
-msgstr ""
+#~ msgid "1‑click cancel and full data export"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:26
-msgid "1‑click cancellation – no lock‑in"
-msgstr ""
+#~ msgid "1‑click cancellation – no lock‑in"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:243
-msgid "1‑click data export – your identity data belongs to you"
-msgstr ""
+#~ msgid "1‑click data export – your identity data belongs to you"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:98
-msgid "1‑click export to CSV, JSON, and Markdown"
-msgstr ""
+#~ msgid "1‑click export to CSV, JSON, and Markdown"
+#~ msgstr ""
 
-#: src/app/page.tsx:61
+#: src/components/home-content.tsx:63
 msgid "10 apps. One suite. Natively integrated."
 msgstr ""
 
-#: src/app/page.tsx:19
+#: src/components/home-content.tsx:21
 msgid "10 essential apps, one unified price. No per‑user fees, no lock‑in. Join the waitlist and be first to access the suite."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:120
-msgid "10 focused, high‑quality apps built in Rust on PostgreSQL"
-msgstr ""
+#~ msgid "10 focused, high‑quality apps built in Rust on PostgreSQL"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:162
-msgid "10 free responses per month – a joke for any business"
-msgstr ""
+#~ msgid "10 free responses per month – a joke for any business"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:90
-msgid "2‑5 second search – lagging behind your work"
-msgstr ""
+#~ msgid "2‑5 second search – lagging behind your work"
+#~ msgstr ""
 
 #: src/components/escape-hatch.tsx:32
 msgid "24h SLA. No bots. Real engineers."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:18
-msgid "3‑year lock‑in contracts that auto‑renew at higher prices"
-msgstr ""
+#~ msgid "3‑year lock‑in contracts that auto‑renew at higher prices"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:36
-msgid "3‑year mandatory"
-msgstr ""
+#~ msgid "3‑year mandatory"
+#~ msgstr ""
 
-#: src/app/alternatives/[slug]/page.tsx:321
+#: src/components/kill-sheet-content.tsx:43
 msgid "3‑year Total Cost of Ownership"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:43
-msgid "30% price hike in 2025 with no warning"
-msgstr ""
+#~ msgid "30% price hike in 2025 with no warning"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:114
-msgid "45 apps – but most are outdated or useless"
-msgstr ""
+#~ msgid "45 apps – but most are outdated or useless"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:68
-msgid "5‑15 minute polling delays"
-msgstr ""
+#~ msgid "5‑15 minute polling delays"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:81
-msgid "Activate – no webhooks needed"
-msgstr ""
+#~ msgid "Activate – no webhooks needed"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:128
-msgid "Activate the other 9 apps natively"
-msgstr ""
+#~ msgid "Activate the other 9 apps natively"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:240
-msgid "AEGIS is built into the OS – SSO is a feature, not a product"
-msgstr ""
+#~ msgid "AEGIS is built into the OS – SSO is a feature, not a product"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:187
-msgid "AI bloat that adds complexity without value"
-msgstr ""
+#~ msgid "AI bloat that adds complexity without value"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:132
 #: src/app/alternatives/[slug]/page.tsx:204
 #: src/app/alternatives/[slug]/page.tsx:228
 #: src/app/alternatives/[slug]/page.tsx:252
 #: src/app/alternatives/[slug]/page.tsx:276
-msgid "Annual"
-msgstr ""
+#~ msgid "Annual"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:117
-msgid "Apps don't share a native database – integrations are slow"
-msgstr ""
+#~ msgid "Apps don't share a native database – integrations are slow"
+#~ msgstr ""
 
-#: src/app/alternatives/[slug]/page.tsx:381
-#: src/app/page.tsx:100
+#: src/components/home-content.tsx:102
+#: src/components/kill-sheet-content.tsx:103
 msgid "Be first to access the suite. No credit card required."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:164
-msgid "Branding removal requires a higher plan"
-msgstr ""
+#~ msgid "Branding removal requires a higher plan"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:67
-msgid "Brittle webhooks that break when APIs change"
-msgstr ""
+#~ msgid "Brittle webhooks that break when APIs change"
+#~ msgstr ""
 
 #: src/components/architecture-proof.tsx:11
 msgid "Built in Rust"
 msgstr ""
 
-#: src/app/page.tsx:74
+#: src/components/home-content.tsx:76
 msgid "Built in Rust. Powered by PostgreSQL. Engineered for performance."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:136
-msgid "Calendly is a scheduling island. TEMPO is built into your OS."
-msgstr ""
+#~ msgid "Calendly is a scheduling island. TEMPO is built into your OS."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:153
-msgid "Cancel Calendly with 1 click"
-msgstr ""
+#~ msgid "Cancel Calendly with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:201
-msgid "Cancel Cin7 with 1 click"
-msgstr ""
+#~ msgid "Cancel Cin7 with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:105
-msgid "Cancel Notion with 1 click"
-msgstr ""
+#~ msgid "Cancel Notion with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:249
-msgid "Cancel Okta with 1 click"
-msgstr ""
+#~ msgid "Cancel Okta with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:225
-msgid "Cancel Personio with 1 click"
-msgstr ""
+#~ msgid "Cancel Personio with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:57
-msgid "Cancel Slack with 1 click"
-msgstr ""
+#~ msgid "Cancel Slack with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:273
-msgid "Cancel Tableau with 1 click"
-msgstr ""
+#~ msgid "Cancel Tableau with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:177
-msgid "Cancel Typeform with 1 click"
-msgstr ""
+#~ msgid "Cancel Typeform with 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:33
-msgid "Cancel your HubSpot contract in 1 click"
-msgstr ""
+#~ msgid "Cancel your HubSpot contract in 1 click"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:129
-msgid "Cancel Zoho One with 1 click"
-msgstr ""
+#~ msgid "Cancel Zoho One with 1 click"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:155
 msgid "CEO, CTO, Head of Ops…"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:80
-msgid "Choose your action (e.g., 'Create DIAL channel')"
-msgstr ""
+#~ msgid "Choose your action (e.g., 'Create DIAL channel')"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:184
-msgid "Cin7 is a siloed warehouse. VAULT connects inventory to your CRM."
-msgstr ""
+#~ msgid "Cin7 is a siloed warehouse. VAULT connects inventory to your CRM."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:193
-msgid "CINQ deals automatically reserve stock via outbox events"
-msgstr ""
+#~ msgid "CINQ deals automatically reserve stock via outbox events"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:24
-msgid "CINQ gives you a full CRM, including reporting and automation, for a flat $49/mo"
-msgstr ""
+#~ msgid "CINQ gives you a full CRM, including reporting and automation, for a flat $49/mo"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:115
-msgid "Clunky 2012‑era UI"
-msgstr ""
+#~ msgid "Clunky 2012‑era UI"
+#~ msgstr ""
 
-#: src/app/page.tsx:35
+#: src/components/home-content.tsx:37
 msgid "Compare pricing"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:236
-msgid "Complex admin UI that frustrates users"
-msgstr ""
+#~ msgid "Complex admin UI that frustrates users"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:56
-msgid "Connect DIAL to CINQ for native CRM integration"
-msgstr ""
+#~ msgid "Connect DIAL to CINQ for native CRM integration"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:224
-msgid "Connect to AEGIS and TEMPO for native security and scheduling"
-msgstr ""
+#~ msgid "Connect to AEGIS and TEMPO for native security and scheduling"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:152
-msgid "Connect to CINQ and DIAL for native integration"
-msgstr ""
+#~ msgid "Connect to CINQ and DIAL for native integration"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:176
-msgid "Connect to CINQ and SPARK natively"
-msgstr ""
+#~ msgid "Connect to CINQ and SPARK natively"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:200
-msgid "Connect to CINQ for native order management"
-msgstr ""
+#~ msgid "Connect to CINQ for native order management"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:248
-msgid "Connect to PAUSE for automated provisioning/deprovisioning"
-msgstr ""
+#~ msgid "Connect to PAUSE for automated provisioning/deprovisioning"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:271
-msgid "Connect VISTA to your Ataqu apps – dashboards are pre‑built"
-msgstr ""
+#~ msgid "Connect VISTA to your Ataqu apps – dashboards are pre‑built"
+#~ msgstr ""
 
 #: src/components/pricing-comparison.tsx:25
 msgid "Contract"
@@ -323,141 +323,141 @@ msgid "CSV, JSON – your data belongs to you."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:272
-msgid "Customize your dashboards with drag‑and‑drop"
-msgstr ""
+#~ msgid "Customize your dashboards with drag‑and‑drop"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:165
-msgid "Data goes to a silo – needs Zapier for CRM"
-msgstr ""
+#~ msgid "Data goes to a silo – needs Zapier for CRM"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:141
-msgid "Data is siloed – no activity tracking in CRM"
-msgstr ""
+#~ msgid "Data is siloed – no activity tracking in CRM"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:91
-msgid "Data trapped in Notion's proprietary format"
-msgstr ""
+#~ msgid "Data trapped in Notion's proprietary format"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:48
-msgid "DIAL unifies internal chat and customer support in one workspace"
-msgstr ""
+#~ msgid "DIAL unifies internal chat and customer support in one workspace"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:31
-msgid "Drop the CSV into Ataqu CINQ"
-msgstr ""
+#~ msgid "Drop the CSV into Ataqu CINQ"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:103
-msgid "Drop the files into PIVOT"
-msgstr ""
+#~ msgid "Drop the files into PIVOT"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:98
 msgid "Email address"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:74
-msgid "Exactly‑once delivery guaranteed by PostgreSQL advisory locks"
-msgstr ""
+#~ msgid "Exactly‑once delivery guaranteed by PostgreSQL advisory locks"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:212
-msgid "Expensive per‑user fees"
-msgstr ""
+#~ msgid "Expensive per‑user fees"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:259
-msgid "Expensive per‑user licensing – $70‑100/user/mo"
-msgstr ""
+#~ msgid "Expensive per‑user licensing – $70‑100/user/mo"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:188
-msgid "Expensive per‑user pricing"
-msgstr ""
+#~ msgid "Expensive per‑user pricing"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:150
-msgid "Export your Calendly event types (JSON)"
-msgstr ""
+#~ msgid "Export your Calendly event types (JSON)"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:198
-msgid "Export your Cin7 products and stock levels (CSV)"
-msgstr ""
+#~ msgid "Export your Cin7 products and stock levels (CSV)"
+#~ msgstr ""
 
 #: src/components/escape-hatch.tsx:20
 msgid "Export your data"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:30
-msgid "Export your HubSpot contacts and deals to CSV"
-msgstr ""
+#~ msgid "Export your HubSpot contacts and deals to CSV"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:102
-msgid "Export your Notion pages as Markdown or CSV"
-msgstr ""
+#~ msgid "Export your Notion pages as Markdown or CSV"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:246
-msgid "Export your Okta users and groups (CSV)"
-msgstr ""
+#~ msgid "Export your Okta users and groups (CSV)"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:222
-msgid "Export your Personio employee data (CSV)"
-msgstr ""
+#~ msgid "Export your Personio employee data (CSV)"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:54
-msgid "Export your Slack channel history (JSON)"
-msgstr ""
+#~ msgid "Export your Slack channel history (JSON)"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:270
-msgid "Export your Tableau data sources (if any) – but with VISTA, you don't need ETL"
-msgstr ""
+#~ msgid "Export your Tableau data sources (if any) – but with VISTA, you don't need ETL"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:174
-msgid "Export your Typeform responses (CSV)"
-msgstr ""
+#~ msgid "Export your Typeform responses (CSV)"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:126
-msgid "Export your Zoho CRM data to CSV"
-msgstr ""
+#~ msgid "Export your Zoho CRM data to CSV"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:171
-msgid "Flat $49/mo for everything"
-msgstr ""
+#~ msgid "Flat $49/mo for everything"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:99
-msgid "Flat $49/mo for the whole team"
-msgstr ""
+#~ msgid "Flat $49/mo for the whole team"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:242
-msgid "Flat $49/mo for the whole team – no per‑user SSO fees"
-msgstr ""
+#~ msgid "Flat $49/mo for the whole team – no per‑user SSO fees"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:146
 #: src/app/alternatives/[slug]/page.tsx:194
 #: src/app/alternatives/[slug]/page.tsx:218
-msgid "Flat $49/mo for your whole team"
-msgstr ""
+#~ msgid "Flat $49/mo for your whole team"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:266
-msgid "Flat $49/mo for your whole team – no per‑user BI fees"
-msgstr ""
+#~ msgid "Flat $49/mo for your whole team – no per‑user BI fees"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:49
 #: src/app/alternatives/[slug]/page.tsx:122
-msgid "Flat $49/mo for your whole team – no per‑user fees"
-msgstr ""
+#~ msgid "Flat $49/mo for your whole team – no per‑user fees"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:170
-msgid "Form submissions create CINQ leads and trigger SPARK workflows automatically"
-msgstr ""
+#~ msgid "Form submissions create CINQ leads and trigger SPARK workflows automatically"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:19
-msgid "Hidden paywalls for reporting and automation"
-msgstr ""
+#~ msgid "Hidden paywalls for reporting and automation"
+#~ msgstr ""
 
-#: src/app/alternatives/[slug]/page.tsx:343
+#: src/components/kill-sheet-content.tsx:65
 msgid "How Ataqu Solves It"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:16
-msgid "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total."
-msgstr ""
+#~ msgid "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total."
+#~ msgstr ""
 
-#: src/app/page.tsx:43
+#: src/components/home-content.tsx:45
 msgid "HubSpot charges $1,200/mo. Ataqu charges $49."
 msgstr ""
 
@@ -467,72 +467,72 @@ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:27
 #: src/app/alternatives/[slug]/page.tsx:219
-msgid "Human support with 24h SLA"
-msgstr ""
+#~ msgid "Human support with 24h SLA"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:247
-msgid "Import into AEGIS"
-msgstr ""
+#~ msgid "Import into AEGIS"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:127
-msgid "Import into Ataqu CINQ"
-msgstr ""
+#~ msgid "Import into Ataqu CINQ"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:55
-msgid "Import into DIAL – your channels and messages are preserved"
-msgstr ""
+#~ msgid "Import into DIAL – your channels and messages are preserved"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:223
-msgid "Import into PAUSE"
-msgstr ""
+#~ msgid "Import into PAUSE"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:151
-msgid "Import into TEMPO – your booking links are recreated"
-msgstr ""
+#~ msgid "Import into TEMPO – your booking links are recreated"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:199
-msgid "Import into VAULT"
-msgstr ""
+#~ msgid "Import into VAULT"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:21
-msgid "Integrations require Zapier (extra cost)"
-msgstr ""
+#~ msgid "Integrations require Zapier (extra cost)"
+#~ msgstr ""
 
-#: src/app/alternatives/[slug]/page.tsx:370
-#: src/app/alternatives/[slug]/page.tsx:378
-#: src/app/page.tsx:29
-#: src/app/page.tsx:97
+#: src/components/home-content.tsx:31
+#: src/components/home-content.tsx:99
+#: src/components/kill-sheet-content.tsx:92
+#: src/components/kill-sheet-content.tsx:100
 #: src/components/waitlist-form.tsx:164
 msgid "Join the waitlist"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:217
-msgid "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
-msgstr ""
+#~ msgid "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:237
-msgid "Lock‑in – difficult to export identity data"
-msgstr ""
+#~ msgid "Lock‑in – difficult to export identity data"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:45
-msgid "Messages are siloed from your CRM"
-msgstr ""
+#~ msgid "Messages are siloed from your CRM"
+#~ msgstr ""
 
-#: src/app/alternatives/[slug]/page.tsx:358
+#: src/components/kill-sheet-content.tsx:80
 msgid "Migrating from {name} is 1 click away."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:123
-msgid "Modern dark‑mode UI, built for 2026"
-msgstr ""
+#~ msgid "Modern dark‑mode UI, built for 2026"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:60
 #: src/app/alternatives/[slug]/page.tsx:84
 #: src/app/alternatives/[slug]/page.tsx:108
 #: src/app/alternatives/[slug]/page.tsx:156
 #: src/app/alternatives/[slug]/page.tsx:180
-msgid "Monthly"
-msgstr ""
+#~ msgid "Monthly"
+#~ msgstr ""
 
 #: src/components/pricing-comparison.tsx:22
 msgid "Monthly Cost"
@@ -547,42 +547,42 @@ msgid "Name (optional)"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:267
-msgid "Native connections to all 10 apps – revenue, inventory, support, and more"
-msgstr ""
+#~ msgid "Native connections to all 10 apps – revenue, inventory, support, and more"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:50
-msgid "Native CRM integration – see deals and support tickets side‑by‑side"
-msgstr ""
+#~ msgid "Native CRM integration – see deals and support tickets side‑by‑side"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:121
-msgid "Native integration – data flows instantly between apps"
-msgstr ""
+#~ msgid "Native integration – data flows instantly between apps"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:25
-msgid "Native integration with DIAL, VAULT, and SPARK via PostgreSQL outbox"
-msgstr ""
+#~ msgid "Native integration with DIAL, VAULT, and SPARK via PostgreSQL outbox"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:241
-msgid "Native integration with PAUSE – deprovision on leave automatically"
-msgstr ""
+#~ msgid "Native integration with PAUSE – deprovision on leave automatically"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:169
-msgid "Native notifications and branding removal included"
-msgstr ""
+#~ msgid "Native notifications and branding removal included"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:73
-msgid "Native outbox with LISTEN/NOTIFY – <1s execution"
-msgstr ""
+#~ msgid "Native outbox with LISTEN/NOTIFY – <1s execution"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:97
-msgid "Native relations to CINQ deals and VAULT products"
-msgstr ""
+#~ msgid "Native relations to CINQ deals and VAULT products"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:75
 msgid "Network error. Please check your connection."
 msgstr ""
 
-#: src/app/page.tsx:87
+#: src/components/home-content.tsx:89
 msgid "No 3‑year lock‑in. No retention specialists. Just 1 click."
 msgstr ""
 
@@ -591,108 +591,108 @@ msgid "No credit card required. Early access only."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:69
-msgid "No exactly‑once delivery – duplicates or drops data"
-msgstr ""
+#~ msgid "No exactly‑once delivery – duplicates or drops data"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:261
-msgid "No native connection to CRM or inventory – requires middleware"
-msgstr ""
+#~ msgid "No native connection to CRM or inventory – requires middleware"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:186
-msgid "No native CRM integration – orders and stock don't sync"
-msgstr ""
+#~ msgid "No native CRM integration – orders and stock don't sync"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:138
-msgid "No native CRM integration – requires Zapier to update deals"
-msgstr ""
+#~ msgid "No native CRM integration – requires Zapier to update deals"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:92
-msgid "No native CRM or inventory relations – requires Zapier"
-msgstr ""
+#~ msgid "No native CRM or inventory relations – requires Zapier"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:44
-msgid "No native customer support – separate Intercom license needed"
-msgstr ""
+#~ msgid "No native customer support – separate Intercom license needed"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:210
-msgid "No native integration with AEGIS – deprovisioning is manual"
-msgstr ""
+#~ msgid "No native integration with AEGIS – deprovisioning is manual"
+#~ msgstr ""
 
 #: src/components/escape-hatch.tsx:14
 msgid "No retention specialist. No phone call. Just click."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:139
-msgid "No‑show detection takes a day – too late to follow up"
-msgstr ""
+#~ msgid "No‑show detection takes a day – too late to follow up"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:145
-msgid "No‑show detection within 15‑30 minutes using PostgreSQL generated columns"
-msgstr ""
+#~ msgid "No‑show detection within 15‑30 minutes using PostgreSQL generated columns"
+#~ msgstr ""
 
 #: src/components/pricing-comparison.tsx:28
 msgid "Notes"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:163
-msgid "Notifications email are a paid add‑on"
-msgstr ""
+#~ msgid "Notifications email are a paid add‑on"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:88
-msgid "Notion is a blank canvas graveyard. PIVOT is an operational database."
-msgstr ""
+#~ msgid "Notion is a blank canvas graveyard. PIVOT is an operational database."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:147
-msgid "OAuth refresh saga keeps calendars synced"
-msgstr ""
+#~ msgid "OAuth refresh saga keeps calendars synced"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:232
-msgid "Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation."
-msgstr ""
+#~ msgid "Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:78
-msgid "Open the SPARK visual builder"
-msgstr ""
+#~ msgid "Open the SPARK visual builder"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:216
-msgid "PAUSE emits EmployeeCreatedV1 events – AEGIS automatically deprovisions on leave"
-msgstr ""
+#~ msgid "PAUSE emits EmployeeCreatedV1 events – AEGIS automatically deprovisions on leave"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:211
-msgid "Payroll complexity that SMBs don't need"
-msgstr ""
+#~ msgid "Payroll complexity that SMBs don't need"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:66
-msgid "Per‑task pricing – costs skyrocket as you scale"
-msgstr ""
+#~ msgid "Per‑task pricing – costs skyrocket as you scale"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:234
-msgid "Per‑user fees – $15/user/mo just for SSO"
-msgstr ""
+#~ msgid "Per‑user fees – $15/user/mo just for SSO"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:140
-msgid "Per‑user fees for a scheduling link"
-msgstr ""
+#~ msgid "Per‑user fees for a scheduling link"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:116
-msgid "Per‑user pricing – costs grow with your team"
-msgstr ""
+#~ msgid "Per‑user pricing – costs grow with your team"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:42
-msgid "Per‑user pricing – grows with your team"
-msgstr ""
+#~ msgid "Per‑user pricing – grows with your team"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:93
-msgid "Per‑user pricing adds up"
-msgstr ""
+#~ msgid "Per‑user pricing adds up"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:208
-msgid "Personio is a compliance silo. PAUSE connects HR to operations."
-msgstr ""
+#~ msgid "Personio is a compliance silo. PAUSE connects HR to operations."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:96
-msgid "PIVOT uses PostgreSQL tsvector with GIN indexes – sub‑50ms search"
-msgstr ""
+#~ msgid "PIVOT uses PostgreSQL tsvector with GIN indexes – sub‑50ms search"
+#~ msgstr ""
 
 #: src/components/architecture-proof.tsx:20
 msgid "PostgreSQL native"
@@ -703,70 +703,70 @@ msgid "PostgreSQL tsvector with GIN indexes, updated asynchronously."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:195
-msgid "Real‑time stock movements visible in VISTA dashboards"
-msgstr ""
+#~ msgid "Real‑time stock movements visible in VISTA dashboards"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:265
-msgid "Real‑time updates via outbox with LISTEN/NOTIFY – dashboards are always fresh"
-msgstr ""
+#~ msgid "Real‑time updates via outbox with LISTEN/NOTIFY – dashboards are always fresh"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:175
-msgid "Recreate your forms in SOND (drag‑and‑drop builder)"
-msgstr ""
+#~ msgid "Recreate your forms in SOND (drag‑and‑drop builder)"
+#~ msgstr ""
 
-#: src/app/page.tsx:64
+#: src/components/home-content.tsx:66
 msgid "Replace your fragmented stack with a single, unified operating system."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:258
-msgid "Requires data engineering – ETL pipelines are complex and fragile"
-msgstr ""
+#~ msgid "Requires data engineering – ETL pipelines are complex and fragile"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:148
 msgid "Role (optional)"
 msgstr ""
 
-#: src/app/page.tsx:53
+#: src/components/home-content.tsx:55
 msgid "See full comparison →"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:79
-msgid "Select your trigger (e.g., 'CINQ deal won')"
-msgstr ""
+#~ msgid "Select your trigger (e.g., 'CINQ deal won')"
+#~ msgstr ""
 
 #: src/components/architecture-proof.tsx:14
 msgid "Single binary, no bloat, compile‑time safety."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:40
-msgid "Slack taxes your team. DIAL gives you chat and support for one flat price."
-msgstr ""
+#~ msgid "Slack taxes your team. DIAL gives you chat and support for one flat price."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:260
-msgid "Slow dashboards – data is stale by the time it loads"
-msgstr ""
+#~ msgid "Slow dashboards – data is stale by the time it loads"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:189
-msgid "Slow to update stock levels in real time"
-msgstr ""
+#~ msgid "Slow to update stock levels in real time"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:72
 msgid "Something went wrong. Please try again."
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:168
-msgid "SOND offers unlimited responses – no per‑response fees"
-msgstr ""
+#~ msgid "SOND offers unlimited responses – no per‑response fees"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:72
-msgid "SPARK has unlimited tasks – no per‑task fees"
-msgstr ""
+#~ msgid "SPARK has unlimited tasks – no per‑task fees"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:235
-msgid "SSO is a standalone product – no native integration with HR"
-msgstr ""
+#~ msgid "SSO is a standalone product – no native integration with HR"
+#~ msgstr ""
 
-#: src/app/page.tsx:46
+#: src/components/home-content.tsx:48
 msgid "Stop paying per user, per task, and per add‑on. Switch to a single, flat rate."
 msgstr ""
 
@@ -779,22 +779,22 @@ msgid "Submitting…"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:213
-msgid "Support becomes unresponsive after contract signing"
-msgstr ""
+#~ msgid "Support becomes unresponsive after contract signing"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:20
-msgid "Support is virtually nonexistent"
-msgstr ""
+#~ msgid "Support is virtually nonexistent"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:256
-msgid "Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data."
-msgstr ""
+#~ msgid "Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:144
-msgid "TEMPO creates CINQ activities and DIAL notifications automatically"
-msgstr ""
+#~ msgid "TEMPO creates CINQ activities and DIAL notifications automatically"
+#~ msgstr ""
 
-#: src/app/page.tsx:14
+#: src/components/home-content.tsx:16
 msgid "The <0>Calm Predator</0> of Productivity"
 msgstr ""
 
@@ -803,18 +803,18 @@ msgid "Tool"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:160
-msgid "Typeform charges for success. SOND gives you unlimited responses."
-msgstr ""
+#~ msgid "Typeform charges for success. SOND gives you unlimited responses."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:192
-msgid "VAULT updates stock atomically with PostgreSQL CHECK constraints – no overselling"
-msgstr ""
+#~ msgid "VAULT updates stock atomically with PostgreSQL CHECK constraints – no overselling"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:264
-msgid "VISTA reads directly from the same PostgreSQL database as your apps – no ETL"
-msgstr ""
+#~ msgid "VISTA reads directly from the same PostgreSQL database as your apps – no ETL"
+#~ msgstr ""
 
-#: src/app/page.tsx:84
+#: src/components/home-content.tsx:86
 msgid "Want to leave? One click. Your data belongs to you."
 msgstr ""
 
@@ -826,13 +826,13 @@ msgstr ""
 msgid "Which apps interest you?"
 msgstr ""
 
-#: src/app/alternatives/[slug]/page.tsx:331
+#: src/components/kill-sheet-content.tsx:53
 msgid "Why {name} Fails"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:75
-msgid "Works natively with all 10 Ataqu apps"
-msgstr ""
+#~ msgid "Works natively with all 10 Ataqu apps"
+#~ msgstr ""
 
 #: src/components/waitlist-form.tsx:85
 msgid "You're on the list!"
@@ -843,14 +843,14 @@ msgid "you@company.com"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:104
-msgid "Your data is indexed and searchable instantly"
-msgstr ""
+#~ msgid "Your data is indexed and searchable instantly"
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:32
-msgid "Your data is mapped instantly"
-msgstr ""
+#~ msgid "Your data is mapped instantly"
+#~ msgstr ""
 
-#: src/app/alternatives/[slug]/page.tsx:355
+#: src/components/kill-sheet-content.tsx:77
 msgid "Your Escape Hatch"
 msgstr ""
 
@@ -859,9 +859,9 @@ msgid "Your name"
 msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:64
-msgid "Zapier is a brittle bridge. SPARK is the native foundation."
-msgstr ""
+#~ msgid "Zapier is a brittle bridge. SPARK is the native foundation."
+#~ msgstr ""
 
 #: src/app/alternatives/[slug]/page.tsx:112
-msgid "Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps."
-msgstr ""
+#~ msgid "Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps."
+#~ msgstr ""

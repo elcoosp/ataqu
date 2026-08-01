@@ -7,3 +7,4 @@ target
 local.db
 .next
 reddit-session.json
+tsconfig.tsbuildinfo
