@@ -310,7 +310,7 @@ export function KillSheetContent({ slug }: Props) {
               window.location.href = `/alternatives/${value}`;
             }}
           >
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Select competitor" />
             </SelectTrigger>
             <SelectContent>

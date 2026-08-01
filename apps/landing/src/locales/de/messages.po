@@ -145,9 +145,9 @@ msgstr ""
 msgid "3‑year mandatory"
 msgstr ""
 
-#: src/components/kill-sheet-content.tsx:43
-#~ msgid "3‑year Total Cost of Ownership"
-#~ msgstr ""
+#: src/components/kill-sheet-content.tsx:334
+msgid "3‑year Total Cost of Ownership"
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:41
 msgid "30% price hike in 2025 with no warning"
@@ -190,6 +190,7 @@ msgid "Apps don't share a native database – integrations are slow"
 msgstr ""
 
 #: src/components/home-content.tsx:102
+#: src/components/kill-sheet-content.tsx:394
 msgid "Be first to access the suite. No credit card required."
 msgstr ""
 
@@ -201,7 +202,7 @@ msgstr ""
 msgid "Brittle webhooks that break when APIs change"
 msgstr ""
 
-#: src/components/architecture-proof.tsx:14
+#: src/components/architecture-proof.tsx:15
 msgid "Built in Rust"
 msgstr ""
 
@@ -257,7 +258,7 @@ msgstr ""
 msgid "Cancel Zoho One with 1 click"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:199
+#: src/components/waitlist-form.tsx:200
 msgid "CEO, CTO, Head of Ops…"
 msgstr ""
 
@@ -357,9 +358,9 @@ msgstr ""
 msgid "Drop the files into PIVOT"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:98
-#~ msgid "Email address"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:138
+msgid "Email address"
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:71
 msgid "Exactly‑once delivery guaranteed by PostgreSQL advisory locks"
@@ -456,9 +457,9 @@ msgstr ""
 msgid "Hidden paywalls for reporting and automation"
 msgstr ""
 
-#: src/components/kill-sheet-content.tsx:65
-#~ msgid "How Ataqu Solves It"
-#~ msgstr ""
+#: src/components/kill-sheet-content.tsx:356
+msgid "How Ataqu Solves It"
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:14
 msgid "HubSpot"
@@ -511,7 +512,9 @@ msgstr ""
 
 #: src/components/home-content.tsx:31
 #: src/components/home-content.tsx:99
-#: src/components/waitlist-form.tsx:208
+#: src/components/kill-sheet-content.tsx:383
+#: src/components/kill-sheet-content.tsx:391
+#: src/components/waitlist-form.tsx:217
 msgid "Join the waitlist"
 msgstr ""
 
@@ -527,9 +530,9 @@ msgstr ""
 msgid "Messages are siloed from your CRM"
 msgstr ""
 
-#: src/components/kill-sheet-content.tsx:80
-#~ msgid "Migrating from {name} is 1 click away."
-#~ msgstr ""
+#: src/components/kill-sheet-content.tsx:371
+msgid "Migrating from {name} is 1 click away."
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:118
 msgid "Modern dark‑mode UI, built for 2026"
@@ -547,13 +550,13 @@ msgstr ""
 msgid "Monthly Cost"
 msgstr ""
 
-#: src/components/architecture-proof.tsx:28
+#: src/components/architecture-proof.tsx:29
 msgid "MVCC, JSONB, outbox with LISTEN/NOTIFY – true concurrency."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:135
-#~ msgid "Name (optional)"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:180
+msgid "Name (optional)"
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:256
 msgid "Native connections to all 10 apps – revenue, inventory, support, and more"
@@ -587,7 +590,7 @@ msgstr ""
 msgid "Native relations to CINQ deals and VAULT products"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:114
+#: src/components/waitlist-form.tsx:115
 msgid "Network error. Please check your connection."
 msgstr ""
 
@@ -595,9 +598,9 @@ msgstr ""
 msgid "No 3‑year lock‑in. No retention specialists. Just 1 click."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:167
-#~ msgid "No credit card required. Early access only."
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:220
+msgid "No credit card required. Early access only."
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:66
 msgid "No exactly‑once delivery – duplicates or drops data"
@@ -715,11 +718,11 @@ msgstr ""
 msgid "PIVOT uses PostgreSQL tsvector with GIN indexes – sub‑50ms search"
 msgstr ""
 
-#: src/components/architecture-proof.tsx:25
+#: src/components/architecture-proof.tsx:26
 msgid "PostgreSQL native"
 msgstr ""
 
-#: src/components/architecture-proof.tsx:39
+#: src/components/architecture-proof.tsx:40
 msgid "PostgreSQL tsvector with GIN indexes, updated asynchronously."
 msgstr ""
 
@@ -743,9 +746,9 @@ msgstr ""
 msgid "Requires data engineering – ETL pipelines are complex and fragile"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:148
-#~ msgid "Role (optional)"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:193
+msgid "Role (optional)"
+msgstr ""
 
 #: src/components/home-content.tsx:55
 msgid "See full comparison →"
@@ -755,8 +758,12 @@ msgstr ""
 msgid "Select your trigger (e.g., 'CINQ deal won')"
 msgstr ""
 
-#: src/components/architecture-proof.tsx:17
+#: src/components/architecture-proof.tsx:18
 msgid "Single binary, no bloat, compile‑time safety."
+msgstr ""
+
+#: src/components/architecture-proof.tsx:58
+msgid "Single database, unified outbox with LISTEN/NOTIFY – instant cross‑app events"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:37
@@ -775,7 +782,7 @@ msgstr ""
 msgid "Slow to update stock levels in real time"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:111
+#: src/components/waitlist-form.tsx:112
 msgid "Something went wrong. Please try again."
 msgstr ""
 
@@ -795,11 +802,11 @@ msgstr ""
 msgid "Stop paying per user, per task, and per add‑on. Switch to a single, flat rate."
 msgstr ""
 
-#: src/components/architecture-proof.tsx:36
+#: src/components/architecture-proof.tsx:37
 msgid "Sub‑50ms search"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:208
+#: src/components/waitlist-form.tsx:215
 msgid "Submitting…"
 msgstr ""
 
@@ -851,27 +858,27 @@ msgstr ""
 msgid "Want to leave? One click. Your data belongs to you."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:88
-#~ msgid "We'll send you early access and exclusive updates."
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:128
+msgid "We'll send you early access and exclusive updates."
+msgstr ""
 
-#: src/components/waitlist-form.tsx:112
-#~ msgid "Which apps interest you?"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:152
+msgid "Which apps interest you?"
+msgstr ""
 
-#: src/components/kill-sheet-content.tsx:53
-#~ msgid "Why {name} Fails"
-#~ msgstr ""
+#: src/components/kill-sheet-content.tsx:344
+msgid "Why {name} Fails"
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:72
 msgid "Works natively with all 10 Ataqu apps"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:85
-#~ msgid "You're on the list!"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:125
+msgid "You're on the list!"
+msgstr ""
 
-#: src/components/waitlist-form.tsx:144
+#: src/components/waitlist-form.tsx:145
 msgid "you@company.com"
 msgstr ""
 
@@ -883,11 +890,11 @@ msgstr ""
 msgid "Your data is mapped instantly"
 msgstr ""
 
-#: src/components/kill-sheet-content.tsx:77
-#~ msgid "Your Escape Hatch"
-#~ msgstr ""
+#: src/components/kill-sheet-content.tsx:368
+msgid "Your Escape Hatch"
+msgstr ""
 
-#: src/components/waitlist-form.tsx:186
+#: src/components/waitlist-form.tsx:187
 msgid "Your name"
 msgstr ""
 

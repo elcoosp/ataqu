@@ -21,6 +21,20 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Ataqu – The Calm Predator of Productivity",
   description: "10 essential apps, one unified price. No lock‑in, no per‑user fees. Join the waitlist.",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "Ataqu – The Calm Predator of Productivity",
+    description: "10 essential apps, one unified price. No lock‑in, no per‑user fees.",
+    type: "website",
+    url: "https://ataqu.so",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ataqu – The Calm Predator of Productivity",
+    description: "10 essential apps, one unified price. No lock‑in, no per‑user fees.",
+  },
 };
 
 export default function RootLayout({
