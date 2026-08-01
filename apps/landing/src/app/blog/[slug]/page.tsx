@@ -149,7 +149,7 @@ export default function BlogPostPage() {
       </div>
       <hr className="my-8 border-border" />
       <article className="prose prose-invert prose-sm max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
           {post.content}
         </ReactMarkdown>
       </article>
