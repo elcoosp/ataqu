@@ -15,6 +15,22 @@
 //!
 //! The repository is fully functional for the current scope and passes all tests.
 //!
+//!
+//! # Error Mapping Limitation
+//!
+//! The domain `AuthError` enum lacks a generic database error variant.
+//! As a result, any database error (e.g., connection failure, constraint violation)
+//! is currently mapped to `AuthError::UserNotFound`. This is a temporary limitation
+//! that should be addressed by adding a `Database(String)` variant to `AuthError`
+//! in the domain crate. Once that is done, this repository can propagate the
+//! actual error details.
+//!
+//! Additionally, this repository uses a global Tokio runtime to block on async
+//! database operations because the domain trait is synchronous. In a future
+//! refactoring, the trait should be made async to avoid blocking.
+//!
+//! The repository is fully functional for the current scope and passes all tests.
+//!
 
 use once_cell::sync::OnceCell;
 use sea_orm::{
