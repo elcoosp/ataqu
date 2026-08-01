@@ -4,7 +4,8 @@ import { Trans } from "@lingui/react/macro";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MDXRemote } from "next-mdx-remote/rsc";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { Post } from "@/lib/posts";
 
 export default function BlogPostPage() {
@@ -68,7 +69,9 @@ export default function BlogPostPage() {
       </div>
       <hr className="my-8 border-border" />
       <article className="prose prose-invert prose-sm max-w-none">
-        <MDXRemote source={post.content} />
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {post.content}
+        </ReactMarkdown>
       </article>
     </div>
   );
