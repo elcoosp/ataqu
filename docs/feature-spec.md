@@ -41,13 +41,13 @@
   | **Tasks** (to-dos, assignments, due dates) | P1 | ~70% of users. Important but not blocking. |
   | **Lead Scoring** (basic — rules-based, not AI) | P1 | ~60% of users. We do NOT need HubSpot's AI scoring. |
   | **Reporting** (dashboards, revenue, pipeline) | P1 | ~50% of users. VISTA handles this natively. |
-  | **Email Tracking** (opens, clicks) — DoS‑isolated with atomic spill | P1 | ~50% of users. Table stakes for sales. Implemented with bounded channel, atomic JSONL file rotation (nanos+uuid, process exactly once). |
+  | **Email Tracking** (opens, clicks) — DoS‑isolated with atomic spill | P0 | ~50% of users. Table stakes for sales. Implemented with bounded channel, atomic JSONL file rotation (nanos+uuid, process exactly once). |
   | **Workflows** (basic automations) | P1 | ~40% of users. SPARK handles this. |
   | **AI Sales Assistant** | Ignored | HubSpot's core differentiator. We are not an AI company. |
   | **Smart Deal Progression** | Ignored | Analyzes call transcripts — overkill for SMBs. |
   | **Data Hub** | Ignored | Enterprise data unification. Bloat. |
   | **Sequences** (automated follow-up emails) | Ignored | Niche. Can be built in SPARK if needed. |
-  | **Custom Fields** | P1 | Stored as `JSONB` with graceful degradation: `@>` exact match (indexed), `->>` ILIKE single-field (scan), `jsonb_each_text` cross-field (expensive, rate-limited & result‑capped). No EAV. Column promotion for high-traffic fields. |
+  | **Custom Fields** | P0 | Stored as `JSONB` with graceful degradation: `@>` exact match (indexed), `->>` ILIKE single-field (scan), `jsonb_each_text` cross-field (expensive, rate-limited & result‑capped). No EAV. Column promotion for high-traffic fields. |
   | **PII Data** (email, phone) | P0 | **Compile‑time redaction:** `Email`/`PhoneNumber` newtypes with `Debug`/`Display` as `[REDACTED]`. **No `Serialize` impl on newtypes** — serialization is handled by `ApiEmail` wrapper at the API boundary. |
 
   **Ataqu Advantage:** CINQ is not "HubSpot with AI." CINQ is "HubSpot without the bloat, without the 3-year lock-in, without the per-user tax, and with native integration to DIAL and SPARK." We win on speed, price, integration, and compile‑time PII safety — not AI gimmicks.

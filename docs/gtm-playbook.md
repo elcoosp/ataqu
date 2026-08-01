@@ -100,7 +100,7 @@ We build hundreds of programmatic landing pages targeting exact-match competitor
 
 To reach the CEO (Alex), we must first convince the CTO (Sam).
 
-- **Hacker News / Reddit:** We publish deep-dive architectural posts (e.g., *"How we built an event-driven outbox with SQLite update_hook in Rust"*).
+- **Hacker News / Reddit:** We publish deep-dive architectural posts (e.g., *"How we built an event-driven outbox with PostgreSQL `LISTEN/NOTIFY` in Rust"*).
 - **The Play:** Developers read the post, respect the engineering, visit the site, and realize it replaces their entire fragmented stack for $49. They become internal champions, bringing Ataqu to the CEO.
 
 **2026 Developer Marketing Insight:** PLG is now the go-to strategy for scaling developer tools. Developers prefer hands-on experiences over traditional sales tactics. The PLG funnel for developer tools moves through four key stages: discovery, activation, retention, and expansion.
@@ -148,7 +148,7 @@ Outbound copy must be empathetic, factual, and highly specific. No generic "can 
 >
 > Just following up. I know switching tools sounds like a headache.
 >
-> Unlike Zapier integrations, Ataqu is built as a modular monolith. Data flows natively via a local outbox driven by SQLite update_hook callbacks – zero race conditions, zero brittle webhooks.
+> Unlike Zapier integrations, Ataqu is built as a modular monolith. Data flows natively via a local outbox driven by PostgreSQL `LISTEN/NOTIFY` callbacks – zero race conditions, zero brittle webhooks.
 >
 > You can export all your data to CSV/JSON in 1 click if you hate it.
 >

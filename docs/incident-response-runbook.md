@@ -121,7 +121,7 @@ When an alert fires, the Responder uses these specific playbooks to diagnose and
 5.  Temporarily increase pool sizes in `ataqu-infra-pools` config and reload.
 6.  If `max_connections=40` is consistently hit, investigate abnormal traffic patterns.
 
-### Playbook E: Idempotency Advisory Lock Timeouts (`ataqu_idempotency_lock_timeout_total > 0`)
+### Playbook E: Idempotency Advisory Lock Timeouts (`ataqu_idempotency_lock_timeout_total_total > 0`)
 **Symptom:** Requests are failing with `503 Service Unavailable` + `Retry-After: 5` due to lock acquisition timeout.
 **Root Cause:** A leader is holding the advisory lock for longer than 10 seconds. This could be due to a slow query, a long-running transaction, or a deadlock.
 **Mitigation Steps:**
@@ -131,7 +131,7 @@ When an alert fires, the Responder uses these specific playbooks to diagnose and
 4.  If timeouts are frequent, check the domain logic for expensive operations inside the idempotency transaction. Offload non‑critical work to background sagas if possible.
 5.  Monitor `ataqu_idempotency_cache_hit_ratio` — a low ratio indicates many first-time requests, which is normal; a sudden drop may indicate cache eviction issues.
 
-### Playbook F: GDPR Deletion Saga Failure (`ataqu_gdpr_deletion_failed_total > 0`)
+### Playbook F: GDPR Deletion Saga Failure (`ataqu_gdpr_deletion_failed_total_total > 0`)
 **Symptom:** A GDPR tenant deletion has stalled or failed after retries.
 **Root Cause:** The saga encountered a permanent error (e.g., S3 permission issue, DB constraint violation).
 **Mitigation Steps:**
