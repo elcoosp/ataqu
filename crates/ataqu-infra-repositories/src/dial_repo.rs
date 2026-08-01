@@ -55,7 +55,7 @@ pub trait PresenceStore {
 // SeaORM Entity (Model)
 // ----------------------------------------------------------------------
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "messages", schema = "dial")]
+#[sea_orm(table_name = "messages", schema_name = "dial")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
@@ -104,6 +104,9 @@ impl DialMessageRepository for DialMessageRepositoryImpl {
         txn: &mut DatabaseTransaction,
         commands: Vec<MessageInsertCommand>,
     ) -> Result<BatchResult<Message>, RepositoryError> {
+        // Collect IDs before moving commands
+        let ids: Vec<Uuid> = commands.iter().map(|cmd| cmd.id).collect();
+
         let models: Vec<ActiveModel> = commands
             .into_iter()
             .map(|cmd| ActiveModel {
@@ -122,10 +125,8 @@ impl DialMessageRepository for DialMessageRepositoryImpl {
             .await
             .map_err(|e| RepositoryError::from(e))?;
 
-        // Since we have the IDs from the commands, return them as successes.
-        let successes: Vec<Uuid> = commands.iter().map(|cmd| cmd.id).collect();
         Ok(BatchResult {
-            successes,
+            successes: ids,
             failures: Vec::new(),
         })
     }
@@ -170,7 +171,7 @@ impl PresenceStore for InMemoryPresenceStore {
         let users = self
             .store
             .get(&tenant_id)
-            .map(|set| set.iter().copied().collect())
+            .map(|set| set.iter().map(|r| *r).collect())
             .unwrap_or_default();
         debug!(?tenant_id, count = users.len(), "Retrieved online users");
         Ok(users)

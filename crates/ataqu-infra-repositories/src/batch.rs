@@ -3,7 +3,6 @@
 
 use sea_orm::{DatabaseTransaction, DbErr};
 use std::future::Future;
-use std::pin::Pin;
 use uuid::Uuid;
 
 /// Result of a batch insert operation.
@@ -34,7 +33,7 @@ where
     let successes: Vec<Uuid> = items
         .iter()
         .enumerate()
-        .map(|(i, _)| Uuid::new_v4())
+        .map(|(_, _)| Uuid::new_v4())
         .collect();
     Ok(BatchResult {
         successes,

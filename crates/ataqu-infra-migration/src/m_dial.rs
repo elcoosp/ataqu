@@ -1,4 +1,5 @@
 use sea_orm_migration::prelude::*;
+use sea_orm_migration::sea_orm::{DatabaseBackend, Statement};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -6,174 +7,127 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Create DIAL schema if not exists
+        // Create schema
         manager
-            .execute_raw(r#"CREATE SCHEMA IF NOT EXISTS dial;"#, &[])
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "CREATE SCHEMA IF NOT EXISTS dial".to_owned(),
+            ))
             .await?;
 
         // Create channels table
         manager
-            .create_table(
-                Table::create()
-                    .table(TableRef::new("dial", "channels"))
-                    .if_not_exists()
-                    .col(ColumnDef::new(Alias::new("id")).uuid().primary_key())
-                    .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("name")).string().not_null())
-                    .col(
-                        ColumnDef::new(Alias::new("created_at"))
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default("NOW()"),
-                    )
-                    .col(
-                        ColumnDef::new(Alias::new("updated_at"))
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default("NOW()"),
-                    )
-                    .to_owned(),
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                r#"
+                CREATE TABLE IF NOT EXISTS dial.channels (
+                    id UUID PRIMARY KEY,
+                    tenant_id UUID NOT NULL,
+                    name TEXT NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                "#,
+            ))
             .await?;
 
         // Create messages table
         manager
-            .create_table(
-                Table::create()
-                    .table(TableRef::new("dial", "messages"))
-                    .if_not_exists()
-                    .col(ColumnDef::new(Alias::new("id")).uuid().primary_key())
-                    .col(ColumnDef::new(Alias::new("channel_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("sender_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("content")).text().not_null())
-                    .col(
-                        ColumnDef::new(Alias::new("sent_at"))
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default("NOW()"),
-                    )
-                    .col(
-                        ColumnDef::new(Alias::new("created_at"))
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default("NOW()"),
-                    )
-                    .foreign_key(
-                        ForeignKey::create()
-                            .from(TableRef::new("dial", "messages"), Alias::new("channel_id"))
-                            .to(TableRef::new("dial", "channels"), Alias::new("id"))
-                            .on_delete(ForeignKeyAction::Cascade),
-                    )
-                    .to_owned(),
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                r#"
+                CREATE TABLE IF NOT EXISTS dial.messages (
+                    id UUID PRIMARY KEY,
+                    channel_id UUID NOT NULL REFERENCES dial.channels(id) ON DELETE CASCADE,
+                    tenant_id UUID NOT NULL,
+                    sender_id UUID NOT NULL,
+                    content TEXT NOT NULL,
+                    sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                "#,
+            ))
             .await?;
 
-        // Enable RLS on both tables
+        // Enable RLS
         manager
-            .execute_raw(
-                r#"ALTER TABLE dial.channels ENABLE ROW LEVEL SECURITY;"#,
-                &[],
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "ALTER TABLE dial.channels ENABLE ROW LEVEL SECURITY",
+            ))
             .await?;
         manager
-            .execute_raw(
-                r#"ALTER TABLE dial.messages ENABLE ROW LEVEL SECURITY;"#,
-                &[],
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "ALTER TABLE dial.messages ENABLE ROW LEVEL SECURITY",
+            ))
             .await?;
 
-        // Create RLS policies with IF NOT EXISTS
-        let policies = vec![
-            ("dial.channels", "channels_tenant_policy"),
-            ("dial.messages", "messages_tenant_policy"),
-        ];
+        // Create policies (IF NOT EXISTS)
+        let policies = [("dial.channels", "channels"), ("dial.messages", "messages")];
         for (table, name) in policies {
-            for (op, using_or_check) in [
-                ("SELECT", "USING"),
-                ("INSERT", "WITH CHECK"),
-                ("UPDATE", "USING"),
-                ("DELETE", "USING"),
-            ] {
+            for op in ["SELECT", "INSERT", "UPDATE", "DELETE"] {
                 let policy_name = format!("{}_{}_policy", name, op.to_lowercase());
-                let check_clause = if op == "INSERT" || op == "UPDATE" {
-                    format!("WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)")
-                } else {
-                    format!("USING (tenant_id = current_setting('app.tenant_id')::uuid)")
-                };
-                // For UPDATE we need both USING and WITH CHECK
-                let sql = if op == "UPDATE" {
+                let sql = if op == "INSERT" {
+                    format!(
+                        r#"CREATE POLICY IF NOT EXISTS {policy_name} ON {table} FOR {op}
+                           WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)"#
+                    )
+                } else if op == "UPDATE" {
                     format!(
                         r#"CREATE POLICY IF NOT EXISTS {policy_name} ON {table} FOR {op}
                            USING (tenant_id = current_setting('app.tenant_id')::uuid)
-                           WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid);"#
+                           WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)"#
                     )
                 } else {
                     format!(
                         r#"CREATE POLICY IF NOT EXISTS {policy_name} ON {table} FOR {op}
-                           {check_clause};"#
+                           USING (tenant_id = current_setting('app.tenant_id')::uuid)"#
                     )
                 };
-                manager.execute_raw(&sql, &[]).await?;
+                manager
+                    .execute(Statement::from_string(DatabaseBackend::Postgres, sql))
+                    .await?;
             }
         }
 
         // Create indexes
         manager
-            .create_index(
-                Index::create()
-                    .name("idx_channels_tenant")
-                    .table(TableRef::new("dial", "channels"))
-                    .col(Alias::new("tenant_id"))
-                    .to_owned(),
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "CREATE INDEX IF NOT EXISTS idx_channels_tenant ON dial.channels (tenant_id)",
+            ))
             .await?;
         manager
-            .create_index(
-                Index::create()
-                    .name("idx_messages_tenant_channel")
-                    .table(TableRef::new("dial", "messages"))
-                    .col(Alias::new("tenant_id"))
-                    .col(Alias::new("channel_id"))
-                    .to_owned(),
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "CREATE INDEX IF NOT EXISTS idx_messages_tenant_channel ON dial.messages (tenant_id, channel_id)",
+            ))
             .await?;
         manager
-            .create_index(
-                Index::create()
-                    .name("idx_messages_sent_at")
-                    .table(TableRef::new("dial", "messages"))
-                    .col(Alias::new("sent_at"))
-                    .to_owned(),
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "CREATE INDEX IF NOT EXISTS idx_messages_sent_at ON dial.messages (sent_at)",
+            ))
             .await?;
 
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Drop tables (cascade will drop foreign keys)
         manager
-            .drop_table(
-                Table::drop()
-                    .table(TableRef::new("dial", "messages"))
-                    .to_owned(),
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "DROP TABLE IF EXISTS dial.messages",
+            ))
             .await?;
         manager
-            .drop_table(
-                Table::drop()
-                    .table(TableRef::new("dial", "channels"))
-                    .to_owned(),
-            )
+            .execute(Statement::from_string(
+                DatabaseBackend::Postgres,
+                "DROP TABLE IF EXISTS dial.channels",
+            ))
             .await?;
+        // Optionally drop schema? We'll keep it.
         Ok(())
     }
-}
-
-fn TableRef(schema: &str, table: &str) -> sea_orm_migration::schema::TableRef {
-    sea_orm_migration::schema::TableRef::SchemaTable(
-        sea_orm::sea_orm::SchemaName::new(schema.to_owned()),
-        sea_orm::sea_orm::TableName::new(table.to_owned()),
-    )
 }
