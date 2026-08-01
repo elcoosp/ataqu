@@ -1,6 +1,6 @@
-# ATAQU AGENT PROTOCOL — Definitive Edition (v10.0)
+# ATAQU AGENT PROTOCOL — Definitive Edition (v10.1)
 
-**Version:** 10.0  
+**Version:** 10.1  
 **Date:** 2026-08-01  
 **Language:** English  
 **Project:** Ataqu (Unified SMB OS)  
@@ -37,18 +37,21 @@ You never hack around a problem. You design a clean solution that fits the archi
 
 ---
 
-## 1. The Worktree & Environment Setup (First Script)
+## 1. The Worktree & Environment Setup (Mandatory Preamble for Every Script)
 
-**Your first script must create an isolated Git worktree** if not already provided.
+**Every script** you produce **must start with the following preamble**. This ensures that an isolated Git worktree exists and that all subsequent commands run inside it. The branch name is **provided by the dispatcher** (e.g., as the first argument `$1`) and is part of the task context.
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 export PAGER=cat
 
-REPO_ROOT="<ABSOLUTE_PATH_TO_REPO>"   # e.g., /home/user/ataqu
-BRANCH="<task-identifier>"            # e.g., agent-1/dial-pagination
-WORKTREE_PATH="../ataqu-wt/ataqu-${BRANCH}"    # e.g., ../ataqu-agent-1-dial-pagination
+# ----------------------------------------------------------------------
+# Mandatory worktree preamble
+# ----------------------------------------------------------------------
+REPO_ROOT="."                         # assume script is run from repo root
+BRANCH="${1:-<task-identifier>}"      # e.g., agent-1/dial-pagination
+WORKTREE_PATH="../ataqu-wt/ataqu-${BRANCH}"
 
 cd "$REPO_ROOT"
 if [ -d "$WORKTREE_PATH" ]; then
@@ -56,15 +59,13 @@ if [ -d "$WORKTREE_PATH" ]; then
 else
   git --no-pager worktree add "$WORKTREE_PATH" -b "$BRANCH"
 fi
-echo "WORKTREE_PATH=$WORKTREE_PATH" > /tmp/ataqu-wt.env
-echo "BRANCH=$BRANCH" >> /tmp/ataqu-wt.env
-echo "✅ Worktree ready: $WORKTREE_PATH"
+cd "$WORKTREE_PATH"
+# ----------------------------------------------------------------------
 ```
 
-All subsequent scripts must start with:
-```bash
-cd "$WORKTREE_PATH"
-```
+**Important:** The script **must** be invoked with the branch name as its first argument. If your environment does not pass it, you can set it via an environment variable (e.g., `export BRANCH=...`) and read it as `BRANCH="${BRANCH:-<default>}"`. However, the recommended approach is to pass it as an argument.
+
+All subsequent commands in the script assume you are now inside the worktree.
 
 ---
 
@@ -90,13 +91,14 @@ You **MUST** study this context to understand the codebase’s patterns, naming,
 
 Each iteration produces **one self‑contained bash script** that does **all** of the following in order:
 
-1. **Write the code** (tests + implementation) using **patches** (never rewrite entire files).
-2. **Run scoped quality gates** (only the crates/apps listed in boundaries).
-3. **If gates pass → COMMIT immediately** (this is the “cohabitation” step).
-4. **Run mandatory self‑review** following the **Harsh Code Plan Critic** framework.
-5. **Score the code** on each dimension (1–10).
-6. **If weighted score < 10** → emit a **surgical fix commit** and repeat steps 2–5.
-7. Once score = 10/10 → push the branch and **create the PR**.
+1. **Include the mandatory worktree preamble** (see Section 1).
+2. **Write the code** (tests + implementation) using **patches** (never rewrite entire files).
+3. **Run scoped quality gates** (only the crates/apps listed in boundaries).
+4. **If gates pass → COMMIT immediately** (this is the “cohabitation” step).
+5. **Run mandatory self‑review** following the **Harsh Code Plan Critic** framework.
+6. **Score the code** on each dimension (1–10).
+7. **If weighted score < 10** → emit a **surgical fix commit** and repeat steps 2–5.
+8. Once score = 10/10 → push the branch and **create the PR**.
 
 ---
 
@@ -279,7 +281,8 @@ Required Fixes: <bullet list of actionable items>
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$WORKTREE_PATH"
+# Include the mandatory worktree preamble (see Section 1)
+# ... (preamble here)
 
 echo "🔧 Adding missing empty‑check guard in next_cursor"
 python3 << 'PYEOF'
@@ -310,7 +313,8 @@ Only after the weighted score is **10/10**:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$WORKTREE_PATH"
+# Include the mandatory worktree preamble (see Section 1)
+# ... (preamble here)
 
 # Final gate check (optional, but good practice)
 cargo test -p $CRATES --all-features && pnpm test run
@@ -356,13 +360,14 @@ echo "✅ PR created"
 - ❌ Skip the self‑review or the iterative fix loop.
 - ❌ Use `git` commands without `--no-pager` or `export PAGER=cat`.
 - ❌ Add a new dependency (Rust crate or npm package) unless explicitly required by the task and justified in the self‑review.
+- ❌ **Forget to include the mandatory worktree preamble** – every script must start with it.
 
 ---
 
 ## 10. Summary of the Loop
 
 1. **Receive** the prompt (protocol + context + task).
-2. **Setup** worktree (if needed).
+2. **Write** a script that starts with the worktree preamble.
 3. **Write** tests + implementation using patches.
 4. **Run** scoped quality gates.
 5. **Commit** immediately (gates pass).
