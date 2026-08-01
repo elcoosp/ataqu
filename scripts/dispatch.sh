@@ -38,7 +38,6 @@ if [ ! -f "$TASK_FILE" ]; then
 fi
 
 # ---------- Extract Execution Boundaries ----------
-# Extracts all lines starting with - or * under the header, then strips markdown to get raw paths
 BOUNDARIES=$(awk '/^## Execution Boundaries/{f=1; next} /^## /{f=0} f' "$TASK_FILE" | grep -E '^[[:space:]]*[-*][[:space:]]+' | sed -E 's/^[[:space:]]*[-*][[:space:]]+//' | sed -E 's/^`//' | sed -E 's/`.*$//' | sed -E 's/[[:space:]]*$//' || true)
 
 if [ -z "$BOUNDARIES" ]; then
@@ -47,16 +46,14 @@ if [ -z "$BOUNDARIES" ]; then
   exit 1
 fi
 
-# Append || true so grep doesn't abort the script if no crates/apps are found
 CRATES=$(echo "$BOUNDARIES" | grep '^crates/' | cut -d'/' -f2 | sort -u || true)
 APPS=$(echo "$BOUNDARIES" | grep '^apps/' | cut -d'/' -f2 | sort -u || true)
 
 # ---------- Build Codebase Context ----------
 CONTEXT=""
 
-# 1. Inject files from boundaries (existing code the agent is allowed to touch)
+# 1. Inject files from boundaries
 for path in $BOUNDARIES; do
-  # Skip text that isn't a file path (like "All 27 crate Cargo.toml files")
   if [[ "$path" == *" "* ]]; then
     continue
   fi
@@ -165,6 +162,22 @@ if [ -n "$APPS" ]; then
   done
 fi
 
+# ---------- Inject Skills for tasks 021-030 (Repo & Migration) ----------
+SKILLS_CONTEXT=""
+if [[ "$TASK_ID" =~ ^TASK-0(2[1-9]|30)$ ]]; then
+  SKILL_FILE="$REPO_ROOT/docs/skills/sea-orm.md"
+  if [ -f "$SKILL_FILE" ]; then
+    SKILLS_CONTEXT="
+# ====================================================================
+#                   SEAORM 2.0 SKILL (for Repository/Migration tasks)
+# ====================================================================
+$(cat "$SKILL_FILE")
+"
+  else
+    echo "WARNING: SeaORM skill file not found at $SKILL_FILE – skipping injection"
+  fi
+fi
+
 # ---------- Assemble the Final Prompt ----------
 PROMPT="
 # ====================================================================
@@ -189,6 +202,11 @@ You always include tests for new functionality and edge cases.
 #                   AGENT PROTOCOL
 # ====================================================================
  $(cat "$PROTOCOL_FILE")
+
+# ====================================================================
+#                   SKILLS CONTEXT
+# ====================================================================
+$SKILLS_CONTEXT
 
 # ====================================================================
 #                   CODEBASE CONTEXT
@@ -229,5 +247,8 @@ echo "$BOUNDARIES" | sed 's/^/  - /'
 echo ""
 echo "📦 Detected Rust Crates: ${CRATES:-None}"
 echo "📱 Detected Frontend Apps: ${APPS:-None}"
+if [[ "$TASK_ID" =~ ^TASK-0(2[1-9]|30)$ ]] && [ -f "$REPO_ROOT/docs/skills/sea-orm.md" ]; then
+  echo "🧠 Injected SeaORM 2.0 skill"
+fi
 echo ""
 echo "✅ Prompt ready. Paste it into your conversation with the agent."
