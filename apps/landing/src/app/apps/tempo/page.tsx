@@ -8,24 +8,7 @@ export default function TempoPage() {
   return (
     <div className="container section-padding max-w-4xl mx-auto">
       <Link href="/" className="text-primary hover:underline text-sm inline-block mb-6">
-      <div className="flex justify-center my-4">
-        <Image
-          src="/apps/tempo.png"
-          alt="tempo"
-          width={80}
-          height={80}
-          className="rounded-full border border-primary/20"
-        />
-      </div>
-      <div className="flex justify-center my-4">
-        <Image
-          src="/apps/tempo.png"
-          alt="tempo"
-          width={80}
-          height={80}
-          className="rounded-full border border-primary/20"
-        />
-      </div>
+
         ← Back to home
       </Link>
 
