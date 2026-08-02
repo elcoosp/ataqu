@@ -318,12 +318,17 @@ name = "ataqu-application"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "ataqu-contracts",
  "ataqu-domain-dial",
+ "ataqu-domain-tempo",
  "ataqu-infra-idempotency",
+ "ataqu-infra-repositories",
  "ataqu-kernel",
+ "chrono",
  "metrics",
  "sea-orm",
  "serde",
+ "serde_json",
  "thiserror",
  "tracing",
  "uuid",
