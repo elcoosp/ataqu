@@ -41,6 +41,9 @@ export function Header() {
           <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
             <Trans>About</Trans>
           </Link>
+          <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Trans>FAQ</Trans>
+          </Link>
           <div className="relative group">
             <button className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
               <Trans>Alternatives</Trans>
