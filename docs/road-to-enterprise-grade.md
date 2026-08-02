@@ -89,41 +89,45 @@
 
 ---
 
-## 4. Phase 2: Reliability & High Availability – $0
+## 4. Phase 2: Reliability & High Availability – $0 (Simplified)
 
-### 4.1. Infrastructure – Stay on Hetzner, but Prepare for Scale
+### 4.1. Infrastructure – Scale Up, Not Out
 - **Action:**
-  - Keep the single VPS (CX42) for now.
-  - Set up **daily snapshots** (Hetzner offers free snapshot storage for a limited number of snapshots).
-  - Use `wal‑g` to stream WAL to **Hetzner Storage Box** (included free with some plans, otherwise €3/mo for 100GB).
-- **Cost:** €0–€3/mo.
+  - Keep the single VPS (Hetzner) – it's simpler and cheaper.
+  - When you hit capacity (CPU > 80% OR memory < 1GB for 5 minutes), **upgrade the VPS** to the next tier:
+    - CX42 (8 GB) → CX52 (16 GB) – ~30€/mo
+    - CX52 (16 GB) → CX62 (32 GB) – ~60€/mo
+    - CX62 (32 GB) → CX72 (64 GB) – ~120€/mo
+  - Upgrade procedure: snapshot → stop → change type → start (15 minutes total).
+- **Cost:** €30–120/mo (depending on tier).
 
-### 4.2. DNS‑Based Failover (Cheap “Multi‑Region”)
+### 4.2. High Availability (Optional – When Needed)
 - **Action:**
-  - Provision a second VPS in a different Hetzner location (e.g., Finland, US) for €4/mo.
-  - Replicate PostgreSQL asynchronously (use `pg_basebackup` + WAL streaming).
-  - Use **Cloudflare Load Balancer** (free) with health checks pointing to the primary IP. If primary fails, Cloudflare routes to the secondary.
-  - Manual failover: promote the secondary to primary (RTO ~10 minutes). Good enough for early enterprise.
-- **Cost:** €4/mo for standby VPS.
+  - If you need HA (e.g., for enterprise customers), provision a **second VPS** in a different location as a warm standby.
+  - Replicate PostgreSQL asynchronously with `pg_basebackup` + WAL streaming.
+  - Use **Cloudflare Load Balancer** (free) for failover.
+  - Manual failover: RTO ~10 minutes.
+- **Cost:** €4–30/mo for standby VPS (only needed at 500+ tenants).
 
 ### 4.3. Disaster Recovery Plan (DRP) – Document + Script
 - **Action:**
   - Write a one‑page DRP with RTO = 15 min, RPO = 1 min.
-  - Write a bash script that:
-    1. Provisions a new VPS (using Hetzner API, free).
-    2. Restores the latest WAL backup from S3.
-    3. Starts the Rust binary.
-  - Test it once a quarter.
+  - Use Hetzner snapshots + WAL‑G backups.
+  - Write a bash script that restores from the latest snapshot and WAL backup.
 - **Cost:** $0.
 
 ### 4.4. SLAs – Honor System
 - **Action:**
   - Define a 99.9% uptime SLA (no financial penalties until you have revenue).
-  - Publish monthly uptime reports on the Trust Center.
-  - When you get your first paid enterprise customer, offer a **Service Credit** (e.g., 10% refund for downtime exceeding 1 hour) – this costs you nothing unless you actually have an outage.
+  - Publish monthly uptime reports.
+  - For enterprise customers, offer Service Credits (e.g., 10% refund for >1 hour downtime).
 - **Cost:** $0.
 
----
+### 4.5. Why Not Managed Services (Neon/RDS, Upstash, etc.)?
+- **Cost:** Managed services would cost $100–200/mo vs. $30–120/mo for a bigger VPS.
+- **Complexity:** No double‑write, no data migration, no new code.
+- **When to reconsider:** Only if you exceed 1,500–2,000 tenants OR need automatic failover / geographic redundancy.
+
 
 ## 5. Phase 3: Administration & Governance – Build It Yourself
 

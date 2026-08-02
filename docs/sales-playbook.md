@@ -57,12 +57,12 @@ Our playbook consists of three specific scenarios designed to intercept buyer in
 4. **Action:** Give them a Loom video showing how to rebuild a common Zapier flow in SPARK in 60 seconds.
 
 ### Play 3: The "Wedge Expansion" (Land & Expand)
-**Trigger:** A user is paying $15/month for a single app (e.g., DIAL) but has a team of 20 people.
+**Trigger:** A user is on the Starter plan ($15/mo for one app) but has a team of 5+ people or is using multiple tools.
 **The Approach:** The "Stack Audit."
-1. **Acknowledge the Value:** "Glad you're enjoying DIAL. How is it comparing to Slack?"
-2. **The Audit:** Ask what other tools they are paying for. (CRM, Forms, Scheduling).
-3. **The Kill Shot:** "You're paying $15 for Ataqu DIAL, $50 for Calendly, $100 for HubSpot, and $30 for Typeform. You can replace all of that for $49 total. Same architecture. Same login. Plus, our TEMPO no‑show detection uses a sargable `ends_at` generated column with a 24‑hour upper bound – so follow‑ups happen within 15 minutes, not a day later."
-4. **Action:** Offer to manually enable a 14‑day trial of the other 9 apps for their team with one click.
+1. **Acknowledge the Value:** "Glad you're enjoying [App]. How is it comparing to your previous tool?"
+2. **The Audit:** Ask what other tools they are paying for. (CRM, Chat, Forms, Scheduling, Automation).
+3. **The Kill Shot:** "You're paying $15 for Ataqu Starter, plus $50 for Calendly, $100 for HubSpot, and $30 for Typeform. For just $39/mo, you can upgrade to Pro and get 5 apps – that covers your CRM, Chat, Scheduling, and more. Or go all‑in with Suite at $79 for all 10 apps. Same architecture, same login, no per‑user fees."
+4. **Action:** Offer to upgrade them to Pro for a 14‑day trial at no extra cost – they can test the additional apps and see the native integrations in action.
 
 ---
 
@@ -99,7 +99,7 @@ Once they answer, pivot immediately to the solution.
 
 | Objection | The SaaS Stereotype Response | The Ataqu "Calm Predator" Response |
 |-----------|------------------------------|------------------------------------|
-| **"It's so cheap, it must be a toy/not enterprise-ready."** | "We have an Enterprise tier for $5,000/mo with dedicated support." | "We run on a Rust monolithic backend with PostgreSQL and SeaORM 2.0. We are profitable at 4 tenants. We are cheap because our architecture doesn't bloat, not because we are a toy. Here is our public architecture doc." |
+| **"It's so cheap, it must be a toy/not enterprise-ready."** | "We have an Enterprise tier for $5,000/mo with dedicated support." | "We run on a Rust monolithic backend with PostgreSQL and SeaORM 2.0. We are profitable from day one. Our pricing is transparent and competitive – $15 for a single app, $39 for 5 apps, $79 for the full suite. We are cheap because our architecture doesn't bloat, not because we are a toy. Here is our public architecture doc." |
 | **"We are too deeply integrated with HubSpot/Zapier to switch."** | "We have a dedicated migration team to help you." | "You're integrated with Zapier because HubSpot doesn't natively talk to Slack. In Ataqu, they share the same PostgreSQL event bus with `LISTEN/NOTIFY`. The integration is already done. Here is the 5‑minute migration CSV guide." |
 | **"We need [Niche Feature X] that HubSpot has."** | "We can put that on our roadmap." | "Ataqu clones the 80% of features that 80% of companies use. If you need [Niche Feature X], you are paying HubSpot $1,000/month to subsidize it. Do you want to pay $1,000/mo for one feature, or $49/mo for everything else?" |
 | **"I need to sign a 12‑month contract for procurement."** | "We can do an annual contract with a 10% discount." | "We don't do annual contracts. We don't believe in lock‑in. Put it on your credit card. If procurement complains, tell them you just saved the company $15,000 this year." |

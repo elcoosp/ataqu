@@ -8,7 +8,7 @@
 ## The Messaging Architecture
 For each app, the messaging is structured across four strategic layers:
 1. **The Incumbent's Fatal Flaw:** Why the market leader is fundamentally broken (not just expensive, but architecturally or economically flawed).
-2. **The Ataqu Narrative (The Weapon):** How Ataqu solves this using the Unified OS philosophy.
+2. **The Ataqu Narrative (The Weapon):** How Ataqu solves this using the Unified OS philosophy. **Ataqu offers Starter ($15/mo for one app), Pro ($39/mo for 5 apps), and Suite ($79/mo for all 10) – no per‑user fees, no lock‑in.**
 3. **The Architectural Proof (Phase 1 – Rust + PostgreSQL + SeaORM 2.0 + Raw SQL):** The specific Rust, PostgreSQL, SeaORM, and raw SQL mechanisms that make our claim bulletproof.
 4. **The OS Compound Effect:** Why being part of Ataqu makes this app 10x more valuable than the standalone competitor.
 
@@ -18,7 +18,7 @@ For each app, the messaging is structured across four strategic layers:
 *Attacking: Notion, ClickUp, Airtable*
 
 * **The Incumbent's Fatal Flaw:** "The Blank Canvas Graveyard." Notion and ClickUp give you infinite flexibility, which leads to infinite configuration time. Worse, they treat your data like a walled garden—trapping your operational data behind fragile APIs and charging per-user for access.
-* **The Ataqu Narrative:** PIVOT is an opinionated, high-density operational database with a doc UI. We don't sell flexibility; we sell velocity. Your project data lives in the same PostgreSQL ecosystem as your CRM and Inventory. No APIs required.
+* **The Ataqu Narrative:** PIVOT is an opinionated, high-density operational database with a doc UI. We don't sell flexibility; we sell velocity. Your project data lives in the same PostgreSQL ecosystem as your CRM and Inventory. No APIs required. Available on Starter ($15/mo for one app), Pro ($39/mo for 5 apps), or Suite ($79/mo for all 10).
 * **The Architectural Proof:** PostgreSQL `tsvector` with GIN indexes, updated asynchronously via outbox consumers with `LISTEN/NOTIFY`. Search queries return sub-15ms results. Views are stored as `JSONB` on the `pivot_databases` table.
 * **The OS Compound Effect:** A PIVOT task isn't just a text block. It can be natively foreign-keyed to a CINQ deal and a VAULT product variant using shared IDs. When the deal closes, the PIVOT task auto-updates via the unified outbox with `LISTEN/NOTIFY`, RLS, and type‑safe `schema` ENUM. No Zapier required.
 * **Hero Copy:** *"Notion is a blank page. PIVOT is an operational database. Stop configuring your productivity tool and start running your business."*
@@ -36,7 +36,7 @@ For each app, the messaging is structured across four strategic layers:
 *Attacking: Slack, Intercom*
 
 * **The Incumbent's Fatal Flaw:** "The Context Chasm." Slack charges per active user, incentivizing you to limit who gets access. Intercom charges a fortune for customer support. Worse, your internal chat and your customer support are completely disconnected. Your support agents can't ping a developer without switching apps.
-* **The Ataqu Narrative:** DIAL unifies internal team communication and external customer support in one natively secure perimeter. Flat rate. No per-user taxes.
+* **The Ataqu Narrative:** DIAL unifies internal team communication and external customer support in one natively secure perimeter. Flat rate. No per-user taxes. **Available on Starter ($15/mo for one app), Pro ($39/mo for 5 apps), or Suite ($79/mo for all 10).**
 * **The Architectural Proof:** Native WebSocket ingestion handled directly in the Axum task. PostgreSQL `SAVEPOINT` isolation via SeaORM nested transactions + raw SQL ensures poison messages are cleanly isolated without lock contention. The unified outbox fan‑out delivers messages to cross‑app integrations via `LISTEN/NOTIFY` with RLS, Column-Level Privileges, and type‑safe `schema` ENUM. The generic `transactional_batch_insert` helper uses chunked fallback (100), transient errors abort immediately, and data violations preserve full DLQ payloads via `T: Clone`.
 * **The OS Compound Effect:** When a customer messages support in DIAL, the agent sees their CINQ deal history, their VAULT order status, and their PIVOT onboarding tasks in the same sidebar – all populated from the same PostgreSQL ecosystem.
 * **Hero Copy:** *"Slack taxes your team. Intercom taxes your customers. DIAL unites them. One secure perimeter, zero per-user fees."*
@@ -63,10 +63,10 @@ For each app, the messaging is structured across four strategic layers:
 *Attacking: HubSpot, Pipedrive*
 
 * **The Incumbent's Fatal Flaw:** "The Bait-and-Switch Tollbooth." HubSpot gives you a free CRM, then charges you $1,200/month to unlock basic reporting, workflow automations, and integrations. They use 3-year contracts to fund their bloated go-to-market motion.
-* **The Ataqu Narrative:** CINQ is an enterprise-grade CRM without the tollbooth. Every feature is included. $15/month (or part of the $49 suite). No 3-year lock-in. Cancel in 1 click.
+* **The Ataqu Narrative:** CINQ is an enterprise-grade CRM without the tollbooth. Every feature is included. **$15/month on Starter (one app), or included in Pro ($39/mo for 5 apps) and Suite ($79/mo for all 10).** No 3-year lock-in. Cancel in 1 click.
 * **The Architectural Proof:** Standard mutations strictly enforce `If-Match` ETags for optimistic concurrency. If two reps edit the same deal simultaneously, the database rejects the stale request with a `409 Conflict`. Zero data corruption. Custom fields are stored as `JSONB` with graceful degradation: `@>` exact match (indexed, fast), `->>` ILIKE single-field (scan, acceptable <100K rows), `jsonb_each_text` cross-field (expensive, rate-limited). Email tracking is completely isolated from the CRM database pool via a bounded `tokio::mpsc` channel with `try_send()` and atomic JSONL disk spill (nanos+uuid filenames, processed exactly once). PII fields (`Email`, `PhoneNumber`) are newtypes with `Debug`/`Display` as `[REDACTED]`; they do not implement `Serialize`; JSON serialization is handled by API wrapper structs.
 * **The OS Compound Effect:** The CRM is the source of truth. When a deal is won, it emits `CinqDealWonV1` to the unified outbox. VISTA updates the revenue chart, VAULT reserves stock, and DIAL creates an onboarding channel. All natively via the outbox relay with `LISTEN/NOTIFY`, RLS, and Column-Level Privileges.
-* **Hero Copy:** *"HubSpot's free CRM is a tollbooth. CINQ is the exit ramp. $15/month, zero lock-in, fully integrated with your entire stack. And your email tracking won't crash your database."*
+* **Hero Copy:** *"HubSpot's free CRM is a tollbooth. CINQ is the exit ramp. From $15/month, zero lock-in, fully integrated with your entire stack. And your email tracking won't crash your database."*
 
 ## 7. VAULT (Inventory & Stock)
 *Attacking: Cin7, inFlow*

@@ -62,7 +62,7 @@ We do not force users to buy the $49/mo bundle on day one. We lower the barrier 
 ### 3.1 The Wedge (Land)
 
 - **The Free Tier:** Unlimited time, strict usage limits. Used for single-users testing PIVOT or SOND.
-- **The Single-App Wedge ($3–$15/mo):** A team adopts CINQ (CRM) for $15/mo because it's cheaper than HubSpot and doesn't require a credit card. Other apps: DIAL $9/mo, PIVOT $15/mo, etc.
+- **The Starter Plan ($15/mo):** A team adopts one app (e.g., CINQ CRM) for $15/mo because it's cheaper than HubSpot and doesn't require a credit card. They get the full app with no per‑user fees.
 - **The Hook:** The UI is fast. The data is clean. The 1-click cancel button gives them psychological safety.
 
 **2026 PLG Insight:** Hybrid go-to-market models that blend PLG with sales-assisted expansion deliver outcomes like **36% free-to-paid conversion** and **3:1 LTV:CAC ratios**.
@@ -71,7 +71,7 @@ We do not force users to buy the $49/mo bundle on day one. We lower the barrier 
 
 - **The Native Integration Pull:** Once CINQ is adopted, the team realizes they need to notify the team when a deal is won. They see a native banner in CINQ: *"Connect DIAL to get deal-won notifications. 1 click."*
 - **The Zapier Eradication:** The user realizes they don't need Zapier anymore. They toggle on SPARK.
-- **The Suite Conversion:** The user calculates that adding 3 more apps only costs $20 more. They upgrade to the $49/mo bundle. The competitor stack is officially decommissioned.
+- **The Upgrade Path:** The user sees that they are using 3 apps individually. They are prompted: *"You're using 3 apps. Upgrade to Pro ($39/mo) and save $6/mo compared to 3 separate Starters. Or get all 10 with Suite ($79/mo)."* They upgrade, and the competitor stack is officially decommissioned.
 
 ---
 
@@ -165,7 +165,7 @@ Ataqu actively removes friction from the buying process. We weaponize ease of us
 
 ### 6.1 No "Contact Us" Walls
 
-Pricing is public. $3 for one app. $49 for all of them. If a user wants to upgrade, they enter a credit card. If they want to downgrade, they click a button. No human intervention is required or allowed.
+Pricing is public. **Starter: $15/mo for one app. Pro: $39/mo for 5 apps. Suite: $79/mo for all 10 apps.** If a user wants to upgrade, they enter a credit card. If they want to downgrade, they click a button. No human intervention is required or allowed.
 
 **2026 Pricing Context:** Seat-based revenue was predictable and easy to forecast—but consumption and API-based models require entirely different customer success motions. Ataqu's flat-rate pricing is a direct attack on the per-user tax model.
 
@@ -190,7 +190,7 @@ Once a user is in the platform, our primary goal is to help them cancel other to
 Inside the Ataqu app, there is a "Stack Decommission" checklist UI.
 - **The UI:** It lists common competitors (Slack, HubSpot, Zapier, Notion).
 - **The Action:** When a user activates the Ataqu equivalent (e.g., DIAL), they check off "Slack." The UI provides a step-by-step migration guide on how to export Slack data and cancel the Slack account.
-- **Gamification:** As they check off tools, a progress bar shows them how much money they are saving per month.
+- **Gamification:** As they check off tools, a progress bar shows them how much money they are saving per month – based on their current plan (Starter, Pro, or Suite). Upgrading to Pro or Suite unlocks even greater savings.
 
 **2026 Retention Context:** You're not managing adoption anymore—you're managing integration depth and workflow criticality. The Decommission Dashboard positions Ataqu as the hub, not just another tool.
 

@@ -17,7 +17,7 @@
 
 | Competitor | Typical Annual Cost (20-person team) | Main Problem |
 |------------|--------------------------------------|--------------|
-| **HubSpot** | $12k–$50k+ | 3-year lock-in, prices that keep climbing |
+| **HubSpot** | $12k–$50k+ | 3-year lock-in, prices that keep climbing. Ataqu offers Starter ($15/mo), Pro ($39/mo), Suite ($79/mo) – all with no lock‑in. |
 | **Slack** | $1,740–$3,000 | 30% price increase with no warning |
 | **Zapier** | $1,200+ (750 tasks/month) | Task limits, exploding costs, brittle APIs |
 | **Notion** | $2,400 | Steep learning curve, trapped data |
@@ -131,20 +131,20 @@ Stop paying for 10 tools that don't talk to each other. Ataqu gives you a comple
 ### 3.5 Value Propositions (Per App)
 | App | Value Prop |
 |-----|------------|
-| **PIVOT** | "Notion + ClickUp + Airtable for $15/month." |
+| **PIVOT** | "Notion + ClickUp + Airtable for just $15/month on Starter, or included in Pro/Suite." |
 | **SOND** | "Typeform without the response limits." |
-| **DIAL** | "Slack + Intercom for $9/month." |
+| **DIAL** | "Slack + Intercom for a fraction of the cost." |
 | **SPARK** | "Zapier without the task limits." |
 | **TEMPO** | "Calendly with more features." |
 | **CINQ** | "HubSpot at 1/10th the price." |
 | **VAULT** | "Cin7 without the lock‑in." |
-| **AEGIS** | "Okta for $3/month." |
-| **PAUSE** | "Personio for $4/month." |
-| **VISTA** | "Tableau for $9/month." |
+| **AEGIS** | "Okta for a fraction of the price." |
+| **PAUSE** | "Personio for a fraction of the price." |
+| **VISTA** | "Tableau for a fraction of the price." |
 
 ### 3.6 Pricing Narrative (Land & Expand)
-Do not just sell the $49 bundle. Lower the barrier to entry.
-> "Start with one app for $3. Upgrade to 5 for $29. Get the whole suite for $49. No per‑user fees. Ever."
+Do not just sell the Suite. Lower the barrier to entry.
+> "Start with one app for $15. Upgrade to 5 for $39. Get the whole suite for $79. No per‑user fees. Ever."
 
 ---
 
@@ -223,7 +223,7 @@ The "Calm Predator" essence must live inside the product. UX writing for Ataqu m
 ### 6.2 Landing Page — "Why Ataqu" Section
 > **"HubSpot charges $150/month. Slack charges $15/user. Zapier charges per task."**
 >
-> **Ataqu charges $49. For everything.**
+> **Ataqu charges $15 for one app, $39 for 5 apps, $79 for all 10. No per‑user fees.**
 >
 > - 10 business apps
 > - Native integrations (no Zapier)

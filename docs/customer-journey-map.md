@@ -65,7 +65,7 @@ This journey is mapped primarily for **Sam (The CTO)** and **Alex (The CEO)**. S
     *   SPARK (Automation) builder.
 *   **Emotional State:** Pleasantly surprised. "Wait, I don't need Zapier for this?"
 *   **❌ The Standard SaaS Friction:** "Upgrade to Premium to connect these apps." Or, redirecting to a Zapier OAuth screen.
-*   **✅ The Ataqu Reality:** The user clicks "Connect" and the integration is instant because the outbox with LISTEN/NOTIFY is already listening for events. RLS ensures each domain role can only insert events for its own schema—no spoofing. They see the data flow from CINQ to DIAL via the outbox relay. They upgrade to the $49 bundle directly inside the app via a single button.
+*   **✅ The Ataqu Reality:** The user clicks "Connect" and the integration is instant because the outbox with LISTEN/NOTIFY is already listening for events. RLS ensures each domain role can only insert events for its own schema—no spoofing. They see the data flow from CINQ to DIAL via the outbox relay. They upgrade to Pro ($39/mo for 5 apps) or Suite ($79/mo for all 10) directly inside the app via a single button.
 
 **Friction Audit Metric:** *Time‑to‑First‑Native‑Integration (TTFNI).* (How long until they connect two apps?).
 
@@ -78,9 +78,9 @@ This journey is mapped primarily for **Sam (The CTO)** and **Alex (The CEO)**. S
     *   Human Support (24h SLA).
 *   **Emotional State:** Relieved but cautious. "I hope exporting my data from HubSpot isn't a nightmare."
 *   **❌ The Standard SaaS Friction:** Abandoning the user after they pay. Forcing them to figure out migration alone.
-*   **✅ The Ataqu Reality:** Upon upgrading, the UI presents the "Decommission Checklist." It provides exact, step‑by‑step instructions (with screenshots) on how to export data from HubSpot/Slack/Notion. If the CSV format is weird, a human engineer replies within 24 hours to help parse it.
+*   **✅ The Ataqu Reality:** Upon upgrading to Pro ($39/mo) or Suite ($79/mo), the UI presents the "Decommission Checklist." It provides exact, step‑by‑step instructions (with screenshots) on how to export data from HubSpot/Slack/Notion. If the CSV format is weird, a human engineer replies within 24 hours to help parse it.
 
-**Friction Audit Metric:** *Decommission Rate.* (Percentage of $49 users who actively cancel a competitor within 30 days).
+**Friction Audit Metric:** *Decommission Rate.* (Percentage of Pro or Suite users who actively cancel a competitor within 30 days).
 
 ### Phase 6: Renewal or Churn (The Escape Hatch)
 **The Goal:** Retain through continuous value, not contracts. Make leaving painless if they want to go.
@@ -107,7 +107,7 @@ This matrix serves as the operational checklist for the Product, Engineering, an
 | **Onboarding** | Empty States with no direction | "No deals. Create one to start tracking revenue." | Product/Design |
 | **Expansion** | Complex integration setup | 1‑click native toggle via unified outbox with LISTEN/NOTIFY and RLS. No Zapier. | Engineering |
 | **Support** | Bots & Tier 1 support | Direct access to human engineers (24h SLA). | Customer Success |
-| **Billing** | Hidden fees & per‑user hikes | Flat $49. Forever. Transparent invoice. | Finance |
+| **Billing** | Hidden fees & per‑user hikes | Starter ($15/mo), Pro ($39/mo), Suite ($79/mo). Flat, transparent, no per‑user fees. | Finance |
 | **Churn** | Cancellation dark patterns | 1‑click cancel + instant data export from PostgreSQL. | Product/Eng |
 
 ---

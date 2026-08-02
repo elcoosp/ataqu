@@ -174,6 +174,34 @@ When an alert fires, the Responder uses these specific playbooks to diagnose and
 
 ---
 
+### Playbook J: VPS Scaling / Resource Exhaustion (RAM / CPU)
+**Symptom:** Memory usage > 90% OR CPU > 80% sustained for 5+ minutes. API latency increases, p95 > 500ms. OOM killer risk.
+**Root Cause:** Tenant growth has exceeded current VPS capacity (8 GB RAM, 8 vCPUs).
+**Mitigation Steps:**
+1.  **Verify the trigger:** Check Grafana dashboard for `node_memory_MemAvailable_bytes` and `node_cpu_seconds_total`. Confirm that the system is genuinely overloaded (not a temporary spike).
+2.  **Snapshot the VPS:** Hetzner snapshot (2 minutes) – ensures rollback capability.
+3.  **Stop the VPS:** `systemctl poweroff` or via Hetzner console (1 minute).
+4.  **Upgrade the VPS:** In Hetzner, change the server type to the next tier:
+    - CX42 (8 GB) → CX52 (16 GB)
+    - CX52 (16 GB) → CX62 (32 GB)
+    - CX62 (32 GB) → CX72 (64 GB)
+5.  **Start the VPS:** Boot the new instance (1 minute).
+6.  **Adjust PostgreSQL parameters:** Connect via `psql` and run:
+    ```sql
+    ALTER SYSTEM SET shared_buffers = '<new_value>';
+    ALTER SYSTEM SET work_mem = '<new_value>';
+    ALTER SYSTEM SET effective_cache_size = '<new_value>';
+    SELECT pg_reload_conf();
+    ```
+    (Refer to the scaling matrix in `docs/project.md` for exact values.)
+7.  **Verify:** Check that the Rust binary restarted correctly and that PostgreSQL is accepting connections. Monitor metrics for 10 minutes to ensure load has dropped.
+8.  **Document:** Update the infrastructure documentation with the new VPS type and PostgreSQL settings.
+9.  **If the upgrade fails:** Restore from snapshot (rollback in < 15 minutes).
+
+**Escalation:** If the upgrade is not sufficient or fails, escalate to the CTO to consider moving to a distributed architecture (Phase 2 – managed services).
+
+---
+
 ## 5. THE PUBLIC COMMUNICATION PROTOCOL
 
 Ataqu does not use corporate PR speak during outages. We state the truth.

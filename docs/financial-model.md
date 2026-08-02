@@ -16,11 +16,11 @@ In traditional SaaS, high CAC (Customer Acquisition Cost) and per‑user infrast
 *   **CAC Payback Period:** Less than 1 month. (If a user pays $49/mo, we recoup acquisition costs instantly).
 
 ### 1.2 LTV (Lifetime Value)
-*   **ARPU (Average Revenue Per User):** $49/mo (Assuming eventual upgrade to the bundle).
+*   **ARPU (Average Revenue Per User):** $43/mo (weighted average across Starter, Pro, Suite).
 *   **Gross Margin:** 95%+ (Software with shared infrastructure).
 *   **Monthly Churn Rate Estimate:** 5% (SMB churn is naturally higher than enterprise, but the low price mitigates sticker‑shock churn).
-*   **LTV Calculation:** $49 / 0.05 = $980.
-*   **LTV:CAC Ratio:** $980 / $5 = **196:1** (Anything above 3:1 is considered good. We are astronomically healthy).
+*   **LTV Calculation:** $43 / 0.05 = $860.
+*   **LTV:CAC Ratio:** $860 / $5 = **172:1** (Anything above 3:1 is considered good. We are astronomically healthy).
 
 ### 1.3 Marginal Infrastructure Cost Per Tenant (Phase 1 – PostgreSQL on Hetzner CX42)
 *   **VPS (Hetzner CX42):** ~$0.03 / tenant / mo (shared across 200 tenants).
@@ -28,7 +28,7 @@ In traditional SaaS, high CAC (Customer Acquisition Cost) and per‑user infrast
 *   **SeaORM / raw SQL:** No external cost.
 *   **moka Cache:** In‑memory, no external cost.
 *   **Total Marginal Cost:** ~$0.03 / tenant / mo (dominated by VPS amortisation).
-*   **Gross Profit per Tenant:** $48.97 / mo.
+*   **Gross Profit per Tenant:** $42.97 / mo.
 
 ---
 
@@ -48,7 +48,7 @@ We do not scale infrastructure until pain is felt.
 | **Storage** | Hetzner Storage Box (S3-compatible) | $0 | Included with VPS. |
 | **Total Fixed Burn** | | **~$25 / mo** | |
 
-**The Break‑Even Point:** At $49/mo per tenant, exactly **1 paying tenant** covers all fixed infrastructure costs (actually $25 / $49 = 0.51 tenants). Everything after tenant #1 is pure profit.
+**The Break‑Even Point:** At an average ARPU of $43/mo, exactly **1 paying tenant** covers all fixed infrastructure costs (actually $25 / $43 ≈ 0.58 tenants). Everything after tenant #1 is pure profit.
 
 ---
 
@@ -61,17 +61,17 @@ This is a conservative, bootstrapped projection. It assumes zero VC funding and 
 | Month | 1 | 3 | 6 | 9 | 12 | 18 | 24 |
 |-------|---|---|---|---|----|----|----|
 | **Paying Tenants** | 5 | 25 | 75 | 150 | 300 | 800 | 1,500 |
-| **MRR** | $245 | $1,225 | $3,675 | $7,350 | $14,700 | $39,200 | $73,500 |
+| **MRR** | $215 | $1,075 | $3,225 | $6,450 | **$12,900** | $34,400 | $64,500 |
 | **Infra Costs** | $25 | $25 | $25 | $50 | $100 | $300 | $600 |
 | **Founder Salary**| $0 | $0 | $2,000 | $4,000 | $6,000 | $10,000 | $15,000 |
 | **Contractors** | $0 | $0 | $0 | $0 | $1,000 | $3,000 | $8,000 |
-| **Net Profit** | **$220** | **$1,200** | **$1,650** | **$3,300** | **$7,600** | **$25,900** | **$49,900** |
+| **Net Profit** | **$190** | **$1,050** | **$1,200** | **$2,400** | **$5,800** | **$21,100** | **$40,900** |
 
 ### 3.2 Cash Flow & Runway
 *   **Initial Capital:** $5,000 (Founder savings).
 *   **Burn Rate (Months 1‑2):** ~$25/mo. Runway is infinite.
 *   **Cash Flow Positive:** Month 1 (Infrastructure is covered by the first tenant).
-*   **Phase 2 Trigger (Month 12):** At 300 tenants ($14.7k MRR), we upgrade to a dedicated managed Postgres (Neon/RDS) and scale the VPS. We hire a part‑time Rust engineer and a dedicated Support Agent.
+*   **Phase 2 Trigger (Month 12):** At 300 tenants ($12.9k MRR), we upgrade to a dedicated managed Postgres (Neon/RDS) and scale the VPS. We hire a part‑time Rust engineer and a dedicated Support Agent.
 
 ---
 

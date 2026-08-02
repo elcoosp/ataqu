@@ -199,7 +199,7 @@ Ataqu is a high-density data OS. We do not force complex grids onto mobile scree
 1. **The Decommission Flow:** User navigates to `/audit`. UI displays a glassmorphic card grid of competitor logos (Slack, HubSpot, Notion, etc.).
 2. User clicks "Mark as Canceled" on the Slack card.
 3. *UI:* A 1-second subtle green pulse fires. The card dims.
-4. *KPI Update:* The "Total Monthly Savings" KPI at the top of the page animates instantly (using `tabular-nums` for smooth number interpolation) from `$0` to `$15`.
+4. *KPI Update:* The "Total Monthly Savings" KPI at the top of the page animates instantly (using `tabular-nums` for smooth number interpolation) – the amount depends on the user's plan: Starter saves ~$15/mo per canceled tool, Pro saves more, Suite maximizes savings.
 5. A toast appears: `"Decommissioned: Slack. Here is your next target: HubSpot."`
 
 ---
