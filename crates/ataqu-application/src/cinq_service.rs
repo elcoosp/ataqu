@@ -111,32 +111,44 @@ where
 
         let result = guard
             .run(|txn| {
-                // 1. Domain pure logic: validate and produce event
+                let span = tracing::info_span!(
+                    "create_contact",
+                    tenant_id = %tenant_id,
+                    command_id = %command_id,
+                );
+                let _enter = span.enter();
+
+                tracing::debug!("Starting domain validation");
                 let event = ataqu_domain_cinq::create_contact(cmd, &self.id_gen, &self.clock)
                     .map_err(|e| CinqError::Domain(e.to_string()))?;
 
-                // 2. Persist via repository (within the same transaction)
+                tracing::debug!("Persisting contact");
                 let contact = self
                     .contact_repo
                     .create_contact(txn, tenant_id, event)
                     .await
                     .map_err(CinqError::from)?;
 
-                // 3. Dispatch email tracking event (non‑critical, fire‑and‑forget)
+                // Dispatch email tracking event asynchronously to avoid blocking.
+                // We spawn a task so that even if the channel is full, the main flow continues.
                 let tracking_event = EmailTrackingEvent {
                     contact_id: contact.id().clone(),
                     tenant_id,
                     action: "contact_created".to_string(),
                     timestamp: self.clock.now().into(),
                 };
-                if let Err(e) = self.email_tracking_tx.try_send(tracking_event) {
-                    warn!(
-                        "Failed to dispatch email tracking event: {} (contact_id={})",
-                        e,
-                        contact.id()
-                    );
-                }
+                let tx = self.email_tracking_tx.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = tx.try_send(tracking_event) {
+                        warn!(
+                            "Failed to dispatch email tracking event: {} (contact_id={})",
+                            e,
+                            contact.id()
+                        );
+                    }
+                });
 
+                tracing::debug!("Contact created successfully");
                 Ok(contact)
             })
             .await?;
@@ -156,9 +168,19 @@ where
 
         let result = guard
             .run(|txn| {
+                let span = tracing::info_span!(
+                    "update_contact",
+                    tenant_id = %tenant_id,
+                    command_id = %command_id,
+                    contact_id = %contact_id,
+                );
+                let _enter = span.enter();
+
+                tracing::debug!("Validating update");
                 let event = ataqu_domain_cinq::update_contact(contact_id, cmd, &self.id_gen, &self.clock)
                     .map_err(|e| CinqError::Domain(e.to_string()))?;
 
+                tracing::debug!("Persisting update");
                 let updated = self
                     .contact_repo
                     .update_contact(txn, tenant_id, event)
@@ -171,14 +193,18 @@ where
                     action: "contact_updated".to_string(),
                     timestamp: self.clock.now().into(),
                 };
-                if let Err(e) = self.email_tracking_tx.try_send(tracking_event) {
-                    warn!(
-                        "Failed to dispatch email tracking event: {} (contact_id={})",
-                        e,
-                        updated.id()
-                    );
-                }
+                let tx = self.email_tracking_tx.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = tx.try_send(tracking_event) {
+                        warn!(
+                            "Failed to dispatch email tracking event: {} (contact_id={})",
+                            e,
+                            updated.id()
+                        );
+                    }
+                });
 
+                tracing::debug!("Contact updated successfully");
                 Ok(updated)
             })
             .await?;
@@ -200,15 +226,25 @@ where
 
         let result = guard
             .run(|txn| {
+                let span = tracing::info_span!(
+                    "create_deal",
+                    tenant_id = %tenant_id,
+                    command_id = %command_id,
+                );
+                let _enter = span.enter();
+
+                tracing::debug!("Validating deal creation");
                 let event = ataqu_domain_cinq::create_deal(cmd, &self.id_gen, &self.clock)
                     .map_err(|e| CinqError::Domain(e.to_string()))?;
 
+                tracing::debug!("Persisting deal");
                 let deal = self
                     .deal_repo
                     .create_deal(txn, tenant_id, event)
                     .await
                     .map_err(CinqError::from)?;
 
+                tracing::debug!("Deal created successfully");
                 Ok(deal)
             })
             .await?;
@@ -232,11 +268,22 @@ where
 
         let batch_result = guard
             .run(|txn| {
-                // Delegate to repository's batch insert method (which uses the generic helper)
-                self.contact_repo
+                let span = tracing::info_span!(
+                    "import_contacts",
+                    tenant_id = %tenant_id,
+                    command_id = %command_id,
+                    row_count = rows.len(),
+                );
+                let _enter = span.enter();
+
+                tracing::debug!("Starting batch import");
+                let result = self.contact_repo
                     .batch_insert_contacts(txn, tenant_id, &rows)
                     .await
-                    .map_err(CinqError::from)
+                    .map_err(CinqError::from)?;
+
+                tracing::debug!(success_count = result.successes.len(), failure_count = result.failures.len(), "Batch import completed");
+                Ok(result)
             })
             .await?;
 
@@ -274,22 +321,29 @@ where
 
         guard
             .run(|txn| {
-                // 1. Convert the employee event into a create-contact command.
-                //    The domain pure function `create_contact_from_employee` is assumed to exist.
+                let span = tracing::info_span!(
+                    "handle_pause_employee_created",
+                    tenant_id = %tenant_id,
+                    command_id = %command_id,
+                    event_id = %event.id,
+                );
+                let _enter = span.enter();
+
+                tracing::debug!("Converting employee event to contact command");
                 let cmd = ataqu_domain_cinq::CreateContactCommand::from_employee(event)
                     .map_err(|e| CinqError::Domain(e.to_string()))?;
 
-                // 2. Domain pure validation & event production
+                tracing::debug!("Validating contact creation");
                 let contact_event = ataqu_domain_cinq::create_contact(cmd, &self.id_gen, &self.clock)
                     .map_err(|e| CinqError::Domain(e.to_string()))?;
 
-                // 3. Persist the new contact (this is a projection; if the contact already exists
-                //    the repository should handle it via upsert or skip on conflict).
+                tracing::debug!("Persisting projected contact");
                 self.contact_repo
                     .create_contact(txn, tenant_id, contact_event)
                     .await
                     .map_err(CinqError::from)?;
 
+                tracing::debug!("Projection handled successfully");
                 Ok(())
             })
             .await?;
