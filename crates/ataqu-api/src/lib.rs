@@ -1,8 +1,9 @@
+pub mod error;
+pub mod handlers;
+
 use ataqu_application::spark_service::SparkService;
 use axum::Router;
 use std::sync::Arc;
-
-pub mod handlers;
 
 #[derive(Clone)]
 pub struct AppState {

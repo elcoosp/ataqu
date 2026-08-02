@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-async-trait = "0.1.91"
 axum = { version = "0.8.9", features = ["ws"] }
 tower = "0.5.3"
 tower-http = { version = "0.7.0", features = ["cors", "trace"] }
@@ -19,6 +18,3 @@ ataqu-application = { path = "../ataqu-application" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
 ataqu-contracts = { path = "../ataqu-contracts" }
-
-[dev-dependencies]
-mockall = "0.15.0"
