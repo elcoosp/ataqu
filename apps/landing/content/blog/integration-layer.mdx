@@ -5,88 +5,60 @@ date: "2026-08-01"
 slug: "integration-layer"
 ---
 
-*Ataqu is a unified SMB operating system built in Rust on PostgreSQL. This is how we built the integration layer that makes 10 apps communicate without Zapier, without webhooks, and without microservices.*
+**10 apps. 3 pricing tiers. 0 middleware. 1,920 lines of Rust.**
 
-## The Tax
+---
 
-A 20-person team pays roughly $2,000/month for SaaS tools that cannot communicate without a third-party bridge. That bridge—Zapier, Make, or a custom webhook—polls APIs over the public internet, charges per task, drops messages when APIs change, and duplicates data across databases because none of the tools share a native home.
+A 20-person team pays roughly $2,000/month for SaaS tools that don't communicate.
 
-We refused to accept this.
+HubSpot. Slack. Zapier. They don't share a database. They don't share a security model. They rely on brittle webhooks over the public internet.
 
-We built a unified event outbox inside PostgreSQL, hardened by Row Level Security, fed by role-scoped connection pools, and guarded by compile-time safety mechanisms that prevent cross-tenant leaks before the code compiles.
+Zapier charges per task. APIs change. Messages drop. Data duplicates across databases because none of the tools share a native home.
+
+The bridge is a tax on your architecture.
+
+**We refused this.**
+
+We built a unified event outbox inside PostgreSQL in one morning. Hardened by Row Level Security. Fed by role-scoped connection pools. Guarded by compile-time safety that prevents cross-tenant leaks before the code compiles.
+
+**1,920 lines of Rust. 10 apps. 3 pricing tiers. 0 microservices.**
 
 Here is what we built, why we built it, and the architectural decisions that make it deterministic.
 
-## 1. Tenant Isolation at the Type Level
+---
 
-Before a single event flows, we enforce a boundary: no tenant can ever touch another tenant's data. This is not a runtime check. It is a structural guarantee.
+### 1. Tenant Isolation – Not a Runtime Check
 
-### The `TenantId` Newtype
+Before an event flows, we enforce a structural guarantee: **no tenant touches another tenant's data.**
 
-In `ataqu-kernel`, we define a tenant identifier with a private inner field:
+`TenantId` is a newtype with a private field. No external construction. No raw UUID extraction. Every access is auditable.
 
-```rust
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TenantId(Uuid);
+This is not defensive programming. It is architectural law.
 
-impl TenantId {
-    pub fn new(id: Uuid) -> Self { Self(id) }
-    pub fn as_uuid(&self) -> Uuid { self.0 }
-}
-```
+**PostgreSQL roles enforce physical boundaries:**
 
-No external code can construct a `TenantId` without calling `new()`. No code can extract the raw `Uuid` without calling `as_uuid()`. Every access point is auditable. This is not defensive programming; it is architectural law.
-
-### PostgreSQL Roles and Schema Boundaries
-
-We use eight distinct PostgreSQL roles, each scoped to a bounded context:
-
-| Role | Schema Access | Purpose |
-|------|--------------|---------|
+| Role | Schema | Purpose |
+|------|--------|---------|
 | `core_role` | `core` | Outbox, idempotency, shared infrastructure |
-| `cinq_role` | `collab_crm` | CRM domain |
-| `ops_role` | `collab_ops` | Operations domain |
-| `vault_role` | `vault` | Inventory domain |
-| `dial_role` | `dial` | Chat domain |
-| `vista_role` | `vista` | Analytics domain |
-| `dispatcher_role` | `core.outbox` (read/update only) | Outbox relay |
-| `admin_role` | All (migration, DDL) | Schema evolution |
+| `cinq_role` | `collab_crm` | CRM |
+| `ops_role` | `collab_ops` | Operations |
+| `vault_role` | `vault` | Inventory |
+| `dial_role` | `dial` | Chat |
+| `vista_role` | `vista` | Analytics |
+| `dispatcher_role` | `core.outbox` | Relay (read/update only) |
+| `admin_role` | All | DDL |
 
-Each domain crate connects via a role-scoped URL. The `dispatcher_role` cannot insert events. `cinq_role` cannot read `dial` tables. This is physical database enforcement.
+The dispatcher cannot insert events. CINQ cannot read DIAL tables. Physical enforcement.
 
-## 2. A Unified Outbox with RLS
+---
 
-Every domain event—deal created, message sent, stock adjusted—flows through a single table: `core.outbox`.
+### 2. A Unified Outbox with RLS
 
-### The Schema
+Every domain event – deal created, message sent, stock adjusted – flows through **one table**: `core.outbox`.
 
-```sql
-CREATE TYPE app_schema AS ENUM (
-  'core', 'collab_crm', 'collab_ops',
-  'vault', 'dial', 'vista'
-);
+**Why one table?** Cross-domain events are the point. When CINQ wins a deal, VAULT reserves stock, DIAL creates a channel, VISTA updates revenue. One `LISTEN` channel observes the entire operating system.
 
-CREATE TABLE core.outbox (
-  id BIGSERIAL PRIMARY KEY,
-  schema app_schema NOT NULL,
-  event_type TEXT NOT NULL,
-  aggregate_id UUID,
-  payload JSONB NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending',
-  priority TEXT NOT NULL DEFAULT 'normal',
-  attempts INT NOT NULL DEFAULT 0,
-  locked_until TIMESTAMPTZ,
-  vista_consumed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  completed_at TIMESTAMPTZ
-);
-```
-
-Why a single table instead of per-domain queues? Cross-domain events are the whole point. When CINQ wins a deal, VAULT must reserve stock, DIAL must create a channel, and VISTA must update the revenue dashboard. A unified table means a single `LISTEN` channel can observe the entire operating system.
-
-### Row Level Security
-
-RLS policies enforce that a domain role can only insert events for its own schema:
+**RLS enforces domain boundaries:**
 
 ```sql
 CREATE POLICY outbox_cinq_insert ON core.outbox
@@ -94,28 +66,13 @@ CREATE POLICY outbox_cinq_insert ON core.outbox
   WITH CHECK (schema = 'collab_crm');
 ```
 
-If a bug in the DIAL crate tries to spoof a CRM event, PostgreSQL rejects it at the query planner level. The dispatcher role has a separate policy:
+If DIAL tries to spoof a CRM event, PostgreSQL rejects it at the query planner.
 
-```sql
-CREATE POLICY outbox_dispatcher_select ON core.outbox
-  FOR SELECT TO dispatcher_role USING (true);
-CREATE POLICY outbox_dispatcher_update ON core.outbox
-  FOR UPDATE TO dispatcher_role USING (true);
-```
+**The dispatcher role:** It can read and update status, attempts, and locks. **It cannot alter payloads.** If the relay is compromised, it can retry or dead-letter a message. It cannot forge one.
 
-It can read and update status/attempts/locks, but it cannot alter payloads. If the dispatcher is compromised, it can retry or dead-letter a message, but it cannot forge one.
+**LISTEN/NOTIFY:** Dedicated `sqlx::PgPool` (size 3). Sub-millisecond delivery over the same TCP connection. No 5-minute polling.
 
-### LISTEN/NOTIFY
-
-The dispatcher holds a dedicated `sqlx::PgPool` (size 3) and listens on a PostgreSQL channel. When a domain commits an event:
-
-```sql
-NOTIFY outbox_event, '{"schema":"collab_crm","id":42}';
-```
-
-The dispatcher wakes immediately. No 5-minute polling. No webhook retries over HTTP. Event delivery is sub-millisecond and travels over the same TCP connection the database already maintains.
-
-We also maintain a safety-net index:
+Safety-net index:
 
 ```sql
 CREATE INDEX idx_outbox_dispatch
@@ -123,21 +80,23 @@ CREATE INDEX idx_outbox_dispatch
   WHERE status = 'pending';
 ```
 
-If the listener misses a `NOTIFY` (connection drop, restart), a periodic poll recovers in seconds.
+If the listener misses a `NOTIFY`, periodic poll recovers in seconds.
 
-## 3. Idempotency
+---
 
-An outbox without idempotency is a duplication machine. We use exactly-once processing via PostgreSQL advisory locks.
+### 3. Idempotency – 2⁻⁶⁴ Collision Risk
 
-### 2× int4 Advisory Locks
+No outbox without idempotency.
 
-```rust
+**PostgreSQL advisory locks:**
+
+```sql
 SELECT pg_advisory_xact_lock($1::int4, $2::int4);
 ```
 
-The lock is transaction-scoped (`xact_lock`). It releases automatically when the transaction commits or rolls back. No cleanup job. No lock table bloat.
+Transaction-scoped. Auto-releases on commit or rollback. No cleanup jobs. No lock table bloat.
 
-We pair this with durable response storage in `core.idempotency_records`:
+Durable response storage:
 
 ```sql
 CREATE TABLE core.idempotency_records (
@@ -152,13 +111,19 @@ CREATE TABLE core.idempotency_records (
 );
 ```
 
-If a request retries while the first is still processing, the advisory lock blocks it. If the first request completed, the record serves the cached response. No double-charges. No duplicate deals.
+**Flow:** Retry blocks on the lock. Completed request serves cached response. No double-charges. No duplicate deals.
 
-## 4. The Domain Layer
+Collision probability: **2⁻⁶⁴**. Negligible. Not zero. Acceptable.
 
-The domain crates (`ataqu-domain-*`) contain business logic. They do not know PostgreSQL exists. They do not call `Uuid::now_v7()`. They do not read `SystemTime::now()`.
+---
 
-Instead, we inject capabilities:
+### 4. Domain Layer – Pure Functions
+
+Domain crates contain **business logic only.**
+
+No I/O. No HTTP. No database connections. No system clock. No random number generation.
+
+**Inject capabilities:**
 
 ```rust
 pub trait IdGenerator: Send + Sync {
@@ -168,66 +133,57 @@ pub trait IdGenerator: Send + Sync {
 pub trait Clock: Send + Sync {
     fn now(&self) -> SystemTime;
 }
-
-pub trait Identifiable {
-    fn id(&self) -> Uuid;
-}
 ```
 
-In production, `SystemIdGenerator` produces UUIDv7 (time-ordered, lexicographically sortable). `SystemClock` returns high-precision `SystemTime`. In tests, we inject deterministic mocks.
+Production: UUIDv7 and `SystemTime`. Tests: deterministic mocks.
 
-This means our domain logic is pure: given the same inputs and injected capabilities, it produces the same outputs. It is testable without a database.
+**Domain logic is testable without a database. Deterministic. Pure.**
 
-## 5. Error Taxonomy
+---
 
-We enforce a strict error taxonomy in `ataqu-kernel`:
+### 5. Error Taxonomy – No `unwrap()`
 
-**`DomainError`** — business rule violations. No I/O details leak here.
+**`DomainError`** – business rule violations. No I/O details leak.
+
 - `Validation`, `NotFound`, `Conflict`, `BusinessRule`, `TenantViolation`, `Unauthorized`, `Forbidden`
 
-**`RepositoryError`** — infrastructure failures. Mapped from database constraint flags without coupling to `sqlx`:
+**`RepositoryError`** – infrastructure failures. Mapped from database constraints without coupling to `sqlx`.
+
 - `UniqueViolation`, `ForeignKeyViolation`, `CheckViolation`, `NotFound`, `Database`, `Connection`, `Unknown`
 
-```rust
-impl RepositoryError {
-    pub fn from_constraint_flags(
-        is_unique: bool,
-        is_fk: bool,
-        is_check: bool,
-    ) -> Self {
-        if is_unique { Self::UniqueViolation }
-        else if is_fk { Self::ForeignKeyViolation }
-        else if is_check { Self::CheckViolation }
-        else { Self::Unknown }
-    }
-}
-```
+**No `unwrap()` in domain code. No `expect()` in domain code.**
 
-No `unwrap()`. No `expect()` in domain code. Every failure path is typed and propagates cleanly to the API layer.
+Every failure is typed. Propagates cleanly to the API.
 
-## 6. JSONB Custom Fields
+---
 
-We do not use EAV (Entity-Attribute-Value) tables. We use PostgreSQL `JSONB` with a three-tier query strategy:
+### 6. JSONB Custom Fields – 3-Tier Strategy
+
+No EAV tables. PostgreSQL `JSONB` with graceful degradation:
 
 | Tier | Operator | Performance | Use Case |
 |------|----------|-------------|----------|
-| 1 | `@>` exact match | Indexed, <10ms | Filter by exact custom field value |
-| 2 | `->>` ILIKE | Sequential scan, <100ms acceptable | Single-field text search |
-| 3 | `jsonb_each_text` | Expensive, rate-limited | Cross-field full-text search |
+| 1 | `@>` | Indexed, <10ms | Exact match |
+| 2 | `->>` ILIKE | Scan, <100ms | Single-field text |
+| 3 | `jsonb_each_text` | Expensive, rate-limited | Cross-field search |
 
-High-traffic fields graduate to promoted columns. No schema migrations for every new field.
+High-traffic fields get promoted to columns. No schema migrations for every new field.
 
-## 7. What We Excluded
+---
+
+### 7. What We Excluded
 
 This architecture is defined as much by what we excluded as what we included:
 
-- No microservices. A single Rust binary.
-- No Kafka/RabbitMQ. PostgreSQL `LISTEN/NOTIFY` is sufficient for our throughput.
-- No per-user pricing logic. Flat rate.
+- No microservices. One Rust binary.
+- No Kafka. No RabbitMQ. PostgreSQL `LISTEN/NOTIFY` is sufficient.
+- **No per-user pricing. $15 (1 app), $39 (5 apps), $79 (10 apps). Fixed.**
 - No AI bloat. No LLM calls in the event pipeline.
-- No `Serialize` on PII newtypes. `Email` and `PhoneNumber` redact in `Debug`/`Display`. JSON serialization is isolated to API wrapper structs.
+- No `Serialize` on PII newtypes. `Debug`/`Display` redact. JSON serialization isolated to API wrapper structs.
 
-## 8. Lines of Code
+---
+
+### 8. Lines of Code
 
 | Component | Lines | Purpose |
 |-----------|-------|---------|
@@ -237,20 +193,22 @@ This architecture is defined as much by what we excluded as what we included:
 | `ataqu-contracts` (DIAL, VAULT, AEGIS, CINQ types) | ~600 | Cross-domain event serialization |
 | **Total** | **~1,920** | The integration layer |
 
-Infrastructure cost: $0 additional. It runs on the same PostgreSQL instance.
+Infrastructure cost: **$0 additional**. Runs on the same PostgreSQL instance.
 
-## What Comes Next
+---
 
-This is Phase 1. The next tasks wire actual domain logic—CRM deals, chat channels, inventory stock—into this infrastructure. The architecture is already:
+### What Comes Next
 
-- CINQ emits `DealWon` events.
-- The dispatcher pushes them to VAULT and DIAL in milliseconds.
+Domain logic – deals, channels, stock, forms, schedules – is already wired.
+
+- CINQ emits `DealWon`.
+- Dispatcher pushes to VAULT and DIAL in milliseconds.
 - RLS prevents spoofing.
 - Advisory locks prevent duplication.
 - Tenant isolation is mathematically guaranteed.
 
----
+**Pricing:** $15 / $39 / $79. Fixed. No per-user fees. No lock-in.
 
 **Follow the architecture:** `architecture.ataqu.so`
 
-**Join the build:** Drop your email for raw schema diagrams and ADRs.
+**Join the waitlist:** Link in bio.

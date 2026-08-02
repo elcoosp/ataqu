@@ -101,7 +101,7 @@ msgid "{0}"
 msgstr ""
 
 #. placeholder {0}: new Date().getFullYear()
-#: src/components/footer.tsx:56
+#: src/components/footer.tsx:54
 msgid "© {0} Ataqu. All rights reserved."
 msgstr ""
 
@@ -121,6 +121,7 @@ msgstr ""
 #: src/app/apps/vault/page.tsx:12
 #: src/app/apps/vista/page.tsx:12
 #: src/app/faq/page.tsx:73
+#: src/app/pricing/page.tsx:11
 #: src/app/privacy/page.tsx:10
 #: src/app/terms/page.tsx:10
 msgid "← Back to home"
@@ -215,7 +216,11 @@ msgid "<0>Status & RCAs:</0> We maintain a public status page. In the event of a
 msgstr ""
 
 #: src/app/privacy/page.tsx:49
-msgid "<0>To Bill You:</0> To process your $49/mo subscription."
+#~ msgid "<0>To Bill You:</0> To process your $49/mo subscription."
+#~ msgstr ""
+
+#: src/app/privacy/page.tsx:49
+msgid "<0>To Bill You:</0> To process your subscription (starting at $15/mo)."
 msgstr ""
 
 #: src/app/privacy/page.tsx:51
@@ -236,6 +241,10 @@ msgstr ""
 
 #: src/app/apps/spark/page.tsx:68
 msgid "<1s execution"
+msgstr ""
+
+#: src/components/footer.tsx:16
+msgid "$15–$79/mo, no lock‑in."
 msgstr ""
 
 #: src/app/apps/cinq/page.tsx:64
@@ -344,8 +353,8 @@ msgid "1. The Philosophy"
 msgstr ""
 
 #: src/components/footer.tsx:16
-msgid "10 apps, one price, zero lock‑in."
-msgstr ""
+#~ msgid "10 apps, one price, zero lock‑in."
+#~ msgstr ""
 
 #: src/components/home-content.tsx:83
 msgid "10 apps. One suite. Natively integrated."
@@ -488,9 +497,9 @@ msgstr ""
 msgid "A human responds within 24 hours, 7 days a week."
 msgstr ""
 
-#: src/components/footer.tsx:26
-#: src/components/header.tsx:42
-#: src/components/header.tsx:91
+#: src/components/footer.tsx:25
+#: src/components/header.tsx:40
+#: src/components/header.tsx:97
 msgid "About"
 msgstr ""
 
@@ -535,8 +544,8 @@ msgid "AI bloat with no value"
 msgstr ""
 
 #: src/components/footer.tsx:23
-#: src/components/header.tsx:49
-#: src/components/header.tsx:94
+#: src/components/header.tsx:57
+#: src/components/header.tsx:113
 msgid "Alternatives"
 msgstr ""
 
@@ -637,9 +646,9 @@ msgstr ""
 msgid "Be first to access the suite. No credit card required."
 msgstr ""
 
-#: src/components/footer.tsx:25
-#: src/components/header.tsx:39
-#: src/components/header.tsx:88
+#: src/components/footer.tsx:26
+#: src/components/header.tsx:44
+#: src/components/header.tsx:101
 msgid "Blog"
 msgstr ""
 
@@ -688,8 +697,11 @@ msgstr ""
 msgid "Calendly"
 msgstr ""
 
-#: src/app/apps/tempo/page.tsx:25
 #: src/components/kill-sheet-content.tsx:154
+msgid "Calendly is a scheduling island. TEMPO is built into your OS — from $15/mo, or all 10 apps for $79/mo."
+msgstr ""
+
+#: src/app/apps/tempo/page.tsx:25
 msgid "Calendly is a scheduling island. TEMPO is built into your OS."
 msgstr ""
 
@@ -790,8 +802,11 @@ msgstr ""
 msgid "Cin7"
 msgstr ""
 
-#: src/app/apps/vault/page.tsx:25
 #: src/components/kill-sheet-content.tsx:210
+msgid "Cin7 is a siloed warehouse. VAULT connects inventory to your CRM — from $15/mo, or all 10 apps for $79/mo."
+msgstr ""
+
+#: src/app/apps/vault/page.tsx:25
 msgid "Cin7 is a siloed warehouse. VAULT connects inventory to your CRM."
 msgstr ""
 
@@ -804,7 +819,11 @@ msgid "CINQ deals automatically reserve stock via outbox events"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:27
-msgid "CINQ gives you a full CRM, including reporting and automation, for a flat $49/mo"
+#~ msgid "CINQ gives you a full CRM, including reporting and automation, for a flat $49/mo"
+#~ msgstr ""
+
+#: src/components/kill-sheet-content.tsx:27
+msgid "CINQ gives you a full CRM, including reporting and automation, for a flat $79/mo for all 10 (or $15/mo for 1)"
 msgstr ""
 
 #: src/app/apps/cinq/page.tsx:28
@@ -835,6 +854,10 @@ msgstr ""
 msgid "Compare the cost of your fragmented SaaS stack"
 msgstr ""
 
+#: src/app/pricing/page.tsx:23
+msgid "Compare your current stack"
+msgstr ""
+
 #: src/components/architecture-proof.tsx:38
 #~ msgid "Compile‑time Security"
 #~ msgstr ""
@@ -855,7 +878,7 @@ msgstr ""
 msgid "Conditions and branching"
 msgstr ""
 
-#: src/components/footer.tsx:40
+#: src/components/footer.tsx:41
 msgid "Connect"
 msgstr ""
 
@@ -1108,8 +1131,9 @@ msgstr ""
 msgid "Exports are in standard formats (CSV, JSON) for easy reuse."
 msgstr ""
 
-#: src/components/footer.tsx:27
-#: src/components/header.tsx:45
+#: src/components/footer.tsx:28
+#: src/components/header.tsx:52
+#: src/components/header.tsx:109
 msgid "FAQ"
 msgstr ""
 
@@ -1135,30 +1159,57 @@ msgid "Fixed price, no surprises"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:198
-msgid "Flat $49/mo for everything"
+#~ msgid "Flat $49/mo for everything"
+#~ msgstr ""
+
+#: src/components/kill-sheet-content.tsx:114
+#~ msgid "Flat $49/mo for the whole team"
+#~ msgstr ""
+
+#: src/components/kill-sheet-content.tsx:281
+#~ msgid "Flat $49/mo for the whole team – no per‑user SSO fees"
+#~ msgstr ""
+
+#: src/components/kill-sheet-content.tsx:169
+#: src/components/kill-sheet-content.tsx:225
+#: src/components/kill-sheet-content.tsx:253
+#~ msgid "Flat $49/mo for your whole team"
+#~ msgstr ""
+
+#: src/components/kill-sheet-content.tsx:309
+#~ msgid "Flat $49/mo for your whole team – no per‑user BI fees"
+#~ msgstr ""
+
+#: src/components/kill-sheet-content.tsx:56
+#: src/components/kill-sheet-content.tsx:141
+#~ msgid "Flat $49/mo for your whole team – no per‑user fees"
+#~ msgstr ""
+
+#: src/components/kill-sheet-content.tsx:198
+msgid "Flat $79/mo for all 10 (or $15/mo for 1) for everything"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:114
-msgid "Flat $49/mo for the whole team"
+msgid "Flat $79/mo for all 10 (or $15/mo for 1) for the whole team"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:281
-msgid "Flat $49/mo for the whole team – no per‑user SSO fees"
+msgid "Flat $79/mo for all 10 (or $15/mo for 1) for the whole team – no per‑user SSO fees"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:169
 #: src/components/kill-sheet-content.tsx:225
 #: src/components/kill-sheet-content.tsx:253
-msgid "Flat $49/mo for your whole team"
+msgid "Flat $79/mo for all 10 (or $15/mo for 1) for your whole team"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:309
-msgid "Flat $49/mo for your whole team – no per‑user BI fees"
+msgid "Flat $79/mo for all 10 (or $15/mo for 1) for your whole team – no per‑user BI fees"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:56
 #: src/components/kill-sheet-content.tsx:141
-msgid "Flat $49/mo for your whole team – no per‑user fees"
+msgid "Flat $79/mo for all 10 (or $15/mo for 1) for your whole team – no per‑user fees"
 msgstr ""
 
 #: src/app/apps/vault/page.tsx:72
@@ -1177,6 +1228,10 @@ msgstr ""
 msgid "Google/Microsoft: SSO identity verification (via OIDC)."
 msgstr ""
 
+#: src/app/pricing/page.tsx:38
+msgid "Have questions?"
+msgstr ""
+
 #: src/app/privacy/page.tsx:103
 msgid "Hetzner: VPS hosting for the Rust binary and PostgreSQL 16.14."
 msgstr ""
@@ -1186,7 +1241,7 @@ msgid "Hidden paywalls for reporting and automation"
 msgstr ""
 
 #: src/components/header.tsx:32
-#: src/components/header.tsx:81
+#: src/components/header.tsx:89
 msgid "Home"
 msgstr ""
 
@@ -1228,8 +1283,12 @@ msgid "HubSpot charges <0>$1,200/mo</0>. Slack taxes you per user."
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:14
-msgid "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total."
+msgid "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively — start at $15/mo, or get all 10 for $79/mo."
 msgstr ""
+
+#: src/components/kill-sheet-content.tsx:14
+#~ msgid "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total."
+#~ msgstr ""
 
 #: src/components/home-content.tsx:46
 #~ msgid "HubSpot charges $1,200/mo. Ataqu charges $49."
@@ -1372,6 +1431,7 @@ msgstr ""
 msgid "It is architecturally impossible for one Ataqu tenant to query another tenant's data."
 msgstr ""
 
+#: src/app/pricing/page.tsx:31
 #: src/components/kill-sheet-content.tsx:477
 #: src/components/kill-sheet-content.tsx:485
 #: src/components/waitlist-form.tsx:241
@@ -1407,7 +1467,7 @@ msgstr ""
 msgid "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
 msgstr ""
 
-#: src/components/footer.tsx:32
+#: src/components/footer.tsx:33
 msgid "Legal"
 msgstr ""
 
@@ -1732,8 +1792,11 @@ msgstr ""
 msgid "Notion"
 msgstr ""
 
-#: src/app/apps/pivot/page.tsx:25
 #: src/components/kill-sheet-content.tsx:98
+msgid "Notion is a blank canvas graveyard. PIVOT is an operational database — from $15/mo, or all 10 apps for $79/mo."
+msgstr ""
+
+#: src/app/apps/pivot/page.tsx:25
 msgid "Notion is a blank canvas graveyard. PIVOT is an operational database."
 msgstr ""
 
@@ -1747,8 +1810,12 @@ msgid "Okta"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:266
-msgid "Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation."
+msgid "Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation — from $15/mo, or all 10 apps for $79/mo."
 msgstr ""
+
+#: src/components/kill-sheet-content.tsx:266
+#~ msgid "Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation."
+#~ msgstr ""
 
 #: src/app/apps/aegis/page.tsx:25
 msgid "Okta is a gatekeeper. AEGIS is the vault built into your foundation."
@@ -1815,8 +1882,11 @@ msgstr ""
 msgid "Personio"
 msgstr ""
 
-#: src/app/apps/pause/page.tsx:25
 #: src/components/kill-sheet-content.tsx:238
+msgid "Personio is a compliance silo. PAUSE connects HR to operations — from $15/mo, or all 10 apps for $79/mo."
+msgstr ""
+
+#: src/app/apps/pause/page.tsx:25
 msgid "Personio is a compliance silo. PAUSE connects HR to operations."
 msgstr ""
 
@@ -1860,12 +1930,18 @@ msgstr ""
 msgid "Prices that climb without warning. Contracts that trap you. Support that ignores you. Tools that don't talk to each other."
 msgstr ""
 
+#: src/components/footer.tsx:24
+#: src/components/header.tsx:36
+#: src/components/header.tsx:93
+msgid "Pricing"
+msgstr ""
+
 #: src/app/faq/page.tsx:9
 msgid "Pricing & Billing"
 msgstr ""
 
 #: src/app/privacy/page.tsx:14
-#: src/components/footer.tsx:35
+#: src/components/footer.tsx:36
 msgid "Privacy Policy"
 msgstr ""
 
@@ -1989,9 +2065,9 @@ msgstr ""
 msgid "RLS on core.outbox prevents cross-domain event spoofing. Cross-schema queries are physically impossible at the database level."
 msgstr ""
 
-#: src/components/footer.tsx:24
-#: src/components/header.tsx:36
-#: src/components/header.tsx:85
+#: src/components/footer.tsx:27
+#: src/components/header.tsx:48
+#: src/components/header.tsx:105
 msgid "Roadmap"
 msgstr ""
 
@@ -2031,6 +2107,10 @@ msgstr ""
 msgid "Simple, minimal interface"
 msgstr ""
 
+#: src/app/pricing/page.tsx:15
+msgid "Simple, transparent pricing"
+msgstr ""
+
 #: src/components/architecture-proof.tsx:120
 #~ msgid "Single binary · Single Tokio runtime · 1s RPO via wal‑g"
 #~ msgstr ""
@@ -2064,8 +2144,12 @@ msgid "Slack + Intercom"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:42
-msgid "Slack taxes your team. DIAL gives you chat and support for one flat price."
+msgid "Slack taxes your team. DIAL gives you chat and support — from $15/mo, or all 10 apps for $79/mo."
 msgstr ""
+
+#: src/components/kill-sheet-content.tsx:42
+#~ msgid "Slack taxes your team. DIAL gives you chat and support for one flat price."
+#~ msgstr ""
 
 #: src/app/apps/dial/page.tsx:25
 msgid "Slack taxes your team. Intercom taxes your customers. DIAL unites both."
@@ -2127,9 +2211,13 @@ msgstr ""
 msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10. No per‑user fees, no lock‑in."
 msgstr ""
 
-#: src/app/apps/aegis/page.tsx:97
-msgid "Start with AEGIS for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#: src/app/pricing/page.tsx:18
+msgid "Start at $15/mo for one app, $39/mo for 5 apps, or $79/mo for all 10. No per‑user fees, no lock‑in."
 msgstr ""
+
+#: src/app/apps/aegis/page.tsx:97
+#~ msgid "Start with AEGIS for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/aegis/page.tsx:85
 #~ msgid "Start with AEGIS for $15/mo. No credit card required for the trial."
@@ -2140,24 +2228,37 @@ msgid "Start with CINQ (CRM)"
 msgstr ""
 
 #: src/app/apps/cinq/page.tsx:97
-msgid "Start with CINQ for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with CINQ for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/cinq/page.tsx:85
 #~ msgid "Start with CINQ for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
 #: src/app/apps/dial/page.tsx:97
-msgid "Start with DIAL for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with DIAL for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/dial/page.tsx:85
 #~ msgid "Start with DIAL for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
+#: src/app/apps/aegis/page.tsx:97
+#: src/app/apps/cinq/page.tsx:97
+#: src/app/apps/dial/page.tsx:97
 #: src/app/apps/pause/page.tsx:97
-msgid "Start with PAUSE for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#: src/app/apps/pivot/page.tsx:97
+#: src/app/apps/sond/page.tsx:97
+#: src/app/apps/spark/page.tsx:97
+#: src/app/apps/tempo/page.tsx:97
+#: src/app/apps/vault/page.tsx:97
+#: src/app/apps/vista/page.tsx:97
+msgid "Start with one app for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
 msgstr ""
+
+#: src/app/apps/pause/page.tsx:97
+#~ msgid "Start with PAUSE for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/pause/page.tsx:85
 #~ msgid "Start with PAUSE for $15/mo. No credit card required for the trial."
@@ -2168,48 +2269,48 @@ msgid "Start with PIVOT (Docs)"
 msgstr ""
 
 #: src/app/apps/pivot/page.tsx:97
-msgid "Start with PIVOT for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with PIVOT for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/pivot/page.tsx:85
 #~ msgid "Start with PIVOT for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
 #: src/app/apps/sond/page.tsx:97
-msgid "Start with SOND for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with SOND for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/sond/page.tsx:85
 #~ msgid "Start with SOND for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
 #: src/app/apps/spark/page.tsx:97
-msgid "Start with SPARK for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with SPARK for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/spark/page.tsx:85
 #~ msgid "Start with SPARK for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
 #: src/app/apps/tempo/page.tsx:97
-msgid "Start with TEMPO for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with TEMPO for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/tempo/page.tsx:85
 #~ msgid "Start with TEMPO for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
 #: src/app/apps/vault/page.tsx:97
-msgid "Start with VAULT for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with VAULT for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/vault/page.tsx:85
 #~ msgid "Start with VAULT for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
 #: src/app/apps/vista/page.tsx:97
-msgid "Start with VISTA for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
-msgstr ""
+#~ msgid "Start with VISTA for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
+#~ msgstr ""
 
 #: src/app/apps/vista/page.tsx:85
 #~ msgid "Start with VISTA for $15/mo. No credit card required for the trial."
@@ -2290,8 +2391,12 @@ msgid "Tableau"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:294
-msgid "Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data."
+msgid "Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data — from $15/mo, or all 10 apps for $79/mo."
 msgstr ""
+
+#: src/components/kill-sheet-content.tsx:294
+#~ msgid "Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data."
+#~ msgstr ""
 
 #: src/app/apps/vista/page.tsx:25
 msgid "Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected."
@@ -2322,7 +2427,7 @@ msgid "TEMPO handles booking links, calendar sync, and no‑show detection — n
 msgstr ""
 
 #: src/app/terms/page.tsx:14
-#: src/components/footer.tsx:34
+#: src/components/footer.tsx:35
 msgid "Terms of Service"
 msgstr ""
 
@@ -2347,8 +2452,8 @@ msgid "There are no usage limits. The price is fixed regardless of volume."
 msgstr ""
 
 #: src/app/roadmap/page.tsx:122
-msgid "This roadmap is updated as we ship. Follow our progress on GitHub."
-msgstr ""
+#~ msgid "This roadmap is updated as we ship. Follow our progress on GitHub."
+#~ msgstr ""
 
 #: src/app/apps/dial/page.tsx:38
 msgid "Threads, mentions, reactions"
@@ -2380,8 +2485,12 @@ msgid "Typeform"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:182
-msgid "Typeform charges for success. SOND gives you unlimited responses."
+msgid "Typeform charges for success. SOND gives you unlimited responses — from $15/mo, or all 10 apps for $79/mo."
 msgstr ""
+
+#: src/components/kill-sheet-content.tsx:182
+#~ msgid "Typeform charges for success. SOND gives you unlimited responses."
+#~ msgstr ""
 
 #: src/app/apps/sond/page.tsx:25
 msgid "Typeform taxes your success. SOND gives you unlimited responses."
@@ -2425,6 +2534,10 @@ msgstr ""
 
 #: src/app/terms/page.tsx:69
 msgid "Violate any local, national, or international law."
+msgstr ""
+
+#: src/app/pricing/page.tsx:40
+msgid "Visit our FAQ"
 msgstr ""
 
 #: src/app/apps/vista/page.tsx:57
@@ -2496,8 +2609,12 @@ msgid "We may update these ToS. We will notify you 30 days before material chang
 msgstr ""
 
 #: src/app/terms/page.tsx:105
-msgid "We target 99.9% uptime. However, we do not offer SLA‑backed financial credits for standard plans, as the flat $49/mo pricing does not support enterprise SLA infrastructure costs. If we experience catastrophic downtime, we will communicate it transparently and apply service credits at our discretion."
+msgid "We target 99.9% uptime. However, we do not offer SLA‑backed financial credits for standard plans, as our entry-level pricing (starting at $15/mo) does not support enterprise SLA infrastructure costs. If we experience catastrophic downtime, we will communicate it transparently and apply service credits at our discretion."
 msgstr ""
+
+#: src/app/terms/page.tsx:105
+#~ msgid "We target 99.9% uptime. However, we do not offer SLA‑backed financial credits for standard plans, as the flat $49/mo pricing does not support enterprise SLA infrastructure costs. If we experience catastrophic downtime, we will communicate it transparently and apply service credits at our discretion."
+#~ msgstr ""
 
 #: src/app/privacy/page.tsx:100
 msgid "We use highly vetted, enterprise‑grade infrastructure providers. We do not share your Customer Data with marketing or advertising networks. Our core sub‑processors are:"
@@ -2733,8 +2850,12 @@ msgid "Zapier is a brittle bridge. SPARK is the foundation."
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:70
-msgid "Zapier is a brittle bridge. SPARK is the native foundation."
+msgid "Zapier is a brittle bridge. SPARK is the native foundation — from $15/mo, or all 10 apps for $79/mo."
 msgstr ""
+
+#: src/components/kill-sheet-content.tsx:70
+#~ msgid "Zapier is a brittle bridge. SPARK is the native foundation."
+#~ msgstr ""
 
 #: src/app/apps/vista/page.tsx:72
 msgid "Zero configuration"
@@ -2745,5 +2866,9 @@ msgid "Zoho One"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:126
-msgid "Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps."
+msgid "Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps — from $15/mo, or all 10 for $79/mo."
 msgstr ""
+
+#: src/components/kill-sheet-content.tsx:126
+#~ msgid "Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps."
+#~ msgstr ""

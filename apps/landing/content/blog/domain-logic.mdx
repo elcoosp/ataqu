@@ -1,23 +1,49 @@
 ---
-title: "We Wrote 10 SaaS Apps in a Single Afternoon"
-excerpt: "The hard part wasn't the code — it was not writing the boilerplate."
-date: "2026-08-01"
-slug: "domain-logic"
+title: "We Wrote the Business Logic and API Handlers of 10 SaaS Apps in One Afternoon"
+excerpt: "3,100 lines of domain logic. 2,100 lines of API handlers. 10 apps. 3 pricing tiers."
+date: "2026-08-02"
+slug: "domain-logic-api"
 ---
 
-I sat down a few hours ago to write the domain logic for 10 SaaS applications. CRM. Chat. HR. Inventory. Analytics. Automation. Scheduling. Forms. Docs. Security. Ten complete business domains.
+**3,100 lines of domain logic. 2,100 lines of API handlers. 10 apps. 3 pricing tiers.**
 
-I expected this to take days. It took an afternoon. The hardest part wasn't writing the code. It was not writing all the other code that everyone else usually writes.
+---
 
-In 2026, Rust has gone from an interesting language to the default choice for new serious backends. Microsoft is rewriting Windows in Rust. The ecosystem has tools for everything: Axum for HTTP, SeaORM for databases, Tokio for async, tracing for observability. The patterns are documented. The boilerplate can be generated.
+We sat down to write the business logic and the API layer for 10 SaaS applications.
 
-About 80% of what you'd normally write for a SaaS backend is boilerplate. Auth. CRUD. Database migrations. Background jobs. Multi-tenancy. The industry has solved these problems.
+CRM. Chat. HR. Inventory. Analytics. Automation. Scheduling. Forms. Docs. Security. Ten complete business domains.
 
-We decided not to write that 80%. We wrote the 20% that makes our apps unique and let the architecture handle the rest.
+We expected this to take days. It took an afternoon.
 
-The 20% we wrote today is the domain layer. Pure Rust functions that encode business rules. No I/O. No HTTP. No database connections. No system clock reads. No random number generation.
+The hardest part wasn't writing the code. It was **not writing all the other code that everyone else usually writes.**
 
-For example, creating a user in AEGIS:
+---
+
+### The 80% Trap
+
+In 2026, Rust is the default choice for serious backends. Microsoft is rewriting Windows in Rust. Axum handles HTTP. SeaORM handles the database. Tokio handles async. Tracing handles observability.
+
+The ecosystem has solved the hard problems.
+
+About **80%** of what you'd normally write for a SaaS backend is boilerplate. Auth. CRUD. Database migrations. Background jobs. Multi-tenancy. PII redaction.
+
+We didn't write that 80%.
+
+We wrote the **20%** that makes our apps unique. The business logic. The rules that make CINQ a CRM and not just a database. The validations that prevent bad data. The events that tell the rest of the system what happened.
+
+And we wrote the API handlers that expose that logic over HTTP — with idempotency, PII serialization, and error mapping baked in.
+
+We let the integration layer handle the rest.
+
+---
+
+### The Domain Layer – Pure Functions
+
+The domain layer is **pure Rust functions** that encode business rules.
+
+No I/O. No HTTP. No database connections. No system clock reads. No random number generation.
+
+Creating a user in AEGIS:
 
 ```rust
 pub fn create_user(
@@ -31,15 +57,34 @@ pub fn create_user(
 }
 ```
 
-That's it. No SQL. No network calls. No async. Just a function that takes a command, generates an ID and a timestamp via injected traits, and returns an event.
+No SQL. No network calls. No async.
 
-The `IdGenerator` and `Clock` traits come from a shared kernel crate. In production, they produce UUIDv7 and `SystemTime`. In tests, we inject mocks that return deterministic values. The domain layer never calls `Uuid::now_v7()` or `SystemTime::now()` directly. It doesn't know what time it is. It only knows that someone will tell it.
+Just a function that takes a command, generates an ID and a timestamp via injected traits, and returns an event.
 
-This makes every domain function testable without a database, deterministic, and portable.
+**The `IdGenerator` and `Clock` traits** come from a shared kernel. In production, they produce UUIDv7 and `SystemTime`. In tests, we inject mocks that return deterministic values.
 
-We wrote domain crates for 10 apps. Each one defines entities, commands, events, repository traits, validation logic, and error types.
+The domain layer never calls `Uuid::now_v7()`. It never calls `SystemTime::now()`.
 
-The repository traits are interesting. They describe what the domain needs from persistence without specifying how. For example, the CINQ contact repository:
+It doesn't know what time it is. It only knows that someone will tell it.
+
+**This makes every domain function testable without a database. Deterministic. Portable.**
+
+---
+
+### Ten Domains, One Pattern
+
+We wrote domain crates for **10 apps**. Each one defines:
+
+- Entities (e.g., `Contact`, `Deal`, `Message`)
+- Commands (e.g., `CreateContactCommand`)
+- Events (e.g., `ContactCreated`, `DealWon`)
+- Repository traits (what the domain needs from persistence – without specifying how)
+- Validation logic
+- Error types
+
+**The repository traits are the key.**
+
+They describe what the domain needs without specifying how. For example, the CINQ contact repository:
 
 ```rust
 pub trait ContactRepository: Send + Sync {
@@ -49,30 +94,125 @@ pub trait ContactRepository: Send + Sync {
 }
 ```
 
-The infrastructure layer implements these using SeaORM and raw SQL. The domain layer doesn't care how data is stored. It only knows what operations are available. This keeps business logic isolated from database migrations, connection pools, and transaction management.
+The infrastructure layer implements these using SeaORM and raw SQL. The domain layer doesn't care how data is stored.
 
-Every domain includes validation logic that prevents bad data from reaching the database.
+**It only knows what operations are available.**
 
-- In CINQ, we validate that deal amounts are positive, pipeline stage orders are non-negative, and contact names aren't empty.
-- In SOND, we validate form question options, rating ranges, and conditional visibility logic.
-- In DIAL, we enforce maximum message lengths, channel name limits, and the rule that direct messages require exactly two participants.
-
-These validations are pure functions that return `Result` with domain errors. They run before any event is produced. By the time data reaches the repository layer, it's already valid.
-
-We didn't write HTTP handlers, database migrations, connection pools, the outbox dispatcher, idempotency guards, tenant isolation, or PII redaction. All of that infrastructure was built last week. Today, we just wired the business logic into it.
-
-The domain crates are dependency-light. They pull in `serde` for serialization, `chrono` for time, `uuid` for identifiers, `thiserror` for errors, and `ataqu-kernel` for shared traits. No async runtime. No database driver. No web framework. Just Rust.
-
-This means the domain crates compile fast, test fast, and are easy to reason about. They're also easy to replace. If we ever changed the database or the web framework, the domain logic wouldn't need to change.
-
-In 2020, building 10 SaaS apps in a single afternoon would have been impossible. The frameworks weren't there. The patterns weren't documented. You'd have spent weeks just figuring out how to structure the code.
-
-In 2026, the hard problems have been solved. We wrote the business logic. And because the infrastructure was already in place, it took an afternoon.
-
-Tomorrow, we build the application layer. The services that orchestrate the idempotency flow, call the domain functions, persist events, and append to the outbox. Then the API handlers. Then the frontend SPAs.
-
-The business logic is written, tested, and ready.
+This keeps business logic isolated from database migrations, connection pools, and transaction management. Change the database? The domain doesn't care. Swap SeaORM for something else? The domain doesn't care.
 
 ---
 
-**Follow the architecture:** architecture.ataqu.so
+### Validation – Pure, Not Hacked
+
+Every domain includes validation logic that prevents bad data from reaching the database.
+
+**In CINQ:**
+- Deal amounts must be positive.
+- Pipeline stage orders must be non-negative.
+- Contact names can't be empty.
+
+**In SOND:**
+- Form question options must be valid.
+- Rating ranges must be between 1 and 10.
+- Conditional visibility logic must be parseable.
+
+**In DIAL:**
+- Message lengths have a maximum.
+- Channel names have limits.
+- Direct messages require exactly two participants.
+
+These validations are **pure functions** that return `Result` with domain errors. They run before any event is produced.
+
+By the time data reaches the repository layer, it's already valid.
+
+---
+
+### The API Layer – Handlers with Idempotency and PII Safety
+
+The API layer is built with **Axum** and sits on top of the application services.
+
+Each handler:
+
+- Extracts the `Idempotency-Key` header (UUIDv4) for mutating endpoints.
+- Uses `ApiEmail` wrapper structs to serialize PII — the newtypes themselves do **not** implement `Serialize`, so PII never leaks into logs (ADR-007).
+- Maps domain and service errors to proper HTTP status codes (422, 404, 409, 503 with `Retry-After`).
+
+For example, the AEGIS login handler:
+
+```rust
+pub async fn login<R, O, D>(
+    State(state): State<AegisHandlerState<R, O, D>>,
+    IdempotencyKeyHeader(idempotency_key): IdempotencyKeyHeader,
+    AxumJson(req): AxumJson<LoginRequest>,
+) -> Response { ... }
+```
+
+It uses the same generic constraints as the service, ensuring type safety from the wire to the database.
+
+**We have handlers for all 10 apps:** AEGIS (auth), CINQ (CRM), DIAL (chat), PAUSE (HR), PIVOT (docs), SOND (forms), SPARK (automation), TEMPO (scheduling), VAULT (inventory), and VISTA (analytics).
+
+Each handler module is lean — the service layer does the heavy lifting, and the handlers focus on HTTP semantics, idempotency, and error presentation.
+
+---
+
+### What We Didn't Write
+
+We didn't write database migrations. Connection pools. The outbox dispatcher. Idempotency guards. Tenant isolation via RLS. PII redaction infrastructure.
+
+All of that was built **yesterday** — the integration layer (1,920 lines of Rust).
+
+Today, we just wired the business logic and the API endpoints into it.
+
+**The domain crates are dependency-light:**
+- `serde` for serialization.
+- `chrono` for time.
+- `uuid` for identifiers.
+- `thiserror` for errors.
+- `ataqu-kernel` for shared traits.
+
+No async runtime. No database driver. No web framework. Just Rust.
+
+This means the domain crates compile fast, test fast, and are easy to reason about.
+
+---
+
+### Lines of Code – Domain + API
+
+We counted.
+
+| Component | Lines | Purpose |
+|-----------|-------|---------|
+| Domain crates (10 apps) | ~3,100 | Business logic, validation, events, repository traits |
+| API handlers (10 apps) | ~2,100 | Axum endpoints, idempotency, error mapping, PII serialization |
+| API support (lib, error, serializers) | ~150 | Shared API utilities |
+| **Total domain + API** | **~5,350** | The 20% that matters |
+
+The integration layer (outbox, pools, idempotency, migrations) adds another ~1,920 lines.
+
+**Total Rust code for the full backend: ~7,270 lines.**
+
+---
+
+### In 2020, This Was Impossible
+
+In 2020, building 10 SaaS apps in a single afternoon would have been impossible.
+
+The frameworks weren't there. The patterns weren't documented. You'd have spent weeks just figuring out how to structure the code.
+
+**In 2026, the hard problems have been solved.**
+
+We wrote the business logic and the API layer. And because the integration layer was already in place, it took an afternoon.
+
+---
+
+### What Comes Next
+
+The application layer (orchestrating idempotency, outbox, and repositories) is already wired. The frontend SPAs are in progress.
+
+The business logic is written, the API is live, and the system is ready to serve.
+
+**Pricing:** $15 (1 app), $39 (5 apps), $79 (10 apps). Fixed. No per-user fees. No lock-in.
+
+**Follow the architecture:** `architecture.ataqu.so`
+
+**Join the waitlist:** Link in bio.
