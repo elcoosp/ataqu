@@ -121,7 +121,117 @@ msgstr ""
 #: src/app/apps/vault/page.tsx:12
 #: src/app/apps/vista/page.tsx:12
 #: src/app/faq/page.tsx:73
+#: src/app/privacy/page.tsx:10
+#: src/app/terms/page.tsx:10
 msgid "← Back to home"
+msgstr ""
+
+#: src/app/terms/page.tsx:55
+msgid "<0>1-Click Cancellation:</0> You can cancel your subscription at any time directly within the Ataqu Admin settings. You do not need to call us, email us, or speak to a \"retention specialist.\""
+msgstr ""
+
+#: src/app/privacy/page.tsx:36
+msgid "<0>A. Account Data:</0> Email address, company name, and hashed password (if not using SSO via Google/Microsoft)."
+msgstr ""
+
+#: src/app/privacy/page.tsx:89
+msgid "<0>Active Accounts:</0> Your data is retained as long as your account is active."
+msgstr ""
+
+#: src/app/privacy/page.tsx:60
+msgid "<0>Ataqu explicitly prohibits the use of Customer Data for training artificial intelligence.</0>"
+msgstr ""
+
+#: src/app/terms/page.tsx:82
+msgid "<0>Ataqu IP:</0> We own the Ataqu software, the Rust codebase, the UI design, and the \"Ataqu\" brand. You do not gain any ownership rights by using the Service."
+msgstr ""
+
+#: src/app/privacy/page.tsx:37
+msgid "<0>B. Billing Data:</0> Credit card number, expiration date, and billing address. Payment processing is strictly handled by our PCI‑DSS compliant payment processor (e.g., Stripe). We never store your full credit card number on our servers."
+msgstr ""
+
+#: src/app/privacy/page.tsx:38
+msgid "<0>C. Customer Data:</0> The business information you actively input into the apps (e.g., deals in CINQ, messages in DIAL, docs in PIVOT)."
+msgstr ""
+
+#: src/app/privacy/page.tsx:90
+msgid "<0>Canceled Accounts:</0> Upon account cancellation, your data remains accessible for export for 7 days. After 30 days, all Customer Data is permanently and irreversibly deleted from the primary PostgreSQL databases and all backups."
+msgstr ""
+
+#: src/app/privacy/page.tsx:39
+msgid "<0>D. Technical/Usage Data:</0> IP addresses, browser type, and aggregate usage metrics (e.g., number of API calls, active integrations) to monitor system health and prevent abuse."
+msgstr ""
+
+#: src/app/terms/page.tsx:57
+msgid "<0>Data Deletion:</0> Following cancellation, your workspace and all associated data will be permanently and cryptographically erased from our production PostgreSQL databases within 30 days. We do not retain your data to prevent you from returning."
+msgstr ""
+
+#: src/app/terms/page.tsx:56
+msgid "<0>Data Export:</0> Upon cancellation, you have the right to export all your data to standard CSV and JSON formats."
+msgstr ""
+
+#: src/app/privacy/page.tsx:127
+msgid "<0>Data Portability:</0> You can export your data in machine‑readable CSV/JSON formats."
+msgstr ""
+
+#: src/app/privacy/page.tsx:80
+msgid "<0>Future Phase 2:</0> We will migrate to managed Postgres (Neon/RDS) while maintaining the same strict isolation guarantees."
+msgstr ""
+
+#: src/app/terms/page.tsx:95
+msgid "<0>No AI Training:</0> We strictly forbid the use of Customer Data to train machine learning models, Large Language Models (LLMs), or artificial intelligence systems. Your data is never used for our internal research and development. PII is redacted at compile time via redacting newtypes (Email, PhoneNumber) with Debug/Display as [REDACTED]; JSON serialization is strictly restricted to the API layer via wrapper structs."
+msgstr ""
+
+#: src/app/terms/page.tsx:43
+msgid "<0>No Long-Term Contracts:</0> All subscriptions are month-to-month unless explicitly stated otherwise. We do not use 3-year lock-in clauses."
+msgstr ""
+
+#: src/app/privacy/page.tsx:91
+msgid "<0>PII Anonymization:</0> In certain apps (like PAUSE/HR), GDPR anonymization routines (compiled table registry) automatically strip Personally Identifiable Information (PII) when records are deleted, replacing them with irreversible cryptographic hashes."
+msgstr ""
+
+#: src/app/terms/page.tsx:42
+msgid "<0>Pricing is Fixed:</0> The price you agree to at checkout is the price you pay. We do not charge per-user fees. We do not charge per-task fees. We do not have hidden tiered pricing."
+msgstr ""
+
+#: src/app/privacy/page.tsx:123
+msgid "<0>Right to Access:</0> You can request a copy of your data (or just use the 1‑click export tool)."
+msgstr ""
+
+#: src/app/privacy/page.tsx:125
+msgid "<0>Right to Erasure:</0> You can request immediate deletion of your data (or just use the 1‑click cancel button)."
+msgstr ""
+
+#: src/app/privacy/page.tsx:126
+msgid "<0>Right to Object:</0> You can object to certain types of processing."
+msgstr ""
+
+#: src/app/privacy/page.tsx:124
+msgid "<0>Right to Rectification:</0> You can correct inaccurate data."
+msgstr ""
+
+#: src/app/terms/page.tsx:96
+msgid "<0>Status & RCAs:</0> We maintain a public status page. In the event of a P0/P1 outage, we will publish a technical Root Cause Analysis (RCA) within 24 hours of resolution."
+msgstr ""
+
+#: src/app/privacy/page.tsx:49
+msgid "<0>To Bill You:</0> To process your $49/mo subscription."
+msgstr ""
+
+#: src/app/privacy/page.tsx:51
+msgid "<0>To Provide Support:</0> If you contact our human support team, we will use your communication history to resolve your issue."
+msgstr ""
+
+#: src/app/privacy/page.tsx:48
+msgid "<0>To Provide the Service:</0> To run the 10 apps, execute SPARK automations, and display VISTA analytics."
+msgstr ""
+
+#: src/app/privacy/page.tsx:50
+msgid "<0>To Secure the System:</0> To monitor for unauthorized access, enforce tenant isolation, and prevent abuse of the platform."
+msgstr ""
+
+#: src/app/terms/page.tsx:83
+msgid "<0>Your IP:</0> You retain all intellectual property rights to the data you input into Ataqu (deals, chats, docs, etc.). We are a data processor, not a data owner."
 msgstr ""
 
 #: src/app/apps/spark/page.tsx:68
@@ -221,6 +331,14 @@ msgstr ""
 msgid "1‑click export to CSV, JSON, Markdown"
 msgstr ""
 
+#: src/app/terms/page.tsx:24
+msgid "1. The Agreement"
+msgstr ""
+
+#: src/app/privacy/page.tsx:24
+msgid "1. The Philosophy"
+msgstr ""
+
 #: src/components/footer.tsx:16
 msgid "10 apps, one price, zero lock‑in."
 msgstr ""
@@ -245,8 +363,28 @@ msgstr ""
 msgid "10 free responses per month – a joke for any business"
 msgstr ""
 
+#: src/app/terms/page.tsx:134
+msgid "10. Changes to These Terms"
+msgstr ""
+
+#: src/app/privacy/page.tsx:145
+msgid "10. Security Breach Protocol"
+msgstr ""
+
+#: src/app/privacy/page.tsx:159
+msgid "11. Changes to This Policy"
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:105
 msgid "2‑5 second search – lagging behind your work"
+msgstr ""
+
+#: src/app/terms/page.tsx:36
+msgid "2. The Service & The Bundle"
+msgstr ""
+
+#: src/app/privacy/page.tsx:33
+msgid "2. What We Collect"
 msgstr ""
 
 #: src/components/escape-hatch.tsx:39
@@ -269,12 +407,28 @@ msgstr ""
 msgid "3‑year Total Cost of Ownership"
 msgstr ""
 
+#: src/app/privacy/page.tsx:45
+msgid "3. How We Use Your Data"
+msgstr ""
+
+#: src/app/terms/page.tsx:49
+msgid "3. The Escape Hatch (Cancellation & Data Export)"
+msgstr ""
+
 #: src/app/apps/dial/page.tsx:67
 msgid "30% price hike in 2025"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:50
 msgid "30% price hike in 2025 with no warning"
+msgstr ""
+
+#: src/app/terms/page.tsx:63
+msgid "4. Acceptable Use Policy"
+msgstr ""
+
+#: src/app/privacy/page.tsx:57
+msgid "4. The AI Guarantee (Strict Prohibition)"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:133
@@ -284,6 +438,46 @@ msgstr ""
 #: src/app/apps/spark/page.tsx:67
 #: src/components/kill-sheet-content.tsx:79
 msgid "5‑15 minute polling delays"
+msgstr ""
+
+#: src/app/privacy/page.tsx:71
+msgid "5. Data Architecture & Tenant Isolation"
+msgstr ""
+
+#: src/app/terms/page.tsx:79
+msgid "5. Intellectual Property"
+msgstr ""
+
+#: src/app/privacy/page.tsx:86
+msgid "6. Data Retention & Deletion"
+msgstr ""
+
+#: src/app/terms/page.tsx:89
+msgid "6. Security & Architecture Transparency"
+msgstr ""
+
+#: src/app/terms/page.tsx:102
+msgid "7. Service Availability"
+msgstr ""
+
+#: src/app/privacy/page.tsx:97
+msgid "7. Sub-Processors"
+msgstr ""
+
+#: src/app/terms/page.tsx:111
+msgid "8. Limitation of Liability"
+msgstr ""
+
+#: src/app/privacy/page.tsx:117
+msgid "8. Your Rights (GDPR & CCPA)"
+msgstr ""
+
+#: src/app/privacy/page.tsx:136
+msgid "9. International Data Transfers"
+msgstr ""
+
+#: src/app/terms/page.tsx:125
+msgid "9. Termination for Cause"
 msgstr ""
 
 #: src/app/faq/page.tsx:51
@@ -382,6 +576,22 @@ msgstr ""
 msgid "Ataqu attacks the market so you don't have to suffer."
 msgstr ""
 
+#: src/app/privacy/page.tsx:27
+msgid "Ataqu does not spy on you. We do not sell your data. We do not use your CRM deals or internal DIAL chats to train AI models. We collect the absolute minimum data required to operate the 10 apps, process your billing, and comply with the law."
+msgstr ""
+
+#: src/app/privacy/page.tsx:139
+msgid "Ataqu infrastructure is hosted primarily in Germany (EU). If you are outside the EU, your data may be transferred. We rely on Standard Contractual Clauses (SCCs) to ensure your data is transferred in compliance with GDPR."
+msgstr ""
+
+#: src/app/terms/page.tsx:117
+msgid "Ataqu is provided \"as is\" and \"as available.\""
+msgstr ""
+
+#: src/app/terms/page.tsx:39
+msgid "Ataqu provides a suite of 10 natively integrated business applications. You may purchase individual apps or the 10-app bundle."
+msgstr ""
+
 #: src/components/home-content.tsx:30
 msgid "Ataqu remplace HubSpot, Slack et Notion par une seule plateforme native. Pas de lock‑in. Pas de per‑user fees. Commencez par le CRM (CINQ) ou par les docs (PIVOT)."
 msgstr ""
@@ -398,12 +608,20 @@ msgstr ""
 msgid "Ataqu. Engineered for scale. Priced for everyone."
 msgstr ""
 
+#: src/app/terms/page.tsx:72
+msgid "Attempt to reverse engineer, decompile, or bypass the security measures of the Ataqu architecture (including our database-level tenant isolation via PostgreSQL Roles, RLS, and compile-time TenantId enforcement)."
+msgstr ""
+
 #: src/app/apps/pause/page.tsx:68
 msgid "Auto‑deprovisioning via AEGIS"
 msgstr ""
 
 #: src/app/apps/tempo/page.tsx:40
 msgid "Automatic reminders (email, SMS)"
+msgstr ""
+
+#: src/app/privacy/page.tsx:108
+msgid "Axiom / Tempo: Logs, traces, and metrics (via OTLP HTTP)."
 msgstr ""
 
 #: src/components/home-content.tsx:111
@@ -443,6 +661,10 @@ msgstr ""
 
 #: src/components/home-content.tsx:85
 msgid "Built in Rust. Powered by PostgreSQL. Engineered for performance."
+msgstr ""
+
+#: src/app/terms/page.tsx:27
+msgid "By creating an Ataqu account, you agree to these Terms of Service (\"ToS\"). You (\"Customer\", \"you\", or \"your\") are entering into a binding agreement with Ataqu (\"we\", \"us\", or \"Ataqu\") to use our Unified SMB Operating System (the \"Service\")."
 msgstr ""
 
 #: src/app/faq/page.tsx:52
@@ -579,6 +801,10 @@ msgstr ""
 
 #: src/app/apps/cinq/page.tsx:28
 msgid "CINQ is a full CRM – contacts, deals, pipeline, activities, email tracking, and custom fields. And it's natively connected to DIAL (chat) and VISTA (analytics). No per‑user fees. No 3‑year lock‑in."
+msgstr ""
+
+#: src/app/privacy/page.tsx:104
+msgid "Cloudflare: Edge network, DDoS protection, and SSL termination."
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:134
@@ -721,6 +947,10 @@ msgstr ""
 msgid "Démarrer avec PIVOT (Docs)"
 msgstr ""
 
+#: src/app/privacy/page.tsx:120
+msgid "Depending on your location (EU/EEA or California), you have specific rights regarding your data:"
+msgstr ""
+
 #: src/app/apps/dial/page.tsx:57
 msgid "DIAL"
 msgstr ""
@@ -789,6 +1019,10 @@ msgstr ""
 #: src/app/blog/page.tsx:51
 #~ msgid "Engineering Blog"
 #~ msgstr ""
+
+#: src/app/privacy/page.tsx:77
+msgid "Every database query executed by the Ataqu Rust backend is scoped to your TenantId via compile-time Repository traits."
+msgstr ""
 
 #: src/components/architecture-proof.tsx:84
 #~ msgid "Exactly‑once Delivery"
@@ -931,6 +1165,14 @@ msgstr ""
 msgid "Frequently Asked Questions"
 msgstr ""
 
+#: src/app/privacy/page.tsx:106
+msgid "Google/Microsoft: SSO identity verification (via OIDC)."
+msgstr ""
+
+#: src/app/privacy/page.tsx:103
+msgid "Hetzner: VPS hosting for the Rust binary and PostgreSQL 16.14."
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:22
 msgid "Hidden paywalls for reporting and automation"
 msgstr ""
@@ -1018,6 +1260,22 @@ msgstr ""
 #~ msgid "Idempotency"
 #~ msgstr ""
 
+#: src/app/privacy/page.tsx:111
+msgid "If we add a new sub‑processor that processes Customer Data, we will notify you 30 days in advance."
+msgstr ""
+
+#: src/app/privacy/page.tsx:162
+msgid "If we change how we process your data, we will update this document and notify you 30 days in advance. We will never retroactively apply a policy that reduces your privacy rights."
+msgstr ""
+
+#: src/app/privacy/page.tsx:65
+msgid "If we introduce AI features in the future (e.g., smart text generation in PIVOT), it will be strictly opt‑in, and the data from that session will not be persisted for model training."
+msgstr ""
+
+#: src/app/terms/page.tsx:30
+msgid "If you are accepting these terms on behalf of a company, you represent that you have the authority to bind that entity."
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:286
 msgid "Import into AEGIS"
 msgstr ""
@@ -1052,6 +1310,14 @@ msgstr ""
 
 #: src/app/faq/page.tsx:31
 msgid "In Europe (Germany), on secure servers compliant with GDPR."
+msgstr ""
+
+#: src/app/privacy/page.tsx:148
+msgid "In the event of a confirmed data breach:"
+msgstr ""
+
+#: src/app/terms/page.tsx:70
+msgid "Infringe upon the intellectual property rights of others."
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:24
@@ -1090,6 +1356,10 @@ msgstr ""
 msgid "Is there a long‑term contract?"
 msgstr ""
 
+#: src/app/privacy/page.tsx:79
+msgid "It is architecturally impossible for one Ataqu tenant to query another tenant's data."
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:477
 #: src/components/kill-sheet-content.tsx:485
 #: src/components/waitlist-form.tsx:231
@@ -1110,6 +1380,11 @@ msgstr ""
 
 #: src/app/faq/page.tsx:101
 msgid "Last updated: August 2026"
+msgstr ""
+
+#: src/app/privacy/page.tsx:18
+#: src/app/terms/page.tsx:18
+msgid "Last Updated: August 29, 2026"
 msgstr ""
 
 #: src/app/apps/pause/page.tsx:38
@@ -1479,6 +1754,10 @@ msgstr ""
 msgid "Other SaaS tools break under their own weight. Ataqu is built to last. It is mathematically sound, deterministically fault‑tolerant, and ruthlessly fast."
 msgstr ""
 
+#: src/app/terms/page.tsx:119
+msgid "Our total liability for any claim arising from the Service is limited to the amount you paid us in the 3 months preceding the claim."
+msgstr ""
+
 #: src/app/apps/pause/page.tsx:57
 msgid "PAUSE"
 msgstr ""
@@ -1573,6 +1852,7 @@ msgstr ""
 msgid "Pricing & Billing"
 msgstr ""
 
+#: src/app/privacy/page.tsx:14
 #: src/components/footer.tsx:35
 msgid "Privacy Policy"
 msgstr ""
@@ -1681,12 +1961,20 @@ msgstr ""
 msgid "Requires ETL pipelines"
 msgstr ""
 
+#: src/app/terms/page.tsx:73
+msgid "Resell or white‑label the Service without explicit written permission."
+msgstr ""
+
 #: src/components/architecture-proof.tsx:108
 #~ msgid "Resource Efficiency"
 #~ msgstr ""
 
 #: src/app/faq/page.tsx:42
 msgid "Response times are < 200ms, thanks to an optimized architecture."
+msgstr ""
+
+#: src/app/privacy/page.tsx:78
+msgid "RLS on core.outbox prevents cross-domain event spoofing. Cross-schema queries are physically impossible at the database level."
 msgstr ""
 
 #: src/components/footer.tsx:24
@@ -1721,6 +2009,10 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:90
 msgid "Select your trigger (e.g., 'CINQ deal won')"
+msgstr ""
+
+#: src/app/privacy/page.tsx:107
+msgid "SendGrid / Postmark: Transactional email delivery."
 msgstr ""
 
 #: src/app/apps/aegis/page.tsx:72
@@ -1911,6 +2203,10 @@ msgstr ""
 #~ msgid "Stop paying per user, per task, and per add‑on. Switch to a single, flat rate."
 #~ msgstr ""
 
+#: src/app/privacy/page.tsx:105
+msgid "Stripe: Payment processing."
+msgstr ""
+
 #: src/app/apps/pivot/page.tsx:39
 msgid "Sub‑15ms search (PostgreSQL tsvector)"
 msgstr ""
@@ -2005,6 +2301,7 @@ msgstr ""
 msgid "TEMPO handles booking links, calendar sync, and no‑show detection — natively connected to your CRM. No per‑user fees. No separate Zapier workflow. Just native scheduling."
 msgstr ""
 
+#: src/app/terms/page.tsx:14
 #: src/components/footer.tsx:34
 msgid "Terms of Service"
 msgstr ""
@@ -2035,6 +2332,14 @@ msgstr ""
 
 #: src/app/apps/dial/page.tsx:38
 msgid "Threads, mentions, reactions"
+msgstr ""
+
+#: src/app/privacy/page.tsx:130
+msgid "To exercise these rights, simply use the in‑app tools. If you need assistance, email privacy@ataqu.so from your registered email address."
+msgstr ""
+
+#: src/app/terms/page.tsx:114
+msgid "To the maximum extent permitted by law:"
 msgstr ""
 
 #: src/components/header.tsx:72
@@ -2078,6 +2383,10 @@ msgstr ""
 msgid "Unlimited tasks — no metering"
 msgstr ""
 
+#: src/app/terms/page.tsx:71
+msgid "Upload malware, malicious code, or conduct unauthorized cyberattacks."
+msgstr ""
+
 #: src/app/faq/page.tsx:55
 msgid "Use the in‑app chat. We respond quickly to urgent issues."
 msgstr ""
@@ -2092,6 +2401,10 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:223
 msgid "VAULT updates stock atomically with PostgreSQL CHECK constraints – no overselling"
+msgstr ""
+
+#: src/app/terms/page.tsx:69
+msgid "Violate any local, national, or international law."
 msgstr ""
 
 #: src/app/apps/vista/page.tsx:57
@@ -2122,6 +2435,18 @@ msgstr ""
 msgid "Want to leave? One click. Your data belongs to you."
 msgstr ""
 
+#: src/app/terms/page.tsx:118
+msgid "We are not liable for indirect, incidental, or consequential damages (e.g., lost profits, lost revenue, or business interruption)."
+msgstr ""
+
+#: src/app/terms/page.tsx:52
+msgid "We believe software must earn your business every month."
+msgstr ""
+
+#: src/app/terms/page.tsx:92
+msgid "We build in Rust with PostgreSQL, SeaORM 2.0, and raw SQL escape hatch for Postgres primitives. We enforce strict tenant isolation via PostgreSQL Roles, Row Level Security (RLS), Column-Level Privileges, and a type‑safe schema ENUM on the unified core.outbox table."
+msgstr ""
+
 #: src/app/about/page.tsx:38
 msgid "We built a monolithic backend in Rust with PostgreSQL and SeaORM 2.0. We use schemas, PostgreSQL Roles, RLS, Column-Level Privileges, and a type‑safe <0>schema</0> ENUM for hard bounded context isolation. Our unified outbox is driven by <1>LISTEN/NOTIFY</1> for instant event delivery. We use <2>JSONB</2> with graceful degradation for custom field filtering. We enforce strict tenant isolation via private <3>TenantId</3> newtype, database-level roles, RLS, and Column-Level Privileges. PII is redacted at compile time via redacting newtypes with zero runtime overhead; JSON serialization is strictly restricted to the API layer via wrapper structs."
 msgstr ""
@@ -2140,6 +2465,34 @@ msgstr ""
 
 #: src/app/about/page.tsx:20
 msgid "We looked at that. We said: \"We can do better.\""
+msgstr ""
+
+#: src/app/terms/page.tsx:128
+msgid "We may suspend or terminate your account immediately if you violate the Acceptable Use Policy (Section 4) or if your usage threatens the operational stability of the PostgreSQL database architecture."
+msgstr ""
+
+#: src/app/terms/page.tsx:137
+msgid "We may update these ToS. We will notify you 30 days before material changes take effect. If you disagree with the changes, your recourse is the 1‑Click Cancel button."
+msgstr ""
+
+#: src/app/terms/page.tsx:105
+msgid "We target 99.9% uptime. However, we do not offer SLA‑backed financial credits for standard plans, as the flat $49/mo pricing does not support enterprise SLA infrastructure costs. If we experience catastrophic downtime, we will communicate it transparently and apply service credits at our discretion."
+msgstr ""
+
+#: src/app/privacy/page.tsx:100
+msgid "We use highly vetted, enterprise‑grade infrastructure providers. We do not share your Customer Data with marketing or advertising networks. Our core sub‑processors are:"
+msgstr ""
+
+#: src/app/privacy/page.tsx:151
+msgid "We will immediately secure the affected systems."
+msgstr ""
+
+#: src/app/privacy/page.tsx:153
+msgid "We will notify affected customers via email within 72 hours of detection, including the scope of the breach and the remediation steps taken."
+msgstr ""
+
+#: src/app/privacy/page.tsx:152
+msgid "We will publish an initial incident report on status.ataqu.so within 24 hours of detection."
 msgstr ""
 
 #: src/components/waitlist-form.tsx:142
@@ -2306,6 +2659,10 @@ msgstr ""
 msgid "Yes. You can upgrade or downgrade in 1 click from your dashboard. Billing is prorated."
 msgstr ""
 
+#: src/app/terms/page.tsx:66
+msgid "You agree not to use the Service to:"
+msgstr ""
+
 #: src/app/faq/page.tsx:63
 msgid "You can export it in 1 click before canceling. After 30 days, it is permanently deleted."
 msgstr ""
@@ -2318,12 +2675,24 @@ msgstr ""
 msgid "you@company.com"
 msgstr ""
 
+#: src/app/privacy/page.tsx:74
+msgid "Your Customer Data is stored in a single PostgreSQL 16.14 instance with schemas for bounded context isolation (core, collab_crm, collab_ops, vault, dial, vista). Logical separation is strictly enforced at the database level via PostgreSQL Roles, Row Level Security (RLS), Column-Level Privileges, and a type‑safe schema ENUM."
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:119
 msgid "Your data is indexed and searchable instantly"
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:35
 msgid "Your data is mapped instantly"
+msgstr ""
+
+#: src/app/privacy/page.tsx:63
+msgid "Your data is never fed into internal or external LLMs."
+msgstr ""
+
+#: src/app/privacy/page.tsx:64
+msgid "Your data is never used for algorithmic tuning."
 msgstr ""
 
 #: src/components/kill-sheet-content.tsx:462
