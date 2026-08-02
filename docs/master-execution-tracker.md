@@ -64,18 +64,18 @@ It is structured by Phases (which map to your 4 weeks). It tells you exactly whe
 
 ### Phase 4: Application Services (Parallel - 10 Agents)
 *Prerequisite: Phase 3 repository implementations must be merged to main.*
-- [ ] **START PARALLEL:** Dispatch Tasks 041 to 050 to 10 agents.
-- [ ] **TASK-041:** App Service: AEGIS
-- [ ] **TASK-042:** App Service: CINQ
-- [ ] **TASK-043:** App Service: DIAL
-- [ ] **TASK-044:** App Service: PIVOT
-- [ ] **TASK-045:** App Service: SPARK
-- [ ] **TASK-046:** App Service: TEMPO
-- [ ] **TASK-047:** App Service: SOND
-- [ ] **TASK-048:** App Service: VAULT
-- [ ] **TASK-049:** App Service: PAUSE
-- [ ] **TASK-050:** App Service: VISTA
-- [ ] **[MERGE TO MAIN]:** Merge all Phase 4 tasks. Verify `cargo check --workspace` passes.
+- [x] **START PARALLEL:** Dispatch Tasks 041 to 050 to 10 agents.
+- [x] **TASK-041:** App Service: AEGIS
+- [x] **TASK-042:** App Service: CINQ
+- [x] **TASK-043:** App Service: DIAL
+- [x] **TASK-044:** App Service: PIVOT
+- [x] **TASK-045:** App Service: SPARK
+- [x] **TASK-046:** App Service: TEMPO
+- [x] **TASK-047:** App Service: SOND
+- [x] **TASK-048:** App Service: VAULT
+- [x] **TASK-049:** App Service: PAUSE
+- [x] **TASK-050:** App Service: VISTA
+- [x] **[MERGE TO MAIN]:** Merge all Phase 4 tasks. Verify `cargo check --workspace` passes.
 
 ---
 
