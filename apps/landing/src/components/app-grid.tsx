@@ -19,7 +19,7 @@ const APPS = [
 
 export function AppGrid() {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="flex flex-wrap justify-center gap-4">
       {APPS.map((app) => (
         <Link key={app.id} href={`/apps/${app.id}`} className="block">
           <AppCard app={app} />
@@ -33,7 +33,7 @@ function AppCard({ app }: { app: { id: string; name: string; desc: string } }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="flex flex-col items-center p-4 rounded-lg border border-border bg-card/30 hover:bg-card/60 transition-colors">
+    <div className="flex flex-col items-center p-4 rounded-lg border border-border bg-card/30 hover:bg-card/60 transition-colors w-24">
       <div className="w-12 h-12 rounded-full overflow-hidden mb-2 border border-primary/20 flex items-center justify-center bg-background">
         {!imgError ? (
           <Image
@@ -49,7 +49,7 @@ function AppCard({ app }: { app: { id: string; name: string; desc: string } }) {
         )}
       </div>
       <span className="font-display text-sm font-semibold">{app.name}</span>
-      <span className="text-xs text-muted-foreground mt-0.5">{app.desc}</span>
+      <span className="text-xs text-muted-foreground mt-0.5 text-center">{app.desc}</span>
     </div>
   );
 }
