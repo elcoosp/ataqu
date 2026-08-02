@@ -225,7 +225,7 @@ msgstr ""
 msgid "10 apps, one price, zero lock‑in."
 msgstr ""
 
-#: src/components/home-content.tsx:64
+#: src/components/home-content.tsx:72
 msgid "10 apps. One suite. Natively integrated."
 msgstr ""
 
@@ -382,7 +382,7 @@ msgstr ""
 msgid "Ataqu attacks the market so you don't have to suffer."
 msgstr ""
 
-#: src/components/home-content.tsx:22
+#: src/components/home-content.tsx:30
 msgid "Ataqu remplace HubSpot, Slack et Notion par une seule plateforme native. Pas de lock‑in. Pas de per‑user fees. Commencez par le CRM (CINQ) ou par les docs (PIVOT)."
 msgstr ""
 
@@ -406,7 +406,7 @@ msgstr ""
 msgid "Automatic reminders (email, SMS)"
 msgstr ""
 
-#: src/components/home-content.tsx:103
+#: src/components/home-content.tsx:111
 #: src/components/kill-sheet-content.tsx:488
 msgid "Be first to access the suite. No credit card required."
 msgstr ""
@@ -441,7 +441,7 @@ msgstr ""
 #~ msgid "Built in Rust"
 #~ msgstr ""
 
-#: src/components/home-content.tsx:77
+#: src/components/home-content.tsx:85
 msgid "Built in Rust. Powered by PostgreSQL. Engineered for performance."
 msgstr ""
 
@@ -543,9 +543,9 @@ msgstr ""
 msgid "Centralized documents (contracts, payslips)"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:200
-#~ msgid "CEO, CTO, Head of Ops…"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:219
+msgid "CEO, CTO, Head of Ops…"
+msgstr ""
 
 #: src/app/apps/dial/page.tsx:37
 msgid "Channels (public & private)"
@@ -709,11 +709,11 @@ msgstr ""
 #~ msgid "Deep dives into our architecture, design decisions, and the philosophy behind Ataqu."
 #~ msgstr ""
 
-#: src/components/home-content.tsx:32
+#: src/components/home-content.tsx:40
 msgid "Démarrer avec CINQ (CRM)"
 msgstr ""
 
-#: src/components/home-content.tsx:38
+#: src/components/home-content.tsx:46
 msgid "Démarrer avec PIVOT (Docs)"
 msgstr ""
 
@@ -761,9 +761,9 @@ msgstr ""
 msgid "Drop the files into PIVOT"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:135
-#~ msgid "Email address"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:157
+msgid "Email address"
+msgstr ""
 
 #: src/app/apps/sond/page.tsx:67
 msgid "Email notifications are paid add‑on"
@@ -974,14 +974,18 @@ msgid "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $
 msgstr ""
 
 #: src/components/home-content.tsx:46
-msgid "HubSpot charges $1,200/mo. Ataqu charges $49."
+#~ msgid "HubSpot charges $1,200/mo. Ataqu charges $49."
+#~ msgstr ""
+
+#: src/components/home-content.tsx:54
+msgid "HubSpot charges $1,200/mo. Ataqu charges $79."
 msgstr ""
 
 #: src/app/apps/cinq/page.tsx:25
 msgid "HubSpot charges $1,200/mo. CINQ does the same for $15."
 msgstr ""
 
-#: src/components/home-content.tsx:16
+#: src/components/home-content.tsx:24
 msgid "HubSpot coûte <0>1 200 $/mois</0>. Slack vous taxe par utilisateur."
 msgstr ""
 
@@ -1082,10 +1086,14 @@ msgstr ""
 msgid "Is there a long‑term contract?"
 msgstr ""
 
-#: src/components/home-content.tsx:100
 #: src/components/kill-sheet-content.tsx:477
 #: src/components/kill-sheet-content.tsx:485
+#: src/components/waitlist-form.tsx:236
 msgid "Join the waitlist"
+msgstr ""
+
+#: src/components/home-content.tsx:108
+msgid "Join the waitlist – from $15/mo (5 apps $39, 10 apps $79)"
 msgstr ""
 
 #: src/app/apps/aegis/page.tsx:40
@@ -1176,9 +1184,9 @@ msgstr ""
 #~ msgid "MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events."
 #~ msgstr ""
 
-#: src/components/waitlist-form.tsx:177
-#~ msgid "Name (optional)"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:199
+msgid "Name (optional)"
+msgstr ""
 
 #: src/app/apps/pause/page.tsx:41
 msgid "Native AEGIS deprovisioning"
@@ -1294,11 +1302,11 @@ msgstr ""
 msgid "Native relations to CINQ deals and VAULT products"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:115
-#~ msgid "Network error. Please check your connection."
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:134
+msgid "Network error. Please check your connection."
+msgstr ""
 
-#: src/components/home-content.tsx:90
+#: src/components/home-content.tsx:98
 msgid "No 3‑year lock‑in. No retention specialists. Just 1 click."
 msgstr ""
 
@@ -1306,9 +1314,9 @@ msgstr ""
 msgid "No bot support. Humans who respond in 24h."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:217
-#~ msgid "No credit card required. Early access only."
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:239
+msgid "No credit card required. Early access only."
+msgstr ""
 
 #: src/app/apps/dial/page.tsx:71
 #: src/app/apps/sond/page.tsx:71
@@ -1657,7 +1665,7 @@ msgstr ""
 msgid "Relational databases (like Airtable)"
 msgstr ""
 
-#: src/components/home-content.tsx:67
+#: src/components/home-content.tsx:75
 msgid "Replace your fragmented stack with a single, unified operating system."
 msgstr ""
 
@@ -1683,9 +1691,9 @@ msgstr ""
 msgid "Roadmap"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:190
-#~ msgid "Role (optional)"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:212
+msgid "Role (optional)"
+msgstr ""
 
 #: src/app/apps/pivot/page.tsx:68
 msgid "Search: <15ms"
@@ -1699,7 +1707,7 @@ msgstr ""
 msgid "Security & Privacy"
 msgstr ""
 
-#: src/components/home-content.tsx:56
+#: src/components/home-content.tsx:64
 msgid "See full comparison →"
 msgstr ""
 
@@ -1763,9 +1771,9 @@ msgstr ""
 msgid "Slow to update stock levels in real time"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:112
-#~ msgid "Something went wrong. Please try again."
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:131
+msgid "Something went wrong. Please try again."
+msgstr ""
 
 #: src/app/apps/sond/page.tsx:57
 msgid "SOND"
@@ -1801,6 +1809,10 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:274
 msgid "SSO is a standalone product – no native integration with HR"
+msgstr ""
+
+#: src/components/home-content.tsx:57
+msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
 msgstr ""
 
 #: src/app/apps/aegis/page.tsx:97
@@ -1888,8 +1900,8 @@ msgid "Stock movements & audit trail"
 msgstr ""
 
 #: src/components/home-content.tsx:49
-msgid "Stop paying per user, per task, and per add‑on. Switch to a single, flat rate."
-msgstr ""
+#~ msgid "Stop paying per user, per task, and per add‑on. Switch to a single, flat rate."
+#~ msgstr ""
 
 #: src/app/apps/pivot/page.tsx:39
 msgid "Sub‑15ms search (PostgreSQL tsvector)"
@@ -1899,9 +1911,9 @@ msgstr ""
 #~ msgid "Sub‑50ms search"
 #~ msgstr ""
 
-#: src/components/waitlist-form.tsx:215
-#~ msgid "Submitting…"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:234
+msgid "Submitting…"
+msgstr ""
 
 #: src/app/faq/page.tsx:49
 msgid "Support & SLA"
@@ -2098,7 +2110,7 @@ msgstr ""
 msgid "Visual workflow builder (drag & drop)"
 msgstr ""
 
-#: src/components/home-content.tsx:87
+#: src/components/home-content.tsx:95
 msgid "Want to leave? One click. Your data belongs to you."
 msgstr ""
 
@@ -2122,9 +2134,9 @@ msgstr ""
 msgid "We looked at that. We said: \"We can do better.\""
 msgstr ""
 
-#: src/components/waitlist-form.tsx:125
-#~ msgid "We'll send you early access and exclusive updates."
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:147
+msgid "We'll send you early access and exclusive updates."
+msgstr ""
 
 #: src/app/roadmap/page.tsx:100
 msgid "We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned."
@@ -2174,9 +2186,9 @@ msgstr ""
 msgid "Where is my data stored?"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:149
-#~ msgid "Which apps interest you?"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:171
+msgid "Which apps interest you?"
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:438
 msgid "Why {name} Fails"
@@ -2290,13 +2302,13 @@ msgstr ""
 msgid "You can export it in 1 click before canceling. After 30 days, it is permanently deleted."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:122
-#~ msgid "You're on the list!"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:144
+msgid "You're on the list!"
+msgstr ""
 
-#: src/components/waitlist-form.tsx:145
-#~ msgid "you@company.com"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:164
+msgid "you@company.com"
+msgstr ""
 
 #: src/components/kill-sheet-content.tsx:119
 msgid "Your data is indexed and searchable instantly"
@@ -2310,9 +2322,9 @@ msgstr ""
 msgid "Your Escape Hatch"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:187
-#~ msgid "Your name"
-#~ msgstr ""
+#: src/components/waitlist-form.tsx:206
+msgid "Your name"
+msgstr ""
 
 #: src/app/apps/spark/page.tsx:54
 #: src/components/kill-sheet-content.tsx:69

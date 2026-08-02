@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useLingui } from "@lingui/react";
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,59 +21,65 @@ type FormData = z.infer<typeof schema>;
 const APP_OPTIONS = [
   {
     id: "pivot",
-    label: "Docs & databases",
-    description: "PIVOT — like Notion but faster"
+    label: "PIVOT",
+    description: "Docs & databases — like Notion but faster"
   },
   {
     id: "dial",
-    label: "Chat & support",
-    description: "DIAL — Slack + Intercom unified"
+    label: "DIAL",
+    description: "Team chat & customer support — Slack + Intercom"
   },
   {
     id: "spark",
-    label: "Automation",
-    description: "SPARK — Zapier without limits"
+    label: "SPARK",
+    description: "Automation — Zapier without the task limits"
   },
   {
     id: "tempo",
-    label: "Scheduling",
-    description: "TEMPO — Calendly built in"
+    label: "TEMPO",
+    description: "Scheduling — Calendly built into your CRM"
   },
   {
     id: "sond",
-    label: "Forms & surveys",
-    description: "SOND — Typeform without limits"
+    label: "SOND",
+    description: "Forms & surveys — Typeform without the limits"
   },
   {
     id: "cinq",
-    label: "CRM & sales",
-    description: "CINQ — HubSpot at 1/10th price"
+    label: "CINQ",
+    description: "CRM & sales pipeline — HubSpot at 1/10th the price"
   },
   {
     id: "vault",
-    label: "Inventory",
-    description: "VAULT — Cin7 without lock‑in"
+    label: "VAULT",
+    description: "Inventory management — Cin7 without the lock‑in"
   },
   {
     id: "pause",
-    label: "HR & leave",
-    description: "PAUSE — Personio simplified"
+    label: "PAUSE",
+    description: "HR & leave management — Personio simplified"
   },
   {
     id: "aegis",
-    label: "SSO & security",
-    description: "AEGIS — Okta for $3/mo"
+    label: "AEGIS",
+    description: "SSO & security — Okta for $3/mo"
   },
   {
     id: "vista",
-    label: "Analytics & BI",
-    description: "VISTA — Tableau without ETL"
+    label: "VISTA",
+    description: "Analytics & BI — Tableau without the ETL"
   },
 ];
 
-export function WaitlistForm() {
+interface WaitlistFormProps {
+  preselectedApps?: string[];
+}
+
+export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
+  const { i18n } = useLingui();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const preselectApplied = useRef(false);
 
   const {
     register,
@@ -78,12 +87,24 @@ export function WaitlistForm() {
     formState: { errors },
     watch,
     setValue,
+    reset,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { apps: [] },
   });
 
   const selectedApps = watch("apps") || [];
+
+  // Apply preselected apps when they change, but only once
+  useEffect(() => {
+    if (preselectedApps && preselectedApps.length > 0 && !preselectApplied.current) {
+      setValue("apps", preselectedApps);
+      preselectApplied.current = true;
+    }
+  }, [preselectedApps, setValue]);
+
+  // Reset the flag when the form is submitted or if we want to allow re-preselection
+  // but for now, keep it simple.
 
   const toggleApp = (id: string) => {
     const current = selectedApps;
@@ -92,6 +113,8 @@ export function WaitlistForm() {
     } else {
       setValue("apps", [...current, id]);
     }
+    // If user manually toggles, we allow them to change, but we don't reset the flag.
+    // It's fine, they can modify.
   };
 
   const onSubmit = async (data: FormData) => {
@@ -105,10 +128,10 @@ export function WaitlistForm() {
       if (res.ok) {
         setSuccess(true);
       } else {
-        alert("Something went wrong. Please try again.");
+        alert(i18n._(t`Something went wrong. Please try again.`));
       }
     } catch {
-      alert("Network error. Please check your connection.");
+      alert(i18n._(t`Network error. Please check your connection.`));
     } finally {
       setIsSubmitting(false);
     }
@@ -118,10 +141,10 @@ export function WaitlistForm() {
     return (
       <div className="p-6 rounded-lg border border-primary/30 bg-card/50 text-center">
         <h3 className="text-xl font-display text-primary">
-          You're on the list!
+          <Trans>You're on the list!</Trans>
         </h3>
         <p className="mt-2 text-muted-foreground">
-          We'll send you early access and exclusive updates.
+          <Trans>We'll send you early access and exclusive updates.</Trans>
         </p>
       </div>
     );
@@ -131,21 +154,21 @@ export function WaitlistForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-md mx-auto space-y-4 text-left">
       <div>
         <label htmlFor="email" className="block text-sm font-medium">
-          Email address
+          <Trans>Email address</Trans>
         </label>
         <input
           id="email"
           type="email"
           {...register("email")}
           className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          placeholder={"you@company.com"}
+          placeholder={i18n._(t`you@company.com`)}
         />
         {errors.email && <p className="mt-1 text-sm text-error">{errors.email.message}</p>}
       </div>
 
       <div>
         <span className="block text-sm font-medium">
-          Which apps interest you?
+          <Trans>Which apps interest you?</Trans>
         </span>
         <div className="mt-2 flex flex-wrap gap-2">
           {APP_OPTIONS.map((app) => (
@@ -173,27 +196,27 @@ export function WaitlistForm() {
 
       <div>
         <label htmlFor="name" className="block text-sm font-medium">
-          Name (optional)
+          <Trans>Name (optional)</Trans>
         </label>
         <input
           id="name"
           type="text"
           {...register("name")}
           className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          placeholder={"Your name"}
+          placeholder={i18n._(t`Your name`)}
         />
       </div>
 
       <div>
         <label htmlFor="role" className="block text-sm font-medium">
-          Role (optional)
+          <Trans>Role (optional)</Trans>
         </label>
         <input
           id="role"
           type="text"
           {...register("role")}
           className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          placeholder={"CEO, CTO, Head of Ops…"}
+          placeholder={i18n._(t`CEO, CTO, Head of Ops…`)}
         />
       </div>
 
@@ -208,12 +231,12 @@ export function WaitlistForm() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {"Submitting…"}
+            {i18n._(t`Submitting…`)}
           </>
-        ) : "Join the waitlist"}
+        ) : i18n._(t`Join the waitlist`)}
       </button>
       <p className="text-xs text-muted-foreground text-center">
-        No credit card required. Early access only.
+        <Trans>No credit card required. Early access only.</Trans>
       </p>
     </form>
   );

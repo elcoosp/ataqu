@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { AppGrid } from "@/components/app-grid";
@@ -8,6 +9,13 @@ import { EscapeHatch } from "@/components/escape-hatch";
 import { ArchitectureProof } from "@/components/architecture-proof";
 
 export function HomeContent() {
+  const [preselectedApps, setPreselectedApps] = useState<string[]>([]);
+
+  const handleWedgeClick = (apps: string[]) => {
+    setPreselectedApps(apps);
+    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <main className="container section-padding space-y-20 md:space-y-28">
       {/* Hero */}
@@ -25,28 +33,28 @@ export function HomeContent() {
           </Trans>
         </p>
         <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-          <a
-            href="#waitlist"
+          <button
+            onClick={() => handleWedgeClick(["cinq"])}
             className="inline-block rounded-md bg-primary px-8 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Trans>Démarrer avec CINQ (CRM)</Trans>
-          </a>
-          <a
-            href="#waitlist"
+          </button>
+          <button
+            onClick={() => handleWedgeClick(["pivot"])}
             className="inline-block rounded-md border border-border bg-transparent px-8 py-3 font-medium text-foreground transition-colors hover:bg-card"
           >
             <Trans>Démarrer avec PIVOT (Docs)</Trans>
-          </a>
+          </button>
         </div>
       </section>
 
       {/* The Math */}
       <section>
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
-          <Trans>HubSpot charges $1,200/mo. Ataqu charges $49.</Trans>
+          <Trans>HubSpot charges $1,200/mo. Ataqu charges $79.</Trans>
         </h2>
         <p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-          <Trans>Stop paying per user, per task, and per add‑on. Switch to a single, flat rate.</Trans>
+          <Trans>Start at $15/mo for one app, $39 for 5, or $79 for all 10.</Trans>
         </p>
         <div className="mt-8">
           <PricingComparison />
@@ -97,13 +105,13 @@ export function HomeContent() {
       {/* Waitlist */}
       <section id="waitlist" className="max-w-2xl mx-auto">
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
-          <Trans>Join the waitlist</Trans>
+          <Trans>Join the waitlist – from $15/mo (5 apps $39, 10 apps $79)</Trans>
         </h2>
         <p className="mt-4 text-center text-muted-foreground">
           <Trans>Be first to access the suite. No credit card required.</Trans>
         </p>
         <div className="mt-8">
-          <WaitlistForm />
+          <WaitlistForm preselectedApps={preselectedApps} />
         </div>
       </section>
     </main>
