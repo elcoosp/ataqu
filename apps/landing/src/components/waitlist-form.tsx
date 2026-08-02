@@ -21,53 +21,53 @@ type FormData = z.infer<typeof schema>;
 const APP_OPTIONS = [
   {
     id: "pivot",
-    label: "PIVOT",
-    description: "Docs & databases — like Notion but faster"
+    label: "Docs & databases",
+    description: "PIVOT — like Notion but faster"
   },
   {
     id: "dial",
-    label: "DIAL",
-    description: "Team chat & customer support — Slack + Intercom"
+    label: "Chat & support",
+    description: "DIAL — Slack + Intercom unified"
   },
   {
     id: "spark",
-    label: "SPARK",
-    description: "Automation — Zapier without the task limits"
+    label: "Automation",
+    description: "SPARK — Zapier without limits"
   },
   {
     id: "tempo",
-    label: "TEMPO",
-    description: "Scheduling — Calendly built into your CRM"
+    label: "Scheduling",
+    description: "TEMPO — Calendly built in"
   },
   {
     id: "sond",
-    label: "SOND",
-    description: "Forms & surveys — Typeform without the limits"
+    label: "Forms & surveys",
+    description: "SOND — Typeform without limits"
   },
   {
     id: "cinq",
-    label: "CINQ",
-    description: "CRM & sales pipeline — HubSpot at 1/10th the price"
+    label: "CRM & sales",
+    description: "CINQ — HubSpot at 1/10th price"
   },
   {
     id: "vault",
-    label: "VAULT",
-    description: "Inventory management — Cin7 without the lock‑in"
+    label: "Inventory",
+    description: "VAULT — Cin7 without lock‑in"
   },
   {
     id: "pause",
-    label: "PAUSE",
-    description: "HR & leave management — Personio simplified"
+    label: "HR & leave",
+    description: "PAUSE — Personio simplified"
   },
   {
     id: "aegis",
-    label: "AEGIS",
-    description: "SSO & security — Okta for $3/mo"
+    label: "SSO & security",
+    description: "AEGIS — Okta for $3/mo"
   },
   {
     id: "vista",
-    label: "VISTA",
-    description: "Analytics & BI — Tableau without the ETL"
+    label: "Analytics & BI",
+    description: "VISTA — Tableau without ETL"
   },
 ];
 
@@ -103,9 +103,6 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
     }
   }, [preselectedApps, setValue]);
 
-  // Reset the flag when the form is submitted or if we want to allow re-preselection
-  // but for now, keep it simple.
-
   const toggleApp = (id: string) => {
     const current = selectedApps;
     if (current.includes(id)) {
@@ -113,8 +110,6 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
     } else {
       setValue("apps", [...current, id]);
     }
-    // If user manually toggles, we allow them to change, but we don't reset the flag.
-    // It's fine, they can modify.
   };
 
   const onSubmit = async (data: FormData) => {

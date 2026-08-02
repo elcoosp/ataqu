@@ -543,7 +543,7 @@ msgstr ""
 msgid "Centralized documents (contracts, payslips)"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:219
+#: src/components/waitlist-form.tsx:214
 msgid "CEO, CTO, Head of Ops…"
 msgstr ""
 
@@ -761,7 +761,7 @@ msgstr ""
 msgid "Drop the files into PIVOT"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:157
+#: src/components/waitlist-form.tsx:152
 msgid "Email address"
 msgstr ""
 
@@ -1088,7 +1088,7 @@ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:477
 #: src/components/kill-sheet-content.tsx:485
-#: src/components/waitlist-form.tsx:236
+#: src/components/waitlist-form.tsx:231
 msgid "Join the waitlist"
 msgstr ""
 
@@ -1184,7 +1184,7 @@ msgstr ""
 #~ msgid "MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events."
 #~ msgstr ""
 
-#: src/components/waitlist-form.tsx:199
+#: src/components/waitlist-form.tsx:194
 msgid "Name (optional)"
 msgstr ""
 
@@ -1302,7 +1302,7 @@ msgstr ""
 msgid "Native relations to CINQ deals and VAULT products"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:134
+#: src/components/waitlist-form.tsx:129
 msgid "Network error. Please check your connection."
 msgstr ""
 
@@ -1314,7 +1314,7 @@ msgstr ""
 msgid "No bot support. Humans who respond in 24h."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:239
+#: src/components/waitlist-form.tsx:234
 msgid "No credit card required. Early access only."
 msgstr ""
 
@@ -1691,7 +1691,7 @@ msgstr ""
 msgid "Roadmap"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:212
+#: src/components/waitlist-form.tsx:207
 msgid "Role (optional)"
 msgstr ""
 
@@ -1771,7 +1771,7 @@ msgstr ""
 msgid "Slow to update stock levels in real time"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:131
+#: src/components/waitlist-form.tsx:126
 msgid "Something went wrong. Please try again."
 msgstr ""
 
@@ -1911,7 +1911,7 @@ msgstr ""
 #~ msgid "Sub‑50ms search"
 #~ msgstr ""
 
-#: src/components/waitlist-form.tsx:234
+#: src/components/waitlist-form.tsx:229
 msgid "Submitting…"
 msgstr ""
 
@@ -2134,7 +2134,7 @@ msgstr ""
 msgid "We looked at that. We said: \"We can do better.\""
 msgstr ""
 
-#: src/components/waitlist-form.tsx:147
+#: src/components/waitlist-form.tsx:142
 msgid "We'll send you early access and exclusive updates."
 msgstr ""
 
@@ -2186,7 +2186,7 @@ msgstr ""
 msgid "Where is my data stored?"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:171
+#: src/components/waitlist-form.tsx:166
 msgid "Which apps interest you?"
 msgstr ""
 
@@ -2302,11 +2302,11 @@ msgstr ""
 msgid "You can export it in 1 click before canceling. After 30 days, it is permanently deleted."
 msgstr ""
 
-#: src/components/waitlist-form.tsx:144
+#: src/components/waitlist-form.tsx:139
 msgid "You're on the list!"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:164
+#: src/components/waitlist-form.tsx:159
 msgid "you@company.com"
 msgstr ""
 
@@ -2322,7 +2322,7 @@ msgstr ""
 msgid "Your Escape Hatch"
 msgstr ""
 
-#: src/components/waitlist-form.tsx:206
+#: src/components/waitlist-form.tsx:201
 msgid "Your name"
 msgstr ""
 

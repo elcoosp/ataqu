@@ -543,7 +543,7 @@ msgstr "Cancellation & Refund"
 msgid "Centralized documents (contracts, payslips)"
 msgstr "Centralized documents (contracts, payslips)"
 
-#: src/components/waitlist-form.tsx:219
+#: src/components/waitlist-form.tsx:214
 msgid "CEO, CTO, Head of Ops…"
 msgstr "CEO, CTO, Head of Ops…"
 
@@ -761,7 +761,7 @@ msgstr "Drop the CSV into Ataqu CINQ"
 msgid "Drop the files into PIVOT"
 msgstr "Drop the files into PIVOT"
 
-#: src/components/waitlist-form.tsx:157
+#: src/components/waitlist-form.tsx:152
 msgid "Email address"
 msgstr "Email address"
 
@@ -1088,7 +1088,7 @@ msgstr "Is there a long‑term contract?"
 
 #: src/components/kill-sheet-content.tsx:477
 #: src/components/kill-sheet-content.tsx:485
-#: src/components/waitlist-form.tsx:236
+#: src/components/waitlist-form.tsx:231
 msgid "Join the waitlist"
 msgstr "Join the waitlist"
 
@@ -1184,7 +1184,7 @@ msgstr "Multi‑channel & multi‑warehouse"
 #~ msgid "MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events."
 #~ msgstr "MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events."
 
-#: src/components/waitlist-form.tsx:199
+#: src/components/waitlist-form.tsx:194
 msgid "Name (optional)"
 msgstr "Name (optional)"
 
@@ -1302,7 +1302,7 @@ msgstr "Native relations to CINQ"
 msgid "Native relations to CINQ deals and VAULT products"
 msgstr "Native relations to CINQ deals and VAULT products"
 
-#: src/components/waitlist-form.tsx:134
+#: src/components/waitlist-form.tsx:129
 msgid "Network error. Please check your connection."
 msgstr "Network error. Please check your connection."
 
@@ -1314,7 +1314,7 @@ msgstr "No 3‑year lock‑in. No retention specialists. Just 1 click."
 msgid "No bot support. Humans who respond in 24h."
 msgstr "No bot support. Humans who respond in 24h."
 
-#: src/components/waitlist-form.tsx:239
+#: src/components/waitlist-form.tsx:234
 msgid "No credit card required. Early access only."
 msgstr "No credit card required. Early access only."
 
@@ -1691,7 +1691,7 @@ msgstr "Response times are < 200ms, thanks to an optimized architecture."
 msgid "Roadmap"
 msgstr "Roadmap"
 
-#: src/components/waitlist-form.tsx:212
+#: src/components/waitlist-form.tsx:207
 msgid "Role (optional)"
 msgstr "Role (optional)"
 
@@ -1771,7 +1771,7 @@ msgstr "Slow dashboards – data is stale by the time it loads"
 msgid "Slow to update stock levels in real time"
 msgstr "Slow to update stock levels in real time"
 
-#: src/components/waitlist-form.tsx:131
+#: src/components/waitlist-form.tsx:126
 msgid "Something went wrong. Please try again."
 msgstr "Something went wrong. Please try again."
 
@@ -1911,7 +1911,7 @@ msgstr "Sub‑15ms search (PostgreSQL tsvector)"
 #~ msgid "Sub‑50ms search"
 #~ msgstr "Sub‑50ms search"
 
-#: src/components/waitlist-form.tsx:234
+#: src/components/waitlist-form.tsx:229
 msgid "Submitting…"
 msgstr "Submitting…"
 
@@ -2134,7 +2134,7 @@ msgstr "We didn't just wrap APIs in a new UI. We eradicated the bloat."
 msgid "We looked at that. We said: \"We can do better.\""
 msgstr "We looked at that. We said: \"We can do better.\""
 
-#: src/components/waitlist-form.tsx:147
+#: src/components/waitlist-form.tsx:142
 msgid "We'll send you early access and exclusive updates."
 msgstr "We'll send you early access and exclusive updates."
 
@@ -2186,7 +2186,7 @@ msgstr "When an employee is offboarded in PAUSE, AEGIS instantly revokes access 
 msgid "Where is my data stored?"
 msgstr "Where is my data stored?"
 
-#: src/components/waitlist-form.tsx:171
+#: src/components/waitlist-form.tsx:166
 msgid "Which apps interest you?"
 msgstr "Which apps interest you?"
 
@@ -2302,11 +2302,11 @@ msgstr "Yes. You can upgrade or downgrade in 1 click from your dashboard. Billin
 msgid "You can export it in 1 click before canceling. After 30 days, it is permanently deleted."
 msgstr "You can export it in 1 click before canceling. After 30 days, it is permanently deleted."
 
-#: src/components/waitlist-form.tsx:144
+#: src/components/waitlist-form.tsx:139
 msgid "You're on the list!"
 msgstr "You're on the list!"
 
-#: src/components/waitlist-form.tsx:164
+#: src/components/waitlist-form.tsx:159
 msgid "you@company.com"
 msgstr "you@company.com"
 
@@ -2322,7 +2322,7 @@ msgstr "Your data is mapped instantly"
 msgid "Your Escape Hatch"
 msgstr "Your Escape Hatch"
 
-#: src/components/waitlist-form.tsx:206
+#: src/components/waitlist-form.tsx:201
 msgid "Your name"
 msgstr "Your name"
 
