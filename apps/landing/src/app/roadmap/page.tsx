@@ -119,7 +119,6 @@ export default function RoadmapPage() {
         ))}
       </div>
       <p className="mt-12 text-center text-sm text-muted-foreground">
-        <Trans>This roadmap is updated as we ship. Follow our progress on GitHub.</Trans>
       </p>
     </div>
   );

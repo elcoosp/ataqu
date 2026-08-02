@@ -13,7 +13,7 @@ export function Footer() {
             <span className="text-primary">A</span>taqu
           </Link>
           <p className="mt-2 text-sm text-muted-foreground max-w-xs">
-            <Trans>10 apps, one price, zero lock‑in.</Trans>
+            <Trans>$15–$79/mo, no lock‑in.</Trans>
           </p>
         </div>
 
@@ -21,9 +21,10 @@ export function Footer() {
           <h4 className="font-display text-sm font-semibold text-foreground"><Trans>Product</Trans></h4>
           <ul className="mt-2 space-y-2 text-sm">
             <li><Link href="/alternatives" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Alternatives</Trans></Link></li>
-            <li><Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Roadmap</Trans></Link></li>
-            <li><Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Blog</Trans></Link></li>
+            <li><Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Pricing</Trans></Link></li>
             <li><Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>About</Trans></Link></li>
+            <li><Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Blog</Trans></Link></li>
+            <li><Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Roadmap</Trans></Link></li>
             <li><Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>FAQ</Trans></Link></li>
           </ul>
         </div>
@@ -39,9 +40,6 @@ export function Footer() {
         <div>
           <h4 className="font-display text-sm font-semibold text-foreground"><Trans>Connect</Trans></h4>
           <div className="mt-2 flex gap-4">
-            <a href="https://github.com/ataqu" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-              <Github className="w-5 h-5" />
-            </a>
             <a href="https://twitter.com/ataqu" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
               <Twitter className="w-5 h-5" />
             </a>

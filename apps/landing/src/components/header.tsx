@@ -32,18 +32,26 @@ export function Header() {
             <Trans>Home</Trans>
           </Link>
 
-          <Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors">
-            <Trans>Roadmap</Trans>
+          <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Trans>Pricing</Trans>
           </Link>
-          <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
-            <Trans>Blog</Trans>
-          </Link>
+
           <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
             <Trans>About</Trans>
           </Link>
+
+          <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Trans>Blog</Trans>
+          </Link>
+
+          <Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Trans>Roadmap</Trans>
+          </Link>
+
           <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
             <Trans>FAQ</Trans>
           </Link>
+
           <div className="relative group">
             <button className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
               <Trans>Alternatives</Trans>
@@ -81,15 +89,26 @@ export function Header() {
               <Trans>Home</Trans>
             </Link>
 
-            <Link href="/roadmap" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-              <Trans>Roadmap</Trans>
+            <Link href="/pricing" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Trans>Pricing</Trans>
             </Link>
-            <Link href="/blog" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-              <Trans>Blog</Trans>
-            </Link>
+
             <Link href="/about" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
               <Trans>About</Trans>
             </Link>
+
+            <Link href="/blog" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Trans>Blog</Trans>
+            </Link>
+
+            <Link href="/roadmap" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Trans>Roadmap</Trans>
+            </Link>
+
+            <Link href="/faq" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Trans>FAQ</Trans>
+            </Link>
+
             <div className="pt-2 border-t border-border/50">
               <p className="text-xs text-muted-foreground mb-2"><Trans>Alternatives</Trans></p>
               {COMPETITORS.map((c) => (

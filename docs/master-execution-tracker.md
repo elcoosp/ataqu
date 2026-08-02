@@ -83,18 +83,18 @@ It is structured by Phases (which map to your 4 weeks). It tells you exactly whe
 
 ### Phase 5: API Handlers (Parallel - 10 Agents)
 *Prerequisite: Phase 4 application services must be merged to main so `dispatch.sh` can inject them.*
-- [ ] **START PARALLEL:** Dispatch Tasks 051 to 060 to 10 agents.
-- [ ] **TASK-051:** API Handler: AEGIS
-- [ ] **TASK-052:** API Handler: CINQ
-- [ ] **TASK-053:** API Handler: DIAL
-- [ ] **TASK-054:** API Handler: PIVOT
-- [ ] **TASK-055:** API Handler: SPARK
-- [ ] **TASK-056:** API Handler: TEMPO
-- [ ] **TASK-057:** API Handler: SOND
-- [ ] **TASK-058:** API Handler: VAULT
-- [ ] **TASK-059:** API Handler: PAUSE
-- [ ] **TASK-060:** API Handler: VISTA
-- [ ] **[MERGE TO MAIN]:** Merge all Phase 5 tasks. The entire backend is now feature-complete.
+- [x] **START PARALLEL:** Dispatch Tasks 051 to 060 to 10 agents.
+- [x] **TASK-051:** API Handler: AEGIS
+- [x] **TASK-052:** API Handler: CINQ
+- [x] **TASK-053:** API Handler: DIAL
+- [x] **TASK-054:** API Handler: PIVOT
+- [x] **TASK-055:** API Handler: SPARK
+- [x] **TASK-056:** API Handler: TEMPO
+- [x] **TASK-057:** API Handler: SOND
+- [x] **TASK-058:** API Handler: VAULT
+- [x] **TASK-059:** API Handler: PAUSE
+- [x] **TASK-060:** API Handler: VISTA
+- [x] **[MERGE TO MAIN]:** Merge all Phase 5 tasks. The entire backend is now feature-complete.
 
 ### Phase 6: Frontend SPAs (Parallel - 10 Agents)
 *Prerequisite: Phase 5 API handlers must be merged to main so `dispatch.sh` can inject them into frontend prompts.*
