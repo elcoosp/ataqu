@@ -1,19 +1,29 @@
-//! Ataqu Kernel — Core types, traits, and error definitions.
-//!
-//! This crate provides the foundational abstractions shared across all
-//! Ataqu crates:
-//!
-//! - [`TenantId`]: Tenant identifier newtype with private inner field (ADR-024).
-//! - [`Identifiable`]: Entity identity trait (ADR-014).
-//! - [`IdGenerator`]: UUID generation capability (ADR-013).
-//! - [`Clock`]: System clock capability (ADR-013).
-//! - [`DomainError`]: Pure business-rule violations.
-//! - [`RepositoryError`]: Infrastructure persistence errors.
+use std::time::SystemTime;
+use uuid::Uuid;
 
-pub mod errors;
-pub mod traits;
-pub mod types;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
+pub struct TenantId(Uuid);
 
-pub use errors::{DomainError, RepositoryError};
-pub use traits::{Clock, IdGenerator, Identifiable};
-pub use types::TenantId;
+impl std::fmt::Display for TenantId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl TenantId {
+    pub fn new(id: Uuid) -> Self {
+        Self(id)
+    }
+}
+
+pub trait IdGenerator: Send + Sync {
+    fn new_uuid_v7(&self) -> Uuid;
+}
+
+pub trait Clock: Send + Sync {
+    fn now(&self) -> SystemTime;
+}
+
+pub trait Identifiable {
+    fn id(&self) -> uuid::Uuid;
+}

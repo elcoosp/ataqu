@@ -8,6 +8,7 @@ anyhow = "1.0.103"
 async-trait = "0.1.91"
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
+ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-vault = { path = "../ataqu-domain-vault" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
