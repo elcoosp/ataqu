@@ -105,6 +105,32 @@ where
     }
 }
 
+
+// ---------- Tenant extraction from authentication ----------
+
+/// Extracts the tenant ID from the request extensions.
+/// Requires that the auth middleware has inserted a `TenantId` into `parts.extensions`.
+pub struct AuthenticatedTenant(pub TenantId);
+
+impl<S> axum::extract::FromRequestParts<S> for AuthenticatedTenant
+where
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let ext = &parts.extensions;
+        ext.get::<TenantId>()
+            .cloned()
+            .map(AuthenticatedTenant)
+            .ok_or(ApiError::Internal)   // Or Unauthorized? But we'll map to Internal for now.
+    }
+}
+
+
 // ---------- Shared state ----------
 
 #[derive(Clone)]
@@ -116,13 +142,16 @@ pub struct AppState {
 
 /// POST /contacts
 pub async fn create_contact(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreateContactRequest>,
 ) -> Result<Json<ContactResponse>, ApiError> {
     debug!(command_id = %idempotency_key.0, "create_contact");
     // TODO: extract tenant_id from authentication (currently placeholder)
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn create_contact(");
     let result = state
         .service
         .create_contact(tenant_id, idempotency_key.0, payload)
@@ -132,33 +161,42 @@ pub async fn create_contact(
 
 /// GET /contacts
 pub async fn list_contacts(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     // TODO: add pagination query params
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
     // TODO: extract tenant_id
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn list_contacts(");
     let result = state.service.list_contacts(tenant_id).await?;
     Ok(Json(result))
 }
 
 /// GET /contacts/:id
 pub async fn get_contact(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ContactResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn get_contact(");
     let result = state.service.get_contact(tenant_id, id).await?;
     Ok(Json(result))
 }
 
 /// PUT /contacts/:id
 pub async fn update_contact(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateContactRequest>,
 ) -> Result<Json<ContactResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn update_contact(");
     let result = state
         .service
         .update_contact(tenant_id, id, idempotency_key.0, payload)
@@ -168,11 +206,14 @@ pub async fn update_contact(
 
 /// DELETE /contacts/:id
 pub async fn delete_contact(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn delete_contact(");
     state
         .service
         .delete_contact(tenant_id, id, idempotency_key.0)
@@ -184,11 +225,14 @@ pub async fn delete_contact(
 
 /// POST /deals
 pub async fn create_deal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreateDealRequest>,
 ) -> Result<Json<DealResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn create_deal(");
     let result = state
         .service
         .create_deal(tenant_id, idempotency_key.0, payload)
@@ -198,31 +242,40 @@ pub async fn create_deal(
 
 /// GET /deals
 pub async fn list_deals(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
 ) -> Result<Json<Vec<DealResponse>>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn list_deals(");
     let result = state.service.list_deals(tenant_id).await?;
     Ok(Json(result))
 }
 
 /// GET /deals/:id
 pub async fn get_deal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DealResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn get_deal(");
     let result = state.service.get_deal(tenant_id, id).await?;
     Ok(Json(result))
 }
 
 /// PUT /deals/:id
 pub async fn update_deal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDealRequest>,
 ) -> Result<Json<DealResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn update_deal(");
     let result = state
         .service
         .update_deal(tenant_id, id, idempotency_key.0, payload)
@@ -232,11 +285,14 @@ pub async fn update_deal(
 
 /// DELETE /deals/:id
 pub async fn delete_deal(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn delete_deal(");
     state
         .service
         .delete_deal(tenant_id, id, idempotency_key.0)
@@ -248,20 +304,26 @@ pub async fn delete_deal(
 
 /// GET /pipeline/stages
 pub async fn list_pipeline_stages(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
 ) -> Result<Json<Vec<PipelineStageResponse>>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn list_pipeline_stages(");
     let result = state.service.list_pipeline_stages(tenant_id).await?;
     Ok(Json(result))
 }
 
 /// POST /pipeline/stages
 pub async fn create_pipeline_stage(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreatePipelineStageRequest>,
 ) -> Result<Json<PipelineStageResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn create_pipeline_stage(");
     let result = state
         .service
         .create_pipeline_stage(tenant_id, idempotency_key.0, payload)
@@ -271,12 +333,15 @@ pub async fn create_pipeline_stage(
 
 /// PUT /pipeline/stages/:id
 pub async fn update_pipeline_stage(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePipelineStageRequest>,
 ) -> Result<Json<PipelineStageResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn update_pipeline_stage(");
     let result = state
         .service
         .update_pipeline_stage(tenant_id, id, idempotency_key.0, payload)
@@ -286,11 +351,14 @@ pub async fn update_pipeline_stage(
 
 /// DELETE /pipeline/stages/:id
 pub async fn delete_pipeline_stage(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn delete_pipeline_stage(");
     state
         .service
         .delete_pipeline_stage(tenant_id, id, idempotency_key.0)
@@ -302,11 +370,14 @@ pub async fn delete_pipeline_stage(
 
 /// POST /activities
 pub async fn create_activity(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreateActivityRequest>,
 ) -> Result<Json<ActivityResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn create_activity(");
     let result = state
         .service
         .create_activity(tenant_id, idempotency_key.0, payload)
@@ -316,20 +387,26 @@ pub async fn create_activity(
 
 /// GET /activities
 pub async fn list_activities(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     Query(params): Query<ListActivitiesParams>,
 ) -> Result<Json<Vec<ActivityResponse>>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn list_activities(");
     let result = state.service.list_activities(tenant_id, params).await?;
     Ok(Json(result))
 }
 
 /// GET /activities/:id
 pub async fn get_activity(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActivityResponse>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn get_activity(");
     let result = state.service.get_activity(tenant_id, id).await?;
     Ok(Json(result))
 }
@@ -338,10 +415,13 @@ pub async fn get_activity(
 
 /// GET /search?q=...
 pub async fn search_contacts(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     Query(params): Query<SearchParams>,
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn search_contacts(");
     let result = state.service.search_contacts(tenant_id, params).await?;
     Ok(Json(result))
 }
@@ -350,26 +430,32 @@ pub async fn search_contacts(
 
 /// POST /csv/import
 /// Multipart form with file.
+
 pub async fn import_csv(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     mut multipart: Multipart,
 ) -> Result<Json<ImportCsvResult>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn import_csv(");
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id, command_id = %idempotency_key.0);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, command_id = %idempotency_key.0, "import_csv");
+
     // Extract file from multipart
-    let mut file_data = Vec::new();
+    let mut csv_content = None;
     while let Some(field) = multipart.next_field().await.map_err(|_| ApiError::Internal)? {
         if field.name() == Some("file") {
-            let content = field.bytes().await.map_err(|_| ApiError::Internal)?;
-            file_data = content.to_vec();
+            // Use text() to get the string directly, which reads the entire body into memory.
+            // For large files, this could be heavy; future improvement: stream using csv_async.
+            let text = field.text().await.map_err(|_| ApiError::Internal)?;
+            csv_content = Some(text);
             break;
         }
     }
-    if file_data.is_empty() {
-        return Err(ApiError::Validation("No file uploaded".to_string()));
-    }
-    // Convert to CSV string
-    let csv_content = String::from_utf8(file_data).map_err(|_| ApiError::Validation("Invalid UTF-8 in CSV".to_string()))?;
+    let csv_content = csv_content.ok_or_else(|| ApiError::Validation("No file uploaded".to_string()))?;
     let result = state
         .service
         .import_csv(tenant_id, idempotency_key.0, csv_content)
@@ -379,9 +465,12 @@ pub async fn import_csv(
 
 /// GET /csv/export
 pub async fn export_csv(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
 ) -> Result<Response, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn export_csv(");
     let csv = state.service.export_csv(tenant_id).await?;
     let response = (StatusCode::OK, [(axum::http::header::CONTENT_TYPE, "text/csv")], csv).into_response();
     Ok(response)
@@ -392,11 +481,14 @@ pub async fn export_csv(
 /// POST /email/track
 /// Record an email open/click event.
 pub async fn track_email(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<TrackEmailRequest>,
 ) -> Result<StatusCode, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    let AuthenticatedTenant(tenant_id) = tenant;
+    let span = tracing::info_span!("handler", tenant_id = %tenant_id);
+    let _guard = span.enter();
+    debug!(tenant_id = %tenant_id, "Handling pub async fn track_email(");
     state
         .service
         .track_email(tenant_id, idempotency_key.0, payload)
@@ -487,5 +579,46 @@ mod tests {
         let (mut parts, _) = req.into_parts();
         let result = IdempotencyKey::from_request_parts(&mut parts, &()).await;
         assert!(matches!(result, Err(ApiError::InvalidIdempotencyKey)));
+    }
+}
+
+
+#[cfg(test)]
+mod integration_tests {
+    use super::*;
+    use axum::Router;
+    use axum::http::Request;
+    use tower::ServiceExt;
+    use std::sync::Arc;
+    use mockall::predicate::*;
+    use ataqu_application::cinq_service::MockCinqService;
+
+    #[tokio::test]
+    async fn test_create_contact_handler() {
+        // Setup mock service
+        let mut mock = MockCinqService::new();
+        mock.expect_create_contact()
+            .with(eq(TenantId::new(Uuid::nil())), any(), any())
+            .returning(|_, _, _| Ok(ContactResponse::default()));
+
+        let state = Arc::new(AppState {
+            service: Arc::new(mock),
+        });
+
+        let app = Router::new()
+            .route("/contacts", post(create_contact))
+            .with_state(state);
+
+        let key = Uuid::new_v4();
+        let req = Request::builder()
+            .method("POST")
+            .uri("/contacts")
+            .header("Idempotency-Key", key.to_string())
+            .header("Content-Type", "application/json")
+            .body(axum::body::Body::from(r#"{"name":"Test","email":"test@example.com"}"#))
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
     }
 }
