@@ -19,9 +19,9 @@ const APPS = [
 
 export function AppGrid() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
+    <div className="flex flex-wrap justify-center gap-4">
       {APPS.map((app) => (
-        <Link key={app.id} href={`/apps/${app.id}`} className="block w-full max-w-[120px]">
+        <Link key={app.id} href={`/apps/${app.id}`} className="block w-[120px]">
           <AppCard app={app} />
         </Link>
       ))}
