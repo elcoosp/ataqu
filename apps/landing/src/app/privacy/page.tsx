@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           </h2>
           <ul className="list-disc list-inside text-muted-foreground space-y-1">
             <li><Trans><strong>To Provide the Service:</strong> To run the 10 apps, execute SPARK automations, and display VISTA analytics.</Trans></li>
-            <li><Trans><strong>To Bill You:</strong> To process your $49/mo subscription.</Trans></li>
+            <li><Trans><strong>To Bill You:</strong> To process your subscription (starting at $15/mo).</Trans></li>
             <li><Trans><strong>To Secure the System:</strong> To monitor for unauthorized access, enforce tenant isolation, and prevent abuse of the platform.</Trans></li>
             <li><Trans><strong>To Provide Support:</strong> If you contact our human support team, we will use your communication history to resolve your issue.</Trans></li>
           </ul>

@@ -3,7 +3,7 @@
 **Platform:** Web (Next.js, React, TypeScript, Tailwind CSS)  
 **Domain:** `ataqu.so`  
 **Version:** 2.0 (Phase 1)  
-**Date:** 2026-08-01  
+**Date:** 2026-08-02  
 
 ---
 
@@ -38,7 +38,7 @@ The website is a microsite consisting of:
 
 ### 3.1 Homepage (`/`)
 - **Hero:** “The Calm Predator of Productivity” – direct value prop, primary CTA (“Join the waitlist”).
-- **The Math:** A summary comparison (HubSpot vs Slack vs Zapier vs Ataqu) with a “See full comparison” link to the detailed kill sheets.
+- **The Math:** A summary comparison (HubSpot vs Slack vs Zapier vs Ataqu) with a “See full comparison” link to the detailed kill sheets. Ataqu’s pricing is shown as “$15/mo for 1 app, $39/mo for 5 apps, or $79/mo for all 10”.
 - **The Apps:** Grid of 10 apps with icons and one‑line descriptions.
 - **Architecture Proof:** Simplified diagram and bullet points of the Rust/PostgreSQL/outbox architecture.
 - **The Escape Hatch:** 1‑click cancellation and data export promise, with a visual (screenshot mockup).
@@ -65,9 +65,9 @@ One dedicated page per major competitor. Each page is a **self‑contained conve
 #### Kill Sheet Page Template
 Each page follows the same structure to ensure consistency and SEO strength:
 
-1. **H1 / Title Tag:** `[Competitor] vs Ataqu: The $49/mo Alternative to [Competitor’s] Lock‑in`
-2. **Sub‑headline / Hook:** A direct attack on the competitor’s pricing, lock‑in, or architectural flaw (e.g., “HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total.”).
-3. **3‑Year TCO Table:** A side‑by‑side comparison of the competitor’s pricing (including add‑ons) vs Ataqu’s flat rate. Highlight the savings with amber accent.
+1. **H1 / Title Tag:** `[Competitor] vs Ataqu: The $79/mo Alternative to [Competitor’s] Lock‑in` (or adjust to highlight starting price).
+2. **Sub‑headline / Hook:** A direct attack on the competitor’s pricing, lock‑in, or architectural flaw (e.g., “HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $79/mo total – or start with one app for just $15/mo.”).
+3. **3‑Year TCO Table:** A side‑by‑side comparison of the competitor’s pricing (including add‑ons) vs Ataqu’s tiered pricing. Highlight the savings with amber accent. The Ataqu row will show “$79/mo for all 10 apps (also $15/mo for 1)”.
 4. **Why [Competitor] Fails:** 2–3 paragraphs explaining the specific pain points (price hikes, per‑user fees, brittle integrations, poor support, lock‑in) with real quotes or numbers from user reviews (anonymized).
 5. **How Ataqu Solves It:** The architectural proof specific to that domain (e.g., for HubSpot: “CINQ is built on a unified PostgreSQL outbox – when a deal is won, DIAL and VAULT update instantly without Zapier”).
 6. **Migration Path / Escape Hatch:** Step‑by‑step guide on how to export data from the competitor and import it into Ataqu, with a clear CTA to join the waitlist.
@@ -95,7 +95,7 @@ Each page follows the same structure to ensure consistency and SEO strength:
 ### 4.3 Content Strategy
 - Each kill sheet is a **long‑form article** (800–1500 words) with H2/H3 headings, bullet lists, and a clear reading flow.
 - Use **real competitor pricing data** (updated quarterly) to maintain credibility.
-- Include **call‑out boxes** with key numbers (e.g., “HubSpot: $1,200/mo | Ataqu: $49/mo”).
+- Include **call‑out boxes** with key numbers (e.g., “HubSpot: $1,200/mo | Ataqu: $79/mo for 10 apps, or $15/mo for 1”).
 - End with a **strong CTA** that leads to the waitlist.
 
 ---
@@ -108,10 +108,11 @@ The waitlist form collects:
 - **Name** (optional)
 - **Role** (optional)
 - **Company size** (optional)
+- **UTM parameters** (source, medium, campaign, term, content) – captured automatically on first visit and stored with the signup.
 
 After submission:
 - Show a **success confirmation** with a clear message (“You’re on the list! We’ll send you early access…”).
-- Store data in the existing PostgreSQL `waitlist` table via the `/api/waitlist` endpoint.
+- Store data in the existing SQLite `waitlist` table via the `/api/waitlist` endpoint.
 - (Future) Send a confirmation email via Postmark/SendGrid.
 
 ---
@@ -136,7 +137,7 @@ After submission:
 - **Direct and aggressive toward incumbents** (e.g., “HubSpot’s 3‑year lock‑in is a trap.”)
 - **Calm and confident about our own architecture** (e.g., “Built in Rust on PostgreSQL. Mathematically sound.”)
 - **No fluff** – no “seamless,” “robust,” “empower,” “leverage.”
-- **Transparent** – use exact numbers ($49, 1‑click, 24h SLA).
+- **Transparent** – use exact numbers ($15, $39, $79, 1‑click, 24h SLA).
 - **Human** – where appropriate, use “we” and “you” to build connection.
 
 ---
@@ -165,7 +166,7 @@ After submission:
 
 - **Constraints:**
   - Must use Next.js, Tailwind, shadcn/ui.
-  - Must work with existing `/api/waitlist` endpoint.
+  - Must work with existing `/api/waitlist` endpoint (extended to accept UTM fields).
   - No heavy client‑side JavaScript that hurts performance.
 - **Open Decisions:**
   - Whether to include a blog section in the future (currently out of scope).

@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const name = COMPETITOR_NAMES[slug];
   if (!name) return { title: "Not Found" };
   return {
-    title: `${name} vs Ataqu: The $49/mo Alternative to ${name} Lock‑in`,
-    description: `Replace ${name} with Ataqu's unified SMB OS. Flat $49/mo, 1‑click cancel, native integrations.`,
+    title: `${name} vs Ataqu: The $79/mo Alternative to ${name} Lock‑in`,
+    description: `Replace ${name} with Ataqu's unified SMB OS. From $15/mo (all 10 for $79), 1‑click cancel, native integrations.`,
   };
 }
 

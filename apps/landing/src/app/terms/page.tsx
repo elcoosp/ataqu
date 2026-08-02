@@ -102,7 +102,7 @@ export default function TermsPage() {
             <Trans>7. Service Availability</Trans>
           </h2>
           <p className="text-muted-foreground leading-relaxed">
-            <Trans>We target 99.9% uptime. However, we do not offer SLA‑backed financial credits for standard plans, as the flat $49/mo pricing does not support enterprise SLA infrastructure costs. If we experience catastrophic downtime, we will communicate it transparently and apply service credits at our discretion.</Trans>
+            <Trans>We target 99.9% uptime. However, we do not offer SLA‑backed financial credits for standard plans, as our entry-level pricing (starting at $15/mo) does not support enterprise SLA infrastructure costs. If we experience catastrophic downtime, we will communicate it transparently and apply service credits at our discretion.</Trans>
           </p>
         </section>
 

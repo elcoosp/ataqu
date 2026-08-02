@@ -15,7 +15,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "HubSpot", price: "$800/mo", contract: "3‑year lock‑in", note: "Professional tier", highlight: false },
         { name: "Zapier (integration)", price: "$79/mo", contract: "Monthly", note: "2,000 tasks/mo", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Everything included", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`3‑year lock‑in contracts that auto‑renew at higher prices`,
@@ -24,7 +24,7 @@ function getCompetitorData(slug: string) {
         t`Integrations require Zapier (extra cost)`,
       ],
       ataquAdvantage: [
-        t`CINQ gives you a full CRM, including reporting and automation, for a flat $49/mo`,
+        t`CINQ gives you a full CRM, including reporting and automation, for a flat $79/mo for all 10 (or $15/mo for 1)`,
         t`Native integration with DIAL, VAULT, and SPARK via PostgreSQL outbox`,
         t`1‑click cancellation – no lock‑in`,
         t`Human support with 24h SLA`,
@@ -43,7 +43,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Slack", price: "$12.50/user/mo", contract: "Monthly", note: "$250/mo for 20 users", highlight: false },
         { name: "Intercom (support)", price: "$100+/mo", contract: "Monthly", note: "Separate tool", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Chat + support included", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`Per‑user pricing – grows with your team`,
@@ -53,7 +53,7 @@ function getCompetitorData(slug: string) {
       ],
       ataquAdvantage: [
         t`DIAL unifies internal chat and customer support in one workspace`,
-        t`Flat $49/mo for your whole team – no per‑user fees`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for your whole team – no per‑user fees`,
         t`Native CRM integration – see deals and support tickets side‑by‑side`,
         t`1‑click cancel and full data export`,
       ],
@@ -71,7 +71,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Zapier", price: "$49/mo", contract: "Monthly", note: "2,000 tasks/mo limit", highlight: false },
         { name: "Webhook maintenance", price: "$200/mo", contract: "‑", note: "Developer time", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Unlimited tasks", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`Per‑task pricing – costs skyrocket as you scale`,
@@ -99,7 +99,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Notion", price: "$18/user/mo", contract: "Monthly", note: "$360/mo for 20 users", highlight: false },
         { name: "Zapier (integration)", price: "$49/mo", contract: "Monthly", note: "To connect CRM", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Docs + CRM + more", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`2‑5 second search – lagging behind your work`,
@@ -111,7 +111,7 @@ function getCompetitorData(slug: string) {
         t`PIVOT uses PostgreSQL tsvector with GIN indexes – sub‑50ms search`,
         t`Native relations to CINQ deals and VAULT products`,
         t`1‑click export to CSV, JSON, and Markdown`,
-        t`Flat $49/mo for the whole team`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for the whole team`,
       ],
       migrationSteps: [
         t`Export your Notion pages as Markdown or CSV`,
@@ -127,7 +127,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Zoho One", price: "$37/user/mo", contract: "Annual", note: "$740/mo for 20 users", highlight: false },
         { name: "Integrations", price: "$200/mo", contract: "‑", note: "Custom API work", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "10 apps included", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`45 apps – but most are outdated or useless`,
@@ -138,7 +138,7 @@ function getCompetitorData(slug: string) {
       ataquAdvantage: [
         t`10 focused, high‑quality apps built in Rust on PostgreSQL`,
         t`Native integration – data flows instantly between apps`,
-        t`Flat $49/mo for your whole team – no per‑user fees`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for your whole team – no per‑user fees`,
         t`Modern dark‑mode UI, built for 2026`,
       ],
       migrationSteps: [
@@ -155,7 +155,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Calendly", price: "$20/seat/mo", contract: "Monthly", note: "$200/mo for 10 seats", highlight: false },
         { name: "Zapier (CRM sync)", price: "$49/mo", contract: "Monthly", note: "To update CRM", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "CRM + Scheduling", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`No native CRM integration – requires Zapier to update deals`,
@@ -166,7 +166,7 @@ function getCompetitorData(slug: string) {
       ataquAdvantage: [
         t`TEMPO creates CINQ activities and DIAL notifications automatically`,
         t`No‑show detection within 15‑30 minutes using PostgreSQL generated columns`,
-        t`Flat $49/mo for your whole team`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for your whole team`,
         t`OAuth refresh saga keeps calendars synced`,
       ],
       migrationSteps: [
@@ -183,7 +183,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Typeform", price: "$50/mo", contract: "Monthly", note: "1,000 responses/mo", highlight: false },
         { name: "Email notifications", price: "$20/mo", contract: "Monthly", note: "Paid add‑on", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Unlimited responses", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`10 free responses per month – a joke for any business`,
@@ -195,7 +195,7 @@ function getCompetitorData(slug: string) {
         t`SOND offers unlimited responses – no per‑response fees`,
         t`Native notifications and branding removal included`,
         t`Form submissions create CINQ leads and trigger SPARK workflows automatically`,
-        t`Flat $49/mo for everything`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for everything`,
       ],
       migrationSteps: [
         t`Export your Typeform responses (CSV)`,
@@ -211,7 +211,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Cin7 Core", price: "$349/mo", contract: "Annual", note: "5 users included", highlight: false },
         { name: "CRM integration", price: "$200/mo", contract: "‑", note: "Custom middleware", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Inventory + CRM", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`No native CRM integration – orders and stock don't sync`,
@@ -222,7 +222,7 @@ function getCompetitorData(slug: string) {
       ataquAdvantage: [
         t`VAULT updates stock atomically with PostgreSQL CHECK constraints – no overselling`,
         t`CINQ deals automatically reserve stock via outbox events`,
-        t`Flat $49/mo for your whole team`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for your whole team`,
         t`Real‑time stock movements visible in VISTA dashboards`,
       ],
       migrationSteps: [
@@ -239,7 +239,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Personio Essentials", price: "$10/user/mo", contract: "Annual", note: "$200/mo for 20 users", highlight: false },
         { name: "AEGIS (deprovision)", price: "$15/user/mo", contract: "Annual", note: "Separate SSO", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "HR + SSO included", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`No native integration with AEGIS – deprovisioning is manual`,
@@ -250,7 +250,7 @@ function getCompetitorData(slug: string) {
       ataquAdvantage: [
         t`PAUSE emits EmployeeCreatedV1 events – AEGIS automatically deprovisions on leave`,
         t`Leave requests trigger TEMPO calendar blocks and DIAL notifications`,
-        t`Flat $49/mo for your whole team`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for your whole team`,
         t`Human support with 24h SLA`,
       ],
       migrationSteps: [
@@ -267,7 +267,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Okta Lifecycle Mgmt", price: "$8/user/mo", contract: "Annual", note: "$160/mo for 20 users", highlight: false },
         { name: "HR integration", price: "$200/mo", contract: "‑", note: "Custom work", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "SSO + HR + more", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`Per‑user fees – $15/user/mo just for SSO`,
@@ -278,7 +278,7 @@ function getCompetitorData(slug: string) {
       ataquAdvantage: [
         t`AEGIS is built into the OS – SSO is a feature, not a product`,
         t`Native integration with PAUSE – deprovision on leave automatically`,
-        t`Flat $49/mo for the whole team – no per‑user SSO fees`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for the whole team – no per‑user SSO fees`,
         t`1‑click data export – your identity data belongs to you`,
       ],
       migrationSteps: [
@@ -295,7 +295,7 @@ function getCompetitorData(slug: string) {
       tcoRows: [
         { name: "Tableau Explorer", price: "$42/user/mo", contract: "Annual", note: "$840/mo for 20 users", highlight: false },
         { name: "ETL pipeline", price: "$500/mo", contract: "‑", note: "Data engineering", highlight: false },
-        { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "No ETL needed", highlight: true },
+        { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "All 10 apps (also $15/mo for 1)", highlight: true },
       ],
       painPoints: [
         t`Requires data engineering – ETL pipelines are complex and fragile`,
@@ -306,7 +306,7 @@ function getCompetitorData(slug: string) {
       ataquAdvantage: [
         t`VISTA reads directly from the same PostgreSQL database as your apps – no ETL`,
         t`Real‑time updates via outbox with LISTEN/NOTIFY – dashboards are always fresh`,
-        t`Flat $49/mo for your whole team – no per‑user BI fees`,
+        t`Flat $79/mo for all 10 (or $15/mo for 1) for your whole team – no per‑user BI fees`,
         t`Native connections to all 10 apps – revenue, inventory, support, and more`,
       ],
       migrationSteps: [
@@ -384,7 +384,7 @@ export function KillSheetContent({ slug }: Props) {
         </div>
 
         <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
-          {name} vs Ataqu: The $49/mo Alternative to {name} Lock‑in
+          {name} vs Ataqu: The $79/mo Alternative to {name} Lock‑in
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">{tagline}</p>
 
