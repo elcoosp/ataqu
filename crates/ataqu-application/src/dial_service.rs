@@ -365,4 +365,33 @@ mod tests {
             _ => panic!("Expected Repository error"),
         }
     }
+
+
+    // Test validation error: empty content
+    #[tokio::test]
+    async fn test_send_messages_validation_error() {
+        let id_gen = Arc::new(MockIdGenerator::new());
+        let clock = Arc::new(MockClock::new());
+        let guard = Arc::new(DummyIdempotencyGuard {});
+        let repo = Arc::new(DummyMessageRepo);
+        let presence = Arc::new(DummyPresenceStore);
+
+        let service = DialService::new(guard, repo, presence, id_gen, clock);
+        let tenant = TenantId::new(Uuid::new_v4());
+        let cmd = SendMessageBatchCommand {
+            messages: vec![SendMessageCommand {
+                channel_id: Uuid::new_v4(),
+                sender_id: Uuid::new_v4(),
+                content: "".to_string(), // empty content
+            }],
+        };
+        let key = Uuid::new_v4();
+        let result = service.send_messages(tenant, cmd, key).await;
+        assert!(result.is_err());
+        match result {
+            Err(DialServiceError::Domain(DialDomainError::Validation(_))) => (),
+            _ => panic!("Expected Validation error"),
+        }
+    }
+
 }
