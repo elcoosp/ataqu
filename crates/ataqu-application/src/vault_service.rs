@@ -46,6 +46,7 @@ pub enum VaultServiceError {
 
 /// Repository trait for vault operations
 #[async_trait::async_trait]
+#[async_trait::async_trait]
 pub trait VaultRepository: Send + Sync {
     /// Atomically updates stock, returning true if successful, false if insufficient stock
     async fn update_stock_atomic(
@@ -58,6 +59,7 @@ pub trait VaultRepository: Send + Sync {
 }
 
 /// Repository trait for outbox operations
+#[async_trait::async_trait]
 #[async_trait::async_trait]
 pub trait OutboxRepository: Send + Sync {
     /// Appends an event to the unified outbox

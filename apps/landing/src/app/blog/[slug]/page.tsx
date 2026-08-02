@@ -1,6 +1,5 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -130,7 +129,7 @@ export default function BlogPostPage() {
       <div className="container section-padding max-w-3xl mx-auto text-center">
         <h1 className="font-display text-2xl font-bold">Post not found</h1>
         <Link href="/blog" className="text-primary hover:underline mt-4 inline-block">
-          <Trans>← Back to blog</Trans>
+          ← Back to blog
         </Link>
       </div>
     );
@@ -139,7 +138,7 @@ export default function BlogPostPage() {
   return (
     <div className="container section-padding max-w-3xl mx-auto">
       <Link href="/blog" className="text-primary hover:underline text-sm mb-4 inline-block">
-        <Trans>← Back to blog</Trans>
+        ← Back to blog
       </Link>
       <h1 className="font-display text-3xl md:text-4xl font-bold">{post.title}</h1>
       <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">

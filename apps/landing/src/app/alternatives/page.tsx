@@ -1,4 +1,3 @@
-import { Trans } from "@lingui/react/macro";
 import Link from "next/link";
 
 const COMPETITORS = [
@@ -19,13 +18,13 @@ export default function AlternativesPage() {
   return (
     <div className="container section-padding">
       <h1 className="font-display text-4xl md:text-5xl font-bold text-center">
-        <Trans>Ataqu vs. the Fragmented Stack</Trans>
+        Ataqu vs. the Fragmented Stack
       </h1>
       <p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-        <Trans>
+        
           See how Ataqu compares to each competitor. We expose the pricing flaws,
           lock‑in clauses, and architectural gaps – and show you a better way.
-        </Trans>
+        
       </p>
       <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {COMPETITORS.map((c) => (
@@ -39,7 +38,7 @@ export default function AlternativesPage() {
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">{c.description}</p>
             <span className="mt-4 inline-block text-sm text-primary group-hover:underline">
-              <Trans>Compare →</Trans>
+              Compare →
             </span>
           </Link>
         ))}

@@ -1,6 +1,5 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
 import { Cpu, Database, Zap, Shield, CheckCircle, ArrowRight, Layers, Server, Network } from "lucide-react";
 
 export function ArchitectureProof() {
@@ -13,10 +12,10 @@ export function ArchitectureProof() {
             <Cpu className="w-8 h-8 text-primary" strokeWidth={1.5} />
           </div>
           <h3 className="font-display text-lg font-semibold">
-            <Trans>Single Rust Binary</Trans>
+            Single Rust Binary
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            <Trans>Monolithic, modular, and compiled to native code. No microservices, no overhead.</Trans>
+            Monolithic, modular, and compiled to native code. No microservices, no overhead.
           </p>
         </div>
         <div className="p-6 rounded-lg border border-border bg-card/30">
@@ -24,10 +23,10 @@ export function ArchitectureProof() {
             <Database className="w-8 h-8 text-primary" strokeWidth={1.5} />
           </div>
           <h3 className="font-display text-lg font-semibold">
-            <Trans>PostgreSQL Native</Trans>
+            PostgreSQL Native
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            <Trans>MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events.</Trans>
+            MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events.
           </p>
         </div>
         <div className="p-6 rounded-lg border border-border bg-card/30">
@@ -35,10 +34,10 @@ export function ArchitectureProof() {
             <Shield className="w-8 h-8 text-primary" strokeWidth={1.5} />
           </div>
           <h3 className="font-display text-lg font-semibold">
-            <Trans>Compile‑time Security</Trans>
+            Compile‑time Security
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            <Trans>PII redacted at compile time; JSON serialization isolated to the API layer.</Trans>
+            PII redacted at compile time; JSON serialization isolated to the API layer.
           </p>
         </div>
       </div>
@@ -46,7 +45,7 @@ export function ArchitectureProof() {
       {/* Simplified flow diagram */}
       <div className="p-6 rounded-lg border border-border bg-card/20">
         <h4 className="font-display text-md font-semibold mb-4 text-center">
-          <Trans>How cross-app events work</Trans>
+          How cross-app events work
         </h4>
         <div className="flex flex-col items-center space-y-4">
           <div className="flex flex-wrap justify-center gap-2">
@@ -59,7 +58,7 @@ export function ArchitectureProof() {
             <span className="px-3 py-1 rounded-full border border-border bg-card/40 text-xs font-mono">PostgreSQL</span>
           </div>
           <div className="text-xs text-muted-foreground text-center">
-            <Trans>Single database, unified outbox with LISTEN/NOTIFY – instant cross‑app events</Trans>
+            Single database, unified outbox with LISTEN/NOTIFY – instant cross‑app events
           </div>
         </div>
       </div>
@@ -69,7 +68,7 @@ export function ArchitectureProof() {
         <div className="p-4 rounded-lg border border-border bg-card/20">
           <h4 className="font-display text-base font-semibold mb-2 flex items-center gap-2">
             <Layers className="w-4 h-4 text-primary" />
-            <Trans>Bounded Contexts</Trans>
+            Bounded Contexts
           </h4>
           <ul className="space-y-1 text-muted-foreground text-xs font-mono">
             <li>• Schemas and PostgreSQL Roles enforce hard isolation</li>
@@ -81,7 +80,7 @@ export function ArchitectureProof() {
         <div className="p-4 rounded-lg border border-border bg-card/20">
           <h4 className="font-display text-base font-semibold mb-2 flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-primary" />
-            <Trans>Exactly‑once Delivery</Trans>
+            Exactly‑once Delivery
           </h4>
           <ul className="space-y-1 text-muted-foreground text-xs font-mono">
             <li>• Advisory locks with negligible collision risk</li>
@@ -93,7 +92,7 @@ export function ArchitectureProof() {
         <div className="p-4 rounded-lg border border-border bg-card/20">
           <h4 className="font-display text-base font-semibold mb-2 flex items-center gap-2">
             <Network className="w-4 h-4 text-primary" />
-            <Trans>Real‑time Outbox</Trans>
+            Real‑time Outbox
           </h4>
           <ul className="space-y-1 text-muted-foreground text-xs font-mono">
             <li>• LISTEN/NOTIFY for instant push</li>
@@ -105,7 +104,7 @@ export function ArchitectureProof() {
         <div className="p-4 rounded-lg border border-border bg-card/20">
           <h4 className="font-display text-base font-semibold mb-2 flex items-center gap-2">
             <Server className="w-4 h-4 text-primary" />
-            <Trans>Resource Efficiency</Trans>
+            Resource Efficiency
           </h4>
           <ul className="space-y-1 text-muted-foreground text-xs font-mono">
             <li>• Bounded caches, connection pools, and channels</li>
@@ -117,7 +116,7 @@ export function ArchitectureProof() {
 
       {/* Small print – no VPS details */}
       <div className="text-center text-xs text-muted-foreground font-mono">
-        <Trans>Single binary · Single Tokio runtime · 1s RPO via wal‑g</Trans>
+        Single binary · Single Tokio runtime · 1s RPO via wal‑g
       </div>
     </div>
   );

@@ -26,3 +26,9 @@ impl SparkRepository {
         Ok(())
     }
 }
+
+pub mod generic_batch;
+
+
+
+

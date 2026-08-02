@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Trans } from "@lingui/react/macro";
 import { Github, Twitter, Linkedin, Mail } from "lucide-react";
 
 export function Footer() {
@@ -13,30 +12,30 @@ export function Footer() {
             <span className="text-primary">A</span>taqu
           </Link>
           <p className="mt-2 text-sm text-muted-foreground max-w-xs">
-            <Trans>10 apps, one price, zero lock‑in.</Trans>
+            10 apps, one price, zero lock‑in.
           </p>
         </div>
 
         <div>
-          <h4 className="font-display text-sm font-semibold text-foreground"><Trans>Product</Trans></h4>
+          <h4 className="font-display text-sm font-semibold text-foreground">Product</h4>
           <ul className="mt-2 space-y-2 text-sm">
-            <li><Link href="/alternatives" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Alternatives</Trans></Link></li>
-            <li><Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Roadmap</Trans></Link></li>
-            <li><Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Blog</Trans></Link></li>
-            <li><Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>About</Trans></Link></li>
+            <li><Link href="/alternatives" className="text-muted-foreground hover:text-foreground transition-colors">Alternatives</Link></li>
+            <li><Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors">Roadmap</Link></li>
+            <li><Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">Blog</Link></li>
+            <li><Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-display text-sm font-semibold text-foreground"><Trans>Legal</Trans></h4>
+          <h4 className="font-display text-sm font-semibold text-foreground">Legal</h4>
           <ul className="mt-2 space-y-2 text-sm">
-            <li><Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Terms of Service</Trans></Link></li>
-            <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors"><Trans>Privacy Policy</Trans></Link></li>
+            <li><Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">Terms of Service</Link></li>
+            <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-display text-sm font-semibold text-foreground"><Trans>Connect</Trans></h4>
+          <h4 className="font-display text-sm font-semibold text-foreground">Connect</h4>
           <div className="mt-2 flex gap-4">
             <a href="https://github.com/ataqu" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
               <Github className="w-5 h-5" />
@@ -52,7 +51,7 @@ export function Footer() {
             </a>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            <Trans>© {new Date().getFullYear()} Ataqu. All rights reserved.</Trans>
+            © {new Date().getFullYear()} Ataqu. All rights reserved.
           </p>
         </div>
       </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
 
 const PHASES = [
   {
@@ -94,10 +93,10 @@ export default function RoadmapPage() {
   return (
     <div className="container section-padding">
       <h1 className="font-display text-4xl md:text-5xl font-bold text-center">
-        <Trans>Public Roadmap</Trans>
+        Public Roadmap
       </h1>
       <p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-        <Trans>We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned.</Trans>
+        We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned.
       </p>
       <div className="mt-12 space-y-12 max-w-3xl mx-auto">
         {PHASES.map((phase, idx) => (
@@ -115,7 +114,7 @@ export default function RoadmapPage() {
         ))}
       </div>
       <p className="mt-12 text-center text-sm text-muted-foreground">
-        <Trans>This roadmap is updated as we ship. Follow our progress on GitHub.</Trans>
+        This roadmap is updated as we ship. Follow our progress on GitHub.
       </p>
     </div>
   );

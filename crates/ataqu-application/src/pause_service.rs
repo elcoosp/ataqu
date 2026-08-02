@@ -272,6 +272,7 @@ pub trait IdempotencyPort: Send + Sync {
 ///
 /// The real implementation lives in `ataqu-infra-repositories::pause`.
 #[async_trait::async_trait]
+#[async_trait::async_trait]
 pub trait EmployeeRepositoryPort: Send + Sync {
     /// Inserts a new employee record within the current transaction.
     async fn insert(
@@ -284,6 +285,7 @@ pub trait EmployeeRepositoryPort: Send + Sync {
 /// Port for leave request repository operations.
 ///
 /// The real implementation lives in `ataqu-infra-repositories::pause`.
+#[async_trait::async_trait]
 #[async_trait::async_trait]
 pub trait LeaveRequestRepositoryPort: Send + Sync {
     /// Inserts a new leave request record within the current transaction.

@@ -1,25 +1,28 @@
 //! DIAL API Handlers
 use axum::{
     extract::{Extension, Json, Path, Query, ws::WebSocketUpgrade},
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
     response::Response,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use async_trait::async_trait;
 use tracing::{error, info, instrument};
 
 // Use local error type
 use crate::error::ApiResult; // Fixed import
 use uuid::Uuid;
 pub type TenantId = Uuid;
-
-// Define UserId as Uuid for now (will be refined)
 pub type UserId = Uuid;
+
+// Convert anyhow errors to 500
+
 
 // ======================================================================
 // Local DialService trait – this will be implemented by the application layer.
 // The handlers only depend on this trait.
 // ======================================================================
+#[async_trait]
 pub trait DialService: Send + Sync {
     async fn list_channels(&self) -> Result<Vec<ChannelSummary>, anyhow::Error>;
     async fn create_channel(&self, req: CreateChannelRequest) -> Result<Channel, anyhow::Error>;
@@ -61,7 +64,7 @@ pub async fn list_channels(
     Extension(dial_service): Extension<Arc<dyn DialService>>,
 ) -> ApiResult<Json<Vec<ChannelSummary>>> {
     info!("Listing channels");
-    let channels = dial_service.list_channels().await?;
+    let channels = dial_service.list_channels().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(channels))
 }
 
@@ -73,7 +76,7 @@ pub async fn create_channel(
     Extension(dial_service): Extension<Arc<dyn DialService>>,
 ) -> ApiResult<Json<Channel>> {
     info!("Creating channel: {}", payload.name);
-    let channel = dial_service.create_channel(payload).await?;
+    let channel = dial_service.create_channel(payload).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(channel))
 }
 
@@ -85,7 +88,7 @@ pub async fn get_channel(
     Extension(dial_service): Extension<Arc<dyn DialService>>,
 ) -> ApiResult<Json<Channel>> {
     info!("Getting channel: {}", channel_id);
-    let channel = dial_service.get_channel(channel_id).await?;
+    let channel = dial_service.get_channel(channel_id).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(channel))
 }
 
@@ -98,7 +101,7 @@ pub async fn list_messages(
     Extension(dial_service): Extension<Arc<dyn DialService>>,
 ) -> ApiResult<Json<MessageListResponse>> {
     info!("Listing messages for channel {}", channel_id);
-    let resp = dial_service.list_messages(channel_id, params).await?;
+    let resp = dial_service.list_messages(channel_id, params).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(resp))
 }
 
@@ -121,7 +124,7 @@ pub async fn send_message(
     );
     let msg = dial_service
         .send_message(channel_id, payload, idempotency_key)
-        .await?;
+        .await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(msg))
 }
 
@@ -133,7 +136,7 @@ pub async fn list_threads(
     Extension(dial_service): Extension<Arc<dyn DialService>>,
 ) -> ApiResult<Json<Vec<ThreadSummary>>> {
     info!("Listing threads for channel {}", channel_id);
-    let threads = dial_service.list_threads(channel_id).await?;
+    let threads = dial_service.list_threads(channel_id).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(threads))
 }
 
@@ -149,7 +152,7 @@ pub async fn create_thread(
         "Creating thread in channel {}: {}",
         channel_id, payload.name
     );
-    let thread = dial_service.create_thread(channel_id, payload).await?;
+    let thread = dial_service.create_thread(channel_id, payload).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(thread))
 }
 
@@ -161,7 +164,7 @@ pub async fn get_upload_url(
     Extension(dial_service): Extension<Arc<dyn DialService>>,
 ) -> ApiResult<Json<UploadUrlResponse>> {
     info!("Getting upload URL for file: {}", payload.filename);
-    let resp = dial_service.generate_upload_url(payload).await?;
+    let resp = dial_service.generate_upload_url(payload).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(resp))
 }
 
@@ -173,7 +176,7 @@ pub async fn search_messages(
     Extension(dial_service): Extension<Arc<dyn DialService>>,
 ) -> ApiResult<Json<SearchResults>> {
     info!("Searching messages with query: {}", params.q);
-    let results = dial_service.search_messages(params).await?;
+    let results = dial_service.search_messages(params).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(results))
 }
 

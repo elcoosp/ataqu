@@ -1,6 +1,5 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
 
 const ROWS = [
   { name: "HubSpot", price: "$1,200/mo", contract: "3‑year lock‑in", note: "+ $200/mo for reporting", highlight: false },
@@ -42,16 +41,16 @@ export function PricingComparison() {
           <thead>
             <tr className="border-b border-border">
               <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-                <Trans>Tool</Trans>
+                Tool
               </th>
               <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-                <Trans>Monthly Cost</Trans>
+                Monthly Cost
               </th>
               <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-                <Trans>Contract</Trans>
+                Contract
               </th>
               <th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-                <Trans>Notes</Trans>
+                Notes
               </th>
             </tr>
           </thead>

@@ -1,6 +1,5 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
 import { XCircle, Download, MessageSquare } from "lucide-react";
 
 export function EscapeHatch() {
@@ -11,10 +10,10 @@ export function EscapeHatch() {
           <XCircle className="w-8 h-8 text-primary" strokeWidth={1.5} />
         </div>
         <h3 className="font-display text-lg font-semibold">
-          <Trans>1‑click cancel</Trans>
+          1‑click cancel
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          <Trans>No retention specialist. No phone call. Just click.</Trans>
+          No retention specialist. No phone call. Just click.
         </p>
       </div>
       <div className="text-center p-6 rounded-lg border border-border bg-card/30">
@@ -22,10 +21,10 @@ export function EscapeHatch() {
           <Download className="w-8 h-8 text-primary" strokeWidth={1.5} />
         </div>
         <h3 className="font-display text-lg font-semibold">
-          <Trans>Export your data</Trans>
+          Export your data
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          <Trans>CSV, JSON – your data belongs to you.</Trans>
+          CSV, JSON – your data belongs to you.
         </p>
       </div>
       <div className="text-center p-6 rounded-lg border border-border bg-card/30">
@@ -33,10 +32,10 @@ export function EscapeHatch() {
           <MessageSquare className="w-8 h-8 text-primary" strokeWidth={1.5} />
         </div>
         <h3 className="font-display text-lg font-semibold">
-          <Trans>Human support</Trans>
+          Human support
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          <Trans>24h SLA. No bots. Real engineers.</Trans>
+          24h SLA. No bots. Real engineers.
         </p>
       </div>
     </div>

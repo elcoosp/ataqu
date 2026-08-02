@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Trans } from "@lingui/react/macro";
-import { useLingui } from "@lingui/react";
-import { t } from "@lingui/core/macro";
 import { Menu, X } from "lucide-react";
 
 const COMPETITORS = [

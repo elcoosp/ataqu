@@ -1,6 +1,5 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Post } from "@/lib/posts";
@@ -30,7 +29,7 @@ export default function BlogIndex() {
     return (
       <div className="container section-padding">
         <h1 className="font-display text-4xl md:text-5xl font-bold text-center">
-          <Trans>Engineering Blog</Trans>
+          Engineering Blog
         </h1>
         <div className="mt-12 max-w-2xl mx-auto space-y-6">
           {[1, 2, 3].map((i) => (
@@ -48,10 +47,10 @@ export default function BlogIndex() {
   return (
     <div className="container section-padding">
       <h1 className="font-display text-4xl md:text-5xl font-bold text-center">
-        <Trans>Engineering Blog</Trans>
+        Engineering Blog
       </h1>
       <p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-        <Trans>Deep dives into our architecture, design decisions, and the philosophy behind Ataqu.</Trans>
+        Deep dives into our architecture, design decisions, and the philosophy behind Ataqu.
       </p>
       <div className="mt-12 max-w-2xl mx-auto space-y-6">
         {posts.map((post) => (
