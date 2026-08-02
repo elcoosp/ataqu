@@ -316,6 +316,22 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-application"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "ataqu-domain-pivot",
+ "ataqu-infra-idempotency",
+ "ataqu-infra-repositories",
+ "ataqu-kernel",
+ "ataqu-security",
+ "chrono",
+ "sea-orm",
+ "serde",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-bin"

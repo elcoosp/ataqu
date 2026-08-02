@@ -4,3 +4,20 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-trait = "0.1.91"
+ataqu-domain-pivot = { version = "0.1.0", path = "../ataqu-domain-pivot" }
+ataqu-infra-idempotency = { version = "0.1.0", path = "../ataqu-infra-idempotency" }
+ataqu-infra-repositories = { version = "0.1.0", path = "../ataqu-infra-repositories" }
+ataqu-kernel = { version = "0.1.0", path = "../ataqu-kernel" }
+ataqu-security = { version = "0.1.0", path = "../ataqu-security" }
+chrono = { version = "0.4.45", features = ["serde"] }
+sea-orm = { version = "2.0.0", features = ["with-uuid", "with-chrono", "sqlx-postgres"] }
+serde = { version = "1.0.229", features = ["derive"] }
+sqlx = { version = "0.9.0", features = ["runtime-tokio", "tls-native-tls", "postgres", "uuid", "chrono"] }
+thiserror = "2.0.19"
+tracing = "0.1.44"
+uuid = { version = "1.24.0", features = ["serde", "v7"] }
+
+[dev-dependencies]
+async-trait = "0.1.91"
+tokio = { version = "1.53.1", features = ["full"] }
