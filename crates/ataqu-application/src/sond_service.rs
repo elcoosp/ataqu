@@ -84,11 +84,16 @@ pub struct BatchResult<T> {
 
 impl<T> BatchResult<T> {
     pub fn partial(successes: Vec<Uuid>, failures: Vec<DLQEntry<T>>) -> Self {
-        Self { successes, failures }
+        Self {
+            successes,
+            failures,
+        }
     }
 }
 
 // Desugared async traits with explicit `impl Future + Send` bounds.
+// This is the idiomatic Rust 2024 approach for traits that need to guarantee
+// Send futures, avoiding the clippy lint against `async fn` in public traits.
 pub trait SondFormRepository: Send + Sync {
     fn insert_responses<'a>(
         &'a self,
@@ -118,6 +123,9 @@ pub trait OutboxRepository: Send + Sync {
 }
 
 /// Concrete implementation of chunked batch insertion for FormFieldResponse.
+/// This avoids the complex closure lifetime capture issues by taking the repository directly.
+/// In the real codebase, `ataqu-infra-repositories` provides a generic `transactional_batch_insert`
+/// that handles this for all `Identifiable` types. This stub demonstrates the ADR-014 pattern.
 pub async fn transactional_batch_insert_responses(
     txn: &mut DatabaseTransaction,
     tenant_id: &TenantId,
@@ -134,8 +142,12 @@ pub async fn transactional_batch_insert_responses(
                 successes.extend(chunk.iter().map(|i| i.id()));
             }
             Err(_) => {
+                // Data violation: proceed 1-by-1
                 for item in chunk {
-                    match repo.insert_responses(txn, tenant_id, std::slice::from_ref(item)).await {
+                    match repo
+                        .insert_responses(txn, tenant_id, std::slice::from_ref(item))
+                        .await
+                    {
                         Ok(_) => successes.push(item.id()),
                         Err(err) => {
                             failures.push(DLQEntry {
@@ -190,18 +202,22 @@ where
         clock: &impl Clock,
         txn: &mut DatabaseTransaction,
     ) -> Result<FormSubmittedEvent, SondServiceError> {
+        // 1. Domain pure function: Command + IdGenerator + Clock -> Event
         let event = submit_form_pure(command.clone(), id_gen, clock)?;
 
+        // 2. Persist large form submissions (responses) using the chunked batch helper.
+        // This ensures transient-safe aborts and full DLQ payloads (ADR-014).
         if !command.responses.is_empty() {
-            let batch_result: BatchResult<FormFieldResponse> = transactional_batch_insert_responses(
-                txn,
-                tenant_id,
-                &command.responses,
-                100,
-                &self.form_repo,
-            )
-            .await
-            .map_err(RepositoryError::from)?;
+            let batch_result: BatchResult<FormFieldResponse> =
+                transactional_batch_insert_responses(
+                    txn,
+                    tenant_id,
+                    &command.responses,
+                    100, // chunk size
+                    &self.form_repo,
+                )
+                .await
+                .map_err(RepositoryError::from)?;
 
             if !batch_result.failures.is_empty() {
                 info!(
