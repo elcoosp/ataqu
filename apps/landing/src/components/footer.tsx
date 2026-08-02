@@ -8,9 +8,7 @@ export function Footer() {
     <footer className="border-t border-border bg-background/80 py-12">
       <div className="container grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
-          <Link href="/" className="font-display text-xl font-bold text-foreground">
-            <span className="text-primary">A</span>taqu
-          </Link>
+          <Link href="/" className="font-display text-xl font-bold text-foreground"><span className="text-primary">A</span>taqu</Link>
           <p className="mt-2 text-sm text-muted-foreground max-w-xs">
             10 apps, one price, zero lock‑in.
           </p>
