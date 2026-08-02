@@ -98,6 +98,7 @@ It is structured by Phases (which map to your 4 weeks). It tells you exactly whe
 
 ### Phase 6: Frontend SPAs (Parallel - 10 Agents)
 *Prerequisite: Phase 5 API handlers must be merged to main so `dispatch.sh` can inject them into frontend prompts.*
+- [ ] **TASK-000:** Frontend SPA Shel & shared packages
 - [ ] **START PARALLEL:** Dispatch Tasks 031 to 040 to 10 agents.
 - [ ] **TASK-031:** Frontend SPA: AEGIS
 - [ ] **TASK-032:** Frontend SPA: CINQ

@@ -1,0 +1,116 @@
+---
+title: "We Built a Frontend Factory Before Writing a Single SPA"
+excerpt: "10 apps, 10 agents, 0 chaos. The shared foundation that saved our frontend."
+date: "2026-08-03"
+slug: "frontend-foundation"
+---
+
+**10 apps. 10 agents. 0 chaos.**
+
+---
+
+Before you let 10 agents loose to build 10 apps, you build the factory.
+
+Without it, you get 10 different experiences. 10 duplicate dependencies. 10 Vite configs that disagree on how to bundle a React component. 10 ways to handle dark mode. 10 inconsistent command palettes.
+
+We almost made that mistake.
+
+We caught it before it cost us weeks of refactoring. Instead of writing app code on day one, we spent a day building the shared foundation that makes 10 independent SPAs feel like one operating system.
+
+Here is what we built and why it is the only way to ship 10 apps without losing your mind.
+
+---
+
+### The Mistake We Almost Made
+
+The plan was simple: spin up 10 agents, give each a subdomain (`crm.ataqu.so`, `chat.ataqu.so`), and let them build.
+
+But a unified OS is not a pile of independent apps. If CINQ feels different from DIAL, users will not trust the platform. If the sidebar disappears on mobile in one app but not another, you lose the "OS" illusion.
+
+We needed a single source of truth for the UI. A shared vocabulary that every app speaks.
+
+So we paused the agents and built TASK-000: the frontend factory.
+
+---
+
+### The Factory: 10 Shared Packages
+
+Before a single app wrote a line of business logic, we built 10 shared packages.
+
+- `@ataqu/types` – Shared domain types (`TenantId`, `User`, `ApiError`). Compatible with the Rust backend.
+- `@ataqu/tailwind-config` – The visual identity enforced as code. Deep Night Blue, Amber, 8px grid.
+- `@ataqu/ui` – The unified shell. Sidebar with 10 app icons. Command palette (`⌘ K`). Glassmorphic layouts. All shadcn/ui components pre-configured.
+- `@ataqu/shared-hooks` – `useWebSocket`, `useSSE`, `useIdempotency`, `useOptimistic`. Generic, reusable, tested.
+- `@ataqu/shared-utils` – Pure utilities: `formatDate`, `formatCurrency`, `buildQueryString`.
+- `@ataqu/shared-stores` – Zustand stores for auth, UI state, and onboarding tours. Persisted in localStorage.
+- `@ataqu/shared-schemas` – Zod schemas for email, password, UUIDs.
+- `@ataqu/shared-i18n` – Lingui 6 with dynamic translations. `en` and `fr` out of the box.
+- `@ataqu/vite-preset` – A single Vite config that every app imports. No copy-pasting `manualChunks` or proxy settings.
+- `@ataqu/test-utils` – Mock providers, MSW handlers, `renderWithProviders` for consistent testing.
+
+**The rule:** If something is shared across apps, it belongs in a package. If it is app-specific, it belongs in the app. This separation is enforced by the workspace boundaries.
+
+---
+
+### The Unified Shell (The OS Glue)
+
+The sidebar is not a component that each app re-implements. It is a central package.
+
+`<Shell activeApp="cinq">` wraps every app. It renders the same navigation, the same glassmorphic styling, the same command palette across all 10 subdomains.
+
+When a user clicks "DIAL" in the sidebar, they navigate to `chat.ataqu.so`. When they press `⌘ K`, the command palette opens with global navigation links – hardcoded links to the other 9 subdomains. This respects the independent SPA architecture while maintaining the OS feel.
+
+No iframes. No micro-frontend bundle sharing. Just a shared npm package and subdomain routing.
+
+---
+
+### The App Scaffolds (10 Empty Shells)
+
+Each of the 10 apps was scaffolded with the exact same structure:
+
+- `vite.config.ts` that imports `@ataqu/vite-preset`.
+- `src/main.tsx` rendering `App.tsx`.
+- `App.tsx` wrapping the `Shell` and the `RouterProvider`.
+- Routes: `__root.tsx` (providers), `index.tsx` (redirect to dashboard), `_auth.tsx` (protected), `login.tsx`, `dashboard.tsx`, `$.tsx` (404).
+
+Each app is an independent Vite build. Each app targets ≤ 500 KB gzipped. Each app shares the same dark-mode-native styling out of the box.
+
+Agents can now work in parallel without stepping on each other's toes. They do not need to configure Vite, set up i18n, or design the sidebar. They just write pages.
+
+---
+
+### Lines of Code (Before a Single SPA)
+
+| Component | Lines | Purpose |
+|-----------|-------|---------|
+| 10 shared packages | ~2,500 | UI kit, hooks, utils, stores, schemas, i18n, Vite preset |
+| Root configs (pnpm, Biome, Vite, Playwright) | ~400 | Workspace orchestration |
+| 10 app scaffolds | ~1,000 | Empty shells with routing, auth guard, and shell integration |
+| **Total foundation** | **~3,900** | The factory that powers 10 apps |
+
+---
+
+### What This Enables
+
+Ten agents can now build ten SPAs in parallel. Each agent writes app-specific code only. They never touch the shared packages unless they are adding a new cross-app capability.
+
+The foundation is already:
+
+- A unified shell that makes 10 subdomains feel like one OS.
+- A design system enforced at compile time via Tailwind preset.
+- An i18n system ready for localization.
+- A shared API client that stays synchronized with the backend.
+- A testing setup (Vitest + Playwright) shared across all apps.
+- A CI pipeline that builds all 10 apps in parallel.
+
+Without TASK-000, the frontend would have been a fragmented mess. With it, it is a factory.
+
+---
+
+### What Comes Next
+
+The 10 agents are starting their SPAs today. AEGIS, CINQ, DIAL, PIVOT, SPARK, TEMPO, SOND, VAULT, PAUSE, VISTA – each becomes a real app.
+
+The factory is built. The assembly line is ready.
+
+**Follow the architecture:** `ataqu.com/blog`
