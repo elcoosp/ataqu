@@ -7,7 +7,7 @@
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use sea_orm::DatabaseTransaction;
 use thiserror::Error;
-use tracing::{error, info};
+use tracing::info;
 
 #[derive(Debug, Error)]
 pub enum TempoServiceError {
@@ -111,7 +111,7 @@ where
         &self,
         tenant_id: &TenantId,
         id_gen: &impl IdGenerator,
-        clock: &impl Clock,
+        _clock: &impl Clock,
         txn: &mut DatabaseTransaction,
     ) -> Result<EventTypeCreatedEvent, TempoServiceError> {
         info!(tenant_id = %tenant_id, "Creating event type");
@@ -200,7 +200,7 @@ where
         &self,
         tenant_id: &TenantId,
         id_gen: &impl IdGenerator,
-        clock: &impl Clock,
+        _clock: &impl Clock,
         txn: &mut DatabaseTransaction,
     ) -> Result<OAuthTokenRefreshedEvent, TempoServiceError> {
         info!(tenant_id = %tenant_id, "Starting OAuth token refresh saga");
