@@ -1,3 +1,4 @@
+import Image from "next/image";
 "use client";
 
 import Link from "next/link";
@@ -7,6 +8,24 @@ export default function VaultPage() {
   return (
     <div className="container section-padding max-w-4xl mx-auto">
       <Link href="/" className="text-primary hover:underline text-sm inline-block mb-6">
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/vault.png"
+          alt="vault"
+          width=80
+          height=80
+          className="rounded-full border border-primary/20"
+        />
+      </div>
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/vault.png"
+          alt="vault"
+          width={80}
+          height={80}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
         ← Back to home
       </Link>
 
@@ -81,7 +100,7 @@ export default function VaultPage() {
           Ready to escape Cin7?
         </h2>
         <p className="mt-2 text-center text-muted-foreground">
-          Start with VAULT for $15/mo. No credit card required for the trial.
+          Start with vault for $15/mo (or get all 10 for $79/mo). No credit card required for the trial.
         </p>
         <div className="mt-6">
           <WaitlistForm />

@@ -26,13 +26,13 @@ export function HomeContent() {
         </p>
         <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
           <a
-            href="/signup?wedge=cinq"
+            href="#waitlist"
             className="inline-block rounded-md bg-primary px-8 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Trans>Démarrer avec CINQ (CRM)</Trans>
           </a>
           <a
-            href="/signup?wedge=pivot"
+            href="#waitlist"
             className="inline-block rounded-md border border-border bg-transparent px-8 py-3 font-medium text-foreground transition-colors hover:bg-card"
           >
             <Trans>Démarrer avec PIVOT (Docs)</Trans>

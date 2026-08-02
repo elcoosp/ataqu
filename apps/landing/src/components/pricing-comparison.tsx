@@ -2,10 +2,10 @@
 
 
 const ROWS = [
-  { name: "HubSpot", price: "$1,200/mo", contract: "3‑year lock‑in", note: "+ $200/mo for reporting", highlight: false },
-  { name: "Slack", price: "$15/user/mo", contract: "Monthly", note: "30% price hike", highlight: false },
-  { name: "Zapier", price: "$79/mo", contract: "Monthly", note: "750 tasks/mo limit", highlight: false },
-  { name: "Ataqu", price: "$49/mo", contract: "Month‑to‑month", note: "Everything included", highlight: true },
+  { name: "HubSpot", price: "$1,200/mo", contract: "3‑year lock‑in", note: "Professional tier", highlight: false },
+  { name: "Slack", price: "$12.50/user/mo", contract: "Monthly", note: "30% price hike", highlight: false },
+  { name: "Zapier", price: "$79/mo", contract: "Monthly", note: "2,000 tasks/mo", highlight: false },
+  { name: "Ataqu", price: "$79/mo", contract: "Month‑to‑month", note: "10 apps included", highlight: true },
 ];
 
 export function PricingComparison() {
