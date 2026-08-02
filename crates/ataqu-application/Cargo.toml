@@ -9,6 +9,7 @@ async-trait = "0.1.91"
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-domain-aegis = { version = "0.1.0", path = "../ataqu-domain-aegis" }
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
+ataqu-domain-sond = { path = "../ataqu-domain-sond" }
 ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-vault = { path = "../ataqu-domain-vault" }
@@ -28,4 +29,3 @@ tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "sync", "
 tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = { version = "0.1.44", features = ["attributes"] }
 uuid = { version = "1.24.0", features = ["v4", "v5", "v7", "serde"] }
-
