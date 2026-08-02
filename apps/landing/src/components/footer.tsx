@@ -1,3 +1,4 @@
+import { Trans } from "@lingui/react/macro";
 "use client";
 
 import Link from "next/link";

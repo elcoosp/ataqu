@@ -852,6 +852,7 @@ msgstr "Export your Zoho CRM data to CSV"
 msgid "Exports are in standard formats (CSV, JSON) for easy reuse."
 msgstr "Exports are in standard formats (CSV, JSON) for easy reuse."
 
+#: src/components/footer.tsx:25
 #: src/components/header.tsx:45
 msgid "FAQ"
 msgstr "FAQ"

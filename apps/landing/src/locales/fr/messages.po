@@ -852,6 +852,7 @@ msgstr ""
 msgid "Exports are in standard formats (CSV, JSON) for easy reuse."
 msgstr ""
 
+#: src/components/footer.tsx:25
 #: src/components/header.tsx:45
 msgid "FAQ"
 msgstr ""
