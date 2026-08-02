@@ -1725,8 +1725,8 @@ msgid "Threads, mentions, reactions"
 msgstr ""
 
 #: src/components/header.tsx:72
-msgid "Toggle menu"
-msgstr ""
+#~ msgid "Toggle menu"
+#~ msgstr ""
 
 #: src/components/kill-sheet-content.tsx:402
 #: src/components/pricing-comparison.tsx:45

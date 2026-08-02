@@ -69,7 +69,7 @@ export function Header() {
         <button
           className="md:hidden p-2 text-muted-foreground hover:text-foreground"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label={useLingui().i18n._(t`Toggle menu`)}
+          aria-label="Toggle menu"
         >
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
