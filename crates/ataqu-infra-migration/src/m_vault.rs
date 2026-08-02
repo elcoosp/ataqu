@@ -8,7 +8,8 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS vault;").await?;
+        conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS vault;")
+            .await?;
         Ok(())
     }
 
