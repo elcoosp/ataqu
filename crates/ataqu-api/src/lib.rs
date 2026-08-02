@@ -1,3 +1,5 @@
-pub mod handlers;
-pub mod middleware;
-pub mod serializers;
+pub mod handlers {
+    pub mod sond;
+}
+
+pub use handlers::sond;
