@@ -6,7 +6,7 @@
 ---
 
 ## KILL SHEET 1: HubSpot vs. Ataqu (CINQ)
-**Target URL:** `ataqu.so/alternatives/hubspot`
+**Target URL:** `ataqu.com/alternatives/hubspot`
 
 ### The Hook (H1)
 # Sick of HubSpot's 3-Year Lock-In and $50k Invoices?
@@ -40,7 +40,7 @@ Ataqu CINQ is built on a unified PostgreSQL ecosystem with schemas and Roles for
 ---
 
 ## KILL SHEET 2: Slack vs. Ataqu (DIAL)
-**Target URL:** `ataqu.so/alternatives/slack`
+**Target URL:** `ataqu.com/alternatives/slack`
 
 ### The Hook (H1)
 # Slack Just Raised Their Prices by 30%. Again.
@@ -72,7 +72,7 @@ Ataqu DIAL unifies internal team chat and external customer support tickets in o
 ---
 
 ## KILL SHEET 3: Zapier vs. Ataqu (SPARK)
-**Target URL:** `ataqu.so/alternatives/zapier`
+**Target URL:** `ataqu.com/alternatives/zapier`
 
 ### The Hook (H1)
 # Zapier is a Brittle Bridge. And They Charge You to Cross It.
@@ -104,7 +104,7 @@ Ataqu SPARK does not use webhooks. The 10 Ataqu apps share the same PostgreSQL e
 ---
 
 ## KILL SHEET 4: Notion vs. Ataqu (PIVOT)
-**Target URL:** `ataqu.so/alternatives/notion`
+**Target URL:** `ataqu.com/alternatives/notion`
 
 ### The Hook (H1)
 # Notion is a Blank Canvas Graveyard.
@@ -136,7 +136,7 @@ Ataqu PIVOT is an opinionated, high‑density operational database with a doc UI
 ---
 
 ## KILL SHEET 5: Zoho One vs. Ataqu (The Suite)
-**Target URL:** `ataqu.so/alternatives/zoho-one`
+**Target URL:** `ataqu.com/alternatives/zoho-one`
 
 ### The Hook (H1)
 # Zoho One is Bloatware Disguised as a Suite.

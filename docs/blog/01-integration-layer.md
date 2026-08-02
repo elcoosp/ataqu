@@ -274,7 +274,7 @@ This is Phase 1. The next tasks wire actual domain logic—CRM deals, chat chann
 
 ---
 
-**Follow the architecture:** `architecture.ataqu.so`  
+**Follow the architecture:** `ataqu.com/blog`  
 **Join the build:** Drop your email for raw schema diagrams and ADRs.
 
 ---

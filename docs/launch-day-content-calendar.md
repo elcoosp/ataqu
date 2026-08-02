@@ -20,8 +20,8 @@ We do not publish a press release. We publish a working product, an Engineering 
 
 *   [ ] **SEO Indexing:** All 5 "Kill Sheet" landing pages and 10 "Migration Guides" are live, submitted to Google Search Console, and cached.
 *   [ ] **VPS Scaling:** Hetzner CX42 provisioned (8 vCores, 8 GB RAM) – Phase 1 uses Hetzner VPS; we monitor traffic spikes.
-*   [ ] **Status Page Live:** `status.ataqu.so` is publicly accessible and showing 99.9% uptime.
-*   [ ] **Support Readiness:** `support@ataqu.so` inbox is cleared. Slack `#support` alerts are routed to mobile.
+*   [ ] **Status Page Live:** `status.ataqu.com` is publicly accessible and showing 99.9% uptime.
+*   [ ] **Support Readiness:** `support@ataqu.com` inbox is cleared. Slack `#support` alerts are routed to mobile.
 *   [ ] **Analytics:** VISTA internal dashboard tracking "Signups" and "Trial‑to‑Paid" is active.
 
 ---

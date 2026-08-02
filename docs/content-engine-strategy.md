@@ -59,7 +59,7 @@ We do not wait for Google to rank us. We go where the buyers are hiding their fr
 
 ### 3.1 High-Intent Programmatic SEO (The "Kill Sheet" Strategy)
 We will build hundreds of programmatic landing pages targeting exact‑match competitor churn queries.
-- **Structure:** `ataqu.so/alternatives/[competitor-name]`
+- **Structure:** `ataqu.com/alternatives/[competitor-name]`
 - **Content:** A ruthless, objective breakdown of the competitor's pricing flaws, lock‑in clauses, and integration limits, followed by the Ataqu solution.
 - **Example:** `/alternatives/hubspot` will feature a real calculator showing a 20‑person team's 3‑year cost on HubSpot vs. Ataqu.
 
@@ -117,13 +117,13 @@ Address Fear, Uncertainty, and Doubt head‑on.
 Trust is our primary moat. We build it through radical, uncomfortable transparency.
 
 ### 6.1 The Public Status Page & RCA System
-- **The Rule:** When Ataqu goes down, we do not hide it. We post it instantly on `status.ataqu.so`.
+- **The Rule:** When Ataqu goes down, we do not hide it. We post it instantly on `status.ataqu.com`.
 - **The RCA (Root Cause Analysis):** Within 24 hours of any incident, we publish an engineering RCA. We explain exactly which Rust component failed, how the unified outbox DLQ caught the poison message, and the exact code fix we deployed. For GDPR saga failures, we document the step that failed and the retry mechanism used.
 - **Why:** Competitors hide outages behind "degraded performance" PR speak. By exposing our own technical errors and how the architecture self‑healed, we prove our competence.
 
 ### 6.2 The Open Architecture Docs
 Unlike competitors who hide their tech stack, we publish ours.
-- `architecture.ataqu.so`: A public, living document detailing our PostgreSQL schemas, Roles, RLS policies, unified outbox, SeaORM entity design, and `LISTEN/NOTIFY` event bus.
+- `ataqu.com/blog`: A public, blog detailing our PostgreSQL schemas, Roles, RLS policies, unified outbox, SeaORM entity design, and `LISTEN/NOTIFY` event bus.
 - **Impact:** CTOs will read this and realize we are building a banking‑grade infrastructure for a $49 tool. It shatters the cognitive dissonance of SaaS pricing.
 
 ---

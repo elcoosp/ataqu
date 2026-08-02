@@ -65,7 +65,7 @@ To ensure the UI delivers on the "Calm Predator" promise, we validate against st
 We reject the "playful" SaaS aesthetic. We use glassmorphism purposefully—to create depth and separation without heavy borders, mimicking the sleek, instrument-panel feel of a high-performance vehicle. Dark mode native, high-density data, zero-bloat.
 
 ### 4.2 The Unified Shell (Independent SPAs + Shared UI Kit)
-The 10 apps live on subdomains (`crm.ataqu.so`, `chat.ataqu.so`) as strictly independent Vite SPAs. The "Unified OS" feel is achieved through a shared npm package (`@ataqu/ui-kit`).
+The 10 apps live on subdomains (`crm.ataqu.com`, `chat.ataqu.com`) as strictly independent Vite SPAs. The "Unified OS" feel is achieved through a shared npm package (`@ataqu/ui-kit`).
 - **The Shell:** A persistent, glassmorphic left sidebar displaying the 10 distinct App Icons. Hovering reveals the app name. Clicking an icon navigates to the corresponding subdomain. 
 - **Seamless Transitions:** To prevent the "flash of white" during subdomain jumps, all SPAs share the exact same Deep Night Blue background (`#0A1628`) and shell layout. The View Transitions API is used for morphing transitions where supported.
 - **The Command Palette (`⌘&nbsp;K` / `Ctrl+K`):** 

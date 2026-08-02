@@ -3,7 +3,7 @@
   **Version:** 2.5
   **Date:** 2026-08-29
   **Document Type:** Product Feature Specification (MLP Scope)
-  **Brand Domain:** `ataqu.so`
+  **Brand Domain:** `ataqu.com`
 
   > **PRODUCT NOTE:** This document defines the *what* — the exact feature set required for Ataqu's Minimum Lovable Product (MLP). While the architecture documents (v143.0) define *how* we build, this document defines *what* we build. It is the bridge between competitive research and the implementation tasks. Every feature listed here is validated against the 2025–2026 feature sets of our competitors. Features marked "Ignored" are deliberate omissions — bloat we refuse to clone.
 

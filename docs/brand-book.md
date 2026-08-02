@@ -392,7 +392,7 @@ To win the CTO persona (Sam), traditional marketing is useless. We need an "Engi
 ### 10.1 The "Open Architecture" Approach
 We don't need to open‑source Ataqu, but we must be radically transparent about how it is built.
 - **Engineering Blog:** Publish deep‑dive articles on the Ataqu architecture. (e.g., *"How we built a unified outbox with PostgreSQL `LISTEN/NOTIFY`, RLS, and type‑safe `schema` ENUM"*, *"Why we chose SeaORM 2.0 with raw SQL escape hatch for Phase 1"*, *"How we isolated email tracking from the CRM database using a bounded channel with JSONL spill and atomic file rotation"*, *"How we implemented honest idempotency with 2× int4 advisory locks"*, *"How we achieved compile‑time PII redaction with redacting newtypes, no `Serialize`, and API wrapper serialization"*).
-- **Public Architecture Docs:** We publish `architecture.ataqu.so` — a living document detailing our schemas, PostgreSQL Roles, RLS policies, Column-Level Privileges, `schema` ENUM, SeaORM entity design, and `LISTEN/NOTIFY` event bus. CTOs read this and realize we are building banking‑grade infrastructure for a $49 tool.
+- **Public Architecture Docs:** We publish in the blog `ataqu.com/blog` — a documents detailing our schemas, PostgreSQL Roles, RLS policies, Column-Level Privileges, `schema` ENUM, SeaORM entity design, and `LISTEN/NOTIFY` event bus. CTOs read this and realize we are building banking‑grade infrastructure for a $49 tool.
 - **Public Status Page:** Real‑time uptime, p99 latency metrics, and outbox DLQ rates. If there is an outage, post a Root Cause Analysis (RCA) within 24 hours. No PR spin.
 
 ### 10.2 The Hacker News / Reddit Strategy

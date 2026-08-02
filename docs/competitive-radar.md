@@ -89,7 +89,7 @@ This matrix defines the exact product scope for the upcoming PRDs.
 As we write the PRDs, Product and Engineering will face pressure to add "parity" features to win deals. These are Trap Features—they add immediate revenue but destroy the "Calm Predator" ethos and bloat the Rust binary.
 
 1.  **Per‑User Pricing Models:** We will never build a "user counting" mechanism into the billing logic. It is flat‑rate.
-2.  **Custom Domain Mapping:** We will not allow `app.yourcompany.com`. It forces us into micro‑frontend routing and SSL management bloat. The app lives at `app.ataqu.so`.
+2.  **Custom Domain Mapping:** We will not allow `app.yourcompany.com`. It forces us into micro‑frontend routing and SSL management bloat. The app lives at `app.ataqu.com`.
 3.  **White‑Labeling:** We will not remove the Ataqu brand from the UI. The brand is the trust signal.
 4.  **On‑Premise / Self‑Hosted Versions:** We will not package Ataqu as a Docker image for users to host. It breaks our unified update model and architectural guarantees.
 5.  **Native Email Servers:** We will not build an email sending server. We integrate with Postmark/Resend via SPARK. Email deliverability is a nightmare that distracts from our core OS.

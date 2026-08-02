@@ -127,7 +127,7 @@ export default function PrivacyPage() {
             <li><Trans><strong>Data Portability:</strong> You can export your data in machine‑readable CSV/JSON formats.</Trans></li>
           </ul>
           <p className="text-muted-foreground leading-relaxed mt-2">
-            <Trans>To exercise these rights, simply use the in‑app tools. If you need assistance, email privacy@ataqu.so from your registered email address.</Trans>
+            <Trans>To exercise these rights, simply use the in‑app tools. If you need assistance, email privacy@ataqu.com from your registered email address.</Trans>
           </p>
         </section>
 
@@ -149,7 +149,7 @@ export default function PrivacyPage() {
           </p>
           <ol className="list-decimal list-inside text-muted-foreground mt-2 space-y-1">
             <li><Trans>We will immediately secure the affected systems.</Trans></li>
-            <li><Trans>We will publish an initial incident report on status.ataqu.so within 24 hours of detection.</Trans></li>
+            <li><Trans>We will publish an initial incident report on status.ataqu.com within 24 hours of detection.</Trans></li>
             <li><Trans>We will notify affected customers via email within 72 hours of detection, including the scope of the breach and the remediation steps taken.</Trans></li>
           </ol>
         </section>

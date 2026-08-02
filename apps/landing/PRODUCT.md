@@ -1,7 +1,7 @@
 # PRODUCT.md — Ataqu Website (Landing Page + Competitor Kill Sheets)
 
 **Platform:** Web (Next.js, React, TypeScript, Tailwind CSS)  
-**Domain:** `ataqu.so`  
+**Domain:** `ataqu.com`  
 **Version:** 2.0 (Phase 1)  
 **Date:** 2026-08-02  
 

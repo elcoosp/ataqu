@@ -685,7 +685,7 @@ msgid "By creating an Ataqu account, you agree to these Terms of Service (\"ToS\
 msgstr ""
 
 #: src/app/faq/page.tsx:52
-msgid "By email (support@ataqu.so) or via the in‑app chat."
+msgid "By email (support@ataqu.com) or via the in‑app chat."
 msgstr ""
 
 #: src/app/apps/tempo/page.tsx:38
@@ -2460,7 +2460,7 @@ msgid "Threads, mentions, reactions"
 msgstr ""
 
 #: src/app/privacy/page.tsx:130
-msgid "To exercise these rights, simply use the in‑app tools. If you need assistance, email privacy@ataqu.so from your registered email address."
+msgid "To exercise these rights, simply use the in‑app tools. If you need assistance, email privacy@ataqu.com from your registered email address."
 msgstr ""
 
 #: src/app/terms/page.tsx:114
@@ -2629,7 +2629,7 @@ msgid "We will notify affected customers via email within 72 hours of detection,
 msgstr ""
 
 #: src/app/privacy/page.tsx:152
-msgid "We will publish an initial incident report on status.ataqu.so within 24 hours of detection."
+msgid "We will publish an initial incident report on status.ataqu.com within 24 hours of detection."
 msgstr ""
 
 #: src/components/waitlist-form.tsx:121
@@ -2749,7 +2749,7 @@ msgid "Yes. All Ataqu apps are natively integrated — no Zapier or third‑part
 msgstr ""
 
 #: src/app/faq/page.tsx:15
-msgid "Yes. Contact us at hello@ataqu.so with your organization details."
+msgid "Yes. Contact us at hello@ataqu.com with your organization details."
 msgstr ""
 
 #: src/app/faq/page.tsx:33

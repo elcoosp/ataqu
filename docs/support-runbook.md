@@ -8,7 +8,7 @@
 ## 1. THE SUPPORT PHILOSOPHY
 
 ### 1.1 The Core Rules
-1.  **Zero Bots:** Automated chatbots are strictly forbidden for inbound support queries. If a user emails `support@ataqu.so` or messages in DIAL, a human reads it and replies.
+1.  **Zero Bots:** Automated chatbots are strictly forbidden for inbound support queries. If a user emails `support@ataqu.com` or messages in DIAL, a human reads it and replies.
 2.  **The 24-Hour SLA:** All inbound tickets must receive a substantive, human-written response within 24 hours. "Substantive" means the agent has actually investigated the issue, not just said "We are looking into this."
 3.  **One-Touch Resolution:** The goal is never to "close a ticket." The goal is to solve the user's problem in a single response. If a user has to ask a follow-up question because the first answer was vague, we have failed.
 

@@ -12,7 +12,7 @@ export default function FAQPage() {
         { q: <Trans>Can I change plans at any time?</Trans>, a: <Trans>Yes. You can upgrade or downgrade in 1 click from your dashboard. Billing is prorated.</Trans> },
         { q: <Trans>Is there a long‑term contract?</Trans>, a: <Trans>No. All plans are month‑to‑month. You can cancel anytime with no penalty.</Trans> },
         { q: <Trans>What happens if I exceed my plan limits?</Trans>, a: <Trans>There are no usage limits. The price is fixed regardless of volume.</Trans> },
-        { q: <Trans>Do you offer discounts for non‑profits or startups?</Trans>, a: <Trans>Yes. Contact us at hello@ataqu.so with your organization details.</Trans> },
+        { q: <Trans>Do you offer discounts for non‑profits or startups?</Trans>, a: <Trans>Yes. Contact us at hello@ataqu.com with your organization details.</Trans> },
       ]
     },
     {
@@ -49,7 +49,7 @@ export default function FAQPage() {
       title: <Trans>Support & SLA</Trans>,
       items: [
         { q: <Trans>What is your support response time?</Trans>, a: <Trans>A human responds within 24 hours, 7 days a week.</Trans> },
-        { q: <Trans>How do I contact support?</Trans>, a: <Trans>By email (support@ataqu.so) or via the in‑app chat.</Trans> },
+        { q: <Trans>How do I contact support?</Trans>, a: <Trans>By email (support@ataqu.com) or via the in‑app chat.</Trans> },
         { q: <Trans>Do you offer phone support?</Trans>, a: <Trans>Not currently. But our email and chat support are responsive and human.</Trans> },
         { q: <Trans>Is there a formal SLA?</Trans>, a: <Trans>Yes. We guarantee 99.9% uptime.</Trans> },
         { q: <Trans>What should I do in an emergency?</Trans>, a: <Trans>Use the in‑app chat. We respond quickly to urgent issues.</Trans> },

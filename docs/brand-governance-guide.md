@@ -84,7 +84,7 @@ How a brand handles failure defines its trust. Ataqu does not hide outages behin
 ### 4.1 The 4‑Stage Outage Communication Protocol
 When a P0/P1 incident occurs (e.g., PostgreSQL connection pool exhaustion, outbox relay lag, RLS misconfiguration, sequence grant failure):
 
-1. **T‑Minus 0 (Detection):** The moment an anomaly is detected, the Public Status Page (`status.ataqu.so`) is automatically updated to "Degraded Performance" or "Outage". No human delay.
+1. **T‑Minus 0 (Detection):** The moment an anomaly is detected, the Public Status Page (`status.ataqu.com`) is automatically updated to "Degraded Performance" or "Outage". No human delay.
 2. **T+15 Minutes (Acknowledgment):** An initial update is posted. State the specific failing component in plain technical English. (e.g., "CRON worker failing to dispatch scheduled tasks due to connection pool timeout. Investigating.")
 3. **Resolution (The Fix):** State exactly what was done. (e.g., "Increased `max_connections` to 120. Restarted `ataqu-server`. Service restored.")
 4. **T+24 Hours (The RCA):** A Root Cause Analysis is published on the Engineering Blog.

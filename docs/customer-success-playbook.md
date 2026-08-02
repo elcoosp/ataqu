@@ -175,7 +175,7 @@ Ataqu eats its own dog food. We do not use external CS tools.
 | **Chat** | Ataqu DIAL | All CS conversations routed through DIAL. |
 | **Scheduling** | Ataqu TEMPO | Customer check-ins booked via TEMPO. |
 | **Analytics** | Ataqu VISTA | Health Score dashboard built in VISTA. |
-| **Support** | `support@ataqu.so` + DIAL | No Zendesk. No Intercom. No external tools. |
+| **Support** | `support@ataqu.com` + DIAL | No Zendesk. No Intercom. No external tools. |
 | **Automation** | Ataqu SPARK | CS workflows (e.g., health score alerts) built in SPARK. |
 
 ---

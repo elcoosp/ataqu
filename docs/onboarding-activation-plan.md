@@ -22,7 +22,7 @@ Ataqu is a Unified OS, but showing a new user 10 apps on day one causes choice p
 ### Phase 1: The Wedge Entry (0-3 Minutes)
 **The Goal:** Sign up, select a wedge app, and create the first entity. Time-to-First-Value (TTFV) must be under 3 minutes.
 
-1. **The SSO Gateway:** User lands on `app.ataqu.so` and clicks "Continue with Google/Workspace."
+1. **The SSO Gateway:** User lands on `app.ataqu.com` and clicks "Continue with Google/Workspace."
 2. **The 1-Question Wedge Selection:** No 5‑page demographic survey. Just one question: *"What are you trying to escape today?"*
    - Options: "HubSpot (CRM)", "Slack (Chat)", "Notion (Docs)", "Zapier (Automation)".
 3. **The Pre-Configured Workspace:** Based on the answer, the UI loads directly into that specific app (e.g., CINQ). The other 9 apps are visible in the sidebar but grayed out.

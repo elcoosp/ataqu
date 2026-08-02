@@ -72,4 +72,4 @@ The business logic is written, tested, and ready.
 
 ---
 
-**Follow the architecture:** architecture.ataqu.so
+**Follow the architecture:** ataqu.com/blog

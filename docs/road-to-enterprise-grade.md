@@ -39,9 +39,9 @@
     - PII redaction (newtypes, compile‑time).
     - Incident response plan (already in `docs/incident-response-runbook.md`).
     - Vendor sub‑processors (Hetzner, Cloudflare, Stripe).
-  - Publish it at `trust.ataqu.so` alongside:
+  - Publish it at `trust.ataqu.com` alongside:
     - Real‑time uptime status (UptimeRobot free tier or self‑hosted Uptime Kuma).
-    - Security contact (`security@ataqu.so`).
+    - Security contact (`security@ataqu.com`).
 - **Why this works:** Early enterprise buyers will ask for security docs. A well‑written whitepaper often suffices during the evaluation phase. When they demand a SOC 2 report, you say: *“We’re SOC 2 ready and can schedule the audit upon signing – we’ll cover the cost as part of the contract.”*
 
 ### 2.2. DDQ (Security Questionnaire) Library
@@ -139,7 +139,7 @@
     - Audit log viewer (fetch from `core.audit_logs` API).
     - Security settings (SSO config, IP allowlist – store in `core.tenant_settings` table).
     - Billing overview (read from Stripe webhooks).
-  - Deploy it under `admin.ataqu.so`.
+  - Deploy it under `admin.ataqu.com`.
 - **Cost:** $0 (developer time).
 
 ### 5.2. Audit Logs – Already in the Schema
@@ -178,7 +178,7 @@
 ### 6.3. Developer Portal – Static Documentation + Interactive
 - **Action:**
   - Generate OpenAPI (Swagger) spec from your Axum routes (using `utoipa`).
-  - Host the spec in a public repo and use **Redoc** or **Swagger UI** (free, self‑hosted) at `api.ataqu.so/docs`.
+  - Host the spec in a public repo and use **Redoc** or **Swagger UI** (free, self‑hosted) at `api.ataqu.com/docs`.
   - Provide a simple API key generator endpoint (store keys in `core.api_keys`).
 - **Cost:** $0.
 
@@ -243,7 +243,7 @@
 ## 10. Immediate Zero‑Cost Actions (Next 7 Days)
 
 1. **Write the Security Whitepaper** (`docs/security-whitepaper.md`) – use the ADRs as source material.
-2. **Set up Uptime Kuma** (self‑hosted on the same VPS) and publish a status page (`status.ataqu.so`).
+2. **Set up Uptime Kuma** (self‑hosted on the same VPS) and publish a status page (`status.ataqu.com`).
 3. **Fill out the SIG questionnaire** (Google Doc) – you can reuse answers from your ADRs.
 4. **Create a simple admin UI mockup** – you’ll build it later, but have the design ready.
 5. **Outline the SAML/SCIM implementation** – decide which Rust crates to use (`saml` or `rust-oauth2`).

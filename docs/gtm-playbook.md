@@ -81,7 +81,7 @@ We do not force users to buy the $49/mo bundle on day one. We lower the barrier 
 
 We build hundreds of programmatic landing pages targeting exact-match competitor churn queries.
 
-- **Structure:** `ataqu.so/alternatives/[competitor-name]`
+- **Structure:** `ataqu.com/alternatives/[competitor-name]`
 - **Content:** A ruthless, objective breakdown of the competitor's pricing flaws, lock-in clauses, and integration limits. Includes a real 3-year TCO (Total Cost of Ownership) calculator comparing them to Ataqu.
 - **Intent Capture:** When a user searches "how to cancel hubspot 3 year contract," they land on our Kill Sheet, see the Ataqu migration guide, and start a free trial.
 

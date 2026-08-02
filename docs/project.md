@@ -3,7 +3,7 @@
 **Version:** 144.0 (Dependency Upgrade)
 **Date:** 2026-08-01
 **Author:** Ataqu Architecture Team
-**Brand Domain:** `ataqu.so`
+**Brand Domain:** `ataqu.com`
 
 > **ENGINEERING NOTE:** v144.0 is a pure dependency upgrade. All versions have been updated to their latest stable majors as of August 2026. No architectural changes, ADRs, or code structure has been modified. This ensures the codebase remains secure, performant, and compatible with the modern ecosystem.
 
@@ -40,16 +40,16 @@ Build **Ataqu**: a single Rust backend codebase powering a suite of 10 SaaS appl
 
 | App | Subdomain | Clone of | Price |
 |-----|-----------|----------|-------|
-| AEGIS | `sso.ataqu.so` | 1Password + Okta | $3/mo |
-| TEMPO | `schedule.ataqu.so` | Calendly | $9/mo |
-| PIVOT | `docs.ataqu.so` | Notion + ClickUp | $15/mo |
-| SOND | `forms.ataqu.so` | SurveyMonkey + Typeform | $15/mo |
-| VAULT | `inv.ataqu.so` | Cin7 + Skubana | $29/mo |
-| PAUSE | `hr.ataqu.so` | Personio + BreatheHR | $4/mo |
-| DIAL | `chat.ataqu.so` | Slack + Intercom | $9/mo |
-| SPARK | `auto.ataqu.so` | Zapier + Make | $19/mo |
-| CINQ | `crm.ataqu.so` | HubSpot + Pipedrive | $15/mo |
-| VISTA | `bi.ataqu.so` | Metabase + PowerBI | $9/mo |
+| AEGIS | `sso.ataqu.com` | 1Password + Okta | $3/mo |
+| TEMPO | `schedule.ataqu.com` | Calendly | $9/mo |
+| PIVOT | `docs.ataqu.com` | Notion + ClickUp | $15/mo |
+| SOND | `forms.ataqu.com` | SurveyMonkey + Typeform | $15/mo |
+| VAULT | `inv.ataqu.com` | Cin7 + Skubana | $29/mo |
+| PAUSE | `hr.ataqu.com` | Personio + BreatheHR | $4/mo |
+| DIAL | `chat.ataqu.com` | Slack + Intercom | $9/mo |
+| SPARK | `auto.ataqu.com` | Zapier + Make | $19/mo |
+| CINQ | `crm.ataqu.com` | HubSpot + Pipedrive | $15/mo |
+| VISTA | `bi.ataqu.com` | Metabase + PowerBI | $9/mo |
 
 **Bundles:** 10-app $49/mo, 5-app $29/mo, individual as above. Free tier with strict usage limits enforced by rate limiting.
 
@@ -808,7 +808,7 @@ The `dispatcher_role` has `SELECT` and column-level `UPDATE` on `core.outbox` tr
 - **Pii Lint:** CI fails if any crate outside the approved list enables the `infra-pii-access` feature on `ataqu-security`.
 - **Entity Boundary Lint:** CI fails if any `sea_orm::Model` or `sea_orm::ActiveModel` type appears in a `ataqu-domain-*` crate's public API.
 - **GDPR Registry CI Test:** Fails if any table with `tenant_id` is not in the compiled registry (ADR-022).
-- Axum routes based on `Host` header (including `track.ataqu.so` for email tracking pixels).
+- Axum routes based on `Host` header (including `track.ataqu.com` for email tracking pixels).
 
 ---
 

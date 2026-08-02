@@ -34,7 +34,7 @@ This journey is mapped primarily for **Sam (The CTO)** and **Alex (The CEO)**. S
 **The Goal:** Prove the Unified SMB OS thesis and earn the signup.
 
 *   **Touchpoints:**
-    *   Landing Page (`ataqu.so`).
+    *   Landing Page (`ataqu.com`).
     *   Pricing Page.
     *   Public Architecture / Status Page.
 *   **Emotional State:** Skeptical but intrigued. "Is this too good to be true?"

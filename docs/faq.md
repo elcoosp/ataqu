@@ -19,7 +19,7 @@
 **A:** There are no usage limits. The price is fixed regardless of volume.
 
 **Q5: Do you offer discounts for non‑profits or startups?**
-**A:** Yes. Contact us at `hello@ataqu.so` with your organization details.
+**A:** Yes. Contact us at `hello@ataqu.com` with your organization details.
 
 ---
 
@@ -86,7 +86,7 @@
 **A:** A human responds within 24 hours, 7 days a week.
 
 **Q22: How do I contact support?**
-**A:** By email (`support@ataqu.so`) or via the in‑app chat.
+**A:** By email (`support@ataqu.com`) or via the in‑app chat.
 
 **Q23: Do you offer phone support?**
 **A:** Not currently. But our email and chat support are responsive and human.

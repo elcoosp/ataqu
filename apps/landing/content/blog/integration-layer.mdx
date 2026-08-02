@@ -1,39 +1,35 @@
 ---
-title: "We Built the Integration Layer of a SaaS OS in One Morning"
-excerpt: "PostgreSQL Roles, RLS, and a Unified Outbox that replaces Zapier."
-date: "2026-08-01"
+title: "We Killed Zapier in One Morning – PostgreSQL RLS, Roles & a Unified Outbox"
+excerpt: "10 apps, 0 middleware, 1,920 lines of Rust."
+date: "2026-08-02"
 slug: "integration-layer"
 ---
 
-**10 apps. 3 pricing tiers. 0 middleware. 1,920 lines of Rust.**
+**10 apps. 0 middleware. 1,920 lines of Rust.**
 
 ---
 
-A 20-person team pays roughly $2,000/month for SaaS tools that don't communicate.
+A 20-person team pays roughly $2,000/month for SaaS tools that refuse to talk to each other. HubSpot, Slack, Zapier – they don't share a database or a security model. They rely on webhooks over the public internet.
 
-HubSpot. Slack. Zapier. They don't share a database. They don't share a security model. They rely on brittle webhooks over the public internet.
+Zapier charges per task. APIs change. Messages drop. Data duplicates across databases because the tools don't share a native home.
 
-Zapier charges per task. APIs change. Messages drop. Data duplicates across databases because none of the tools share a native home.
+A bridge like Zapier taxes your architecture.
 
-The bridge is a tax on your architecture.
-
-**We refused this.**
+We refused this.
 
 We built a unified event outbox inside PostgreSQL in one morning. Hardened by Row Level Security. Fed by role-scoped connection pools. Guarded by compile-time safety that prevents cross-tenant leaks before the code compiles.
 
-**1,920 lines of Rust. 10 apps. 3 pricing tiers. 0 microservices.**
-
-Here is what we built, why we built it, and the architectural decisions that make it deterministic.
+1,920 lines of Rust. 10 apps. 0 microservices.
 
 ---
 
 ### 1. Tenant Isolation – Not a Runtime Check
 
-Before an event flows, we enforce a structural guarantee: **no tenant touches another tenant's data.**
+Before an event flows, we enforce a structural guarantee: no tenant touches another tenant's data.
 
 `TenantId` is a newtype with a private field. No external construction. No raw UUID extraction. Every access is auditable.
 
-This is not defensive programming. It is architectural law.
+This is architectural law, not defensive programming.
 
 **PostgreSQL roles enforce physical boundaries:**
 
@@ -54,7 +50,7 @@ The dispatcher cannot insert events. CINQ cannot read DIAL tables. Physical enfo
 
 ### 2. A Unified Outbox with RLS
 
-Every domain event – deal created, message sent, stock adjusted – flows through **one table**: `core.outbox`.
+Every domain event – deal created, message sent, stock adjusted – flows through one table: `core.outbox`.
 
 **Why one table?** Cross-domain events are the point. When CINQ wins a deal, VAULT reserves stock, DIAL creates a channel, VISTA updates revenue. One `LISTEN` channel observes the entire operating system.
 
@@ -68,7 +64,7 @@ CREATE POLICY outbox_cinq_insert ON core.outbox
 
 If DIAL tries to spoof a CRM event, PostgreSQL rejects it at the query planner.
 
-**The dispatcher role:** It can read and update status, attempts, and locks. **It cannot alter payloads.** If the relay is compromised, it can retry or dead-letter a message. It cannot forge one.
+**The dispatcher role:** It can read and update status, attempts, and locks. It cannot alter payloads. If the relay is compromised, it can retry or dead-letter a message, but it cannot forge one.
 
 **LISTEN/NOTIFY:** Dedicated `sqlx::PgPool` (size 3). Sub-millisecond delivery over the same TCP connection. No 5-minute polling.
 
@@ -113,13 +109,13 @@ CREATE TABLE core.idempotency_records (
 
 **Flow:** Retry blocks on the lock. Completed request serves cached response. No double-charges. No duplicate deals.
 
-Collision probability: **2⁻⁶⁴**. Negligible. Not zero. Acceptable.
+Collision probability is 2⁻⁶⁴ – negligible and acceptable.
 
 ---
 
 ### 4. Domain Layer – Pure Functions
 
-Domain crates contain **business logic only.**
+Domain crates contain business logic only.
 
 No I/O. No HTTP. No database connections. No system clock. No random number generation.
 
@@ -135,7 +131,7 @@ pub trait Clock: Send + Sync {
 }
 ```
 
-Production: UUIDv7 and `SystemTime`. Tests: deterministic mocks.
+Production uses UUIDv7 and `SystemTime`. Tests use deterministic mocks.
 
 **Domain logic is testable without a database. Deterministic. Pure.**
 
@@ -151,7 +147,7 @@ Production: UUIDv7 and `SystemTime`. Tests: deterministic mocks.
 
 - `UniqueViolation`, `ForeignKeyViolation`, `CheckViolation`, `NotFound`, `Database`, `Connection`, `Unknown`
 
-**No `unwrap()` in domain code. No `expect()` in domain code.**
+No `unwrap()` in domain code. No `expect()` in domain code.
 
 Every failure is typed. Propagates cleanly to the API.
 
@@ -173,13 +169,13 @@ High-traffic fields get promoted to columns. No schema migrations for every new 
 
 ### 7. What We Excluded
 
-This architecture is defined as much by what we excluded as what we included:
+The architecture is defined by what we left out:
 
 - No microservices. One Rust binary.
 - No Kafka. No RabbitMQ. PostgreSQL `LISTEN/NOTIFY` is sufficient.
-- **No per-user pricing. $15 (1 app), $39 (5 apps), $79 (10 apps). Fixed.**
+- No per-user pricing. Fixed, transparent pricing.
 - No AI bloat. No LLM calls in the event pipeline.
-- No `Serialize` on PII newtypes. `Debug`/`Display` redact. JSON serialization isolated to API wrapper structs.
+- No `Serialize` on PII newtypes. `Debug`/`Display` redact. JSON serialization is isolated to API wrapper structs.
 
 ---
 
@@ -193,7 +189,7 @@ This architecture is defined as much by what we excluded as what we included:
 | `ataqu-contracts` (DIAL, VAULT, AEGIS, CINQ types) | ~600 | Cross-domain event serialization |
 | **Total** | **~1,920** | The integration layer |
 
-Infrastructure cost: **$0 additional**. Runs on the same PostgreSQL instance.
+Infrastructure cost: $0 additional. Runs on the same PostgreSQL instance.
 
 ---
 
@@ -207,8 +203,6 @@ Domain logic – deals, channels, stock, forms, schedules – is already wired.
 - Advisory locks prevent duplication.
 - Tenant isolation is mathematically guaranteed.
 
-**Pricing:** $15 / $39 / $79. Fixed. No per-user fees. No lock-in.
+Pricing is fixed and transparent. No per-user fees. No lock-in.
 
-**Follow the architecture:** `architecture.ataqu.so`
-
-**Join the waitlist:** Link in bio.
+**Follow the architecture:** `ataqu.com/blog`

@@ -499,7 +499,7 @@ After executing TASK‑000, the following must be true:
 ## Notes
 
 - The API client generation **does not** use any external tool; the AI reads the Rust code directly and writes the TypeScript files.
-- All apps will be deployed as independent SPAs on subdomains (e.g., `crm.ataqu.so`); the shell uses `<a>` navigation to switch between them.
+- All apps will be deployed as independent SPAs on subdomains (e.g., `crm.ataqu.com`); the shell uses `<a>` navigation to switch between them.
 - The foundation is built once; subsequent frontend tasks (031–040) only add app‑specific pages and logic.
 
 ---

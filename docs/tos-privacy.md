@@ -116,7 +116,7 @@ Depending on your location (EU/EEA or California), you have specific rights rega
 *   **Right to Object:** You can object to certain types of processing.
 *   **Data Portability:** You can export your data in machine‑readable CSV/JSON formats.
 
-To exercise these rights, simply use the in‑app tools. If you need assistance, email `privacy@ataqu.so` from your registered email address.
+To exercise these rights, simply use the in‑app tools. If you need assistance, email `privacy@ataqu.com` from your registered email address.
 
 ### 9. International Data Transfers
 Ataqu infrastructure is hosted primarily in Germany (EU). If you are outside the EU, your data may be transferred. We rely on Standard Contractual Clauses (SCCs) to ensure your data is transferred in compliance with GDPR.
@@ -124,7 +124,7 @@ Ataqu infrastructure is hosted primarily in Germany (EU). If you are outside the
 ### 10. Security Breach Protocol
 In the event of a confirmed data breach:
 1.  We will immediately secure the affected systems.
-2.  We will publish an initial incident report on `status.ataqu.so` within 24 hours of detection.
+2.  We will publish an initial incident report on `status.ataqu.com` within 24 hours of detection.
 3.  We will notify affected customers via email within 72 hours of detection, including the scope of the breach and the remediation steps taken.
 
 ### 11. Changes to This Policy

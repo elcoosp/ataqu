@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: "Ataqu – The Calm Predator of Productivity",
     description: "10 essential apps, one unified price. No lock‑in, no per‑user fees.",
     type: "website",
-    url: "https://ataqu.so",
+    url: "https://ataqu.com",
   },
   twitter: {
     card: "summary_large_image",

@@ -35,7 +35,7 @@ During a SEV‑1 or SEV‑2 incident, strict roles are assigned to prevent thras
 
 1.  **Incident Commander (IC):** Drives the response. Does *not* write code. Declares the incident open/closed, assigns roles, and dictates the external communication strategy. (Default: CTO or Lead Engineer).
 2.  **Responder(s):** The engineers actively investigating logs, querying the database, and deploying fixes. They report only to the IC.
-3.  **Scribe:** Updates the public Status Page (`status.ataqu.so`) and the internal incident Slack thread with timestamps. (Can be the IC if team is small).
+3.  **Scribe:** Updates the public Status Page (`status.ataqu.com`) and the internal incident Slack thread with timestamps. (Can be the IC if team is small).
 
 ---
 
@@ -45,7 +45,7 @@ During a SEV‑1 or SEV‑2 incident, strict roles are assigned to prevent thras
 *   **Trigger:** Alert fires.
 *   **Action:** On‑Call Engineer acknowledges the alert in PagerDuty.
 *   **Comms:** On‑Call posts in `#incidents` Slack channel: `[SEV-1] Acknowledged. Investigating [Brief Description].`
-*   **Public:** If SEV‑1/SEV‑2, Scribe immediately updates `status.ataqu.so` to "Investigating" with a plain‑English description.
+*   **Public:** If SEV‑1/SEV‑2, Scribe immediately updates `status.ataqu.com` to "Investigating" with a plain‑English description.
 
 ### Phase 2: Triage & Isolation
 *   **Action:** Responder identifies the failing component. The primary goal is not a permanent fix, but *isolation* to stop the bleeding.
@@ -57,7 +57,7 @@ During a SEV‑1 or SEV‑2 incident, strict roles are assigned to prevent thras
 
 ### Phase 4: Resolution
 *   **Action:** IC declares the incident resolved.
-*   **Comms:** Scribe updates `status.ataqu.so` to "Resolved."
+*   **Comms:** Scribe updates `status.ataqu.com` to "Resolved."
 *   **Cleanup:** Responder ensures all DLQs are drained and no orphaned processes remain.
 
 ### Phase 5: The Post‑Mortem (The Radical Transparency Mandate)

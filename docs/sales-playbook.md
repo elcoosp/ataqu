@@ -191,7 +191,7 @@ While Ataqu is PLG-first, **founder-led outbound** is essential in the first 90 
 >
 > You can export all your data to CSV/JSON in 1 click. No lock-in. No traps.
 >
-> Test it here: [app.ataqu.so]
+> Test it here: [app.ataqu.com]
 >
 > — [Your Name]
 
