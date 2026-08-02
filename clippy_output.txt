@@ -1,0 +1,2 @@
+    Checking ataqu-application v0.1.0 (/Users/adm/Documents/Repos/ataqu-wt/ataqu-task-042-cinq-service/crates/ataqu-application)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.72s
