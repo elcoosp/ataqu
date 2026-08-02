@@ -26,10 +26,7 @@ use ataqu_kernel::TenantId;
 // ----------------------------------------------------------------------
 // Re-export DTOs for cleaner code
 // ----------------------------------------------------------------------
-pub use pivot_dtos::{
-    CreateDocumentCommand, Database, Document, ListDocumentsParams, SearchParams,
-    UpdateDocumentCommand,
-};
+pub use pivot_dtos::{CreateDocumentCommand, Database, Document, ListDocumentsParams, SearchParams, UpdateDocumentCommand, CreateRelationCommand, Relation, ListRelationsParams};
 
 // ----------------------------------------------------------------------
 // Idempotency-Key extractor
@@ -185,6 +182,63 @@ pub async fn get_database(
     Ok(Json(db))
 }
 
+
+// ----------------------------------------------------------------------
+// Relation handlers
+// ----------------------------------------------------------------------
+
+#[instrument(skip(state), fields(tenant = ?tenant_id, doc_id = %doc_id))]
+pub async fn create_relation(
+    State(state): State<AppState>,
+    idempotency_key: IdempotencyKey,
+    Path(doc_id): Path<Uuid>,
+    Json(payload): Json<CreateRelationCommand>,
+) -> Result<Json<Relation>, AppError> {
+    let tenant_id = TenantId::from_uuid(Uuid::new_v4());
+    let rel = state
+        .pivot_service
+        .create_relation(tenant_id, doc_id, idempotency_key.0, payload)
+        .await?;
+    Ok(Json(rel))
+}
+
+#[instrument(skip(state), fields(tenant = ?tenant_id, rel_id = %id))]
+pub async fn get_relation(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Relation>, AppError> {
+    let tenant_id = TenantId::from_uuid(Uuid::new_v4());
+    let rel = state.pivot_service.get_relation(tenant_id, id).await?;
+    Ok(Json(rel))
+}
+
+#[instrument(skip(state), fields(tenant = ?tenant_id, rel_id = %id))]
+pub async fn delete_relation(
+    State(state): State<AppState>,
+    idempotency_key: IdempotencyKey,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, AppError> {
+    let tenant_id = TenantId::from_uuid(Uuid::new_v4());
+    state
+        .pivot_service
+        .delete_relation(tenant_id, id, idempotency_key.0)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[instrument(skip(state), fields(tenant = ?tenant_id, doc_id = %doc_id))]
+pub async fn list_relations(
+    State(state): State<AppState>,
+    Path(doc_id): Path<Uuid>,
+    Query(params): Query<ListRelationsParams>,
+) -> Result<Json<Vec<Relation>>, AppError> {
+    let tenant_id = TenantId::from_uuid(Uuid::new_v4());
+    let rels = state
+        .pivot_service
+        .list_relations(tenant_id, doc_id, params)
+        .await?;
+    Ok(Json(rels))
+}
 // ----------------------------------------------------------------------
 // Router
 // ----------------------------------------------------------------------
@@ -198,4 +252,69 @@ pub fn routes() -> Router<AppState> {
         .route("/search", axum::routing::get(search_documents))
         .route("/databases/:id", axum::routing::get(get_database))
     // TODO: add routes for relations
+        .route("/docs/:doc_id/relations", axum::routing::post(create_relation))
+        .route("/docs/:doc_id/relations", axum::routing::get(list_relations))
+        .route("/relations/:id", axum::routing::get(get_relation))
+        .route("/relations/:id", axum::routing::delete(delete_relation))
+
+}
+
+
+// ----------------------------------------------------------------------
+// Tests
+// ----------------------------------------------------------------------
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{
+        body::Body,
+        http::{Request, HeaderValue, header::HeaderName},
+        routing::post,
+        Router,
+    };
+    use tower::ServiceExt;
+    use mockall::predicate::*;
+    use ataqu_application::pivot_service::MockPivotService;
+    use ataqu_kernel::TenantId;
+    use uuid::Uuid;
+
+    // Test the IdempotencyKey extractor
+    #[tokio::test]
+    async fn test_idempotency_key_extractor() {
+        let app = Router::new().route("/test", post(|idempotency_key: IdempotencyKey| async move {
+            axum::Json(serde_json::json!({ "key": idempotency_key.0 }))
+        }));
+
+        let req = Request::builder()
+            .method("POST")
+            .uri("/test")
+            .header("Idempotency-Key", "test-key-123")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), 200);
+        let body = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(json["key"], "test-key-123");
+    }
+
+    // Test missing Idempotency-Key returns 400
+    #[tokio::test]
+    async fn test_idempotency_key_missing() {
+        let app = Router::new().route("/test", post(|_idempotency_key: IdempotencyKey| async move {
+            axum::Json(serde_json::json!({ "ok": true }))
+        }));
+
+        let req = Request::builder()
+            .method("POST")
+            .uri("/test")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), 400);
+    }
+
+    // We could add more tests with mocked service, but that's out of scope for now.
 }
