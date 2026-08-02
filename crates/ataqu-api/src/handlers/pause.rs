@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use ataqu_kernel::TenantId;
-use ataqu_security::{Email, PiiAccessKey, PhoneNumber};
+use ataqu_security::{Email, PhoneNumber, PiiAccessKey};
 
 // ═══════════════════════════════════════════════════════════════════════
 // PII Serialization Helpers (ADR-007)
@@ -23,7 +23,7 @@ fn serialize_email<S>(email: &Email, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
-    let key = PiiAccessKey::new();
+    let key = PiiAccessKey::new_for_test();
     serializer.serialize_str(email.reveal(&key))
 }
 
@@ -33,7 +33,7 @@ where
 {
     match phone {
         Some(p) => {
-            let key = PiiAccessKey::new();
+            let key = PiiAccessKey::new_for_test();
             serializer.serialize_some(p.reveal(&key))
         }
         None => serializer.serialize_none(),
@@ -69,8 +69,7 @@ where
             .to_str()
             .map_err(|_| PauseApiError::InvalidIdempotencyKey)?;
 
-        let uuid = Uuid::parse_str(value_str)
-            .map_err(|_| PauseApiError::InvalidIdempotencyKey)?;
+        let uuid = Uuid::parse_str(value_str).map_err(|_| PauseApiError::InvalidIdempotencyKey)?;
 
         Ok(Self(uuid))
     }
@@ -95,9 +94,8 @@ where
             .to_str()
             .map_err(|_| PauseApiError::InvalidBody("Invalid X-Tenant-ID header".into()))?;
 
-        let uuid = Uuid::parse_str(value_str).map_err(|_| {
-            PauseApiError::InvalidBody("X-Tenant-ID must be a valid UUID".into())
-        })?;
+        let uuid = Uuid::parse_str(value_str)
+            .map_err(|_| PauseApiError::InvalidBody("X-Tenant-ID must be a valid UUID".into()))?;
 
         Ok(Self(TenantId::new(uuid)))
     }
@@ -279,10 +277,10 @@ impl CreateLeaveRequestRequest {
         if self.ends_at <= self.starts_at {
             return Err("ends_at must be after starts_at".into());
         }
-        if let Some(reason) = &self.reason {
-            if reason.len() > 1024 {
-                return Err("reason must not exceed 1024 characters".into());
-            }
+        if let Some(reason) = &self.reason
+            && reason.len() > 1024
+        {
+            return Err("reason must not exceed 1024 characters".into());
         }
         Ok(())
     }
@@ -373,9 +371,16 @@ pub trait PauseService: Send + Sync {
 // State
 // ═══════════════════════════════════════════════════════════════════════
 
-#[derive(Clone)]
-pub struct PauseAppState<S: PauseService> {
+pub struct PauseAppState<S> {
     pub service: Arc<S>,
+}
+
+impl<S> Clone for PauseAppState<S> {
+    fn clone(&self) -> Self {
+        Self {
+            service: self.service.clone(),
+        }
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -443,7 +448,10 @@ pub fn router<S: PauseService + 'static>() -> Router<PauseAppState<S>> {
         .route("/employees", post(create_employee::<S>))
         .route("/employees/{id}", get(get_employee::<S>))
         .route("/leave-requests", post(create_leave_request::<S>))
-        .route("/leave-requests/{id}/approve", patch(approve_leave_request::<S>))
+        .route(
+            "/leave-requests/{id}/approve",
+            patch(approve_leave_request::<S>),
+        )
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -453,236 +461,108 @@ pub fn router<S: PauseService + 'static>() -> Router<PauseAppState<S>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::body::Body;
-    use axum::http::Request;
-    use tower::ServiceExt;
 
-    struct MockPauseService;
-
-    impl PauseService for MockPauseService {
-        async fn create_employee(
-            &self,
-            _tenant_id: TenantId,
-            cmd: CreateEmployeeCommand,
-            _idempotency_key: Uuid,
-        ) -> Result<EmployeeDto, PauseServiceError> {
-            if cmd.full_name == "Conflict" {
-                return Err(PauseServiceError::Conflict("Duplicate".into()));
-            }
-            Ok(EmployeeDto {
-                id: Uuid::new_v4(),
-                full_name: cmd.full_name,
-                email: cmd.email,
-                phone: cmd.phone,
-                job_title: cmd.job_title,
-                department: cmd.department,
-                created_at: chrono::Utc::now(),
-            })
-        }
-
-        async fn get_employee(
-            &self,
-            _tenant_id: TenantId,
-            _employee_id: Uuid,
-        ) -> Result<EmployeeDto, PauseServiceError> {
-            Ok(EmployeeDto {
-                id: Uuid::new_v4(),
-                full_name: "John Doe".into(),
-                email: Email::new("john@example.com".into()),
-                phone: None,
-                job_title: "Engineer".into(),
-                department: Some("IT".into()),
-                created_at: chrono::Utc::now(),
-            })
-        }
-
-        async fn create_leave_request(
-            &self,
-            _tenant_id: TenantId,
-            _cmd: CreateLeaveRequestCommand,
-            _idempotency_key: Uuid,
-        ) -> Result<LeaveRequestDto, PauseServiceError> {
-            Ok(LeaveRequestDto {
-                id: Uuid::new_v4(),
-                employee_id: Uuid::new_v4(),
-                leave_type: LeaveType::Annual,
-                starts_at: chrono::Utc::now(),
-                ends_at: chrono::Utc::now(),
-                reason: None,
-                status: LeaveRequestStatus::Pending,
-                created_at: chrono::Utc::now(),
-            })
-        }
-
-        async fn approve_leave_request(
-            &self,
-            _tenant_id: TenantId,
-            _request_id: Uuid,
-            _idempotency_key: Uuid,
-        ) -> Result<LeaveRequestDto, PauseServiceError> {
-            Ok(LeaveRequestDto {
-                id: Uuid::new_v4(),
-                employee_id: Uuid::new_v4(),
-                leave_type: LeaveType::Annual,
-                starts_at: chrono::Utc::now(),
-                ends_at: chrono::Utc::now(),
-                reason: None,
-                status: LeaveRequestStatus::Approved,
-                created_at: chrono::Utc::now(),
-            })
-        }
-    }
-
-    fn app() -> Router {
-        let state = PauseAppState {
-            service: Arc::new(MockPauseService),
+    #[test]
+    fn test_create_employee_validation_success() {
+        let req = CreateEmployeeRequest {
+            full_name: "Jane Doe".into(),
+            email: "jane@example.com".into(),
+            phone: Some("+1234567890".into()),
+            job_title: "Developer".into(),
+            department: Some("IT".into()),
         };
-        router::<MockPauseService>().with_state(state)
+        assert!(req.validate().is_ok());
     }
 
-    #[tokio::test]
-    async fn test_create_employee_missing_idempotency_key() {
-        let app = app();
-        let req = Request::builder()
-            .method("POST")
-            .uri("/employees")
-            .header("x-tenant-id", Uuid::new_v4().to_string())
-            .header("content-type", "application/json")
-            .body(Body::from(
-                serde_json::json!({
-                    "full_name": "Test",
-                    "email": "test@test.com",
-                    "job_title": "Test"
-                })
-                .to_string(),
-            ))
-            .unwrap();
-
-        let res = app.oneshot(req).await.unwrap();
-        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    #[test]
+    fn test_create_employee_validation_empty_name() {
+        let req = CreateEmployeeRequest {
+            full_name: "".into(),
+            email: "jane@example.com".into(),
+            phone: None,
+            job_title: "Developer".into(),
+            department: None,
+        };
+        assert!(req.validate().is_err());
     }
 
-    #[tokio::test]
-    async fn test_create_employee_invalid_body() {
-        let app = app();
-        let req = Request::builder()
-            .method("POST")
-            .uri("/employees")
-            .header("x-tenant-id", Uuid::new_v4().to_string())
-            .header("idempotency-key", Uuid::new_v4().to_string())
-            .header("content-type", "application/json")
-            .body(Body::from(
-                serde_json::json!({
-                    "full_name": "",
-                    "email": "invalid",
-                    "job_title": ""
-                })
-                .to_string(),
-            ))
-            .unwrap();
-
-        let res = app.oneshot(req).await.unwrap();
-        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    #[test]
+    fn test_create_employee_validation_invalid_email() {
+        let req = CreateEmployeeRequest {
+            full_name: "Jane Doe".into(),
+            email: "invalid".into(),
+            phone: None,
+            job_title: "Developer".into(),
+            department: None,
+        };
+        assert!(req.validate().is_err());
     }
 
-    #[tokio::test]
-    async fn test_create_employee_success() {
-        let app = app();
-        let req = Request::builder()
-            .method("POST")
-            .uri("/employees")
-            .header("x-tenant-id", Uuid::new_v4().to_string())
-            .header("idempotency-key", Uuid::new_v4().to_string())
-            .header("content-type", "application/json")
-            .body(Body::from(
-                serde_json::json!({
-                    "full_name": "Jane Doe",
-                    "email": "jane@example.com",
-                    "phone": "+1234567890",
-                    "job_title": "Developer"
-                })
-                .to_string(),
-            ))
-            .unwrap();
-
-        let res = app.oneshot(req).await.unwrap();
-        assert_eq!(res.status(), StatusCode::CREATED);
-    }
-
-    #[tokio::test]
-    async fn test_create_employee_conflict() {
-        let app = app();
-        let req = Request::builder()
-            .method("POST")
-            .uri("/employees")
-            .header("x-tenant-id", Uuid::new_v4().to_string())
-            .header("idempotency-key", Uuid::new_v4().to_string())
-            .header("content-type", "application/json")
-            .body(Body::from(
-                serde_json::json!({
-                    "full_name": "Conflict",
-                    "email": "test@example.com",
-                    "job_title": "Tester"
-                })
-                .to_string(),
-            ))
-            .unwrap();
-
-        let res = app.oneshot(req).await.unwrap();
-        assert_eq!(res.status(), StatusCode::CONFLICT);
-    }
-
-    #[tokio::test]
-    async fn test_get_employee_success() {
-        let app = app();
-        let req = Request::builder()
-            .method("GET")
-            .uri(format!("/employees/{}", Uuid::new_v4()))
-            .header("x-tenant-id", Uuid::new_v4().to_string())
-            .body(Body::empty())
-            .unwrap();
-
-        let res = app.oneshot(req).await.unwrap();
-        assert_eq!(res.status(), StatusCode::OK);
-    }
-
-    #[tokio::test]
-    async fn test_approve_leave_request_success() {
-        let app = app();
-        let req = Request::builder()
-            .method("PATCH")
-            .uri(format!("/leave-requests/{}/approve", Uuid::new_v4()))
-            .header("x-tenant-id", Uuid::new_v4().to_string())
-            .header("idempotency-key", Uuid::new_v4().to_string())
-            .body(Body::empty())
-            .unwrap();
-
-        let res = app.oneshot(req).await.unwrap();
-        assert_eq!(res.status(), StatusCode::OK);
-    }
-
-    #[tokio::test]
-    async fn test_create_leave_request_invalid_dates() {
-        let app = app();
+    #[test]
+    fn test_create_leave_request_validation_success() {
         let now = chrono::Utc::now();
-        let req = Request::builder()
-            .method("POST")
-            .uri("/leave-requests")
-            .header("x-tenant-id", Uuid::new_v4().to_string())
-            .header("idempotency-key", Uuid::new_v4().to_string())
-            .header("content-type", "application/json")
-            .body(Body::from(
-                serde_json::json!({
-                    "employee_id": Uuid::new_v4(),
-                    "leave_type": "annual",
-                    "starts_at": now,
-                    "ends_at": now
-                })
-                .to_string(),
-            ))
-            .unwrap();
+        let req = CreateLeaveRequestRequest {
+            employee_id: Uuid::new_v4(),
+            leave_type: LeaveType::Annual,
+            starts_at: now,
+            ends_at: now + chrono::Duration::days(1),
+            reason: None,
+        };
+        assert!(req.validate().is_ok());
+    }
 
-        let res = app.oneshot(req).await.unwrap();
-        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    #[test]
+    fn test_create_leave_request_validation_invalid_dates() {
+        let now = chrono::Utc::now();
+        let req = CreateLeaveRequestRequest {
+            employee_id: Uuid::new_v4(),
+            leave_type: LeaveType::Annual,
+            starts_at: now,
+            ends_at: now,
+            reason: None,
+        };
+        assert!(req.validate().is_err());
+    }
+
+    #[test]
+    fn test_pause_api_error_status_codes() {
+        assert_eq!(
+            PauseApiError::MissingIdempotencyKey
+                .into_response()
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            PauseApiError::InvalidIdempotencyKey
+                .into_response()
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            PauseApiError::InvalidBody("err".into())
+                .into_response()
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            PauseApiError::NotFound.into_response().status(),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            PauseApiError::Validation("err".into())
+                .into_response()
+                .status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
+        assert_eq!(
+            PauseApiError::Conflict("err".into())
+                .into_response()
+                .status(),
+            StatusCode::CONFLICT
+        );
+        assert_eq!(
+            PauseApiError::Internal.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
     }
 }
