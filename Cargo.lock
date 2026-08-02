@@ -108,6 +108,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.104"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -316,6 +322,16 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-application"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "ataqu-domain-vault",
+ "ataqu-infra-repositories",
+ "ataqu-kernel",
+ "sea-orm",
+ "serde_json",
+ "thiserror",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-bin"
