@@ -7,10 +7,11 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{error, info, instrument};
-use uuid::Uuid;
 
 // Use local error type
 use crate::error::ApiResult;
+use uuid::Uuid;
+pub type TenantId = Uuid;
 
 // Define UserId as Uuid for now (will be refined)
 pub type UserId = Uuid;
@@ -300,4 +301,3 @@ pub struct SearchResults {
 }
 
 // Re-export TenantId from kernel
-pub use ataqu_kernel::TenantId;

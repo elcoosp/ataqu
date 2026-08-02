@@ -1,42 +1,9 @@
 [workspace]
-resolver = "3"
+resolver = "2"
 members = [
-    "crates/ataqu-admin",
     "crates/ataqu-api",
     "crates/ataqu-application",
-    "crates/ataqu-bin",
-    "crates/ataqu-contracts",
-    "crates/ataqu-domain-aegis",
-    "crates/ataqu-domain-billing",
-    "crates/ataqu-domain-cinq",
-    "crates/ataqu-domain-dial",
-    "crates/ataqu-domain-gdpr",
-    "crates/ataqu-domain-pause",
-    "crates/ataqu-domain-pivot",
-    "crates/ataqu-domain-sond",
-    "crates/ataqu-domain-spark",
-    "crates/ataqu-domain-tempo",
-    "crates/ataqu-domain-vault",
-    "crates/ataqu-domain-vista",
-    "crates/ataqu-infra-cron",
-    "crates/ataqu-infra-idempotency",
-    "crates/ataqu-infra-migration",
-    "crates/ataqu-infra-outbox",
-    "crates/ataqu-infra-pools",
-    "crates/ataqu-infra-repositories",
-    "crates/ataqu-infra-sagas",
-    "crates/ataqu-infra-storage",
     "crates/ataqu-kernel",
     "crates/ataqu-security",
+    "crates/ataqu-contracts",
 ]
-
-# Optional profile settings
-[profile.dev]
-opt-level = 0
-debug = true
-split-debuginfo = 'unpacked'
-
-[profile.release]
-opt-level = 3
-debug = false
-lto = true

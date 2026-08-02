@@ -19,3 +19,6 @@ ataqu-application = { path = "../ataqu-application" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
 ataqu-contracts = { path = "../ataqu-contracts" }
+
+[dev-dependencies]
+mockall = "0.15.0"

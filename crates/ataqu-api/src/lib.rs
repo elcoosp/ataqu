@@ -1,4 +1,17 @@
 pub mod error;
 pub mod handlers;
-pub mod middleware;
-pub mod serializers;
+
+use ataqu_application::spark_service::SparkService;
+use axum::Router;
+use std::sync::Arc;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub spark_service: Arc<SparkService>,
+}
+
+pub fn create_router(state: AppState) -> Router {
+    Router::new()
+        .nest("/api/spark", handlers::spark::spark_router())
+        .with_state(state)
+}

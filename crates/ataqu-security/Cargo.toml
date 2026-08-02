@@ -2,10 +2,5 @@
 name = "ataqu-security"
 version = "0.1.0"
 edition = "2024"
-authors = ["Ataqu Team"]
-description = "Security primitives: PII newtypes, crypto, JWT (Phase 1)"
-
-[features]
-infra-pii-access = []
 
 [dependencies]
