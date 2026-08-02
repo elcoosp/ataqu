@@ -20,7 +20,7 @@ export default function AboutPage() {
             <p><Trans>We looked at that. We said: "We can do better."</Trans></p>
             <p><Trans>We built Ataqu.</Trans></p>
             <p><Trans>10 business apps, natively integrated. In Rust with PostgreSQL. Fixed price.</Trans></p>
-            <p><Trans>$49/month. Everything included.</Trans></p>
+            <p><Trans>$15/mo for one app, $39/mo for 5 apps, or $79/mo for all 10.</Trans></p>
             <p><Trans>No lock‑in. Cancel in 1 click.</Trans></p>
             <p><Trans>No bot support. Humans who respond in 24h.</Trans></p>
             <p><Trans>No surprises. No bullshit.</Trans></p>

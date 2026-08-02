@@ -261,6 +261,10 @@ msgstr "$15/mo (whole team)"
 msgid "$15/mo for 1 app, $39/mo for 5 apps, or $79/mo for all 10 apps. No per‑user fees, no hidden charges."
 msgstr "$15/mo for 1 app, $39/mo for 5 apps, or $79/mo for all 10 apps. No per‑user fees, no hidden charges."
 
+#: src/app/about/page.tsx:23
+msgid "$15/mo for one app, $39/mo for 5 apps, or $79/mo for all 10."
+msgstr "$15/mo for one app, $39/mo for 5 apps, or $79/mo for all 10."
+
 #: src/app/apps/aegis/page.tsx:63
 #: src/app/apps/pause/page.tsx:63
 #: src/app/apps/tempo/page.tsx:63
@@ -284,8 +288,8 @@ msgid "$40/mo (10 free responses)"
 msgstr "$40/mo (10 free responses)"
 
 #: src/app/about/page.tsx:23
-msgid "$49/month. Everything included."
-msgstr "$49/month. Everything included."
+#~ msgid "$49/month. Everything included."
+#~ msgstr "$49/month. Everything included."
 
 #: src/app/apps/vista/page.tsx:63
 msgid "$75/user/mo"
@@ -343,7 +347,7 @@ msgstr "1. The Philosophy"
 msgid "10 apps, one price, zero lock‑in."
 msgstr "10 apps, one price, zero lock‑in."
 
-#: src/components/home-content.tsx:72
+#: src/components/home-content.tsx:83
 msgid "10 apps. One suite. Natively integrated."
 msgstr "10 apps. One suite. Natively integrated."
 
@@ -596,7 +600,7 @@ msgstr "Ataqu provides a suite of 10 natively integrated business applications. 
 #~ msgid "Ataqu remplace HubSpot, Slack et Notion par une seule plateforme native. Pas de lock‑in. Pas de per‑user fees. Commencez par le CRM (CINQ) ou par les docs (PIVOT)."
 #~ msgstr "Ataqu remplace HubSpot, Slack et Notion par une seule plateforme native. Pas de lock‑in. Pas de per‑user fees. Commencez par le CRM (CINQ) ou par les docs (PIVOT)."
 
-#: src/components/home-content.tsx:30
+#: src/components/home-content.tsx:37
 msgid "Ataqu replaces HubSpot, Slack, and Notion with a single native platform. No lock‑in. No per‑user fees. Start with CRM (CINQ) or docs (PIVOT)."
 msgstr "Ataqu replaces HubSpot, Slack, and Notion with a single native platform. No lock‑in. No per‑user fees. Start with CRM (CINQ) or docs (PIVOT)."
 
@@ -628,7 +632,7 @@ msgstr "Automatic reminders (email, SMS)"
 msgid "Axiom / Tempo: Logs, traces, and metrics (via OTLP HTTP)."
 msgstr "Axiom / Tempo: Logs, traces, and metrics (via OTLP HTTP)."
 
-#: src/components/home-content.tsx:111
+#: src/components/home-content.tsx:122
 #: src/components/kill-sheet-content.tsx:488
 msgid "Be first to access the suite. No credit card required."
 msgstr "Be first to access the suite. No credit card required."
@@ -663,7 +667,7 @@ msgstr "Brittle webhooks that break when APIs change"
 #~ msgid "Built in Rust"
 #~ msgstr "Built in Rust"
 
-#: src/components/home-content.tsx:85
+#: src/components/home-content.tsx:96
 msgid "Built in Rust. Powered by PostgreSQL. Engineered for performance."
 msgstr "Built in Rust. Powered by PostgreSQL. Engineered for performance."
 
@@ -769,7 +773,7 @@ msgstr "Cancellation & Refund"
 msgid "Centralized documents (contracts, payslips)"
 msgstr "Centralized documents (contracts, payslips)"
 
-#: src/components/waitlist-form.tsx:214
+#: src/components/waitlist-form.tsx:222
 msgid "CEO, CTO, Head of Ops…"
 msgstr "CEO, CTO, Head of Ops…"
 
@@ -827,7 +831,7 @@ msgstr "Companies pay a fortune. They're prisoners. They suffer."
 #~ msgid "Compare pricing"
 #~ msgstr "Compare pricing"
 
-#: src/components/home-content.tsx:54
+#: src/components/home-content.tsx:65
 msgid "Compare the cost of your fragmented SaaS stack"
 msgstr "Compare the cost of your fragmented SaaS stack"
 
@@ -999,7 +1003,7 @@ msgstr "Drop the CSV into Ataqu CINQ"
 msgid "Drop the files into PIVOT"
 msgstr "Drop the files into PIVOT"
 
-#: src/components/waitlist-form.tsx:152
+#: src/components/waitlist-form.tsx:131
 msgid "Email address"
 msgstr "Email address"
 
@@ -1219,7 +1223,7 @@ msgstr "How much does Ataqu cost?"
 msgid "HubSpot"
 msgstr "HubSpot"
 
-#: src/components/home-content.tsx:24
+#: src/components/home-content.tsx:31
 msgid "HubSpot charges <0>$1,200/mo</0>. Slack taxes you per user."
 msgstr "HubSpot charges <0>$1,200/mo</0>. Slack taxes you per user."
 
@@ -1370,11 +1374,11 @@ msgstr "It is architecturally impossible for one Ataqu tenant to query another t
 
 #: src/components/kill-sheet-content.tsx:477
 #: src/components/kill-sheet-content.tsx:485
-#: src/components/waitlist-form.tsx:231
+#: src/components/waitlist-form.tsx:241
 msgid "Join the waitlist"
 msgstr "Join the waitlist"
 
-#: src/components/home-content.tsx:108
+#: src/components/home-content.tsx:119
 msgid "Join the waitlist – from $15/mo (5 apps $39, 10 apps $79)"
 msgstr "Join the waitlist – from $15/mo (5 apps $39, 10 apps $79)"
 
@@ -1471,7 +1475,7 @@ msgstr "Multi‑channel & multi‑warehouse"
 #~ msgid "MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events."
 #~ msgstr "MVCC, JSONB, schemas, and a unified outbox with LISTEN/NOTIFY for instant events."
 
-#: src/components/waitlist-form.tsx:194
+#: src/components/waitlist-form.tsx:198
 msgid "Name (optional)"
 msgstr "Name (optional)"
 
@@ -1589,11 +1593,11 @@ msgstr "Native relations to CINQ"
 msgid "Native relations to CINQ deals and VAULT products"
 msgstr "Native relations to CINQ deals and VAULT products"
 
-#: src/components/waitlist-form.tsx:129
+#: src/components/waitlist-form.tsx:90
 msgid "Network error. Please check your connection."
 msgstr "Network error. Please check your connection."
 
-#: src/components/home-content.tsx:98
+#: src/components/home-content.tsx:109
 msgid "No 3‑year lock‑in. No retention specialists. Just 1 click."
 msgstr "No 3‑year lock‑in. No retention specialists. Just 1 click."
 
@@ -1601,7 +1605,7 @@ msgstr "No 3‑year lock‑in. No retention specialists. Just 1 click."
 msgid "No bot support. Humans who respond in 24h."
 msgstr "No bot support. Humans who respond in 24h."
 
-#: src/components/waitlist-form.tsx:234
+#: src/components/waitlist-form.tsx:245
 msgid "No credit card required. Early access only."
 msgstr "No credit card required. Early access only."
 
@@ -1957,7 +1961,7 @@ msgstr "Recreate your forms in SOND (drag‑and‑drop builder)"
 msgid "Relational databases (like Airtable)"
 msgstr "Relational databases (like Airtable)"
 
-#: src/components/home-content.tsx:75
+#: src/components/home-content.tsx:86
 msgid "Replace your fragmented stack with a single, unified operating system."
 msgstr "Replace your fragmented stack with a single, unified operating system."
 
@@ -1991,7 +1995,7 @@ msgstr "RLS on core.outbox prevents cross-domain event spoofing. Cross-schema qu
 msgid "Roadmap"
 msgstr "Roadmap"
 
-#: src/components/waitlist-form.tsx:207
+#: src/components/waitlist-form.tsx:213
 msgid "Role (optional)"
 msgstr "Role (optional)"
 
@@ -2007,7 +2011,7 @@ msgstr "Search: 2‑5 seconds"
 msgid "Security & Privacy"
 msgstr "Security & Privacy"
 
-#: src/components/home-content.tsx:64
+#: src/components/home-content.tsx:75
 msgid "See full comparison →"
 msgstr "See full comparison →"
 
@@ -2075,7 +2079,7 @@ msgstr "Slow dashboards – data is stale by the time it loads"
 msgid "Slow to update stock levels in real time"
 msgstr "Slow to update stock levels in real time"
 
-#: src/components/waitlist-form.tsx:126
+#: src/components/waitlist-form.tsx:86
 msgid "Something went wrong. Please try again."
 msgstr "Something went wrong. Please try again."
 
@@ -2119,7 +2123,7 @@ msgstr "SSO is a standalone product – no native integration with HR"
 #~ msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
 #~ msgstr "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
 
-#: src/components/home-content.tsx:57
+#: src/components/home-content.tsx:68
 msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10. No per‑user fees, no lock‑in."
 msgstr "Start at $15/mo for one app, $39 for 5, or $79 for all 10. No per‑user fees, no lock‑in."
 
@@ -2131,7 +2135,7 @@ msgstr "Start with AEGIS for $15/mo (or get all 10 for $79/mo). No credit card r
 #~ msgid "Start with AEGIS for $15/mo. No credit card required for the trial."
 #~ msgstr "Start with AEGIS for $15/mo. No credit card required for the trial."
 
-#: src/components/home-content.tsx:40
+#: src/components/home-content.tsx:49
 msgid "Start with CINQ (CRM)"
 msgstr "Start with CINQ (CRM)"
 
@@ -2159,7 +2163,7 @@ msgstr "Start with PAUSE for $15/mo (or get all 10 for $79/mo). No credit card r
 #~ msgid "Start with PAUSE for $15/mo. No credit card required for the trial."
 #~ msgstr "Start with PAUSE for $15/mo. No credit card required for the trial."
 
-#: src/components/home-content.tsx:46
+#: src/components/home-content.tsx:57
 msgid "Start with PIVOT (Docs)"
 msgstr "Start with PIVOT (Docs)"
 
@@ -2231,7 +2235,7 @@ msgstr "Sub‑15ms search (PostgreSQL tsvector)"
 #~ msgid "Sub‑50ms search"
 #~ msgstr "Sub‑50ms search"
 
-#: src/components/waitlist-form.tsx:229
+#: src/components/waitlist-form.tsx:239
 msgid "Submitting…"
 msgstr "Submitting…"
 
@@ -2447,7 +2451,7 @@ msgstr "Visual drag‑and‑drop builder"
 msgid "Visual workflow builder (drag & drop)"
 msgstr "Visual workflow builder (drag & drop)"
 
-#: src/components/home-content.tsx:95
+#: src/components/home-content.tsx:106
 msgid "Want to leave? One click. Your data belongs to you."
 msgstr "Want to leave? One click. Your data belongs to you."
 
@@ -2511,7 +2515,7 @@ msgstr "We will notify affected customers via email within 72 hours of detection
 msgid "We will publish an initial incident report on status.ataqu.so within 24 hours of detection."
 msgstr "We will publish an initial incident report on status.ataqu.so within 24 hours of detection."
 
-#: src/components/waitlist-form.tsx:142
+#: src/components/waitlist-form.tsx:121
 msgid "We'll send you early access and exclusive updates."
 msgstr "We'll send you early access and exclusive updates."
 
@@ -2563,7 +2567,7 @@ msgstr "When an employee is offboarded in PAUSE, AEGIS instantly revokes access 
 msgid "Where is my data stored?"
 msgstr "Where is my data stored?"
 
-#: src/components/waitlist-form.tsx:166
+#: src/components/waitlist-form.tsx:158
 msgid "Which apps interest you?"
 msgstr "Which apps interest you?"
 
@@ -2683,11 +2687,11 @@ msgstr "You agree not to use the Service to:"
 msgid "You can export it in 1 click before canceling. After 30 days, it is permanently deleted."
 msgstr "You can export it in 1 click before canceling. After 30 days, it is permanently deleted."
 
-#: src/components/waitlist-form.tsx:139
+#: src/components/waitlist-form.tsx:118
 msgid "You're on the list!"
 msgstr "You're on the list!"
 
-#: src/components/waitlist-form.tsx:159
+#: src/components/waitlist-form.tsx:140
 msgid "you@company.com"
 msgstr "you@company.com"
 
@@ -2715,7 +2719,7 @@ msgstr "Your data is never used for algorithmic tuning."
 msgid "Your Escape Hatch"
 msgstr "Your Escape Hatch"
 
-#: src/components/waitlist-form.tsx:201
+#: src/components/waitlist-form.tsx:207
 msgid "Your name"
 msgstr "Your name"
 
