@@ -9,11 +9,11 @@
 //! - Idempotency-Key header is required for mutating endpoints.
 
 use axum::{
+    Json, Router,
     extract::{Path, Query, State},
     headers::HeaderName,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -26,7 +26,10 @@ use ataqu_kernel::TenantId;
 // ----------------------------------------------------------------------
 // Re-export DTOs for cleaner code
 // ----------------------------------------------------------------------
-pub use pivot_dtos::{CreateDocumentCommand, Database, Document, ListDocumentsParams, SearchParams, UpdateDocumentCommand, CreateRelationCommand, Relation, ListRelationsParams};
+pub use pivot_dtos::{
+    CreateDocumentCommand, CreateRelationCommand, Database, Document, ListDocumentsParams,
+    ListRelationsParams, Relation, SearchParams, UpdateDocumentCommand,
+};
 
 // ----------------------------------------------------------------------
 // Idempotency-Key extractor
@@ -59,7 +62,8 @@ where
 
 /// Extract request ID from headers for tracing.
 fn get_request_id(parts: &axum::http::request::Parts) -> String {
-    parts.headers
+    parts
+        .headers
         .get(&X_REQUEST_ID_HEADER)
         .and_then(|v| v.to_str().ok())
         .unwrap_or("unknown")
@@ -193,7 +197,6 @@ pub async fn get_database(
     Ok(Json(db))
 }
 
-
 // ----------------------------------------------------------------------
 // Relation handlers
 // ----------------------------------------------------------------------
@@ -262,14 +265,18 @@ pub fn routes() -> Router<AppState> {
         .route("/docs/:id", axum::routing::delete(delete_document))
         .route("/search", axum::routing::get(search_documents))
         .route("/databases/:id", axum::routing::get(get_database))
-    // TODO: add routes for relations
-        .route("/docs/:doc_id/relations", axum::routing::post(create_relation))
-        .route("/docs/:doc_id/relations", axum::routing::get(list_relations))
+        // TODO: add routes for relations
+        .route(
+            "/docs/:doc_id/relations",
+            axum::routing::post(create_relation),
+        )
+        .route(
+            "/docs/:doc_id/relations",
+            axum::routing::get(list_relations),
+        )
         .route("/relations/:id", axum::routing::get(get_relation))
         .route("/relations/:id", axum::routing::delete(delete_relation))
-
 }
-
 
 // ----------------------------------------------------------------------
 // Tests
@@ -277,24 +284,27 @@ pub fn routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{
-        body::Body,
-        http::{Request, HeaderValue, header::HeaderName},
-        routing::post,
-        Router,
-    };
-    use tower::ServiceExt;
-    use mockall::predicate::*;
     use ataqu_application::pivot_service::MockPivotService;
     use ataqu_kernel::TenantId;
+    use axum::{
+        Router,
+        body::Body,
+        http::{HeaderValue, Request, header::HeaderName},
+        routing::post,
+    };
+    use mockall::predicate::*;
+    use tower::ServiceExt;
     use uuid::Uuid;
 
     // Test the IdempotencyKey extractor
     #[tokio::test]
     async fn test_idempotency_key_extractor() {
-        let app = Router::new().route("/test", post(|idempotency_key: IdempotencyKey| async move {
-            axum::Json(serde_json::json!({ "key": idempotency_key.0 }))
-        }));
+        let app = Router::new().route(
+            "/test",
+            post(|idempotency_key: IdempotencyKey| async move {
+                axum::Json(serde_json::json!({ "key": idempotency_key.0 }))
+            }),
+        );
 
         let req = Request::builder()
             .method("POST")
@@ -313,9 +323,12 @@ mod tests {
     // Test missing Idempotency-Key returns 400
     #[tokio::test]
     async fn test_idempotency_key_missing() {
-        let app = Router::new().route("/test", post(|_idempotency_key: IdempotencyKey| async move {
-            axum::Json(serde_json::json!({ "ok": true }))
-        }));
+        let app = Router::new().route(
+            "/test",
+            post(|_idempotency_key: IdempotencyKey| async move {
+                axum::Json(serde_json::json!({ "ok": true }))
+            }),
+        );
 
         let req = Request::builder()
             .method("POST")

@@ -1,9 +1,9 @@
 use axum::{
+    Router,
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::Json,
     routing::{get, post, put},
-    Router,
 };
 use tracing::instrument;
 use uuid::Uuid;
@@ -51,7 +51,10 @@ async fn list_products(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let products = state.vault_service.list_products(&tenant_id).await
+    let products = state
+        .vault_service
+        .list_products(&tenant_id)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(products))
@@ -66,7 +69,10 @@ async fn create_product(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let product = state.vault_service.create_product(&tenant_id, payload).await
+    let product = state
+        .vault_service
+        .create_product(&tenant_id, payload)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(product))
@@ -81,7 +87,10 @@ async fn get_product(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let product = state.vault_service.get_product(&tenant_id, &id).await
+    let product = state
+        .vault_service
+        .get_product(&tenant_id, &id)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(product))
@@ -97,7 +106,10 @@ async fn update_product(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let product = state.vault_service.update_product(&tenant_id, &id, payload).await
+    let product = state
+        .vault_service
+        .update_product(&tenant_id, &id, payload)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(product))
@@ -111,7 +123,10 @@ async fn list_variants(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let variants = state.vault_service.list_variants(&tenant_id).await
+    let variants = state
+        .vault_service
+        .list_variants(&tenant_id)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(variants))
@@ -126,7 +141,10 @@ async fn create_variant(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let variant = state.vault_service.create_variant(&tenant_id, payload).await
+    let variant = state
+        .vault_service
+        .create_variant(&tenant_id, payload)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(variant))
@@ -141,7 +159,10 @@ async fn get_variant(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let variant = state.vault_service.get_variant(&tenant_id, &id).await
+    let variant = state
+        .vault_service
+        .get_variant(&tenant_id, &id)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(variant))
@@ -157,7 +178,10 @@ async fn update_variant(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let variant = state.vault_service.update_variant(&tenant_id, &id, payload).await
+    let variant = state
+        .vault_service
+        .update_variant(&tenant_id, &id, payload)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(variant))
@@ -171,7 +195,10 @@ async fn get_stock(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let stock = state.vault_service.get_stock(&tenant_id).await
+    let stock = state
+        .vault_service
+        .get_stock(&tenant_id)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(stock))
@@ -186,7 +213,10 @@ async fn update_stock(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let stock = state.vault_service.update_stock(&tenant_id, payload).await
+    let stock = state
+        .vault_service
+        .update_stock(&tenant_id, payload)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(stock))
@@ -200,7 +230,10 @@ async fn list_movements(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let movements = state.vault_service.list_movements(&tenant_id).await
+    let movements = state
+        .vault_service
+        .list_movements(&tenant_id)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(movements))
@@ -215,7 +248,10 @@ async fn record_movement(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let movement = state.vault_service.record_movement(&tenant_id, payload).await
+    let movement = state
+        .vault_service
+        .record_movement(&tenant_id, payload)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(movement))
@@ -229,7 +265,10 @@ async fn list_alerts(
     let _idempotency_key = extract_idempotency_key(&headers);
     let tenant_id = extract_tenant_id(&headers);
 
-    let alerts = state.vault_service.list_alerts(&tenant_id).await
+    let alerts = state
+        .vault_service
+        .list_alerts(&tenant_id)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(alerts))

@@ -9,7 +9,7 @@ use std::sync::Arc;
 use tracing::{error, info, instrument};
 
 // Use local error type
-use crate::error::ApiResult;
+use crate::error::ApiResult; // Fixed import
 use uuid::Uuid;
 pub type TenantId = Uuid;
 
@@ -20,7 +20,6 @@ pub type UserId = Uuid;
 // Local DialService trait – this will be implemented by the application layer.
 // The handlers only depend on this trait.
 // ======================================================================
-#[async_trait::async_trait]
 pub trait DialService: Send + Sync {
     async fn list_channels(&self) -> Result<Vec<ChannelSummary>, anyhow::Error>;
     async fn create_channel(&self, req: CreateChannelRequest) -> Result<Channel, anyhow::Error>;

@@ -36,7 +36,7 @@ pub struct WorkflowResponse {
 
 #[instrument(skip(state, req))]
 pub async fn create_workflow(
-    State(state): State<crate::AppState>,
+    State(state): State<super::super::AppState>,
     headers: HeaderMap,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> Result<impl IntoResponse, SparkApiError> {
@@ -61,7 +61,7 @@ pub async fn create_workflow(
 
 #[instrument(skip(state))]
 pub async fn execute_workflow(
-    State(state): State<crate::AppState>,
+    State(state): State<super::super::AppState>,
     headers: HeaderMap,
     Path(workflow_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, SparkApiError> {
@@ -84,7 +84,7 @@ pub async fn execute_workflow(
     }))
 }
 
-pub fn spark_router() -> axum::Router<crate::AppState> {
+pub fn spark_router() -> axum::Router<super::super::AppState> {
     axum::Router::new()
         .route("/workflows", axum::routing::post(create_workflow))
         .route(

@@ -3,20 +3,20 @@
 //! All endpoints include idempotency-key support and proper error mapping.
 
 use axum::{
-    extract::{Path, Query, State, Multipart},
-    http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response, Json},
     Router,
-    routing::{get, post, put, delete},
+    extract::{Multipart, Path, Query, State},
+    http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Json, Response},
+    routing::{delete, get, post, put},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use uuid::Uuid;
 use tracing::debug;
+use uuid::Uuid;
 
 use ataqu_application::cinq_service::CinqService;
-use ataqu_kernel::{TenantId, IdGenerator, Clock};
 use ataqu_contracts::cinq::*;
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::{Email, PiiAccessKey};
 
 // ---------- Error mapping ----------
@@ -45,13 +45,21 @@ pub enum ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, body) = match self {
-            ApiError::MissingIdempotencyKey => (StatusCode::BAD_REQUEST, "Idempotency-Key header required"),
-            ApiError::InvalidIdempotencyKey => (StatusCode::BAD_REQUEST, "Idempotency-Key must be a valid UUIDv5"),
+            ApiError::MissingIdempotencyKey => {
+                (StatusCode::BAD_REQUEST, "Idempotency-Key header required")
+            }
+            ApiError::InvalidIdempotencyKey => (
+                StatusCode::BAD_REQUEST,
+                "Idempotency-Key must be a valid UUIDv5",
+            ),
             ApiError::NotFound => (StatusCode::NOT_FOUND, "Resource not found"),
             ApiError::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
             ApiError::Conflict(msg) => (StatusCode::CONFLICT, msg),
             ApiError::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, "Too many requests"),
-            ApiError::ServiceUnavailable => (StatusCode::SERVICE_UNAVAILABLE, "Idempotency lock timeout, retry later"),
+            ApiError::ServiceUnavailable => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Idempotency lock timeout, retry later",
+            ),
             ApiError::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
         };
         (status, body).into_response()
@@ -64,7 +72,9 @@ impl From<ataqu_application::cinq_service::Error> for ApiError {
             ataqu_application::cinq_service::Error::NotFound => ApiError::NotFound,
             ataqu_application::cinq_service::Error::Validation(msg) => ApiError::Validation(msg),
             ataqu_application::cinq_service::Error::Conflict(msg) => ApiError::Conflict(msg),
-            ataqu_application::cinq_service::Error::IdempotencyLockTimeout => ApiError::ServiceUnavailable,
+            ataqu_application::cinq_service::Error::IdempotencyLockTimeout => {
+                ApiError::ServiceUnavailable
+            }
             ataqu_application::cinq_service::Error::TooManyRequests => ApiError::TooManyRequests,
             _ => ApiError::Internal,
         }
@@ -105,7 +115,6 @@ where
     }
 }
 
-
 // ---------- Tenant extraction from authentication ----------
 
 /// Extracts the tenant ID from the request extensions.
@@ -126,10 +135,9 @@ where
         ext.get::<TenantId>()
             .cloned()
             .map(AuthenticatedTenant)
-            .ok_or(ApiError::Internal)   // Or Unauthorized? But we'll map to Internal for now.
+            .ok_or(ApiError::Internal) // Or Unauthorized? But we'll map to Internal for now.
     }
 }
-
 
 // ---------- Shared state ----------
 
@@ -142,7 +150,8 @@ pub struct AppState {
 
 /// POST /contacts
 pub async fn create_contact(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreateContactRequest>,
 ) -> Result<Json<ContactResponse>, ApiError> {
@@ -161,7 +170,8 @@ pub async fn create_contact(
 
 /// GET /contacts
 pub async fn list_contacts(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     // TODO: add pagination query params
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
     // TODO: extract tenant_id
@@ -175,7 +185,8 @@ pub async fn list_contacts(
 
 /// GET /contacts/:id
 pub async fn get_contact(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ContactResponse>, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
@@ -188,7 +199,8 @@ pub async fn get_contact(
 
 /// PUT /contacts/:id
 pub async fn update_contact(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateContactRequest>,
@@ -206,7 +218,8 @@ pub async fn update_contact(
 
 /// DELETE /contacts/:id
 pub async fn delete_contact(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
@@ -225,7 +238,8 @@ pub async fn delete_contact(
 
 /// POST /deals
 pub async fn create_deal(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreateDealRequest>,
 ) -> Result<Json<DealResponse>, ApiError> {
@@ -242,7 +256,8 @@ pub async fn create_deal(
 
 /// GET /deals
 pub async fn list_deals(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
 ) -> Result<Json<Vec<DealResponse>>, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
     let span = tracing::info_span!("handler", tenant_id = %tenant_id);
@@ -254,7 +269,8 @@ pub async fn list_deals(
 
 /// GET /deals/:id
 pub async fn get_deal(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DealResponse>, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
@@ -267,7 +283,8 @@ pub async fn get_deal(
 
 /// PUT /deals/:id
 pub async fn update_deal(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDealRequest>,
@@ -285,7 +302,8 @@ pub async fn update_deal(
 
 /// DELETE /deals/:id
 pub async fn delete_deal(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
@@ -304,7 +322,8 @@ pub async fn delete_deal(
 
 /// GET /pipeline/stages
 pub async fn list_pipeline_stages(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
 ) -> Result<Json<Vec<PipelineStageResponse>>, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
     let span = tracing::info_span!("handler", tenant_id = %tenant_id);
@@ -316,7 +335,8 @@ pub async fn list_pipeline_stages(
 
 /// POST /pipeline/stages
 pub async fn create_pipeline_stage(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreatePipelineStageRequest>,
 ) -> Result<Json<PipelineStageResponse>, ApiError> {
@@ -333,7 +353,8 @@ pub async fn create_pipeline_stage(
 
 /// PUT /pipeline/stages/:id
 pub async fn update_pipeline_stage(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePipelineStageRequest>,
@@ -351,7 +372,8 @@ pub async fn update_pipeline_stage(
 
 /// DELETE /pipeline/stages/:id
 pub async fn delete_pipeline_stage(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
@@ -370,7 +392,8 @@ pub async fn delete_pipeline_stage(
 
 /// POST /activities
 pub async fn create_activity(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<CreateActivityRequest>,
 ) -> Result<Json<ActivityResponse>, ApiError> {
@@ -387,7 +410,8 @@ pub async fn create_activity(
 
 /// GET /activities
 pub async fn list_activities(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     Query(params): Query<ListActivitiesParams>,
 ) -> Result<Json<Vec<ActivityResponse>>, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
@@ -400,7 +424,8 @@ pub async fn list_activities(
 
 /// GET /activities/:id
 pub async fn get_activity(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActivityResponse>, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
@@ -415,7 +440,8 @@ pub async fn get_activity(
 
 /// GET /search?q=...
 pub async fn search_contacts(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     Query(params): Query<SearchParams>,
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
@@ -432,7 +458,8 @@ pub async fn search_contacts(
 /// Multipart form with file.
 
 pub async fn import_csv(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     mut multipart: Multipart,
 ) -> Result<Json<ImportCsvResult>, ApiError> {
@@ -440,13 +467,18 @@ pub async fn import_csv(
     let span = tracing::info_span!("handler", tenant_id = %tenant_id);
     let _guard = span.enter();
     debug!(tenant_id = %tenant_id, "Handling pub async fn import_csv(");
-    let span = tracing::info_span!("handler", tenant_id = %tenant_id, command_id = %idempotency_key.0);
+    let span =
+        tracing::info_span!("handler", tenant_id = %tenant_id, command_id = %idempotency_key.0);
     let _guard = span.enter();
     debug!(tenant_id = %tenant_id, command_id = %idempotency_key.0, "import_csv");
 
     // Extract file from multipart
     let mut csv_content = None;
-    while let Some(field) = multipart.next_field().await.map_err(|_| ApiError::Internal)? {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|_| ApiError::Internal)?
+    {
         if field.name() == Some("file") {
             // Use text() to get the string directly, which reads the entire body into memory.
             // For large files, this could be heavy; future improvement: stream using csv_async.
@@ -455,7 +487,8 @@ pub async fn import_csv(
             break;
         }
     }
-    let csv_content = csv_content.ok_or_else(|| ApiError::Validation("No file uploaded".to_string()))?;
+    let csv_content =
+        csv_content.ok_or_else(|| ApiError::Validation("No file uploaded".to_string()))?;
     let result = state
         .service
         .import_csv(tenant_id, idempotency_key.0, csv_content)
@@ -465,14 +498,20 @@ pub async fn import_csv(
 
 /// GET /csv/export
 pub async fn export_csv(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
 ) -> Result<Response, ApiError> {
     let AuthenticatedTenant(tenant_id) = tenant;
     let span = tracing::info_span!("handler", tenant_id = %tenant_id);
     let _guard = span.enter();
     debug!(tenant_id = %tenant_id, "Handling pub async fn export_csv(");
     let csv = state.service.export_csv(tenant_id).await?;
-    let response = (StatusCode::OK, [(axum::http::header::CONTENT_TYPE, "text/csv")], csv).into_response();
+    let response = (
+        StatusCode::OK,
+        [(axum::http::header::CONTENT_TYPE, "text/csv")],
+        csv,
+    )
+        .into_response();
     Ok(response)
 }
 
@@ -481,7 +520,8 @@ pub async fn export_csv(
 /// POST /email/track
 /// Record an email open/click event.
 pub async fn track_email(
-    State(state): State<Arc<AppState>>, tenant: AuthenticatedTenant,
+    State(state): State<Arc<AppState>>,
+    tenant: AuthenticatedTenant,
     idempotency_key: IdempotencyKey,
     Json(payload): Json<TrackEmailRequest>,
 ) -> Result<StatusCode, ApiError> {
@@ -582,16 +622,15 @@ mod tests {
     }
 }
 
-
 #[cfg(test)]
 mod integration_tests {
     use super::*;
+    use ataqu_application::cinq_service::MockCinqService;
     use axum::Router;
     use axum::http::Request;
-    use tower::ServiceExt;
-    use std::sync::Arc;
     use mockall::predicate::*;
-    use ataqu_application::cinq_service::MockCinqService;
+    use std::sync::Arc;
+    use tower::ServiceExt;
 
     #[tokio::test]
     async fn test_create_contact_handler() {
@@ -615,7 +654,9 @@ mod integration_tests {
             .uri("/contacts")
             .header("Idempotency-Key", key.to_string())
             .header("Content-Type", "application/json")
-            .body(axum::body::Body::from(r#"{"name":"Test","email":"test@example.com"}"#))
+            .body(axum::body::Body::from(
+                r#"{"name":"Test","email":"test@example.com"}"#,
+            ))
             .unwrap();
 
         let resp = app.oneshot(req).await.unwrap();
