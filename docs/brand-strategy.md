@@ -49,7 +49,7 @@ As a challenger brand, we do not play defense. We define the market by what we a
 ### 3.1 The Positioning Statement
 > **For** startups and SMBs who are held hostage by abusive SaaS vendors,
 > **Ataqu** is the Unified SMB Operating System
-> **that** delivers 10 natively integrated apps for a flat $49/month.
+> **that** delivers 10 natively integrated apps starting at $15/month for one app, $39/month for 5 apps, or $79/month for all 10.
 > **Unlike** HubSpot, Slack, and Zapier,
 > **Ataqu** is built in Rust on PostgreSQL with SeaORM 2.0 for fault‑tolerant performance, guarantees 1‑click cancellation, strictly forbids AI training on your data, and enforces PII redaction at compile time via redacting newtypes with no `Serialize` impl on the newtypes themselves; JSON serialization of PII is strictly restricted to the API layer via wrapper structs.
 
@@ -88,7 +88,7 @@ People don't buy Ataqu to have a CRM or a chat tool. They "hire" Ataqu to solve 
 In 2026, features can be cloned, and UIs can be copied. Ataqu's brand moat is built on **Radical Transparency** and **Trust**. We weaponize trust against our competitors.
 
 ### 5.1 The Trust Pillars
-1. **Pricing Transparency:** No hidden tiers. No "Contact Us for Enterprise." $3 for one app, $49 for all of them. Forever.
+1. **Pricing Transparency:** No hidden tiers. No "Contact Us for Enterprise." $15 for one app, $39 for 5 apps, $79 for all 10. Forever.
 2. **Architectural Transparency:** We publicly evangelize our engineering. We don't hide our stack; we brag about the Rust/PostgreSQL/SeaORM architecture, native `LISTEN/NOTIFY` outbox with RLS, Column-Level Privileges, type‑safe `schema` ENUM, `JSONB` with graceful degradation (`@>` exact → `->>` ILIKE → rate‑limited `jsonb_each_text`), event-driven projections, honest idempotency via 2× int4 advisory locks with explicit casts, generic `transactional_batch_insert` helper with transient-safe chunked fallback, and compile‑time PII redaction via redacting newtypes with serialization strictly isolated to the API layer via wrapper structs. This proves our competence to technical buyers.
 3. **Data Transparency:** We strictly publish our data handling policies. No AI training. 1‑click CSV/JSON export. If you leave, your data leaves with you cleanly. All timestamps stored in UTC for global consistency.
 
@@ -106,7 +106,7 @@ Our GTM motion is **Product-Led Growth (PLG) combined with Developer Evangelism.
 We do not force users to buy the $49 suite on day one. We use a "Land and Expand" wedge strategy.
 - **The Wedge:** A single user adopts CINQ (CRM) for $15/mo or DIAL (Chat) for $9/mo because it's cheaper than the competitor and doesn't require a credit card.
 - **The Expansion:** As the team realizes the app is fast and reliable, they need forms (SOND) or automation (SPARK). Instead of buying Zapier, they toggle it on inside Ataqu.
-- **The Suite:** The company eventually migrates entirely to the $49/mo bundle, decommissioning their HubSpot, Slack, and Calendly accounts.
+- **The Suite:** The company eventually migrates entirely to the $79/mo bundle, decommissioning their HubSpot, Slack, and Calendly accounts.
 
 ### 6.2 Channel Strategy
 | Channel | Strategy | Brand Angle |

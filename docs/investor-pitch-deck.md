@@ -26,7 +26,7 @@ The deck is designed to be read in 3 minutes or presented in 5. Every slide has 
 ### Slide 1: Title & The Hook
 *   **Visual:** The Ataqu logo (The Calm Predator). Deep Night Blue background. A high‑contrast screenshot of the dark‑mode UI.
 *   **Headline:** Ataqu. The Unified SMB OS.
-*   **Sub‑headline:** 10 apps. $49/month. Zero lock‑in. Built in Rust on PostgreSQL.
+*   **Sub‑headline:** 10 apps. $79/month for the full suite (or $15/$39 for smaller bundles). Zero lock‑in. Built in Rust on PostgreSQL.
 *   **The Script:** "HubSpot and Slack hold SMBs hostage. Ataqu is the rescue mission."
 
 ### Slide 2: The Problem (The SaaS Oligopoly)

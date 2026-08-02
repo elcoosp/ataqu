@@ -53,9 +53,9 @@ The total cost for a 20-person SMB using these 4 tools + others easily exceeds $
 - **Calm:** The calm of a predator. No surprises. No stress. No lock-in. Zero race conditions. Zero data loss. You sleep well at night because the infrastructure is mathematically sound — powered by PostgreSQL MVCC, native `LISTEN/NOTIFY`, SeaORM 2.0, raw SQL escape hatch, and compile‑time PII redaction via redacting newtypes.
 
 ### 1.5 Brand Promise
-> **"Ataqu — 10 apps, one price, zero lock-in."**
+> **"Ataqu — 10 apps, tiered pricing ($15/$39/$79), zero lock-in."**
 
-Stop paying for 10 tools that don't talk to each other. Ataqu gives you a complete, native suite at $49/month. And if you want to leave, one click is all it takes.
+Stop paying for 10 tools that don't talk to each other. Ataqu gives you a complete, native suite starting at $15/month for one app, $39/month for 5 apps, or $79/month for all 10. And if you want to leave, one click is all it takes.
 
 ### 1.6 Data Sovereignty & The Trust Narrative
 "Zero lock-in" is our strongest pillar. In a cynical SaaS market, we define exactly what Data Sovereignty means at Ataqu:
@@ -117,7 +117,7 @@ Stop paying for 10 tools that don't talk to each other. Ataqu gives you a comple
 > **"A world where any company, regardless of size, can use the best tools without being trapped by a vendor."**
 
 ### 3.3 Core Message
-> **"Ataqu — 10 apps, one price, zero lock-in."**
+> **"Ataqu — 10 apps, tiered pricing ($15/$39/$79), zero lock-in."**
 
 ### 3.4 Key Messages (The 4 Pillars)
 
