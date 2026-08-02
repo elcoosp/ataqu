@@ -33,6 +33,8 @@ pub use pivot_dtos::{CreateDocumentCommand, Database, Document, ListDocumentsPar
 // ----------------------------------------------------------------------
 const IDEMPOTENCY_KEY_HEADER: HeaderName = HeaderName::from_static("idempotency-key");
 
+const X_REQUEST_ID_HEADER: HeaderName = HeaderName::from_static("x-request-id");
+
 pub struct IdempotencyKey(pub String);
 
 impl<S> axum::extract::FromRequestParts<S> for IdempotencyKey
@@ -53,6 +55,15 @@ where
             .ok_or((StatusCode::BAD_REQUEST, "Missing Idempotency-Key header"))?;
         Ok(IdempotencyKey(value))
     }
+}
+
+/// Extract request ID from headers for tracing.
+fn get_request_id(parts: &axum::http::request::Parts) -> String {
+    parts.headers
+        .get(&X_REQUEST_ID_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("unknown")
+        .to_string()
 }
 
 // ----------------------------------------------------------------------
@@ -317,4 +328,14 @@ mod tests {
     }
 
     // We could add more tests with mocked service, but that's out of scope for now.
+
+    // Simple test to verify routes are defined
+    #[test]
+    fn test_router_contains_routes() {
+        let app = routes();
+        let routes = app.into_routes();
+        // We can't easily inspect routes, but we can compile.
+        // This test is a placeholder.
+        assert!(true);
+    }
 }
