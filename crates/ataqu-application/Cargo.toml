@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+ataqu-kernel = { path = "../ataqu-kernel" }
+ataqu-contracts = { path = "../ataqu-contracts" }
+ataqu-domain-spark = { path = "../ataqu-domain-spark" }
+ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
+ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
+sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+uuid = { version = "1.24.0", features = ["v4", "v5", "v7"] }
+thiserror = "2.0.18"
+anyhow = "1.0.103"
+tracing = "0.1.44"
