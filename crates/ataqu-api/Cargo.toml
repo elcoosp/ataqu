@@ -10,11 +10,10 @@ tower = "0.5.3"
 tower-http = { version = "0.7.0", features = ["cors", "trace"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
-tracing = "0.1.44"
-uuid = { version = "1.24.0", features = ["v4", "v7", "serde"] }
-chrono = { version = "0.4.45", features = ["serde"] }
+uuid = { version = "1.24.0", features = ["v4", "v5", "v7", "serde"] }
 anyhow = "1.0.103"
 thiserror = "2.0.18"
+tracing = "0.1.44"
 ataqu-application = { path = "../ataqu-application" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
