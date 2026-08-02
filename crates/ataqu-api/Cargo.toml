@@ -14,6 +14,8 @@ uuid = { version = "1.24.0", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4.45", features = ["serde"] }
 anyhow = "1.0.103"
 thiserror = "2.0.18"
+tokio = { version = "1.52", features = ["sync", "rt", "time"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
 ataqu-application = { path = "../ataqu-application" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
