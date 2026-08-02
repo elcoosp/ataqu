@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
+import { motion } from "motion/react";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { AppGrid } from "@/components/app-grid";
 import { PricingComparison } from "@/components/pricing-comparison";
 import { EscapeHatch } from "@/components/escape-hatch";
 import { ArchitectureProof } from "@/components/architecture-proof";
+import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 export function HomeContent() {
   const [preselectedApps, setPreselectedApps] = useState<string[]>([]);
@@ -17,9 +19,14 @@ export function HomeContent() {
   };
 
   return (
-    <main className="container section-padding space-y-20 md:space-y-28">
+    <motion.main
+      className="container section-padding space-y-20 md:space-y-28"
+      initial="hidden"
+      animate="visible"
+      variants={staggerContainer}
+    >
       {/* Hero */}
-      <section className="text-center max-w-3xl mx-auto">
+      <motion.section variants={fadeInUp} className="text-center max-w-3xl mx-auto">
         <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight">
           <Trans>
             HubSpot charges <span className="text-primary">$1,200/mo</span>.
@@ -33,23 +40,27 @@ export function HomeContent() {
           </Trans>
         </p>
         <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1 }}
             onClick={() => handleWedgeClick(["cinq"])}
             className="inline-block rounded-md bg-primary px-8 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Trans>Start with CINQ (CRM)</Trans>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1 }}
             onClick={() => handleWedgeClick(["pivot"])}
             className="inline-block rounded-md border border-border bg-transparent px-8 py-3 font-medium text-foreground transition-colors hover:bg-card"
           >
             <Trans>Start with PIVOT (Docs)</Trans>
-          </button>
+          </motion.button>
         </div>
-      </section>
+      </motion.section>
 
       {/* The Math */}
-      <section>
+      <motion.section variants={fadeInUp}>
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
           <Trans>Compare the cost of your fragmented SaaS stack</Trans>
         </h2>
@@ -64,10 +75,10 @@ export function HomeContent() {
             <Trans>See full comparison →</Trans>
           </a>
         </div>
-      </section>
+      </motion.section>
 
       {/* Apps Grid */}
-      <section>
+      <motion.section variants={fadeInUp}>
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
           <Trans>10 apps. One suite. Natively integrated.</Trans>
         </h2>
@@ -77,20 +88,20 @@ export function HomeContent() {
         <div className="mt-8">
           <AppGrid />
         </div>
-      </section>
+      </motion.section>
 
       {/* Architecture Proof */}
-      <section>
+      <motion.section variants={fadeInUp}>
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
           <Trans>Built in Rust. Powered by PostgreSQL. Engineered for performance.</Trans>
         </h2>
         <div className="mt-8">
           <ArchitectureProof />
         </div>
-      </section>
+      </motion.section>
 
       {/* Escape Hatch */}
-      <section>
+      <motion.section variants={fadeInUp}>
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
           <Trans>Want to leave? One click. Your data belongs to you.</Trans>
         </h2>
@@ -100,10 +111,10 @@ export function HomeContent() {
         <div className="mt-8">
           <EscapeHatch />
         </div>
-      </section>
+      </motion.section>
 
       {/* Waitlist */}
-      <section id="waitlist" className="max-w-2xl mx-auto">
+      <motion.section id="waitlist" variants={fadeInUp} className="max-w-2xl mx-auto">
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
           <Trans>Join the waitlist – from $15/mo (5 apps $39, 10 apps $79)</Trans>
         </h2>
@@ -113,7 +124,7 @@ export function HomeContent() {
         <div className="mt-8">
           <WaitlistForm preselectedApps={preselectedApps} />
         </div>
-      </section>
-    </main>
+      </motion.section>
+    </motion.main>
   );
 }

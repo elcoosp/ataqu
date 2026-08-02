@@ -94,7 +94,7 @@ export default function PivotPage() {
           <Trans>Ready to escape Notion?</Trans>
         </h2>
         <p className="mt-2 text-center text-muted-foreground">
-          <Trans>Start with PIVOT for $15/mo (or get all 10 for $79/mo). No credit card required for the trial.</Trans>
+          <Trans>Start with one app for $15/mo (or get all 10 for $79/mo). No credit card required for the trial.</Trans>
         </p>
         <div className="mt-6">
           <WaitlistForm />

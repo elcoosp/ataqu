@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
+import { cardTilt } from "@/lib/animations";
 
 const APPS = [
   { id: "cinq", name: "CINQ", desc: "CRM" },
@@ -17,23 +19,17 @@ const APPS = [
   { id: "vista", name: "VISTA", desc: "Analytics & BI" },
 ];
 
-function GlowCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="glow relative">
-      {children}
-      <svg className="glow-container pointer-events-none absolute inset-[-20px] w-[calc(100%+40px)] h-[calc(100%+40px)] opacity-0" width="100%" height="100%">
-        <rect pathLength="100" strokeLinecap="round" className="glow-blur fill-transparent stroke-black stroke-[5px] stroke-dasharray-[var(--glow-line-length)_calc(50-var(--glow-line-length))]"></rect>
-        <rect pathLength="100" strokeLinecap="round" className="glow-line fill-transparent stroke-[var(--glow-line-color)] stroke-[var(--glow-line-thickness)] stroke-dasharray-[var(--glow-line-length)_calc(50-var(--glow-line-length))]"></rect>
-      </svg>
-    </div>
-  );
-}
-
 function AppCard({ app }: { app: { id: string; name: string; desc: string } }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="flex flex-col items-center p-4 rounded-lg border border-border bg-card/30 hover:bg-card/50 transition-colors w-full h-full">
+    <motion.div
+      className="flex flex-col items-center p-4 rounded-lg border border-border bg-card/30 hover:bg-card/50 transition-colors w-full h-full relative glow"
+      initial="rest"
+      whileHover="hover"
+      variants={cardTilt}
+      style={{ transformStyle: "preserve-3d" }}
+    >
       <div className="w-14 h-14 rounded-full overflow-hidden mb-2 border border-primary/20 flex items-center justify-center bg-background">
         {!imgError ? (
           <Image
@@ -50,7 +46,11 @@ function AppCard({ app }: { app: { id: string; name: string; desc: string } }) {
       </div>
       <span className="font-display text-sm font-semibold text-center">{app.name}</span>
       <span className="text-xs text-muted-foreground mt-1 text-center">{app.desc}</span>
-    </div>
+      <svg className="glow-container pointer-events-none absolute inset-[-20px] w-[calc(100%+40px)] h-[calc(100%+40px)] opacity-0" width="100%" height="100%">
+        <rect pathLength="100" strokeLinecap="round" className="glow-blur fill-transparent stroke-black stroke-[5px] stroke-dasharray-[var(--glow-line-length)_calc(50-var(--glow-line-length))]"></rect>
+        <rect pathLength="100" strokeLinecap="round" className="glow-line fill-transparent stroke-[var(--glow-line-color)] stroke-[var(--glow-line-thickness)] stroke-dasharray-[var(--glow-line-length)_calc(50-var(--glow-line-length))]"></rect>
+      </svg>
+    </motion.div>
   );
 }
 
@@ -59,9 +59,7 @@ export function AppGrid() {
     <div className="flex flex-wrap justify-center gap-6">
       {APPS.map((app) => (
         <Link key={app.id} href={`/apps/${app.id}`} className="block w-[120px] no-underline">
-          <GlowCard>
-            <AppCard app={app} />
-          </GlowCard>
+          <AppCard app={app} />
         </Link>
       ))}
     </div>

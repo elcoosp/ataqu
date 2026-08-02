@@ -11,7 +11,7 @@ function getCompetitorData(slug: string) {
   const data: Record<string, any> = {
     hubspot: {
       name: t`HubSpot`,
-      tagline: t`HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total.`,
+      tagline: t`HubSpot charges $1,200/mo for reporting. Ataqu includes it natively — start at $15/mo, or get all 10 for $79/mo.`,
       tcoRows: [
         { name: "HubSpot", price: "$800/mo", contract: "3‑year lock‑in", note: "Professional tier", highlight: false },
         { name: "Zapier (integration)", price: "$79/mo", contract: "Monthly", note: "2,000 tasks/mo", highlight: false },
@@ -39,7 +39,7 @@ function getCompetitorData(slug: string) {
     },
     slack: {
       name: t`Slack`,
-      tagline: t`Slack taxes your team. DIAL gives you chat and support for one flat price.`,
+      tagline: t`Slack taxes your team. DIAL gives you chat and support — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Slack", price: "$12.50/user/mo", contract: "Monthly", note: "$250/mo for 20 users", highlight: false },
         { name: "Intercom (support)", price: "$100+/mo", contract: "Monthly", note: "Separate tool", highlight: false },
@@ -67,7 +67,7 @@ function getCompetitorData(slug: string) {
     },
     zapier: {
       name: t`Zapier`,
-      tagline: t`Zapier is a brittle bridge. SPARK is the native foundation.`,
+      tagline: t`Zapier is a brittle bridge. SPARK is the native foundation — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Zapier", price: "$49/mo", contract: "Monthly", note: "2,000 tasks/mo limit", highlight: false },
         { name: "Webhook maintenance", price: "$200/mo", contract: "‑", note: "Developer time", highlight: false },
@@ -95,7 +95,7 @@ function getCompetitorData(slug: string) {
     },
     notion: {
       name: t`Notion`,
-      tagline: t`Notion is a blank canvas graveyard. PIVOT is an operational database.`,
+      tagline: t`Notion is a blank canvas graveyard. PIVOT is an operational database — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Notion", price: "$18/user/mo", contract: "Monthly", note: "$360/mo for 20 users", highlight: false },
         { name: "Zapier (integration)", price: "$49/mo", contract: "Monthly", note: "To connect CRM", highlight: false },
@@ -123,7 +123,7 @@ function getCompetitorData(slug: string) {
     },
     "zoho-one": {
       name: t`Zoho One`,
-      tagline: t`Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps.`,
+      tagline: t`Zoho One is bloatware disguised as a suite. Ataqu is 10 exceptional apps — from $15/mo, or all 10 for $79/mo.`,
       tcoRows: [
         { name: "Zoho One", price: "$37/user/mo", contract: "Annual", note: "$740/mo for 20 users", highlight: false },
         { name: "Integrations", price: "$200/mo", contract: "‑", note: "Custom API work", highlight: false },
@@ -151,7 +151,7 @@ function getCompetitorData(slug: string) {
     },
     calendly: {
       name: t`Calendly`,
-      tagline: t`Calendly is a scheduling island. TEMPO is built into your OS.`,
+      tagline: t`Calendly is a scheduling island. TEMPO is built into your OS — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Calendly", price: "$20/seat/mo", contract: "Monthly", note: "$200/mo for 10 seats", highlight: false },
         { name: "Zapier (CRM sync)", price: "$49/mo", contract: "Monthly", note: "To update CRM", highlight: false },
@@ -179,7 +179,7 @@ function getCompetitorData(slug: string) {
     },
     typeform: {
       name: t`Typeform`,
-      tagline: t`Typeform charges for success. SOND gives you unlimited responses.`,
+      tagline: t`Typeform charges for success. SOND gives you unlimited responses — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Typeform", price: "$50/mo", contract: "Monthly", note: "1,000 responses/mo", highlight: false },
         { name: "Email notifications", price: "$20/mo", contract: "Monthly", note: "Paid add‑on", highlight: false },
@@ -207,7 +207,7 @@ function getCompetitorData(slug: string) {
     },
     cin7: {
       name: t`Cin7`,
-      tagline: t`Cin7 is a siloed warehouse. VAULT connects inventory to your CRM.`,
+      tagline: t`Cin7 is a siloed warehouse. VAULT connects inventory to your CRM — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Cin7 Core", price: "$349/mo", contract: "Annual", note: "5 users included", highlight: false },
         { name: "CRM integration", price: "$200/mo", contract: "‑", note: "Custom middleware", highlight: false },
@@ -235,7 +235,7 @@ function getCompetitorData(slug: string) {
     },
     personio: {
       name: t`Personio`,
-      tagline: t`Personio is a compliance silo. PAUSE connects HR to operations.`,
+      tagline: t`Personio is a compliance silo. PAUSE connects HR to operations — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Personio Essentials", price: "$10/user/mo", contract: "Annual", note: "$200/mo for 20 users", highlight: false },
         { name: "AEGIS (deprovision)", price: "$15/user/mo", contract: "Annual", note: "Separate SSO", highlight: false },
@@ -263,7 +263,7 @@ function getCompetitorData(slug: string) {
     },
     okta: {
       name: t`Okta`,
-      tagline: t`Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation.`,
+      tagline: t`Okta is a gatekeeper standing on top of your stack. AEGIS is the vault built into the foundation — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Okta Lifecycle Mgmt", price: "$8/user/mo", contract: "Annual", note: "$160/mo for 20 users", highlight: false },
         { name: "HR integration", price: "$200/mo", contract: "‑", note: "Custom work", highlight: false },
@@ -291,7 +291,7 @@ function getCompetitorData(slug: string) {
     },
     tableau: {
       name: t`Tableau`,
-      tagline: t`Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data.`,
+      tagline: t`Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected to your data — from $15/mo, or all 10 apps for $79/mo.`,
       tcoRows: [
         { name: "Tableau Explorer", price: "$42/user/mo", contract: "Annual", note: "$840/mo for 20 users", highlight: false },
         { name: "ETL pipeline", price: "$500/mo", contract: "‑", note: "Data engineering", highlight: false },
