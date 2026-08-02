@@ -1,15 +1,15 @@
 "use client";
-import Image from "next/image";
 
+import Image from "next/image";
 import Link from "next/link";
+import { Trans } from "@lingui/react/macro";
 import { WaitlistForm } from "@/components/waitlist-form";
 
 export default function SparkPage() {
   return (
     <div className="container section-padding max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <Link href="/" className="text-primary hover:underline text-sm inline-block mb-6">
-
-        ← Back to home
+        <Trans>← Back to home</Trans>
       </Link>
 
       <div className="flex justify-center my-4">
@@ -22,75 +22,79 @@ export default function SparkPage() {
         />
       </div>
       <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold">
-        Zapier is a brittle bridge. SPARK is the foundation.
+        <Trans>Zapier is a brittle bridge. SPARK is the foundation.</Trans>
       </h1>
       <p className="mt-4 text-lg text-muted-foreground">
-        
-          SPARK is native automation across your entire OS. No per‑task fees, no brittle webhooks, no 5‑minute polling.
-          Triggers fire in &lt;1s via PostgreSQL LISTEN/NOTIFY.
-        
+        <Trans>SPARK is native automation across your entire OS. No per‑task fees, no brittle webhooks, no 5‑minute polling. Triggers fire in &lt;1s via PostgreSQL LISTEN/NOTIFY.</Trans>
       </p>
 
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         <div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-          <h2 className="font-display text-xl font-bold text-primary">Features</h2>
+          <h2 className="font-display text-xl font-bold text-primary">
+            <Trans>Features</Trans>
+          </h2>
           <ul className="mt-4 space-y-2 text-muted-foreground">
-            <li>• Visual workflow builder (drag & drop)</li>
-            <li>• Triggers & actions from all 10 apps</li>
-            <li>• Conditions and branching</li>
-            <li>• Unlimited tasks — no metering</li>
-            <li>• Native event bus (LISTEN/NOTIFY)</li>
-            <li>• Exactly‑once delivery with DLQ</li>
+            <li>• <Trans>Visual workflow builder (drag & drop)</Trans></li>
+            <li>• <Trans>Triggers & actions from all 10 apps</Trans></li>
+            <li>• <Trans>Conditions and branching</Trans></li>
+            <li>• <Trans>Unlimited tasks — no metering</Trans></li>
+            <li>• <Trans>Native event bus (LISTEN/NOTIFY)</Trans></li>
+            <li>• <Trans>Exactly‑once delivery with DLQ</Trans></li>
           </ul>
         </div>
 
         <div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-          <h2 className="font-display text-xl font-bold text-primary">Why replace Zapier?</h2>
+          <h2 className="font-display text-xl font-bold text-primary">
+            <Trans>Why replace Zapier?</Trans>
+          </h2>
           <div className="overflow-x-auto"><table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-2 font-display text-muted-foreground">Zapier</th>
-                <th className="text-left py-2 font-display text-muted-foreground">SPARK</th>
+                <th className="text-left py-2 font-display text-muted-foreground">
+                  <Trans>Zapier</Trans>
+                </th>
+                <th className="text-left py-2 font-display text-muted-foreground">
+                  <Trans>SPARK</Trans>
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">$79/mo for 750 tasks</td>
-                <td className="py-2 text-primary font-bold">$15/mo (unlimited)</td>
+                <td className="py-2 text-muted-foreground"><Trans>$79/mo for 750 tasks</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>$15/mo (unlimited)</Trans></td>
               </tr>
               <tr className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">5‑15 minute polling delays</td>
-                <td className="py-2 text-primary font-bold">&lt;1s execution</td>
+                <td className="py-2 text-muted-foreground"><Trans>5‑15 minute polling delays</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>&lt;1s execution</Trans></td>
               </tr>
               <tr className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">Brittle webhooks</td>
-                <td className="py-2 text-primary font-bold">Native outbox with LISTEN/NOTIFY</td>
+                <td className="py-2 text-muted-foreground"><Trans>Brittle webhooks</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>Native outbox with LISTEN/NOTIFY</Trans></td>
               </tr>
               <tr>
-                <td className="py-2 text-muted-foreground">Support: 1.3/5 on Trustpilot</td>
-                <td className="py-2 text-primary font-bold">Human support, 24h SLA</td>
+                <td className="py-2 text-muted-foreground"><Trans>Support: 1.3/5 on Trustpilot</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>Human support, 24h SLA</Trans></td>
               </tr>
             </tbody>
-          </table></div></div>
+          </table></div>
+        </div>
+      </div>
 
       <div className="mt-12 p-6 rounded-lg border border-primary/30 bg-card/50">
         <h2 className="font-display text-2xl font-bold text-primary">
-          Native integration across the OS
+          <Trans>Native integration across the OS</Trans>
         </h2>
         <p className="mt-2 text-muted-foreground">
-          
-            SPARK workflows can trigger on any event from any app. When a CINQ deal is won, reserve VAULT stock.
-            When a SOND form is submitted, create a CINQ lead. No Zapier required.
-          
+          <Trans>SPARK workflows can trigger on any event from any app. When a CINQ deal is won, reserve VAULT stock. When a SOND form is submitted, create a CINQ lead. No Zapier required.</Trans>
         </p>
       </div>
 
       <div className="mt-12">
         <h2 className="font-display text-2xl font-bold text-center">
-          Ready to escape Zapier?
+          <Trans>Ready to escape Zapier?</Trans>
         </h2>
         <p className="mt-2 text-center text-muted-foreground">
-          Start with spark for $15/mo (or get all 10 for $79/mo). No credit card required for the trial.
+          <Trans>Start with SPARK for $15/mo (or get all 10 for $79/mo). No credit card required for the trial.</Trans>
         </p>
         <div className="mt-6">
           <WaitlistForm />

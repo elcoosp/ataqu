@@ -1,15 +1,15 @@
 "use client";
-import Image from "next/image";
 
+import Image from "next/image";
 import Link from "next/link";
+import { Trans } from "@lingui/react/macro";
 import { WaitlistForm } from "@/components/waitlist-form";
 
 export default function VaultPage() {
   return (
     <div className="container section-padding max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <Link href="/" className="text-primary hover:underline text-sm inline-block mb-6">
-
-        ← Back to home
+        <Trans>← Back to home</Trans>
       </Link>
 
       <div className="flex justify-center my-4">
@@ -22,75 +22,79 @@ export default function VaultPage() {
         />
       </div>
       <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold">
-        Cin7 is a siloed warehouse. VAULT connects inventory to your CRM.
+        <Trans>Cin7 is a siloed warehouse. VAULT connects inventory to your CRM.</Trans>
       </h1>
       <p className="mt-4 text-lg text-muted-foreground">
-        
-          VAULT is real‑time inventory management with atomic stock updates, native CRM integration,
-          and no AI bloat. Stock reservations happen automatically when deals are won.
-        
+        <Trans>VAULT is real‑time inventory management with atomic stock updates, native CRM integration, and no AI bloat. Stock reservations happen automatically when deals are won.</Trans>
       </p>
 
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         <div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-          <h2 className="font-display text-xl font-bold text-primary">Features</h2>
+          <h2 className="font-display text-xl font-bold text-primary">
+            <Trans>Features</Trans>
+          </h2>
           <ul className="mt-4 space-y-2 text-muted-foreground">
-            <li>• Products & variants</li>
-            <li>• Real‑time stock (atomic updates)</li>
-            <li>• Stock movements & audit trail</li>
-            <li>• Low stock alerts & notifications</li>
-            <li>• Multi‑channel & multi‑warehouse</li>
-            <li>• Native CINQ order reservation</li>
+            <li>• <Trans>Products & variants</Trans></li>
+            <li>• <Trans>Real‑time stock (atomic updates)</Trans></li>
+            <li>• <Trans>Stock movements & audit trail</Trans></li>
+            <li>• <Trans>Low stock alerts & notifications</Trans></li>
+            <li>• <Trans>Multi‑channel & multi‑warehouse</Trans></li>
+            <li>• <Trans>Native CINQ order reservation</Trans></li>
           </ul>
         </div>
 
         <div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-          <h2 className="font-display text-xl font-bold text-primary">Why replace Cin7?</h2>
+          <h2 className="font-display text-xl font-bold text-primary">
+            <Trans>Why replace Cin7?</Trans>
+          </h2>
           <div className="overflow-x-auto"><table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-2 font-display text-muted-foreground">Cin7</th>
-                <th className="text-left py-2 font-display text-muted-foreground">VAULT</th>
+                <th className="text-left py-2 font-display text-muted-foreground">
+                  <Trans>Cin7</Trans>
+                </th>
+                <th className="text-left py-2 font-display text-muted-foreground">
+                  <Trans>VAULT</Trans>
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">$79–$349/mo</td>
-                <td className="py-2 text-primary font-bold">$15/mo</td>
+                <td className="py-2 text-muted-foreground"><Trans>$79–$349/mo</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>$15/mo</Trans></td>
               </tr>
               <tr className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">No native CRM integration</td>
-                <td className="py-2 text-primary font-bold">Native CINQ deal reservation</td>
+                <td className="py-2 text-muted-foreground"><Trans>No native CRM integration</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>Native CINQ deal reservation</Trans></td>
               </tr>
               <tr className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">AI bloat with no value</td>
-                <td className="py-2 text-primary font-bold">Focused, bloat‑free</td>
+                <td className="py-2 text-muted-foreground"><Trans>AI bloat with no value</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>Focused, bloat‑free</Trans></td>
               </tr>
               <tr>
-                <td className="py-2 text-muted-foreground">Support: 4.5/5 but expensive</td>
-                <td className="py-2 text-primary font-bold">Human support, 24h SLA</td>
+                <td className="py-2 text-muted-foreground"><Trans>Support: 4.5/5 but expensive</Trans></td>
+                <td className="py-2 text-primary font-bold"><Trans>Human support, 24h SLA</Trans></td>
               </tr>
             </tbody>
-          </table></div></div>
+          </table></div>
+        </div>
+      </div>
 
       <div className="mt-12 p-6 rounded-lg border border-primary/30 bg-card/50">
         <h2 className="font-display text-2xl font-bold text-primary">
-          Native integration across the OS
+          <Trans>Native integration across the OS</Trans>
         </h2>
         <p className="mt-2 text-muted-foreground">
-          
-            When a CINQ deal is won, VAULT reserves stock atomically via outbox event.
-            When stock hits zero, SPARK pauses the sales sequence. No middleware required.
-          
+          <Trans>When a CINQ deal is won, VAULT reserves stock atomically via outbox event. When stock hits zero, SPARK pauses the sales sequence. No middleware required.</Trans>
         </p>
       </div>
 
       <div className="mt-12">
         <h2 className="font-display text-2xl font-bold text-center">
-          Ready to escape Cin7?
+          <Trans>Ready to escape Cin7?</Trans>
         </h2>
         <p className="mt-2 text-center text-muted-foreground">
-          Start with vault for $15/mo (or get all 10 for $79/mo). No credit card required for the trial.
+          <Trans>Start with VAULT for $15/mo (or get all 10 for $79/mo). No credit card required for the trial.</Trans>
         </p>
         <div className="mt-6">
           <WaitlistForm />
