@@ -1,4 +1,3 @@
-use ataqu_application::sond_service::SondService;
 use ataqu_kernel::TenantId;
 use axum::{
     Router,
@@ -10,12 +9,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone)]
-pub struct AppState {
-    pub sond_service: std::sync::Arc<SondService>,
-}
-
-pub fn router() -> Router<AppState> {
+pub fn router() -> Router<crate::AppState> {
     Router::new()
         .route("/forms", post(create_form))
         .route("/forms/:form_id/submissions", post(create_submission))
@@ -40,7 +34,7 @@ pub struct CreateFormRequest {
 }
 
 pub async fn create_form(
-    State(state): State<AppState>,
+    State(state): State<crate::AppState>,
     headers: HeaderMap,
     Json(payload): Json<CreateFormRequest>,
 ) -> impl IntoResponse {
@@ -78,7 +72,7 @@ pub struct CreateSubmissionRequest {
 }
 
 pub async fn create_submission(
-    State(state): State<AppState>,
+    State(state): State<crate::AppState>,
     headers: HeaderMap,
     axum::extract::Path(form_id): axum::extract::Path<Uuid>,
     Json(payload): Json<CreateSubmissionRequest>,
@@ -111,7 +105,7 @@ pub async fn create_submission(
 }
 
 pub async fn export_form(
-    State(state): State<AppState>,
+    State(state): State<crate::AppState>,
     axum::extract::Path(form_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
     let tenant_id = TenantId::new(Uuid::new_v4());
