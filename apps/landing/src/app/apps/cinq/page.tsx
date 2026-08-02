@@ -12,6 +12,15 @@ export default function CinqPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/cinq.png"
+          alt="cinq"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         HubSpot charges $1,200/mo. CINQ does the same for $15.
       </h1>

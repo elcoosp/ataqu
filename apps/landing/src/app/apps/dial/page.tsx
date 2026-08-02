@@ -12,6 +12,15 @@ export default function DialPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/dial.png"
+          alt="dial"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Slack taxes your team. Intercom taxes your customers. DIAL unites both.
       </h1>

@@ -12,6 +12,15 @@ export default function PausePage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/pause.png"
+          alt="pause"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Personio is a compliance silo. PAUSE connects HR to operations.
       </h1>

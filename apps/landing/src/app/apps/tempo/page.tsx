@@ -12,6 +12,15 @@ export default function TempoPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/tempo.png"
+          alt="tempo"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Calendly is a scheduling island. TEMPO is built into your OS.
       </h1>

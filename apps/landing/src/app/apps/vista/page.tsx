@@ -12,6 +12,15 @@ export default function VistaPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/vista.png"
+          alt="vista"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Tableau is an ETL nightmare. VISTA is real‑time analytics, natively connected.
       </h1>

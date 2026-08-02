@@ -12,6 +12,15 @@ export default function SondPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/sond.png"
+          alt="sond"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Typeform taxes your success. SOND gives you unlimited responses.
       </h1>

@@ -12,6 +12,15 @@ export default function PivotPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/pivot.png"
+          alt="pivot"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Notion is a blank canvas graveyard. PIVOT is an operational database.
       </h1>

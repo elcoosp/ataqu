@@ -12,6 +12,15 @@ export default function SparkPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/spark.png"
+          alt="spark"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Zapier is a brittle bridge. SPARK is the foundation.
       </h1>

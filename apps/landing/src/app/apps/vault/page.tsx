@@ -12,6 +12,15 @@ export default function VaultPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/vault.png"
+          alt="vault"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Cin7 is a siloed warehouse. VAULT connects inventory to your CRM.
       </h1>

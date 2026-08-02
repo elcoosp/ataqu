@@ -12,6 +12,15 @@ export default function AegisPage() {
         ← Back to home
       </Link>
 
+      <div className="flex justify-center my-4">
+        <Image
+          src="/apps/aegis.png"
+          alt="aegis"
+          width={64}
+          height={64}
+          className="rounded-full border border-primary/20"
+        />
+      </div>
       <h1 className="font-display text-4xl md:text-5xl font-bold">
         Okta is a gatekeeper. AEGIS is the vault built into your foundation.
       </h1>
