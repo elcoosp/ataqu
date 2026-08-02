@@ -4,3 +4,20 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-trait = { version = "0.1.91", default-features = false }
+ataqu-domain-aegis = { version = "0.1.0", path = "../ataqu-domain-aegis" }
+ataqu-infra-idempotency = { version = "0.1.0", path = "../ataqu-infra-idempotency" }
+ataqu-infra-pools = { version = "0.1.0", path = "../ataqu-infra-pools" }
+ataqu-infra-repositories = { version = "0.1.0", path = "../ataqu-infra-repositories" }
+ataqu-kernel = { version = "0.1.0", path = "../ataqu-kernel" }
+ataqu-security = { version = "0.1.0", path = "../ataqu-security" }
+sea-orm = { version = "2.0.0", default-features = false, features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+serde = { version = "1.0.229", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0.151", default-features = false }
+thiserror = { version = "2.0.19", default-features = false }
+tracing = { version = "0.1.44", default-features = false }
+uuid = { version = "1.24.0", default-features = false, features = ["v7"] }
+
+[dev-dependencies]
+mockall = { version = "0.15.0", default-features = false }
+tokio = { version = "1.53.1", default-features = false, features = ["rt", "time", "macros"] }

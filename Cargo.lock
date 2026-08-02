@@ -316,6 +316,23 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-application"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "ataqu-domain-aegis",
+ "ataqu-infra-idempotency",
+ "ataqu-infra-pools",
+ "ataqu-infra-repositories",
+ "ataqu-kernel",
+ "ataqu-security",
+ "mockall 0.15.0",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-bin"
@@ -432,7 +449,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "mockall",
+ "mockall 0.12.1",
  "moka",
  "pretty_assertions",
  "sea-orm",
@@ -1732,7 +1749,21 @@ dependencies = [
  "downcast",
  "fragile",
  "lazy_static",
- "mockall_derive",
+ "mockall_derive 0.12.1",
+ "predicates",
+ "predicates-tree",
+]
+
+[[package]]
+name = "mockall"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a6ceddfe3ce334925e96bf420fdb2dcee5bed6c632a168ece622676dadeaf8a"
+dependencies = [
+ "cfg-if",
+ "downcast",
+ "fragile",
+ "mockall_derive 0.15.0",
  "predicates",
  "predicates-tree",
 ]
@@ -1742,6 +1773,18 @@ name = "mockall_derive"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af7cbce79ec385a1d4f54baa90a76401eb15d9cab93685f62e7e9f942aa00ae2"
+dependencies = [
+ "cfg-if",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "mockall_derive"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cfe16fbe8a314aeec0b861ac24e60b1e123e97634bab045475b9d6a18416fd8"
 dependencies = [
  "cfg-if",
  "proc-macro2",
