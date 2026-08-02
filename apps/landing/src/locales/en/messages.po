@@ -597,6 +597,10 @@ msgstr "Companies pay a fortune. They're prisoners. They suffer."
 #~ msgid "Compare pricing"
 #~ msgstr "Compare pricing"
 
+#: src/components/home-content.tsx:54
+msgid "Compare the cost of your fragmented SaaS stack"
+msgstr "Compare the cost of your fragmented SaaS stack"
+
 #: src/components/architecture-proof.tsx:38
 #~ msgid "Compile‑time Security"
 #~ msgstr "Compile‑time Security"
@@ -978,8 +982,8 @@ msgstr "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for 
 #~ msgstr "HubSpot charges $1,200/mo. Ataqu charges $49."
 
 #: src/components/home-content.tsx:54
-msgid "HubSpot charges $1,200/mo. Ataqu charges $79."
-msgstr "HubSpot charges $1,200/mo. Ataqu charges $79."
+#~ msgid "HubSpot charges $1,200/mo. Ataqu charges $79."
+#~ msgstr "HubSpot charges $1,200/mo. Ataqu charges $79."
 
 #: src/app/apps/cinq/page.tsx:25
 msgid "HubSpot charges $1,200/mo. CINQ does the same for $15."
@@ -1812,8 +1816,12 @@ msgid "SSO is a standalone product – no native integration with HR"
 msgstr "SSO is a standalone product – no native integration with HR"
 
 #: src/components/home-content.tsx:57
-msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
-msgstr "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
+#~ msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
+#~ msgstr "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
+
+#: src/components/home-content.tsx:57
+msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10. No per‑user fees, no lock‑in."
+msgstr "Start at $15/mo for one app, $39 for 5, or $79 for all 10. No per‑user fees, no lock‑in."
 
 #: src/app/apps/aegis/page.tsx:97
 msgid "Start with AEGIS for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."

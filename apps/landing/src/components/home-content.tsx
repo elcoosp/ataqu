@@ -51,10 +51,10 @@ export function HomeContent() {
       {/* The Math */}
       <section>
         <h2 className="font-display text-3xl md:text-4xl font-bold text-center">
-          <Trans>HubSpot charges $1,200/mo. Ataqu charges $79.</Trans>
+          <Trans>Compare the cost of your fragmented SaaS stack</Trans>
         </h2>
         <p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-          <Trans>Start at $15/mo for one app, $39 for 5, or $79 for all 10.</Trans>
+          <Trans>Start at $15/mo for one app, $39 for 5, or $79 for all 10. No per‑user fees, no lock‑in.</Trans>
         </p>
         <div className="mt-8">
           <PricingComparison />

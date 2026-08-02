@@ -597,6 +597,10 @@ msgstr ""
 #~ msgid "Compare pricing"
 #~ msgstr ""
 
+#: src/components/home-content.tsx:54
+msgid "Compare the cost of your fragmented SaaS stack"
+msgstr ""
+
 #: src/components/architecture-proof.tsx:38
 #~ msgid "Compile‑time Security"
 #~ msgstr ""
@@ -978,8 +982,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/home-content.tsx:54
-msgid "HubSpot charges $1,200/mo. Ataqu charges $79."
-msgstr ""
+#~ msgid "HubSpot charges $1,200/mo. Ataqu charges $79."
+#~ msgstr ""
 
 #: src/app/apps/cinq/page.tsx:25
 msgid "HubSpot charges $1,200/mo. CINQ does the same for $15."
@@ -1812,7 +1816,11 @@ msgid "SSO is a standalone product – no native integration with HR"
 msgstr ""
 
 #: src/components/home-content.tsx:57
-msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
+#~ msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10."
+#~ msgstr ""
+
+#: src/components/home-content.tsx:57
+msgid "Start at $15/mo for one app, $39 for 5, or $79 for all 10. No per‑user fees, no lock‑in."
 msgstr ""
 
 #: src/app/apps/aegis/page.tsx:97
