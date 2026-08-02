@@ -8,3 +8,5 @@ pub mod vault_service;
 pub mod vista_service;
 
 pub use spark_service::{SparkService, SparkServiceError};
+
+pub mod pivot_service;
