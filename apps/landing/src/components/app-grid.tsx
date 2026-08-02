@@ -2,14 +2,15 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import Link from "next/link";
 
 const APPS = [
+  { id: "cinq", name: "CINQ", desc: "CRM" },
   { id: "pivot", name: "PIVOT", desc: "Docs & databases" },
   { id: "dial", name: "DIAL", desc: "Chat & support" },
   { id: "spark", name: "SPARK", desc: "Automation" },
   { id: "tempo", name: "TEMPO", desc: "Scheduling" },
   { id: "sond", name: "SOND", desc: "Forms & surveys" },
-  { id: "cinq", name: "CINQ", desc: "CRM" },
   { id: "vault", name: "VAULT", desc: "Inventory" },
   { id: "pause", name: "PAUSE", desc: "HR & leave" },
   { id: "aegis", name: "AEGIS", desc: "SSO & security" },
@@ -20,7 +21,9 @@ export function AppGrid() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {APPS.map((app) => (
-        <AppCard key={app.id} app={app} />
+        <Link key={app.id} href={`/apps/${app.id}`} className="block">
+          <AppCard app={app} />
+        </Link>
       ))}
     </div>
   );

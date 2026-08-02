@@ -14,27 +14,28 @@ export function HomeContent() {
       <section className="text-center max-w-3xl mx-auto">
         <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight">
           <Trans>
-            The <span className="text-primary">Calm Predator</span> of Productivity
+            HubSpot coûte <span className="text-primary">1 200 $/mois</span>.
+            Slack vous taxe par utilisateur.
           </Trans>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
           <Trans>
-            10 essential apps, one unified price. No per‑user fees, no lock‑in.
-            Join the waitlist and be first to access the suite.
+            Ataqu remplace HubSpot, Slack et Notion par une seule plateforme native.
+            Pas de lock‑in. Pas de per‑user fees. Commencez par le CRM (CINQ) ou par les docs (PIVOT).
           </Trans>
         </p>
         <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
           <a
-            href="#waitlist"
+            href="/signup?wedge=cinq"
             className="inline-block rounded-md bg-primary px-8 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            <Trans>Join the waitlist</Trans>
+            <Trans>Démarrer avec CINQ (CRM)</Trans>
           </a>
           <a
-            href="/alternatives/hubspot"
+            href="/signup?wedge=pivot"
             className="inline-block rounded-md border border-border bg-transparent px-8 py-3 font-medium text-foreground transition-colors hover:bg-card"
           >
-            <Trans>Compare pricing</Trans>
+            <Trans>Démarrer avec PIVOT (Docs)</Trans>
           </a>
         </div>
       </section>
