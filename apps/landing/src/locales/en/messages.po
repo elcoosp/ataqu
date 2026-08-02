@@ -94,9 +94,9 @@ msgstr ""
 #~ msgstr "waitlist.success.title"
 
 #. placeholder {0}: new Date().getFullYear()
-#: src/components/footer.tsx:55
-#~ msgid "© {0} Ataqu. All rights reserved."
-#~ msgstr "© {0} Ataqu. All rights reserved."
+#: src/components/footer.tsx:56
+msgid "© {0} Ataqu. All rights reserved."
+msgstr "© {0} Ataqu. All rights reserved."
 
 #: src/app/blog/[slug]/page.tsx:133
 #: src/app/blog/[slug]/page.tsx:142
@@ -215,8 +215,8 @@ msgid "1‑click export to CSV, JSON, Markdown"
 msgstr "1‑click export to CSV, JSON, Markdown"
 
 #: src/components/footer.tsx:16
-#~ msgid "10 apps, one price, zero lock‑in."
-#~ msgstr "10 apps, one price, zero lock‑in."
+msgid "10 apps, one price, zero lock‑in."
+msgstr "10 apps, one price, zero lock‑in."
 
 #: src/components/home-content.tsx:64
 msgid "10 apps. One suite. Natively integrated."
@@ -283,6 +283,7 @@ msgstr "5‑15 minute polling delays"
 msgid "A human responds within 24 hours, 7 days a week."
 msgstr "A human responds within 24 hours, 7 days a week."
 
+#: src/components/footer.tsx:26
 #: src/components/header.tsx:42
 #: src/components/header.tsx:91
 msgid "About"
@@ -328,6 +329,7 @@ msgstr "AI bloat that adds complexity without value"
 msgid "AI bloat with no value"
 msgstr "AI bloat with no value"
 
+#: src/components/footer.tsx:23
 #: src/components/header.tsx:49
 #: src/components/header.tsx:94
 msgid "Alternatives"
@@ -402,6 +404,7 @@ msgstr "Automatic reminders (email, SMS)"
 msgid "Be first to access the suite. No credit card required."
 msgstr "Be first to access the suite. No credit card required."
 
+#: src/components/footer.tsx:25
 #: src/components/header.tsx:39
 #: src/components/header.tsx:88
 msgid "Blog"
@@ -607,9 +610,9 @@ msgstr "Conditional logic & branching"
 msgid "Conditions and branching"
 msgstr "Conditions and branching"
 
-#: src/components/footer.tsx:39
-#~ msgid "Connect"
-#~ msgstr "Connect"
+#: src/components/footer.tsx:40
+msgid "Connect"
+msgstr "Connect"
 
 #: src/components/kill-sheet-content.tsx:63
 msgid "Connect DIAL to CINQ for native CRM integration"
@@ -852,7 +855,7 @@ msgstr "Export your Zoho CRM data to CSV"
 msgid "Exports are in standard formats (CSV, JSON) for easy reuse."
 msgstr "Exports are in standard formats (CSV, JSON) for easy reuse."
 
-#: src/components/footer.tsx:25
+#: src/components/footer.tsx:27
 #: src/components/header.tsx:45
 msgid "FAQ"
 msgstr "FAQ"
@@ -1098,9 +1101,9 @@ msgstr "Leave requests & approvals (3 clicks)"
 msgid "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
 msgstr "Leave requests trigger TEMPO calendar blocks and DIAL notifications"
 
-#: src/components/footer.tsx:31
-#~ msgid "Legal"
-#~ msgstr "Legal"
+#: src/components/footer.tsx:32
+msgid "Legal"
+msgstr "Legal"
 
 #: src/components/kill-sheet-content.tsx:276
 msgid "Lock‑in – difficult to export identity data"
@@ -1551,13 +1554,13 @@ msgstr "Prices that climb without warning. Contracts that trap you. Support that
 msgid "Pricing & Billing"
 msgstr "Pricing & Billing"
 
-#: src/components/footer.tsx:34
-#~ msgid "Privacy Policy"
-#~ msgstr "Privacy Policy"
+#: src/components/footer.tsx:35
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
 
 #: src/components/footer.tsx:21
-#~ msgid "Product"
-#~ msgstr "Product"
+msgid "Product"
+msgstr "Product"
 
 #: src/app/apps/vault/page.tsx:37
 msgid "Products & variants"
@@ -1667,6 +1670,7 @@ msgstr "Requires ETL pipelines"
 msgid "Response times are < 200ms, thanks to an optimized architecture."
 msgstr "Response times are < 200ms, thanks to an optimized architecture."
 
+#: src/components/footer.tsx:24
 #: src/components/header.tsx:36
 #: src/components/header.tsx:85
 msgid "Roadmap"
@@ -1974,9 +1978,9 @@ msgstr "TEMPO creates CINQ activities and DIAL notifications automatically"
 msgid "TEMPO handles booking links, calendar sync, and no‑show detection — natively connected to your CRM. No per‑user fees. No separate Zapier workflow. Just native scheduling."
 msgstr "TEMPO handles booking links, calendar sync, and no‑show detection — natively connected to your CRM. No per‑user fees. No separate Zapier workflow. Just native scheduling."
 
-#: src/components/footer.tsx:33
-#~ msgid "Terms of Service"
-#~ msgstr "Terms of Service"
+#: src/components/footer.tsx:34
+msgid "Terms of Service"
+msgstr "Terms of Service"
 
 #: src/components/home-content.tsx:16
 #~ msgid "The <0>Calm Predator</0> of Productivity"
