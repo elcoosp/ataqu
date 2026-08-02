@@ -25,7 +25,7 @@ export function Header() {
   return (
     <header className="border-b border-border bg-background/90 backdrop-blur-sm sticky top-0 z-50">
       <div className="container flex items-center justify-between h-16">
-        <Link href="/" className="flex items-center gap-2 font-display text-xl font-bold text-foreground"><span className="text-primary">A</span>taqu</Link>
+        <Link href="/" className="flex items-center gap-0 font-display text-xl font-bold text-foreground"><span className="text-primary">A</span>taqu</Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
