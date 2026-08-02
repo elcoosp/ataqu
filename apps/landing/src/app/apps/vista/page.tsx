@@ -12,8 +12,8 @@ export default function VistaPage() {
         <Image
           src="/apps/vista.png"
           alt="vista"
-          width=80
-          height=80
+          width={80}
+          height={80}
           className="rounded-full border border-primary/20"
         />
       </div>

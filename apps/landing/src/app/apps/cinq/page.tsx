@@ -12,8 +12,8 @@ export default function CinqPage() {
         <Image
           src="/apps/cinq.png"
           alt="cinq"
-          width=80
-          height=80
+          width={80}
+          height={80}
           className="rounded-full border border-primary/20"
         />
       </div>

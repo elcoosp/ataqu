@@ -12,8 +12,8 @@ export default function PivotPage() {
         <Image
           src="/apps/pivot.png"
           alt="pivot"
-          width=80
-          height=80
+          width={80}
+          height={80}
           className="rounded-full border border-primary/20"
         />
       </div>

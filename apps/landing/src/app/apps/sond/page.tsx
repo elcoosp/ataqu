@@ -12,8 +12,8 @@ export default function SondPage() {
         <Image
           src="/apps/sond.png"
           alt="sond"
-          width=80
-          height=80
+          width={80}
+          height={80}
           className="rounded-full border border-primary/20"
         />
       </div>

@@ -12,8 +12,8 @@ export default function SparkPage() {
         <Image
           src="/apps/spark.png"
           alt="spark"
-          width=80
-          height=80
+          width={80}
+          height={80}
           className="rounded-full border border-primary/20"
         />
       </div>

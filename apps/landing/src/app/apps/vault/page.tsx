@@ -12,8 +12,8 @@ export default function VaultPage() {
         <Image
           src="/apps/vault.png"
           alt="vault"
-          width=80
-          height=80
+          width={80}
+          height={80}
           className="rounded-full border border-primary/20"
         />
       </div>
