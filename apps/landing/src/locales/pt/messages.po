@@ -593,7 +593,11 @@ msgid "Ataqu provides a suite of 10 natively integrated business applications. Y
 msgstr ""
 
 #: src/components/home-content.tsx:30
-msgid "Ataqu remplace HubSpot, Slack et Notion par une seule plateforme native. Pas de lock‑in. Pas de per‑user fees. Commencez par le CRM (CINQ) ou par les docs (PIVOT)."
+#~ msgid "Ataqu remplace HubSpot, Slack et Notion par une seule plateforme native. Pas de lock‑in. Pas de per‑user fees. Commencez par le CRM (CINQ) ou par les docs (PIVOT)."
+#~ msgstr ""
+
+#: src/components/home-content.tsx:30
+msgid "Ataqu replaces HubSpot, Slack, and Notion with a single native platform. No lock‑in. No per‑user fees. Start with CRM (CINQ) or docs (PIVOT)."
 msgstr ""
 
 #: src/app/alternatives/page.tsx:22
@@ -940,12 +944,12 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/home-content.tsx:40
-msgid "Démarrer avec CINQ (CRM)"
-msgstr ""
+#~ msgid "Démarrer avec CINQ (CRM)"
+#~ msgstr ""
 
 #: src/components/home-content.tsx:46
-msgid "Démarrer avec PIVOT (Docs)"
-msgstr ""
+#~ msgid "Démarrer avec PIVOT (Docs)"
+#~ msgstr ""
 
 #: src/app/privacy/page.tsx:120
 msgid "Depending on your location (EU/EEA or California), you have specific rights regarding your data:"
@@ -1215,6 +1219,10 @@ msgstr ""
 msgid "HubSpot"
 msgstr ""
 
+#: src/components/home-content.tsx:24
+msgid "HubSpot charges <0>$1,200/mo</0>. Slack taxes you per user."
+msgstr ""
+
 #: src/components/kill-sheet-content.tsx:14
 msgid "HubSpot charges $1,200/mo for reporting. Ataqu includes it natively for $49/mo total."
 msgstr ""
@@ -1232,8 +1240,8 @@ msgid "HubSpot charges $1,200/mo. CINQ does the same for $15."
 msgstr ""
 
 #: src/components/home-content.tsx:24
-msgid "HubSpot coûte <0>1 200 $/mois</0>. Slack vous taxe par utilisateur."
-msgstr ""
+#~ msgid "HubSpot coûte <0>1 200 $/mois</0>. Slack vous taxe par utilisateur."
+#~ msgstr ""
 
 #: src/components/escape-hatch.tsx:36
 #~ msgid "Human support"
@@ -2123,6 +2131,10 @@ msgstr ""
 #~ msgid "Start with AEGIS for $15/mo. No credit card required for the trial."
 #~ msgstr ""
 
+#: src/components/home-content.tsx:40
+msgid "Start with CINQ (CRM)"
+msgstr ""
+
 #: src/app/apps/cinq/page.tsx:97
 msgid "Start with CINQ for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
 msgstr ""
@@ -2146,6 +2158,10 @@ msgstr ""
 #: src/app/apps/pause/page.tsx:85
 #~ msgid "Start with PAUSE for $15/mo. No credit card required for the trial."
 #~ msgstr ""
+
+#: src/components/home-content.tsx:46
+msgid "Start with PIVOT (Docs)"
+msgstr ""
 
 #: src/app/apps/pivot/page.tsx:97
 msgid "Start with PIVOT for $15/mo (or get all 10 for $79/mo). No credit card required for the trial."
