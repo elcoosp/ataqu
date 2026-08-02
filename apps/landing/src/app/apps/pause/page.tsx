@@ -6,7 +6,7 @@ import { WaitlistForm } from "@/components/waitlist-form";
 
 export default function PausePage() {
   return (
-    <div className="container section-padding max-w-4xl mx-auto">
+    <div className="container section-padding max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <Link href="/" className="text-primary hover:underline text-sm inline-block mb-6">
 
         ← Back to home
@@ -21,7 +21,7 @@ export default function PausePage() {
           className="rounded-full border border-primary/20"
         />
       </div>
-      <h1 className="font-display text-4xl md:text-5xl font-bold">
+      <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold">
         Personio is a compliance silo. PAUSE connects HR to operations.
       </h1>
       <p className="mt-4 text-lg text-muted-foreground">
@@ -31,8 +31,8 @@ export default function PausePage() {
         
       </p>
 
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="p-6 rounded-lg border border-border bg-card/30">
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        <div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
           <h2 className="font-display text-xl font-bold text-primary">Features</h2>
           <ul className="mt-4 space-y-2 text-muted-foreground">
             <li>• Employee directory (searchable)</li>
@@ -44,9 +44,9 @@ export default function PausePage() {
           </ul>
         </div>
 
-        <div className="p-6 rounded-lg border border-border bg-card/30">
+        <div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
           <h2 className="font-display text-xl font-bold text-primary">Why replace Personio?</h2>
-          <table className="w-full text-sm border-collapse">
+          <div className="overflow-x-auto"><table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-2 font-display text-muted-foreground">Personio</th>
@@ -71,9 +71,7 @@ export default function PausePage() {
                 <td className="py-2 text-primary font-bold">1‑click cancel & export</td>
               </tr>
             </tbody>
-          </table>
-        </div>
-      </div>
+          </table></div></div>
 
       <div className="mt-12 p-6 rounded-lg border border-primary/30 bg-card/50">
         <h2 className="font-display text-2xl font-bold text-primary">
