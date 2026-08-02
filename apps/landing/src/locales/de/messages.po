@@ -93,6 +93,13 @@ msgstr ""
 #~ msgid "waitlist.success.title"
 #~ msgstr ""
 
+#. placeholder {0}: phase.name
+#. placeholder {0}: task.name
+#: src/app/roadmap/page.tsx:106
+#: src/app/roadmap/page.tsx:112
+msgid "{0}"
+msgstr ""
+
 #. placeholder {0}: new Date().getFullYear()
 #: src/components/footer.tsx:56
 msgid "© {0} Ataqu. All rights reserved."
@@ -1567,8 +1574,8 @@ msgid "Products & variants"
 msgstr ""
 
 #: src/app/roadmap/page.tsx:97
-#~ msgid "Public Roadmap"
-#~ msgstr ""
+msgid "Public Roadmap"
+msgstr ""
 
 #: src/app/apps/aegis/page.tsx:39
 msgid "RBAC (Admin, Member, Viewer, Custom)"
@@ -2002,9 +2009,9 @@ msgstr ""
 msgid "There are no usage limits. The price is fixed regardless of volume."
 msgstr ""
 
-#: src/app/roadmap/page.tsx:118
-#~ msgid "This roadmap is updated as we ship. Follow our progress on GitHub."
-#~ msgstr ""
+#: src/app/roadmap/page.tsx:122
+msgid "This roadmap is updated as we ship. Follow our progress on GitHub."
+msgstr ""
 
 #: src/app/apps/dial/page.tsx:38
 msgid "Threads, mentions, reactions"
@@ -2120,8 +2127,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/app/roadmap/page.tsx:100
-#~ msgid "We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned."
-#~ msgstr ""
+msgid "We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned."
+msgstr ""
 
 #: src/app/faq/page.tsx:14
 msgid "What happens if I exceed my plan limits?"

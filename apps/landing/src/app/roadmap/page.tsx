@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 
 const PHASES = [
   {
@@ -40,8 +41,8 @@ const PHASES = [
   {
     name: "Application Layer (In Progress)",
     tasks: [
-      { name: "Application services (orchestration)", status: "in-progress" },
-      { name: "API handlers (REST + WebSocket)", status: "planned" },
+      { name: "Application services (orchestration)", status: "done" },
+      { name: "API handlers (REST + WebSocket)", status: "in-progress" },
       { name: "Admin CLI & audit logs", status: "planned" },
       { name: "Background workers & cron", status: "planned" },
     ],
@@ -93,19 +94,23 @@ export default function RoadmapPage() {
   return (
     <div className="container section-padding">
       <h1 className="font-display text-4xl md:text-5xl font-bold text-center">
-        Public Roadmap
+        <Trans>Public Roadmap</Trans>
       </h1>
       <p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-        We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned.
+        <Trans>We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned.</Trans>
       </p>
       <div className="mt-12 space-y-12 max-w-3xl mx-auto">
         {PHASES.map((phase, idx) => (
           <div key={idx} className="border-l-2 border-border pl-6">
-            <h2 className="font-display text-2xl font-bold text-foreground">{phase.name}</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground">
+              <Trans>{phase.name}</Trans>
+            </h2>
             <ul className="mt-4 space-y-3">
               {phase.tasks.map((task, tIdx) => (
                 <li key={tIdx} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                  <span className="text-sm text-foreground">{task.name}</span>
+                  <span className="text-sm text-foreground">
+                    <Trans>{task.name}</Trans>
+                  </span>
                   <StatusBadge status={task.status} />
                 </li>
               ))}
@@ -114,7 +119,7 @@ export default function RoadmapPage() {
         ))}
       </div>
       <p className="mt-12 text-center text-sm text-muted-foreground">
-        This roadmap is updated as we ship. Follow our progress on GitHub.
+        <Trans>This roadmap is updated as we ship. Follow our progress on GitHub.</Trans>
       </p>
     </div>
   );

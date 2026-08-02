@@ -93,6 +93,13 @@ msgstr ""
 #~ msgid "waitlist.success.title"
 #~ msgstr "waitlist.success.title"
 
+#. placeholder {0}: phase.name
+#. placeholder {0}: task.name
+#: src/app/roadmap/page.tsx:106
+#: src/app/roadmap/page.tsx:112
+msgid "{0}"
+msgstr "{0}"
+
 #. placeholder {0}: new Date().getFullYear()
 #: src/components/footer.tsx:56
 msgid "© {0} Ataqu. All rights reserved."
@@ -1567,8 +1574,8 @@ msgid "Products & variants"
 msgstr "Products & variants"
 
 #: src/app/roadmap/page.tsx:97
-#~ msgid "Public Roadmap"
-#~ msgstr "Public Roadmap"
+msgid "Public Roadmap"
+msgstr "Public Roadmap"
 
 #: src/app/apps/aegis/page.tsx:39
 msgid "RBAC (Admin, Member, Viewer, Custom)"
@@ -2002,9 +2009,9 @@ msgstr "The SaaS market is broken."
 msgid "There are no usage limits. The price is fixed regardless of volume."
 msgstr "There are no usage limits. The price is fixed regardless of volume."
 
-#: src/app/roadmap/page.tsx:118
-#~ msgid "This roadmap is updated as we ship. Follow our progress on GitHub."
-#~ msgstr "This roadmap is updated as we ship. Follow our progress on GitHub."
+#: src/app/roadmap/page.tsx:122
+msgid "This roadmap is updated as we ship. Follow our progress on GitHub."
+msgstr "This roadmap is updated as we ship. Follow our progress on GitHub."
 
 #: src/app/apps/dial/page.tsx:38
 msgid "Threads, mentions, reactions"
@@ -2120,8 +2127,8 @@ msgstr "We looked at that. We said: \"We can do better.\""
 #~ msgstr "We'll send you early access and exclusive updates."
 
 #: src/app/roadmap/page.tsx:100
-#~ msgid "We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned."
-#~ msgstr "We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned."
+msgid "We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned."
+msgstr "We're building the Unified SMB OS in the open. Here's what's done, what's next, and what's planned."
 
 #: src/app/faq/page.tsx:14
 msgid "What happens if I exceed my plan limits?"
