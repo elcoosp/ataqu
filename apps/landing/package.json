@@ -16,8 +16,8 @@
     "@drizzle-team/studio": "1.0.3",
     "@hookform/resolvers": "^3.9.1",
     "@libsql/client": "^0.15.15",
-    "@lingui/core": "6.4.0",
-    "@lingui/react": "6.4.0",
+    "@lingui/core": "6.6.0",
+    "@lingui/react": "6.6.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.2.12",
@@ -55,10 +55,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@lingui/cli": "6.4.0",
+    "@lingui/cli": "6.6.0",
     "@lingui/format-po": "^6.6.0",
-    "@lingui/macro": "^5.9.5",
-    "@lingui/swc-plugin": "^6.6.0",
+    "@lingui/swc-plugin": "6.6.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.4",
     "@types/react-dom": "^19.2.4",

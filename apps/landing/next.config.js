@@ -8,6 +8,7 @@ const nextConfig = {
     swcPlugins: [
       ['@lingui/swc-plugin', {}],
     ],
+    useTypeScriptCli: true,
   },
   images: {
     remotePatterns: [
@@ -16,14 +17,6 @@ const nextConfig = {
         hostname: '**',
       },
     ],
-  },
-  // Ignorer les erreurs TypeScript pour débloquer le build
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  // Ignorer ESLint également
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 
