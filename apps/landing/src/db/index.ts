@@ -1,9 +1,10 @@
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
+import path from "path";
 
 let db: any;
 
-// Only create client if URL is defined
+// Use local SQLite file if TURSO_DATABASE_URL is not set
 if (process.env.TURSO_DATABASE_URL) {
   const client = createClient({
     url: process.env.TURSO_DATABASE_URL,
@@ -11,12 +12,13 @@ if (process.env.TURSO_DATABASE_URL) {
   });
   db = drizzle(client);
 } else {
-  // Return a mock db for build/development without DB
-  console.warn("⚠️ TURSO_DATABASE_URL not set – using mock DB (no actual persistence)");
-  db = {
-    select: () => ({ from: () => ({ limit: () => Promise.resolve([]) }) }),
-    insert: () => ({ values: () => ({ returning: () => Promise.resolve([{ id: 1 }]) }) }),
-  } as any;
+  // Use absolute path to data.db in the current working directory
+  const dbPath = path.join(process.cwd(), "data.db");
+  console.warn(`⚠️ TURSO_DATABASE_URL not set – using local SQLite at ${dbPath}`);
+  const client = createClient({
+    url: `file:${dbPath}`,
+  });
+  db = drizzle(client);
 }
 
 export { db };
