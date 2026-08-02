@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-trait = "0.1.91"
+ataqu-domain-dial = { version = "0.1.0", path = "../ataqu-domain-dial" }
+ataqu-infra-idempotency = { version = "0.1.0", path = "../ataqu-infra-idempotency" }
+ataqu-kernel = { version = "0.1.0", path = "../ataqu-kernel" }
+metrics = "0.24.6"
+sea-orm = { version = "2.0.0", features = ["sqlx-postgres"] }
+serde = { version = "1.0.229", features = ["derive"] }
+thiserror = "2.0.19"
+tracing = "0.1.44"
+uuid = { version = "1.24.0", features = ["v4", "v7"] }
