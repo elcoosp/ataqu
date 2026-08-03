@@ -42,18 +42,16 @@ pub struct PivotService {
     dbs: DatabaseStore,
     rels: RelationStore,
     id_gen: Arc<dyn IdGenerator>,
-    clock: Arc<dyn Clock>,
 }
 
 impl PivotService {
-    pub fn new(id_gen: Arc<dyn IdGenerator>, clock: Arc<dyn Clock>) -> Self {
+    pub fn new(id_gen: Arc<dyn IdGenerator>) -> Self {
         Self {
             docs: DocumentStore::default(),
             dbs: DatabaseStore::default(),
             rels: RelationStore::default(),
             id_gen,
-            clock,
-        }
+                    }
     }
 
     pub async fn create_document(
