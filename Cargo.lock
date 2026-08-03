@@ -433,6 +433,7 @@ version = "0.1.0"
 name = "ataqu-domain-cinq"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-kernel",
  "ataqu-security",
  "chrono",
@@ -575,9 +576,15 @@ dependencies = [
 name = "ataqu-infra-repositories"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-contracts",
+ "ataqu-domain-cinq",
  "ataqu-kernel",
+ "ataqu-security",
+ "chrono",
+ "rust_decimal",
  "sea-orm",
+ "serde_json",
  "sqlx",
  "thiserror",
  "tracing",

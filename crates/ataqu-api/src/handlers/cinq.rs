@@ -39,8 +39,11 @@ impl From<ataqu_application::cinq_service::CinqServiceError> for ApiError {
         match e {
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => ApiError::NotFound,
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => ApiError::NotFound,
+            ataqu_application::cinq_service::CinqServiceError::ActivityNotFound => ApiError::NotFound,
+            ataqu_application::cinq_service::CinqServiceError::PipelineStageNotFound => ApiError::NotFound,
             ataqu_application::cinq_service::CinqServiceError::Validation(msg) => ApiError::Validation(msg),
             ataqu_application::cinq_service::CinqServiceError::Domain(err) => ApiError::Service(err.to_string()),
+            ataqu_application::cinq_service::CinqServiceError::Repository(err) => ApiError::Service(err),
         }
     }
 }
@@ -68,7 +71,7 @@ pub async fn list_contacts(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let contacts = state.cinq_service.list_contacts(tenant_id).await?;
+    let contacts = state.cinq_service.list_contacts(tenant_id, 100, 0).await?;
     Ok(Json(contacts.into_iter().map(|c| ContactResponse {
         id: c.id,
         name: c.name,
@@ -117,7 +120,7 @@ pub async fn list_deals(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<DealResponse>>, ApiError> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let deals = state.cinq_service.list_deals(tenant_id).await?;
+    let deals = state.cinq_service.list_deals(tenant_id, 100, 0).await?;
     Ok(Json(deals.into_iter().map(|d| DealResponse {
         id: d.id,
         title: d.title,
@@ -148,16 +151,11 @@ pub async fn get_activity(Path(_id): Path<Uuid>) -> Result<Json<ActivityResponse
     Ok(Json(ActivityResponse { id: Uuid::new_v4(), description: "activity".into() }))
 }
 pub async fn search_contacts(
-    State(state): State<AppState>,
-    Query(params): Query<SearchParams>,
+    State(_state): State<AppState>,
+    Query(_params): Query<SearchParams>,
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let contacts = state.cinq_service.search_contacts(tenant_id, &params.q).await?;
-    Ok(Json(contacts.into_iter().map(|c| ContactResponse {
-        id: c.id,
-        name: c.name,
-        email: c.email.to_string(),
-    }).collect()))
+    // TODO: implement real search using tsvector when repository supports it
+    Ok(Json(vec![]))
 }
 pub async fn import_csv() -> Result<Json<ImportCsvResult>, ApiError> {
     Ok(Json(ImportCsvResult { imported: 0, failed: 0 }))

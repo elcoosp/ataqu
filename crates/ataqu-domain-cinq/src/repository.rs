@@ -1,6 +1,5 @@
-use std::future::Future;
-
 use uuid::Uuid;
+use async_trait::async_trait;
 
 use crate::activity::Activity;
 use crate::contact::Contact;
@@ -11,70 +10,30 @@ use ataqu_kernel::TenantId;
 
 pub type CinqRepositoryResult<T> = Result<T, CinqDomainError>;
 
+#[async_trait]
 pub trait ContactRepository: Send + Sync {
-    fn save_contact(
-        &self,
-        contact: &Contact,
-    ) -> impl Future<Output = CinqRepositoryResult<()>> + Send;
-    fn find_contact_by_id(
-        &self,
-        tenant_id: &TenantId,
-        id: Uuid,
-    ) -> impl Future<Output = CinqRepositoryResult<Option<Contact>>> + Send;
-    fn list_contacts(
-        &self,
-        tenant_id: &TenantId,
-        limit: u64,
-        offset: u64,
-    ) -> impl Future<Output = CinqRepositoryResult<Vec<Contact>>> + Send;
+    async fn save_contact(&self, contact: &Contact) -> CinqRepositoryResult<()>;
+    async fn find_contact_by_id(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<Option<Contact>>;
+    async fn list_contacts(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> CinqRepositoryResult<Vec<Contact>>;
 }
 
+#[async_trait]
 pub trait DealRepository: Send + Sync {
-    fn save_deal(&self, deal: &Deal) -> impl Future<Output = CinqRepositoryResult<()>> + Send;
-    fn find_deal_by_id(
-        &self,
-        tenant_id: &TenantId,
-        id: Uuid,
-    ) -> impl Future<Output = CinqRepositoryResult<Option<Deal>>> + Send;
-    fn list_deals(
-        &self,
-        tenant_id: &TenantId,
-        limit: u64,
-        offset: u64,
-    ) -> impl Future<Output = CinqRepositoryResult<Vec<Deal>>> + Send;
+    async fn save_deal(&self, deal: &Deal) -> CinqRepositoryResult<()>;
+    async fn find_deal_by_id(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<Option<Deal>>;
+    async fn list_deals(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> CinqRepositoryResult<Vec<Deal>>;
 }
 
+#[async_trait]
 pub trait PipelineStageRepository: Send + Sync {
-    fn save_pipeline_stage(
-        &self,
-        stage: &PipelineStage,
-    ) -> impl Future<Output = CinqRepositoryResult<()>> + Send;
-    fn find_pipeline_stage_by_id(
-        &self,
-        tenant_id: &TenantId,
-        id: Uuid,
-    ) -> impl Future<Output = CinqRepositoryResult<Option<PipelineStage>>> + Send;
-    fn list_pipeline_stages(
-        &self,
-        tenant_id: &TenantId,
-    ) -> impl Future<Output = CinqRepositoryResult<Vec<PipelineStage>>> + Send;
+    async fn save_pipeline_stage(&self, stage: &PipelineStage) -> CinqRepositoryResult<()>;
+    async fn find_pipeline_stage_by_id(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<Option<PipelineStage>>;
+    async fn list_pipeline_stages(&self, tenant_id: &TenantId) -> CinqRepositoryResult<Vec<PipelineStage>>;
 }
 
+#[async_trait]
 pub trait ActivityRepository: Send + Sync {
-    fn save_activity(
-        &self,
-        activity: &Activity,
-    ) -> impl Future<Output = CinqRepositoryResult<()>> + Send;
-    fn find_activity_by_id(
-        &self,
-        tenant_id: &TenantId,
-        id: Uuid,
-    ) -> impl Future<Output = CinqRepositoryResult<Option<Activity>>> + Send;
-    fn list_activities_for_contact(
-        &self,
-        tenant_id: &TenantId,
-        contact_id: Uuid,
-        limit: u64,
-        offset: u64,
-    ) -> impl Future<Output = CinqRepositoryResult<Vec<Activity>>> + Send;
+    async fn save_activity(&self, activity: &Activity) -> CinqRepositoryResult<()>;
+    async fn find_activity_by_id(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<Option<Activity>>;
+    async fn list_activities_for_contact(&self, tenant_id: &TenantId, contact_id: Uuid, limit: u64, offset: u64) -> CinqRepositoryResult<Vec<Activity>>;
 }

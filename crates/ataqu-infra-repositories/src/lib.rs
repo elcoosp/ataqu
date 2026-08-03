@@ -1,3 +1,4 @@
+pub mod entities;
 use ataqu_contracts::spark::WorkflowAction;
 use ataqu_kernel::TenantId;
 use sea_orm::DatabaseTransaction;
@@ -32,3 +33,4 @@ pub mod generic_batch;
 
 
 
+pub mod cinq_repo_impl;

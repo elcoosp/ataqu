@@ -29,6 +29,7 @@ use ataqu_kernel::{Clock, IdGenerator};
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_idempotency::IdempotencyCache;
 use ataqu_infra_pools::Pools;
+use ataqu_infra_repositories;
 
 // ------------------------------------------------------------------------------
 // System implementations
@@ -102,7 +103,23 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // CINQ
-    let cinq_service = Arc::new(CinqService::new(id_gen.clone(), clock.clone()));
+        // CINQ with real repositories
+    use ataqu_infra_repositories::cinq_repo_impl::{
+        CinqContactRepository, CinqDealRepository,
+        CinqActivityRepository, CinqPipelineStageRepository,
+    };
+    let contact_repo = Arc::new(CinqContactRepository::new(pools.core.clone()));
+    let deal_repo = Arc::new(CinqDealRepository::new(pools.core.clone()));
+    let activity_repo = Arc::new(CinqActivityRepository::new(pools.core.clone()));
+    let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.core.clone()));
+    let cinq_service = Arc::new(CinqService::new(
+        contact_repo,
+        deal_repo,
+        activity_repo,
+        stage_repo,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // DIAL
     let dial_service = Arc::new(DialService::new(id_gen.clone(), clock.clone()));

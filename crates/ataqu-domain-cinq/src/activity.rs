@@ -72,8 +72,8 @@ pub struct ActivityUpdated {
 
 pub fn create_activity(
     cmd: CreateActivityCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> ActivityCreated {
     let id = id_gen.new_uuid_v7();
     let now = clock.now().into();
@@ -89,7 +89,7 @@ pub fn create_activity(
     }
 }
 
-pub fn update_activity(cmd: UpdateActivityCommand, clock: &impl Clock) -> ActivityUpdated {
+pub fn update_activity(cmd: UpdateActivityCommand, clock: &dyn Clock) -> ActivityUpdated {
     let now = clock.now().into();
     ActivityUpdated {
         id: cmd.id,

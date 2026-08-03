@@ -42,8 +42,8 @@ pub struct PipelineStageUpdated {
 }
 pub fn create_pipeline_stage(
     cmd: CreatePipelineStageCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> CinqResult<PipelineStageCreated> {
     if cmd.order < 0 {
         return Err(CinqDomainError::InvalidOrder);
@@ -65,7 +65,7 @@ pub fn create_pipeline_stage(
 }
 pub fn update_pipeline_stage(
     cmd: UpdatePipelineStageCommand,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> CinqResult<PipelineStageUpdated> {
     if let Some(order) = cmd.order
         && order < 0
