@@ -109,7 +109,8 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
                 <img
                   src={iconSrc}
                   alt={APP_NAMES[app]}
-                  className={`h-6 w-6 flex-shrink-0 ${isActive ? 'opacity-100' : 'opacity-70'}`}
+                  // Removed opacity classes and added object-contain to prevent squishing
+                  className="h-6 w-6 flex-shrink-0 object-contain"
                 />
                 {sidebarOpen && (
                   <span className="ml-3 text-sm font-medium">{APP_NAMES[app]}</span>
