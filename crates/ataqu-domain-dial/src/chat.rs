@@ -22,7 +22,7 @@ pub const DM_PARTICIPANT_COUNT: usize = 2;
 // Identifier Newtypes
 // ============================================================================
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct ChannelId(Uuid);
 
 impl ChannelId {
@@ -41,7 +41,7 @@ impl From<Uuid> for ChannelId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct MessageId(Uuid);
 
 impl MessageId {
@@ -60,7 +60,7 @@ impl From<Uuid> for MessageId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct ThreadId(Uuid);
 
 impl ThreadId {
@@ -79,7 +79,7 @@ impl From<Uuid> for ThreadId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct UserId(Uuid);
 
 impl UserId {
@@ -307,8 +307,8 @@ pub struct MentionCreatedEvent {
 
 pub fn create_channel(
     cmd: CreateChannelCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<ChannelCreatedEvent, DialError> {
     validate_channel_name(&cmd.name)?;
     validate_channel_type(&cmd.channel_type, &cmd.participants)?;
@@ -329,7 +329,7 @@ pub fn create_channel(
 
 pub fn archive_channel(
     channel: &Channel,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> Result<ChannelArchivedEvent, DialError> {
     if channel.is_archived() {
         return Err(DialError::ChannelAlreadyArchived);
@@ -345,8 +345,8 @@ pub fn archive_channel(
 pub fn send_message(
     cmd: SendMessageCommand,
     channel: &Channel,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<MessageSentEvent, DialError> {
     if channel.is_archived() {
         return Err(DialError::ChannelIsArchived);
@@ -374,7 +374,7 @@ pub fn edit_message(
     message: &Message,
     editor_id: UserId,
     new_content: String,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> Result<MessageEditedEvent, DialError> {
     if message.author_id != editor_id {
         return Err(DialError::NotMessageAuthor);
@@ -398,7 +398,7 @@ pub fn delete_message(
     message: &Message,
     deleter_id: UserId,
     is_moderator: bool,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> Result<MessageDeletedEvent, DialError> {
     if !is_moderator && message.author_id != deleter_id {
         return Err(DialError::NotMessageAuthor);
@@ -415,8 +415,8 @@ pub fn delete_message(
 pub fn start_thread(
     cmd: StartThreadCommand,
     parent_message: &Message,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<ThreadStartedEvent, DialError> {
     if parent_message.channel_id != cmd.channel_id {
         return Err(DialError::ThreadParentNotFound);

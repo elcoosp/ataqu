@@ -30,3 +30,4 @@ impl MigratorTrait for Migrator {
         ]
     }
 }
+pub mod m_dial_add_threads_mentions;

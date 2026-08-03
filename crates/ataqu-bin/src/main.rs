@@ -123,7 +123,16 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // DIAL
-    let dial_service = Arc::new(DialService::new(id_gen.clone(), clock.clone()));
+        // DIAL with real repository and presence
+    use ataqu_infra_repositories::dial_repo_impl::{DialRepositoryImpl, InMemoryPresenceStore};
+    let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
+    let dial_presence = Arc::new(InMemoryPresenceStore::new());
+    let dial_service = Arc::new(DialService::new(
+        dial_repo,
+        dial_presence,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // PIVOT
     let pivot_service = Arc::new(PivotService::new(id_gen.clone()));

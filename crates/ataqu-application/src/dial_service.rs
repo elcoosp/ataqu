@@ -1,62 +1,39 @@
-//! DIAL application service – orchestrates chat operations.
-//! Uses in-memory repositories for now, but structured for later DB integration.
-
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+//! DIAL application service – orchestrates chat operations using domain repositories.
+use std::sync::Arc;
 use uuid::Uuid;
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_domain_dial::chat::{
+    self as dial_domain, ChannelId, MessageId, Thread, ThreadId,
+    Mention, UserId, ChannelType,
+    CreateChannelCommand as DomainCreateChannel,
+    SendMessageCommand as DomainSendMessage,
+    StartThreadCommand as DomainStartThread,
+};
+use ataqu_domain_dial::repository::DialRepository;
+use ataqu_domain_dial::presence::PresenceStore;
+use ataqu_domain_dial::error::DialError;
 
-// Domain types (moved here for brevity; in production they come from domain crate)
-#[derive(Debug, Clone, PartialEq)]
-pub struct Channel {
-    pub id: Uuid,
-    pub tenant_id: TenantId,
-    pub name: String,
-    pub created_by: Uuid,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-}
+// Re-export domain types for API layer
+pub use ataqu_domain_dial::chat::{Channel, Message};
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Message {
-    pub id: Uuid,
-    pub channel_id: Uuid,
-    pub tenant_id: TenantId,
-    pub sender_id: Uuid,
-    pub content: String,
-    pub sent_at: chrono::DateTime<chrono::Utc>,
-}
-
+// Application commands (using domain types)
 #[derive(Debug, Clone)]
 pub struct CreateChannelCommand {
     pub tenant_id: TenantId,
     pub name: String,
+    pub channel_type: ChannelType,
     pub created_by: Uuid,
+    pub participants: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SendMessageCommand {
     pub tenant_id: TenantId,
     pub channel_id: Uuid,
-    pub sender_id: Uuid,
+    pub thread_id: Option<Uuid>,
+    pub author_id: Uuid,
     pub content: String,
-}
-
-// --- Thread and mention support (stubs, will be expanded later) ---
-#[derive(Debug, Clone)]
-pub struct Thread {
-    pub id: Uuid,
-    pub channel_id: Uuid,
-    pub parent_message_id: Uuid,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Mention {
-    pub id: Uuid,
-    pub message_id: Uuid,
-    pub user_id: Uuid,
-    pub read_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone)]
@@ -70,132 +47,164 @@ pub struct StartThreadCommand {
 pub enum DialServiceError {
     #[error("Channel not found")]
     ChannelNotFound,
+    #[error("Message not found")]
+    MessageNotFound,
+    #[error("Thread not found")]
+    ThreadNotFound,
     #[error("Validation error: {0}")]
     Validation(String),
-    #[error("Internal error: {0}")]
-    Internal(String),
+    #[error("Domain error: {0}")]
+    Domain(#[from] DialError),
+    #[error("Repository error: {0}")]
+    Repository(String),
 }
 
 pub type DialResult<T> = Result<T, DialServiceError>;
 
-// In-memory repositories
-#[derive(Default)]
-struct ChannelStore {
-    channels: Arc<RwLock<HashMap<Uuid, Channel>>>,
-}
-
-#[derive(Default)]
-struct MessageStore {
-    messages: Arc<RwLock<Vec<Message>>>,
-}
-
 pub struct DialService {
-    channels: ChannelStore,
-    messages: MessageStore,
+    repo: Arc<dyn DialRepository + Send + Sync>,
+    presence: Arc<dyn PresenceStore + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
 
 impl DialService {
-    pub fn new(id_gen: Arc<dyn IdGenerator>, clock: Arc<dyn Clock>) -> Self {
-        Self {
-            channels: ChannelStore::default(),
-            messages: MessageStore::default(),
-            id_gen,
-            clock,
-        }
+    pub fn new(
+        repo: Arc<dyn DialRepository + Send + Sync>,
+        presence: Arc<dyn PresenceStore + Send + Sync>,
+        id_gen: Arc<dyn IdGenerator>,
+        clock: Arc<dyn Clock>,
+    ) -> Self {
+        Self { repo, presence, id_gen, clock }
     }
 
+    // -- Channel methods --
     pub async fn create_channel(&self, cmd: CreateChannelCommand) -> DialResult<Channel> {
-        let id = self.id_gen.new_uuid_v7();
-        let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
-        let channel = Channel {
-            id,
+        let participants: Vec<UserId> = cmd.participants.into_iter().map(UserId::new).collect();
+        let domain_cmd = DomainCreateChannel {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
-            created_by: cmd.created_by,
-            created_at: now,
+            channel_type: cmd.channel_type,
+            created_by: UserId::new(cmd.created_by),
+            participants,
         };
-        self.channels.channels.write().unwrap().insert(id, channel.clone());
+        let event = dial_domain::create_channel(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(DialServiceError::Domain)?;
+        let channel = Channel {
+            id: event.channel_id,
+            tenant_id: event.tenant_id,
+            name: event.name,
+            channel_type: event.channel_type,
+            created_by: event.created_by,
+            participants: event.participants,
+            created_at: event.created_at,
+            archived_at: None,
+        };
+        self.repo.insert_channel(&channel).await?;
         Ok(channel)
     }
 
     pub async fn get_channel(&self, tenant_id: TenantId, channel_id: Uuid) -> DialResult<Channel> {
-        let map = self.channels.channels.read().unwrap();
-        map.get(&channel_id)
-            .filter(|c| c.tenant_id == tenant_id)
-            .cloned()
-            .ok_or(DialServiceError::ChannelNotFound)
+        self.repo.get_channel(&tenant_id, &ChannelId::new(channel_id)).await
+            .map_err(DialServiceError::Domain)
     }
 
-    pub async fn list_channels(&self, tenant_id: TenantId) -> DialResult<Vec<Channel>> {
-        let map = self.channels.channels.read().unwrap();
-        let channels = map.values().filter(|c| c.tenant_id == tenant_id).cloned().collect();
-        Ok(channels)
+    pub async fn list_channels(&self, _tenant_id: TenantId) -> DialResult<Vec<Channel>> {
+        unimplemented!("list_channels not yet implemented")
     }
 
+    // -- Message methods --
     pub async fn send_message(&self, cmd: SendMessageCommand) -> DialResult<Message> {
-        // Validate channel exists
-        let _ = self.get_channel(cmd.tenant_id, cmd.channel_id).await?;
-        if cmd.content.trim().is_empty() {
-            return Err(DialServiceError::Validation("Message content cannot be empty".into()));
-        }
-        let id = self.id_gen.new_uuid_v7();
-        let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
-        let msg = Message {
-            id,
-            channel_id: cmd.channel_id,
+        let channel_id = ChannelId::new(cmd.channel_id);
+        let channel = self.repo.get_channel(&cmd.tenant_id, &channel_id).await?;
+        let domain_cmd = DomainSendMessage {
             tenant_id: cmd.tenant_id,
-            sender_id: cmd.sender_id,
+            channel_id,
+            thread_id: cmd.thread_id.map(ThreadId::new),
+            author_id: UserId::new(cmd.author_id),
             content: cmd.content,
-            sent_at: now,
         };
-        self.messages.messages.write().unwrap().push(msg.clone());
-        Ok(msg)
+        let event = dial_domain::send_message(domain_cmd, &channel, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(DialServiceError::Domain)?;
+        let message = Message {
+            id: event.message_id,
+            tenant_id: event.tenant_id,
+            channel_id: event.channel_id,
+            thread_id: event.thread_id,
+            author_id: event.author_id,
+            content: event.content,
+            created_at: event.created_at,
+            edited_at: None,
+            deleted_at: None,
+        };
+        self.repo.insert_message(&message).await?;
+        Ok(message)
     }
 
-    pub async fn list_messages(&self, tenant_id: TenantId, channel_id: Uuid) -> DialResult<Vec<Message>> {
-        let _ = self.get_channel(tenant_id, channel_id).await?;
-        let store = self.messages.messages.read().unwrap();
-        let msgs = store.iter()
-            .filter(|m| m.tenant_id == tenant_id && m.channel_id == channel_id)
-            .cloned()
-            .collect();
-        Ok(msgs)
+    pub async fn list_messages(&self, _tenant_id: TenantId, _channel_id: Uuid) -> DialResult<Vec<Message>> {
+        unimplemented!("list_messages not yet implemented")
     }
 
-    // --- Thread and mention methods ---
+    // -- Thread methods --
     pub async fn start_thread(&self, cmd: StartThreadCommand) -> DialResult<Thread> {
-        // Validate channel exists
-        let _ = self.get_channel(cmd.tenant_id, cmd.channel_id).await?;
-        // In future, use domain: ataqu_domain_dial::chat::start_thread
-        let id = self.id_gen.new_uuid_v7();
-        let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
-        Ok(Thread {
-            id,
-            channel_id: cmd.channel_id,
-            parent_message_id: cmd.parent_message_id,
-            created_at: now,
-        })
+        let channel_id = ChannelId::new(cmd.channel_id);
+        let parent_message_id = MessageId::new(cmd.parent_message_id);
+        let parent_message = self.repo.get_message(&cmd.tenant_id, &parent_message_id).await?;
+        let domain_cmd = DomainStartThread {
+            tenant_id: cmd.tenant_id,
+            channel_id,
+        };
+        let event = dial_domain::start_thread(domain_cmd, &parent_message, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(DialServiceError::Domain)?;
+        let thread = Thread {
+            id: event.thread_id,
+            tenant_id: event.tenant_id,
+            channel_id: event.channel_id,
+            parent_message_id: event.parent_message_id,
+            created_at: event.created_at,
+        };
+        self.repo.insert_thread(&thread).await?;
+        Ok(thread)
     }
 
     pub async fn get_thread(&self, _tenant_id: TenantId, _thread_id: Uuid) -> DialResult<Thread> {
-        // Stub – not implemented
-        Err(DialServiceError::Internal("Thread not found".into()))
+        unimplemented!("get_thread not yet implemented")
     }
 
-    pub async fn add_mention(&self, _tenant_id: TenantId, message_id: Uuid, user_id: Uuid) -> DialResult<Mention> {
-        let id = self.id_gen.new_uuid_v7();
-        let _now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
-        Ok(Mention {
-            id,
-            message_id,
-            user_id,
+    // -- Mention methods --
+    pub async fn add_mention(&self, tenant_id: TenantId, message_id: Uuid, user_id: Uuid) -> DialResult<Mention> {
+        let mention = Mention {
+            id: Uuid::new_v4(),
+            tenant_id,
+            message_id: MessageId::new(message_id),
+            user_id: UserId::new(user_id),
+            created_at: self.clock.now(),
             read_at: None,
-        })
+        };
+        self.repo.insert_mention(&mention).await?;
+        Ok(mention)
     }
 
-    pub async fn list_mentions(&self, _tenant_id: TenantId, _user_id: Uuid) -> DialResult<Vec<Mention>> {
-        Ok(vec![])
+    pub async fn list_mentions(&self, tenant_id: TenantId, user_id: Uuid) -> DialResult<Vec<Mention>> {
+        self.repo.get_mentions_for_user(&tenant_id, &UserId::new(user_id)).await
+            .map_err(DialServiceError::Domain)
+    }
+
+    // -- Presence methods --
+    pub async fn set_online(&self, tenant_id: TenantId, user_id: Uuid) -> Result<(), DialServiceError> {
+        use ataqu_domain_dial::presence::PresenceStatus;
+        self.presence.set_presence(&tenant_id, &UserId::new(user_id), PresenceStatus::Online).await
+            .map_err(DialServiceError::Domain)
+    }
+
+    pub async fn set_offline(&self, tenant_id: TenantId, user_id: Uuid) -> Result<(), DialServiceError> {
+        self.presence.remove_presence(&tenant_id, &UserId::new(user_id)).await
+            .map_err(DialServiceError::Domain)
+    }
+
+    pub async fn get_online_users(&self, tenant_id: TenantId) -> Result<Vec<Uuid>, DialServiceError> {
+        self.presence.get_online_users(&tenant_id).await
+            .map_err(DialServiceError::Domain)
+            .map(|users| users.into_iter().map(|u| u.as_uuid()).collect())
     }
 }

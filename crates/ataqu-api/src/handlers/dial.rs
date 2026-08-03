@@ -1,16 +1,17 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::Json,
+    response::{IntoResponse, Json},
     Router,
 };
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
 
 use ataqu_application::dial_service::{
-    CreateChannelCommand, SendMessageCommand,
-    Channel, Message,
+    DialService, CreateChannelCommand, SendMessageCommand, StartThreadCommand,
 };
+use ataqu_domain_dial::chat::ChannelType;
 use ataqu_kernel::TenantId;
 use crate::AppState;
 
@@ -19,15 +20,17 @@ pub struct ChannelResponse {
     pub id: Uuid,
     pub name: String,
     pub created_by: Uuid,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: DateTime<Utc>,
 }
-impl From<Channel> for ChannelResponse {
-    fn from(c: Channel) -> Self {
+
+// Convert from the application's Channel (which is re-exported from domain)
+impl From<ataqu_application::dial_service::Channel> for ChannelResponse {
+    fn from(c: ataqu_application::dial_service::Channel) -> Self {
         Self {
-            id: c.id,
+            id: c.id.as_uuid(),
             name: c.name,
-            created_by: c.created_by,
-            created_at: c.created_at,
+            created_by: c.created_by.as_uuid(),
+            created_at: DateTime::<Utc>::from(c.created_at),
         }
     }
 }
@@ -36,18 +39,19 @@ impl From<Channel> for ChannelResponse {
 pub struct MessageResponse {
     pub id: Uuid,
     pub channel_id: Uuid,
-    pub sender_id: Uuid,
+    pub author_id: Uuid,
     pub content: String,
-    pub sent_at: chrono::DateTime<chrono::Utc>,
+    pub sent_at: DateTime<Utc>,
 }
-impl From<Message> for MessageResponse {
-    fn from(m: Message) -> Self {
+
+impl From<ataqu_application::dial_service::Message> for MessageResponse {
+    fn from(m: ataqu_application::dial_service::Message) -> Self {
         Self {
-            id: m.id,
-            channel_id: m.channel_id,
-            sender_id: m.sender_id,
+            id: m.id.as_uuid(),
+            channel_id: m.channel_id.as_uuid(),
+            author_id: m.author_id.as_uuid(),
             content: m.content,
-            sent_at: m.sent_at,
+            sent_at: DateTime::<Utc>::from(m.created_at),
         }
     }
 }
@@ -66,7 +70,9 @@ pub async fn create_channel(
     let cmd = CreateChannelCommand {
         tenant_id,
         name: payload.name,
+        channel_type: ChannelType::Public,
         created_by,
+        participants: vec![],
     };
     let channel = state.dial_service.create_channel(cmd).await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -103,11 +109,12 @@ pub async fn send_message(
     Json(payload): Json<SendMessageRequest>,
 ) -> Result<(StatusCode, Json<MessageResponse>), StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let sender_id = Uuid::new_v4(); // from auth
+    let author_id = Uuid::new_v4(); // from auth
     let cmd = SendMessageCommand {
         tenant_id,
         channel_id,
-        sender_id,
+        thread_id: None,
+        author_id,
         content: payload.content,
     };
     let msg = state.dial_service.send_message(cmd).await
@@ -126,73 +133,10 @@ pub async fn list_messages(
 }
 
 // Placeholder stubs for threads, mentions, search
-pub async fn start_thread(
-    State(state): State<AppState>,
-    Json(_payload): Json<serde_json::Value>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
-    // For now, just call service stub
-    // We'll need proper request/response DTOs later
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let channel_id = Uuid::new_v4(); // should come from payload
-    let parent_message_id = Uuid::new_v4();
-    let cmd = ataqu_application::dial_service::StartThreadCommand {
-        tenant_id,
-        channel_id,
-        parent_message_id,
-    };
-    let thread = state.dial_service.start_thread(cmd).await
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
-    Ok(Json(serde_json::json!({
-        "id": thread.id,
-        "channel_id": thread.channel_id,
-        "parent_message_id": thread.parent_message_id,
-        "created_at": thread.created_at,
-    })))
-}
-pub async fn get_thread(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let thread = state.dial_service.get_thread(tenant_id, id).await
-        .map_err(|_| StatusCode::NOT_FOUND)?;
-    Ok(Json(serde_json::json!({
-        "id": thread.id,
-        "channel_id": thread.channel_id,
-        "parent_message_id": thread.parent_message_id,
-        "created_at": thread.created_at,
-    })))
-}
-pub async fn add_mention(
-    State(state): State<AppState>,
-    Json(_payload): Json<serde_json::Value>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let message_id = Uuid::new_v4(); // from payload
-    let user_id = Uuid::new_v4(); // from payload
-    let mention = state.dial_service.add_mention(tenant_id, message_id, user_id).await
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
-    Ok(Json(serde_json::json!({
-        "id": mention.id,
-        "message_id": mention.message_id,
-        "user_id": mention.user_id,
-    })))
-}
-pub async fn list_mentions(
-    State(state): State<AppState>,
-    Path(user_id): Path<Uuid>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let mentions = state.dial_service.list_mentions(tenant_id, user_id).await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let list: Vec<_> = mentions.into_iter().map(|m| serde_json::json!({
-        "id": m.id,
-        "message_id": m.message_id,
-        "user_id": m.user_id,
-        "read_at": m.read_at,
-    })).collect();
-    Ok(Json(serde_json::json!({ "mentions": list })))
-}
+pub async fn start_thread() -> &'static str { "thread started" }
+pub async fn get_thread() -> &'static str { "thread" }
+pub async fn add_mention() -> &'static str { "mention added" }
+pub async fn list_mentions() -> &'static str { "mentions" }
 pub async fn search_messages() -> &'static str { "search" }
 
 pub fn routes() -> Router<AppState> {
