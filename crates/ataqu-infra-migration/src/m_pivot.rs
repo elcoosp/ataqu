@@ -19,13 +19,11 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Documents::Title).text().not_null())
                     .col(ColumnDef::new(Documents::Content).text())
                     .col(ColumnDef::new(Documents::Metadata).json_binary())
+                    // Use raw SQL to define the generated tsvector column
                     .col(
                         ColumnDef::new(Documents::SearchVector)
                             .custom(Alias::new("tsvector"))
-                            .generated(
-                                Expr::cust("to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, ''))"),
-                                true, // stored
-                            ),
+                            .extra("GENERATED ALWAYS AS (to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, ''))) STORED")
                     )
                     .col(
                         ColumnDef::new(Documents::CreatedAt)
@@ -68,19 +66,14 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Databases::TenantId).uuid().not_null())
                     .col(ColumnDef::new(Databases::Name).text().not_null())
-                    .col(
-                        ColumnDef::new(Databases::ConnectionString)
-                            .text()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(Databases::ConnectionString)
+                        .text()
+                        .not_null())
                     .col(ColumnDef::new(Databases::Metadata).json_binary())
                     .col(
                         ColumnDef::new(Databases::SearchVector)
                             .custom(Alias::new("tsvector"))
-                            .generated(
-                                Expr::cust("to_tsvector('english', coalesce(name, ''))"),
-                                true, // stored
-                            ),
+                            .extra("GENERATED ALWAYS AS (to_tsvector('english', coalesce(name, ''))) STORED")
                     )
                     .col(
                         ColumnDef::new(Databases::CreatedAt)
