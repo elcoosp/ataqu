@@ -1,10 +1,134 @@
-# TASK-038: Frontend SPA: VAULT (Inventory)
+# TASK-038: Frontend SPA — VAULT (Inventory)
+
+## Objective
+Implement VAULT: product catalog with variants, real-time stock display, stock adjustments (atomic, optimistic), movement history, low stock alerts, multi-warehouse, reservations (CINQ deal integration), multi-channel (Shopify sync), command palette actions, cross-app integration badge (CINQ deal), and micro-tour.
 
 ## Execution Boundaries
- - `apps/vault/`
+- `apps/vault/src/routes/_auth.products.index.tsx`
+- `apps/vault/src/routes/_auth.products.$id.tsx`
+- `apps/vault/src/routes/_auth.movements.tsx`
+- `apps/vault/src/routes/_auth.warehouses.tsx`
+- `apps/vault/src/routes/_auth.reservations.tsx`
+- `apps/vault/src/api/`
+- `apps/vault/src/components/`
+- `apps/vault/src/actions.ts`
 
-## Step-by-Step Implementation Details
- 1. **Context Mapping**: Read injected backend files (`vault_service.rs`, `handlers/vault.rs`).\n2. **Routing**: TanStack Router for `/products`, `/movements`.\n3. **Product Catalog**: Grid/List view of products with variants. Display current stock quantity.\n4. **Stock Adjustment**: Modal or inline form to adjust stock (add/remove). Use optimistic UI to update the quantity instantly before the server responds.\n5. **Movement History**: TanStack Table showing the audit trail of stock movements.\n6. **Alerts**: UI badge or toast notification if a product hits the low-stock threshold (fetched via query).\n7. **Styling**: Tailwind 4 + shadcn/ui. Dark-mode native.\n8. **Idempotency**: Stock adjustments must include `Idempotency-Key`.
+## Backend Context Mapping
+*The dispatch script has injected `crates/ataqu-domain-vault`, `crates/ataqu-application/src/vault_service.rs`, and `crates/ataqu-api/src/handlers/vault.rs`. You MUST read these to derive:*
+- **Entity Types**: Map `Product`, `Variant`, `Movement`, `Warehouse`, `Reservation`, `LowStockAlert` structs to TypeScript.
+- **API Endpoints**: `GET /products`, `POST /products`, `GET /products/:id`, `PATCH /products/:id`, `POST /products/:id/variants`, `POST /products/:id/adjust` (stock adjustment), `GET /movements`, `GET /warehouses`, `POST /warehouses`, `GET /reservations`, `POST /reservations`, `GET /products/:id/alerts`, `PATCH /products/:id/alerts`, `POST /sync/shopify`, `GET /api/v1/cross-app/relations?entityId=productId`.
+- **Atomic Stock Updates** (ADR-023): Backend uses `UPDATE ... SET stock_quantity = stock_quantity + $1 WHERE id = $2 AND stock_quantity + $1 >= 0` with `CHECK` constraint. Frontend just calls `POST /products/:id/adjust` with `{ change: -1, reason: "sale" }`.
+- **Reservations**: When CINQ deal is won, backend emits `CinqDealWonV1` → VAULT consumes and creates reservation. Frontend can also manually reserve via `POST /reservations`.
+- **Low Stock Alerts**: Backend checks threshold and emits `VaultStockBelowThresholdV1` to outbox. SPARK consumes.
 
-## Success Criteria & Verification
- - [ ] `pnpm build` succeeds with 0 TypeScript errors.\n- [ ] Bundle size is ≤ 500 KB gzipped.\n- [ ] Stock updates render optimistically.\n- [ ] Movement history is paginated.
+## UI Contract
+
+### Shell & Layout
+- `<Shell activeApp="vault">`.
+
+### Product Catalog (`products.index.tsx`)
+- Grid/list toggle. Products with: name, SKU, price, total stock, variant count.
+- "Create Product" button. "Import CSV" button (same pattern as CINQ).
+- "Export CSV" button.
+- Search bar: debounced, filters by name/SKU.
+- Low stock badge on products below threshold: `<Badge variant="destructive">Low Stock</Badge>`.
+- Empty state: `<EmptyState icon={Package} title="No products" description="Import your product catalog from CSV, or add your first product." ctaLabel="Create Product" />`.
+
+### Product Detail (`products.$id.tsx`)
+- Header: name, SKU, price, description.
+- **Stock Display**: prominent number, `font-mono`, `text-2xl`. `data-tour="stock-display"` on the stock number.
+- **Variants**: table of variants (size, color, stock). "Add Variant" button.
+- **Stock Adjustment**: inline form or modal. `data-tour="adjust-stock"` on button. Fields: change amount (+/-), reason (sale/restock/adjustment/damage), warehouse select. `POST /products/:id/adjust` with `Idempotency-Key`. Optimistic UI: stock number updates instantly, reverts on error.
+- **Low Stock Alert**: threshold input. "Set Low Stock Alert" button. `PATCH /products/:id/alerts`.
+- **Movement History**: table for this product: date, change, reason, warehouse, user.
+- **Cross-App Integration Badge**: fetch `GET /api/v1/cross-app/relations?entityId=product.id`. If CINQ reservation exists, show `<Badge variant="info">Reserved for CINQ deal #42</Badge>` with link.
+- **Integration Toggle**: `<Switch>` labeled "Reserve stock automatically when CINQ deal is won." `POST /integrations/toggle` with `{ sourceApp: "cinq", targetApp: "vault", entityId: product.id, enabled }`. Badge: "Connected to CINQ".
+- **Shopify Sync**: "Sync Shopify" button. `POST /sync/shopify`. Toast: "Shopify sync started."
+
+### Movements (`movements.tsx`)
+- `@ataqu/ui` `Table`: date, product, variant, change, reason, warehouse, user.
+- Filter by product, date range, warehouse.
+- Paginated.
+- Empty state: "No movements yet. Adjust stock to see history."
+
+### Warehouses (`warehouses.tsx`)
+- List of warehouses: name, address, product count, total stock value.
+- "Create Warehouse" button.
+- Empty state: "No warehouses. Add your first location."
+
+### Reservations (`reservations.tsx`)
+- Table: product, variant, quantity, CINQ deal link, status (active/released), created.
+- "Reserve Stock" button: modal with product select, quantity, deal ID.
+- Empty state: "No reservations. When CINQ deals are won, stock is reserved automatically."
+
+### Command Palette Actions (`apps/vault/src/actions.ts`)
+- `Create Product` → opens product creation modal
+- `Create Variant` → only when viewing a product
+- `Go to Products` → navigate to `/products`
+- `Go to Movements` → navigate to `/movements`
+- `Go to Warehouses` → navigate to `/warehouses`
+- `Go to Reservations` → navigate to `/reservations`
+- `Search Products` → focuses product search
+- `Adjust Stock` → only when viewing a product
+- `Set Low Stock Alert` → only when viewing a product
+- `Reserve Stock for Deal [ID]` → opens reservation modal
+- `Connect to CINQ` → toggles CINQ integration
+- `Export Products CSV` → triggers export
+- `Sync Shopify` → triggers sync
+
+### Micro-Tour (from `micro-tours.md`)
+- Tour ID: `vault-stock-tour`
+- Trigger: First visit to `/products/:id`.
+- Steps:
+  1. Target `[data-tour="stock-display"]` — Content: "Real-time stock. Zero race conditions." Action: view.
+  2. Target `[data-tour="adjust-stock"]` — Content: "Adjust it. The math is protected at the database level. No overselling." Action: click.
+
+### Toasts
+- "Stock adjusted." / "Product created." / "Variant added."
+- "Low stock alert set." / "Reservation created."
+- "VAULT connected to CINQ." / "Shopify sync started."
+- "Export ready." / "Movement logged."
+
+### Optimistic UI
+- Stock adjustment: number updates instantly, reverts on error.
+- Product create: appears in list instantly.
+- Reservation create: appears in list instantly.
+- Integration toggle: switch flips instantly.
+
+### Styling
+- Dark-mode native. High-density data tables.
+- Stock number: `font-mono text-2xl font-bold`.
+- Low stock: `text-destructive`.
+- In stock: `text-success`.
+- `data-tour` attributes on stock display and adjust button.
+
+## Implementation Plan (Development Script)
+1. Create types, API client.
+2. Create `product-catalog.tsx` (grid/list, search, low stock badge).
+3. Create `product-detail.tsx` (stock display, variants, adjustment, alerts, cross-app badge, integration toggle).
+4. Create `stock-adjustment.tsx` (modal, optimistic UI).
+5. Create `movement-history.tsx` (table, filters).
+6. Create `warehouse-list.tsx`.
+7. Create `reservation-list.tsx` (with CINQ deal link).
+8. Create `csv-import.tsx` (same pattern as CINQ).
+9. Create `apps/vault/src/actions.ts`.
+10. Implement routes: products index, product detail, movements, warehouses, reservations.
+11. Add `data-tour` attributes.
+12. Wrap `/products/:id` with `<OnboardTour>`.
+13. Run gates, commit.
+
+## Definition of Done (DoD)
+- [ ] Stock updates render optimistically and revert on error.
+- [ ] Variants table works with add/edit.
+- [ ] Movement history is paginated and filterable.
+- [ ] Low stock alerts can be configured per product.
+- [ ] Reservations show CINQ deal link.
+- [ ] Cross-app badge shows CINQ reservation with link.
+- [ ] Integration toggle calls correct endpoint, shows badge.
+- [ ] Shopify sync button triggers backend.
+- [ ] All 13 command palette actions registered.
+- [ ] Micro-tour triggers on first visit to `/products/:id`.
+- [ ] All empty states use `<EmptyState>`.
+- [ ] All toasts contextual.
+- [ ] All mutations include `Idempotency-Key`.
+- [ ] No `any` types. Gates pass.

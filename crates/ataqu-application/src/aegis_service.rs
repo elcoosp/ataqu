@@ -13,7 +13,7 @@ use tracing::{info, instrument, warn};
 use uuid::Uuid;
 
 use ataqu_security::Email;
-use ataqu_domain_aegis::{AuthError, User, UserCreated, create_user, authenticate, setup_mfa};
+use ataqu_domain_aegis::{User, UserCreated};
 use ataqu_kernel::{Clock, IdGenerator};
 
 // ----------------------------------------------------------------------

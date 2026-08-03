@@ -1,135 +1,156 @@
-//! CINQ CRM orchestration service (compilation-ready).
+//! CINQ CRM orchestration service – in-memory implementation.
 
-use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use ataqu_domain_cinq::contact::{CreateContactCommand, UpdateContactCommand, ContactCreated, ContactUpdated};
-use ataqu_domain_cinq::deal::{CreateDealCommand, DealCreated};
-use ataqu_infra_repositories::generic_batch::BatchResult;
-use tokio::sync::mpsc;
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use uuid::Uuid;
 
-// Placeholder for EmailTrackingEvent
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
+
+// Domain DTOs
 #[derive(Debug, Clone)]
-pub struct EmailTrackingEvent {
-    pub contact_id: Uuid,
+pub struct Contact {
+    pub id: Uuid,
     pub tenant_id: TenantId,
-    pub action: String,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub name: String,
+    pub email: String,
+    pub phone: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-// Placeholder error type
+#[derive(Debug, Clone)]
+pub struct Deal {
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub contact_id: Uuid,
+    pub title: String,
+    pub amount: f64,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateContactCommand {
+    pub tenant_id: TenantId,
+    pub name: String,
+    pub email: String,
+    pub phone: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateDealCommand {
+    pub tenant_id: TenantId,
+    pub contact_id: Uuid,
+    pub title: String,
+    pub amount: f64,
+    pub status: String,
+}
+
 #[derive(Debug, thiserror::Error)]
-pub enum CinqError {
-    #[error("Domain error: {0}")]
-    Domain(String),
-    #[error("Repository error: {0}")]
-    Repository(String),
-    #[error("Other error: {0}")]
-    Other(String),
-}
-pub type CinqResult<T> = Result<T, CinqError>;
-
-// Service struct
-pub struct CinqService<CRepo, DRepo, G, I, C> {
-    contact_repo: CRepo,
-    deal_repo: DRepo,
-    guard_factory: G,
-    id_gen: I,
-    clock: C,
-    email_tracking_tx: mpsc::Sender<EmailTrackingEvent>,
+pub enum CinqServiceError {
+    #[error("Contact not found")]
+    ContactNotFound,
+    #[error("Deal not found")]
+    DealNotFound,
+    #[error("Validation error: {0}")]
+    Validation(String),
 }
 
-impl<CRepo, DRepo, G, I, C> CinqService<CRepo, DRepo, G, I, C>
-where
-    CRepo: Send + Sync,
-    DRepo: Send + Sync,
-    G: Send + Sync,
-    I: IdGenerator,
-    C: Clock,
-{
-    pub fn new(
-        contact_repo: CRepo,
-        deal_repo: DRepo,
-        guard_factory: G,
-        id_gen: I,
-        clock: C,
-        email_tracking_tx: mpsc::Sender<EmailTrackingEvent>,
-    ) -> Self {
+pub type CinqResult<T> = Result<T, CinqServiceError>;
+
+#[derive(Default)]
+struct ContactStore {
+    contacts: Arc<RwLock<HashMap<Uuid, Contact>>>,
+}
+
+#[derive(Default)]
+struct DealStore {
+    deals: Arc<RwLock<HashMap<Uuid, Deal>>>,
+}
+
+pub struct CinqService {
+    contacts: ContactStore,
+    deals: DealStore,
+    id_gen: Arc<dyn IdGenerator>,
+    clock: Arc<dyn Clock>,
+}
+
+impl CinqService {
+    pub fn new(id_gen: Arc<dyn IdGenerator>, clock: Arc<dyn Clock>) -> Self {
         Self {
-            contact_repo,
-            deal_repo,
-            guard_factory,
+            contacts: ContactStore::default(),
+            deals: DealStore::default(),
             id_gen,
             clock,
-            email_tracking_tx,
         }
     }
 
-    // Contact operations
-    pub async fn create_contact(
-        &self,
-        _tenant_id: TenantId,
-        cmd: CreateContactCommand,
-        _command_id: Uuid,
-    ) -> CinqResult<ContactCreated> {
-        use ataqu_domain_cinq::contact::create_contact;
-        let event = create_contact(cmd, &self.id_gen, &self.clock);
-        Ok(event)
+    pub async fn create_contact(&self, cmd: CreateContactCommand) -> CinqResult<Contact> {
+        if cmd.name.trim().is_empty() {
+            return Err(CinqServiceError::Validation("Name cannot be empty".into()));
+        }
+        if !cmd.email.contains('@') {
+            return Err(CinqServiceError::Validation("Invalid email".into()));
+        }
+        let id = self.id_gen.new_uuid_v7();
+        let now = self.clock.now().into();
+        let contact = Contact {
+            id,
+            tenant_id: cmd.tenant_id,
+            name: cmd.name,
+            email: cmd.email,
+            phone: cmd.phone,
+            created_at: now,
+        };
+        self.contacts.contacts.write().unwrap().insert(id, contact.clone());
+        Ok(contact)
     }
 
-    pub async fn update_contact(
-        &self,
-        _tenant_id: TenantId,
-        _contact_id: Uuid,
-        cmd: UpdateContactCommand,
-        _command_id: Uuid,
-    ) -> CinqResult<ContactUpdated> {
-        use ataqu_domain_cinq::contact::update_contact;
-        let event = update_contact(cmd, &self.clock);
-        Ok(event)
+    pub async fn get_contact(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<Contact> {
+        let map = self.contacts.contacts.read().unwrap();
+        map.get(&id)
+            .filter(|c| c.tenant_id == tenant_id)
+            .cloned()
+            .ok_or(CinqServiceError::ContactNotFound)
     }
 
-    // Deal operations
-    pub async fn create_deal(
-        &self,
-        _tenant_id: TenantId,
-        cmd: CreateDealCommand,
-        _command_id: Uuid,
-    ) -> CinqResult<DealCreated> {
-        use ataqu_domain_cinq::deal::create_deal;
-use ataqu_kernel::{Clock, IdGenerator};
-use ataqu_kernel::TenantId;
-        let event = create_deal(cmd, &self.id_gen, &self.clock).map_err(|e| CinqError::Domain(e.to_string()))?;
-        Ok(event)
+    pub async fn list_contacts(&self, tenant_id: TenantId) -> CinqResult<Vec<Contact>> {
+        let map = self.contacts.contacts.read().unwrap();
+        let contacts = map.values().filter(|c| c.tenant_id == tenant_id).cloned().collect();
+        Ok(contacts)
     }
 
-    // CSV import
-    pub async fn import_contacts(
-        &self,
-        _tenant_id: TenantId,
-        _rows: Vec<serde_json::Value>,
-        _command_id: Uuid,
-    ) -> CinqResult<BatchResult<serde_json::Value>> {
-        // Placeholder: return empty result
-        Ok(BatchResult {
-            successes: vec![],
-            failures: vec![],
-        })
+    pub async fn create_deal(&self, cmd: CreateDealCommand) -> CinqResult<Deal> {
+        // Validate contact exists
+        let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
+        if cmd.title.trim().is_empty() {
+            return Err(CinqServiceError::Validation("Deal title cannot be empty".into()));
+        }
+        let id = self.id_gen.new_uuid_v7();
+        let now = self.clock.now().into();
+        let deal = Deal {
+            id,
+            tenant_id: cmd.tenant_id,
+            contact_id: cmd.contact_id,
+            title: cmd.title,
+            amount: cmd.amount,
+            status: cmd.status,
+            created_at: now,
+        };
+        self.deals.deals.write().unwrap().insert(id, deal.clone());
+        Ok(deal)
     }
 
-    // Cross-domain projection
-    pub async fn handle_pause_employee_created(
-        &self,
-        _tenant_id: TenantId,
-        _event: crate::pause_service::EmployeeCreatedEvent,
-    ) -> CinqResult<()> {
-        Ok(())
+    pub async fn get_deal(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<Deal> {
+        let map = self.deals.deals.read().unwrap();
+        map.get(&id)
+            .filter(|d| d.tenant_id == tenant_id)
+            .cloned()
+            .ok_or(CinqServiceError::DealNotFound)
     }
-}
 
-#[cfg(test)]
-mod tests {
-    #[tokio::test]
-    async fn test_stub() {
-        // placeholder
+    pub async fn list_deals(&self, tenant_id: TenantId) -> CinqResult<Vec<Deal>> {
+        let map = self.deals.deals.read().unwrap();
+        let deals = map.values().filter(|d| d.tenant_id == tenant_id).cloned().collect();
+        Ok(deals)
     }
 }

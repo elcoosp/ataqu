@@ -1,4 +1,4 @@
-//! CINQ handlers - minimal but functional.
+//! CINQ API handlers - using ataqu_application::cinq_service.
 
 use axum::{
     extract::{Path, Query, State},
@@ -6,101 +6,119 @@ use axum::{
     response::{IntoResponse, Json},
     Router,
 };
-use std::sync::Arc;
 use uuid::Uuid;
 
-use ataqu_application::cinq_service::CinqService;
+use ataqu_application::cinq_service::{CreateContactCommand, CreateDealCommand};
 use ataqu_contracts::cinq::*;
+use ataqu_kernel::TenantId;
 use crate::AppState;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
-    #[error("Validation error: {0}")]
-    Validation(String),
+    #[error("Service error: {0}")]
+    Service(String),
     #[error("Not found")]
     NotFound,
-    #[error("Conflict")]
-    Conflict,
-    #[error("Internal")]
-    Internal,
+    #[error("Validation: {0}")]
+    Validation(String),
 }
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+        let status = match self {
+            ApiError::Service(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::NotFound => StatusCode::NOT_FOUND,
+            ApiError::Validation(_) => StatusCode::BAD_REQUEST,
+        };
+        (status, self.to_string()).into_response()
+    }
+}
+impl From<ataqu_application::cinq_service::CinqServiceError> for ApiError {
+    fn from(e: ataqu_application::cinq_service::CinqServiceError) -> Self {
+        match e {
+            ataqu_application::cinq_service::CinqServiceError::ContactNotFound => ApiError::NotFound,
+            ataqu_application::cinq_service::CinqServiceError::DealNotFound => ApiError::NotFound,
+            ataqu_application::cinq_service::CinqServiceError::Validation(msg) => ApiError::Validation(msg),
+        }
     }
 }
 
 pub async fn create_contact(
-    State(_state): State<AppState>,
-    Json(_payload): Json<CreateContactRequest>,
+    State(state): State<AppState>,
+    Json(payload): Json<CreateContactRequest>,
 ) -> Result<Json<ContactResponse>, ApiError> {
-    Ok(Json(ContactResponse { id: Uuid::new_v4(), name: "test".into(), email: "test@test.com".into() }))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let cmd = CreateContactCommand {
+        tenant_id,
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+    };
+    let contact = state.cinq_service.create_contact(cmd).await?;
+    Ok(Json(ContactResponse {
+        id: contact.id,
+        name: contact.name,
+        email: contact.email,
+    }))
 }
 
 pub async fn list_contacts(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
-    Ok(Json(vec![]))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let contacts = state.cinq_service.list_contacts(tenant_id).await?;
+    Ok(Json(contacts.into_iter().map(|c| ContactResponse {
+        id: c.id,
+        name: c.name,
+        email: c.email,
+    }).collect()))
 }
 
 pub async fn get_contact(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
 ) -> Result<Json<ContactResponse>, ApiError> {
-    Ok(Json(ContactResponse { id: Uuid::new_v4(), name: "test".into(), email: "test@test.com".into() }))
-}
-
-pub async fn update_contact(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(_payload): Json<UpdateContactRequest>,
-) -> Result<Json<ContactResponse>, ApiError> {
-    Ok(Json(ContactResponse { id: Uuid::new_v4(), name: "test".into(), email: "test@test.com".into() }))
-}
-
-pub async fn delete_contact(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Result<StatusCode, ApiError> {
-    Ok(StatusCode::NO_CONTENT)
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let contact = state.cinq_service.get_contact(tenant_id, id).await?;
+    Ok(Json(ContactResponse {
+        id: contact.id,
+        name: contact.name,
+        email: contact.email,
+    }))
 }
 
 pub async fn create_deal(
-    State(_state): State<AppState>,
-    Json(_payload): Json<CreateDealRequest>,
+    State(state): State<AppState>,
+    Json(payload): Json<CreateDealRequest>,
 ) -> Result<Json<DealResponse>, ApiError> {
-    Ok(Json(DealResponse { id: Uuid::new_v4(), title: "deal".into(), amount: 100.0 }))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let cmd = CreateDealCommand {
+        tenant_id,
+        contact_id: payload.contact_id,
+        title: payload.title,
+        amount: payload.amount,
+        status: "open".to_string(),
+    };
+    let deal = state.cinq_service.create_deal(cmd).await?;
+    Ok(Json(DealResponse {
+        id: deal.id,
+        title: deal.title,
+        amount: deal.amount,
+    }))
 }
 
 pub async fn list_deals(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<DealResponse>>, ApiError> {
-    Ok(Json(vec![]))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let deals = state.cinq_service.list_deals(tenant_id).await?;
+    Ok(Json(deals.into_iter().map(|d| DealResponse {
+        id: d.id,
+        title: d.title,
+        amount: d.amount,
+    }).collect()))
 }
 
-pub async fn get_deal(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Result<Json<DealResponse>, ApiError> {
-    Ok(Json(DealResponse { id: Uuid::new_v4(), title: "deal".into(), amount: 100.0 }))
-}
-
-pub async fn update_deal(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(_payload): Json<UpdateDealRequest>,
-) -> Result<Json<DealResponse>, ApiError> {
-    Ok(Json(DealResponse { id: Uuid::new_v4(), title: "deal".into(), amount: 100.0 }))
-}
-
-pub async fn delete_deal(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Result<StatusCode, ApiError> {
-    Ok(StatusCode::NO_CONTENT)
-}
-
-// Stubs for pipeline, activities, etc.
+// Stubs for other endpoints
 pub async fn list_pipeline_stages() -> Result<Json<Vec<PipelineStageResponse>>, ApiError> {
     Ok(Json(vec![]))
 }
@@ -140,13 +158,8 @@ pub fn cinq_routes() -> Router<AppState> {
         .route("/contacts", axum::routing::post(create_contact))
         .route("/contacts", axum::routing::get(list_contacts))
         .route("/contacts/:id", axum::routing::get(get_contact))
-        .route("/contacts/:id", axum::routing::put(update_contact))
-        .route("/contacts/:id", axum::routing::delete(delete_contact))
         .route("/deals", axum::routing::post(create_deal))
         .route("/deals", axum::routing::get(list_deals))
-        .route("/deals/:id", axum::routing::get(get_deal))
-        .route("/deals/:id", axum::routing::put(update_deal))
-        .route("/deals/:id", axum::routing::delete(delete_deal))
         .route("/pipeline/stages", axum::routing::get(list_pipeline_stages))
         .route("/pipeline/stages", axum::routing::post(create_pipeline_stage))
         .route("/pipeline/stages/:id", axum::routing::put(update_pipeline_stage))

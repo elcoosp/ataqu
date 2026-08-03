@@ -1,8 +1,8 @@
-//! PIVOT application service - in-memory implementation for compilation.
-//! Provides all methods expected by the API layer using `ataqu_contracts::pivot` DTOs.
+//! PIVOT application service – in-memory document and relation store.
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use uuid::Uuid;
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_contracts::pivot::{
@@ -11,11 +11,7 @@ use ataqu_contracts::pivot::{
     CreateRelationCommand,
     ListDocumentsParams, ListRelationsParams, SearchParams,
 };
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
-// Removed duplicate imports of Clock, IdGenerator, TenantId
 
-// ---------- Error types ----------
 #[derive(Debug, thiserror::Error)]
 pub enum PivotServiceError {
     #[error("Resource not found")]
@@ -27,7 +23,6 @@ pub enum PivotServiceError {
 }
 pub type Result<T> = std::result::Result<T, PivotServiceError>;
 
-// ---------- In-memory stores ----------
 #[derive(Clone, Default)]
 struct DocumentStore {
     data: Arc<RwLock<HashMap<Uuid, Document>>>,
@@ -41,7 +36,6 @@ struct RelationStore {
     data: Arc<RwLock<HashMap<Uuid, Relation>>>,
 }
 
-// ---------- Service ----------
 #[derive(Clone)]
 pub struct PivotService {
     docs: DocumentStore,
@@ -62,8 +56,6 @@ impl PivotService {
         }
     }
 
-    // ----- Document operations -----
-
     pub async fn create_document(
         &self,
         _tenant_id: TenantId,
@@ -71,12 +63,10 @@ impl PivotService {
         cmd: CreateDocumentCommand,
     ) -> Result<Document> {
         let id = self.id_gen.new_uuid_v7();
-        let now: DateTime<Utc> = self.clock.now().into();
         let doc = Document {
             id,
             title: cmd.title,
             content: cmd.content,
-            // Add other fields if needed (we only have id, title, content in contract)
         };
         self.docs.data.write().unwrap().insert(id, doc.clone());
         Ok(doc)
@@ -110,7 +100,6 @@ impl PivotService {
         if self.docs.data.write().unwrap().remove(&id).is_none() {
             return Err(PivotServiceError::NotFound);
         }
-        // Also clean up relations? Not needed for compilation.
         Ok(())
     }
 
@@ -126,10 +115,9 @@ impl PivotService {
     pub async fn search_documents(
         &self,
         _tenant_id: TenantId,
-        _params: SearchParams,
+        params: SearchParams,
     ) -> Result<Vec<Document>> {
-        // Simple search: if q is empty, return all; otherwise filter by title/content containing q.
-        let q = _params.q.trim().to_lowercase();
+        let q = params.q.trim().to_lowercase();
         let map = self.docs.data.read().unwrap();
         if q.is_empty() {
             return Ok(map.values().cloned().collect());
@@ -142,22 +130,16 @@ impl PivotService {
         Ok(results)
     }
 
-    // ----- Database operations -----
-
     pub async fn get_database(&self, _tenant_id: TenantId, id: Uuid) -> Result<Database> {
         self.dbs.data.read().unwrap().get(&id).cloned().ok_or(PivotServiceError::NotFound)
     }
 
-    // We don't have create_database endpoint in API, but we might need it internally.
-    // We'll add a helper to create a database for testing.
     pub async fn create_database(&self, _tenant_id: TenantId, name: String) -> Result<Database> {
         let id = self.id_gen.new_uuid_v7();
         let db = Database { id, name };
         self.dbs.data.write().unwrap().insert(id, db.clone());
         Ok(db)
     }
-
-    // ----- Relation operations -----
 
     pub async fn create_relation(
         &self,
@@ -198,11 +180,7 @@ impl PivotService {
         _doc_id: Uuid,
         _params: ListRelationsParams,
     ) -> Result<Vec<Relation>> {
-        // For simplicity, return all relations.
         let map = self.rels.data.read().unwrap();
         Ok(map.values().cloned().collect())
     }
-
-    // Note: The original pivot_service from the dump also had methods using sqlx.
-    // We are not using them; we provide the ones the API expects.
 }

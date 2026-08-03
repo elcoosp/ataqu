@@ -5,6 +5,7 @@
 
 use std::fmt;
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
 // ---------------------------------------------------------------------------
 // TenantId  (ADR-024)
@@ -27,7 +28,7 @@ use uuid::Uuid;
 /// let tenant = TenantId::new(id);
 /// assert_eq!(tenant.as_uuid(), id);
 /// ```
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct TenantId(Uuid);
 
 impl TenantId {

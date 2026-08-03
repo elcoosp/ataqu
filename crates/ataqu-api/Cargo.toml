@@ -21,8 +21,9 @@ ataqu-application = { path = "../ataqu-application" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
 ataqu-contracts = { path = "../ataqu-contracts" }
+ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
+sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 
 [dev-dependencies]
 mockall = "0.15.0"
 dotenvy = "0.15"
-sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }

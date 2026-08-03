@@ -323,6 +323,7 @@ dependencies = [
  "async-trait",
  "ataqu-application",
  "ataqu-contracts",
+ "ataqu-domain-aegis",
  "ataqu-kernel",
  "ataqu-security",
  "axum",
@@ -578,6 +579,7 @@ version = "0.1.0"
 name = "ataqu-kernel"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "thiserror",
  "uuid",
 ]
