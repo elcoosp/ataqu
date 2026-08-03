@@ -1,4 +1,3 @@
-use sea_orm::Statement;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -7,44 +6,74 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let sql = r#"
-        CREATE TABLE IF NOT EXISTS collab_ops.bookings (
-            id UUID PRIMARY KEY,
-            tenant_id UUID NOT NULL,
-            starts_at TIMESTAMPTZ NOT NULL,
-            duration_seconds INT NOT NULL,
-            ends_at TIMESTAMPTZ GENERATED ALWAYS AS (starts_at + (duration_seconds * INTERVAL '1 second')) STORED,
-            oauth_access_token TEXT,
-            oauth_refresh_token TEXT,
-            oauth_token_expires_at TIMESTAMPTZ,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS idx_bookings_tenant_id ON collab_ops.bookings (tenant_id);
-        CREATE INDEX IF NOT EXISTS idx_bookings_ends_at ON collab_ops.bookings (ends_at);
-        "#;
-
         manager
             .get_connection()
-            .execute_raw(Statement::from_sql_and_values(
-                sea_orm::DbBackend::Postgres,
-                sql,
-                [],
-            ))
+            .execute_unprepared("CREATE SCHEMA IF NOT EXISTS collab_ops")
             .await?;
+
+        // Bookings table
+        manager
+            .create_table(
+                Table::create()
+                    .table((Alias::new("collab_ops"), Bookings::Table))
+                    .if_not_exists()
+                    .col(ColumnDef::new(Bookings::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(Bookings::TenantId).uuid().not_null())
+                    .col(ColumnDef::new(Bookings::StartsAt).timestamp_with_time_zone().not_null())
+                    .col(ColumnDef::new(Bookings::DurationSeconds).integer().not_null())
+                    .col(ColumnDef::new(Bookings::EndsAt).timestamp_with_time_zone().generated_as_expr(Expr::col(Bookings::StartsAt) + Expr::col(Bookings::DurationSeconds) * Expr::val("1 second")).stored())
+                    .col(ColumnDef::new(Bookings::OauthAccessToken).string())
+                    .col(ColumnDef::new(Bookings::OauthRefreshToken).string())
+                    .col(ColumnDef::new(Bookings::OauthTokenExpiresAt).timestamp_with_time_zone())
+                    .col(ColumnDef::new(Bookings::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(ColumnDef::new(Bookings::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .to_owned(),
+            )
+            .await?;
+
+        // Indexes
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_bookings_tenant_id")
+                    .table((Alias::new("collab_ops"), Bookings::Table))
+                    .col(Bookings::TenantId)
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_bookings_ends_at")
+                    .table((Alias::new("collab_ops"), Bookings::Table))
+                    .col(Bookings::EndsAt)
+                    .to_owned(),
+            )
+            .await?;
+
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let sql = "DROP TABLE IF EXISTS collab_ops.bookings;";
         manager
-            .get_connection()
-            .execute_raw(Statement::from_sql_and_values(
-                sea_orm::DbBackend::Postgres,
-                sql,
-                [],
-            ))
+            .drop_table(Table::drop().table((Alias::new("collab_ops"), Bookings::Table)).to_owned())
             .await?;
         Ok(())
     }
+}
+
+#[derive(Iden)]
+enum Bookings {
+    Table,
+    Id,
+    TenantId,
+    StartsAt,
+    DurationSeconds,
+    EndsAt,
+    OauthAccessToken,
+    OauthRefreshToken,
+    OauthTokenExpiresAt,
+    CreatedAt,
+    UpdatedAt,
 }

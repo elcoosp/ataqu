@@ -17,7 +17,7 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
-            Box::new(m20250101_000001_core::Migration),
+            Box::new(m20250101_000001_core::Migration), // MUST be first!
             Box::new(m_aegis::Migration),
             Box::new(m_cinq::Migration),
             Box::new(m_dial::Migration),

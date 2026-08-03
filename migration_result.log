@@ -1,0 +1,13 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.90s
+     Running `target/debug/migrator`
+Migrator connecting to: postgres://postgres:postgres@127.0.0.1:5433/ataqu_test
+Error: Exec(SqlxError(Database(PgDatabaseError { severity: Error, code: "23505", message: "duplicate keyError: Exec(SqlxError(Database(PgDatabaseError { severity: Error, code: "23505", message: "dup🔵 Running CORE migration...
+  ✅ core schema created
+  ✅ app_schema ENUM created
+  ✅ core.outbox created
+  ✅ core.idempotency_records created
+Running migration: m_cinq
+Error: Exec(SqlxError(Database(PgDatabaseError { severity: Error, code: "42P01", message: "relation \"collab_crm.contacts\" does not exist", detail: None, hint: None, position: None, where: None, schema: None, table: None, column: None, data_type: None, constraint: None, file: Some("namespace.c"), line: Some(631), routine: Some("RangeVarGetRelidExtended") })))

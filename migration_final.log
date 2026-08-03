@@ -1,0 +1,36 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+  Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+   Compiling ataqu-infra-migration v0.1.0 (/Users/adm/Documents/Repos/ataqu-suite/crates/ataqu-infra-migration)
+error[E0599]: no method named `generated_as_expr` found for mutable reference `&mut sea_orm_migration::prelude::ColumnDef` in the current scope
+   --> crates/ataqu-infra-migration/src/m_tempo.rs:24:86
+    |
+ 24 | ...   .col(ColumnDef::new(Bookings::EndsAt).timestamp_with_time_zone().generated_as_expr(Expr::col(Bookings::StartsAt) + Expr::col(...
+    |                                                                        ^^^^^^^^^^^^^^^^^
+    |
+help: there is a method `generated` with a similar name, but with different arguments
+   --> /Users/adm/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sea-query-1.0.1/src/table/column.rs:832:5
+    |
+832 | /     pub fn generated<T>(&mut self, expr: T, stored: bool) -> &mut Self
+833 | |     where
+834 | |         T: Into<Expr>,
+    | |______________________^
+
+error[E0369]: cannot multiply `sea_orm_migration::prelude::Expr` by `sea_orm_migration::prelude::Expr`
+  --> crates/ataqu-infra-migration/src/m_tempo.rs:24:173
+   |
+24 | ...ings::StartsAt) + Expr::col(Bookings::DurationSeconds) * Expr::val("1 second")).stored())
+   |                      ------------------------------------ ^ --------------------- sea_orm_migration::prelude::Expr
+   |                      |
+   |                      sea_orm_migration::prelude::Expr
+   |
+note: `sea_orm_migration::prelude::Expr` does not implement `std::ops::Mul`
+  --> /Users/adm/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sea-query-1.0.1/src/expr/enum.rs:21:1
+   |
+21 | pub enum Expr {
+   | ^^^^^^^^^^^^^ `sea_orm_migration::prelude::Expr` is defined in another crate
+
+plain E0369`.
+error: could not compile `ataqu-infra-migration` (lib) due to 2 previous errors

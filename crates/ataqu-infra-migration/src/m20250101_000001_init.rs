@@ -7,6 +7,7 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        println!("Running migration: m20250101_000001_init");
         let conn = manager.get_connection();
         conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS public;").await?;
         

@@ -1,5 +1,4 @@
 use sea_orm_migration::prelude::*;
-use sea_orm_migration::sea_orm::ConnectionTrait;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -7,61 +6,108 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let conn = manager.get_connection();
+        // Create schema
+        manager
+            .get_connection()
+            .execute_unprepared("CREATE SCHEMA IF NOT EXISTS dial")
+            .await?;
 
-        // Create channels table
-        conn.execute_unprepared(
-            r#"
-            CREATE TABLE IF NOT EXISTS dial.channels (
-                id UUID PRIMARY KEY,
-                tenant_id UUID NOT NULL,
-                name TEXT NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        // Channels
+        manager
+            .create_table(
+                Table::create()
+                    .table((Alias::new("dial"), Channels::Table))
+                    .if_not_exists()
+                    .col(ColumnDef::new(Channels::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(Channels::TenantId).uuid().not_null())
+                    .col(ColumnDef::new(Channels::Name).string().not_null())
+                    .col(ColumnDef::new(Channels::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(ColumnDef::new(Channels::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .to_owned(),
             )
-            "#
-        )
-        .await?;
+            .await?;
 
-        // Create messages table
-        conn.execute_unprepared(
-            r#"
-            CREATE TABLE IF NOT EXISTS dial.messages (
-                id UUID PRIMARY KEY,
-                channel_id UUID NOT NULL REFERENCES dial.channels(id) ON DELETE CASCADE,
-                tenant_id UUID NOT NULL,
-                sender_id UUID NOT NULL,
-                content TEXT NOT NULL,
-                sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        // Messages
+        manager
+            .create_table(
+                Table::create()
+                    .table((Alias::new("dial"), Messages::Table))
+                    .if_not_exists()
+                    .col(ColumnDef::new(Messages::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(Messages::ChannelId).uuid().not_null())
+                    .col(ColumnDef::new(Messages::TenantId).uuid().not_null())
+                    .col(ColumnDef::new(Messages::SenderId).uuid().not_null())
+                    .col(ColumnDef::new(Messages::Content).string().not_null())
+                    .col(ColumnDef::new(Messages::SentAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(ColumnDef::new(Messages::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .to_owned(),
             )
-            "#
-        )
-        .await?;
+            .await?;
 
-        // Create indexes
-        conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_channels_tenant ON dial.channels (tenant_id)",
-        )
-        .await?;
-        conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_messages_tenant_channel ON dial.messages (tenant_id, channel_id)",
-        )
-        .await?;
-        conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_messages_sent_at ON dial.messages (sent_at)",
-        )
-        .await?;
+        // Indexes
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_channels_tenant")
+                    .table((Alias::new("dial"), Channels::Table))
+                    .col(Channels::TenantId)
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_messages_tenant_channel")
+                    .table((Alias::new("dial"), Messages::Table))
+                    .col(Messages::TenantId)
+                    .col(Messages::ChannelId)
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_messages_sent_at")
+                    .table((Alias::new("dial"), Messages::Table))
+                    .col(Messages::SentAt)
+                    .to_owned(),
+            )
+            .await?;
 
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS dial.messages")
+        manager
+            .drop_table(Table::drop().table((Alias::new("dial"), Messages::Table)).to_owned())
             .await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS dial.channels")
+        manager
+            .drop_table(Table::drop().table((Alias::new("dial"), Channels::Table)).to_owned())
             .await?;
         Ok(())
     }
+}
+
+#[derive(Iden)]
+enum Channels {
+    Table,
+    Id,
+    TenantId,
+    Name,
+    CreatedAt,
+    UpdatedAt,
+}
+
+#[derive(Iden)]
+enum Messages {
+    Table,
+    Id,
+    ChannelId,
+    TenantId,
+    SenderId,
+    Content,
+    SentAt,
+    CreatedAt,
 }

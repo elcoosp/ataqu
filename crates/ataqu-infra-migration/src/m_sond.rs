@@ -1,4 +1,3 @@
-use sea_orm::{DbBackend, Statement};
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -7,117 +6,105 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let db = manager.get_connection();
+        manager
+            .get_connection()
+            .execute_unprepared("CREATE SCHEMA IF NOT EXISTS collab_ops")
+            .await?;
 
+        // Forms
         manager
             .create_table(
                 Table::create()
-                    .table((Alias::new("collab_ops"), Alias::new("forms")))
+                    .table((Alias::new("collab_ops"), Forms::Table))
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Alias::new("id"))
-                            .uuid()
-                            .not_null()
-                            .primary_key(),
-                    )
-                    .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("title")).text().not_null())
-                    .col(ColumnDef::new(Alias::new("description")).text().null())
-                    .col(
-                        ColumnDef::new(Alias::new("schema_json"))
-                            .json_binary()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(Alias::new("is_active"))
-                            .boolean()
-                            .not_null()
-                            .default(true),
-                    )
-                    .col(
-                        ColumnDef::new(Alias::new("created_at"))
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        ColumnDef::new(Alias::new("updated_at"))
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default(Expr::current_timestamp()),
-                    )
+                    .col(ColumnDef::new(Forms::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(Forms::TenantId).uuid().not_null())
+                    .col(ColumnDef::new(Forms::Title).text().not_null())
+                    .col(ColumnDef::new(Forms::Description).text())
+                    .col(ColumnDef::new(Forms::SchemaJson).json_binary().not_null())
+                    .col(ColumnDef::new(Forms::IsActive).boolean().not_null().default(true))
+                    .col(ColumnDef::new(Forms::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(ColumnDef::new(Forms::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .to_owned(),
+            )
+            .await?;
+
+        // Submissions
+        manager
+            .create_table(
+                Table::create()
+                    .table((Alias::new("collab_ops"), Submissions::Table))
+                    .if_not_exists()
+                    .col(ColumnDef::new(Submissions::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(Submissions::TenantId).uuid().not_null())
+                    .col(ColumnDef::new(Submissions::FormId).uuid().not_null())
+                    .col(ColumnDef::new(Submissions::RespondentId).uuid())
+                    .col(ColumnDef::new(Submissions::ResponseData).json_binary().not_null())
+                    .col(ColumnDef::new(Submissions::SubmittedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .to_owned(),
+            )
+            .await?;
+
+        // Foreign key and indexes (raw SQL for constraint)
+        let conn = manager.get_connection();
+        conn.execute_unprepared(
+            "ALTER TABLE collab_ops.submissions ADD CONSTRAINT fk_submissions_form FOREIGN KEY (form_id) REFERENCES collab_ops.forms(id) ON DELETE CASCADE;"
+        ).await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_submissions_tenant")
+                    .table((Alias::new("collab_ops"), Submissions::Table))
+                    .col(Submissions::TenantId)
                     .to_owned(),
             )
             .await?;
 
         manager
-            .create_table(
-                Table::create()
-                    .table((Alias::new("collab_ops"), Alias::new("submissions")))
-                    .if_not_exists()
-                    .col(
-                        ColumnDef::new(Alias::new("id"))
-                            .uuid()
-                            .not_null()
-                            .primary_key(),
-                    )
-                    .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("form_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("respondent_id")).uuid().null())
-                    .col(
-                        ColumnDef::new(Alias::new("response_data"))
-                            .json_binary()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(Alias::new("submitted_at"))
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default(Expr::current_timestamp()),
-                    )
+            .create_index(
+                Index::create()
+                    .name("idx_submissions_form")
+                    .table((Alias::new("collab_ops"), Submissions::Table))
+                    .col(Submissions::FormId)
                     .to_owned(),
             )
             .await?;
-
-        // Add foreign key constraint
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "ALTER TABLE collab_ops.submissions ADD CONSTRAINT fk_submissions_form FOREIGN KEY (form_id) REFERENCES collab_ops.forms(id) ON DELETE CASCADE;",
-            [],
-        ))
-        .await?;
-
-        // Add indexes (no RLS for now)
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "CREATE INDEX IF NOT EXISTS idx_submissions_tenant ON collab_ops.submissions (tenant_id);",
-            [],
-        ))
-        .await?;
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "CREATE INDEX IF NOT EXISTS idx_submissions_form ON collab_ops.submissions (form_id);",
-            [],
-        ))
-        .await?;
 
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let db = manager.get_connection();
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "DROP TABLE IF EXISTS collab_ops.submissions CASCADE;",
-            [],
-        ))
-        .await?;
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "DROP TABLE IF EXISTS collab_ops.forms CASCADE;",
-            [],
-        ))
-        .await?;
+        manager
+            .drop_table(Table::drop().table((Alias::new("collab_ops"), Submissions::Table)).to_owned())
+            .await?;
+        manager
+            .drop_table(Table::drop().table((Alias::new("collab_ops"), Forms::Table)).to_owned())
+            .await?;
         Ok(())
     }
+}
+
+#[derive(Iden)]
+enum Forms {
+    Table,
+    Id,
+    TenantId,
+    Title,
+    Description,
+    SchemaJson,
+    IsActive,
+    CreatedAt,
+    UpdatedAt,
+}
+
+#[derive(Iden)]
+enum Submissions {
+    Table,
+    Id,
+    TenantId,
+    FormId,
+    RespondentId,
+    ResponseData,
+    SubmittedAt,
 }
