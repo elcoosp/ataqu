@@ -2,10 +2,9 @@ import React from 'react';
 import { useAuthStore, useUIStore } from '@ataqu/shared-stores';
 import { CommandPalette } from './command-palette';
 import { Button } from './button';
-// Use a simple div for avatar instead of importing avatar component
 import { Menu, X } from 'lucide-react';
 
-// App icons mapping - we'll use simple emojis for now
+// App icons mapping - use emojis for now
 const APP_ICONS: Record<string, string> = {
   aegis: '🔐',
   cinq: '📊',
@@ -19,7 +18,6 @@ const APP_ICONS: Record<string, string> = {
   vista: '📈',
 };
 
-// App names for display
 const APP_NAMES: Record<string, string> = {
   aegis: 'AEGIS',
   cinq: 'CINQ',
@@ -33,7 +31,6 @@ const APP_NAMES: Record<string, string> = {
   vista: 'VISTA',
 };
 
-// App subdomains
 const APP_DOMAINS: Record<string, string> = {
   aegis: 'sso',
   cinq: 'crm',
@@ -129,20 +126,7 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="lg:hidden text-gray-400 hover:text-white"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <span className="font-heading text-xl text-white hidden sm:block">
-              {APP_NAMES[activeApp] || 'Ataqu'}
-            </span>
-          </div>
+        <header className="h-16 flex items-center justify-end px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
