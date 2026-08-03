@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,6 +18,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         generatedRouteTree: './src/routeTree.gen.ts',
       }),
       react(),
+      tailwindcss(), // <-- Tailwind v4 Vite plugin
     ],
     server: {
       proxy: {
@@ -24,7 +26,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         '/ws': { target: 'ws://localhost:8080', ws: true },
       },
     },
-    // ✅ NO aliases — rely on pnpm workspace symlinks + package.json "exports"
+    // No aliases needed — pnpm workspace + exports handle it
     build: {
       target: 'es2024',
       minify: 'esbuild',
