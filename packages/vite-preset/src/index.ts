@@ -1,11 +1,17 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/postcss';
 import autoprefixer from 'autoprefixer';
 
+// Get __dirname equivalent in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
-  const rootDir = path.resolve(__dirname, '../../../'); // from packages/vite-preset/src to root
+  // rootDir is the monorepo root: go up from packages/vite-preset/src to root
+  const rootDir = path.resolve(__dirname, '../../../');
 
   return defineConfig({
     plugins: [react()],
