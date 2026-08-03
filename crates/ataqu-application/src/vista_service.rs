@@ -231,9 +231,7 @@ pub trait VistaAggregationPort: Send + Sync {
 /// NOTE: In production, this is `ataqu_kernel::Clock`. Defined locally
 /// until the kernel crate's exact API is wired into this crate's
 /// dependencies. The trait signature matches ADR-013.
-pub trait Clock: Send + Sync {
-    fn now(&self) -> SystemTime;
-}
+
 
 /// System clock implementation using `SystemTime::now()`.
 pub struct SystemClock;
@@ -1029,6 +1027,8 @@ mod tests {
     #[tokio::test]
     async fn test_kpi_stream_filters_other_tenant() {
         use tokio_stream::StreamExt;
+use ataqu_kernel::{Clock, IdGenerator};
+use ataqu_kernel::TenantId;
 
         let broadcaster = KpiBroadcaster::new(16);
         let mut stream = create_kpi_stream(&broadcaster, TENANT_A);

@@ -34,3 +34,28 @@ async fn update_stock() -> Json<Value> { Json(json!({})) }
 async fn list_movements() -> Json<Vec<Value>> { Json(vec![]) }
 async fn record_movement() -> Json<Value> { Json(json!({})) }
 async fn list_alerts() -> Json<Vec<Value>> { Json(vec![]) }
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}

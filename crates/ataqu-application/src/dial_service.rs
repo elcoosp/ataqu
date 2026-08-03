@@ -214,6 +214,8 @@ mod tests {
     use ataqu_kernel::{MockClock, MockIdGenerator};
     use std::sync::Arc;
     use uuid::Uuid;
+use ataqu_kernel::{Clock, IdGenerator};
+use ataqu_kernel::TenantId;
 
     // Dummy implementations for testing (assume we can't modify domain/infra)
     struct DummyIdempotencyGuard;

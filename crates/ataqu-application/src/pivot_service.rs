@@ -13,6 +13,8 @@ use ataqu_contracts::pivot::{
 };
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
+use ataqu_kernel::{Clock, IdGenerator};
+use ataqu_kernel::TenantId;
 
 // ---------- Error types ----------
 #[derive(Debug, thiserror::Error)]

@@ -1,6 +1,0 @@
-    Blocking waiting for file lock on package cache
-    Blocking waiting for file lock on package cache
-    Blocking waiting for file lock on build directory
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.80s
-     Running `target/debug/migratorMigrator connecting to: postgres://postgres:postgres@127.0.0.1:5433/ataqu_test
-Error: Exec(SqlxError(Database(PgDatabaseError { severity: Error, code: "42P01", message: "relation \"coreError: Exec(SqlxError(Database(PgDatabaseError { severity: Error, code: "42P01", message: "relation \"core.idempotency_records\" does not exist", detail: None, hint: None, position: None, where: None, schema: None, table: None, column: None, data_type: None, constraint: None, file: Some("namespace.c"), line: Some(631), routine: Some("RangeVarGetRelidExtended") })))

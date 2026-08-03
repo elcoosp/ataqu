@@ -26,7 +26,7 @@ impl<'a> Serialize for ApiEmail<'a> {
     where
         S: serde::Serializer,
     {
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         serializer.serialize_str(self.0.reveal(&key))
     }
 }
@@ -235,4 +235,9 @@ mod tests {
     fn test_dummy() {
         assert_eq!(1, 1);
     }
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
 }

@@ -692,3 +692,23 @@ mod tests {
         assert!(response.trend_pct.is_none());
     }
 }
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}

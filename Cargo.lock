@@ -348,8 +348,17 @@ dependencies = [
  "anyhow",
  "async-trait",
  "ataqu-contracts",
+ "ataqu-domain-aegis",
  "ataqu-domain-cinq",
+ "ataqu-domain-dial",
+ "ataqu-domain-gdpr",
+ "ataqu-domain-pause",
  "ataqu-domain-pivot",
+ "ataqu-domain-sond",
+ "ataqu-domain-spark",
+ "ataqu-domain-tempo",
+ "ataqu-domain-vault",
+ "ataqu-domain-vista",
  "ataqu-infra-idempotency",
  "ataqu-infra-repositories",
  "ataqu-kernel",
@@ -430,6 +439,11 @@ version = "0.1.0"
 [[package]]
 name = "ataqu-domain-pause"
 version = "0.1.0"
+dependencies = [
+ "ataqu-kernel",
+ "serde",
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-pivot"

@@ -96,6 +96,8 @@ where
         _command_id: Uuid,
     ) -> CinqResult<DealCreated> {
         use ataqu_domain_cinq::deal::create_deal;
+use ataqu_kernel::{Clock, IdGenerator};
+use ataqu_kernel::TenantId;
         let event = create_deal(cmd, &self.id_gen, &self.clock).map_err(|e| CinqError::Domain(e.to_string()))?;
         Ok(event)
     }

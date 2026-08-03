@@ -1,32 +1,64 @@
+//! Ataqu API - unified HTTP server for all 10 apps.
+
 pub mod error;
 pub mod handlers;
 pub mod middleware;
 pub mod serializers;
 
 use axum::Router;
+use std::sync::Arc;
+
+// Import all application services.
+use ataqu_application::aegis_service::AegisService;
+use ataqu_application::cinq_service::CinqService;
+use ataqu_application::dial_service::DialService;
+use ataqu_application::pause_service::PauseService;
 use ataqu_application::pivot_service::PivotService;
+use ataqu_application::sond_service::SondService;
+use ataqu_application::spark_service::SparkService;
+use ataqu_application::tempo_service::TempoService;
+use ataqu_application::vault_service::VaultService;
+use ataqu_application::vista_service::VistaService;
 
-// Placeholder services with Clone
-#[derive(Clone)]
-pub struct SondService;
-#[derive(Clone)]
-pub struct SparkService;
-#[derive(Clone)]
-pub struct VaultService;
-
+// For now, use placeholder generics; in production, we'll use real repositories.
+// We'll create a unified AppState.
 #[derive(Clone)]
 pub struct AppState {
-    pub sond_service: SondService,
-    pub spark_service: SparkService,
-    pub vault_service: VaultService,
-    pub pivot_service: PivotService,  // concrete type, no generics
+    pub aegis_service: Arc<AegisService<(), (), ()>>,  // Placeholder generics
+    pub cinq_service: Arc<CinqService<(), (), (), (), ()>>,
+    pub dial_service: Arc<DialService>,
+    pub pause_service: Arc<PauseService>,
+    pub pivot_service: Arc<PivotService>,
+    pub sond_service: Arc<SondService>,
+    pub spark_service: Arc<SparkService>,
+    pub tempo_service: Arc<TempoService<(), (), (), ()>>,
+    pub vault_service: Arc<VaultService>,
+    pub vista_service: Arc<VistaService>,
 }
 
+// Helper to create a router with all app routes.
 pub fn create_router(state: AppState) -> Router {
+    use handlers::aegis::aegis_routes;
+    use handlers::cinq::cinq_routes;
+    use handlers::dial::dial_routes;
+    use handlers::pause::pause_routes;
+    use handlers::pivot::pivot_routes;
+    use handlers::sond::sond_routes;
+    use handlers::spark::spark_routes;
+    use handlers::tempo::tempo_routes;
+    use handlers::vault::vault_routes;
+    use handlers::vista::vista_routes;
+
     Router::new()
-        .nest("/api/spark", handlers::spark::spark_router())
-        .nest("/api/sond", handlers::sond::router())
-        .nest("/api/tempo", handlers::tempo::router())
-        .nest("/api/pivot", handlers::pivot::routes())
+        .nest("/api/aegis", aegis_routes())
+        .nest("/api/cinq", cinq_routes())
+        .nest("/api/dial", dial_routes())
+        .nest("/api/pause", pause_routes())
+        .nest("/api/pivot", pivot_routes())
+        .nest("/api/sond", sond_routes())
+        .nest("/api/spark", spark_routes())
+        .nest("/api/tempo", tempo_routes())
+        .nest("/api/vault", vault_routes())
+        .nest("/api/vista", vista_routes())
         .with_state(state)
 }

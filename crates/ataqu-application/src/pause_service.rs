@@ -25,6 +25,8 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_domain_pause::employee::{create_employee, CreateEmployeeCommand, EmployeeCreatedEvent};
+use ataqu_domain_pause::leave::{request_leave, RequestLeaveCommand, LeaveRequestedEvent};
 use uuid::Uuid;
 
 use chrono::{DateTime, Utc};
@@ -329,53 +331,8 @@ fn validate_request_leave(cmd: &RequestLeaveCommand) -> Result<(), PauseServiceE
 /// # Panics
 /// This function does not panic. All impure operations are delegated to
 /// the injected `IdGenerator` and `Clock` capabilities.
-fn create_employee(
-    cmd: CreateEmployeeCommand,
-    tenant_id: &TenantId,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
-) -> EmployeeCreatedV1 {
-    let employee_id = id_gen.new_uuid_v7();
-    let created_at: DateTime<Utc> = clock.now().into();
-    let hire_date: DateTime<Utc> = cmd.hire_date.into();
-
-    EmployeeCreatedV1 {
-        employee_id,
-        tenant_id: tenant_id.as_uuid(),
-        name: cmd.name,
-        department: cmd.department,
-        position: cmd.position,
-        hire_date,
-        created_at,
-    }
 }
 
-/// Requests leave by generating IDs and timestamps via injected capabilities.
-///
-/// # Purity
-/// This function is pure — it performs no I/O and reads no system state.
-fn request_leave(
-    cmd: RequestLeaveCommand,
-    tenant_id: &TenantId,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
-) -> LeaveRequestedV1 {
-    let leave_request_id = id_gen.new_uuid_v7();
-    let created_at: DateTime<Utc> = clock.now().into();
-    let start_date: DateTime<Utc> = cmd.start_date.into();
-    let end_date: DateTime<Utc> = cmd.end_date.into();
-
-    LeaveRequestedV1 {
-        leave_request_id,
-        tenant_id: tenant_id.as_uuid(),
-        employee_id: cmd.employee_id,
-        leave_type: cmd.leave_type,
-        start_date,
-        end_date,
-        reason: cmd.reason,
-        created_at,
-    }
-}
 
 // ============================================================================
 // SERVICE
@@ -1733,4 +1690,3 @@ mod tests {
             "get_cached should fail when no cached response"
         );
     }
-}

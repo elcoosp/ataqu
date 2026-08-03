@@ -17,9 +17,18 @@ tracing = "0.1"
 tokio = { version = "1.52", features = ["sync", "rt", "time", "macros"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 ataqu-kernel = { path = "../ataqu-kernel" }
-ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
-ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
+ataqu-domain-cinq = { version = "0.1.0", path = "../ataqu-domain-cinq" }
+ataqu-domain-pivot = { version = "0.1.0", path = "../ataqu-domain-pivot" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-security = { version = "0.1.0", path = "../ataqu-security" }
+ataqu-domain-aegis = { version = "0.1.0", path = "../ataqu-domain-aegis" }
+ataqu-domain-pause = { version = "0.1.0", path = "../ataqu-domain-pause" }
+ataqu-domain-dial = { version = "0.1.0", path = "../ataqu-domain-dial" }
+ataqu-domain-sond = { version = "0.1.0", path = "../ataqu-domain-sond" }
+ataqu-domain-spark = { version = "0.1.0", path = "../ataqu-domain-spark" }
+ataqu-domain-tempo = { version = "0.1.0", path = "../ataqu-domain-tempo" }
+ataqu-domain-vault = { version = "0.1.0", path = "../ataqu-domain-vault" }
+ataqu-domain-vista = { version = "0.1.0", path = "../ataqu-domain-vista" }
+ataqu-domain-gdpr = { version = "0.1.0", path = "../ataqu-domain-gdpr" }

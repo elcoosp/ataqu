@@ -13,6 +13,7 @@ use tracing::{info, instrument, warn};
 use uuid::Uuid;
 
 use ataqu_security::Email;
+use ataqu_domain_aegis::{AuthError, User, UserCreatedEvent, create_user, authenticate, setup_mfa};
 
 // ----------------------------------------------------------------------
 // Domain commands and types
@@ -52,62 +53,17 @@ pub enum DomainError {
     AuthFailed,
 }
 
-#[derive(Debug, Clone)]
-pub struct User {
-    pub id: Uuid,
-    pub email: String,           // PII stored as String in application layer
-    pub password_hash: String,
-    pub mfa_secret: Option<String>,
-    pub mfa_enabled: bool,
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct UserCreatedEvent {
-    pub user_id: Uuid,
-    pub email: String,
-    pub created_at: SystemTime,
-}
 
-#[derive(Debug, Clone)]
-pub struct TokenPair {
-    pub access_token: String,
-    pub refresh_token: String,
-}
 
 // ----------------------------------------------------------------------
 // Traits for external capabilities
 // ----------------------------------------------------------------------
 
-pub trait IdGenerator: Send + Sync {
-    fn new_uuid_v7(&self) -> Uuid;
-}
 
-pub trait Clock: Send + Sync {
-    fn now(&self) -> SystemTime;
-}
 
-#[async_trait]
-pub trait AegisDomain: Send + Sync {
-    async fn create_user(
-        &self,
-        cmd: CreateUserCommand,
-        id_gen: &dyn IdGenerator,
-        clock: &dyn Clock,
-    ) -> Result<(UserCreatedEvent, User), DomainError>;
 
-    async fn authenticate(
-        &self,
-        cmd: AuthenticateCommand,
-        user: User,
-        clock: &dyn Clock,
-    ) -> Result<TokenPair, DomainError>;
 
-    async fn setup_mfa(
-        &self,
-        user: &mut User,
-        clock: &dyn Clock,
-    ) -> Result<(String, String), DomainError>;
-}
 
 #[async_trait]
 pub trait UserRepository: Send + Sync {
@@ -401,6 +357,8 @@ impl Clock for SystemClock {
 #[cfg(test)]
 mod tests {
     use super::*;
+use ataqu_kernel::{Clock, IdGenerator};
+use ataqu_kernel::TenantId;
 
     #[test]
     fn service_compiles() {

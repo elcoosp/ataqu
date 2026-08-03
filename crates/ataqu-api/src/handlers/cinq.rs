@@ -161,3 +161,8 @@ pub fn cinq_routes() -> Router<Arc<AppState>> {
         .route("/csv/export", axum::routing::get(export_csv))
         .route("/email/track", axum::routing::post(track_email))
 }
+use axum::Router;
+
+pub fn routes() -> Router<crate::AppState> {
+    Router::new()
+}

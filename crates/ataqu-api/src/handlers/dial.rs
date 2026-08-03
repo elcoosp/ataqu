@@ -303,3 +303,8 @@ pub struct SearchResults {
 }
 
 // Re-export TenantId from kernel
+pub fn routes() -> axum::Router<crate::AppState> {
+    use axum::routing::get;
+    axum::Router::new()
+        .route("/", get(|| async { "Placeholder for $app" }))
+}
