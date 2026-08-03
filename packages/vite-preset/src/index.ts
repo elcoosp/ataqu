@@ -21,8 +21,10 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         generatedRouteTree: './src/routeTree.gen.ts',
       }),
       react(),
-      tailwindcss(), // <-- Tailwind v4 Vite plugin
+      tailwindcss(),
     ],
+    // 👇 Serve shared assets from packages/shared-assets/public
+    publicDir: path.resolve(packagesDir, 'shared-assets/public'),
     server: {
       proxy: {
         '/api': 'http://localhost:8080',
@@ -31,11 +33,8 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
     },
     resolve: {
       alias: [
-        // Exact match for the main entry
         { find: /^@ataqu\/ui$/, replacement: path.resolve(packagesDir, 'ui/src/index.ts') },
-        // Exact match for styles.css subpath
         { find: /^@ataqu\/ui\/styles\.css$/, replacement: path.resolve(packagesDir, 'ui/src/styles.css') },
-        // For other packages, generic alias
         { find: /^@ataqu\/(.+)$/, replacement: path.resolve(packagesDir, '$1/src/index.ts') },
       ],
     },
