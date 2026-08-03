@@ -8,3 +8,4 @@ pub mod spark_service;
 pub mod tempo_service;
 pub mod vault_service;
 pub mod vista_service;
+pub mod pause_infra;

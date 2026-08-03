@@ -168,42 +168,14 @@ async fn main() -> anyhow::Result<()> {
     let vista_kpi = Arc::new(ataqu_application::vista_service::InMemoryKpiStore::default());
     let vista_service = Arc::new(VistaService::new(vista_outbox, vista_kpi, clock.clone()));
 
-    // PAUSE – real repositories, dummy idempotency/outbox for now
+    // PAUSE – real repositories, real idempotency, real outbox
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
-    use ataqu_application::pause_service::{
-        IdempotencyPort, IdempotencyGuardHandle,
-        OutboxPort,
-    };
-    use async_trait::async_trait;
+    use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
 
-    // Dummy idempotency
-    struct DummyIdempotency;
-    #[async_trait]
-    impl IdempotencyPort for DummyIdempotency {
-        async fn acquire(&self, _cmd_id: &Uuid) -> Result<IdempotencyGuardHandle, ataqu_application::pause_service::PauseServiceError> {
-            Ok(IdempotencyGuardHandle::new(None))
-        }
-        async fn commit(&self, _cmd_id: &Uuid, _resp: serde_json::Value) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
-            Ok(())
-        }
-        async fn rollback(&self, _cmd_id: &Uuid) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
-            Ok(())
-        }
-    }
-
-    // Dummy outbox
-    struct DummyOutbox;
-    #[async_trait]
-    impl OutboxPort for DummyOutbox {
-        async fn append(&self, _schema: &str, _event_type: &str, _agg_id: Uuid, _payload: &serde_json::Value) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
-            Ok(())
-        }
-    }
-
-    let pause_idempotency = Arc::new(DummyIdempotency);
+    let pause_idempotency = Arc::new(RealIdempotency::new(pools.core.clone()));
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
-    let pause_outbox = Arc::new(DummyOutbox);
+    let pause_outbox = Arc::new(RealOutbox::new(pools.core.clone()));
     let pause_service = Arc::new(PauseService::new(
         pause_idempotency,
         pause_employee_repo,

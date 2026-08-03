@@ -364,6 +364,7 @@ dependencies = [
  "ataqu-domain-vault",
  "ataqu-domain-vista",
  "ataqu-infra-idempotency",
+ "ataqu-infra-outbox",
  "ataqu-kernel",
  "ataqu-security",
  "chrono",
