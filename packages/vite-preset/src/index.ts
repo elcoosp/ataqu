@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +21,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         generatedRouteTree: './src/routeTree.gen.ts',
       }),
       react(),
+      tailwindcss(), // <-- Tailwind v4 Vite plugin
     ],
     server: {
       proxy: {
@@ -33,10 +35,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         { find: /^@ataqu\/ui$/, replacement: path.resolve(packagesDir, 'ui/src/index.ts') },
         // Exact match for styles.css subpath
         { find: /^@ataqu\/ui\/styles\.css$/, replacement: path.resolve(packagesDir, 'ui/src/styles.css') },
-        // For other packages, generic alias (but we'll keep it as a fallback)
-        // But we want to avoid prefix matching for ui, so we add a generic after.
-        // Actually, we can use a regex that doesn't match ui subpaths.
-        // Simpler: we'll map all @ataqu/* to packages/* but the UI-specific ones will be caught first.
+        // For other packages, generic alias
         { find: /^@ataqu\/(.+)$/, replacement: path.resolve(packagesDir, '$1/src/index.ts') },
       ],
     },
