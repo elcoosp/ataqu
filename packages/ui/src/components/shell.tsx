@@ -79,7 +79,7 @@ export interface ShellProps {
 export const Shell: React.FC<ShellProps> = ({ activeApp, children, searchFn, extraSidebarItems = [] }) => {
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { user, logout } = useAuthStore();
-  const [appsExpanded, setAppsExpanded] = useState(true); // default expanded
+  const [appsExpanded, setAppsExpanded] = useState(true);
 
   const appKeys = Object.keys(APP_ICONS);
 
@@ -106,7 +106,7 @@ export const Shell: React.FC<ShellProps> = ({ activeApp, children, searchFn, ext
         </div>
 
         <nav className="flex-1 py-4 overflow-y-auto">
-          {/* All Apps collapsible section */}
+          {/* All Apps collapsible section – only when expanded */}
           {sidebarOpen && (
             <div className="px-4 mb-2">
               <button
@@ -118,7 +118,7 @@ export const Shell: React.FC<ShellProps> = ({ activeApp, children, searchFn, ext
               </button>
             </div>
           )}
-          {appsExpanded && (
+          {sidebarOpen && appsExpanded && (
             <>
               {appKeys.map((app) => {
                 const iconSrc = APP_ICONS[app];
@@ -148,18 +148,20 @@ export const Shell: React.FC<ShellProps> = ({ activeApp, children, searchFn, ext
             </>
           )}
 
-          {/* Extra sidebar items (per-app custom menu) */}
-          {extraSidebarItems.length > 0 && sidebarOpen && (
+          {/* Extra sidebar items – always shown, but only icons when collapsed */}
+          {extraSidebarItems.length > 0 && (
             <>
-              <div className="border-t border-gray-700/40 my-2" />
+              {sidebarOpen && <div className="border-t border-gray-700/40 my-2" />}
               {extraSidebarItems.map((item, idx) => (
                 <a
                   key={idx}
                   href={item.href}
-                  className="flex items-center px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                  className={`flex items-center px-4 py-3 transition-colors text-gray-400 hover:text-white hover:bg-white/5 ${
+                    sidebarOpen ? 'text-sm' : 'justify-center'
+                  }`}
                 >
-                  {item.icon && <span className="mr-3">{item.icon}</span>}
-                  {item.label}
+                  {item.icon && <span className={sidebarOpen ? 'mr-3' : ''}>{item.icon}</span>}
+                  {sidebarOpen && item.label}
                 </a>
               ))}
             </>
@@ -194,7 +196,7 @@ export const Shell: React.FC<ShellProps> = ({ activeApp, children, searchFn, ext
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header with app name - removed user avatar */}
+        {/* Header with app name - no avatar */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
           <span className="font-heading text-xl text-white">{APP_NAMES[activeApp] || 'Ataqu'}</span>
           <div className="flex items-center gap-4">
