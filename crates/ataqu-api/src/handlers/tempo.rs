@@ -1,14 +1,14 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::{IntoResponse, Json},
+    response::Json,
     Router,
 };
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
-use ataqu_application::tempo_service::{TempoService, CreateBookingCommand, Booking};
+use ataqu_application::tempo_service::{CreateBookingCommand, Booking};
 use ataqu_kernel::TenantId;
 use crate::AppState;
 

@@ -1,14 +1,14 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::{IntoResponse, Json},
+    response::Json,
     Router,
 };
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use ataqu_application::sond_service::{SondService, CreateFormCommand, SubmitResponseCommand, Form, Submission};
+use ataqu_application::sond_service::{CreateFormCommand, SubmitResponseCommand, Form};
 use ataqu_kernel::TenantId;
 use crate::AppState;
 
@@ -64,9 +64,10 @@ pub async fn create_form(
 pub async fn list_forms(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<FormResponse>>, StatusCode> {
-    // SondService doesn't have list_forms; we'll add a simple in-memory list.
-    // For now, we'll return an empty list.
-    Ok(Json(vec![]))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let forms = state.sond_service.list_forms(tenant_id).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(forms.into_iter().map(|f| f.into()).collect()))
 }
 
 pub async fn get_form(

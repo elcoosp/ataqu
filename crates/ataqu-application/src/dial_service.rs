@@ -42,6 +42,30 @@ pub struct SendMessageCommand {
     pub content: String,
 }
 
+// --- Thread and mention support (stubs, will be expanded later) ---
+#[derive(Debug, Clone)]
+pub struct Thread {
+    pub id: Uuid,
+    pub channel_id: Uuid,
+    pub parent_message_id: Uuid,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Mention {
+    pub id: Uuid,
+    pub message_id: Uuid,
+    pub user_id: Uuid,
+    pub read_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StartThreadCommand {
+    pub tenant_id: TenantId,
+    pub channel_id: Uuid,
+    pub parent_message_id: Uuid,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum DialServiceError {
     #[error("Channel not found")]
@@ -84,7 +108,7 @@ impl DialService {
 
     pub async fn create_channel(&self, cmd: CreateChannelCommand) -> DialResult<Channel> {
         let id = self.id_gen.new_uuid_v7();
-        let now = self.clock.now().into();
+        let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
         let channel = Channel {
             id,
             tenant_id: cmd.tenant_id,
@@ -117,7 +141,7 @@ impl DialService {
             return Err(DialServiceError::Validation("Message content cannot be empty".into()));
         }
         let id = self.id_gen.new_uuid_v7();
-        let now = self.clock.now().into();
+        let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
         let msg = Message {
             id,
             channel_id: cmd.channel_id,
@@ -138,5 +162,40 @@ impl DialService {
             .cloned()
             .collect();
         Ok(msgs)
+    }
+
+    // --- Thread and mention methods ---
+    pub async fn start_thread(&self, cmd: StartThreadCommand) -> DialResult<Thread> {
+        // Validate channel exists
+        let _ = self.get_channel(cmd.tenant_id, cmd.channel_id).await?;
+        // In future, use domain: ataqu_domain_dial::chat::start_thread
+        let id = self.id_gen.new_uuid_v7();
+        let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
+        Ok(Thread {
+            id,
+            channel_id: cmd.channel_id,
+            parent_message_id: cmd.parent_message_id,
+            created_at: now,
+        })
+    }
+
+    pub async fn get_thread(&self, _tenant_id: TenantId, _thread_id: Uuid) -> DialResult<Thread> {
+        // Stub – not implemented
+        Err(DialServiceError::Internal("Thread not found".into()))
+    }
+
+    pub async fn add_mention(&self, _tenant_id: TenantId, message_id: Uuid, user_id: Uuid) -> DialResult<Mention> {
+        let id = self.id_gen.new_uuid_v7();
+        let _now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
+        Ok(Mention {
+            id,
+            message_id,
+            user_id,
+            read_at: None,
+        })
+    }
+
+    pub async fn list_mentions(&self, _tenant_id: TenantId, _user_id: Uuid) -> DialResult<Vec<Mention>> {
+        Ok(vec![])
     }
 }

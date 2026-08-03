@@ -70,6 +70,7 @@ struct ProductStore {
 
 pub struct VaultService {
     products: ProductStore,
+    variants: Arc<RwLock<HashMap<Uuid, Variant>>>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
@@ -78,6 +79,7 @@ impl VaultService {
     pub fn new(id_gen: Arc<dyn IdGenerator>, clock: Arc<dyn Clock>) -> Self {
         Self {
             products: ProductStore::default(),
+            variants: Arc::new(RwLock::new(HashMap::new())),
             id_gen,
             clock,
         }
@@ -134,5 +136,41 @@ impl VaultService {
         product.stock = new_stock;
         map.insert(cmd.product_id, product.clone());
         Ok(product)
+    }
+
+    pub async fn create_variant(&self, cmd: CreateVariantCommand) -> VaultResult<Variant> {
+        if cmd.sku.trim().is_empty() {
+            return Err(VaultServiceError::Validation("SKU cannot be empty".into()));
+        }
+        if cmd.initial_stock < 0 {
+            return Err(VaultServiceError::Validation("Initial stock cannot be negative".into()));
+        }
+        let id = self.id_gen.new_uuid_v7();
+        let now = self.clock.now().into();
+        let variant = Variant {
+            id,
+            product_id: cmd.product_id,
+            tenant_id: cmd.tenant_id,
+            sku: cmd.sku,
+            stock: cmd.initial_stock,
+            reserved: 0,
+            created_at: now,
+        };
+        self.variants.write().unwrap().insert(id, variant.clone());
+        Ok(variant)
+    }
+
+    pub async fn get_variant(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<Variant> {
+        let map = self.variants.read().unwrap();
+        map.get(&id)
+            .filter(|v| v.tenant_id == tenant_id)
+            .cloned()
+            .ok_or(VaultServiceError::ProductNotFound)
+    }
+
+    pub async fn list_variants(&self, tenant_id: TenantId) -> VaultResult<Vec<Variant>> {
+        let map = self.variants.read().unwrap();
+        let variants = map.values().filter(|v| v.tenant_id == tenant_id).cloned().collect();
+        Ok(variants)
     }
 }

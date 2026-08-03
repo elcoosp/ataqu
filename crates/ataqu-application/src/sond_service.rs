@@ -133,4 +133,10 @@ impl SondService {
             .collect();
         Ok(subs)
     }
+
+    pub async fn list_forms(&self, tenant_id: TenantId) -> SondResult<Vec<Form>> {
+        let map = self.forms.forms.read().unwrap();
+        let forms = map.values().filter(|f| f.tenant_id == tenant_id).cloned().collect();
+        Ok(forms)
+    }
 }

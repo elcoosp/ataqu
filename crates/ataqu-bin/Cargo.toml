@@ -33,3 +33,4 @@ anyhow = "1.0"
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls"] }
 async-trait = "0.1"
 sea-orm-migration = "2.0.0-rc.41"
+ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }

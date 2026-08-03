@@ -8,7 +8,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::{info, warn};
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 use ataqu_api::{AppState, create_router, UserRepoPlaceholder, OutboxPlaceholder, AegisDomainPlaceholder};
@@ -50,37 +50,13 @@ impl Clock for SystemClock {
 // ------------------------------------------------------------------------------
 // Outbox event handler (placeholder – will be expanded later)
 // ------------------------------------------------------------------------------
-async fn handle_outbox_event(
-    event: ataqu_infra_outbox::OutboxEvent,
-) -> Result<(), ataqu_infra_outbox::DispatcherError> {
-    use ataqu_infra_outbox::DispatcherError;
+async fn handle_outbox_event(event: ataqu_infra_outbox::OutboxEvent) -> Result<(), ataqu_infra_outbox::DispatcherError> {
     info!(
         "Processing outbox event: id={}, schema={}, event_type={}",
         event.id, event.schema, event.event_type
     );
-
-    match event.schema.as_str() {
-        "vista" => {
-            // For VISTA, we can process aggregation.
-            // We'll just log for now.
-            info!("VISTA event: {:?}", event);
-            Ok(())
-        }
-        "spark" => {
-            // Trigger workflow execution.
-            info!("SPARK event: {:?}", event);
-            Ok(())
-        }
-        "core" => {
-            // Handle core events (e.g., user created)
-            info!("Core event: {:?}", event);
-            Ok(())
-        }
-        _ => {
-            warn!("Unknown schema: {}", event.schema);
-            Ok(())
-        }
-    }
+    // TODO: Route to appropriate handlers based on schema/event_type
+    Ok(())
 }
 
 // ------------------------------------------------------------------------------
@@ -152,7 +128,7 @@ async fn main() -> anyhow::Result<()> {
     let vista_kpi = Arc::new(ataqu_application::vista_service::InMemoryKpiStore::default());
     let vista_service = Arc::new(VistaService::new(vista_outbox, vista_kpi, clock.clone()));
 
-    // PAUSE – with no-op implementations
+    // PAUSE – no-op implementations
     use ataqu_application::pause_service::{
         IdempotencyPort, IdempotencyGuardHandle,
         EmployeeRepositoryPort, LeaveRequestRepositoryPort, OutboxPort,

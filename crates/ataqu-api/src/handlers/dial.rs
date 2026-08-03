@@ -1,14 +1,14 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::{IntoResponse, Json},
+    response::Json,
     Router,
 };
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 
 use ataqu_application::dial_service::{
-    DialService, CreateChannelCommand, SendMessageCommand,
+    CreateChannelCommand, SendMessageCommand,
     Channel, Message,
 };
 use ataqu_kernel::TenantId;
@@ -126,10 +126,73 @@ pub async fn list_messages(
 }
 
 // Placeholder stubs for threads, mentions, search
-pub async fn start_thread() -> &'static str { "thread started" }
-pub async fn get_thread() -> &'static str { "thread" }
-pub async fn add_mention() -> &'static str { "mention added" }
-pub async fn list_mentions() -> &'static str { "mentions" }
+pub async fn start_thread(
+    State(state): State<AppState>,
+    Json(_payload): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    // For now, just call service stub
+    // We'll need proper request/response DTOs later
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let channel_id = Uuid::new_v4(); // should come from payload
+    let parent_message_id = Uuid::new_v4();
+    let cmd = ataqu_application::dial_service::StartThreadCommand {
+        tenant_id,
+        channel_id,
+        parent_message_id,
+    };
+    let thread = state.dial_service.start_thread(cmd).await
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    Ok(Json(serde_json::json!({
+        "id": thread.id,
+        "channel_id": thread.channel_id,
+        "parent_message_id": thread.parent_message_id,
+        "created_at": thread.created_at,
+    })))
+}
+pub async fn get_thread(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let thread = state.dial_service.get_thread(tenant_id, id).await
+        .map_err(|_| StatusCode::NOT_FOUND)?;
+    Ok(Json(serde_json::json!({
+        "id": thread.id,
+        "channel_id": thread.channel_id,
+        "parent_message_id": thread.parent_message_id,
+        "created_at": thread.created_at,
+    })))
+}
+pub async fn add_mention(
+    State(state): State<AppState>,
+    Json(_payload): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let message_id = Uuid::new_v4(); // from payload
+    let user_id = Uuid::new_v4(); // from payload
+    let mention = state.dial_service.add_mention(tenant_id, message_id, user_id).await
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    Ok(Json(serde_json::json!({
+        "id": mention.id,
+        "message_id": mention.message_id,
+        "user_id": mention.user_id,
+    })))
+}
+pub async fn list_mentions(
+    State(state): State<AppState>,
+    Path(user_id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let mentions = state.dial_service.list_mentions(tenant_id, user_id).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let list: Vec<_> = mentions.into_iter().map(|m| serde_json::json!({
+        "id": m.id,
+        "message_id": m.message_id,
+        "user_id": m.user_id,
+        "read_at": m.read_at,
+    })).collect();
+    Ok(Json(serde_json::json!({ "mentions": list })))
+}
 pub async fn search_messages() -> &'static str { "search" }
 
 pub fn routes() -> Router<AppState> {

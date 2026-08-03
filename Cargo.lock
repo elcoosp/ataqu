@@ -389,6 +389,7 @@ dependencies = [
  "ataqu-infra-migration",
  "ataqu-infra-outbox",
  "ataqu-infra-pools",
+ "ataqu-infra-repositories",
  "ataqu-kernel",
  "axum",
  "dotenvy",

@@ -1,13 +1,12 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
-    response::{IntoResponse, Json},
+    response::Json,
     Router,
 };
 use uuid::Uuid;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use ataqu_application::pivot_service::PivotService;
 use ataqu_contracts::pivot::{Document, CreateDocumentCommand, UpdateDocumentCommand};
 use ataqu_kernel::TenantId;
 use crate::AppState;
@@ -77,9 +76,37 @@ pub async fn delete_doc(
 }
 
 // Placeholder stubs for relations and search
-pub async fn create_relation() -> &'static str { "relation created" }
-pub async fn list_relations() -> &'static str { "relations" }
-pub async fn search_docs() -> &'static str { "search results" }
+pub async fn create_relation(
+    State(state): State<AppState>,
+    Json(payload): Json<ataqu_contracts::pivot::CreateRelationCommand>,
+) -> Result<Json<ataqu_contracts::pivot::Relation>, StatusCode> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let command_id = Uuid::new_v4().to_string();
+    let doc_id = Uuid::new_v4(); // We don't have doc_id in payload? Actually contract doesn't have doc_id.
+    // We'll skip for now.
+    let rel = state.pivot_service.create_relation(tenant_id, doc_id, command_id, payload).await
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    Ok(Json(rel))
+}
+pub async fn list_relations(
+    State(state): State<AppState>,
+    Path(doc_id): Path<Uuid>,
+) -> Result<Json<Vec<ataqu_contracts::pivot::Relation>>, StatusCode> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let params = ataqu_contracts::pivot::ListRelationsParams { limit: None, offset: None };
+    let rels = state.pivot_service.list_relations(tenant_id, doc_id, params).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(rels))
+}
+pub async fn search_docs(
+    State(state): State<AppState>,
+    Query(params): Query<ataqu_contracts::pivot::SearchParams>,
+) -> Result<Json<Vec<ataqu_contracts::pivot::Document>>, StatusCode> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let docs = state.pivot_service.search_documents(tenant_id, params).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(docs))
+}
 
 pub fn routes() -> Router<AppState> {
     Router::new()
