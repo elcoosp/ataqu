@@ -6,7 +6,7 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from '../ui/command';
+} from '@ataqu/ui';
 import { Home, Search, LogOut } from 'lucide-react';
 import { useAuthStore } from '@ataqu/shared-stores';
 import { useNavigate } from '@tanstack/react-router';
