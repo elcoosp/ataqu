@@ -1,1 +1,2 @@
-/*eslint-disable*/module.exports={messages:JSON.parse("{}")};
+/*eslint-disable*/
+export const messages = {};

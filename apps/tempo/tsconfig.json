@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"],
-      "@ataqu/*": ["../../packages/*/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*", "e2e/**/*", "src/routeTree.gen.ts"],

@@ -26,8 +26,8 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('ataqu-locale', detected);
   }, []);
 
-  // If messages aren't loaded yet, show nothing
   if (!i18n.messages[locale]) {
+    // Fallback: just show children without translation
     return <>{children}</>;
   }
 

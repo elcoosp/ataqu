@@ -37,9 +37,8 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       tailwindcss(),
     ],
     resolve: {
-      // Enable native tsconfig path resolution (replaces vite-tsconfig-paths)
+      // Native tsconfig path resolution – works per package based on its own tsconfig
       tsconfigPaths: true,
-      // Dedupe to avoid pnpm symlink resolution issues
       dedupe: [
         'react',
         'react-dom',
