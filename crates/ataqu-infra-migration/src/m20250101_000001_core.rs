@@ -9,71 +9,122 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
 
-        // Create all schemas
-        for schema in &["core", "collab_crm", "collab_ops", "vault", "dial", "vista"] {
-            conn.execute_unprepared(&format!("CREATE SCHEMA IF NOT EXISTS {};", schema)).await?;
-        }
+        // Create core schema
+        conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS core;").await?;
 
-        // Create the app roles (idempotent with DO block)
-        for role in &["core_role", "cinq_role", "ops_role", "vault_role", "dial_role", "vista_role", "dispatcher_role", "admin_role"] {
-            let sql = format!("DO $$ BEGIN CREATE ROLE {}; EXCEPTION WHEN duplicate_object THEN NULL; END $$;", role);
-            conn.execute_unprepared(&sql).await?;
-        }
-
-        // Create app_schema ENUM (simple, no exception handling because we only run once)
+        // Create app_schema ENUM using SeaORM's raw SQL – but we'll use DO block to avoid IF NOT EXISTS issues
         conn.execute_unprepared(
-            "CREATE TYPE app_schema AS ENUM ('core', 'collab_crm', 'collab_ops', 'vault', 'dial', 'vista');"
+            "DO $$ BEGIN
+                CREATE TYPE app_schema AS ENUM ('core', 'collab_crm', 'collab_ops', 'vault', 'dial', 'vista');
+             EXCEPTION
+                WHEN duplicate_object THEN NULL;
+             END $$;"
         ).await?;
 
-        // Create core.outbox table
+        // Create core.outbox table using SeaORM DSL
+        manager
+            .create_table(
+                Table::create()
+                    .table(Outbox::Table)
+                    .if_not_exists()
+                    .col(ColumnDef::new(Outbox::Id).big_integer().not_null().auto_increment().primary_key())
+                    .col(ColumnDef::new(Outbox::Schema).custom(Alias::new("app_schema")).not_null())
+                    .col(ColumnDef::new(Outbox::EventType).string().not_null())
+                    .col(ColumnDef::new(Outbox::AggregateId).uuid())
+                    .col(ColumnDef::new(Outbox::Payload).json_binary().not_null())
+                    .col(ColumnDef::new(Outbox::Status).string().not_null().default("pending"))
+                    .col(ColumnDef::new(Outbox::Priority).string().not_null().default("normal"))
+                    .col(ColumnDef::new(Outbox::Attempts).integer().not_null().default(0))
+                    .col(ColumnDef::new(Outbox::LockedUntil).timestamp_with_time_zone())
+                    .col(ColumnDef::new(Outbox::VistaConsumedAt).timestamp_with_time_zone())
+                    .col(
+                        ColumnDef::new(Outbox::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(Outbox::CompletedAt)
+                            .timestamp_with_time_zone(),
+                    )
+                    .to_owned(),
+            )
+            .await?;
+
+        // Create core.idempotency_records table
+        manager
+            .create_table(
+                Table::create()
+                    .table(IdempotencyRecord::Table)
+                    .if_not_exists()
+                    .col(ColumnDef::new(IdempotencyRecord::CommandId).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(IdempotencyRecord::Status).string().not_null())
+                    .col(ColumnDef::new(IdempotencyRecord::ResponseStatus).small_integer())
+                    .col(ColumnDef::new(IdempotencyRecord::ResponseBody).json_binary())
+                    .col(ColumnDef::new(IdempotencyRecord::ResponseHeaders).json_binary().default("{}"))
+                    .col(ColumnDef::new(IdempotencyRecord::AggregateId).uuid())
+                    .col(
+                        ColumnDef::new(IdempotencyRecord::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(IdempotencyRecord::CompletedAt)
+                            .timestamp_with_time_zone(),
+                    )
+                    .to_owned(),
+            )
+            .await?;
+
+        // Add CHECK constraint for status separately (SeaORM doesn't support it directly)
         conn.execute_unprepared(
-            r#"
-            CREATE TABLE core.outbox (
-                id BIGSERIAL PRIMARY KEY,
-                schema app_schema NOT NULL,
-                event_type TEXT NOT NULL,
-                aggregate_id UUID,
-                payload JSONB NOT NULL,
-                status TEXT NOT NULL DEFAULT 'pending',
-                priority TEXT NOT NULL DEFAULT 'normal',
-                attempts INT NOT NULL DEFAULT 0,
-                locked_until TIMESTAMPTZ,
-                vista_consumed_at TIMESTAMPTZ,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                completed_at TIMESTAMPTZ
-            );
-            "#
+            "ALTER TABLE core.idempotency_records ADD CONSTRAINT status_check CHECK (status IN ('in_progress', 'completed', 'failed'));"
         ).await?;
 
-        // Create core.idempotency_records
-        conn.execute_unprepared(
-            r#"
-            CREATE TABLE core.idempotency_records (
-                command_id UUID PRIMARY KEY,
-                status TEXT NOT NULL CHECK (status IN ('in_progress', 'completed', 'failed')),
-                response_status SMALLINT,
-                response_body JSONB,
-                response_headers JSONB DEFAULT '{}'::jsonb,
-                aggregate_id UUID,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                completed_at TIMESTAMPTZ
-            );
-            "#
-        ).await?;
-
-        // Grant sequence usage to all domain roles
-        conn.execute_unprepared(
-            "GRANT USAGE, SELECT ON SEQUENCE core.outbox_id_seq TO core_role, cinq_role, ops_role, vault_role, dial_role, vista_role;"
-        ).await?;
-
+        // We'll skip grants for now to avoid role dependency issues
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS core.idempotency_records;").await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS core.outbox;").await?;
+        manager
+            .drop_table(Table::drop().table(IdempotencyRecord::Table).to_owned())
+            .await?;
+        manager
+            .drop_table(Table::drop().table(Outbox::Table).to_owned())
+            .await?;
         conn.execute_unprepared("DROP TYPE IF EXISTS app_schema;").await?;
         Ok(())
     }
+}
+
+#[derive(DeriveIden)]
+enum Outbox {
+    Table,
+    Id,
+    Schema,
+    EventType,
+    AggregateId,
+    Payload,
+    Status,
+    Priority,
+    Attempts,
+    LockedUntil,
+    VistaConsumedAt,
+    CreatedAt,
+    CompletedAt,
+}
+
+#[derive(DeriveIden)]
+enum IdempotencyRecord {
+    Table,
+    CommandId,
+    Status,
+    ResponseStatus,
+    ResponseBody,
+    ResponseHeaders,
+    AggregateId,
+    CreatedAt,
+    CompletedAt,
 }
