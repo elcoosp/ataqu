@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { TourProvider, TourStep, useTour } from '@reactour/tour';
+import React from 'react';
+import { TourProvider, useTour } from '@reactour/tour';
+import type { TourStep } from '@reactour/tour';
 import { useOnboardingStore } from '@ataqu/shared-stores';
 import { Button } from './button';
 
