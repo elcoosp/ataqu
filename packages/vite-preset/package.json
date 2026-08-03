@@ -6,9 +6,13 @@
   "types": "src/index.ts",
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.4",
-    "vite": "^8.1.0",
+    "autoprefixer": "^10.4.20",
     "tailwindcss": "^4.3.0",
-    "autoprefixer": "^10.4.20"
+    "vite": "^8.1.0",
+    "@tailwindcss/postcss": "^4.0.0"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3"
+  }
 }
