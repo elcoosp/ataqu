@@ -3,12 +3,10 @@ import { fileURLToPath } from 'url';
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
-  // rootDir is the monorepo root: go up from packages/vite-preset/src to root
   const rootDir = path.resolve(__dirname, '../../../');
   const packagesDir = path.resolve(rootDir, 'packages');
 
@@ -22,12 +20,9 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
     },
     resolve: {
       alias: {
-        // Map all @ataqu/* to their respective index files
         '@ataqu': packagesDir,
-        // Explicit alias for ui and its subpath
+        // Explicit alias for main entry to avoid potential issues
         '@ataqu/ui': path.resolve(packagesDir, 'ui/src/index.ts'),
-        '@ataqu/ui/styles.css': path.resolve(packagesDir, 'ui/src/styles.css'),
-        // For other packages, rely on the wildcard
       },
     },
     build: {
