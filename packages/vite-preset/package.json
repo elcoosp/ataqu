@@ -1,0 +1,11 @@
+{
+  "name": "@ataqu/vite-preset",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.0.4",
+    "vite": "^8.1.0"
+  }
+}

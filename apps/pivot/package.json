@@ -1,0 +1,37 @@
+{
+  "name": "@ataqu/app-pivot",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@ataqu/api-client": "workspace:*",
+    "@ataqu/shared-hooks": "workspace:*",
+    "@ataqu/shared-i18n": "workspace:*",
+    "@ataqu/shared-schemas": "workspace:*",
+    "@ataqu/shared-stores": "workspace:*",
+    "@ataqu/shared-utils": "workspace:*",
+    "@ataqu/types": "workspace:*",
+    "@ataqu/ui": "workspace:*",
+    "@tanstack/react-query": "^5.101.0",
+    "@tanstack/react-router": "^1.170.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@ataqu/test-utils": "workspace:*",
+    "@ataqu/vite-preset": "workspace:*",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.4",
+    "typescript": "^7.0.0",
+    "vite": "^8.1.0",
+    "vitest": "^2.0.5"
+  }
+}
