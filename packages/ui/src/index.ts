@@ -1,4 +1,3 @@
-// Components
 export * from './components/shell';
 export * from './components/command-palette';
 export * from './components/onboard-tour';
@@ -8,8 +7,6 @@ export * from './components/kanban-board';
 export * from './components/form-builder';
 export * from './components/workflow-canvas';
 export * from './components/chart';
-
-// shadcn UI components
 export * from './components/ui/button';
 export * from './components/ui/card';
 export * from './components/ui/input';
@@ -27,6 +24,4 @@ export * from './components/ui/sheet';
 export * from './components/ui/dialog';
 export * from './components/ui/command';
 export * from './components/ui/sonner';
-
-// Utilities
 export * from './lib/utils';

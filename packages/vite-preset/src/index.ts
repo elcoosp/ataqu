@@ -4,11 +4,11 @@ import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Fixed dev ports for each app
 const APP_PORTS: Record<string, number> = {
   aegis: 5173,
   cinq: 5174,
@@ -36,6 +36,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       }),
       react(),
       tailwindcss(),
+      tsconfigPaths(),
     ],
     publicDir: path.resolve(packagesDir, 'shared-assets/public'),
     server: {
