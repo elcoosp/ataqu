@@ -30,8 +30,6 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
 
   const step = steps[currentStep];
   if (!step) return null;
-  // step.content can be a string or React node; we'll render it as is.
-  const content = step.content;
 
   return (
     <div
@@ -43,7 +41,7 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
       }}
     >
       <div className="text-white">
-        {typeof content === 'string' ? <p className="text-sm">{content}</p> : content}
+        {typeof step.content === 'string' ? <p className="text-sm">{step.content}</p> : step.content}
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <Button variant="ghost" size="sm" onClick={handleClose} className="text-gray-400 hover:text-white">

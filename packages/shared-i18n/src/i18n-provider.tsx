@@ -8,7 +8,6 @@ import { messages as frMessages } from '../locales/fr/messages';
 i18n.load('en', enMessages);
 i18n.load('fr', frMessages);
 
-// Detect user locale from browser or fallback to 'en'
 function getLocale(): string {
   if (typeof navigator === 'undefined') return 'en';
   const stored = localStorage.getItem('ataqu-locale');

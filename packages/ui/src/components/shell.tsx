@@ -153,7 +153,7 @@ export const Shell: React.FC<ShellProps> = ({ activeApp, children, searchFn }) =
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
+        {/* Header with app name and user avatar */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
           <span className="font-heading text-xl text-white">{APP_NAMES[activeApp] || 'Ataqu'}</span>
           <div className="flex items-center gap-4">

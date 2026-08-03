@@ -36,14 +36,8 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       react(),
       tailwindcss(),
     ],
-    // ✅ Native tsconfig path resolution (replaces vite-tsconfig-paths)
     resolve: {
-      tsconfigPaths: true,
-      alias: [
-        { find: /^@ataqu\/ui$/, replacement: path.resolve(packagesDir, 'ui/src/index.ts') },
-        { find: /^@ataqu\/ui\/styles\.css$/, replacement: path.resolve(packagesDir, 'ui/src/styles.css') },
-        { find: /^@ataqu\/(.+)$/, replacement: path.resolve(packagesDir, '$1/src/index.ts') },
-      ],
+      preserveSymlinks: true, // Required for Vite 8 / Rolldown in pnpm workspaces
     },
     publicDir: path.resolve(packagesDir, 'shared-assets/public'),
     server: {

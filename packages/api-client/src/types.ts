@@ -283,7 +283,7 @@ export interface FilterRequest {
 export interface FilterConditionDto {
   field: string;
   operator: string;
-  value: any;
+  value: unknown;
 }
 export interface FilterResponse {
   dashboard_id: UUID;
