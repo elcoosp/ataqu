@@ -55,7 +55,9 @@
     "react-hook-form": "^7.84.0",
     "recharts": "^3.10.1",
     "sonner": "^2.0.7",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@tanstack/router-core": "^1.170.0",
+    "@tanstack/react-router": "^1.170.0"
   },
   "devDependencies": {
     "@radix-ui/react-dialog": "^1.1.2",

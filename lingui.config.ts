@@ -10,8 +10,7 @@ const config: LinguiConfig = {
       include: ['apps/*/src', 'packages/*/src'],
     },
   ],
-  // Use ES module format by setting cjs: false
-  format: formatter({ lineNumbers: false, cjs: false }),
+  format: formatter({ lineNumbers: false }),
 };
 
 export default config;

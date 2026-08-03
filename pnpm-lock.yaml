@@ -99,6 +99,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -178,6 +181,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -257,6 +263,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -502,6 +511,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -581,6 +593,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -662,6 +677,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -741,6 +759,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -820,6 +841,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -899,6 +923,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -978,6 +1005,9 @@ importers:
       '@ataqu/vite-preset':
         specifier: workspace:*
         version: link:../../packages/vite-preset
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -1163,12 +1193,18 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.101.0
         version: 5.101.4(react@19.2.7)
+      '@tanstack/react-router':
+        specifier: ^1.170.0
+        version: 1.170.18(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-table':
         specifier: ^8.20.5
         version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-virtual':
         specifier: ^3.13.26
         version: 3.14.9(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/router-core':
+        specifier: ^1.170.0
+        version: 1.171.15
       '@xyflow/react':
         specifier: ^12.11.2
         version: 12.11.2(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

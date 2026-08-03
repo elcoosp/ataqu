@@ -37,7 +37,14 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       tailwindcss(),
     ],
     resolve: {
-      preserveSymlinks: true, // Required for Vite 8 / Rolldown in pnpm workspaces
+      // Force Vite to resolve these packages from the root, bypassing the Rolldown pnpm symlink bug.
+      dedupe: [
+        'react',
+        'react-dom',
+        '@tanstack/react-router',
+        '@tanstack/react-query',
+        '@tanstack/history'
+      ]
     },
     publicDir: path.resolve(packagesDir, 'shared-assets/public'),
     server: {
@@ -52,19 +59,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       target: 'es2024',
       minify: 'esbuild',
       sourcemap: true,
-      rollupOptions: {
-        output: {
-          manualChunks: (id) => {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
-              if (id.includes('tanstack')) return 'vendor-tanstack';
-              if (id.includes('@radix-ui') || id.includes('lucide') || id.includes('class-variance-authority')) return 'vendor-ui';
-              if (id.includes('@xyflow') || id.includes('reactflow') || id.includes('blocknote') || id.includes('recharts')) return 'vendor-heavy';
-              return 'vendor';
-            }
-          },
-        },
-      },
+      // Rolldown handles chunk splitting automatically; manualChunks can break symlink resolution
     },
   });
 };
