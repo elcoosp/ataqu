@@ -897,9 +897,6 @@ importers:
       '@ataqu/shared-utils':
         specifier: workspace:*
         version: link:../shared-utils
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
       react:
         specifier: ^19.2.7
         version: 19.2.7
@@ -956,9 +953,15 @@ importers:
 
   packages/ui:
     dependencies:
+      '@ataqu/shared-hooks':
+        specifier: workspace:*
+        version: link:../shared-hooks
       '@ataqu/shared-stores':
         specifier: workspace:*
         version: link:../shared-stores
+      '@ataqu/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
       '@ataqu/tailwind-config':
         specifier: workspace:*
         version: link:../tailwind-config

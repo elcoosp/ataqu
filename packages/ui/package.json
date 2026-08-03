@@ -33,7 +33,9 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "tailwind-merge": "^2.5.0",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "@ataqu/shared-hooks": "workspace:*",
+    "@ataqu/shared-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
