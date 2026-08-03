@@ -5,6 +5,7 @@
 use dotenvy::dotenv;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use uuid::Uuid;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
@@ -145,55 +146,42 @@ async fn main() -> anyhow::Result<()> {
     let vista_kpi = Arc::new(ataqu_application::vista_service::InMemoryKpiStore::default());
     let vista_service = Arc::new(VistaService::new(vista_outbox, vista_kpi, clock.clone()));
 
-    // PAUSE – no-op implementations
+    // PAUSE – real repositories, dummy idempotency/outbox for now
+    use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
     use ataqu_application::pause_service::{
         IdempotencyPort, IdempotencyGuardHandle,
-        EmployeeRepositoryPort, LeaveRequestRepositoryPort, OutboxPort,
+        OutboxPort,
     };
     use async_trait::async_trait;
 
-    struct NoopIdempotency;
+    // Dummy idempotency
+    struct DummyIdempotency;
     #[async_trait]
-    impl IdempotencyPort for NoopIdempotency {
-        async fn acquire(&self, _cmd_id: &uuid::Uuid) -> Result<IdempotencyGuardHandle, ataqu_application::pause_service::PauseServiceError> {
+    impl IdempotencyPort for DummyIdempotency {
+        async fn acquire(&self, _cmd_id: &Uuid) -> Result<IdempotencyGuardHandle, ataqu_application::pause_service::PauseServiceError> {
             Ok(IdempotencyGuardHandle::new(None))
         }
-        async fn commit(&self, _cmd_id: &uuid::Uuid, _resp: serde_json::Value) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
+        async fn commit(&self, _cmd_id: &Uuid, _resp: serde_json::Value) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
             Ok(())
         }
-        async fn rollback(&self, _cmd_id: &uuid::Uuid) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
+        async fn rollback(&self, _cmd_id: &Uuid) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
             Ok(())
         }
     }
 
-    struct NoopEmployeeRepo;
+    // Dummy outbox
+    struct DummyOutbox;
     #[async_trait]
-    impl EmployeeRepositoryPort for NoopEmployeeRepo {
-        async fn insert(&self, _tenant: &ataqu_kernel::TenantId, _event: &ataqu_application::pause_service::EmployeeCreatedEvent) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
+    impl OutboxPort for DummyOutbox {
+        async fn append(&self, _schema: &str, _event_type: &str, _agg_id: Uuid, _payload: &serde_json::Value) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
             Ok(())
         }
     }
 
-    struct NoopLeaveRequestRepo;
-    #[async_trait]
-    impl LeaveRequestRepositoryPort for NoopLeaveRequestRepo {
-        async fn insert(&self, _tenant: &ataqu_kernel::TenantId, _event: &ataqu_application::pause_service::LeaveRequestedEvent) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
-            Ok(())
-        }
-    }
-
-    struct NoopOutbox;
-    #[async_trait]
-    impl OutboxPort for NoopOutbox {
-        async fn append(&self, _schema: &str, _event_type: &str, _agg_id: uuid::Uuid, _payload: &serde_json::Value) -> Result<(), ataqu_application::pause_service::PauseServiceError> {
-            Ok(())
-        }
-    }
-
-    let pause_idempotency = Arc::new(NoopIdempotency);
-    let pause_employee_repo = Arc::new(NoopEmployeeRepo);
-    let pause_leave_repo = Arc::new(NoopLeaveRequestRepo);
-    let pause_outbox = Arc::new(NoopOutbox);
+    let pause_idempotency = Arc::new(DummyIdempotency);
+    let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
+    let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
+    let pause_outbox = Arc::new(DummyOutbox);
     let pause_service = Arc::new(PauseService::new(
         pause_idempotency,
         pause_employee_repo,

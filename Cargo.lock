@@ -362,7 +362,6 @@ dependencies = [
  "ataqu-domain-vault",
  "ataqu-domain-vista",
  "ataqu-infra-idempotency",
- "ataqu-infra-repositories",
  "ataqu-kernel",
  "ataqu-security",
  "chrono",
@@ -460,8 +459,11 @@ version = "0.1.0"
 name = "ataqu-domain-pause"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-kernel",
+ "chrono",
  "serde",
+ "thiserror",
  "uuid",
 ]
 
@@ -579,6 +581,7 @@ dependencies = [
  "async-trait",
  "ataqu-contracts",
  "ataqu-domain-cinq",
+ "ataqu-domain-pause",
  "ataqu-kernel",
  "ataqu-security",
  "chrono",

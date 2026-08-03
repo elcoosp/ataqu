@@ -19,7 +19,6 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-domain-cinq = { version = "0.1.0", path = "../ataqu-domain-cinq" }
 ataqu-domain-pivot = { version = "0.1.0", path = "../ataqu-domain-pivot" }
-ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-security = { version = "0.1.0", path = "../ataqu-security" }

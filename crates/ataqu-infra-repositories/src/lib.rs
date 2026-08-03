@@ -34,3 +34,4 @@ pub mod generic_batch;
 
 
 pub mod cinq_repo_impl;
+pub mod pause_repo_impl;
