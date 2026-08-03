@@ -1,5 +1,31 @@
 {
   "name": "ataqu",
-  "version": "0.1.0",
-  "private": true
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev-all": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "biome check --apply .",
+    "extract": "pnpm -r extract",
+    "compile": "pnpm -r compile",
+    "generate:api": "node scripts/generate-api-client.ts",
+    "prepare": "pnpm generate:api"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.6",
+    "@lingui/format-po": "^6.6.0",
+    "@playwright/test": "^1.48.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/router-plugin": "^1.168.23",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.0.5",
+    "tsx": "^4.19.1",
+    "typescript": "^7.0.0",
+    "vite": "^8.1.0",
+    "vitest": "^2.0.5"
+  }
 }
