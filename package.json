@@ -11,7 +11,8 @@
     "lint": "biome check . --apply",
     "extract": "pnpm -r extract",
     "compile": "pnpm -r compile",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "dev-all": "pnpm -r --parallel dev"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.6",
