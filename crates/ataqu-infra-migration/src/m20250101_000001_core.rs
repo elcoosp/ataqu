@@ -14,24 +14,21 @@ impl MigrationTrait for Migration {
             conn.execute_unprepared(&format!("CREATE SCHEMA IF NOT EXISTS {};", schema)).await?;
         }
 
-        // Create the app roles (idempotent)
+        // Create the app roles (idempotent with DO block)
         for role in &["core_role", "cinq_role", "ops_role", "vault_role", "dial_role", "vista_role", "dispatcher_role", "admin_role"] {
-            conn.execute_unprepared(&format!("DO $$ BEGIN CREATE ROLE {}; EXCEPTION WHEN duplicate_object THEN NULL; END $$;", role)).await?;
+            let sql = format!("DO $$ BEGIN CREATE ROLE {}; EXCEPTION WHEN duplicate_object THEN NULL; END $$;", role);
+            conn.execute_unprepared(&sql).await?;
         }
 
-        // Create app_schema ENUM
+        // Create app_schema ENUM (simple, no exception handling because we only run once)
         conn.execute_unprepared(
-            "DO $$ BEGIN
-                CREATE TYPE app_schema AS ENUM ('core', 'collab_crm', 'collab_ops', 'vault', 'dial', 'vista');
-             EXCEPTION
-                WHEN duplicate_object THEN NULL;
-             END $$;"
+            "CREATE TYPE app_schema AS ENUM ('core', 'collab_crm', 'collab_ops', 'vault', 'dial', 'vista');"
         ).await?;
 
         // Create core.outbox table
         conn.execute_unprepared(
             r#"
-            CREATE TABLE IF NOT EXISTS core.outbox (
+            CREATE TABLE core.outbox (
                 id BIGSERIAL PRIMARY KEY,
                 schema app_schema NOT NULL,
                 event_type TEXT NOT NULL,
@@ -51,7 +48,7 @@ impl MigrationTrait for Migration {
         // Create core.idempotency_records
         conn.execute_unprepared(
             r#"
-            CREATE TABLE IF NOT EXISTS core.idempotency_records (
+            CREATE TABLE core.idempotency_records (
                 command_id UUID PRIMARY KEY,
                 status TEXT NOT NULL CHECK (status IN ('in_progress', 'completed', 'failed')),
                 response_status SMALLINT,
@@ -64,7 +61,7 @@ impl MigrationTrait for Migration {
             "#
         ).await?;
 
-        // Grant sequence usage to all domain roles (now that they exist)
+        // Grant sequence usage to all domain roles
         conn.execute_unprepared(
             "GRANT USAGE, SELECT ON SEQUENCE core.outbox_id_seq TO core_role, cinq_role, ops_role, vault_role, dial_role, vista_role;"
         ).await?;
