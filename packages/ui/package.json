@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@ataqu/shared-stores": "workspace:*",
+    "@ataqu/shared-utils": "workspace:*",
+    "@ataqu/shared-hooks": "workspace:*",
     "@ataqu/tailwind-config": "workspace:*",
     "@radix-ui/react-slot": "^1.1.0",
     "@tanstack/react-query": "^5.101.0",
@@ -33,9 +35,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "tailwind-merge": "^2.5.0",
-    "tailwindcss": "^4.3.0",
-    "@ataqu/shared-hooks": "workspace:*",
-    "@ataqu/shared-utils": "workspace:*"
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

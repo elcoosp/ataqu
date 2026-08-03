@@ -5,10 +5,8 @@ import { routeTree } from './routeTree.gen';
 import '@ataqu/ui/styles.css';
 import './index.css';
 
-// Create a new router instance using the generated route tree
 const router = createRouter({ routeTree });
 
-// Register the router instance for type safety
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;

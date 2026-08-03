@@ -8,12 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
-  const rootDir = path.resolve(__dirname, '../../../');
-  const packagesDir = path.resolve(rootDir, 'packages');
-
   return defineConfig({
     plugins: [
-      // IMPORTANT: router plugin MUST come before react plugin
       tanstackRouter({
         target: 'react',
         autoCodeSplitting: true,
@@ -28,11 +24,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         '/ws': { target: 'ws://localhost:8080', ws: true },
       },
     },
-    resolve: {
-      alias: {
-        '@ataqu': packagesDir,
-      },
-    },
+    // No aliases! Let pnpm workspace + package.json exports handle resolution.
     build: {
       target: 'es2024',
       minify: 'esbuild',
