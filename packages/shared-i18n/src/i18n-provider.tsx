@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { I18nProvider as LinguiProvider } from '@lingui/react';
 import { i18n } from '@lingui/core';
-import { messages as enMessages } from '../locales/en/messages';
-import { messages as frMessages } from '../locales/fr/messages';
+import en from '../locales/en/messages';
+import fr from '../locales/fr/messages';
 
 // Load messages for each locale
-i18n.load('en', enMessages);
-i18n.load('fr', frMessages);
+i18n.load('en', en.messages);
+i18n.load('fr', fr.messages);
 
 function getLocale(): string {
   if (typeof navigator === 'undefined') return 'en';
@@ -27,7 +27,6 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   if (!i18n.messages[locale]) {
-    // Fallback: just show children without translation
     return <>{children}</>;
   }
 
