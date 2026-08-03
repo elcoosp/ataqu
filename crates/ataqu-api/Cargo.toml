@@ -23,6 +23,7 @@ ataqu-security = { path = "../ataqu-security" }
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
 
 [dev-dependencies]
 mockall = "0.15.0"

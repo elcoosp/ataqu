@@ -324,6 +324,7 @@ dependencies = [
  "ataqu-application",
  "ataqu-contracts",
  "ataqu-domain-aegis",
+ "ataqu-domain-cinq",
  "ataqu-kernel",
  "ataqu-security",
  "axum",

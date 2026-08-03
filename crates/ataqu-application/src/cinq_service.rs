@@ -1,39 +1,22 @@
-//! CINQ CRM orchestration service – in-memory implementation.
+//! CINQ CRM orchestration service – using domain pure functions and entities.
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use uuid::Uuid;
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_security::{Email, PhoneNumber};
+use ataqu_domain_cinq::contact::{self as contact_domain, Contact, CreateContactCommand as DomainCreateContact};
+use ataqu_domain_cinq::deal::{self as deal_domain, Deal, CreateDealCommand as DomainCreateDeal, DealStatus};
+use ataqu_domain_cinq::error::CinqDomainError;
 
-// Domain DTOs
-#[derive(Debug, Clone)]
-pub struct Contact {
-    pub id: Uuid,
-    pub tenant_id: TenantId,
-    pub name: String,
-    pub email: String,
-    pub phone: Option<String>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Deal {
-    pub id: Uuid,
-    pub tenant_id: TenantId,
-    pub contact_id: Uuid,
-    pub title: String,
-    pub amount: f64,
-    pub status: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
+// Application-level commands using domain types.
 #[derive(Debug, Clone)]
 pub struct CreateContactCommand {
     pub tenant_id: TenantId,
     pub name: String,
-    pub email: String,
-    pub phone: Option<String>,
+    pub email: Email,
+    pub phone: Option<PhoneNumber>,
 }
 
 #[derive(Debug, Clone)]
@@ -41,8 +24,9 @@ pub struct CreateDealCommand {
     pub tenant_id: TenantId,
     pub contact_id: Uuid,
     pub title: String,
+    pub pipeline_stage_id: Uuid,
     pub amount: f64,
-    pub status: String,
+    pub status: DealStatus,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -53,6 +37,8 @@ pub enum CinqServiceError {
     DealNotFound,
     #[error("Validation error: {0}")]
     Validation(String),
+    #[error("Domain error: {0}")]
+    Domain(#[from] CinqDomainError),
 }
 
 pub type CinqResult<T> = Result<T, CinqServiceError>;
@@ -88,20 +74,27 @@ impl CinqService {
         if cmd.name.trim().is_empty() {
             return Err(CinqServiceError::Validation("Name cannot be empty".into()));
         }
-        if !cmd.email.contains('@') {
-            return Err(CinqServiceError::Validation("Invalid email".into()));
-        }
-        let id = self.id_gen.new_uuid_v7();
-        let now = self.clock.now().into();
-        let contact = Contact {
-            id,
+
+        let domain_cmd = DomainCreateContact {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
             email: cmd.email,
             phone: cmd.phone,
-            created_at: now,
         };
-        self.contacts.contacts.write().unwrap().insert(id, contact.clone());
+
+        let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+
+        let contact = Contact {
+            id: event.id,
+            tenant_id: event.tenant_id,
+            name: event.name,
+            email: event.email,
+            phone: event.phone,
+            created_at: event.created_at,
+            updated_at: event.created_at,
+        };
+
+        self.contacts.contacts.write().unwrap().insert(contact.id, contact.clone());
         Ok(contact)
     }
 
@@ -122,21 +115,39 @@ impl CinqService {
     pub async fn create_deal(&self, cmd: CreateDealCommand) -> CinqResult<Deal> {
         // Validate contact exists
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
+
+        if cmd.amount <= 0.0 {
+            return Err(CinqServiceError::Validation("Amount must be positive".into()));
+        }
         if cmd.title.trim().is_empty() {
             return Err(CinqServiceError::Validation("Deal title cannot be empty".into()));
         }
-        let id = self.id_gen.new_uuid_v7();
-        let now = self.clock.now().into();
-        let deal = Deal {
-            id,
+
+        let domain_cmd = DomainCreateDeal {
             tenant_id: cmd.tenant_id,
             contact_id: cmd.contact_id,
-            title: cmd.title,
+            title: cmd.title.clone(),
+            pipeline_stage_id: cmd.pipeline_stage_id,
             amount: cmd.amount,
             status: cmd.status,
-            created_at: now,
         };
-        self.deals.deals.write().unwrap().insert(id, deal.clone());
+
+        let event = deal_domain::create_deal(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(CinqServiceError::Domain)?;
+
+        let deal = Deal {
+            id: event.id,
+            tenant_id: event.tenant_id,
+            contact_id: event.contact_id,
+            title: event.title.clone(),
+            pipeline_stage_id: event.pipeline_stage_id,
+            amount: event.amount,
+            status: event.status,
+            created_at: event.created_at,
+            updated_at: event.created_at,
+        };
+
+        self.deals.deals.write().unwrap().insert(deal.id, deal.clone());
         Ok(deal)
     }
 

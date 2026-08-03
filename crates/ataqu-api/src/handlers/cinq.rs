@@ -11,6 +11,8 @@ use uuid::Uuid;
 use ataqu_application::cinq_service::{CreateContactCommand, CreateDealCommand};
 use ataqu_contracts::cinq::*;
 use ataqu_kernel::TenantId;
+use ataqu_security::{Email, PhoneNumber};
+use ataqu_domain_cinq::deal::DealStatus;
 use crate::AppState;
 
 #[derive(Debug, thiserror::Error)]
@@ -38,6 +40,7 @@ impl From<ataqu_application::cinq_service::CinqServiceError> for ApiError {
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => ApiError::NotFound,
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => ApiError::NotFound,
             ataqu_application::cinq_service::CinqServiceError::Validation(msg) => ApiError::Validation(msg),
+            ataqu_application::cinq_service::CinqServiceError::Domain(err) => ApiError::Service(err.to_string()),
         }
     }
 }
@@ -50,14 +53,14 @@ pub async fn create_contact(
     let cmd = CreateContactCommand {
         tenant_id,
         name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
+        email: Email::new(payload.email),
+        phone: payload.phone.map(PhoneNumber::new),
     };
     let contact = state.cinq_service.create_contact(cmd).await?;
     Ok(Json(ContactResponse {
         id: contact.id,
         name: contact.name,
-        email: contact.email,
+        email: contact.email.to_string(),
     }))
 }
 
@@ -69,7 +72,7 @@ pub async fn list_contacts(
     Ok(Json(contacts.into_iter().map(|c| ContactResponse {
         id: c.id,
         name: c.name,
-        email: c.email,
+        email: c.email.to_string(),
     }).collect()))
 }
 
@@ -82,7 +85,7 @@ pub async fn get_contact(
     Ok(Json(ContactResponse {
         id: contact.id,
         name: contact.name,
-        email: contact.email,
+        email: contact.email.to_string(),
     }))
 }
 
@@ -91,12 +94,16 @@ pub async fn create_deal(
     Json(payload): Json<CreateDealRequest>,
 ) -> Result<Json<DealResponse>, ApiError> {
     let tenant_id = TenantId::new(Uuid::new_v4());
+    // Use a default pipeline stage ID; in production this would come from the request or tenant config.
+    let default_stage = Uuid::parse_str("00000000-0000-0000-0000-000000000001")
+        .unwrap_or_else(|_| Uuid::new_v4());
     let cmd = CreateDealCommand {
         tenant_id,
         contact_id: payload.contact_id,
         title: payload.title,
         amount: payload.amount,
-        status: "open".to_string(),
+        pipeline_stage_id: default_stage,
+        status: DealStatus::Open,
     };
     let deal = state.cinq_service.create_deal(cmd).await?;
     Ok(Json(DealResponse {

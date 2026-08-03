@@ -68,6 +68,7 @@ pub fn validate_deal_row(row: &[String]) -> CinqResult<CreateDealCommand> {
     Ok(CreateDealCommand {
         tenant_id,
         contact_id,
+        title: "Imported Deal".to_string(),  // placeholder, should come from CSV
         pipeline_stage_id,
         amount,
         status,

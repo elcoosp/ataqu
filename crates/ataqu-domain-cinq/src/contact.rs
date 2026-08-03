@@ -61,8 +61,8 @@ pub struct ContactUpdated {
 // ---------- Pure Domain Functions ----------
 pub fn create_contact(
     cmd: CreateContactCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> ContactCreated {
     let id = id_gen.new_uuid_v7();
     let now = clock.now().into(); // Convert SystemTime to DateTime<Utc>
@@ -76,7 +76,7 @@ pub fn create_contact(
     }
 }
 
-pub fn update_contact(cmd: UpdateContactCommand, clock: &impl Clock) -> ContactUpdated {
+pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> ContactUpdated {
     let now = clock.now().into();
     ContactUpdated {
         id: cmd.id,
