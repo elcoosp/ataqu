@@ -7,9 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
-  const rootDir = path.resolve(__dirname, '../../../');
-  const packagesDir = path.resolve(rootDir, 'packages');
-
   return defineConfig({
     plugins: [react()],
     server: {
@@ -18,13 +15,9 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         '/ws': { target: 'ws://localhost:8080', ws: true },
       },
     },
-    resolve: {
-      alias: {
-        '@ataqu': packagesDir,
-        // Explicit alias for main entry to avoid potential issues
-        '@ataqu/ui': path.resolve(packagesDir, 'ui/src/index.ts'),
-      },
-    },
+    // ✅ No aliases needed — pnpm workspace symlinks + package.json "exports"
+    // resolve @ataqu/* imports correctly, including subpaths like
+    // @ataqu/ui/styles.css → packages/ui/src/styles.css
     build: {
       target: 'es2024',
       minify: 'esbuild',
