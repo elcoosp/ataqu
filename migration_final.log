@@ -29,11 +29,9 @@ note: `sea_orm_migration::prelude::Expr` does not implement `std::ops::Mul`
 21 | pub enum Expr {
    | ^^^^^^^^^^^^^ `sea_orm_migration::prelude::Expr` is defined in another crate
 
-6b5b557f/sea-query-1.0.1/src/expr/enum.rs:21:1
-   |
-21 | pub enum Expr {
-   | ^^^^^^^^^^^^^ `sea_orm_migration::prelude::Expr` is defined in another crate
-
 Some errors have detailed explanations: E0369, E0599.
+For more information about an error, try `rustc --explain E0369`.
+error: could not compile `ataqu-infra-migration` (lib) due to 2 previous errors
+9, E0599.
 For more information about an error, try `rustc --explain E0369`.
 error: could not compile `ataqu-infra-migration` (lib) due to 2 previous errors
