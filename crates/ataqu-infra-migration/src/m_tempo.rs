@@ -13,7 +13,7 @@ impl MigrationTrait for Migration {
             tenant_id UUID NOT NULL,
             starts_at TIMESTAMPTZ NOT NULL,
             duration_seconds INT NOT NULL,
-            ends_at TIMESTAMPTZ GENERATED ALWAYS AS (starts_at + (duration_seconds || ' seconds')::INTERVAL) STORED,
+            ends_at TIMESTAMPTZ GENERATED ALWAYS AS (starts_at + (duration_seconds * INTERVAL '1 second')) STORED,
             oauth_access_token TEXT,
             oauth_refresh_token TEXT,
             oauth_token_expires_at TIMESTAMPTZ,

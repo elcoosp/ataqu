@@ -1,6 +1,7 @@
 use sea_orm_migration::prelude::*;
 
 pub mod m_aegis;
+pub mod m20250101_000001_core;
 pub mod m_cinq;
 pub mod m_dial;
 pub mod m_pause;
@@ -15,7 +16,8 @@ pub struct Migrator;
 #[async_trait::async_trait]
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        vec![
+        vec![Box::new(m20250101_000001_core::Migration),
+
             Box::new(m_aegis::Migration),
             Box::new(m_cinq::Migration),
             Box::new(m_dial::Migration),
