@@ -50,13 +50,37 @@ impl Clock for SystemClock {
 // ------------------------------------------------------------------------------
 // Outbox event handler (placeholder – will be expanded later)
 // ------------------------------------------------------------------------------
-async fn handle_outbox_event(event: ataqu_infra_outbox::OutboxEvent) -> Result<(), ataqu_infra_outbox::DispatcherError> {
+async fn handle_outbox_event(
+    event: ataqu_infra_outbox::OutboxEvent,
+) -> Result<(), ataqu_infra_outbox::DispatcherError> {
+    use ataqu_infra_outbox::DispatcherError;
     info!(
         "Processing outbox event: id={}, schema={}, event_type={}",
         event.id, event.schema, event.event_type
     );
-    // TODO: Route to appropriate handlers based on schema/event_type
-    Ok(())
+
+    match event.schema.as_str() {
+        "vista" => {
+            // For VISTA, we can process aggregation.
+            // We'll just log for now.
+            info!("VISTA event: {:?}", event);
+            Ok(())
+        }
+        "spark" => {
+            // Trigger workflow execution.
+            info!("SPARK event: {:?}", event);
+            Ok(())
+        }
+        "core" => {
+            // Handle core events (e.g., user created)
+            info!("Core event: {:?}", event);
+            Ok(())
+        }
+        _ => {
+            warn!("Unknown schema: {}", event.schema);
+            Ok(())
+        }
+    }
 }
 
 // ------------------------------------------------------------------------------
