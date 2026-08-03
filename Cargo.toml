@@ -6,4 +6,5 @@ members = [
     "crates/ataqu-kernel",
     "crates/ataqu-security",
     "crates/ataqu-contracts",
+    "crates/ataqu-bin",
 ]

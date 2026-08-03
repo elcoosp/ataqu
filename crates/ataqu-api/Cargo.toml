@@ -24,3 +24,5 @@ ataqu-contracts = { path = "../ataqu-contracts" }
 
 [dev-dependencies]
 mockall = "0.15.0"
+dotenvy = "0.15"
+sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
