@@ -891,6 +891,9 @@ importers:
       '@ataqu/shared-stores':
         specifier: workspace:*
         version: link:../shared-stores
+      '@ataqu/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
       '@tanstack/react-query':
         specifier: ^5.101.0
         version: 5.101.4(react@19.2.7)
