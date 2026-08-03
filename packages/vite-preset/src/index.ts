@@ -4,7 +4,6 @@ import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,8 +35,16 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       }),
       react(),
       tailwindcss(),
-      tsconfigPaths(),
     ],
+    // ✅ Native tsconfig path resolution (replaces vite-tsconfig-paths)
+    resolve: {
+      tsconfigPaths: true,
+      alias: [
+        { find: /^@ataqu\/ui$/, replacement: path.resolve(packagesDir, 'ui/src/index.ts') },
+        { find: /^@ataqu\/ui\/styles\.css$/, replacement: path.resolve(packagesDir, 'ui/src/styles.css') },
+        { find: /^@ataqu\/(.+)$/, replacement: path.resolve(packagesDir, '$1/src/index.ts') },
+      ],
+    },
     publicDir: path.resolve(packagesDir, 'shared-assets/public'),
     server: {
       port: APP_PORTS[options.appName] || 5173,
@@ -46,13 +53,6 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         '/api': 'http://localhost:8080',
         '/ws': { target: 'ws://localhost:8080', ws: true },
       },
-    },
-    resolve: {
-      alias: [
-        { find: /^@ataqu\/ui$/, replacement: path.resolve(packagesDir, 'ui/src/index.ts') },
-        { find: /^@ataqu\/ui\/styles\.css$/, replacement: path.resolve(packagesDir, 'ui/src/styles.css') },
-        { find: /^@ataqu\/(.+)$/, replacement: path.resolve(packagesDir, '$1/src/index.ts') },
-      ],
     },
     build: {
       target: 'es2024',
