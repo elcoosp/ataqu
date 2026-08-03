@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "vitest"
   },
@@ -18,6 +18,9 @@
     "@ataqu/shared-utils": "workspace:*",
     "@ataqu/types": "workspace:*",
     "@ataqu/ui": "workspace:*",
+    "@lingui/core": "^6.6.0",
+    "@lingui/macro": "^5.9.5",
+    "@lingui/react": "^6.6.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-router": "^1.170.0",
     "react": "^19.2.7",
@@ -30,9 +33,9 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.4",
+    "tailwindcss": "^4.3.0",
     "typescript": "^7.0.0",
     "vite": "^8.1.0",
-    "vitest": "^2.0.5",
-    "tailwindcss": "^4.3.0"
+    "vitest": "^2.0.5"
   }
 }

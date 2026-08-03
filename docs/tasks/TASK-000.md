@@ -1,7 +1,3 @@
-Here is the refined, English version of the **TASK-000** specification without the `dispatch.sh` details (we will adjust the script separately). This is ready to be saved as `docs/tasks/TASK-000.md` and used as the foundation for all frontend work.
-
----
-
 # TASK-000: Frontend Foundation & Unified Shell
 
 **Version:** 1.0  

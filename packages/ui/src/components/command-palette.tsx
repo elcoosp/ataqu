@@ -10,6 +10,11 @@ import {
 import { Home, Search, LogOut } from 'lucide-react';
 import { useAuthStore } from '@ataqu/shared-stores';
 import { useNavigate } from '@tanstack/react-router';
+import { useDebounce } from '@ataqu/shared-hooks';
+
+export interface CommandPaletteProps {
+  searchFn?: (q: string) => Promise<unknown[]>;
+}
 
 const APP_DOMAINS: Record<string, string> = {
   aegis: 'sso',
@@ -70,8 +75,11 @@ function getAppUrl(app: string): string {
   return `https://${APP_DOMAINS[app]}.ataqu.com`;
 }
 
-export const CommandPalette: React.FC = () => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const debouncedSearch = useDebounce(search, 300);
   const navigate = useNavigate();
   const { logout } = useAuthStore();
 
@@ -86,6 +94,14 @@ export const CommandPalette: React.FC = () => {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
+  useEffect(() => {
+    if (!searchFn || !debouncedSearch.trim()) {
+      setResults([]);
+      return;
+    }
+    searchFn(debouncedSearch).then(setResults).catch(() => setResults([]));
+  }, [debouncedSearch, searchFn]);
+
   const handleSelect = (callback: () => void) => {
     setOpen(false);
     callback();
@@ -93,39 +109,38 @@ export const CommandPalette: React.FC = () => {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search apps, navigate, or run commands..." />
+      <CommandInput placeholder="Search apps, navigate, or run commands..." value={search} onValueChange={setSearch} />
       <CommandList>
         <CommandEmpty>No commands found.</CommandEmpty>
         <CommandGroup heading="Switch App">
           {Object.keys(APP_DOMAINS).map((app) => (
-            <CommandItem
-              key={app}
-              onSelect={() => handleSelect(() => {
-                window.location.href = getAppUrl(app);
-              })}
-            >
+            <CommandItem key={app} onSelect={() => handleSelect(() => window.location.href = getAppUrl(app))}>
               <img src={APP_ICONS[app]} alt={APP_NAMES[app]} className="h-5 w-5 mr-2" />
               <span>{APP_NAMES[app]}</span>
               <span className="ml-auto text-xs text-muted-foreground">⌘{app[0]}</span>
             </CommandItem>
           ))}
         </CommandGroup>
+        {searchFn && results.length > 0 && (
+          <CommandGroup heading="Search Results">
+            {results.map((item) => (
+              <CommandItem key={item.id} onSelect={() => handleSelect(() => navigate(item.url))}>
+                {item.title}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
         <CommandGroup heading="Navigation">
           <CommandItem onSelect={() => handleSelect(() => navigate({ to: '/dashboard' }))}>
-            <Home className="mr-2 h-4 w-4" />
-            <span>Dashboard</span>
-            <span className="ml-auto text-xs text-muted-foreground">⌘D</span>
+            <Home className="mr-2 h-4 w-4" /><span>Dashboard</span><span className="ml-auto text-xs text-muted-foreground">⌘D</span>
           </CommandItem>
           <CommandItem onSelect={() => handleSelect(() => console.log('Search opened'))}>
-            <Search className="mr-2 h-4 w-4" />
-            <span>Global Search</span>
-            <span className="ml-auto text-xs text-muted-foreground">⌘S</span>
+            <Search className="mr-2 h-4 w-4" /><span>Global Search</span><span className="ml-auto text-xs text-muted-foreground">⌘S</span>
           </CommandItem>
         </CommandGroup>
         <CommandGroup heading="Account">
           <CommandItem onSelect={() => handleSelect(logout)}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sign Out</span>
+            <LogOut className="mr-2 h-4 w-4" /><span>Sign Out</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

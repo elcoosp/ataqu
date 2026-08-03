@@ -1,6 +1,5 @@
 import React from 'react';
-import { TourProvider, useTour } from '@reactour/tour';
-import type { TourStep } from '@reactour/tour';
+import { TourProvider, useTour, type TourStep } from '@reactour/tour';
 import { useOnboardingStore } from '@ataqu/shared-stores';
 import { Button } from './button';
 
@@ -31,19 +30,20 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
 
   const step = steps[currentStep];
   if (!step) return null;
+  // step.content can be a string or React node; we'll render it as is.
+  const content = step.content;
 
   return (
     <div
-      className="fixed z-50 max-w-sm p-4 rounded-lg shadow-lg bg-deep-night/90 backdrop-blur-xl border border-gray-700/40 text-white"
+      className="fixed z-50 max-w-sm p-4 rounded-lg shadow-lg ataqu-glass border border-gray-700/40"
       style={{
-        top: step.content?.style?.top || '50%',
-        left: step.content?.style?.left || '50%',
+        top: '50%',
+        left: '50%',
         transform: 'translate(-50%, -50%)',
       }}
     >
       <div className="text-white">
-        <h3 className="font-heading text-lg mb-2">{step.content?.title}</h3>
-        <p className="text-sm text-gray-300">{step.content?.text}</p>
+        {typeof content === 'string' ? <p className="text-sm">{content}</p> : content}
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <Button variant="ghost" size="sm" onClick={handleClose} className="text-gray-400 hover:text-white">
@@ -59,9 +59,7 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
 
 export const OnboardTour: React.FC<OnboardTourProps> = ({ tourId, steps, children }) => {
   const { isCompleted } = useOnboardingStore();
-  const completed = isCompleted(tourId);
-
-  if (completed) return <>{children}</>;
+  if (isCompleted(tourId)) return <>{children}</>;
 
   return (
     <TourProvider

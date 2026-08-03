@@ -63,7 +63,13 @@ function getAppUrl(app: string): string {
   return `https://${APP_DOMAINS[app]}.ataqu.com`;
 }
 
-export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> = ({ activeApp, children }) => {
+export interface ShellProps {
+  activeApp: string;
+  children: React.ReactNode;
+  searchFn?: (q: string) => Promise<unknown[]>;
+}
+
+export const Shell: React.FC<ShellProps> = ({ activeApp, children, searchFn }) => {
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { user, logout } = useAuthStore();
 
@@ -109,7 +115,6 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
                 <img
                   src={iconSrc}
                   alt={APP_NAMES[app]}
-                  // Removed opacity classes and added object-contain to prevent squishing
                   className="h-6 w-6 flex-shrink-0 object-contain"
                 />
                 {sidebarOpen && (
@@ -148,7 +153,9 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 flex items-center justify-end px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
+        {/* Header */}
+        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
+          <span className="font-heading text-xl text-white">{APP_NAMES[activeApp] || 'Ataqu'}</span>
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -160,6 +167,9 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
               <span className="text-xs border border-gray-600 rounded px-1">Search</span>
             </Button>
             <div className="h-8 w-px bg-gray-700 hidden sm:block" />
+            <div className="h-8 w-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold">
+              {user?.name?.[0] || user?.email?.[0] || 'U'}
+            </div>
             <Button
               variant="ghost"
               size="icon"
@@ -174,8 +184,9 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
           </div>
         </header>
 
+        {/* Page content */}
         <div className="flex-1 overflow-auto p-6">
-          <CommandPalette />
+          <CommandPalette searchFn={searchFn} />
           {children}
         </div>
       </main>

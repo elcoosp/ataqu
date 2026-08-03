@@ -13,5 +13,6 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     }
-  }
+  },
+  "type": "module"
 }
