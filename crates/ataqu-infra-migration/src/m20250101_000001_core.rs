@@ -9,10 +9,8 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
 
-        // Create core schema
         conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS core;").await?;
 
-        // Create app_schema ENUM using SeaORM's raw SQL – but we'll use DO block to avoid IF NOT EXISTS issues
         conn.execute_unprepared(
             "DO $$ BEGIN
                 CREATE TYPE app_schema AS ENUM ('core', 'collab_crm', 'collab_ops', 'vault', 'dial', 'vista');
@@ -21,11 +19,11 @@ impl MigrationTrait for Migration {
              END $$;"
         ).await?;
 
-        // Create core.outbox table using SeaORM DSL
+        // core.outbox
         manager
             .create_table(
                 Table::create()
-                    .table(Outbox::Table)
+                    .table((Alias::new("core"), Outbox::Table))
                     .if_not_exists()
                     .col(ColumnDef::new(Outbox::Id).big_integer().not_null().auto_increment().primary_key())
                     .col(ColumnDef::new(Outbox::Schema).custom(Alias::new("app_schema")).not_null())
@@ -37,25 +35,17 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Outbox::Attempts).integer().not_null().default(0))
                     .col(ColumnDef::new(Outbox::LockedUntil).timestamp_with_time_zone())
                     .col(ColumnDef::new(Outbox::VistaConsumedAt).timestamp_with_time_zone())
-                    .col(
-                        ColumnDef::new(Outbox::CreatedAt)
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        ColumnDef::new(Outbox::CompletedAt)
-                            .timestamp_with_time_zone(),
-                    )
+                    .col(ColumnDef::new(Outbox::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(ColumnDef::new(Outbox::CompletedAt).timestamp_with_time_zone())
                     .to_owned(),
             )
             .await?;
 
-        // Create core.idempotency_records table
+        // core.idempotency_records
         manager
             .create_table(
                 Table::create()
-                    .table(IdempotencyRecord::Table)
+                    .table((Alias::new("core"), IdempotencyRecord::Table))
                     .if_not_exists()
                     .col(ColumnDef::new(IdempotencyRecord::CommandId).uuid().not_null().primary_key())
                     .col(ColumnDef::new(IdempotencyRecord::Status).string().not_null())
@@ -63,36 +53,26 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(IdempotencyRecord::ResponseBody).json_binary())
                     .col(ColumnDef::new(IdempotencyRecord::ResponseHeaders).json_binary().default("{}"))
                     .col(ColumnDef::new(IdempotencyRecord::AggregateId).uuid())
-                    .col(
-                        ColumnDef::new(IdempotencyRecord::CreatedAt)
-                            .timestamp_with_time_zone()
-                            .not_null()
-                            .default(Expr::current_timestamp()),
-                    )
-                    .col(
-                        ColumnDef::new(IdempotencyRecord::CompletedAt)
-                            .timestamp_with_time_zone(),
-                    )
+                    .col(ColumnDef::new(IdempotencyRecord::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(ColumnDef::new(IdempotencyRecord::CompletedAt).timestamp_with_time_zone())
                     .to_owned(),
             )
             .await?;
 
-        // Add CHECK constraint for status separately (SeaORM doesn't support it directly)
         conn.execute_unprepared(
             "ALTER TABLE core.idempotency_records ADD CONSTRAINT status_check CHECK (status IN ('in_progress', 'completed', 'failed'));"
         ).await?;
 
-        // We'll skip grants for now to avoid role dependency issues
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
         manager
-            .drop_table(Table::drop().table(IdempotencyRecord::Table).to_owned())
+            .drop_table(Table::drop().table((Alias::new("core"), IdempotencyRecord::Table)).to_owned())
             .await?;
         manager
-            .drop_table(Table::drop().table(Outbox::Table).to_owned())
+            .drop_table(Table::drop().table((Alias::new("core"), Outbox::Table)).to_owned())
             .await?;
         conn.execute_unprepared("DROP TYPE IF EXISTS app_schema;").await?;
         Ok(())
