@@ -1,17 +1,17 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import ReactFlow, {
   addEdge,
-  Connection,
-  Edge,
-  Node,
+  type Connection,
+  type Edge,
+  type Node,
   useNodesState,
   useEdgesState,
   Controls,
   Background,
   MiniMap,
   BackgroundVariant,
-  NodeTypes,
-  EdgeTypes,
+  type NodeTypes,
+  type EdgeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { cn } from '../lib/utils';
@@ -98,4 +98,5 @@ export function WorkflowCanvas({
 }
 
 // Re-export commonly used types and utilities for convenience
-export { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node, type NodeTypes, type EdgeTypes };
+export { useNodesState, useEdgesState, addEdge };
+export type { Connection, Edge, Node, NodeTypes, EdgeTypes };
