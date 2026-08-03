@@ -1,17 +1,24 @@
-use crate::block::{BlockCreatedEvent, RelationCreatedEvent};
+use async_trait::async_trait;
+use ataqu_kernel::{TenantId, RepositoryError};
+use uuid::Uuid;
 use crate::document::DocumentCreatedEvent;
-use crate::primitives::{TenantId, Uuid};
+use crate::block::{BlockCreatedEvent, RelationCreatedEvent};
 
-pub trait PivotRepository {
-    type Error;
+#[async_trait]
+pub trait DocumentRepository: Send + Sync {
+    async fn save_document(&self, event: &DocumentCreatedEvent) -> Result<(), RepositoryError>;
+    async fn get_document(&self, tenant_id: &TenantId, doc_id: Uuid) -> Result<DocumentCreatedEvent, RepositoryError>;
+    async fn list_documents(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<DocumentCreatedEvent>, RepositoryError>;
+}
 
-    fn save_document(&self, event: &DocumentCreatedEvent) -> Result<(), Self::Error>;
-    fn save_block(&self, event: &BlockCreatedEvent) -> Result<(), Self::Error>;
-    fn save_relation(&self, event: &RelationCreatedEvent) -> Result<(), Self::Error>;
+#[async_trait]
+pub trait BlockRepository: Send + Sync {
+    async fn save_block(&self, event: &BlockCreatedEvent) -> Result<(), RepositoryError>;
+    async fn get_blocks_for_document(&self, tenant_id: &TenantId, doc_id: Uuid) -> Result<Vec<BlockCreatedEvent>, RepositoryError>;
+}
 
-    fn get_document(
-        &self,
-        tenant_id: &TenantId,
-        doc_id: Uuid,
-    ) -> Result<DocumentCreatedEvent, Self::Error>;
+#[async_trait]
+pub trait RelationRepository: Send + Sync {
+    async fn save_relation(&self, event: &RelationCreatedEvent) -> Result<(), RepositoryError>;
+    async fn get_relations_for_document(&self, tenant_id: &TenantId, doc_id: Uuid) -> Result<Vec<RelationCreatedEvent>, RepositoryError>;
 }

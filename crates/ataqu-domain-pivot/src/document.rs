@@ -19,8 +19,8 @@ pub struct DocumentCreatedEvent {
 
 pub fn create_document(
     cmd: CreateDocumentCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> DocumentCreatedEvent {
     DocumentCreatedEvent {
         id: id_gen.new_uuid_v7(),

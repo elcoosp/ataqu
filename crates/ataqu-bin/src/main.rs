@@ -135,7 +135,20 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // PIVOT
-    let pivot_service = Arc::new(PivotService::new(id_gen.clone()));
+        // PIVOT with real repositories
+    use ataqu_infra_repositories::pivot_repo_impl::{
+        PivotDocumentRepository, PivotBlockRepository, PivotRelationRepository,
+    };
+    let pivot_doc_repo = Arc::new(PivotDocumentRepository::new(pools.core.clone()));
+    let pivot_block_repo = Arc::new(PivotBlockRepository::new(pools.core.clone()));
+    let pivot_rel_repo = Arc::new(PivotRelationRepository::new(pools.core.clone()));
+    let pivot_service = Arc::new(PivotService::new(
+        pivot_doc_repo,
+        pivot_block_repo,
+        pivot_rel_repo,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // SOND
     let sond_service = Arc::new(SondService::new(id_gen.clone(), clock.clone()));

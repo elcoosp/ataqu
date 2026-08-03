@@ -25,6 +25,7 @@ ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
+ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
 
 [dev-dependencies]
 mockall = "0.15.0"

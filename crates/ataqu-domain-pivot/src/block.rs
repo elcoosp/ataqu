@@ -52,8 +52,8 @@ pub struct RelationCreatedEvent {
 
 pub fn create_block(
     cmd: CreateBlockCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> BlockCreatedEvent {
     BlockCreatedEvent {
         id: id_gen.new_uuid_v7(),
@@ -66,8 +66,8 @@ pub fn create_block(
 
 pub fn create_relation(
     cmd: CreateRelationCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> RelationCreatedEvent {
     RelationCreatedEvent {
         id: id_gen.new_uuid_v7(),

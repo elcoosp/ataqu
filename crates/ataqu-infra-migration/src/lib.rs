@@ -31,3 +31,4 @@ impl MigratorTrait for Migrator {
     }
 }
 pub mod m_dial_add_threads_mentions;
+pub mod m_pivot_add_blocks_relations;

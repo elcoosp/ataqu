@@ -36,3 +36,4 @@ pub mod generic_batch;
 pub mod cinq_repo_impl;
 pub mod pause_repo_impl;
 pub mod dial_repo_impl;
+pub mod pivot_repo_impl;
