@@ -44,6 +44,12 @@ impl fmt::Display for Email {
     }
 }
 
+impl AsRef<str> for Email {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 /// A phone number.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct PhoneNumber(String);
@@ -67,6 +73,12 @@ impl fmt::Debug for PhoneNumber {
 impl fmt::Display for PhoneNumber {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[REDACTED]")
+    }
+}
+
+impl AsRef<str> for PhoneNumber {
+    fn as_ref(&self) -> &str {
+        &self.0
     }
 }
 

@@ -1,35 +1,37 @@
-//! PAUSE application service — HR orchestration.
-//!
-//! Implements employee onboarding and leave request workflows following
-//! ADR-017 (Pure Domain Model with Application-Layer Orchestration) and
-//! ADR-006 (Idempotency via Advisory Locks & Durable Response Storage).
-//!
-//! # Flow (ADR-017)
-//!
-//! 1. Acquire `IdempotencyGuard` (advisory lock + SeaORM transaction)
-//! 2. Inject `IdGenerator` and `Clock` into domain pure function
-//! 3. Call domain pure function → events
-//! 4. Call repository to persist events (same txn)
-//! 5. Append to `core.outbox` (same txn)
-//! 6. Update idempotency record (same txn)
-//! 7. Commit → release advisory lock
-//!
-//! # PII Note
-//!
-//! PII fields (email, phone) are wrapped in redacting newtypes (ADR-007).
-//! The application layer never calls `reveal()`. PII newtypes are passed
-//! through to infrastructure for encryption-at-rest and to the API layer
-//! for serialization via wrapper structs (`ApiEmail`, etc.).
+// PAUSE application service — HR orchestration.
+//
+// Implements employee onboarding and leave request workflows following
+// ADR-017 (Pure Domain Model with Application-Layer Orchestration) and
+// ADR-006 (Idempotency via Advisory Locks & Durable Response Storage).
+//
+// # Flow (ADR-017)
+//
+// 1. Acquire `IdempotencyGuard` (advisory lock + SeaORM transaction)
+// 2. Inject `IdGenerator` and `Clock` into domain pure function
+// 3. Call domain pure function → events
+// 4. Call repository to persist events (same txn)
+// 5. Append to `core.outbox` (same txn)
+// 6. Update idempotency record (same txn)
+// 7. Commit → release advisory lock
+//
+// # PII Note
+//
+// PII fields (email, phone) are wrapped in redacting newtypes (ADR-007).
+// The application layer never calls `reveal()`. PII newtypes are passed
+// through to infrastructure for encryption-at-rest and to the API layer
+// for serialization via wrapper structs (`ApiEmail`, etc.).
 
 use std::sync::Arc;
 use std::time::SystemTime;
+
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use uuid::Uuid;
 
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::instrument;
-use uuid::Uuid;
 
 // ============================================================================
 // CONSTANTS
@@ -40,51 +42,6 @@ use uuid::Uuid;
 /// PAUSE is in the `collab_ops` schema per the database layout
 /// (Section 3.2 of the architecture document).
 pub const PAUSE_SCHEMA: &str = "collab_ops";
-
-// ============================================================================
-// KERNEL TYPES
-// ============================================================================
-// NOTE: In the full workspace, these are imported from `ataqu-kernel`.
-// They are defined here so the crate compiles independently. When
-// `ataqu-kernel` is available, replace with:
-//   use ataqu_kernel::{Clock, IdGenerator, TenantId};
-
-/// Tenant identifier newtype with private field (ADR-024).
-///
-/// Enforces tenant isolation at the type level — the inner `Uuid`
-/// cannot be accessed without going through `as_uuid()`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TenantId(Uuid);
-
-impl TenantId {
-    /// Creates a new `TenantId` from a `Uuid`.
-    pub fn new(uuid: Uuid) -> Self {
-        Self(uuid)
-    }
-
-    /// Returns the inner `Uuid`.
-    pub fn as_uuid(&self) -> Uuid {
-        self.0
-    }
-}
-
-/// Impure capability for generating UUIDs (ADR-013).
-///
-/// Injected into domain functions for testability.
-/// Domain never calls `Uuid::new_v7()` directly.
-pub trait IdGenerator: Send + Sync {
-    /// Generates a new UUIDv7 (time-ordered).
-    fn new_uuid_v7(&self) -> Uuid;
-}
-
-/// Impure capability for reading the system clock (ADR-013).
-///
-/// Injected into domain functions for testability.
-/// Domain never calls `SystemTime::now()` directly.
-pub trait Clock: Send + Sync {
-    /// Returns the current `SystemTime` at high precision.
-    fn now(&self) -> SystemTime;
-}
 
 // ============================================================================
 // ERROR TYPES
@@ -122,9 +79,6 @@ pub enum PauseServiceError {
 // ============================================================================
 // DOMAIN TYPES
 // ============================================================================
-// NOTE: In the full workspace, these are imported from `ataqu-contracts`
-// and `ataqu-domain-pause`. They are defined here so the crate compiles
-// independently.
 
 /// Command to create a new employee.
 #[derive(Debug, Clone)]
@@ -272,7 +226,6 @@ pub trait IdempotencyPort: Send + Sync {
 ///
 /// The real implementation lives in `ataqu-infra-repositories::pause`.
 #[async_trait::async_trait]
-#[async_trait::async_trait]
 pub trait EmployeeRepositoryPort: Send + Sync {
     /// Inserts a new employee record within the current transaction.
     async fn insert(
@@ -285,7 +238,6 @@ pub trait EmployeeRepositoryPort: Send + Sync {
 /// Port for leave request repository operations.
 ///
 /// The real implementation lives in `ataqu-infra-repositories::pause`.
-#[async_trait::async_trait]
 #[async_trait::async_trait]
 pub trait LeaveRequestRepositoryPort: Send + Sync {
     /// Inserts a new leave request record within the current transaction.

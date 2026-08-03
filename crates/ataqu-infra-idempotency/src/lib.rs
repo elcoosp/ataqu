@@ -1,27 +1,8 @@
-use sea_orm::DatabaseTransaction;
-use thiserror::Error;
+//! Idempotency infrastructure for Ataqu.
+pub mod cache;
+pub mod guard;
+pub mod store;
 
-#[derive(Error, Debug)]
-pub enum IdempotencyError {
-    #[error("Transaction error: {0}")]
-    Transaction(String),
-}
-
-pub struct IdempotencyGuard {
-    txn: DatabaseTransaction,
-}
-
-impl IdempotencyGuard {
-    pub fn new(txn: DatabaseTransaction) -> Self {
-        Self { txn }
-    }
-
-    pub fn transaction_mut(&mut self) -> &mut DatabaseTransaction {
-        &mut self.txn
-    }
-
-    pub async fn complete(self) -> Result<(), IdempotencyError> {
-        // Updates idempotency record and commits transaction
-        Ok(())
-    }
-}
+pub use cache::IdempotencyCache;
+pub use guard::{AcquireOutcome, IdempotencyGuard, IdempotencyError};
+pub use store::{CachedResponse, IdempotencyRecord, IdempotencyStatus, IdempotencyStore, SeaOrmIdempotencyStore};

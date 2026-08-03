@@ -1,8 +1,9 @@
-//! AEGIS application service – orchestrates auth flows.
-//! This version is simplified: it uses a transaction directly without idempotency guard.
-//! Idempotency will be added in a follow-up task.
+// AEGIS application service – orchestrates auth flows.
+// This version is simplified: it uses a transaction directly without idempotency guard.
+// Idempotency will be added in a follow-up task.
 
 use std::sync::Arc;
+use std::time::SystemTime;
 
 use async_trait::async_trait;
 use sea_orm::{DatabaseTransaction, DbErr};
@@ -10,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::{info, instrument, warn};
 use uuid::Uuid;
+
+use ataqu_security::Email;
 
 // ----------------------------------------------------------------------
 // Domain commands and types
@@ -52,19 +55,17 @@ pub enum DomainError {
 #[derive(Debug, Clone)]
 pub struct User {
     pub id: Uuid,
-    pub email: Email,
+    pub email: String,           // PII stored as String in application layer
     pub password_hash: String,
     pub mfa_secret: Option<String>,
     pub mfa_enabled: bool,
 }
 
-#[derive(Debug, Clone)]
-pub struct Email(pub String);
-
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct UserCreatedEvent {
     pub user_id: Uuid,
     pub email: String,
+    pub created_at: SystemTime,
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +83,7 @@ pub trait IdGenerator: Send + Sync {
 }
 
 pub trait Clock: Send + Sync {
-    fn now(&self) -> std::time::SystemTime;
+    fn now(&self) -> SystemTime;
 }
 
 #[async_trait]
@@ -115,7 +116,7 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_email(
         &self,
         txn: &mut DatabaseTransaction,
-        email: &Email,
+        email: &Email,            // Repository uses the PII newtype
     ) -> Result<Option<User>, DbErr>;
     async fn find_by_id(
         &self,
@@ -240,7 +241,7 @@ where
 
         Ok(CreateUserResponse {
             user_id: user.id,
-            email: user.email.0,
+            email: user.email,
         })
     }
 
@@ -253,7 +254,7 @@ where
 
         let mut txn = self.repo.begin().await?;
 
-        let email = Email(cmd.email.clone());
+        let email = Email::new(cmd.email.clone());
         let user = self
             .repo
             .find_by_email(&mut txn, &email)
@@ -389,8 +390,8 @@ impl IdGenerator for SystemIdGenerator {
 
 pub struct SystemClock;
 impl Clock for SystemClock {
-    fn now(&self) -> std::time::SystemTime {
-        std::time::SystemTime::now()
+    fn now(&self) -> SystemTime {
+        SystemTime::now()
     }
 }
 

@@ -22,3 +22,4 @@ ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 ataqu-contracts = { path = "../ataqu-contracts" }
+ataqu-security = { version = "0.1.0", path = "../ataqu-security" }
