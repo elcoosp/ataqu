@@ -1,4 +1,11 @@
-// This will be overwritten by generate:api, but we need a placeholder for now
 export * from './client';
 export * from './aegis';
-// ... other domains
+export * from './cinq';
+export * from './dial';
+export * from './pivot';
+export * from './spark';
+export * from './tempo';
+export * from './sond';
+export * from './vault';
+export * from './pause';
+export * from './vista';

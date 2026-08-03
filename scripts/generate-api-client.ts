@@ -1,5 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const outputDir = path.join(__dirname, '../packages/api-client/src');
 fs.mkdirSync(outputDir, { recursive: true });
