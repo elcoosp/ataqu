@@ -1,12 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_auth')({
-  component: () => <Outlet />,
   beforeLoad: () => {
-    const token = localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')!).state?.token : null;
+    const token = localStorage.getItem('auth-storage')
+      ? JSON.parse(localStorage.getItem('auth-storage')!).state?.token
+      : null;
     if (!token) {
-      window.location.href = '/login';
+      throw redirect({ to: '/login' });
     }
   },
+  component: () => <Outlet />,
 });

@@ -2,22 +2,37 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
+  const rootDir = path.resolve(__dirname, '../../../');
+  const packagesDir = path.resolve(rootDir, 'packages');
+
   return defineConfig({
-    plugins: [react()],
+    plugins: [
+      // IMPORTANT: router plugin MUST come before react plugin
+      tanstackRouter({
+        target: 'react',
+        autoCodeSplitting: true,
+        routesDirectory: './src/routes',
+        generatedRouteTree: './src/routeTree.gen.ts',
+      }),
+      react(),
+    ],
     server: {
       proxy: {
         '/api': 'http://localhost:8080',
         '/ws': { target: 'ws://localhost:8080', ws: true },
       },
     },
-    // ✅ No aliases needed — pnpm workspace symlinks + package.json "exports"
-    // resolve @ataqu/* imports correctly, including subpaths like
-    // @ataqu/ui/styles.css → packages/ui/src/styles.css
+    resolve: {
+      alias: {
+        '@ataqu': packagesDir,
+      },
+    },
     build: {
       target: 'es2024',
       minify: 'esbuild',
