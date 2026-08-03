@@ -1,4 +1,3 @@
-use sea_orm::Statement;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -85,46 +84,6 @@ impl MigrationTrait for Migration {
                     )
                     .to_owned(),
             )
-            .await?;
-
-        manager
-            .get_connection()
-            .execute_raw(Statement::from_string(
-                manager.get_database_backend(),
-                "ALTER TABLE collab_ops.employees ENABLE ROW LEVEL SECURITY;".to_owned(),
-            ))
-            .await?;
-
-        manager
-            .get_connection()
-            .execute_raw(Statement::from_string(
-                manager.get_database_backend(),
-                "CREATE POLICY employees_tenant_isolation ON collab_ops.employees FOR ALL TO ops_role USING (tenant_id = current_setting('app.current_tenant_id')::uuid);".to_owned(),
-            ))
-            .await?;
-
-        manager
-            .get_connection()
-            .execute_raw(Statement::from_string(
-                manager.get_database_backend(),
-                "ALTER TABLE collab_ops.leave_requests ENABLE ROW LEVEL SECURITY;".to_owned(),
-            ))
-            .await?;
-
-        manager
-            .get_connection()
-            .execute_raw(Statement::from_string(
-                manager.get_database_backend(),
-                "CREATE POLICY leave_requests_tenant_isolation ON collab_ops.leave_requests FOR ALL TO ops_role USING (tenant_id = current_setting('app.current_tenant_id')::uuid);".to_owned(),
-            ))
-            .await?;
-
-        manager
-            .get_connection()
-            .execute_raw(Statement::from_string(
-                manager.get_database_backend(),
-                "GRANT USAGE, SELECT ON SEQUENCE core.outbox_id_seq TO ops_role;".to_owned(),
-            ))
             .await?;
 
         Ok(())

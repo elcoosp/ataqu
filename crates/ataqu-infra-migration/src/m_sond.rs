@@ -9,13 +9,6 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            r#"CREATE SCHEMA IF NOT EXISTS collab_ops"#,
-            [],
-        ))
-        .await?;
-
         manager
             .create_table(
                 Table::create()
@@ -57,13 +50,6 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            r#"CREATE INDEX IF NOT EXISTS idx_forms_tenant ON collab_ops.forms (tenant_id)"#,
-            [],
-        ))
-        .await?;
-
         manager
             .create_table(
                 Table::create()
@@ -93,51 +79,24 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        // Add foreign key constraint
         db.execute_raw(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"ALTER TABLE collab_ops.submissions ADD CONSTRAINT fk_submissions_form FOREIGN KEY (form_id) REFERENCES collab_ops.forms(id) ON DELETE CASCADE"#,
+            "ALTER TABLE collab_ops.submissions ADD CONSTRAINT fk_submissions_form FOREIGN KEY (form_id) REFERENCES collab_ops.forms(id) ON DELETE CASCADE;",
             [],
         ))
         .await?;
 
+        // Add indexes (no RLS for now)
         db.execute_raw(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"CREATE INDEX IF NOT EXISTS idx_submissions_tenant ON collab_ops.submissions (tenant_id)"#,
+            "CREATE INDEX IF NOT EXISTS idx_submissions_tenant ON collab_ops.submissions (tenant_id);",
             [],
         ))
         .await?;
-
         db.execute_raw(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"CREATE INDEX IF NOT EXISTS idx_submissions_form ON collab_ops.submissions (form_id)"#,
-            [],
-        ))
-        .await?;
-
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            r#"ALTER TABLE collab_ops.forms ENABLE ROW LEVEL SECURITY"#,
-            [],
-        ))
-        .await?;
-
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            r#"ALTER TABLE collab_ops.submissions ENABLE ROW LEVEL SECURITY"#,
-            [],
-        ))
-        .await?;
-
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            r#"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'forms' AND schemaname = 'collab_ops' AND policyname = 'ops_forms_isolation') THEN CREATE POLICY ops_forms_isolation ON collab_ops.forms TO ops_role USING (tenant_id = current_setting('app.tenant_id')::uuid) WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid); END IF; END $$"#,
-            [],
-        ))
-        .await?;
-
-        db.execute_raw(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            r#"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'submissions' AND schemaname = 'collab_ops' AND policyname = 'ops_submissions_isolation') THEN CREATE POLICY ops_submissions_isolation ON collab_ops.submissions TO ops_role USING (tenant_id = current_setting('app.tenant_id')::uuid) WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid); END IF; END $$"#,
+            "CREATE INDEX IF NOT EXISTS idx_submissions_form ON collab_ops.submissions (form_id);",
             [],
         ))
         .await?;
@@ -149,13 +108,13 @@ impl MigrationTrait for Migration {
         let db = manager.get_connection();
         db.execute_raw(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"DROP TABLE IF EXISTS collab_ops.submissions CASCADE"#,
+            "DROP TABLE IF EXISTS collab_ops.submissions CASCADE;",
             [],
         ))
         .await?;
         db.execute_raw(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"DROP TABLE IF EXISTS collab_ops.forms CASCADE"#,
+            "DROP TABLE IF EXISTS collab_ops.forms CASCADE;",
             [],
         ))
         .await?;

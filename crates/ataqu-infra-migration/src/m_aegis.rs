@@ -28,24 +28,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // Enable RLS
-        manager
-            .get_connection()
-            .execute_unprepared("ALTER TABLE core.users ENABLE ROW LEVEL SECURITY")
-            .await?;
-
-        // RLS policy: tenant isolation via current_setting
-        manager
-            .get_connection()
-            .execute_unprepared(
-                r#"
-                CREATE POLICY users_tenant_isolation ON core.users
-                USING (tenant_id = (current_setting('app.current_tenant_id'))::uuid)
-                WITH CHECK (tenant_id = (current_setting('app.current_tenant_id'))::uuid)
-                "#,
-            )
-            .await?;
-
+        // RLS and policies will be added in a later migration
         Ok(())
     }
 

@@ -9,8 +9,10 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
 
-        // Create core schema
-        conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS core;").await?;
+        // Create all schemas
+        for schema in &["core", "collab_crm", "collab_ops", "vault", "dial", "vista"] {
+            conn.execute_unprepared(&format!("CREATE SCHEMA IF NOT EXISTS {};", schema)).await?;
+        }
 
         // Create the app roles (idempotent)
         for role in &["core_role", "cinq_role", "ops_role", "vault_role", "dial_role", "vista_role", "dispatcher_role", "admin_role"] {
@@ -62,9 +64,6 @@ impl MigrationTrait for Migration {
             "#
         ).await?;
 
-        // Enable RLS on outbox
-        conn.execute_unprepared("ALTER TABLE core.outbox ENABLE ROW LEVEL SECURITY;").await?;
-
         // Grant sequence usage to all domain roles (now that they exist)
         conn.execute_unprepared(
             "GRANT USAGE, SELECT ON SEQUENCE core.outbox_id_seq TO core_role, cinq_role, ops_role, vault_role, dial_role, vista_role;"
@@ -78,7 +77,6 @@ impl MigrationTrait for Migration {
         conn.execute_unprepared("DROP TABLE IF EXISTS core.idempotency_records;").await?;
         conn.execute_unprepared("DROP TABLE IF EXISTS core.outbox;").await?;
         conn.execute_unprepared("DROP TYPE IF EXISTS app_schema;").await?;
-        // Drop roles? Not necessary for test cleanup.
         Ok(())
     }
 }

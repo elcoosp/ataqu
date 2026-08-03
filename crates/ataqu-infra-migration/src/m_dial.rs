@@ -9,10 +9,6 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
 
-        // Create schema
-        conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS dial")
-            .await?;
-
         // Create channels table
         conn.execute_unprepared(
             r#"
@@ -23,7 +19,7 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
-            "#,
+            "#
         )
         .await?;
 
@@ -39,41 +35,9 @@ impl MigrationTrait for Migration {
                 sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
-            "#,
+            "#
         )
         .await?;
-
-        // Enable RLS
-        conn.execute_unprepared("ALTER TABLE dial.channels ENABLE ROW LEVEL SECURITY")
-            .await?;
-        conn.execute_unprepared("ALTER TABLE dial.messages ENABLE ROW LEVEL SECURITY")
-            .await?;
-
-        // Create policies (IF NOT EXISTS)
-        let policies = [("dial.channels", "channels"), ("dial.messages", "messages")];
-        for (table, name) in policies {
-            for op in ["SELECT", "INSERT", "UPDATE", "DELETE"] {
-                let policy_name = format!("{}_{}_policy", name, op.to_lowercase());
-                let sql = if op == "INSERT" {
-                    format!(
-                        r#"CREATE POLICY IF NOT EXISTS {policy_name} ON {table} FOR {op}
-                           WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)"#
-                    )
-                } else if op == "UPDATE" {
-                    format!(
-                        r#"CREATE POLICY IF NOT EXISTS {policy_name} ON {table} FOR {op}
-                           USING (tenant_id = current_setting('app.tenant_id')::uuid)
-                           WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)"#
-                    )
-                } else {
-                    format!(
-                        r#"CREATE POLICY IF NOT EXISTS {policy_name} ON {table} FOR {op}
-                           USING (tenant_id = current_setting('app.tenant_id')::uuid)"#
-                    )
-                };
-                conn.execute_unprepared(&sql).await?;
-            }
-        }
 
         // Create indexes
         conn.execute_unprepared(
