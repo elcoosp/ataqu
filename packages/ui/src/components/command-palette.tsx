@@ -2,17 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CommandMenu, type CommandAction } from 'better-cmdk';
 import {
   HomeIcon,
-  UsersIcon,
-  MessageSquareIcon,
-  FileTextIcon,
-  ZapIcon,
-  CalendarIcon,
-  FormInputIcon,
-  PackageIcon,
-  UserIcon,
-  BarChartIcon,
   SearchIcon,
-  SettingsIcon,
   LogOutIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@ataqu/shared-stores';
@@ -86,7 +76,6 @@ export const CommandPalette: React.FC = () => {
     },
   }));
 
-  // Internal navigation actions (using TanStack Router)
   const internalActions: CommandAction[] = [
     {
       name: 'dashboard',
@@ -106,10 +95,6 @@ export const CommandPalette: React.FC = () => {
       shortcut: '⌘S',
       execute: () => console.log('Search opened'),
     },
-  ];
-
-  // User actions
-  const userActions: CommandAction[] = [
     {
       name: 'logout',
       label: 'Sign Out',
@@ -120,16 +105,24 @@ export const CommandPalette: React.FC = () => {
     },
   ];
 
-  const allActions = [...appActions, ...internalActions, ...userActions];
+  const allActions = [...appActions, ...internalActions];
 
   return (
-    <CommandMenu
-      open={open}
-      onOpenChange={setOpen}
-      actions={allActions}
-      actionsPlaceholder="Search apps, navigate, or run commands..."
-      groupsLabel="Categories"
-      emptyMessage="No commands found."
-    />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/50" onClick={() => setOpen(false)}>
+      <div
+        className="ataqu-glass w-full max-w-lg rounded-lg shadow-lg overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CommandMenu
+          open={open}
+          onOpenChange={setOpen}
+          actions={allActions}
+          actionsPlaceholder="Search apps, navigate, or run commands..."
+          groupsLabel="Categories"
+          emptyMessage="No commands found."
+          className="!bg-transparent !shadow-none !border-none !rounded-none"
+        />
+      </div>
+    </div>
   );
 };
