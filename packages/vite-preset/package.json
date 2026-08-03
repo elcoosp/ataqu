@@ -19,8 +19,5 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     }
-  },
-  "devDependencies": {
-    "vite-tsconfig-paths": "^6.1.1"
   }
 }

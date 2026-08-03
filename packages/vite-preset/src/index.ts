@@ -4,7 +4,6 @@ import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,9 +35,10 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       }),
       react(),
       tailwindcss(),
-      tsconfigPaths(), // Enable tsconfig path resolution for @/
     ],
     resolve: {
+      // Enable native tsconfig path resolution (replaces vite-tsconfig-paths)
+      tsconfigPaths: true,
       // Dedupe to avoid pnpm symlink resolution issues
       dedupe: [
         'react',

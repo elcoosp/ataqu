@@ -2,18 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@ataqu/*": ["../../packages/*/src/index.ts"]
     }
   },
-  "include": [
-    "src/**/*",
-    "e2e/**/*",
-    "src/routeTree.gen.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", "e2e/**/*", "src/routeTree.gen.ts"],
+  "exclude": ["node_modules", "dist"]
 }
