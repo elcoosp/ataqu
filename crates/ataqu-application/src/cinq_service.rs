@@ -120,7 +120,7 @@ use ataqu_kernel::TenantId;
     pub async fn handle_pause_employee_created(
         &self,
         _tenant_id: TenantId,
-        _event: crate::pause_service::EmployeeCreatedV1,
+        _event: crate::pause_service::EmployeeCreatedEvent,
     ) -> CinqResult<()> {
         Ok(())
     }

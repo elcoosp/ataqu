@@ -1,4 +1,5 @@
 use std::fmt;
+use serde::Serialize;
 
 /// A capability token that allows revealing PII.
 #[derive(Clone, Copy)]
@@ -19,7 +20,7 @@ impl PiiAccessKey {
 }
 
 /// An email address.
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct Email(String);
 
 impl Email {
@@ -51,7 +52,7 @@ impl AsRef<str> for Email {
 }
 
 /// A phone number.
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct PhoneNumber(String);
 
 impl PhoneNumber {

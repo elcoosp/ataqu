@@ -1,4 +1,5 @@
 //! CINQ handlers - minimal but functional.
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -10,10 +11,7 @@ use uuid::Uuid;
 
 use ataqu_application::cinq_service::CinqService;
 use ataqu_contracts::cinq::*;
-
-pub struct AppState {
-    pub service: Arc<CinqService<(), (), (), (), ()>>, // placeholder generics
-}
+use crate::AppState;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
@@ -33,27 +31,27 @@ impl IntoResponse for ApiError {
 }
 
 pub async fn create_contact(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Json(_payload): Json<CreateContactRequest>,
 ) -> Result<Json<ContactResponse>, ApiError> {
     Ok(Json(ContactResponse { id: Uuid::new_v4(), name: "test".into(), email: "test@test.com".into() }))
 }
 
 pub async fn list_contacts(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
     Ok(Json(vec![]))
 }
 
 pub async fn get_contact(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
 ) -> Result<Json<ContactResponse>, ApiError> {
     Ok(Json(ContactResponse { id: Uuid::new_v4(), name: "test".into(), email: "test@test.com".into() }))
 }
 
 pub async fn update_contact(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
     Json(_payload): Json<UpdateContactRequest>,
 ) -> Result<Json<ContactResponse>, ApiError> {
@@ -61,34 +59,34 @@ pub async fn update_contact(
 }
 
 pub async fn delete_contact(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn create_deal(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Json(_payload): Json<CreateDealRequest>,
 ) -> Result<Json<DealResponse>, ApiError> {
     Ok(Json(DealResponse { id: Uuid::new_v4(), title: "deal".into(), amount: 100.0 }))
 }
 
 pub async fn list_deals(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
 ) -> Result<Json<Vec<DealResponse>>, ApiError> {
     Ok(Json(vec![]))
 }
 
 pub async fn get_deal(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
 ) -> Result<Json<DealResponse>, ApiError> {
     Ok(Json(DealResponse { id: Uuid::new_v4(), title: "deal".into(), amount: 100.0 }))
 }
 
 pub async fn update_deal(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
     Json(_payload): Json<UpdateDealRequest>,
 ) -> Result<Json<DealResponse>, ApiError> {
@@ -96,13 +94,13 @@ pub async fn update_deal(
 }
 
 pub async fn delete_deal(
-    State(_state): State<Arc<AppState>>,
+    State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     Ok(StatusCode::NO_CONTENT)
 }
 
-// Stubs for pipeline, activities, etc. - we add minimal implementations for missing endpoints.
+// Stubs for pipeline, activities, etc.
 pub async fn list_pipeline_stages() -> Result<Json<Vec<PipelineStageResponse>>, ApiError> {
     Ok(Json(vec![]))
 }
@@ -137,7 +135,7 @@ pub async fn track_email(Json(_payload): Json<TrackEmailRequest>) -> Result<Stat
     Ok(StatusCode::ACCEPTED)
 }
 
-pub fn cinq_routes() -> Router<Arc<AppState>> {
+pub fn cinq_routes() -> Router<AppState> {
     Router::new()
         .route("/contacts", axum::routing::post(create_contact))
         .route("/contacts", axum::routing::get(list_contacts))
@@ -160,9 +158,4 @@ pub fn cinq_routes() -> Router<Arc<AppState>> {
         .route("/csv/import", axum::routing::post(import_csv))
         .route("/csv/export", axum::routing::get(export_csv))
         .route("/email/track", axum::routing::post(track_email))
-}
-use axum::Router;
-
-pub fn routes() -> Router<crate::AppState> {
-    Router::new()
 }

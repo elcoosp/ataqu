@@ -38,16 +38,16 @@ pub struct AppState {
 
 // Helper to create a router with all app routes.
 pub fn create_router(state: AppState) -> Router {
-    use handlers::aegis::aegis_routes;
+    use handlers::aegis::routes as aegis_routes;
     use handlers::cinq::cinq_routes;
-    use handlers::dial::dial_routes;
-    use handlers::pause::pause_routes;
-    use handlers::pivot::pivot_routes;
-    use handlers::sond::sond_routes;
-    use handlers::spark::spark_routes;
-    use handlers::tempo::tempo_routes;
-    use handlers::vault::vault_routes;
-    use handlers::vista::vista_routes;
+    use handlers::dial::routes as dial_routes;
+    use handlers::pause::routes as pause_routes;
+    use handlers::pivot::routes as pivot_routes;
+    use handlers::sond::routes as sond_routes;
+    use handlers::spark::routes as spark_routes;
+    use handlers::tempo::routes as tempo_routes;
+    use handlers::vault::routes as vault_routes;
+    use handlers::vista::routes as vista_routes;
 
     Router::new()
         .nest("/api/aegis", aegis_routes())

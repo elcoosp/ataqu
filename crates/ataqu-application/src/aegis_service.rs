@@ -13,7 +13,8 @@ use tracing::{info, instrument, warn};
 use uuid::Uuid;
 
 use ataqu_security::Email;
-use ataqu_domain_aegis::{AuthError, User, UserCreatedEvent, create_user, authenticate, setup_mfa};
+use ataqu_domain_aegis::{AuthError, User, UserCreated, create_user, authenticate, setup_mfa};
+use ataqu_kernel::{Clock, IdGenerator};
 
 // ----------------------------------------------------------------------
 // Domain commands and types
@@ -138,6 +139,38 @@ pub struct MfaSetupResponse {
 // Service (without idempotency guard for now)
 // ----------------------------------------------------------------------
 
+
+// ----------------------------------------------------------------------
+// Traits and types for external capabilities
+// ----------------------------------------------------------------------
+
+#[derive(Debug, Clone)]
+pub struct TokenPair {
+    pub access_token: String,
+    pub refresh_token: String,
+}
+
+#[async_trait]
+pub trait AegisDomain: Send + Sync {
+    async fn create_user(
+        &self,
+        cmd: CreateUserCommand,
+        id_gen: &dyn IdGenerator,
+        clock: &dyn Clock,
+    ) -> Result<(UserCreated, User), DomainError>;
+    async fn authenticate(
+        &self,
+        cmd: AuthenticateCommand,
+        user: User,
+        clock: &dyn Clock,
+    ) -> Result<TokenPair, DomainError>;
+    async fn setup_mfa(
+        &self,
+        user: &mut User,
+        clock: &dyn Clock,
+    ) -> Result<(String, String), DomainError>;
+}
+
 pub struct AegisService<R, O, D> {
     repo: Arc<R>,
     outbox: Arc<O>,
@@ -197,7 +230,7 @@ where
 
         Ok(CreateUserResponse {
             user_id: user.id,
-            email: user.email,
+            email: user.email.to_string(),
         })
     }
 
@@ -273,7 +306,7 @@ impl AegisDomain for NoopDomain {
         _cmd: CreateUserCommand,
         _id_gen: &dyn IdGenerator,
         _clock: &dyn Clock,
-    ) -> Result<(UserCreatedEvent, User), DomainError> {
+    ) -> Result<(UserCreated, User), DomainError> {
         unimplemented!("Domain logic not yet implemented")
     }
     async fn authenticate(

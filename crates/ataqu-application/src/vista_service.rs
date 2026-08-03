@@ -30,6 +30,7 @@ use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
+use ataqu_kernel::Clock;
 
 // ─── Error Types ───────────────────────────────────────────────────────
 

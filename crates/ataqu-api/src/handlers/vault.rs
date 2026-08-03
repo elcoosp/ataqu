@@ -1,16 +1,10 @@
 use axum::{
     Router,
-    extract::{Path, State},
-    http::{HeaderMap, StatusCode},
-    response::Json,
     routing::{get, post, put},
 };
-use serde_json::{json, Value};
-use uuid::Uuid;
-
 use crate::AppState;
 
-pub fn router() -> Router<AppState> {
+pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/products", get(list_products).post(create_product))
         .route("/products/:id", get(get_product).put(update_product))
@@ -21,41 +15,16 @@ pub fn router() -> Router<AppState> {
         .route("/alerts", get(list_alerts))
 }
 
-async fn list_products() -> Json<Vec<Value>> { Json(vec![]) }
-async fn create_product() -> Json<Value> { Json(json!({})) }
-async fn get_product() -> Json<Value> { Json(json!({})) }
-async fn update_product() -> Json<Value> { Json(json!({})) }
-async fn list_variants() -> Json<Vec<Value>> { Json(vec![]) }
-async fn create_variant() -> Json<Value> { Json(json!({})) }
-async fn get_variant() -> Json<Value> { Json(json!({})) }
-async fn update_variant() -> Json<Value> { Json(json!({})) }
-async fn get_stock() -> Json<Value> { Json(json!({})) }
-async fn update_stock() -> Json<Value> { Json(json!({})) }
-async fn list_movements() -> Json<Vec<Value>> { Json(vec![]) }
-async fn record_movement() -> Json<Value> { Json(json!({})) }
-async fn list_alerts() -> Json<Vec<Value>> { Json(vec![]) }
-pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::get;
-    axum::Router::new()
-        .route("/", get(|| async { "Placeholder for $app" }))
-}
-pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::get;
-    axum::Router::new()
-        .route("/", get(|| async { "Placeholder for $app" }))
-}
-pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::get;
-    axum::Router::new()
-        .route("/", get(|| async { "Placeholder for $app" }))
-}
-pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::get;
-    axum::Router::new()
-        .route("/", get(|| async { "Placeholder for $app" }))
-}
-pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::get;
-    axum::Router::new()
-        .route("/", get(|| async { "Placeholder for $app" }))
-}
+async fn list_products() -> axum::Json<Vec<serde_json::Value>> { axum::Json(vec![]) }
+async fn create_product() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn get_product() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn update_product() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn list_variants() -> axum::Json<Vec<serde_json::Value>> { axum::Json(vec![]) }
+async fn create_variant() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn get_variant() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn update_variant() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn get_stock() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn update_stock() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn list_movements() -> axum::Json<Vec<serde_json::Value>> { axum::Json(vec![]) }
+async fn record_movement() -> axum::Json<serde_json::Value> { axum::Json(serde_json::json!({})) }
+async fn list_alerts() -> axum::Json<Vec<serde_json::Value>> { axum::Json(vec![]) }

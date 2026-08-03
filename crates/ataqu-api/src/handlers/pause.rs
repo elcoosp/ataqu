@@ -454,6 +454,12 @@ pub fn router<S: PauseService + 'static>() -> Router<PauseAppState<S>> {
         )
 }
 
+// For lib.rs, we provide a placeholder routes function that returns an empty router
+// This will be used until we integrate properly.
+pub fn routes() -> Router<crate::AppState> {
+    Router::new()
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Tests
 // ═══════════════════════════════════════════════════════════════════════
@@ -565,14 +571,4 @@ mod tests {
             StatusCode::INTERNAL_SERVER_ERROR
         );
     }
-}
-pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::get;
-    axum::Router::new()
-        .route("/", get(|| async { "Placeholder for $app" }))
-}
-pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::get;
-    axum::Router::new()
-        .route("/", get(|| async { "Placeholder for $app" }))
 }

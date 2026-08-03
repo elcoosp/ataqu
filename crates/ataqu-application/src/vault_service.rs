@@ -4,8 +4,7 @@ use serde::Serialize;
 use std::time::SystemTime;
 use thiserror::Error;
 use uuid::Uuid;
-use ataqu_kernel::{Clock, IdGenerator};
-use ataqu_kernel::TenantId;
+// Removed duplicate imports of Clock, IdGenerator, TenantId
 
 /// Command to update stock quantity
 #[derive(Debug, Clone)]

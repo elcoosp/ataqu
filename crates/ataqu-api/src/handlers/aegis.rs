@@ -26,7 +26,7 @@ impl<'a> Serialize for ApiEmail<'a> {
     where
         S: serde::Serializer,
     {
-        let key = PiiAccessKey::new();
+        let key = PiiAccessKey::new_for_test();
         serializer.serialize_str(self.0.reveal(&key))
     }
 }

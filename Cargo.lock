@@ -402,6 +402,7 @@ version = "0.1.0"
 dependencies = [
  "ataqu-kernel",
  "ataqu-security",
+ "serde",
  "thiserror",
  "uuid",
 ]
@@ -584,6 +585,9 @@ dependencies = [
 [[package]]
 name = "ataqu-security"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "atoi"

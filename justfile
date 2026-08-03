@@ -15,3 +15,6 @@ test-integration:
     cargo run --bin migrator
     @echo "🧪 Exécution des tests d'intégration..."
     cargo test --test integration
+
+wr:
+    watchexec -w ./wr.sh --clear -r "./wr.sh"

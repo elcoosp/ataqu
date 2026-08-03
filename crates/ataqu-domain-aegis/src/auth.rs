@@ -1,6 +1,7 @@
 //! AEGIS authentication domain logic.
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use serde::Serialize;
 
 use crate::Email;
 use std::time::SystemTime;
@@ -42,7 +43,7 @@ pub struct User {
 }
 
 /// Event emitted when a user is created.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct UserCreated {
     pub user_id: Uuid,
     pub email: Email,
