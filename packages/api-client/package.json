@@ -7,6 +7,7 @@
   "dependencies": {
     "@ataqu/shared-stores": "workspace:*",
     "@ataqu/shared-utils": "workspace:*",
-    "@ataqu/types": "workspace:*"
+    "@ataqu/types": "workspace:*",
+    "@tanstack/react-query": "^5.101.0"
   }
 }

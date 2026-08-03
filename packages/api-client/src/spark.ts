@@ -1,10 +1,26 @@
-// Auto-generated for spark
 import { api } from './client';
+import { useMutation } from '@tanstack/react-query';
+import type { UseMutationOptions } from '@tanstack/react-query';
 
-export const sparkApi = {
-  getList: () => api.get('/spark'),
-  getOne: (id: string) => api.get(`/spark/${id}`),
-  create: (data: any) => api.post('/spark', data),
-  update: (id: string, data: any) => api.put(`/spark/${id}`, data),
-  delete: (id: string) => api.delete(`/spark/${id}`),
-};
+export interface Workflow {
+  id: string;
+  name: string;
+  steps: string[];
+}
+export interface WorkflowResult {
+  id: string;
+  status: string;
+}
+
+export const createWorkflow = (data: Workflow) =>
+  api.post<WorkflowResult>('/workflows', data);
+export const executeWorkflow = (workflowId: string) =>
+  api.post<WorkflowResult>(`/workflows/${workflowId}/execute`);
+
+export const useCreateWorkflow = (options?: UseMutationOptions<WorkflowResult, Error, Workflow>) =>
+  useMutation({ mutationFn: createWorkflow, ...options });
+export const useExecuteWorkflow = (options?: UseMutationOptions<WorkflowResult, Error, string>) =>
+  useMutation({
+    mutationFn: executeWorkflow,
+    ...options,
+  });

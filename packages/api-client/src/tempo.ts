@@ -1,10 +1,8 @@
-// Auto-generated for tempo
 import { api } from './client';
+import { useQuery } from '@tanstack/react-query';
+import type { UseQueryOptions } from '@tanstack/react-query';
 
-export const tempoApi = {
-  getList: () => api.get('/tempo'),
-  getOne: (id: string) => api.get(`/tempo/${id}`),
-  create: (data: any) => api.post('/tempo', data),
-  update: (id: string, data: any) => api.put(`/tempo/${id}`, data),
-  delete: (id: string) => api.delete(`/tempo/${id}`),
-};
+export const getCalendars = () => api.get<unknown[]>('/calendars');
+
+export const useGetCalendars = (options?: UseQueryOptions<unknown[]>) =>
+  useQuery({ queryKey: ['tempo', 'calendars'], queryFn: getCalendars, ...options });

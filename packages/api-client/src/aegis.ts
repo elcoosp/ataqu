@@ -1,10 +1,37 @@
-// Auto-generated for aegis
 import { api } from './client';
+import type {
+  LoginRequest,
+  LoginResponse,
+  MfaSetupRequest,
+  MfaSetupResponse,
+} from './types';
+import { useMutation } from '@tanstack/react-query';
+import type { UseMutationOptions } from '@tanstack/react-query';
 
-export const aegisApi = {
-  getList: () => api.get('/aegis'),
-  getOne: (id: string) => api.get(`/aegis/${id}`),
-  create: (data: any) => api.post('/aegis', data),
-  update: (id: string, data: any) => api.put(`/aegis/${id}`, data),
-  delete: (id: string) => api.delete(`/aegis/${id}`),
-};
+export const login = (data: LoginRequest) =>
+  api.post<LoginResponse>('/auth/login', data);
+
+export const mfaSetup = (data: MfaSetupRequest) =>
+  api.post<MfaSetupResponse>('/auth/mfa', data);
+
+export const tokenRefresh = (refreshToken: string) =>
+  api.post<{ access_token: string }>('/auth/refresh', { refresh_token: refreshToken });
+
+// ---- React Query hooks ----
+export const useLogin = (options?: UseMutationOptions<LoginResponse, Error, LoginRequest>) =>
+  useMutation({
+    mutationFn: login,
+    ...options,
+  });
+
+export const useMfaSetup = (options?: UseMutationOptions<MfaSetupResponse, Error, MfaSetupRequest>) =>
+  useMutation({
+    mutationFn: mfaSetup,
+    ...options,
+  });
+
+export const useTokenRefresh = (options?: UseMutationOptions<{ access_token: string }, Error, string>) =>
+  useMutation({
+    mutationFn: tokenRefresh,
+    ...options,
+  });
