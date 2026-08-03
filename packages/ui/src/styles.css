@@ -58,7 +58,6 @@
   }
 }
 
-/* Glassmorphism utilities from brand book */
 .ataqu-glass {
   background: rgba(10, 22, 40, 0.75);
   backdrop-filter: blur(12px) saturate(180%);

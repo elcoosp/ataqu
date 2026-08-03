@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@ataqu/ui": ["../../packages/ui/src/index.ts"],
+      "@ataqu/ui/*": ["../../packages/ui/src/*"],
+      "@ataqu/*": ["../../packages/*/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "e2e/**/*"],
+  "references": [{ "path": "../../packages/ui" }]
+}

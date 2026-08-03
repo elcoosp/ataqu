@@ -14,6 +14,30 @@
     "verbatimModuleSyntax": true,
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@ataqu/*": ["packages/*/src/index.ts"],
+      "@ataqu/ui": ["packages/ui/src/index.ts"],
+      "@ataqu/ui/*": ["packages/ui/src/*"],
+      "@ataqu/types": ["packages/types/src/index.ts"],
+      "@ataqu/types/*": ["packages/types/src/*"],
+      "@ataqu/shared-hooks": ["packages/shared-hooks/src/index.ts"],
+      "@ataqu/shared-hooks/*": ["packages/shared-hooks/src/*"],
+      "@ataqu/shared-utils": ["packages/shared-utils/src/index.ts"],
+      "@ataqu/shared-utils/*": ["packages/shared-utils/src/*"],
+      "@ataqu/shared-stores": ["packages/shared-stores/src/index.ts"],
+      "@ataqu/shared-stores/*": ["packages/shared-stores/src/*"],
+      "@ataqu/shared-schemas": ["packages/shared-schemas/src/index.ts"],
+      "@ataqu/shared-schemas/*": ["packages/shared-schemas/src/*"],
+      "@ataqu/shared-i18n": ["packages/shared-i18n/src/index.ts"],
+      "@ataqu/shared-i18n/*": ["packages/shared-i18n/src/*"],
+      "@ataqu/vite-preset": ["packages/vite-preset/src/index.ts"],
+      "@ataqu/vite-preset/*": ["packages/vite-preset/src/*"],
+      "@ataqu/test-utils": ["packages/test-utils/src/index.ts"],
+      "@ataqu/test-utils/*": ["packages/test-utils/src/*"],
+      "@ataqu/api-client": ["packages/api-client/src/index.ts"],
+      "@ataqu/api-client/*": ["packages/api-client/src/*"]
+    }
   }
 }
