@@ -4,7 +4,6 @@ import { CommandPalette } from './command-palette';
 import { Button } from './button';
 import { Menu, X } from 'lucide-react';
 
-// App icons mapping - use PNG images from public/apps/
 const APP_ICONS: Record<string, string> = {
   aegis: '/apps/aegis.png',
   cinq: '/apps/cinq.png',
@@ -44,6 +43,26 @@ const APP_DOMAINS: Record<string, string> = {
   vista: 'bi',
 };
 
+const APP_PORTS: Record<string, number> = {
+  aegis: 5173,
+  cinq: 5174,
+  dial: 5175,
+  pivot: 5176,
+  spark: 5177,
+  tempo: 5178,
+  sond: 5179,
+  vault: 5180,
+  pause: 5181,
+  vista: 5182,
+};
+
+function getAppUrl(app: string): string {
+  if (import.meta.env.DEV) {
+    return `http://localhost:${APP_PORTS[app]}`;
+  }
+  return `https://${APP_DOMAINS[app]}.ataqu.com`;
+}
+
 export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> = ({ activeApp, children }) => {
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { user, logout } = useAuthStore();
@@ -76,8 +95,7 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
           {appKeys.map((app) => {
             const iconSrc = APP_ICONS[app];
             const isActive = app === activeApp;
-            const subdomain = APP_DOMAINS[app];
-            const href = `https://${subdomain}.ataqu.com`;
+            const href = getAppUrl(app);
             return (
               <a
                 key={app}
@@ -129,7 +147,6 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="h-16 flex items-center justify-end px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
           <div className="flex items-center gap-4">
             <Button
@@ -146,7 +163,7 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
               variant="ghost"
               size="icon"
               className="text-gray-400 hover:text-white"
-              onClick={() => { /* show notifications */ }}
+              onClick={() => {}}
             >
               <span className="sr-only">Notifications</span>
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -156,7 +173,6 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
           </div>
         </header>
 
-        {/* Page content */}
         <div className="flex-1 overflow-auto p-6">
           <CommandPalette />
           {children}

@@ -50,6 +50,26 @@ const APP_ICONS: Record<string, string> = {
   vista: '/apps/vista.png',
 };
 
+const APP_PORTS: Record<string, number> = {
+  aegis: 5173,
+  cinq: 5174,
+  dial: 5175,
+  pivot: 5176,
+  spark: 5177,
+  tempo: 5178,
+  sond: 5179,
+  vault: 5180,
+  pause: 5181,
+  vista: 5182,
+};
+
+function getAppUrl(app: string): string {
+  if (import.meta.env.DEV) {
+    return `http://localhost:${APP_PORTS[app]}`;
+  }
+  return `https://${APP_DOMAINS[app]}.ataqu.com`;
+}
+
 export const CommandPalette: React.FC = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -81,7 +101,7 @@ export const CommandPalette: React.FC = () => {
             <CommandItem
               key={app}
               onSelect={() => handleSelect(() => {
-                window.location.href = `https://${APP_DOMAINS[app]}.ataqu.com`;
+                window.location.href = getAppUrl(app);
               })}
             >
               <img src={APP_ICONS[app]} alt={APP_NAMES[app]} className="h-5 w-5 mr-2" />
