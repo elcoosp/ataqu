@@ -1,30 +1,31 @@
-# Ataqu Monorepo
+# Ataqu Monorepo – Frontend Foundation
 
-This monorepo contains all 10 Ataqu apps and shared packages.
+## Quick Start
 
-## Setup
+```bash
+# Install dependencies
+pnpm install
 
-1. Install dependencies: `pnpm install`
-2. Generate API client: `pnpm generate:api` (automatically runs on postinstall)
-3. Start development servers: `pnpm dev`
+# Start all 10 apps in development mode (each on its own port)
+pnpm dev
 
-## Structure
+# Or start a specific app
+pnpm --filter @ataqu/app-aegis dev
+```
 
-- `apps/` – each app is an independent SPA
-- `packages/` – shared code across apps
+All apps are available at subdomains in production, but locally they run on ports 5173–5182.
 
-## Commands
+The shared UI kit includes the unified Shell, Command Palette, and all shadcn/ui components.
 
-- `pnpm dev` – run all apps in dev mode
-- `pnpm build` – build all apps for production
-- `pnpm test` – run unit tests
-- `pnpm test:e2e` – run Playwright end-to-end tests
-- `pnpm lint` – run Biome
-- `pnpm extract` – extract i18n messages
-- `pnpm compile` – compile i18n catalogs
-- `pnpm generate:api` – regenerate API client from Rust code
+## Tasks Completed
 
-## Naming Conventions
+- [x] Monorepo structure (apps/ packages/)
+- [x] Shared packages: types, tailwind-config, ui, shared-hooks, shared-utils, shared-stores, shared-schemas, shared-i18n, vite-preset, test-utils
+- [x] API client (hand-crafted from Rust handlers)
+- [x] 10 app scaffolds with routing, authentication guard, and Shell integration
+- [x] i18n with Lingui 6
+- [x] Testing setup (Vitest + Playwright)
+- [x] CI pipeline (GitHub Actions)
+- [x] Documentation
 
-- All files: `kebab-case` (except entry points like `vite.config.ts`)
-- Git commits: conventional commits (feat, fix, chore, etc.)
+See `packages/*/README.md` for details on each package.

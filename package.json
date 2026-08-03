@@ -8,11 +8,10 @@
     "build": "pnpm -r build",
     "test": "vitest",
     "test:e2e": "playwright test",
-    "lint": "biome check --apply .",
+    "lint": "biome check . --apply",
     "extract": "pnpm -r extract",
     "compile": "pnpm -r compile",
-    "generate:api": "tsx scripts/generate-api-client.ts",
-    "prepare": "pnpm generate:api"
+    "test:ui": "vitest --ui"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.6",

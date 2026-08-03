@@ -6,6 +6,9 @@
   "types": "src/index.ts",
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.4",
-    "vite": "^8.1.0"
-  }
+    "vite": "^8.1.0",
+    "tailwindcss": "^4.3.0",
+    "autoprefixer": "^10.4.20"
+  },
+  "type": "module"
 }

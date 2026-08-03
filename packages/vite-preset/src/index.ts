@@ -1,5 +1,7 @@
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
 export const defineViteConfig = (options: { appName: string }): UserConfig => defineConfig({
   plugins: [react()],
@@ -32,7 +34,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => de
   },
   css: {
     postcss: {
-      plugins: [require('tailwindcss'), require('autoprefixer')],
+      plugins: [tailwindcss, autoprefixer],
     },
   },
 });
