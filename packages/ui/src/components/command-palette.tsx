@@ -1,11 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Command } from 'cmdk';
-import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@ataqu/shared-stores';
 import { useDebounce } from '@ataqu/shared-hooks';
-import { searchContacts } from '@ataqu/api-client/cinq';
-import { searchDocuments } from '@ataqu/api-client/pivot';
-import { searchMessages } from '@ataqu/api-client/dial';
 
 interface SearchResult {
   id: string;
@@ -47,13 +42,12 @@ export const CommandPalette: React.FC = () => {
     { id: 'vista', name: 'VISTA', icon: '📈', path: 'https://bi.ataqu.com' },
   ];
 
-  // Simulate search across apps (in real app, we'd use query hooks)
+  // Simulate search across apps
   useEffect(() => {
     if (debouncedSearch.trim().length < 2) {
       setResults([]);
       return;
     }
-    // For demo, we'll just show a static list
     const filtered = appItems.filter((item) =>
       item.name.toLowerCase().includes(debouncedSearch.toLowerCase())
     );

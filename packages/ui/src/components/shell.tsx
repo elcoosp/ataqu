@@ -2,34 +2,21 @@ import React from 'react';
 import { useAuthStore, useUIStore } from '@ataqu/shared-stores';
 import { CommandPalette } from './command-palette';
 import { Button } from './button';
-import { Avatar, AvatarFallback, AvatarImage } from './avatar';
-import {
-  Menu,
-  X,
-  AegisIcon,
-  CinqIcon,
-  DialIcon,
-  PivotIcon,
-  SparkIcon,
-  TempoIcon,
-  SondIcon,
-  VaultIcon,
-  PauseIcon,
-  VistaIcon,
-} from 'lucide-react';
+// Use a simple div for avatar instead of importing avatar component
+import { Menu, X } from 'lucide-react';
 
-// App icons mapping
-const APP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  aegis: AegisIcon,
-  cinq: CinqIcon,
-  dial: DialIcon,
-  pivot: PivotIcon,
-  spark: SparkIcon,
-  tempo: TempoIcon,
-  sond: SondIcon,
-  vault: VaultIcon,
-  pause: PauseIcon,
-  vista: VistaIcon,
+// App icons mapping - we'll use simple emojis for now
+const APP_ICONS: Record<string, string> = {
+  aegis: '🔐',
+  cinq: '📊',
+  dial: '💬',
+  pivot: '📝',
+  spark: '⚡',
+  tempo: '📅',
+  sond: '📋',
+  vault: '📦',
+  pause: '👤',
+  vista: '📈',
 };
 
 // App names for display
@@ -67,10 +54,10 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
   const appKeys = Object.keys(APP_ICONS);
 
   return (
-    <div className="flex h-screen bg-deep-night text-white overflow-hidden">
+    <div className="flex h-screen bg-[#0A1628] text-white overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? 'w-64' : 'w-16'} flex-shrink-0 bg-deep-night/80 border-r border-gray-700/40 transition-all duration-150 ease-out overflow-hidden flex flex-col`}
+        className={`${sidebarOpen ? 'w-64' : 'w-16'} flex-shrink-0 bg-[#0A1628]/80 border-r border-gray-700/40 transition-all duration-150 ease-out overflow-hidden flex flex-col`}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700/40">
           {sidebarOpen ? (
@@ -90,7 +77,7 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
 
         <nav className="flex-1 py-4 overflow-y-auto">
           {appKeys.map((app) => {
-            const Icon = APP_ICONS[app];
+            const icon = APP_ICONS[app];
             const isActive = app === activeApp;
             const subdomain = APP_DOMAINS[app];
             const href = `https://${subdomain}.ataqu.com`;
@@ -104,7 +91,7 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-amber' : ''}`} />
+                <span className={`text-lg flex-shrink-0 ${isActive ? 'text-amber' : ''}`}>{icon}</span>
                 {sidebarOpen && (
                   <span className="ml-3 text-sm font-medium">{APP_NAMES[app]}</span>
                 )}
@@ -116,12 +103,9 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
         {/* User footer */}
         <div className="border-t border-gray-700/40 p-4">
           <div className="flex items-center">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.avatarUrl} />
-              <AvatarFallback className="bg-amber/20 text-amber">
-                {user?.name?.[0] || user?.email?.[0] || 'U'}
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-8 w-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold">
+              {user?.name?.[0] || user?.email?.[0] || 'U'}
+            </div>
             {sidebarOpen && (
               <div className="ml-3 flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
@@ -145,7 +129,7 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-deep-night/50">
+        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

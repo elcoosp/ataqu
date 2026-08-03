@@ -2,8 +2,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/postcss';
-import autoprefixer from 'autoprefixer';
 
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -12,6 +10,7 @@ const __dirname = path.dirname(__filename);
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
   // rootDir is the monorepo root: go up from packages/vite-preset/src to root
   const rootDir = path.resolve(__dirname, '../../../');
+  const packagesDir = path.resolve(rootDir, 'packages');
 
   return defineConfig({
     plugins: [react()],
@@ -23,9 +22,12 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
     },
     resolve: {
       alias: {
-        '@ataqu': path.resolve(rootDir, 'packages'),
-        '@ataqu/ui': path.resolve(rootDir, 'packages/ui/src/index.ts'),
-        '@ataqu/ui/styles.css': path.resolve(rootDir, 'packages/ui/src/styles.css'),
+        // Map all @ataqu/* to their respective index files
+        '@ataqu': packagesDir,
+        // Explicit alias for ui and its subpath
+        '@ataqu/ui': path.resolve(packagesDir, 'ui/src/index.ts'),
+        '@ataqu/ui/styles.css': path.resolve(packagesDir, 'ui/src/styles.css'),
+        // For other packages, rely on the wildcard
       },
     },
     build: {
@@ -44,11 +46,6 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
             }
           },
         },
-      },
-    },
-    css: {
-      postcss: {
-        plugins: [tailwindcss, autoprefixer],
       },
     },
   });
