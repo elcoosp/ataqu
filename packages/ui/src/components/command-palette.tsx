@@ -7,11 +7,7 @@ import {
   CommandGroup,
   CommandItem,
 } from '../ui/command';
-import {
-  HomeIcon,
-  SearchIcon,
-  LogOutIcon,
-} from 'lucide-react';
+import { Home, Search, LogOut } from 'lucide-react';
 import { useAuthStore } from '@ataqu/shared-stores';
 import { useNavigate } from '@tanstack/react-router';
 
@@ -96,19 +92,19 @@ export const CommandPalette: React.FC = () => {
         </CommandGroup>
         <CommandGroup heading="Navigation">
           <CommandItem onSelect={() => handleSelect(() => navigate({ to: '/dashboard' }))}>
-            <HomeIcon className="mr-2 h-4 w-4" />
+            <Home className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
             <span className="ml-auto text-xs text-muted-foreground">⌘D</span>
           </CommandItem>
           <CommandItem onSelect={() => handleSelect(() => console.log('Search opened'))}>
-            <SearchIcon className="mr-2 h-4 w-4" />
+            <Search className="mr-2 h-4 w-4" />
             <span>Global Search</span>
             <span className="ml-auto text-xs text-muted-foreground">⌘S</span>
           </CommandItem>
         </CommandGroup>
         <CommandGroup heading="Account">
           <CommandItem onSelect={() => handleSelect(logout)}>
-            <LogOutIcon className="mr-2 h-4 w-4" />
+            <LogOut className="mr-2 h-4 w-4" />
             <span>Sign Out</span>
           </CommandItem>
         </CommandGroup>

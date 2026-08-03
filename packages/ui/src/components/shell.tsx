@@ -4,18 +4,18 @@ import { CommandPalette } from './command-palette';
 import { Button } from './button';
 import { Menu, X } from 'lucide-react';
 
-// App icons mapping - use emojis for now
+// App icons mapping - use PNG images from public/apps/
 const APP_ICONS: Record<string, string> = {
-  aegis: '🔐',
-  cinq: '📊',
-  dial: '💬',
-  pivot: '📝',
-  spark: '⚡',
-  tempo: '📅',
-  sond: '📋',
-  vault: '📦',
-  pause: '👤',
-  vista: '📈',
+  aegis: '/apps/aegis.png',
+  cinq: '/apps/cinq.png',
+  dial: '/apps/dial.png',
+  pivot: '/apps/pivot.png',
+  spark: '/apps/spark.png',
+  tempo: '/apps/tempo.png',
+  sond: '/apps/sond.png',
+  vault: '/apps/vault.png',
+  pause: '/apps/pause.png',
+  vista: '/apps/vista.png',
 };
 
 const APP_NAMES: Record<string, string> = {
@@ -74,7 +74,7 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
 
         <nav className="flex-1 py-4 overflow-y-auto">
           {appKeys.map((app) => {
-            const icon = APP_ICONS[app];
+            const iconSrc = APP_ICONS[app];
             const isActive = app === activeApp;
             const subdomain = APP_DOMAINS[app];
             const href = `https://${subdomain}.ataqu.com`;
@@ -88,7 +88,11 @@ export const Shell: React.FC<{ activeApp: string; children: React.ReactNode }> =
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className={`text-lg flex-shrink-0 ${isActive ? 'text-amber' : ''}`}>{icon}</span>
+                <img
+                  src={iconSrc}
+                  alt={APP_NAMES[app]}
+                  className={`h-6 w-6 flex-shrink-0 ${isActive ? 'opacity-100' : 'opacity-70'}`}
+                />
                 {sidebarOpen && (
                   <span className="ml-3 text-sm font-medium">{APP_NAMES[app]}</span>
                 )}
