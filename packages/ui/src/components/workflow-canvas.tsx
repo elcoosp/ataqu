@@ -12,8 +12,9 @@ import ReactFlow, {
   BackgroundVariant,
   NodeTypes,
   EdgeTypes,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { cn } from '../lib/utils';
 
 export interface WorkflowCanvasProps {
   initialNodes?: Node[];
@@ -61,8 +62,7 @@ export function WorkflowCanvas({
 
   const onConnect = useCallback(
     (params: Connection) => {
-      const newEdge = { ...params, type: 'smoothstep' };
-      setEdges((eds) => addEdge(newEdge, eds));
+      setEdges((eds) => addEdge(params, eds));
       if (onEdgesChange) {
         setTimeout(() => onEdgesChange(edges), 0);
       }
@@ -97,4 +97,5 @@ export function WorkflowCanvas({
   );
 }
 
-export { useNodesState, useEdgesState, addEdge, Connection, Edge, Node, NodeTypes, EdgeTypes };
+// Re-export commonly used types and utilities for convenience
+export { useNodesState, useEdgesState, addEdge, type Connection, type Edge, type Node, type NodeTypes, type EdgeTypes };
