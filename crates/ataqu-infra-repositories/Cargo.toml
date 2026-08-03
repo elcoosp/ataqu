@@ -21,3 +21,4 @@ ataqu-domain-pause = { path = "../ataqu-domain-pause" }
 dashmap = "6.0.1"
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
 ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
+ataqu-domain-sond = { path = "../ataqu-domain-sond" }

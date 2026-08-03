@@ -154,8 +154,8 @@ fn validate_answer_value(value: &AnswerValue, question: &Question) -> Result<(),
 pub fn submit_response(
     cmd: SubmitResponseCommand,
     form: &crate::form::Form,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<ResponseSubmitted, SondError> {
     let validated_answers = validate_answers(&cmd.answers, &form.questions)?;
 

@@ -37,3 +37,4 @@ pub mod cinq_repo_impl;
 pub mod pause_repo_impl;
 pub mod dial_repo_impl;
 pub mod pivot_repo_impl;
+pub mod sond_repo_impl;

@@ -58,8 +58,8 @@ pub struct FormUpdated {
 
 pub fn create_form(
     cmd: CreateFormCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<FormCreated, SondError> {
     if cmd.title.trim().is_empty() {
         return Err(SondError::InvalidTitle("Title cannot be empty".to_string()));
@@ -97,8 +97,8 @@ pub fn create_form(
 pub fn update_form(
     cmd: UpdateFormCommand,
     current_form: &Form,
-    _id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    _id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<FormUpdated, SondError> {
     if let Some(title) = &cmd.title
         && title.trim().is_empty()

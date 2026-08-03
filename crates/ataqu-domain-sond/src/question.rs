@@ -84,7 +84,7 @@ impl QuestionInput {
         Ok(())
     }
 
-    pub fn into_question(self, id_gen: &impl IdGenerator) -> Question {
+    pub fn into_question(self, id_gen: &dyn IdGenerator) -> Question {
         Question {
             id: id_gen.new_uuid_v7(),
             label: self.label,

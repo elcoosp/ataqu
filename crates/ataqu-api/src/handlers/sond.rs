@@ -1,14 +1,15 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::Json,
+    response::{IntoResponse, Json},
     Router,
 };
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use ataqu_application::sond_service::{CreateFormCommand, SubmitResponseCommand, Form};
+use ataqu_application::sond_service::{SondService, CreateFormCommand, SubmitResponseCommand, Form, Response};
+use ataqu_domain_sond::question::QuestionInput;
 use ataqu_kernel::TenantId;
 use crate::AppState;
 
@@ -16,7 +17,7 @@ use crate::AppState;
 pub struct CreateFormRequest {
     pub title: String,
     pub description: Option<String>,
-    pub schema: Value,
+    pub questions: Vec<QuestionInput>,
 }
 
 #[derive(Debug, Serialize)]
@@ -24,25 +25,26 @@ pub struct FormResponse {
     pub id: Uuid,
     pub title: String,
     pub description: Option<String>,
-    pub schema: Value,
+    pub questions: Vec<Value>, // simplified
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 impl From<Form> for FormResponse {
     fn from(f: Form) -> Self {
+        // Convert questions to Value (simplified)
+        let questions = f.questions.iter().map(|q| serde_json::json!({
+            "id": q.id,
+            "label": q.label,
+            "type": q.question_type,
+            "required": q.required,
+        })).collect();
         Self {
             id: f.id,
             title: f.title,
             description: f.description,
-            schema: f.schema,
+            questions,
             created_at: f.created_at,
         }
     }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SubmitRequest {
-    pub respondent_id: Option<Uuid>,
-    pub data: Value,
 }
 
 pub async fn create_form(
@@ -54,7 +56,7 @@ pub async fn create_form(
         tenant_id,
         title: payload.title,
         description: payload.description,
-        schema: payload.schema,
+        questions: payload.questions,
     };
     let form = state.sond_service.create_form(cmd).await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -62,22 +64,25 @@ pub async fn create_form(
 }
 
 pub async fn list_forms(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Result<Json<Vec<FormResponse>>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let forms = state.sond_service.list_forms(tenant_id).await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(forms.into_iter().map(|f| f.into()).collect()))
+    // TODO: implement list_forms in service
+    Ok(Json(vec![]))
 }
 
 pub async fn get_form(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FormResponse>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let form = state.sond_service.get_form(tenant_id, id).await
+    let form = state.sond_service.get_form(id).await
         .map_err(|_| StatusCode::NOT_FOUND)?;
     Ok(Json(form.into()))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SubmitRequest {
+    pub answers: Vec<ataqu_domain_sond::response::AnswerInput>,
+    pub respondent_id: Option<Uuid>,
 }
 
 pub async fn submit_form(
@@ -89,8 +94,8 @@ pub async fn submit_form(
     let cmd = SubmitResponseCommand {
         tenant_id,
         form_id,
+        answers: payload.answers,
         respondent_id: payload.respondent_id,
-        data: payload.data,
     };
     state.sond_service.submit_response(cmd).await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -100,6 +105,7 @@ pub async fn submit_form(
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form))
+        .route("/forms", axum::routing::get(list_forms))
         .route("/forms/:id", axum::routing::get(get_form))
         .route("/forms/:id/submit", axum::routing::post(submit_form))
 }

@@ -327,6 +327,7 @@ dependencies = [
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
  "ataqu-domain-pivot",
+ "ataqu-domain-sond",
  "ataqu-kernel",
  "ataqu-security",
  "axum",
@@ -483,6 +484,7 @@ dependencies = [
 name = "ataqu-domain-sond"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-kernel",
  "chrono",
  "serde",
@@ -588,6 +590,7 @@ dependencies = [
  "ataqu-domain-dial",
  "ataqu-domain-pause",
  "ataqu-domain-pivot",
+ "ataqu-domain-sond",
  "ataqu-kernel",
  "ataqu-security",
  "chrono",

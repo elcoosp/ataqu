@@ -151,7 +151,14 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // SOND
-    let sond_service = Arc::new(SondService::new(id_gen.clone(), clock.clone()));
+        // SOND with real repository
+    use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
+    let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
+    let sond_service = Arc::new(SondService::new(
+        sond_repo,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // SPARK
     let spark_service = Arc::new(SparkService::new(id_gen.clone(), clock.clone()));
