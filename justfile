@@ -1,23 +1,17 @@
-export DATABASE_TEST_URL := "postgres://postgres:postgres@localhost:5432/ataqu_test"
-
 test-integration:
-    🧪 Suppression des volumes PostgreSQL résiduels...
-    docker volume ls -q | grep -E '.*postgres.*' | xargs docker volume rm -f 2>/dev/null || true
-
-    🧪 Nettoyage complet de l'environnement de test...
+    @echo "🧪 Suppression des volumes PostgreSQL résiduels..."
+    -docker volume ls -q | grep -E '.*postgres.*' | xargs docker volume rm -f 2>/dev/null
+    @echo "🧪 Nettoyage complet de l'environnement de test..."
     docker compose -f docker-compose.test.yml down -v
-
-    🧪 Démarrage de PostgreSQL pour les tests...
+    @echo "🧪 Démarrage de PostgreSQL pour les tests..."
     docker compose -f docker-compose.test.yml up -d --force-recreate
-
-    ⏳ Attente de PostgreSQL...
-    docker compose -f docker-compose.test.yml exec -T postgres pg_isready -U postgres
-
-    🔍 Vérification de la connexion avec PGPASSWORD...
-    PGPASSWORD=postgres psql -h localhost -U postgres -d ataqu_test -c "SELECT 1"
-
-    🔄 Exécution des migrations sur la base de test...
+    @echo "⏳ Attente de PostgreSQL..."
+    @while ! docker compose -f docker-compose.test.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do \
+        echo "Waiting for postgres..."; \
+        sleep 1; \
+    done
+    @echo "PostgreSQL is ready."
+    @echo "🔄 Exécution des migrations sur la base de test..."
     cargo run --bin migrator
-
-    🧪 Exécution des tests d'intégration...
+    @echo "🧪 Exécution des tests d'intégration..."
     cargo test --test integration

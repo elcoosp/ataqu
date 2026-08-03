@@ -1,24 +1,13 @@
-use std::env;
 use sea_orm::{Database, DbErr};
 use ataqu_infra_migration::Migrator;
 use sea_orm_migration::MigratorTrait;
 
 #[tokio::main]
 async fn main() -> Result<(), DbErr> {
-    let _ = dotenvy::dotenv();
+    let db_url = "postgres://postgres:postgres@127.0.0.1:5433/ataqu_test";
+    println!("Migrator connecting to: {}", db_url);
 
-    let default_url = "postgres://postgres:postgres@localhost:5432/ataqu_test";
-    let db_url = env::var("DATABASE_TEST_URL")
-        .or_else(|_| env::var("DATABASE_URL"))
-        .unwrap_or_else(|_| default_url.to_string());
-
-    let db_url = if db_url.contains("://postgres@") {
-        db_url.replace("://postgres@", "://postgres:postgres@")
-    } else {
-        db_url
-    };
-
-    let db = Database::connect(&db_url).await?;
+    let db = Database::connect(db_url).await?;
     Migrator::up(&db, None).await?;
     println!("Migrations applied successfully.");
     Ok(())
