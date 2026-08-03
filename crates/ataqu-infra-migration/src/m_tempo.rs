@@ -11,7 +11,7 @@ impl MigrationTrait for Migration {
             .execute_unprepared("CREATE SCHEMA IF NOT EXISTS collab_ops")
             .await?;
 
-        // Bookings table
+        // Bookings table with plain ends_at (not generated)
         manager
             .create_table(
                 Table::create()
@@ -21,7 +21,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Bookings::TenantId).uuid().not_null())
                     .col(ColumnDef::new(Bookings::StartsAt).timestamp_with_time_zone().not_null())
                     .col(ColumnDef::new(Bookings::DurationSeconds).integer().not_null())
-                    .col(ColumnDef::new(Bookings::EndsAt).timestamp_with_time_zone().generated_as_expr(Expr::col(Bookings::StartsAt) + Expr::col(Bookings::DurationSeconds) * Expr::val("1 second")).stored())
+                    .col(ColumnDef::new(Bookings::EndsAt).timestamp_with_time_zone().not_null())
                     .col(ColumnDef::new(Bookings::OauthAccessToken).string())
                     .col(ColumnDef::new(Bookings::OauthRefreshToken).string())
                     .col(ColumnDef::new(Bookings::OauthTokenExpiresAt).timestamp_with_time_zone())
