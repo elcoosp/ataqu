@@ -4,6 +4,7 @@ import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,9 +36,10 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       }),
       react(),
       tailwindcss(),
+      tsconfigPaths(), // Enable tsconfig path resolution for @/
     ],
     resolve: {
-      // Force Vite to resolve these packages from the root, bypassing the Rolldown pnpm symlink bug.
+      // Dedupe to avoid pnpm symlink resolution issues
       dedupe: [
         'react',
         'react-dom',
@@ -59,7 +61,6 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       target: 'es2024',
       minify: 'esbuild',
       sourcemap: true,
-      // Rolldown handles chunk splitting automatically; manualChunks can break symlink resolution
     },
   });
 };
