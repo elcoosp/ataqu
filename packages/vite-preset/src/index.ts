@@ -8,25 +8,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
-  const rootDir = path.resolve(__dirname, '../../../');
-  const packagesDir = path.resolve(rootDir, 'packages');
-
-  // Build alias map for all @ataqu/* packages we use
-  const alias = {
-    // Main entry for each package
-    '@ataqu/ui': path.resolve(packagesDir, 'ui/src/index.ts'),
-    '@ataqu/ui/styles.css': path.resolve(packagesDir, 'ui/src/styles.css'),
-    '@ataqu/shared-hooks': path.resolve(packagesDir, 'shared-hooks/src/index.ts'),
-    '@ataqu/shared-utils': path.resolve(packagesDir, 'shared-utils/src/index.ts'),
-    '@ataqu/shared-stores': path.resolve(packagesDir, 'shared-stores/src/index.ts'),
-    '@ataqu/shared-schemas': path.resolve(packagesDir, 'shared-schemas/src/index.ts'),
-    '@ataqu/shared-i18n': path.resolve(packagesDir, 'shared-i18n/src/index.ts'),
-    '@ataqu/types': path.resolve(packagesDir, 'types/src/index.ts'),
-    '@ataqu/api-client': path.resolve(packagesDir, 'api-client/src/index.ts'),
-    '@ataqu/test-utils': path.resolve(packagesDir, 'test-utils/src/index.ts'),
-    // Add more as needed
-  };
-
   return defineConfig({
     plugins: [
       tanstackRouter({
@@ -43,9 +24,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         '/ws': { target: 'ws://localhost:8080', ws: true },
       },
     },
-    resolve: {
-      alias,
-    },
+    // ✅ NO aliases — rely on pnpm workspace symlinks + package.json "exports"
     build: {
       target: 'es2024',
       minify: 'esbuild',
