@@ -147,8 +147,17 @@ pub async fn list_activities(Query(_params): Query<ListActivitiesParams>) -> Res
 pub async fn get_activity(Path(_id): Path<Uuid>) -> Result<Json<ActivityResponse>, ApiError> {
     Ok(Json(ActivityResponse { id: Uuid::new_v4(), description: "activity".into() }))
 }
-pub async fn search_contacts(Query(_params): Query<SearchParams>) -> Result<Json<Vec<ContactResponse>>, ApiError> {
-    Ok(Json(vec![]))
+pub async fn search_contacts(
+    State(state): State<AppState>,
+    Query(params): Query<SearchParams>,
+) -> Result<Json<Vec<ContactResponse>>, ApiError> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let contacts = state.cinq_service.search_contacts(tenant_id, &params.q).await?;
+    Ok(Json(contacts.into_iter().map(|c| ContactResponse {
+        id: c.id,
+        name: c.name,
+        email: c.email.to_string(),
+    }).collect()))
 }
 pub async fn import_csv() -> Result<Json<ImportCsvResult>, ApiError> {
     Ok(Json(ImportCsvResult { imported: 0, failed: 0 }))

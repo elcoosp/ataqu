@@ -17,6 +17,26 @@ pub struct Product {
 }
 
 #[derive(Debug, Clone)]
+pub struct Variant {
+    pub id: Uuid,
+    pub product_id: Uuid,
+    pub tenant_id: TenantId,
+    pub sku: String,
+    pub stock: i64,
+    pub reserved: i64,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateVariantCommand {
+    pub tenant_id: TenantId,
+    pub product_id: Uuid,
+    pub sku: String,
+    pub initial_stock: i64,
+}
+
+
+#[derive(Debug, Clone)]
 pub struct CreateProductCommand {
     pub tenant_id: TenantId,
     pub name: String,

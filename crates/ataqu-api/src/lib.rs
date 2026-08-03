@@ -134,6 +134,7 @@ pub fn create_router(state: AppState) -> Router {
 
     Router::new()
         .nest("/api/aegis", aegis_routes())
+        .route("/api/aegis/users", axum::routing::post(handlers::aegis::create_user_app))
         .nest("/api/cinq", cinq_routes())
         .nest("/api/dial", dial_routes())
         .nest("/api/pause", pause_routes())

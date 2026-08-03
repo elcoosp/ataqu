@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Json},
     Router,
@@ -125,7 +125,11 @@ pub async fn list_messages(
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
 }
 
-// Stub for search, threads, mentions – we'll add later.
+// Placeholder stubs for threads, mentions, search
+pub async fn start_thread() -> &'static str { "thread started" }
+pub async fn get_thread() -> &'static str { "thread" }
+pub async fn add_mention() -> &'static str { "mention added" }
+pub async fn list_mentions() -> &'static str { "mentions" }
 pub async fn search_messages() -> &'static str { "search" }
 
 pub fn routes() -> Router<AppState> {
@@ -135,5 +139,9 @@ pub fn routes() -> Router<AppState> {
         .route("/channels/:id", axum::routing::get(get_channel))
         .route("/channels/:id/messages", axum::routing::post(send_message))
         .route("/channels/:id/messages", axum::routing::get(list_messages))
+        .route("/threads", axum::routing::post(start_thread))
+        .route("/threads/:id", axum::routing::get(get_thread))
+        .route("/mentions", axum::routing::post(add_mention))
+        .route("/mentions", axum::routing::get(list_mentions))
         .route("/search", axum::routing::get(search_messages))
 }

@@ -18,6 +18,8 @@ use ataqu_application::aegis_service::{
 };
 use ataqu_security::{Email, PiiAccessKey};
 
+use crate::AppState;
+
 // API-layer wrapper for PII serialization (ADR-007)
 #[derive(Debug)]
 pub struct ApiEmail<'a>(pub &'a Email);
@@ -204,6 +206,43 @@ where
     (StatusCode::NOT_IMPLEMENTED, "Token refresh not implemented").into_response()
 }
 
+// ---------- Create User (using AppState) ----------
+#[derive(Debug, Deserialize)]
+pub struct CreateUserAppRequest {
+    pub email: String,
+    pub password: String,
+    pub name: Option<String>,
+}
+
+pub async fn create_user_app(
+    State(state): State<AppState>,
+    IdempotencyKeyHeader(idempotency_key): IdempotencyKeyHeader,
+    AxumJson(req): AxumJson<CreateUserAppRequest>,
+) -> Response {
+    use ataqu_application::aegis_service::CreateUserCommand;
+    info!(
+        idempotency_key = ?idempotency_key,
+        "Create user via AppState"
+    );
+    let cmd = CreateUserCommand {
+        email: req.email,
+        password: req.password,
+        name: req.name.unwrap_or_else(|| "User".to_string()),
+    };
+    match state.aegis_service.create_user(cmd).await {
+        Ok(resp) => {
+            (StatusCode::CREATED, Json(serde_json::json!({
+                "user_id": resp.user_id,
+                "email": resp.email,
+            }))).into_response()
+        }
+        Err(err) => {
+            error!(error = ?err, "User creation failed");
+            map_aegis_error(err)
+        }
+    }
+}
+
 // ---------- Error mapping ----------
 fn map_aegis_error(err: AegisServiceError) -> Response {
     let err_str = format!("{:?}", err);
@@ -237,48 +276,7 @@ mod tests {
     }
 }
 
-// ---------- Create User ----------
-#[derive(Debug, Deserialize)]
-pub struct CreateUserRequest {
-    pub email: String,
-    pub password: String,
-    pub name: Option<String>,
-}
-
-pub async fn create_user<R, O, D>(
-    State(state): State<AegisHandlerState<R, O, D>>,
-    IdempotencyKeyHeader(idempotency_key): IdempotencyKeyHeader,
-    AxumJson(req): AxumJson<CreateUserRequest>,
-) -> Response
-where
-    R: UserRepository + Clone + Send + Sync + 'static,
-    O: OutboxAppender + Clone + Send + Sync + 'static,
-    D: AegisDomain + Clone + Send + Sync + 'static,
-{
-    use ataqu_application::aegis_service::CreateUserCommand;
-    info!(
-        idempotency_key = ?idempotency_key,
-        "Create user request"
-    );
-    let cmd = CreateUserCommand {
-        email: req.email,
-        password: req.password,
-        name: req.name.unwrap_or_else(|| "User".to_string()),
-    };
-    match state.service.create_user(cmd).await {
-        Ok(resp) => {
-            (StatusCode::CREATED, Json(serde_json::json!({
-                "user_id": resp.user_id,
-                "email": resp.email,
-            }))).into_response()
-        }
-        Err(err) => {
-            error!(error = ?err, "User creation failed");
-            map_aegis_error(err)
-        }
-    }
-}
-
+// Routes for the generic AegisHandlerState (not used with AppState)
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::get;
     axum::Router::new()

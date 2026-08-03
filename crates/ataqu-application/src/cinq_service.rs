@@ -164,4 +164,15 @@ impl CinqService {
         let deals = map.values().filter(|d| d.tenant_id == tenant_id).cloned().collect();
         Ok(deals)
     }
+
+    pub async fn search_contacts(&self, tenant_id: TenantId, query: &str) -> CinqResult<Vec<Contact>> {
+        let map = self.contacts.contacts.read().unwrap();
+        let query_lower = query.to_lowercase();
+        let results = map.values()
+            .filter(|c| c.tenant_id == tenant_id)
+            .filter(|c| c.name.to_lowercase().contains(&query_lower) || c.email.as_ref().to_lowercase().contains(&query_lower))
+            .cloned()
+            .collect();
+        Ok(results)
+    }
 }

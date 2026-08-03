@@ -76,6 +76,11 @@ pub async fn delete_doc(
     Ok(StatusCode::NO_CONTENT)
 }
 
+// Placeholder stubs for relations and search
+pub async fn create_relation() -> &'static str { "relation created" }
+pub async fn list_relations() -> &'static str { "relations" }
+pub async fn search_docs() -> &'static str { "search results" }
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/docs", axum::routing::post(create_doc))
@@ -83,4 +88,7 @@ pub fn routes() -> Router<AppState> {
         .route("/docs/:id", axum::routing::get(get_doc))
         .route("/docs/:id", axum::routing::put(update_doc))
         .route("/docs/:id", axum::routing::delete(delete_doc))
+        .route("/relations", axum::routing::post(create_relation))
+        .route("/relations", axum::routing::get(list_relations))
+        .route("/search", axum::routing::get(search_docs))
 }
