@@ -47,12 +47,16 @@ pub struct CreateDealRequest {
     pub title: String,
     pub amount: f64,
     pub contact_id: Uuid,
+    pub pipeline_stage_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateDealRequest {
     pub title: Option<String>,
     pub amount: Option<f64>,
+    pub contact_id: Option<Uuid>,
+    pub pipeline_stage_id: Option<Uuid>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -69,8 +73,11 @@ pub struct UpdatePipelineStageRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateActivityRequest {
-    pub description: String,
     pub contact_id: Uuid,
+    pub deal_id: Option<Uuid>,
+    pub activity_type: String,
+    pub description: String,
+    pub scheduled_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

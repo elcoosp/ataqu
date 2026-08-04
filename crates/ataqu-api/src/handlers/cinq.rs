@@ -15,16 +15,18 @@ use uuid::Uuid;
 
 use ataqu_application::cinq_service::{
     CreateActivityCommand, CreateContactCommand, CreateDealCommand, CreatePipelineStageCommand,
+    UpdateContactCommand, UpdateDealCommand,
 };
 use ataqu_contracts::cinq::*;
+use ataqu_domain_cinq::activity::ActivityType;
 use ataqu_domain_cinq::contact::Contact;
-use ataqu_domain_cinq::deal::Deal;
-use ataqu_domain_cinq::deal::DealStatus;
+use ataqu_domain_cinq::deal::{Deal, DealStatus};
 use ataqu_security::{Email, PhoneNumber};
 
 use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
+use crate::serializers::{ApiEmail, ApiPhone};
 
 // ---------- Pagination ----------
 #[derive(Debug, Deserialize, Default)]
@@ -38,8 +40,8 @@ pub struct PaginationParams {
 pub struct ContactResponse {
     pub id: Uuid,
     pub name: String,
-    pub email: String,
-    pub phone: Option<String>,
+    pub email: ApiEmail,
+    pub phone: Option<ApiPhone>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -49,8 +51,8 @@ impl From<Contact> for ContactResponse {
         Self {
             id: c.id,
             name: c.name,
-            email: c.email.to_string(),
-            phone: c.phone.map(|p| p.to_string()),
+            email: ApiEmail::new(c.email),
+            phone: c.phone.map(ApiPhone::new),
             created_at: c.created_at,
             updated_at: c.updated_at,
         }
@@ -76,7 +78,7 @@ impl From<Deal> for DealResponse {
             id: d.id,
             title: d.title,
             amount: Decimal::from_f64(d.amount).unwrap_or(Decimal::ZERO),
-            status: format!("{:?}", d.status),
+            status: format!("{:?}", d.status).to_lowercase(),
             contact_id: d.contact_id,
             pipeline_stage_id: d.pipeline_stage_id,
             created_at: d.created_at,
@@ -135,27 +137,48 @@ pub async fn get_contact(
     Ok(Json(ContactResponse::from(contact)))
 }
 
-// For now, update and delete are not fully implemented in the service.
-// We'll return "not implemented" errors.
 pub async fn update_contact(
-    State(_state): State<AppState>,
-    _auth: AuthContext,
-    Path(_id): Path<Uuid>,
-    Json(_payload): Json<UpdateContactRequest>,
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateContactRequest>,
 ) -> ApiResult<Json<ContactResponse>> {
-    Err(ApiResponseError::internal(
-        "Update contact not yet implemented",
-    ))
+    let cmd = UpdateContactCommand {
+        id,
+        tenant_id: auth.tenant_id,
+        name: payload.name,
+        email: payload.email.map(Email::new),
+        phone: payload.phone.map(|p| p.map(PhoneNumber::new)),
+    };
+    let contact = state
+        .cinq_service
+        .update_contact(cmd)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
+                ApiResponseError::not_found("Contact not found")
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
+    Ok(Json(ContactResponse::from(contact)))
 }
 
 pub async fn delete_contact(
-    State(_state): State<AppState>,
-    _auth: AuthContext,
-    Path(_id): Path<Uuid>,
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    Err(ApiResponseError::internal(
-        "Delete contact not yet implemented",
-    ))
+    state
+        .cinq_service
+        .delete_contact(auth.tenant_id, id)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
+                ApiResponseError::not_found("Contact not found")
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 // ---------- Deal Endpoints ----------
@@ -164,14 +187,24 @@ pub async fn create_deal(
     auth: AuthContext,
     Json(payload): Json<CreateDealRequest>,
 ) -> ApiResult<(StatusCode, Json<DealResponse>)> {
-    let default_stage =
-        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or_else(|_| Uuid::new_v4());
+    let pipeline_stage_id = if let Some(id) = payload.pipeline_stage_id {
+        state.cinq_service.get_pipeline_stage(auth.tenant_id, id).await
+            .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
+        id
+    } else {
+        let stages = state.cinq_service.list_pipeline_stages(auth.tenant_id).await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        stages.first()
+            .ok_or_else(|| ApiResponseError::validation("No pipeline stages exist for this tenant"))?
+            .id
+    };
+
     let cmd = CreateDealCommand {
         tenant_id: auth.tenant_id,
         contact_id: payload.contact_id,
         title: payload.title,
+        pipeline_stage_id,
         amount: payload.amount,
-        pipeline_stage_id: default_stage,
         status: DealStatus::Open,
     };
     let deal = state
@@ -211,24 +244,55 @@ pub async fn get_deal(
 }
 
 pub async fn update_deal(
-    State(_state): State<AppState>,
-    _auth: AuthContext,
-    Path(_id): Path<Uuid>,
-    Json(_payload): Json<UpdateDealRequest>,
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateDealRequest>,
 ) -> ApiResult<Json<DealResponse>> {
-    Err(ApiResponseError::internal(
-        "Update deal not yet implemented",
-    ))
+    let status = payload.status.map(|s| match s.to_lowercase().as_str() {
+        "open" => DealStatus::Open,
+        "won" => DealStatus::Won,
+        "lost" => DealStatus::Lost,
+        _ => DealStatus::Open,
+    });
+    let cmd = UpdateDealCommand {
+        id,
+        tenant_id: auth.tenant_id,
+        contact_id: payload.contact_id,
+        title: payload.title,
+        pipeline_stage_id: payload.pipeline_stage_id,
+        amount: payload.amount,
+        status,
+    };
+    let deal = state
+        .cinq_service
+        .update_deal(cmd)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
+                ApiResponseError::not_found("Deal not found")
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
+    Ok(Json(DealResponse::from(deal)))
 }
 
 pub async fn delete_deal(
-    State(_state): State<AppState>,
-    _auth: AuthContext,
-    Path(_id): Path<Uuid>,
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    Err(ApiResponseError::internal(
-        "Delete deal not yet implemented",
-    ))
+    state
+        .cinq_service
+        .delete_deal(auth.tenant_id, id)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
+                ApiResponseError::not_found("Deal not found")
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 // ---------- Pipeline Stages ----------
@@ -315,14 +379,21 @@ pub async fn create_activity(
     auth: AuthContext,
     Json(payload): Json<CreateActivityRequest>,
 ) -> ApiResult<(StatusCode, Json<ActivityResponse>)> {
-    use ataqu_domain_cinq::activity::ActivityType;
+    let activity_type = match payload.activity_type.to_lowercase().as_str() {
+        "call" => ActivityType::Call,
+        "email" => ActivityType::Email,
+        "meeting" => ActivityType::Meeting,
+        "task" => ActivityType::Task,
+        "note" => ActivityType::Note,
+        _ => return Err(ApiResponseError::validation("Invalid activity_type")),
+    };
     let cmd = CreateActivityCommand {
         tenant_id: auth.tenant_id,
         contact_id: payload.contact_id,
-        deal_id: None,
-        activity_type: ActivityType::Note,
+        deal_id: payload.deal_id,
+        activity_type,
         description: payload.description,
-        scheduled_at: None,
+        scheduled_at: payload.scheduled_at,
     };
     let activity = state
         .cinq_service
@@ -433,10 +504,11 @@ pub async fn export_csv(
 
 // ---------- Email Tracking ----------
 pub async fn track_email(
+    _state: State<AppState>,
     _auth: AuthContext,
     Json(_payload): Json<TrackEmailRequest>,
 ) -> ApiResult<StatusCode> {
-    // TODO: implement email tracking
+    // TODO: implement email tracking via bounded channel
     Ok(StatusCode::ACCEPTED)
 }
 
