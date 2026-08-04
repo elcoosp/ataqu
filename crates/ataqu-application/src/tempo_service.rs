@@ -7,6 +7,7 @@ use ataqu_domain_tempo::availability::{self as availability_domain, Availability
 use ataqu_domain_tempo::repository::TempoRepository;
 use ataqu_domain_tempo::schedule::{self as tempo_domain, BookingId, EventTypeId};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::outbox::Outbox;
 
 // Re-export domain types for API
 pub use ataqu_domain_tempo::schedule::Booking;
@@ -60,6 +61,7 @@ pub type TempoResult<T> = Result<T, TempoServiceError>;
 
 pub struct TempoService {
     repo: Arc<dyn TempoRepository + Send + Sync>,
+    outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
@@ -67,11 +69,13 @@ pub struct TempoService {
 impl TempoService {
     pub fn new(
         repo: Arc<dyn TempoRepository + Send + Sync>,
+        outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
         Self {
             repo,
+            outbox,
             id_gen,
             clock,
         }
@@ -95,6 +99,15 @@ impl TempoService {
             .create_booking(&booking)
             .await
             .map_err(TempoServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "booking_id": booking.id.0,
+            "tenant_id": booking.tenant_id.as_uuid(),
+            "event_type_id": booking.event_type_id.0,
+            "starts_at": booking.starts_at,
+        });
+        self.outbox.append("tempo", "BookingCreated", booking.id.0, &payload).await.map_err(|e| TempoServiceError::Repository(e))?;
+
         Ok(booking)
     }
 

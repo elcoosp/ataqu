@@ -7,6 +7,7 @@ use ataqu_domain_sond::form as form_domain;
 use ataqu_domain_sond::repository::SondRepository;
 use ataqu_domain_sond::response as response_domain;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::outbox::Outbox;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_sond::form::Form;
@@ -48,6 +49,7 @@ pub type SondResult<T> = Result<T, SondServiceError>;
 
 pub struct SondService {
     repo: Arc<dyn SondRepository + Send + Sync>,
+    outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
@@ -55,11 +57,13 @@ pub struct SondService {
 impl SondService {
     pub fn new(
         repo: Arc<dyn SondRepository + Send + Sync>,
+        outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
         Self {
             repo,
+            outbox,
             id_gen,
             clock,
         }
@@ -145,6 +149,16 @@ impl SondService {
             .save_response(&response)
             .await
             .map_err(|e| SondServiceError::Repository(e.to_string()))?;
+
+        let payload = serde_json::json!({
+            "response_id": response.id,
+            "tenant_id": response.tenant_id.as_uuid(),
+            "form_id": response.form_id,
+            "email": response.answers.iter().find_map(|a| if let ataqu_domain_sond::response::AnswerValue::Email(e) = &a.value { Some(e.clone()) } else { None }),
+            "name": response.answers.iter().find_map(|a| if let ataqu_domain_sond::response::AnswerValue::Text(t) = &a.value { Some(t.clone()) } else { None }),
+        });
+        self.outbox.append("sond", "ResponseSubmitted", response.id, &payload).await.map_err(|e| SondServiceError::Repository(e))?;
+
         Ok(response)
     }
 

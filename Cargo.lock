@@ -326,6 +326,13 @@ dependencies = [
 [[package]]
 name = "ataqu-admin"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "ataqu-api"
@@ -593,6 +600,10 @@ dependencies = [
 [[package]]
 name = "ataqu-infra-cron"
 version = "0.1.0"
+dependencies = [
+ "tokio",
+ "tracing",
+]
 
 [[package]]
 name = "ataqu-infra-idempotency"

@@ -133,7 +133,8 @@ async fn main() -> anyhow::Result<()> {
     // SOND
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
-    let sond_service = Arc::new(SondService::new(sond_repo, id_gen.clone(), clock.clone()));
+    let sond_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let sond_service = Arc::new(SondService::new(sond_repo, sond_outbox, id_gen.clone(), clock.clone()));
 
     // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
@@ -248,7 +249,8 @@ async fn main() -> anyhow::Result<()> {
     // TEMPO
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
-    let tempo_service = Arc::new(TempoService::new(tempo_repo, id_gen.clone(), clock.clone()));
+    let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let tempo_service = Arc::new(TempoService::new(tempo_repo, tempo_outbox, id_gen.clone(), clock.clone()));
 
     // PAUSE
     use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
