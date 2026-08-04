@@ -1,6 +1,9 @@
+use crate::availability::AvailabilitySlot;
+use crate::event_type::EventType;
 use crate::schedule::{Booking, BookingId};
 use async_trait::async_trait;
 use ataqu_kernel::TenantId;
+use uuid::Uuid;
 
 #[async_trait]
 pub trait TempoRepository: Send + Sync {
@@ -27,4 +30,11 @@ pub trait TempoRepository: Send + Sync {
         tenant_id: &TenantId,
         upper_bound: std::time::SystemTime,
     ) -> Result<Vec<Booking>, String>;
+
+    async fn save_event_type(&self, event_type: &EventType) -> Result<(), String>;
+    async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, String>;
+
+    async fn save_availability_slot(&self, slot: &AvailabilitySlot) -> Result<(), String>;
+    async fn list_availability_slots(&self, tenant_id: &TenantId, event_type_id: &Uuid) -> Result<Vec<AvailabilitySlot>, String>;
+    async fn delete_availability_slot(&self, tenant_id: &TenantId, slot_id: &Uuid) -> Result<(), String>;
 }

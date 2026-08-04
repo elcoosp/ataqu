@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use ataqu_domain_tempo::availability::{self as availability_domain, AvailabilitySlot};
 use ataqu_domain_tempo::repository::TempoRepository;
 use ataqu_domain_tempo::schedule::{self as tempo_domain, BookingId, EventTypeId};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
@@ -10,6 +11,7 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 // Re-export domain types for API
 pub use ataqu_domain_tempo::schedule::Booking;
 pub use ataqu_domain_tempo::schedule::BookingStatus;
+pub use ataqu_domain_tempo::event_type::EventType;
 
 #[derive(Debug, Clone)]
 pub struct CreateBookingCommand {
@@ -24,6 +26,22 @@ pub struct UpdateBookingStatusCommand {
     pub tenant_id: TenantId,
     pub booking_id: Uuid,
     pub status: BookingStatus,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateEventTypeCommand {
+    pub tenant_id: TenantId,
+    pub name: String,
+    pub description: Option<String>,
+    pub duration_minutes: i32,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateAvailabilitySlotCommand {
+    pub tenant_id: TenantId,
+    pub event_type_id: Uuid,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -124,7 +142,6 @@ impl TempoService {
         let mut updated = Vec::new();
         for booking in bookings {
             if tempo_domain::evaluate_no_show(&booking, now, 15) {
-                // Fix: pass booking.id directly, not booking.id::NoShow
                 self.repo
                     .update_booking_status(&tenant_id, &booking.id, BookingStatus::NoShow)
                     .await
@@ -133,5 +150,42 @@ impl TempoService {
             }
         }
         Ok(updated)
+    }
+
+    pub async fn create_event_type(&self, cmd: CreateEventTypeCommand) -> TempoResult<EventType> {
+        let domain_cmd = ataqu_domain_tempo::CreateEventTypeCommand {
+            tenant_id: cmd.tenant_id,
+            name: cmd.name,
+            description: cmd.description,
+            duration_minutes: cmd.duration_minutes,
+        };
+        let event_type = ataqu_domain_tempo::event_type::create_event_type(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(TempoServiceError::Validation)?;
+        self.repo.save_event_type(&event_type).await.map_err(TempoServiceError::Repository)?;
+        Ok(event_type)
+    }
+
+    pub async fn list_event_types(&self, tenant_id: TenantId) -> TempoResult<Vec<EventType>> {
+        self.repo.list_event_types(&tenant_id).await.map_err(TempoServiceError::Repository)
+    }
+
+    pub async fn create_availability_slot(&self, cmd: CreateAvailabilitySlotCommand) -> TempoResult<AvailabilitySlot> {
+        let domain_cmd = availability_domain::CreateAvailabilitySlotCommand {
+            tenant_id: cmd.tenant_id,
+            event_type_id: cmd.event_type_id,
+            start_time: cmd.start_time,
+            end_time: cmd.end_time,
+        };
+        let slot = availability_domain::create_slot(domain_cmd, self.id_gen.as_ref());
+        self.repo.save_availability_slot(&slot).await.map_err(TempoServiceError::Repository)?;
+        Ok(slot)
+    }
+
+    pub async fn list_availability_slots(&self, tenant_id: TenantId, event_type_id: Uuid) -> TempoResult<Vec<AvailabilitySlot>> {
+        self.repo.list_availability_slots(&tenant_id, &event_type_id).await.map_err(TempoServiceError::Repository)
+    }
+
+    pub async fn delete_availability_slot(&self, tenant_id: TenantId, slot_id: Uuid) -> TempoResult<()> {
+        self.repo.delete_availability_slot(&tenant_id, &slot_id).await.map_err(TempoServiceError::Repository)
     }
 }

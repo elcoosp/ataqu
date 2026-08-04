@@ -12,7 +12,7 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_application::tempo_service::{
-    BookingStatus, CreateBookingCommand, UpdateBookingStatusCommand,
+    BookingStatus, CreateBookingCommand, UpdateBookingStatusCommand, CreateEventTypeCommand, CreateAvailabilitySlotCommand,
 };
 
 #[derive(Debug, Deserialize)]
@@ -107,10 +107,131 @@ pub async fn cancel_booking(
     Ok(Json(booking.into()))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CreateEventTypeRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub duration_minutes: i32,
+}
+
+#[derive(Debug, Serialize)]
+pub struct EventTypeResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub duration_minutes: i32,
+    pub is_active: bool,
+}
+
+impl From<ataqu_application::tempo_service::EventType> for EventTypeResponse {
+    fn from(e: ataqu_application::tempo_service::EventType) -> Self {
+        Self {
+            id: e.id.0,
+            name: e.name,
+            description: e.description,
+            duration_minutes: e.duration_minutes,
+            is_active: e.is_active,
+        }
+    }
+}
+
+pub async fn create_event_type(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<CreateEventTypeRequest>,
+) -> ApiResult<(StatusCode, Json<EventTypeResponse>)> {
+    let cmd = CreateEventTypeCommand {
+        tenant_id: auth.tenant_id,
+        name: payload.name,
+        description: payload.description,
+        duration_minutes: payload.duration_minutes,
+    };
+    let event_type = state.tempo_service.create_event_type(cmd).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok((StatusCode::CREATED, Json(event_type.into())))
+}
+
+pub async fn list_event_types(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<EventTypeResponse>>> {
+    let event_types = state.tempo_service.list_event_types(auth.tenant_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(event_types.into_iter().map(|e| e.into()).collect()))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateAvailabilitySlotRequest {
+    pub event_type_id: Uuid,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AvailabilitySlotResponse {
+    pub id: Uuid,
+    pub event_type_id: Uuid,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
+    pub is_booked: bool,
+}
+
+impl From<ataqu_domain_tempo::availability::AvailabilitySlot> for AvailabilitySlotResponse {
+    fn from(s: ataqu_domain_tempo::availability::AvailabilitySlot) -> Self {
+        Self {
+            id: s.id,
+            event_type_id: s.event_type_id,
+            start_time: s.start_time,
+            end_time: s.end_time,
+            is_booked: s.is_booked,
+        }
+    }
+}
+
+pub async fn create_availability_slot(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<CreateAvailabilitySlotRequest>,
+) -> ApiResult<(StatusCode, Json<AvailabilitySlotResponse>)> {
+    let cmd = CreateAvailabilitySlotCommand {
+        tenant_id: auth.tenant_id,
+        event_type_id: payload.event_type_id,
+        start_time: payload.start_time,
+        end_time: payload.end_time,
+    };
+    let slot = state.tempo_service.create_availability_slot(cmd).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok((StatusCode::CREATED, Json(slot.into())))
+}
+
+pub async fn list_availability_slots(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(event_type_id): Path<Uuid>,
+) -> ApiResult<Json<Vec<AvailabilitySlotResponse>>> {
+    let slots = state.tempo_service.list_availability_slots(auth.tenant_id, event_type_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(slots.into_iter().map(|s| s.into()).collect()))
+}
+
+pub async fn delete_availability_slot(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(slot_id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.tempo_service.delete_availability_slot(auth.tenant_id, slot_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/bookings", axum::routing::post(create_booking))
         .route("/bookings", axum::routing::get(list_bookings))
         .route("/bookings/:id", axum::routing::get(get_booking))
         .route("/bookings/:id/cancel", axum::routing::post(cancel_booking))
+        .route("/event-types", axum::routing::post(create_event_type).get(list_event_types))
+        .route("/availability-slots", axum::routing::post(create_availability_slot))
+        .route("/availability-slots/:event_type_id", axum::routing::get(list_availability_slots))
+        .route("/availability-slots/:id", axum::routing::delete(delete_availability_slot))
 }

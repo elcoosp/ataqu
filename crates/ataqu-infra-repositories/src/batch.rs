@@ -1,7 +1,6 @@
 //! Generic transactional batch insertion helper.
-//! Placeholder – real implementation from ADR-014 should be used when available.
 
-use sea_orm::{DatabaseTransaction, DbErr};
+use sea_orm::{ConnectionTrait, DatabaseTransaction, DbErr};
 use std::future::Future;
 use uuid::Uuid;
 
@@ -18,22 +17,63 @@ pub struct DLQEntry<T> {
 }
 
 /// Generic batch insert with chunking and savepoint handling.
-#[allow(dead_code)]
 pub async fn transactional_batch_insert<T, F, Fut>(
-    _txn: &mut DatabaseTransaction,
+    txn: &mut DatabaseTransaction,
     items: &[T],
-    _chunk_size: usize,
-    _insert_fn: F,
+    chunk_size: usize,
+    insert_fn: F,
 ) -> Result<BatchResult<T>, DbErr>
 where
     T: Clone + Send + Sync,
     F: Fn(&mut DatabaseTransaction, &[T]) -> Fut + Send + Sync,
     Fut: Future<Output = Result<(), DbErr>> + Send,
 {
-    // For now, just pretend everything succeeded.
-    let successes: Vec<Uuid> = items.iter().map(|_| Uuid::new_v4()).collect();
+    let mut successes = Vec::new();
+    let mut failures = Vec::new();
+
+    for chunk in items.chunks(chunk_size) {
+        txn.execute_raw(sea_orm::Statement::from_sql_and_values(
+            sea_orm::DatabaseBackend::Postgres,
+            "SAVEPOINT chunk_sp",
+            [],
+        ))
+        .await?;
+
+        let mut chunk_ok = true;
+        for item in chunk {
+            match insert_fn(txn, std::slice::from_ref(item)).await {
+                Ok(_) => successes.push(Uuid::new_v4()), // Assuming success means we can generate a placeholder ID if needed
+                Err(e) => {
+                    tracing::warn!("Failed to insert item in batch: {}", e);
+                    failures.push(DLQEntry {
+                        item: item.clone(),
+                        error: e.to_string(),
+                    });
+                    chunk_ok = false;
+                    break;
+                }
+            }
+        }
+
+        if chunk_ok {
+            txn.execute_raw(sea_orm::Statement::from_sql_and_values(
+                sea_orm::DatabaseBackend::Postgres,
+                "RELEASE SAVEPOINT chunk_sp",
+                [],
+            ))
+            .await?;
+        } else {
+            txn.execute_raw(sea_orm::Statement::from_sql_and_values(
+                sea_orm::DatabaseBackend::Postgres,
+                "ROLLBACK TO SAVEPOINT chunk_sp",
+                [],
+            ))
+            .await?;
+        }
+    }
+
     Ok(BatchResult {
         successes,
-        failures: Vec::new(),
+        failures,
     })
 }
