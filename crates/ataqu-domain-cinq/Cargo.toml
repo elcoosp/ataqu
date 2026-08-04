@@ -10,3 +10,5 @@ uuid = { version = "1.0", features = ["v7"] }
 chrono = { version = "0.4" }
 thiserror = "2.0"
 async-trait = "0.1.91"
+rust_decimal = "1.32"
+serde = { version = "1.0", features = ["derive"] }

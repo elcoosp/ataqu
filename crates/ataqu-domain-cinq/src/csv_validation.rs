@@ -53,10 +53,10 @@ pub fn validate_deal_row(row: &[String]) -> CinqResult<CreateDealCommand> {
         .map_err(|_| CinqDomainError::Validation("Invalid contact_id UUID".to_string()))?;
     let pipeline_stage_id = Uuid::parse_str(&row[2])
         .map_err(|_| CinqDomainError::Validation("Invalid pipeline_stage_id UUID".to_string()))?;
-    let amount: f64 = row[3]
+    let amount: rust_decimal::Decimal = row[3]
         .parse()
         .map_err(|_| CinqDomainError::Validation("Invalid amount".to_string()))?;
-    if amount <= 0.0 {
+    if amount <= rust_decimal::Decimal::ZERO {
         return Err(CinqDomainError::InvalidAmount);
     }
     let status = match row[4].to_lowercase().as_str() {

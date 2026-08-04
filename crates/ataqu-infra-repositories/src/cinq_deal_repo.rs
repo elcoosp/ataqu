@@ -105,6 +105,7 @@ impl DealRepository {
         custom_fields: JsonValue,
         now: chrono::DateTime<chrono::Utc>,
     ) -> Result<deal::Model, DbErr> {
+        let _ = now;
         let id = Uuid::new_v4();
         let model = deal::ActiveModel {
             id: ActiveValue::Set(id),

@@ -9,7 +9,6 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -77,7 +76,7 @@ impl From<Deal> for DealResponse {
         Self {
             id: d.id,
             title: d.title,
-            amount: Decimal::from_f64(d.amount).unwrap_or(Decimal::ZERO),
+            amount: d.amount,
             status: format!("{:?}", d.status).to_lowercase(),
             contact_id: d.contact_id,
             pipeline_stage_id: d.pipeline_stage_id,

@@ -23,6 +23,7 @@ use ataqu_domain_cinq::repository::{
 };
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::{Email, PhoneNumber};
+use rust_decimal::Decimal;
 
 use crate::outbox::Outbox;
 
@@ -50,7 +51,7 @@ pub struct CreateDealCommand {
     pub contact_id: Uuid,
     pub title: String,
     pub pipeline_stage_id: Uuid,
-    pub amount: f64,
+    pub amount: Decimal,
     pub status: DealStatus,
 }
 
@@ -61,7 +62,7 @@ pub struct UpdateDealCommand {
     pub contact_id: Option<Uuid>,
     pub title: Option<String>,
     pub pipeline_stage_id: Option<Uuid>,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
 }
 

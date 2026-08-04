@@ -1,6 +1,7 @@
 use crate::error::{CinqDomainError, CinqResult};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,7 +18,7 @@ pub struct Deal {
     pub contact_id: Uuid,
     pub title: String,
     pub pipeline_stage_id: Uuid,
-    pub amount: f64,
+    pub amount: Decimal,
     pub status: DealStatus,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -29,7 +30,7 @@ pub struct CreateDealCommand {
     pub contact_id: Uuid,
     pub title: String,
     pub pipeline_stage_id: Uuid,
-    pub amount: f64,
+    pub amount: Decimal,
     pub status: DealStatus,
 }
 
@@ -40,7 +41,7 @@ pub struct UpdateDealCommand {
     pub contact_id: Option<Uuid>,
     pub title: Option<String>,
     pub pipeline_stage_id: Option<Uuid>,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
 }
 
@@ -51,7 +52,7 @@ pub struct DealCreated {
     pub contact_id: Uuid,
     pub title: String,
     pub pipeline_stage_id: Uuid,
-    pub amount: f64,
+    pub amount: Decimal,
     pub status: DealStatus,
     pub created_at: DateTime<Utc>,
 }
@@ -63,7 +64,7 @@ pub struct DealUpdated {
     pub contact_id: Option<Uuid>,
     pub title: Option<String>,
     pub pipeline_stage_id: Option<Uuid>,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
     pub updated_at: DateTime<Utc>,
 }
@@ -73,7 +74,7 @@ pub fn create_deal(
     id_gen: &dyn IdGenerator,
     clock: &dyn Clock,
 ) -> CinqResult<DealCreated> {
-    if cmd.amount <= 0.0 {
+    if cmd.amount <= Decimal::ZERO {
         return Err(CinqDomainError::InvalidAmount);
     }
     if cmd.title.trim().is_empty() {
@@ -97,7 +98,7 @@ pub fn create_deal(
 
 pub fn update_deal(cmd: UpdateDealCommand, clock: &dyn Clock) -> CinqResult<DealUpdated> {
     if let Some(amount) = cmd.amount
-        && amount <= 0.0
+        && amount <= Decimal::ZERO
     {
         return Err(CinqDomainError::InvalidAmount);
     }
@@ -126,6 +127,7 @@ mod tests {
     use super::*;
     use ataqu_kernel::{Clock, IdGenerator};
     use chrono::{DateTime, Utc};
+    use rust_decimal::Decimal;
 
     struct MockIdGenerator {
         next: Uuid,
@@ -164,7 +166,7 @@ mod tests {
             contact_id: Uuid::new_v4(),
             title: "My Deal".to_string(),
             pipeline_stage_id: Uuid::new_v4(),
-            amount: 100.0,
+            amount: Decimal::new(100, 0),
             status: DealStatus::Open,
         };
         let id_gen = MockIdGenerator::new();
@@ -180,7 +182,7 @@ mod tests {
             contact_id: Uuid::new_v4(),
             title: "My Deal".to_string(),
             pipeline_stage_id: Uuid::new_v4(),
-            amount: -10.0,
+            amount: Decimal::new(-10, 0),
             status: DealStatus::Open,
         };
         let id_gen = MockIdGenerator::new();

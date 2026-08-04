@@ -1,7 +1,5 @@
 //! SeaORM-based repositories for CINQ domain.
 use async_trait::async_trait;
-use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
 use sea_orm::{
     ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect,
     Set,
@@ -207,7 +205,7 @@ impl CinqDealRepository {
 }
 
 fn deal_to_active(deal: &Deal) -> deal_entity::ActiveModel {
-    let amount_decimal = Decimal::from_f64(deal.amount).unwrap_or(Decimal::ZERO);
+    let amount_decimal = deal.amount;
     deal_entity::ActiveModel {
         id: Set(deal.id),
         tenant_id: Set(deal.tenant_id.as_uuid()),
@@ -233,7 +231,7 @@ fn model_to_deal(model: deal_entity::Model) -> Deal {
         "lost" => DealStatus::Lost,
         _ => DealStatus::Open,
     };
-    let amount = model.amount.to_string().parse::<f64>().unwrap_or(0.0);
+    let amount = model.amount;
     Deal {
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),

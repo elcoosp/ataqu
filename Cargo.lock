@@ -398,6 +398,7 @@ dependencies = [
  "csv",
  "jsonwebtoken",
  "rand 0.8.7",
+ "rust_decimal",
  "sea-orm",
  "serde",
  "serde_json",
@@ -446,6 +447,7 @@ name = "ataqu-contracts"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "rust_decimal",
  "serde",
  "serde_json",
  "uuid",
@@ -480,6 +482,8 @@ dependencies = [
  "ataqu-kernel",
  "ataqu-security",
  "chrono",
+ "rust_decimal",
+ "serde",
  "thiserror",
  "uuid",
 ]

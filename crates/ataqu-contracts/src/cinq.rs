@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactResponse {
@@ -12,7 +13,7 @@ pub struct ContactResponse {
 pub struct DealResponse {
     pub id: Uuid,
     pub title: String,
-    pub amount: f64,
+    pub amount: Decimal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,7 +46,7 @@ pub struct UpdateContactRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateDealRequest {
     pub title: String,
-    pub amount: f64,
+    pub amount: Decimal,
     pub contact_id: Uuid,
     pub pipeline_stage_id: Option<Uuid>,
 }
@@ -53,7 +54,7 @@ pub struct CreateDealRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateDealRequest {
     pub title: Option<String>,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub contact_id: Option<Uuid>,
     pub pipeline_stage_id: Option<Uuid>,
     pub status: Option<String>,
@@ -99,7 +100,7 @@ pub struct ImportCsvResult {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct TrackEmailRequest {
-    pub contact_id: uuid::Uuid,
+    pub contact_id: Uuid,
     pub event_type: String,
     pub metadata: serde_json::Value,
 }
