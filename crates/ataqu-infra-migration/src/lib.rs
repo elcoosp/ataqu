@@ -18,6 +18,9 @@ pub mod m_vault_add_products_variants;
 pub mod m_vault_add_price_column;
 pub mod m_vista_tables;
 pub mod m_dial_add_participants;
+pub mod m_pause_add_columns;
+pub mod m_tempo_add_event_types;   // we'll create this
+pub mod m_tempo_add_status;        // we'll create this
 
 pub struct Migrator;
 
@@ -25,20 +28,23 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
-            Box::new(m20250101_000001_core::Migration), // MUST be first!
+            Box::new(m20250101_000001_core::Migration),
             Box::new(m_aegis::Migration),
             Box::new(m_cinq::Migration),
             Box::new(m_cinq_add_activity_stage::Migration),
             Box::new(m_dial::Migration),
             Box::new(m_dial_add_threads_mentions::Migration),
             Box::new(m_dial_add_presence::Migration),
-            Box::new(m_dial_add_participants::Migration), // ADDED
+            Box::new(m_dial_add_participants::Migration),
             Box::new(m_pause::Migration),
+            Box::new(m_pause_add_columns::Migration),
             Box::new(m_pivot::Migration),
             Box::new(m_pivot_add_blocks_relations::Migration),
             Box::new(m_sond::Migration),
             Box::new(m_spark::Migration),
             Box::new(m_tempo::Migration),
+            Box::new(m_tempo_add_status::Migration),
+            Box::new(m_tempo_add_event_types::Migration),
             Box::new(m_vault::Migration),
             Box::new(m_vault_add_products_variants::Migration),
             Box::new(m_vault_add_price_column::Migration),

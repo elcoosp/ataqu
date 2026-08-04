@@ -53,6 +53,8 @@ pub struct AppState {
     pub aegis_service: Arc<AegisService<OutboxPlaceholder>>,
     pub pause_service: Arc<PauseService>,
     pub jwt_secret: Arc<Vec<u8>>,
+    pub id_gen: Arc<dyn IdGenerator>,
+    pub clock: Arc<dyn Clock>,
 }
 
 pub fn create_router(state: AppState) -> Router {

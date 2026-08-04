@@ -9,8 +9,11 @@ use async_trait::async_trait;
 pub use ataqu_domain_pause::{
     Employee, CreateEmployeeCommand, EmployeeCreatedEvent,
     LeaveRequest, RequestLeaveCommand, LeaveRequestedEvent,
+    LeaveStatus, LeaveType,
     PauseDomainError,
 };
+
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 // Application-specific error type.
 #[derive(Debug, thiserror::Error)]
@@ -81,10 +84,10 @@ impl PauseService {
 
     pub async fn create_employee(
         &self,
-        tenant_id: &ataqu_kernel::TenantId,
+        tenant_id: &TenantId,
         command: CreateEmployeeCommand,
-        id_gen: &impl ataqu_kernel::IdGenerator,
-        clock: &impl ataqu_kernel::Clock,
+        id_gen: &dyn IdGenerator,
+        clock: &dyn Clock,
         command_id: Uuid,
     ) -> Result<Uuid, PauseServiceError> {
         let guard = self.idempotency.acquire(&command_id).await?;
@@ -102,10 +105,10 @@ impl PauseService {
 
     pub async fn request_leave(
         &self,
-        tenant_id: &ataqu_kernel::TenantId,
+        tenant_id: &TenantId,
         command: RequestLeaveCommand,
-        id_gen: &impl ataqu_kernel::IdGenerator,
-        clock: &impl ataqu_kernel::Clock,
+        id_gen: &dyn IdGenerator,
+        clock: &dyn Clock,
         command_id: Uuid,
     ) -> Result<Uuid, PauseServiceError> {
         let guard = self.idempotency.acquire(&command_id).await?;

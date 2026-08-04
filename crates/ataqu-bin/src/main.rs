@@ -217,7 +217,9 @@ async fn main() -> anyhow::Result<()> {
         vista_service,
         aegis_service,
         pause_service,
-        jwt_secret: jwt_secret.clone(),
+        jwt_secret,
+        id_gen: id_gen.clone(),
+        clock: clock.clone(),
     };
 
     // Create router

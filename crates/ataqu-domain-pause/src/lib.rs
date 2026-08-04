@@ -6,5 +6,5 @@ pub mod repository;
 
 // Re-export common types
 pub use employee::{Employee, CreateEmployeeCommand, EmployeeCreatedEvent};
-pub use leave::{LeaveRequest, RequestLeaveCommand, LeaveRequestedEvent};
+pub use leave::{LeaveRequest, LeaveType, LeaveStatus, RequestLeaveCommand, LeaveRequestedEvent};
 pub use error::PauseDomainError;

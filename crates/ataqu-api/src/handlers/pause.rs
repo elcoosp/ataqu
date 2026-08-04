@@ -1,199 +1,19 @@
-//! PAUSE API handlers — employee management, leave requests, and approvals.
-
-use std::sync::Arc;
-
 use axum::{
-    Json, Router,
-    extract::{Path, State},
-    http::{StatusCode, request::Parts},
-    response::{IntoResponse, Response},
-    routing::{get, patch, post},
+    extract::State,
+    http::StatusCode,
+    response::Json,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use chrono::{DateTime, Utc, NaiveDate};
 
-use ataqu_kernel::TenantId;
-use ataqu_security::{Email, PhoneNumber, PiiAccessKey};
-
-// ═══════════════════════════════════════════════════════════════════════
-// PII Serialization Helpers (ADR-007)
-// ═══════════════════════════════════════════════════════════════════════
-
-fn serialize_email<S>(email: &Email, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    let key = PiiAccessKey::new_for_test();
-    serializer.serialize_str(email.reveal(&key))
-}
-
-fn serialize_phone_opt<S>(phone: &Option<PhoneNumber>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    match phone {
-        Some(p) => {
-            let key = PiiAccessKey::new_for_test();
-            serializer.serialize_some(p.reveal(&key))
-        }
-        None => serializer.serialize_none(),
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Extractors
-// ═══════════════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Copy)]
-pub struct IdempotencyKey(Uuid);
-
-impl IdempotencyKey {
-    pub fn into_uuid(self) -> Uuid {
-        self.0
-    }
-}
-
-impl<S> axum::extract::FromRequestParts<S> for IdempotencyKey
-where
-    S: Send + Sync,
-{
-    type Rejection = PauseApiError;
-
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let header_value = parts
-            .headers
-            .get("idempotency-key")
-            .ok_or(PauseApiError::MissingIdempotencyKey)?;
-
-        let value_str = header_value
-            .to_str()
-            .map_err(|_| PauseApiError::InvalidIdempotencyKey)?;
-
-        let uuid = Uuid::parse_str(value_str).map_err(|_| PauseApiError::InvalidIdempotencyKey)?;
-
-        Ok(Self(uuid))
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct TenantExtractor(pub TenantId);
-
-impl<S> axum::extract::FromRequestParts<S> for TenantExtractor
-where
-    S: Send + Sync,
-{
-    type Rejection = PauseApiError;
-
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let header_value = parts
-            .headers
-            .get("x-tenant-id")
-            .ok_or_else(|| PauseApiError::InvalidBody("Missing X-Tenant-ID header".into()))?;
-
-        let value_str = header_value
-            .to_str()
-            .map_err(|_| PauseApiError::InvalidBody("Invalid X-Tenant-ID header".into()))?;
-
-        let uuid = Uuid::parse_str(value_str)
-            .map_err(|_| PauseApiError::InvalidBody("X-Tenant-ID must be a valid UUID".into()))?;
-
-        Ok(Self(TenantId::new(uuid)))
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Error Types
-// ═══════════════════════════════════════════════════════════════════════
-
-#[derive(Debug)]
-pub enum PauseServiceError {
-    NotFound,
-    Validation(String),
-    Conflict(String),
-    Internal,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum PauseApiError {
-    #[error("Missing Idempotency-Key header")]
-    MissingIdempotencyKey,
-
-    #[error("Invalid Idempotency-Key header: must be a valid UUID")]
-    InvalidIdempotencyKey,
-
-    #[error("Invalid request: {0}")]
-    InvalidBody(String),
-
-    #[error("Resource not found")]
-    NotFound,
-
-    #[error("Validation error: {0}")]
-    Validation(String),
-
-    #[error("Conflict: {0}")]
-    Conflict(String),
-
-    #[error("Internal server error")]
-    Internal,
-}
-
-impl From<PauseServiceError> for PauseApiError {
-    fn from(e: PauseServiceError) -> Self {
-        match e {
-            PauseServiceError::NotFound => Self::NotFound,
-            PauseServiceError::Validation(msg) => Self::Validation(msg),
-            PauseServiceError::Conflict(msg) => Self::Conflict(msg),
-            PauseServiceError::Internal => Self::Internal,
-        }
-    }
-}
-
-impl IntoResponse for PauseApiError {
-    fn into_response(self) -> Response {
-        let (status, message) = match &self {
-            Self::MissingIdempotencyKey => (StatusCode::BAD_REQUEST, self.to_string()),
-            Self::InvalidIdempotencyKey => (StatusCode::BAD_REQUEST, self.to_string()),
-            Self::InvalidBody(_) => (StatusCode::BAD_REQUEST, self.to_string()),
-            Self::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
-            Self::Validation(_) => (StatusCode::UNPROCESSABLE_ENTITY, self.to_string()),
-            Self::Conflict(_) => (StatusCode::CONFLICT, self.to_string()),
-            Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
-        };
-
-        let body = Json(serde_json::json!({
-            "error": message,
-            "code": status.as_u16(),
-        }));
-
-        (status, body).into_response()
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Enums
-// ═══════════════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum LeaveType {
-    Annual,
-    Sick,
-    Personal,
-    Unpaid,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum LeaveRequestStatus {
-    Pending,
-    Approved,
-    Rejected,
-    Cancelled,
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Request DTOs
-// ═══════════════════════════════════════════════════════════════════════
+use ataqu_application::pause_service::{
+    CreateEmployeeCommand, RequestLeaveCommand, LeaveType,
+};
+use crate::AppState;
+use crate::middleware::AuthContext;
+use crate::error::{ApiResponseError, ApiResult};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateEmployeeRequest {
@@ -202,373 +22,149 @@ pub struct CreateEmployeeRequest {
     pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
+    pub hire_date: NaiveDate,
 }
 
-impl CreateEmployeeRequest {
-    pub fn validate(&self) -> Result<(), String> {
-        if self.full_name.trim().is_empty() {
-            return Err("full_name must not be empty".into());
-        }
-        if self.full_name.len() > 256 {
-            return Err("full_name must not exceed 256 characters".into());
-        }
-        if self.email.trim().is_empty() || !self.email.contains('@') {
-            return Err("email must be a valid email address".into());
-        }
-        if self.email.len() > 320 {
-            return Err("email must not exceed 320 characters".into());
-        }
-        if let Some(phone) = &self.phone {
-            if phone.trim().is_empty() {
-                return Err("phone must not be empty if provided".into());
-            }
-            if phone.len() > 32 {
-                return Err("phone must not exceed 32 characters".into());
-            }
-        }
-        if self.job_title.trim().is_empty() {
-            return Err("job_title must not be empty".into());
-        }
-        if self.job_title.len() > 128 {
-            return Err("job_title must not exceed 128 characters".into());
-        }
-        if let Some(dept) = &self.department {
-            if dept.trim().is_empty() {
-                return Err("department must not be empty if provided".into());
-            }
-            if dept.len() > 128 {
-                return Err("department must not exceed 128 characters".into());
-            }
-        }
-        Ok(())
-    }
-
-    pub fn into_command(self) -> CreateEmployeeCommand {
-        CreateEmployeeCommand {
-            full_name: self.full_name,
-            email: Email::new(self.email),
-            phone: self.phone.map(PhoneNumber::new),
-            job_title: self.job_title,
-            department: self.department,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct CreateEmployeeCommand {
+#[derive(Debug, Serialize)]
+pub struct EmployeeResponse {
+    pub id: Uuid,
     pub full_name: String,
-    pub email: Email,
-    pub phone: Option<PhoneNumber>,
+    pub email: String,
+    pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
+    pub hire_date: NaiveDate,
+    pub is_active: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct CreateLeaveRequestRequest {
+pub struct CreateLeaveRequest {
     pub employee_id: Uuid,
-    pub leave_type: LeaveType,
-    pub starts_at: chrono::DateTime<chrono::Utc>,
-    pub ends_at: chrono::DateTime<chrono::Utc>,
+    pub leave_type: String,
+    pub start_date: NaiveDate,
+    pub end_date: NaiveDate,
     pub reason: Option<String>,
-}
-
-impl CreateLeaveRequestRequest {
-    pub fn validate(&self) -> Result<(), String> {
-        if self.ends_at <= self.starts_at {
-            return Err("ends_at must be after starts_at".into());
-        }
-        if let Some(reason) = &self.reason
-            && reason.len() > 1024
-        {
-            return Err("reason must not exceed 1024 characters".into());
-        }
-        Ok(())
-    }
-
-    pub fn into_command(self) -> CreateLeaveRequestCommand {
-        CreateLeaveRequestCommand {
-            employee_id: self.employee_id,
-            leave_type: self.leave_type,
-            starts_at: self.starts_at,
-            ends_at: self.ends_at,
-            reason: self.reason,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct CreateLeaveRequestCommand {
-    pub employee_id: Uuid,
-    pub leave_type: LeaveType,
-    pub starts_at: chrono::DateTime<chrono::Utc>,
-    pub ends_at: chrono::DateTime<chrono::Utc>,
-    pub reason: Option<String>,
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Response DTOs
-// ═══════════════════════════════════════════════════════════════════════
-
-#[derive(Debug, Serialize)]
-pub struct EmployeeDto {
-    pub id: Uuid,
-    pub full_name: String,
-    #[serde(serialize_with = "serialize_email")]
-    pub email: Email,
-    #[serde(serialize_with = "serialize_phone_opt")]
-    pub phone: Option<PhoneNumber>,
-    pub job_title: String,
-    pub department: Option<String>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct LeaveRequestDto {
+pub struct LeaveRequestResponse {
     pub id: Uuid,
     pub employee_id: Uuid,
-    pub leave_type: LeaveType,
-    pub starts_at: chrono::DateTime<chrono::Utc>,
-    pub ends_at: chrono::DateTime<chrono::Utc>,
+    pub leave_type: String,
+    pub start_date: NaiveDate,
+    pub end_date: NaiveDate,
     pub reason: Option<String>,
-    pub status: LeaveRequestStatus,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// Service Trait
-// ═══════════════════════════════════════════════════════════════════════
-
-pub trait PauseService: Send + Sync {
-    fn create_employee(
-        &self,
-        tenant_id: TenantId,
-        cmd: CreateEmployeeCommand,
-        idempotency_key: Uuid,
-    ) -> impl std::future::Future<Output = Result<EmployeeDto, PauseServiceError>> + Send;
-
-    fn get_employee(
-        &self,
-        tenant_id: TenantId,
-        employee_id: Uuid,
-    ) -> impl std::future::Future<Output = Result<EmployeeDto, PauseServiceError>> + Send;
-
-    fn create_leave_request(
-        &self,
-        tenant_id: TenantId,
-        cmd: CreateLeaveRequestCommand,
-        idempotency_key: Uuid,
-    ) -> impl std::future::Future<Output = Result<LeaveRequestDto, PauseServiceError>> + Send;
-
-    fn approve_leave_request(
-        &self,
-        tenant_id: TenantId,
-        request_id: Uuid,
-        idempotency_key: Uuid,
-    ) -> impl std::future::Future<Output = Result<LeaveRequestDto, PauseServiceError>> + Send;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// State
-// ═══════════════════════════════════════════════════════════════════════
-
-pub struct PauseAppState<S> {
-    pub service: Arc<S>,
-}
-
-impl<S> Clone for PauseAppState<S> {
-    fn clone(&self) -> Self {
-        Self {
-            service: self.service.clone(),
-        }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Handlers
-// ═══════════════════════════════════════════════════════════════════════
-
-pub async fn create_employee<S: PauseService>(
-    State(state): State<PauseAppState<S>>,
-    TenantExtractor(tenant_id): TenantExtractor,
-    IdempotencyKey(idempotency_key): IdempotencyKey,
+pub async fn create_employee(
+    State(state): State<AppState>,
+    auth: AuthContext,
     Json(req): Json<CreateEmployeeRequest>,
-) -> Result<(StatusCode, Json<EmployeeDto>), PauseApiError> {
-    req.validate().map_err(PauseApiError::InvalidBody)?;
-    let cmd = req.into_command();
-    let dto = state
-        .service
-        .create_employee(tenant_id, cmd, idempotency_key)
-        .await?;
-    Ok((StatusCode::CREATED, Json(dto)))
+) -> ApiResult<(StatusCode, Json<EmployeeResponse>)> {
+    // Clone fields to avoid move issues
+    let full_name = req.full_name.clone();
+    let email = req.email.clone();
+    let phone = req.phone.clone();
+    let job_title = req.job_title.clone();
+    let department = req.department.clone();
+    let hire_date = req.hire_date;
+
+    let cmd = CreateEmployeeCommand {
+        tenant_id: auth.tenant_id,
+        full_name: full_name.clone(),
+        email: email.clone(),
+        phone: phone.clone(),
+        job_title: job_title.clone(),
+        department: department.clone(),
+        hire_date,
+    };
+    let employee_id = state.pause_service.create_employee(
+        &auth.tenant_id,
+        cmd,
+        &*state.id_gen,
+        &*state.clock,
+        Uuid::new_v4(),
+    ).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    Ok((StatusCode::CREATED, Json(EmployeeResponse {
+        id: employee_id,
+        full_name,
+        email,
+        phone,
+        job_title,
+        department,
+        hire_date,
+        is_active: true,
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+    })))
 }
 
-pub async fn get_employee<S: PauseService>(
-    State(state): State<PauseAppState<S>>,
-    TenantExtractor(tenant_id): TenantExtractor,
-    Path(employee_id): Path<Uuid>,
-) -> Result<Json<EmployeeDto>, PauseApiError> {
-    let dto = state.service.get_employee(tenant_id, employee_id).await?;
-    Ok(Json(dto))
+pub async fn request_leave(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<CreateLeaveRequest>,
+) -> ApiResult<(StatusCode, Json<LeaveRequestResponse>)> {
+    let leave_type = match req.leave_type.as_str() {
+        "annual" => LeaveType::Annual,
+        "sick" => LeaveType::Sick,
+        "personal" => LeaveType::Personal,
+        "unpaid" => LeaveType::Unpaid,
+        _ => return Err(ApiResponseError::validation("Invalid leave type")),
+    };
+    let reason = req.reason.clone();
+    let cmd = RequestLeaveCommand {
+        tenant_id: auth.tenant_id,
+        employee_id: req.employee_id,
+        leave_type,
+        start_date: req.start_date,
+        end_date: req.end_date,
+        reason: reason.clone(),
+    };
+    let request_id = state.pause_service.request_leave(
+        &auth.tenant_id,
+        cmd,
+        &*state.id_gen,
+        &*state.clock,
+        Uuid::new_v4(),
+    ).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    Ok((StatusCode::CREATED, Json(LeaveRequestResponse {
+        id: request_id,
+        employee_id: req.employee_id,
+        leave_type: req.leave_type,
+        start_date: req.start_date,
+        end_date: req.end_date,
+        reason,
+        status: "pending".to_string(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+    })))
 }
 
-pub async fn create_leave_request<S: PauseService>(
-    State(state): State<PauseAppState<S>>,
-    TenantExtractor(tenant_id): TenantExtractor,
-    IdempotencyKey(idempotency_key): IdempotencyKey,
-    Json(req): Json<CreateLeaveRequestRequest>,
-) -> Result<(StatusCode, Json<LeaveRequestDto>), PauseApiError> {
-    req.validate().map_err(PauseApiError::InvalidBody)?;
-    let cmd = req.into_command();
-    let dto = state
-        .service
-        .create_leave_request(tenant_id, cmd, idempotency_key)
-        .await?;
-    Ok((StatusCode::CREATED, Json(dto)))
+pub async fn list_employees(
+    _state: State<AppState>,
+    _auth: AuthContext,
+) -> ApiResult<Json<Vec<EmployeeResponse>>> {
+    // TODO: implement list in PauseService
+    Err(ApiResponseError::internal("List employees not yet implemented"))
 }
 
-pub async fn approve_leave_request<S: PauseService>(
-    State(state): State<PauseAppState<S>>,
-    TenantExtractor(tenant_id): TenantExtractor,
-    IdempotencyKey(idempotency_key): IdempotencyKey,
-    Path(request_id): Path<Uuid>,
-) -> Result<Json<LeaveRequestDto>, PauseApiError> {
-    let dto = state
-        .service
-        .approve_leave_request(tenant_id, request_id, idempotency_key)
-        .await?;
-    Ok(Json(dto))
+pub async fn list_leave_requests(
+    _state: State<AppState>,
+    _auth: AuthContext,
+) -> ApiResult<Json<Vec<LeaveRequestResponse>>> {
+    Err(ApiResponseError::internal("List leave requests not yet implemented"))
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// Router
-// ═══════════════════════════════════════════════════════════════════════
-
-pub fn router<S: PauseService + 'static>() -> Router<PauseAppState<S>> {
+pub fn routes() -> Router<AppState> {
+    use axum::routing::{get, post};
     Router::new()
-        .route("/employees", post(create_employee::<S>))
-        .route("/employees/{id}", get(get_employee::<S>))
-        .route("/leave-requests", post(create_leave_request::<S>))
-        .route(
-            "/leave-requests/{id}/approve",
-            patch(approve_leave_request::<S>),
-        )
-}
-
-// For lib.rs, we provide a placeholder routes function that returns an empty router
-// This will be used until we integrate properly.
-pub fn routes() -> Router<crate::AppState> {
-    Router::new()
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Tests
-// ═══════════════════════════════════════════════════════════════════════
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_create_employee_validation_success() {
-        let req = CreateEmployeeRequest {
-            full_name: "Jane Doe".into(),
-            email: "jane@example.com".into(),
-            phone: Some("+1234567890".into()),
-            job_title: "Developer".into(),
-            department: Some("IT".into()),
-        };
-        assert!(req.validate().is_ok());
-    }
-
-    #[test]
-    fn test_create_employee_validation_empty_name() {
-        let req = CreateEmployeeRequest {
-            full_name: "".into(),
-            email: "jane@example.com".into(),
-            phone: None,
-            job_title: "Developer".into(),
-            department: None,
-        };
-        assert!(req.validate().is_err());
-    }
-
-    #[test]
-    fn test_create_employee_validation_invalid_email() {
-        let req = CreateEmployeeRequest {
-            full_name: "Jane Doe".into(),
-            email: "invalid".into(),
-            phone: None,
-            job_title: "Developer".into(),
-            department: None,
-        };
-        assert!(req.validate().is_err());
-    }
-
-    #[test]
-    fn test_create_leave_request_validation_success() {
-        let now = chrono::Utc::now();
-        let req = CreateLeaveRequestRequest {
-            employee_id: Uuid::new_v4(),
-            leave_type: LeaveType::Annual,
-            starts_at: now,
-            ends_at: now + chrono::Duration::days(1),
-            reason: None,
-        };
-        assert!(req.validate().is_ok());
-    }
-
-    #[test]
-    fn test_create_leave_request_validation_invalid_dates() {
-        let now = chrono::Utc::now();
-        let req = CreateLeaveRequestRequest {
-            employee_id: Uuid::new_v4(),
-            leave_type: LeaveType::Annual,
-            starts_at: now,
-            ends_at: now,
-            reason: None,
-        };
-        assert!(req.validate().is_err());
-    }
-
-    #[test]
-    fn test_pause_api_error_status_codes() {
-        assert_eq!(
-            PauseApiError::MissingIdempotencyKey
-                .into_response()
-                .status(),
-            StatusCode::BAD_REQUEST
-        );
-        assert_eq!(
-            PauseApiError::InvalidIdempotencyKey
-                .into_response()
-                .status(),
-            StatusCode::BAD_REQUEST
-        );
-        assert_eq!(
-            PauseApiError::InvalidBody("err".into())
-                .into_response()
-                .status(),
-            StatusCode::BAD_REQUEST
-        );
-        assert_eq!(
-            PauseApiError::NotFound.into_response().status(),
-            StatusCode::NOT_FOUND
-        );
-        assert_eq!(
-            PauseApiError::Validation("err".into())
-                .into_response()
-                .status(),
-            StatusCode::UNPROCESSABLE_ENTITY
-        );
-        assert_eq!(
-            PauseApiError::Conflict("err".into())
-                .into_response()
-                .status(),
-            StatusCode::CONFLICT
-        );
-        assert_eq!(
-            PauseApiError::Internal.into_response().status(),
-            StatusCode::INTERNAL_SERVER_ERROR
-        );
-    }
+        .route("/employees", post(create_employee).get(list_employees))
+        .route("/leave-requests", post(request_leave).get(list_leave_requests))
 }
