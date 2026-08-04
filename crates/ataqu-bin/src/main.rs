@@ -148,7 +148,8 @@ async fn main() -> anyhow::Result<()> {
     // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.core.clone()));
-    let vault_service = Arc::new(VaultService::new(vault_repo, id_gen.clone(), clock.clone()));
+    let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let vault_service = Arc::new(VaultService::new(vault_repo, vault_outbox, id_gen.clone(), clock.clone()));
 
     // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;

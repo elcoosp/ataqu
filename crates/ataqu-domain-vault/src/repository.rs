@@ -1,4 +1,5 @@
 use crate::inventory::{Product, Variant};
+use crate::stock::StockMovement;
 use async_trait::async_trait;
 use ataqu_kernel::TenantId;
 use uuid::Uuid;
@@ -14,6 +15,8 @@ pub trait VaultRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Product>, String>;
+    async fn delete_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), String>;
+
     async fn save_variant(&self, variant: &Variant) -> Result<(), String>;
     async fn get_variant(&self, tenant_id: &TenantId, id: &Uuid)
     -> Result<Option<Variant>, String>;
@@ -29,4 +32,18 @@ pub trait VaultRepository: Send + Sync {
         id: &Uuid,
         delta: i64,
     ) -> Result<Variant, String>;
+
+    async fn save_movement(&self, movement: &StockMovement) -> Result<(), String>;
+    async fn list_movements(
+        &self,
+        tenant_id: &TenantId,
+        variant_id: &Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<StockMovement>, String>;
+    async fn find_low_stock_variants(
+        &self,
+        tenant_id: &TenantId,
+        threshold: i64,
+    ) -> Result<Vec<Variant>, String>;
 }

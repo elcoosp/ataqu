@@ -24,6 +24,7 @@ pub mod m_tempo_fix_duration;
 pub mod m_vault;
 pub mod m_vault_add_price_column;
 pub mod m_vault_add_products_variants;
+pub mod m_vault_add_stock_movements;
 pub mod m_vista_tables;
 
 pub struct Migrator;
@@ -56,6 +57,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_vault::Migration),
             Box::new(m_vault_add_products_variants::Migration),
             Box::new(m_vault_add_price_column::Migration),
+            Box::new(m_vault_add_stock_movements::Migration),
             Box::new(m_vista_tables::Migration),
         ]
     }

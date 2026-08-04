@@ -1,20 +1,51 @@
-//! SeaORM implementations for VAULT domain repository.
 use async_trait::async_trait;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
-    QuerySelect, Set,
-};
-use uuid::Uuid;
-
 use ataqu_domain_vault::inventory::{Product, Variant};
 use ataqu_domain_vault::repository::VaultRepository;
+use ataqu_domain_vault::stock::StockMovement;
 use ataqu_kernel::TenantId;
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set,
+};
+use uuid::Uuid;
 
 use crate::entities::vault::product as product_entity;
 use crate::entities::vault::variant as variant_entity;
 
-// Helpers
-fn product_to_model(product: &Product) -> product_entity::ActiveModel {
+mod stock_movement_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "stock_movements", schema_name = "vault")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub variant_id: Uuid,
+        pub quantity: i64,
+        pub reason: String,
+        pub reference: Option<String>,
+        pub timestamp: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
+pub struct VaultRepositoryImpl {
+    db: DatabaseConnection,
+}
+
+impl VaultRepositoryImpl {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
+}
+
+fn product_domain_to_active(product: &Product) -> product_entity::ActiveModel {
     product_entity::ActiveModel {
         id: Set(product.id),
         tenant_id: Set(product.tenant_id.as_uuid()),
@@ -26,7 +57,7 @@ fn product_to_model(product: &Product) -> product_entity::ActiveModel {
     }
 }
 
-fn model_to_product(model: product_entity::Model) -> Product {
+fn product_model_to_domain(model: product_entity::Model) -> Product {
     Product {
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
@@ -38,7 +69,7 @@ fn model_to_product(model: product_entity::Model) -> Product {
     }
 }
 
-fn variant_to_model(variant: &Variant) -> variant_entity::ActiveModel {
+fn variant_domain_to_active(variant: &Variant) -> variant_entity::ActiveModel {
     variant_entity::ActiveModel {
         id: Set(variant.id),
         product_id: Set(variant.product_id),
@@ -52,7 +83,7 @@ fn variant_to_model(variant: &Variant) -> variant_entity::ActiveModel {
     }
 }
 
-fn model_to_variant(model: variant_entity::Model) -> Variant {
+fn variant_model_to_domain(model: variant_entity::Model) -> Variant {
     Variant {
         id: model.id,
         product_id: model.product_id,
@@ -66,39 +97,37 @@ fn model_to_variant(model: variant_entity::Model) -> Variant {
     }
 }
 
-pub struct VaultRepositoryImpl {
-    db: DatabaseConnection,
-}
-
-impl VaultRepositoryImpl {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
-    }
-}
-
 #[async_trait]
 impl VaultRepository for VaultRepositoryImpl {
     async fn save_product(&self, product: &Product) -> Result<(), String> {
-        let active = product_to_model(product);
-        product_entity::Entity::insert(active)
-            .exec(&self.db)
+        let active = product_domain_to_active(product);
+        let exists = product_entity::Entity::find_by_id(product.id)
+            .one(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| e.to_string())?
+            .is_some();
+        if exists {
+            product_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| e.to_string())?;
+        } else {
+            product_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
         Ok(())
     }
 
-    async fn get_product(
-        &self,
-        tenant_id: &TenantId,
-        id: &Uuid,
-    ) -> Result<Option<Product>, String> {
+    async fn get_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Product>, String> {
         let model = product_entity::Entity::find()
             .filter(product_entity::Column::Id.eq(*id))
             .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        Ok(model.map(model_to_product))
+        Ok(model.map(product_model_to_domain))
     }
 
     async fn list_products(
@@ -114,30 +143,48 @@ impl VaultRepository for VaultRepositoryImpl {
             .all(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        Ok(models.into_iter().map(model_to_product).collect())
+        Ok(models.into_iter().map(product_model_to_domain).collect())
     }
 
-    async fn save_variant(&self, variant: &Variant) -> Result<(), String> {
-        let active = variant_to_model(variant);
-        variant_entity::Entity::insert(active)
+    async fn delete_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), String> {
+        product_entity::Entity::delete_many()
+            .filter(product_entity::Column::Id.eq(*id))
+            .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .exec(&self.db)
             .await
             .map_err(|e| e.to_string())?;
         Ok(())
     }
 
-    async fn get_variant(
-        &self,
-        tenant_id: &TenantId,
-        id: &Uuid,
-    ) -> Result<Option<Variant>, String> {
+    async fn save_variant(&self, variant: &Variant) -> Result<(), String> {
+        let active = variant_domain_to_active(variant);
+        let exists = variant_entity::Entity::find_by_id(variant.id)
+            .one(&self.db)
+            .await
+            .map_err(|e| e.to_string())?
+            .is_some();
+        if exists {
+            variant_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| e.to_string())?;
+        } else {
+            variant_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        Ok(())
+    }
+
+    async fn get_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Variant>, String> {
         let model = variant_entity::Entity::find()
             .filter(variant_entity::Column::Id.eq(*id))
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        Ok(model.map(model_to_variant))
+        Ok(model.map(variant_model_to_domain))
     }
 
     async fn list_variants(
@@ -153,7 +200,7 @@ impl VaultRepository for VaultRepositoryImpl {
             .all(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        Ok(models.into_iter().map(model_to_variant).collect())
+        Ok(models.into_iter().map(variant_model_to_domain).collect())
     }
 
     async fn update_variant_stock(
@@ -162,22 +209,82 @@ impl VaultRepository for VaultRepositoryImpl {
         id: &Uuid,
         delta: i64,
     ) -> Result<Variant, String> {
-        let mut active = variant_entity::Entity::find()
-            .filter(variant_entity::Column::Id.eq(*id))
-            .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .one(&self.db)
-            .await
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Variant not found".to_string())?
-            .into_active_model();
-        let new_stock = active.stock_quantity.unwrap() + delta;
-        if new_stock < 0 {
-            return Err("Insufficient stock".to_string());
-        }
-        active.stock_quantity = Set(new_stock);
-        active.update(&self.db).await.map_err(|e| e.to_string())?;
-        self.get_variant(tenant_id, id)
+        let mut variant = self
+            .get_variant(tenant_id, id)
             .await?
-            .ok_or_else(|| "Variant not found after update".to_string())
+            .ok_or_else(|| "Variant not found".to_string())?;
+
+        let new_stock = variant.stock_quantity + delta;
+        if new_stock < 0 {
+            return Err(format!("Insufficient stock for variant {}: available {}, requested {}", id, variant.stock_quantity, -delta));
+        }
+        variant.stock_quantity = new_stock;
+
+        let active = variant_domain_to_active(&variant);
+        variant_entity::Entity::update(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(variant)
+    }
+
+    async fn save_movement(&self, movement: &StockMovement) -> Result<(), String> {
+        let active = stock_movement_entity::ActiveModel {
+            id: Set(movement.id),
+            tenant_id: Set(movement.tenant_id.as_uuid()),
+            variant_id: Set(movement.variant_id),
+            quantity: Set(movement.quantity),
+            reason: Set(movement.reason.clone()),
+            reference: Set(movement.reference.clone()),
+            timestamp: Set(movement.timestamp.into()),
+        };
+        stock_movement_entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    async fn list_movements(
+        &self,
+        tenant_id: &TenantId,
+        variant_id: &Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<StockMovement>, String> {
+        let models = stock_movement_entity::Entity::find()
+            .filter(stock_movement_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(stock_movement_entity::Column::VariantId.eq(*variant_id))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(models.into_iter().map(|m| StockMovement {
+            id: m.id,
+            tenant_id: TenantId::new(m.tenant_id),
+            variant_id: m.variant_id,
+            quantity: m.quantity,
+            reason: m.reason,
+            reference: m.reference,
+            timestamp: m.timestamp.into(),
+        }).collect())
+    }
+
+    async fn find_low_stock_variants(
+        &self,
+        tenant_id: &TenantId,
+        threshold: i64,
+    ) -> Result<Vec<Variant>, String> {
+        let models = variant_entity::Entity::find()
+            .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(variant_entity::Column::StockQuantity.lte(threshold))
+            .all(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(models.into_iter().map(variant_model_to_domain).collect())
     }
 }

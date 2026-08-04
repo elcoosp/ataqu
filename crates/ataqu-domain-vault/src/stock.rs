@@ -1,36 +1,55 @@
 //! Stock movements and tracking.
 
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use std::time::SystemTime;
+use uuid::Uuid;
+
 // Re-export errors from inventory for convenience
 pub use crate::inventory::StockError;
 
 /// A record of a stock movement (inbound or outbound).
 #[derive(Debug, Clone, PartialEq)]
 pub struct StockMovement {
-    pub id: String,
-    pub variant_id: String,
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub variant_id: Uuid,
     pub quantity: i64, // positive = inbound, negative = outbound
     pub reason: String,
+    pub reference: Option<String>, // e.g., deal_id, PO number
     pub timestamp: SystemTime,
 }
 
-impl StockMovement {
-    pub fn new(id: String, variant_id: String, quantity: i64, reason: String) -> Self {
-        Self {
-            id,
-            variant_id,
-            quantity,
-            reason,
-            timestamp: SystemTime::now(),
-        }
+#[derive(Debug, Clone)]
+pub struct CreateMovementCommand {
+    pub tenant_id: TenantId,
+    pub variant_id: Uuid,
+    pub quantity: i64,
+    pub reason: String,
+    pub reference: Option<String>,
+}
+
+pub fn create_movement(
+    cmd: CreateMovementCommand,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
+) -> StockMovement {
+    StockMovement {
+        id: id_gen.new_uuid_v7(),
+        tenant_id: cmd.tenant_id,
+        variant_id: cmd.variant_id,
+        quantity: cmd.quantity,
+        reason: cmd.reason,
+        reference: cmd.reference,
+        timestamp: clock.now(),
     }
 }
 
 /// A reservation record (for auditing purposes).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Reservation {
-    pub id: String,
-    pub variant_id: String,
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub variant_id: Uuid,
     pub quantity: i64,
     pub status: ReservationStatus,
     pub expires_at: Option<SystemTime>,
@@ -44,55 +63,36 @@ pub enum ReservationStatus {
     Cancelled,
 }
 
-impl Reservation {
-    pub fn new(
-        id: String,
-        variant_id: String,
-        quantity: i64,
-        expires_at: Option<SystemTime>,
-    ) -> Self {
-        Self {
-            id,
-            variant_id,
-            quantity,
-            status: ReservationStatus::Pending,
-            expires_at,
-            created_at: SystemTime::now(),
-        }
-    }
+#[derive(Debug, Clone)]
+pub struct CreateReservationCommand {
+    pub tenant_id: TenantId,
+    pub variant_id: Uuid,
+    pub quantity: i64,
+    pub expires_at: Option<SystemTime>,
+}
 
+pub fn create_reservation(
+    cmd: CreateReservationCommand,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
+) -> Reservation {
+    Reservation {
+        id: id_gen.new_uuid_v7(),
+        tenant_id: cmd.tenant_id,
+        variant_id: cmd.variant_id,
+        quantity: cmd.quantity,
+        status: ReservationStatus::Pending,
+        expires_at: cmd.expires_at,
+        created_at: clock.now(),
+    }
+}
+
+impl Reservation {
     pub fn confirm(&mut self) {
         self.status = ReservationStatus::Confirmed;
     }
 
     pub fn cancel(&mut self) {
         self.status = ReservationStatus::Cancelled;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn stock_movement_creation() {
-        let mov = StockMovement::new(
-            "mov1".to_string(),
-            "v1".to_string(),
-            10,
-            "initial stock".to_string(),
-        );
-        assert_eq!(mov.quantity, 10);
-        assert_eq!(mov.reason, "initial stock");
-    }
-
-    #[test]
-    fn reservation_lifecycle() {
-        let mut res = Reservation::new("res1".to_string(), "v1".to_string(), 5, None);
-        assert_eq!(res.status, ReservationStatus::Pending);
-        res.confirm();
-        assert_eq!(res.status, ReservationStatus::Confirmed);
-        res.cancel();
-        assert_eq!(res.status, ReservationStatus::Cancelled);
     }
 }

@@ -12,7 +12,7 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_application::vault_service::{
-    CreateProductCommand, CreateVariantCommand, UpdateStockCommand,
+    CreateProductCommand, CreateVariantCommand, UpdateProductCommand, UpdateStockCommand,
 };
 
 #[derive(Debug, Deserialize)]
@@ -20,6 +20,13 @@ pub struct CreateProductRequest {
     pub name: String,
     pub description: String,
     pub sku: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateProductRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub sku: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -89,6 +96,40 @@ pub async fn get_product(
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(product.into()))
+}
+
+pub async fn update_product(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateProductRequest>,
+) -> ApiResult<Json<ProductResponse>> {
+    let cmd = UpdateProductCommand {
+        tenant_id: auth.tenant_id,
+        id,
+        name: payload.name,
+        description: payload.description,
+        sku: payload.sku,
+    };
+    let product = state
+        .vault_service
+        .update_product(cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(product.into()))
+}
+
+pub async fn delete_product(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state
+        .vault_service
+        .delete_product(auth.tenant_id, id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Deserialize)]
@@ -176,6 +217,8 @@ pub async fn get_variant(
 #[derive(Debug, Deserialize)]
 pub struct UpdateStockRequest {
     pub delta: i64,
+    pub reason: Option<String>,
+    pub reference: Option<String>,
 }
 
 pub async fn update_stock(
@@ -188,6 +231,8 @@ pub async fn update_stock(
         tenant_id: auth.tenant_id,
         variant_id,
         delta: payload.delta,
+        reason: payload.reason,
+        reference: payload.reference,
     };
     let variant = state
         .vault_service
@@ -197,13 +242,57 @@ pub async fn update_stock(
     Ok(Json(variant.into()))
 }
 
+pub async fn list_movements(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(variant_id): Path<Uuid>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let movements = state
+        .vault_service
+        .list_movements(auth.tenant_id, variant_id, 100, 0)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let list: Vec<_> = movements
+        .iter()
+        .map(|m| {
+            serde_json::json!({
+                "id": m.id,
+                "variant_id": m.variant_id,
+                "delta": m.quantity,
+                "reason": m.reason,
+                "reference": m.reference,
+                "created_at": m.timestamp,
+            })
+        })
+        .collect();
+    Ok(Json(list))
+}
+
+pub async fn get_low_stock(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<VariantResponse>>> {
+    let variants = state
+        .vault_service
+        .find_low_stock_variants(auth.tenant_id, 5)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(variants.into_iter().map(VariantResponse::from).collect()))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/products", axum::routing::post(create_product))
-        .route("/products", axum::routing::get(list_products))
-        .route("/products/:id", axum::routing::get(get_product))
-        .route("/variants", axum::routing::post(create_variant))
-        .route("/variants", axum::routing::get(list_variants))
+        .route(
+            "/products",
+            axum::routing::post(create_product).get(list_products),
+        )
+        .route(
+            "/products/:id",
+            axum::routing::get(get_product).put(update_product).delete(delete_product),
+        )
+        .route("/variants", axum::routing::post(create_variant).get(list_variants))
         .route("/variants/:id", axum::routing::get(get_variant))
         .route("/variants/:id/stock", axum::routing::put(update_stock))
+        .route("/variants/:id/movements", axum::routing::get(list_movements))
+        .route("/alerts/low-stock", axum::routing::get(get_low_stock))
 }
