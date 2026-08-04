@@ -27,6 +27,7 @@ ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
 ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
 ataqu-domain-sond = { path = "../ataqu-domain-sond" }
+ataqu-domain-vault = { path = "../ataqu-domain-vault" }
 
 [dev-dependencies]
 mockall = "0.15.0"

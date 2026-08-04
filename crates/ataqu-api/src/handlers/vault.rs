@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::Json,
+    response::{IntoResponse, Json},
     Router,
 };
 use uuid::Uuid;
@@ -9,36 +9,34 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
 use ataqu_application::vault_service::{
-    CreateProductCommand, UpdateStockCommand, Product,
-    CreateVariantCommand, Variant,
+    VaultService, CreateProductCommand, CreateVariantCommand, UpdateStockCommand,
 };
 use ataqu_kernel::TenantId;
 use crate::AppState;
 
-// ---------- Product endpoints ----------
+// ---------- Product DTOs ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateProductRequest {
     pub name: String,
-    pub sku: String,
-    pub initial_stock: i64,
+    pub description: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ProductResponse {
-    pub id: Uuid,
+    pub id: String,
     pub name: String,
-    pub sku: String,
-    pub stock: i64,
+    pub description: String,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
-impl From<Product> for ProductResponse {
-    fn from(p: Product) -> Self {
+impl From<ataqu_application::vault_service::Product> for ProductResponse {
+    fn from(p: ataqu_application::vault_service::Product) -> Self {
         Self {
             id: p.id,
             name: p.name,
-            sku: p.sku,
-            stock: p.stock,
-            created_at: p.created_at,
+            description: p.description,
+            created_at: p.created_at.into(),
+            updated_at: p.updated_at.into(),
         }
     }
 }
@@ -51,8 +49,7 @@ pub async fn create_product(
     let cmd = CreateProductCommand {
         tenant_id,
         name: payload.name,
-        sku: payload.sku,
-        initial_stock: payload.initial_stock,
+        description: payload.description,
     };
     let product = state.vault_service.create_product(cmd).await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -63,7 +60,7 @@ pub async fn list_products(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<ProductResponse>>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let products = state.vault_service.list_products(tenant_id).await
+    let products = state.vault_service.list_products(tenant_id, 100, 0).await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(products.into_iter().map(|p| p.into()).collect()))
 }
@@ -78,53 +75,37 @@ pub async fn get_product(
     Ok(Json(product.into()))
 }
 
-#[derive(Debug, Deserialize)]
-pub struct UpdateStockRequest {
-    pub delta: i64,
-}
-
-pub async fn update_stock(
-    State(state): State<AppState>,
-    Path(product_id): Path<Uuid>,
-    Json(payload): Json<UpdateStockRequest>,
-) -> Result<Json<ProductResponse>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
-    let cmd = UpdateStockCommand {
-        tenant_id,
-        product_id,
-        delta: payload.delta,
-    };
-    let product = state.vault_service.update_stock(cmd).await
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
-    Ok(Json(product.into()))
-}
-
-// ---------- Variant endpoints ----------
+// ---------- Variant DTOs ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateVariantRequest {
     pub product_id: Uuid,
     pub sku: String,
     pub initial_stock: i64,
+    pub price: i64,
 }
 
 #[derive(Debug, Serialize)]
 pub struct VariantResponse {
-    pub id: Uuid,
-    pub product_id: Uuid,
+    pub id: String,
+    pub product_id: String,
     pub sku: String,
-    pub stock: i64,
-    pub reserved: i64,
+    pub price: i64,
+    pub stock_quantity: i64,
+    pub reserved_quantity: i64,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
-impl From<Variant> for VariantResponse {
-    fn from(v: Variant) -> Self {
+impl From<ataqu_application::vault_service::Variant> for VariantResponse {
+    fn from(v: ataqu_application::vault_service::Variant) -> Self {
         Self {
             id: v.id,
             product_id: v.product_id,
             sku: v.sku,
-            stock: v.stock,
-            reserved: v.reserved,
-            created_at: v.created_at,
+            price: v.price,
+            stock_quantity: v.stock_quantity,
+            reserved_quantity: v.reserved_quantity,
+            created_at: v.created_at.into(),
+            updated_at: v.updated_at.into(),
         }
     }
 }
@@ -139,6 +120,7 @@ pub async fn create_variant(
         product_id: payload.product_id,
         sku: payload.sku,
         initial_stock: payload.initial_stock,
+        price: payload.price,
     };
     let variant = state.vault_service.create_variant(cmd).await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -149,7 +131,7 @@ pub async fn list_variants(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<VariantResponse>>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let variants = state.vault_service.list_variants(tenant_id).await
+    let variants = state.vault_service.list_variants(tenant_id, 100, 0).await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(variants.into_iter().map(|v| v.into()).collect()))
 }
@@ -164,14 +146,35 @@ pub async fn get_variant(
     Ok(Json(variant.into()))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateStockRequest {
+    pub delta: i64,
+}
+
+pub async fn update_stock(
+    State(state): State<AppState>,
+    Path(variant_id): Path<Uuid>,
+    Json(payload): Json<UpdateStockRequest>,
+) -> Result<Json<VariantResponse>, StatusCode> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let cmd = UpdateStockCommand {
+        tenant_id,
+        variant_id,
+        delta: payload.delta,
+    };
+    let variant = state.vault_service.update_stock(cmd).await
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    Ok(Json(variant.into()))
+}
+
 // ---------- Router ----------
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/products", axum::routing::post(create_product))
         .route("/products", axum::routing::get(list_products))
         .route("/products/:id", axum::routing::get(get_product))
-        .route("/products/:id/stock", axum::routing::put(update_stock))
         .route("/variants", axum::routing::post(create_variant))
         .route("/variants", axum::routing::get(list_variants))
         .route("/variants/:id", axum::routing::get(get_variant))
+        .route("/variants/:id/stock", axum::routing::put(update_stock))
 }

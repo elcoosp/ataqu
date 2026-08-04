@@ -5,3 +5,4 @@ pub mod dial;
 pub mod pivot;
 pub mod sond;
 pub mod tempo;
+pub mod vault;

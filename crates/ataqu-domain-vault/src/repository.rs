@@ -1,0 +1,15 @@
+use async_trait::async_trait;
+use ataqu_kernel::TenantId;
+use uuid::Uuid;
+use crate::inventory::{Product, Variant};
+
+#[async_trait]
+pub trait VaultRepository: Send + Sync {
+    async fn save_product(&self, product: &Product) -> Result<(), String>;
+    async fn get_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Product>, String>;
+    async fn list_products(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Product>, String>;
+    async fn save_variant(&self, variant: &Variant) -> Result<(), String>;
+    async fn get_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Variant>, String>;
+    async fn list_variants(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Variant>, String>;
+    async fn update_variant_stock(&self, tenant_id: &TenantId, id: &Uuid, delta: i64) -> Result<Variant, String>;
+}
