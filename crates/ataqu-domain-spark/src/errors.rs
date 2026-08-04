@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Debug, Error, PartialEq)]
+#[derive(Debug, Error)]
 pub enum SparkError {
     #[error("Workflow name cannot be empty")]
     InvalidWorkflowName,
@@ -10,4 +10,6 @@ pub enum SparkError {
     TenantMismatch,
     #[error("Workflow not found")]
     WorkflowNotFound,
+    #[error("Database error: {0}")]
+    Database(String),
 }

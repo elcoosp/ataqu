@@ -1,6 +1,6 @@
 use sea_orm::Statement;
 use sea_orm::*;
-use serde::{Deserialize, Serialize};
+use serde;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::fs::OpenOptions;

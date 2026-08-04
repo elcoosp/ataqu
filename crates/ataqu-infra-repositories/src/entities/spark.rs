@@ -38,7 +38,7 @@ pub mod lease {
         pub workflow_id: Uuid,
         pub fence_token: i64,
         pub holder: Option<String>,
-        pub expires_at: DateTime<Utc>,
+        pub expires_at: Option<DateTime<Utc>>,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
     }

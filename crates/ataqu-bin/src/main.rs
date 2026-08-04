@@ -11,6 +11,7 @@ use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
+use uuid::Uuid;
 
 use ataqu_api::{AppState, create_router};
 use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
@@ -23,7 +24,7 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
-use ataqu_kernel::{Clock, IdGenerator};
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
@@ -135,16 +136,6 @@ async fn main() -> anyhow::Result<()> {
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
     let sond_service = Arc::new(SondService::new(sond_repo, id_gen.clone(), clock.clone()));
 
-    // SPARK
-    use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
-    let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.core.clone()));
-    let spark_service = Arc::new(SparkService::new(spark_repo, id_gen.clone(), clock.clone()));
-
-    // TEMPO
-    use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
-    let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
-    let tempo_service = Arc::new(TempoService::new(tempo_repo, id_gen.clone(), clock.clone()));
-
     // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.core.clone()));
@@ -155,6 +146,109 @@ async fn main() -> anyhow::Result<()> {
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.core.clone()));
     let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone()));
+
+    // SPARK
+    use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
+    let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.core.clone()));
+
+    // SPARK Action Dispatcher
+    use ataqu_application::spark_service::ActionDispatcher;
+    use ataqu_domain_spark::Action;
+    use ataqu_application::cinq_service::{CreateContactCommand, CreateActivityCommand};
+    use ataqu_application::dial_service::{CreateChannelCommand, SendMessageCommand};
+    use ataqu_application::vault_service::UpdateStockCommand;
+    use ataqu_domain_cinq::activity::ActivityType;
+    use ataqu_domain_dial::chat::ChannelType;
+    use ataqu_security::{Email, PhoneNumber};
+
+    struct AtaquActionDispatcher {
+        dial_service: Arc<DialService>,
+        cinq_service: Arc<CinqService>,
+        vault_service: Arc<VaultService>,
+    }
+
+    #[async_trait::async_trait]
+    impl ActionDispatcher for AtaquActionDispatcher {
+        async fn dispatch(&self, action: &Action, tenant_id: &TenantId) -> Result<(), String> {
+            match action {
+                Action::CreateDialChannel { name, channel_type, participants } => {
+                    let ct = match channel_type.as_str() {
+                        "public" => ChannelType::Public,
+                        "private" => ChannelType::Private,
+                        "dm" => ChannelType::DirectMessage,
+                        _ => ChannelType::Public,
+                    };
+                    self.dial_service.create_channel(CreateChannelCommand {
+                        tenant_id: *tenant_id,
+                        name: name.clone(),
+                        channel_type: ct,
+                        created_by: Uuid::nil(),
+                        participants: participants.clone(),
+                    }).await.map_err(|e| e.to_string())?;
+                }
+                Action::SendDialMessage { channel_id, content } => {
+                    self.dial_service.send_message(SendMessageCommand {
+                        tenant_id: *tenant_id,
+                        channel_id: *channel_id,
+                        thread_id: None,
+                        author_id: Uuid::nil(),
+                        content: content.clone(),
+                    }).await.map_err(|e| e.to_string())?;
+                }
+                Action::CreateCinqContact { name, email, phone } => {
+                    self.cinq_service.create_contact(CreateContactCommand {
+                        tenant_id: *tenant_id,
+                        name: name.clone(),
+                        email: Email::new(email.clone()),
+                        phone: phone.clone().map(PhoneNumber::new),
+                    }).await.map_err(|e| e.to_string())?;
+                }
+                Action::CreateCinqActivity { contact_id, activity_type, description } => {
+                    let act_type = match activity_type.as_str() {
+                        "call" => ActivityType::Call,
+                        "email" => ActivityType::Email,
+                        "meeting" => ActivityType::Meeting,
+                        "task" => ActivityType::Task,
+                        _ => ActivityType::Note,
+                    };
+                    self.cinq_service.create_activity(CreateActivityCommand {
+                        tenant_id: *tenant_id,
+                        contact_id: *contact_id,
+                        deal_id: None,
+                        activity_type: act_type,
+                        description: description.clone(),
+                        scheduled_at: None,
+                    }).await.map_err(|e| e.to_string())?;
+                }
+                Action::AdjustVaultStock { variant_id, delta, reason } => {
+                    self.vault_service.update_stock(UpdateStockCommand {
+                        tenant_id: *tenant_id,
+                        variant_id: *variant_id,
+                        delta: *delta,
+                        reason: Some(reason.clone()),
+                        reference: None,
+                    }).await.map_err(|e| e.to_string())?;
+                }
+                _ => {
+                    tracing::warn!("Action type not yet implemented natively: {:?}", action);
+                }
+            }
+            Ok(())
+        }
+    }
+
+    let action_dispatcher = Arc::new(AtaquActionDispatcher {
+        dial_service: dial_service.clone(),
+        cinq_service: cinq_service.clone(),
+        vault_service: vault_service.clone(),
+    });
+
+    let spark_service = Arc::new(SparkService::new(spark_repo.clone(), action_dispatcher, id_gen.clone(), clock.clone()));
+
+    // TEMPO
+    use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
+    let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
+    let tempo_service = Arc::new(TempoService::new(tempo_repo, id_gen.clone(), clock.clone()));
 
     // PAUSE
     use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
@@ -192,7 +286,7 @@ async fn main() -> anyhow::Result<()> {
         dial_service,
         pivot_service,
         sond_service,
-        spark_service,
+        spark_service: spark_service.clone(),
         tempo_service,
         vault_service,
         vista_service,
@@ -211,13 +305,23 @@ async fn main() -> anyhow::Result<()> {
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
+    let spark_service_for_outbox = spark_service.clone();
     let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
         let vista = vista_service_for_outbox.clone();
+        let spark = spark_service_for_outbox.clone();
         async move {
             match event.schema.as_str() {
-                "vista" | "spark" | "core" | "collab_crm" | "collab_ops" | "vault" | "dial" | "tempo" => {
+                "vista" | "core" => {
                     if let Err(e) = vista.process_event(&event).await {
-                        tracing::error!(error = %e, "Failed to process outbox event");
+                        tracing::error!(error = %e, "VISTA event processing failed");
+                    }
+                }
+                "collab_crm" | "collab_ops" | "vault" | "dial" | "tempo" => {
+                    if let Err(e) = vista.process_event(&event).await {
+                        tracing::error!(error = %e, "CRM/OPS event -> VISTA failed");
+                    }
+                    if let Err(e) = spark.evaluate_trigger(&event).await {
+                        tracing::error!(error = %e, "CRM/OPS event -> SPARK failed");
                     }
                 }
                 _ => {
@@ -236,7 +340,7 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(300)).await;
-            let tenant_id = ataqu_kernel::TenantId::new(uuid::Uuid::nil()); // TODO: iterate real tenants
+            let tenant_id = TenantId::new(uuid::Uuid::nil()); // TODO: iterate real tenants
             match tempo_service_for_noshow.no_show_worker(tenant_id).await {
                 Ok(updated) => {
                     if !updated.is_empty() {

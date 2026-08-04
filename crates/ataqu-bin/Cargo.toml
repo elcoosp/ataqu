@@ -19,6 +19,12 @@ ataqu-infra-outbox = { path = "../ataqu-infra-outbox" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 ataqu-infra-pools = { path = "../ataqu-infra-pools" }
 ataqu-infra-migration = { path = "../ataqu-infra-migration" }
+ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
+
+ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
+ataqu-domain-dial = { path = "../ataqu-domain-dial" }
+ataqu-domain-spark = { path = "../ataqu-domain-spark" }
+ataqu-security = { path = "../ataqu-security" }
 
 axum = { version = "0.8.9", features = ["ws", "multipart"] }
 tokio = { version = "1.52", features = ["rt", "macros", "rt-multi-thread", "signal"] }
@@ -33,5 +39,4 @@ anyhow = "1.0"
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls"] }
 async-trait = "0.1"
 sea-orm-migration = "2.0.0-rc.41"
-ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
 dashmap = "6.0.1"

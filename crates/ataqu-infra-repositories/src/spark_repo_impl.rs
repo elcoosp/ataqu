@@ -1,55 +1,43 @@
-//! SeaORM implementations for SPARK domain repository.
 use async_trait::async_trait;
-use chrono::Utc;
-use sea_orm::{
-    ColumnTrait, ConnectionTrait, DatabaseConnection, DbBackend, EntityTrait, QueryFilter,
-    QuerySelect, Set, Statement,
-};
-use uuid::Uuid;
-
-use ataqu_domain_spark::action::Action;
 use ataqu_domain_spark::errors::SparkError;
+use ataqu_domain_spark::lease::Lease;
 use ataqu_domain_spark::repository::SparkRepository;
 use ataqu_domain_spark::workflow::Workflow;
+use ataqu_domain_spark::{Action, Condition, Trigger};
 use ataqu_kernel::TenantId;
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set,
+};
+use uuid::Uuid;
 
 use crate::entities::spark::lease as lease_entity;
 use crate::entities::spark::workflow as workflow_entity;
 
-// ---------- Helpers ----------
-fn workflow_to_model(workflow: &Workflow) -> workflow_entity::ActiveModel {
-    let definition = serde_json::json!({
-        "trigger": workflow.trigger,
-        "conditions": workflow.conditions,
-        "actions": workflow.actions,
-    });
-    workflow_entity::ActiveModel {
-        id: Set(workflow.id),
-        tenant_id: Set(workflow.tenant_id),
-        name: Set(workflow.name.clone()),
-        definition: Set(definition),
-        enabled: Set(workflow.is_active),
-        created_at: Set(workflow.created_at.into()),
-        updated_at: Set(workflow.updated_at.into()),
+pub struct SparkRepositoryImpl {
+    db: DatabaseConnection,
+}
+
+impl SparkRepositoryImpl {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
     }
 }
 
-fn model_to_workflow(model: workflow_entity::Model) -> Workflow {
+fn workflow_model_to_domain(model: workflow_entity::Model) -> Workflow {
     let def = model.definition;
-    let trigger: ataqu_domain_spark::Trigger =
-        serde_json::from_value(def.get("trigger").cloned().unwrap_or(serde_json::json!({})))
-            .unwrap_or(ataqu_domain_spark::Trigger::Webhook {
-                path: "/default".to_string(),
-            });
-    let conditions: Vec<ataqu_domain_spark::Condition> = serde_json::from_value(
-        def.get("conditions")
-            .cloned()
-            .unwrap_or(serde_json::json!([])),
-    )
-    .unwrap_or_default();
-    let actions: Vec<ataqu_domain_spark::Action> =
-        serde_json::from_value(def.get("actions").cloned().unwrap_or(serde_json::json!([])))
-            .unwrap_or_default();
+
+    let trigger = serde_json::from_value(
+        def.get("trigger").cloned().unwrap_or(serde_json::json!({}))
+    ).unwrap_or(Trigger::Event { event_type: "unknown".to_string() });
+
+    let conditions: Vec<Condition> = serde_json::from_value(
+        def.get("conditions").cloned().unwrap_or(serde_json::json!([]))
+    ).unwrap_or_default();
+
+    let actions: Vec<Action> = serde_json::from_value(
+        def.get("actions").cloned().unwrap_or(serde_json::json!([]))
+    ).unwrap_or_default();
+
     Workflow {
         id: model.id,
         tenant_id: model.tenant_id,
@@ -60,16 +48,6 @@ fn model_to_workflow(model: workflow_entity::Model) -> Workflow {
         is_active: model.enabled,
         created_at: model.created_at.into(),
         updated_at: model.updated_at.into(),
-    }
-}
-
-pub struct SparkRepositoryImpl {
-    db: DatabaseConnection,
-}
-
-impl SparkRepositoryImpl {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
     }
 }
 
@@ -85,16 +63,44 @@ impl SparkRepository for SparkRepositoryImpl {
             .filter(workflow_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
-            .map_err(|_| SparkError::WorkflowNotFound)?;
-        Ok(model.map(model_to_workflow))
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+        Ok(model.map(workflow_model_to_domain))
     }
 
     async fn save_workflow(&self, workflow: &Workflow) -> Result<(), SparkError> {
-        let active = workflow_to_model(workflow);
-        workflow_entity::Entity::insert(active)
-            .exec(&self.db)
+        let definition = serde_json::json!({
+            "trigger": workflow.trigger,
+            "conditions": workflow.conditions,
+            "actions": workflow.actions,
+        });
+
+        let active = workflow_entity::ActiveModel {
+            id: Set(workflow.id),
+            tenant_id: Set(workflow.tenant_id),
+            name: Set(workflow.name.clone()),
+            definition: Set(definition),
+            enabled: Set(workflow.is_active),
+            created_at: Set(workflow.created_at.into()),
+            updated_at: Set(workflow.updated_at.into()),
+        };
+
+        let exists = workflow_entity::Entity::find_by_id(workflow.id)
+            .one(&self.db)
             .await
-            .map_err(|_| SparkError::WorkflowNotFound)?;
+            .map_err(|e| SparkError::Database(e.to_string()))?
+            .is_some();
+
+        if exists {
+            workflow_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| SparkError::Database(e.to_string()))?;
+        } else {
+            workflow_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| SparkError::Database(e.to_string()))?;
+        }
         Ok(())
     }
 
@@ -110,111 +116,85 @@ impl SparkRepository for SparkRepositoryImpl {
             .offset(offset)
             .all(&self.db)
             .await
-            .map_err(|_| SparkError::WorkflowNotFound)?;
-        Ok(models.into_iter().map(model_to_workflow).collect())
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+        Ok(models.into_iter().map(workflow_model_to_domain).collect())
     }
 
-    async fn acquire_lease_and_dispatch(
+    async fn list_active_workflows_by_event_type(
+        &self,
+        _schema: &str,
+        event_type: &str,
+    ) -> Result<Vec<Workflow>, SparkError> {
+        let models = workflow_entity::Entity::find()
+            .filter(workflow_entity::Column::Enabled.eq(true))
+            .all(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+
+        let workflows: Vec<Workflow> = models.into_iter().map(workflow_model_to_domain).collect();
+
+        Ok(workflows.into_iter().filter(|w| {
+            if let Trigger::Event { event_type: et } = &w.trigger {
+                et == event_type
+            } else {
+                false
+            }
+        }).collect())
+    }
+
+    async fn get_workflow_lease(
         &self,
         tenant_id: &TenantId,
         workflow_id: &Uuid,
-        expected_token: u64,
-        actions: &[Action],
-    ) -> Result<(), SparkError> {
-        // Check if lease exists
-        let existing = lease_entity::Entity::find()
-            .filter(lease_entity::Column::WorkflowId.eq(*workflow_id))
+    ) -> Result<Option<Lease>, SparkError> {
+        let model = lease_entity::Entity::find()
             .filter(lease_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(lease_entity::Column::WorkflowId.eq(*workflow_id))
             .one(&self.db)
             .await
-            .map_err(|_| SparkError::WorkflowNotFound)?;
+            .map_err(|e| SparkError::Database(e.to_string()))?;
 
-        let now = Utc::now();
-        let expires_at = now + chrono::Duration::hours(1);
+        Ok(model.map(|m| Lease {
+            id: m.id,
+            tenant_id: m.tenant_id,
+            workflow_id: m.workflow_id,
+            fence_token: m.fence_token as u64,
+            holder: m.holder,
+            expires_at: m.expires_at,
+            created_at: m.created_at,
+            updated_at: m.updated_at,
+        }))
+    }
 
-        if let Some(_lease) = existing {
-            // Update lease atomically
-            // We'll use raw SQL to avoid complex SeaORM expressions
-            let sql = r#"
-                UPDATE collab_crm.leases
-                SET fence_token = fence_token + 1,
-                    updated_at = $1,
-                    expires_at = $2
-                WHERE workflow_id = $3
-                  AND tenant_id = $4
-                  AND fence_token = $5
-            "#;
-            let stmt = Statement::from_sql_and_values(
-                DbBackend::Postgres,
-                sql,
-                vec![
-                    now.into(),
-                    expires_at.into(),
-                    (*workflow_id).into(),
-                    (tenant_id.as_uuid()).into(),
-                    (expected_token as i64).into(),
-                ],
-            );
-            let res = self
-                .db
-                .execute_raw(stmt)
-                .await
-                .map_err(|_| SparkError::WorkflowNotFound)?;
-            if res.rows_affected() == 0 {
-                return Err(SparkError::WorkflowNotFound);
-            }
-        } else {
-            // Insert new lease with fence_token = 1
-            let new_lease = lease_entity::ActiveModel {
-                id: Set(Uuid::new_v4()),
-                tenant_id: Set(tenant_id.as_uuid()),
-                workflow_id: Set(*workflow_id),
-                fence_token: Set(1),
-                holder: Set(None),
-                expires_at: Set(expires_at),
-                created_at: Set(now),
-                updated_at: Set(now),
-            };
-            lease_entity::Entity::insert(new_lease)
+    async fn save_lease(&self, lease: &Lease) -> Result<(), SparkError> {
+        let active = lease_entity::ActiveModel {
+            id: Set(lease.id),
+            tenant_id: Set(lease.tenant_id),
+            workflow_id: Set(lease.workflow_id),
+            fence_token: Set(lease.fence_token as i64),
+            holder: Set(lease.holder.clone()),
+            expires_at: Set(lease.expires_at),
+            created_at: Set(lease.created_at),
+            updated_at: Set(lease.updated_at),
+        };
+
+        let exists = lease_entity::Entity::find_by_id(lease.id)
+            .one(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?
+            .is_some();
+
+        if exists {
+            lease_entity::Entity::update(active)
                 .exec(&self.db)
                 .await
-                .map_err(|_| SparkError::WorkflowNotFound)?;
-        }
-
-        // Dispatch actions to outbox
-        for action in actions {
-            let payload = serde_json::json!({
-                "action": action,
-                "workflow_id": workflow_id,
-                "tenant_id": tenant_id.as_uuid(),
-                "timestamp": now,
-            });
-            let outbox_sql = r#"
-                INSERT INTO core.outbox (schema, event_type, aggregate_id, payload, status, priority)
-                VALUES ('spark', 'ActionExecuted', $1, $2, 'pending', 'normal')
-            "#;
-            let stmt = Statement::from_sql_and_values(
-                DbBackend::Postgres,
-                outbox_sql,
-                vec![(*workflow_id).into(), payload.into()],
-            );
-            self.db
-                .execute_raw(stmt)
+                .map_err(|e| SparkError::Database(e.to_string()))?;
+        } else {
+            lease_entity::Entity::insert(active)
+                .exec(&self.db)
                 .await
-                .map_err(|_| SparkError::WorkflowNotFound)?;
+                .map_err(|e| SparkError::Database(e.to_string()))?;
         }
-
-        // Notify dispatcher
-        let notify = Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "SELECT pg_notify('outbox_event', '')",
-            vec![],
-        );
-        self.db
-            .execute_raw(notify)
-            .await
-            .map_err(|_| SparkError::WorkflowNotFound)?;
-
         Ok(())
     }
 }

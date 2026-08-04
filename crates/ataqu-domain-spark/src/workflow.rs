@@ -1,13 +1,13 @@
 use crate::{
-    action::Action,
     commands::{CreateWorkflowCommand, TriggerWorkflowCommand},
-    condition::Condition,
     errors::SparkError,
     events::{WorkflowCreated, WorkflowTriggered},
-    trigger::Trigger,
 };
+use crate::action::Action;
+use crate::condition::Condition;
+use crate::trigger::Trigger;
 use ataqu_kernel::{Clock, IdGenerator};
-use serde_json::Value;
+use std::time::SystemTime;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -19,8 +19,8 @@ pub struct Workflow {
     pub conditions: Vec<Condition>,
     pub actions: Vec<Action>,
     pub is_active: bool,
-    pub created_at: std::time::SystemTime,
-    pub updated_at: std::time::SystemTime,
+    pub created_at: SystemTime,
+    pub updated_at: SystemTime,
 }
 
 pub fn create_workflow(
@@ -78,34 +78,4 @@ pub fn trigger_workflow(
         execution_id,
         triggered_at,
     })
-}
-
-pub fn evaluate_conditions(conditions: &[Condition], payload: &Value) -> bool {
-    for cond in conditions {
-        match cond {
-            Condition::FieldEquals { field, value } => {
-                if let Some(v) = payload.get(field) {
-                    if v.as_str() != Some(value) {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            }
-            Condition::FieldContains { field, value } => {
-                if let Some(v) = payload.get(field) {
-                    if let Some(s) = v.as_str() {
-                        if !s.contains(value) {
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            }
-        }
-    }
-    true
 }
