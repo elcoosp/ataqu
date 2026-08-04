@@ -59,6 +59,8 @@ impl From<ataqu_application::dial_service::Message> for MessageResponse {
 #[derive(Debug, Deserialize)]
 pub struct CreateChannelRequest {
     pub name: String,
+    pub channel_type: Option<String>,
+    pub participants: Option<Vec<Uuid>>,
 }
 
 pub async fn create_channel(
@@ -66,12 +68,28 @@ pub async fn create_channel(
     auth: AuthContext,
     Json(payload): Json<CreateChannelRequest>,
 ) -> ApiResult<(StatusCode, Json<ChannelResponse>)> {
+    let channel_type = match payload.channel_type.as_deref().unwrap_or("public") {
+        "public" => ChannelType::Public,
+        "private" => ChannelType::Private,
+        "dm" | "direct" | "direct_message" => ChannelType::DirectMessage,
+        _ => return Err(ApiResponseError::validation("Invalid channel_type")),
+    };
+
+    let mut participants = payload.participants.unwrap_or_default();
+    if !participants.contains(&auth.user_id) {
+        participants.push(auth.user_id);
+    }
+
+    if channel_type == ChannelType::DirectMessage && participants.len() != 2 {
+        return Err(ApiResponseError::validation("Direct message channels must have exactly 2 participants"));
+    }
+
     let cmd = CreateChannelCommand {
         tenant_id: auth.tenant_id,
         name: payload.name,
-        channel_type: ChannelType::Public,
+        channel_type,
         created_by: auth.user_id,
-        participants: vec![],
+        participants,
     };
     let channel = state
         .dial_service
@@ -104,6 +122,16 @@ pub async fn get_channel(
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(channel.into()))
+}
+
+pub async fn archive_channel(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.dial_service.archive_channel(auth.tenant_id, id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Deserialize)]
@@ -145,25 +173,47 @@ pub async fn list_messages(
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct EditMessageRequest {
+    pub content: String,
+}
+
+pub async fn edit_message(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(message_id): Path<Uuid>,
+    Json(payload): Json<EditMessageRequest>,
+) -> ApiResult<Json<MessageResponse>> {
+    let edited = state.dial_service.edit_message(auth.tenant_id, message_id, auth.user_id, payload.content).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(edited.into()))
+}
+
+pub async fn delete_message(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(message_id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.dial_service.delete_message(auth.tenant_id, message_id, auth.user_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StartThreadRequest {
+    pub channel_id: Uuid,
+    pub parent_message_id: Uuid,
+}
+
 pub async fn start_thread(
     State(state): State<AppState>,
     auth: AuthContext,
-    Json(payload): Json<serde_json::Value>,
+    Json(payload): Json<StartThreadRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let channel_id = payload
-        .get("channel_id")
-        .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .ok_or_else(|| ApiResponseError::validation("channel_id required as UUID"))?;
-    let parent_message_id = payload
-        .get("parent_message_id")
-        .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .ok_or_else(|| ApiResponseError::validation("parent_message_id required as UUID"))?;
     let cmd = StartThreadCommand {
         tenant_id: auth.tenant_id,
-        channel_id,
-        parent_message_id,
+        channel_id: payload.channel_id,
+        parent_message_id: payload.parent_message_id,
     };
     let thread = state
         .dial_service
@@ -196,25 +246,28 @@ pub async fn get_thread(
     })))
 }
 
+pub async fn list_thread_messages(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(thread_id): Path<Uuid>,
+) -> ApiResult<Json<Vec<MessageResponse>>> {
+    let msgs = state.dial_service.list_thread_messages(auth.tenant_id, thread_id, 100, 0).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddMentionRequest {
+    pub message_id: Uuid,
+    pub user_id: Uuid,
+}
+
 pub async fn add_mention(
     State(state): State<AppState>,
     auth: AuthContext,
-    Json(payload): Json<serde_json::Value>,
+    Json(payload): Json<AddMentionRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let message_id = payload
-        .get("message_id")
-        .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .ok_or_else(|| ApiResponseError::validation("message_id required"))?;
-    let user_id = payload
-        .get("user_id")
-        .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .ok_or_else(|| ApiResponseError::validation("user_id required"))?;
-    let mention = state
-        .dial_service
-        .add_mention(auth.tenant_id, message_id, user_id)
-        .await
+    let mention = state.dial_service.add_mention(auth.tenant_id, payload.message_id, payload.user_id).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({
         "id": mention.id,
@@ -247,6 +300,25 @@ pub async fn list_mentions(
     Ok(Json(serde_json::json!({ "mentions": list })))
 }
 
+pub async fn mark_mention_read(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(mention_id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.dial_service.mark_mention_as_read(auth.tenant_id, mention_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn get_online_users(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<serde_json::Value>> {
+    let users = state.dial_service.get_online_users(auth.tenant_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(serde_json::json!({ "online_users": users })))
+}
+
 pub async fn search_messages(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -273,17 +345,21 @@ pub async fn search_messages(
 }
 
 pub fn routes() -> Router<AppState> {
-    use axum::routing::{get, post};
+    use axum::routing::{get, post, put};
     Router::new()
         .route("/channels", post(create_channel).get(list_channels))
-        .route("/channels/:id", get(get_channel))
+        .route("/channels/:id", get(get_channel).delete(archive_channel))
         .route(
             "/channels/:id/messages",
             post(send_message).get(list_messages),
         )
+        .route("/messages/:id", put(edit_message).delete(delete_message))
         .route("/threads", post(start_thread))
         .route("/threads/:id", get(get_thread))
+        .route("/threads/:id/messages", get(list_thread_messages))
         .route("/mentions", post(add_mention).get(list_mentions))
+        .route("/mentions/:id/read", post(mark_mention_read))
+        .route("/presence/online", get(get_online_users))
         .route("/search", get(search_messages))
         .nest("/ws", super::dial_ws::routes())
 }

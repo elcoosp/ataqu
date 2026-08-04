@@ -3,8 +3,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sea_orm::QuerySelect;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
-    Set,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, Set,
 };
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -198,7 +197,7 @@ impl DialRepository for DialRepositoryImpl {
             .map_err(|e| DialError::Repository(e.to_string()))?
             .ok_or_else(|| DialError::Repository("Channel not found".to_string()))?;
         let mut channel = channel_model_to_domain(model);
-        channel.participants = Vec::new(); // not loading participants for simplicity
+        channel.participants = Vec::new();
         Ok(channel)
     }
 
@@ -362,6 +361,24 @@ impl DialRepository for DialRepositoryImpl {
         let models = message_entity::Entity::find()
             .filter(message_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(message_entity::Column::ChannelId.eq(channel_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(message_model_to_domain).collect())
+    }
+
+    async fn list_messages_for_thread(
+        &self,
+        tenant_id: &TenantId,
+        thread_id: &ThreadId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Message>, DialError> {
+        let models = message_entity::Entity::find()
+            .filter(message_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(message_entity::Column::ThreadId.eq(thread_id.as_uuid()))
             .limit(limit)
             .offset(offset)
             .all(&self.db)

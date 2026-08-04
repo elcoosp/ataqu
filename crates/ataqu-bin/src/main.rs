@@ -12,7 +12,7 @@ use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
-use ataqu_api::{AppState, OutboxPlaceholder, create_router};
+use ataqu_api::{AppState, create_router};
 use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
@@ -25,13 +25,9 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_kernel::{Clock, IdGenerator};
 
-use ataqu_infra_idempotency::IdempotencyCache;
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
 
-// ------------------------------------------------------------------------------
-// System implementations
-// ------------------------------------------------------------------------------
 pub struct SystemIdGenerator;
 impl IdGenerator for SystemIdGenerator {
     fn new_uuid_v7(&self) -> uuid::Uuid {
@@ -46,9 +42,6 @@ impl Clock for SystemClock {
     }
 }
 
-// ------------------------------------------------------------------------------
-// Main
-// ------------------------------------------------------------------------------
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
@@ -60,20 +53,16 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Starting Ataqu unified server...");
 
-    // Database URL (should come from env)
     let db_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:5433/ataqu".to_string());
 
-    // Initialize database pools
     let pools = Pools::new(&db_url).await?;
 
-    // Capabilities
     let id_gen = Arc::new(SystemIdGenerator);
     let clock = Arc::new(SystemClock);
 
-    // JWT secret configuration
     let jwt_secret_raw = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "change-me-in-production-32-bytes!!".into())
+        .unwrap_or_else(|_| "change-me-in-production-32-bytes".into())
         .into_bytes();
     let jwt_secret = Arc::new(jwt_secret_raw.clone());
     let aegis_config = AegisConfig {
@@ -82,15 +71,10 @@ async fn main() -> anyhow::Result<()> {
         refresh_token_ttl: Duration::from_secs(604800),
     };
 
-    // Idempotency cache (hot path) – use in middleware later
-    let _idempotency_cache = IdempotencyCache::new();
-
-    // Build services
-
-    // AEGIS – real SeaORM repository and domain, using OutboxPlaceholder from ataqu-api
+    // AEGIS
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
-    let aegis_outbox = Arc::new(OutboxPlaceholder);
+    let aegis_outbox = Arc::new(ataqu_api::OutboxPlaceholder);
     let aegis_domain = Arc::new(RealAegisDomain);
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
@@ -103,8 +87,7 @@ async fn main() -> anyhow::Result<()> {
 
     // CINQ
     use ataqu_infra_repositories::cinq_repo_impl::{
-        CinqActivityRepository, CinqContactRepository, CinqDealRepository,
-        CinqPipelineStageRepository,
+        CinqActivityRepository, CinqContactRepository, CinqDealRepository, CinqPipelineStageRepository,
     };
     let contact_repo = Arc::new(CinqContactRepository::new(pools.core.clone()));
     let deal_repo = Arc::new(CinqDealRepository::new(pools.core.clone()));
@@ -170,10 +153,9 @@ async fn main() -> anyhow::Result<()> {
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.core.clone()));
     let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone()));
 
-    // PAUSE – real repositories, real idempotency, real outbox
+    // PAUSE
     use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
-
     let pause_idempotency = Arc::new(RealIdempotency::new(pools.core.clone()));
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
@@ -186,7 +168,10 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // Build AppState
+    use dashmap::DashMap;
+    let ws_registry = Arc::new(DashMap::new());
     let vista_service_for_outbox = vista_service.clone();
+    let tempo_service_for_noshow = tempo_service.clone();
     let state = AppState {
         cinq_service,
         dial_service,
@@ -201,22 +186,20 @@ async fn main() -> anyhow::Result<()> {
         jwt_secret,
         id_gen: id_gen.clone(),
         clock: clock.clone(),
+        ws_registry,
     };
 
-    // Create router
     let app = create_router(state)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive());
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
-
     let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
         let vista = vista_service_for_outbox.clone();
         async move {
-            // Process the event only if it's for VISTA or SPARK
             match event.schema.as_str() {
-                "vista" | "spark" | "core" => {
+                "vista" | "spark" | "core" | "collab_crm" | "collab_ops" | "vault" | "dial" | "tempo" => {
                     if let Err(e) = vista.process_event(&event).await {
                         tracing::error!(error = %e, "Failed to process outbox event");
                     }
@@ -231,6 +214,24 @@ async fn main() -> anyhow::Result<()> {
     let dispatcher = OutboxDispatcher::new(dispatcher_pool, handler);
     tokio::spawn(async move {
         dispatcher.run().await;
+    });
+
+    // Start no-show worker
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(300)).await;
+            let tenant_id = ataqu_kernel::TenantId::new(uuid::Uuid::nil()); // TODO: iterate real tenants
+            match tempo_service_for_noshow.no_show_worker(tenant_id).await {
+                Ok(updated) => {
+                    if !updated.is_empty() {
+                        tracing::info!("No-show worker marked {} bookings as no-show", updated.len());
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("No-show worker error: {}", e);
+                }
+            }
+        }
     });
 
     // Start server with graceful shutdown

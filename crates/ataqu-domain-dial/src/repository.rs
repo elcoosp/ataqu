@@ -63,12 +63,18 @@ pub trait DialRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Message>, DialError>;
+    async fn list_messages_for_thread(
+        &self,
+        tenant_id: &TenantId,
+        thread_id: &ThreadId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Message>, DialError>;
     async fn get_thread(
         &self,
         tenant_id: &TenantId,
         thread_id: &ThreadId,
     ) -> Result<Thread, DialError>;
-    // New: search messages by content
     async fn search_messages(
         &self,
         tenant_id: &TenantId,

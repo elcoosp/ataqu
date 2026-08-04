@@ -36,6 +36,7 @@ ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-vista = { path = "../ataqu-domain-vista" }
 csv = "1.3"
 rand = "0.8.5"
+dashmap = "6.0.1"
 
 [dev-dependencies]
 mockall = "0.15.0"

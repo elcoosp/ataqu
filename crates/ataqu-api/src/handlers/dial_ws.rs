@@ -6,11 +6,17 @@ use axum::{
     },
     response::Response,
 };
+use dashmap::DashMap;
+use futures::{SinkExt, StreamExt};
+use std::sync::Arc;
+use tokio::sync::mpsc;
 use tracing::info;
 
 use crate::AppState;
 use crate::error::ApiResponseError;
 use crate::middleware::AuthContext;
+
+pub type ConnectionRegistry = Arc<DashMap<(uuid::Uuid, uuid::Uuid), DashMap<uuid::Uuid, mpsc::UnboundedSender<String>>>>;
 
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
@@ -20,38 +26,131 @@ pub async fn ws_handler(
     Ok(ws.on_upgrade(move |socket| handle_websocket(socket, state, auth)))
 }
 
-async fn handle_websocket(mut socket: WebSocket, state: AppState, auth: AuthContext) {
-    info!("WebSocket connected for user {}", auth.user_id);
-    if let Err(e) = state
-        .dial_service
-        .set_online(auth.tenant_id, auth.user_id)
-        .await
-    {
+async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext) {
+    info!(user_id = %auth.user_id, "WebSocket connected");
+
+    if let Err(e) = state.dial_service.set_online(auth.tenant_id, auth.user_id).await {
         tracing::error!("Failed to set presence: {}", e);
     }
-    while let Some(Ok(msg)) = socket.recv().await {
+
+    let (mut ws_sender, mut ws_receiver) = socket.split();
+    let (tx, mut rx) = mpsc::unbounded_channel::<String>();
+
+    let send_task = tokio::spawn(async move {
+        while let Some(msg) = rx.recv().await {
+            if ws_sender.send(Message::Text(msg.into())).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    while let Some(Ok(msg)) = ws_receiver.next().await {
         match msg {
             Message::Text(text) => {
-                // Echo back
-                if let Err(e) = socket.send(Message::Text(text)).await {
-                    tracing::error!("Failed to send echo: {}", e);
-                    break;
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text) {
+                    if let Some(action) = parsed.get("action").and_then(|v| v.as_str()) {
+                        match action {
+                            "subscribe" => {
+                                if let Some(channel_id) = parsed.get("channel_id")
+                                    .and_then(|v| v.as_str())
+                                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                                {
+                                    let key = (auth.tenant_id.as_uuid(), channel_id);
+                                    let entry = state.ws_registry
+                                        .entry(key)
+                                        .or_insert_with(DashMap::new);
+                                    entry.insert(auth.user_id, tx.clone());
+
+                                    let _ = tx.send(serde_json::json!({
+                                        "type": "subscribed",
+                                        "channel_id": channel_id
+                                    }).to_string());
+                                }
+                            }
+                            "message" => {
+                                if let (Some(channel_id), Some(content)) = (
+                                    parsed.get("channel_id").and_then(|v| v.as_str()).and_then(|s| uuid::Uuid::parse_str(s).ok()),
+                                    parsed.get("content").and_then(|v| v.as_str()),
+                                ) {
+                                    let cmd = ataqu_application::dial_service::SendMessageCommand {
+                                        tenant_id: auth.tenant_id,
+                                        channel_id,
+                                        thread_id: parsed.get("thread_id")
+                                            .and_then(|v| v.as_str())
+                                            .and_then(|s| uuid::Uuid::parse_str(s).ok()),
+                                        author_id: auth.user_id,
+                                        content: content.to_string(),
+                                    };
+                                    match state.dial_service.send_message(cmd).await {
+                                        Ok(msg) => {
+                                            let key = (auth.tenant_id.as_uuid(), channel_id);
+                                            let broadcast = serde_json::json!({
+                                                "type": "message",
+                                                "id": msg.id.as_uuid(),
+                                                "channel_id": msg.channel_id.as_uuid(),
+                                                "author_id": msg.author_id.as_uuid(),
+                                                "content": msg.content,
+                                                "created_at": msg.created_at,
+                                            }).to_string();
+
+                                            if let Some(subscribers) = state.ws_registry.get(&key) {
+                                                for entry in subscribers.iter() {
+                                                    let _ = entry.value().send(broadcast.clone());
+                                                }
+                                            }
+                                        }
+                                        Err(e) => {
+                                            let _ = tx.send(serde_json::json!({
+                                                "type": "error",
+                                                "message": e.to_string()
+                                            }).to_string());
+                                        }
+                                    }
+                                }
+                            }
+                            "typing" => {
+                                if let Some(channel_id) = parsed.get("channel_id")
+                                    .and_then(|v| v.as_str())
+                                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                                {
+                                    let key = (auth.tenant_id.as_uuid(), channel_id);
+                                    let broadcast = serde_json::json!({
+                                        "type": "typing",
+                                        "channel_id": channel_id,
+                                        "user_id": auth.user_id,
+                                    }).to_string();
+                                    if let Some(subscribers) = state.ws_registry.get(&key) {
+                                        for entry in subscribers.iter() {
+                                            if entry.key() != &auth.user_id {
+                                                let _ = entry.value().send(broadcast.clone());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
                 }
             }
             Message::Close(_) => break,
             _ => {}
         }
     }
-    if let Err(e) = state
-        .dial_service
-        .set_offline(auth.tenant_id, auth.user_id)
-        .await
-    {
+
+    let user_uuid = auth.user_id;
+    for entry in state.ws_registry.iter() {
+        entry.value().remove(&user_uuid);
+    }
+
+    if let Err(e) = state.dial_service.set_offline(auth.tenant_id, auth.user_id).await {
         tracing::error!("Failed to remove presence: {}", e);
     }
+
+    send_task.abort();
+    info!(user_id = %auth.user_id, "WebSocket disconnected");
 }
 
 pub fn routes() -> Router<AppState> {
-    use axum::routing::get;
-    Router::new().route("/", get(ws_handler))
+    axum::Router::new().route("/", axum::routing::get(ws_handler))
 }

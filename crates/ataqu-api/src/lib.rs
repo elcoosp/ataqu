@@ -62,6 +62,7 @@ pub struct AppState {
     pub jwt_secret: Arc<Vec<u8>>,
     pub id_gen: Arc<dyn IdGenerator>,
     pub clock: Arc<dyn Clock>,
+    pub ws_registry: handlers::dial_ws::ConnectionRegistry,
 }
 
 async fn health_check() -> &'static str {
