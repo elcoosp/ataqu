@@ -105,6 +105,39 @@ impl DocumentRepository for PivotDocumentRepository {
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
+
+    async fn search_documents(
+        &self,
+        tenant_id: &TenantId,
+        query: &str,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError> {
+        let sql = r#"
+            SELECT * FROM collab_ops.documents
+            WHERE tenant_id = $1
+            AND search_vector @@ to_tsquery('english', $2)
+            LIMIT $3 OFFSET $4
+        "#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DatabaseBackend::Postgres,
+            sql,
+            vec![
+                tenant_id.as_uuid().into(),
+                query.into(),
+                (limit as i64).into(),
+                (offset as i64).into(),
+            ],
+        );
+
+        let models = document_entity::Entity::find()
+            .from_raw_sql(stmt)
+            .all(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+        Ok(models.into_iter().map(doc_model_to_event).collect())
+    }
 }
 
 pub struct PivotBlockRepository {

@@ -23,6 +23,13 @@ pub trait DocumentRepository: Send + Sync {
         tenant_id: &TenantId,
         doc_id: Uuid,
     ) -> Result<(), RepositoryError>;
+    async fn search_documents(
+        &self,
+        tenant_id: &TenantId,
+        query: &str,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError>;
 }
 
 #[async_trait]
