@@ -9,6 +9,8 @@ use std::time::Duration;
 use tokio::select;
 use tracing::{debug, error, info, warn};
 
+const MAX_ATTEMPTS: i32 = 5;
+
 /// Outbox dispatcher using `sqlx::PgListener` and `FOR UPDATE SKIP LOCKED`.
 pub struct OutboxDispatcher<H, F>
 where
@@ -38,12 +40,10 @@ where
         self
     }
 
-    /// Get the poll interval (for testing)
     pub fn poll_interval(&self) -> Duration {
         self.poll_interval
     }
 
-    /// Runs the dispatcher: starts listening on `outbox_event` and processes events.
     pub async fn run(&self) -> ! {
         info!("OutboxDispatcher starting");
         let mut listener = PgListener::connect_with(&self.pool)
@@ -102,6 +102,7 @@ where
                 completed_at
             FROM core.outbox
             WHERE status = 'pending'
+              AND (locked_until IS NULL OR locked_until < NOW())
             ORDER BY id
             FOR UPDATE SKIP LOCKED
             LIMIT 100
@@ -152,6 +153,10 @@ where
         debug!("Processing {} events", rows.len());
 
         for event in rows {
+            if event.attempts >= MAX_ATTEMPTS {
+                self.mark_dlq(&mut txn, &event).await?;
+                continue;
+            }
             match self.process_event(&mut txn, &event).await {
                 Ok(_) => {
                     debug!("Event {} processed successfully", event.id);
@@ -203,16 +208,19 @@ where
         event: &OutboxEvent,
     ) -> Result<()> {
         let new_attempts = event.attempts + 1;
+        let backoff_seconds = 2u64.pow(new_attempts as u32); // exponential backoff
+        let locked_until = Utc::now() + chrono::Duration::seconds(backoff_seconds as i64);
         sqlx::query(
             r#"
             UPDATE core.outbox
             SET attempts = $2,
-                locked_until = NULL
+                locked_until = $3
             WHERE id = $1
             "#,
         )
         .bind(event.id)
         .bind(new_attempts)
+        .bind(locked_until)
         .execute(&mut **txn)
         .await?;
         Ok(())

@@ -28,6 +28,8 @@ pub enum PauseServiceError {
     Idempotency(String),
     #[error("Domain error: {0}")]
     Domain(#[from] PauseDomainError),
+    #[error("Not found")]
+    NotFound,
 }
 
 pub const PAUSE_SCHEMA: &str = "collab_ops";
@@ -122,5 +124,72 @@ impl PauseService {
         self.outbox.append(PAUSE_SCHEMA, "LeaveRequestedEvent", event.leave_request_id, &payload).await?;
         self.idempotency.commit(&command_id, serde_json::to_value(&event.leave_request_id).unwrap()).await?;
         Ok(event.leave_request_id)
+    }
+
+    pub async fn list_employees(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Employee>, PauseServiceError> {
+        self.employee_repo.list(tenant_id, limit, offset).await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))
+    }
+
+    pub async fn list_leave_requests(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<LeaveRequest>, PauseServiceError> {
+        self.leave_request_repo.list(tenant_id, limit, offset).await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))
+    }
+
+    pub async fn approve_leave(
+        &self,
+        tenant_id: &TenantId,
+        leave_id: Uuid,
+        reviewer_id: Uuid,
+        clock: &dyn Clock,
+    ) -> Result<LeaveRequest, PauseServiceError> {
+        let mut request = self.leave_request_repo.find_by_id(tenant_id, leave_id).await?
+            .ok_or(PauseServiceError::NotFound)?;
+        let event = ataqu_domain_pause::leave::approve_leave(&mut request, reviewer_id, clock);
+        self.leave_request_repo.update_status(
+            tenant_id,
+            leave_id,
+            LeaveStatus::Approved,
+            reviewer_id,
+            clock.now(),
+        ).await?;
+        // Outbox event
+        let payload = serde_json::to_value(&event)
+            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        self.outbox.append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload).await?;
+        Ok(request)
+    }
+
+    pub async fn reject_leave(
+        &self,
+        tenant_id: &TenantId,
+        leave_id: Uuid,
+        reviewer_id: Uuid,
+        clock: &dyn Clock,
+    ) -> Result<LeaveRequest, PauseServiceError> {
+        let mut request = self.leave_request_repo.find_by_id(tenant_id, leave_id).await?
+            .ok_or(PauseServiceError::NotFound)?;
+        let event = ataqu_domain_pause::leave::reject_leave(&mut request, reviewer_id, clock);
+        self.leave_request_repo.update_status(
+            tenant_id,
+            leave_id,
+            LeaveStatus::Rejected,
+            reviewer_id,
+            clock.now(),
+        ).await?;
+        let payload = serde_json::to_value(&event)
+            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        self.outbox.append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload).await?;
+        Ok(request)
     }
 }
