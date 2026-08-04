@@ -11,6 +11,7 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 jsonwebtoken = "9.3.0"
 uuid = { version = "1.24.0", features = ["v4", "v5", "v7", "serde"] }
+rust_decimal = "1.32"
 anyhow = "1.0.103"
 chrono = "0.4.45"
 thiserror = "2.0.18"

@@ -2,7 +2,6 @@
 use async_trait::async_trait;
 use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use ataqu_kernel::TenantId;
 use ataqu_domain_sond::form::Form;
@@ -15,12 +14,13 @@ use crate::entities::sond::submission as submission_entity;
 
 // ---------- Helpers ----------
 fn form_model_to_domain(model: form_entity::Model) -> Form {
+    // In a real implementation, we would deserialize questions from schema_json
     Form {
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
         title: model.title,
         description: model.description,
-        questions: Vec::new(),
+        questions: Vec::new(), // TODO: deserialize from schema_json
         created_at: model.created_at,
         updated_at: model.updated_at,
     }
@@ -31,7 +31,7 @@ fn submission_model_to_domain(model: submission_entity::Model) -> Response {
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
         form_id: model.form_id,
-        answers: Vec::new(),
+        answers: Vec::new(), // TODO: deserialize from response_data
         respondent_id: model.respondent_id,
         submitted_at: model.submitted_at,
     }
@@ -59,12 +59,14 @@ impl SondRepository for SondRepositoryImpl {
     }
 
     async fn save_form(&self, form: &Form) -> Result<(), SondError> {
+        let schema_json = serde_json::to_value(&form.questions)
+            .map_err(|e| SondError::Repository(e.to_string()))?;
         let active = form_entity::ActiveModel {
             id: Set(form.id),
             tenant_id: Set(form.tenant_id.as_uuid()),
             title: Set(form.title.clone()),
             description: Set(form.description.clone()),
-            schema_json: Set(serde_json::json!({})),
+            schema_json: Set(schema_json),
             is_active: Set(true),
             created_at: Set(form.created_at),
             updated_at: Set(form.updated_at),
@@ -86,12 +88,14 @@ impl SondRepository for SondRepositoryImpl {
     }
 
     async fn save_response(&self, response: &Response) -> Result<(), SondError> {
+        let response_data = serde_json::to_value(&response.answers)
+            .map_err(|e| SondError::Repository(e.to_string()))?;
         let active = submission_entity::ActiveModel {
             id: Set(response.id),
             tenant_id: Set(response.tenant_id.as_uuid()),
             form_id: Set(response.form_id),
             respondent_id: Set(response.respondent_id),
-            response_data: Set(serde_json::json!({})),
+            response_data: Set(response_data),
             submitted_at: Set(response.submitted_at),
         };
         submission_entity::Entity::insert(active)
@@ -110,5 +114,17 @@ impl SondRepository for SondRepositoryImpl {
             .await
             .map_err(|e| SondError::Repository(e.to_string()))?;
         Ok(models.into_iter().map(form_model_to_domain).collect())
+    }
+
+    async fn list_responses(&self, tenant_id: &TenantId, form_id: Uuid, limit: u64, offset: u64) -> Result<Vec<Response>, SondError> {
+        let models = submission_entity::Entity::find()
+            .filter(submission_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(submission_entity::Column::FormId.eq(form_id))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| SondError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(submission_model_to_domain).collect())
     }
 }

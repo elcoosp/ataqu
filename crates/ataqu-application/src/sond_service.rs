@@ -11,6 +11,7 @@ use ataqu_domain_sond::errors::SondError;
 // Re-export domain types for API layer
 pub use ataqu_domain_sond::form::Form;
 pub use ataqu_domain_sond::response::Response;
+pub use ataqu_domain_sond::question::Question;
 
 // Application commands
 #[derive(Debug, Clone)]
@@ -65,16 +66,19 @@ impl SondService {
             tenant_id: cmd.tenant_id,
             title: cmd.title,
             description: cmd.description,
-            questions: cmd.questions,
+            questions: cmd.questions.clone(),
         };
-        let event = form_domain::create_form(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())
-            .map_err(SondServiceError::Domain)?;
+        let event = form_domain::create_form(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
+        // Build questions with IDs
+        let questions: Vec<ataqu_domain_sond::question::Question> = cmd.questions.into_iter()
+            .map(|qi| qi.into_question(self.id_gen.as_ref()))
+            .collect();
         let form = Form {
             id: event.id,
             tenant_id: event.tenant_id,
-            title: event.title.clone(),
-            description: event.description.clone(),
-            questions: vec![],
+            title: event.title,
+            description: event.description,
+            questions,
             created_at: event.created_at,
             updated_at: event.created_at,
         };
@@ -83,8 +87,7 @@ impl SondService {
     }
 
     pub async fn get_form(&self, form_id: Uuid) -> SondResult<Form> {
-        self.repo.get_form(form_id).await
-            .map_err(|e| SondServiceError::Repository(e.to_string()))?
+        self.repo.get_form(form_id).await?
             .ok_or(SondServiceError::FormNotFound)
     }
 
@@ -94,22 +97,22 @@ impl SondService {
     }
 
     pub async fn submit_response(&self, cmd: SubmitResponseCommand) -> SondResult<Response> {
-        let form = self.repo.get_form(cmd.form_id).await
-            .map_err(|e| SondServiceError::Repository(e.to_string()))?
+        let form = self.repo.get_form(cmd.form_id).await?
             .ok_or(SondServiceError::FormNotFound)?;
         let domain_cmd = response_domain::SubmitResponseCommand {
             tenant_id: cmd.tenant_id,
             form_id: cmd.form_id,
-            answers: cmd.answers,
+            answers: cmd.answers.clone(),
             respondent_id: cmd.respondent_id,
         };
-        let event = response_domain::submit_response(domain_cmd, &form, self.id_gen.as_ref(), self.clock.as_ref())
-            .map_err(SondServiceError::Domain)?;
+        let event = response_domain::submit_response(domain_cmd, &form, self.id_gen.as_ref(), self.clock.as_ref())?;
+        // Validate answers again to get proper structure
+        let validated = response_domain::validate_answers(&cmd.answers, &form.questions)?;
         let response = Response {
             id: event.id,
             tenant_id: event.tenant_id,
             form_id: event.form_id,
-            answers: vec![],
+            answers: validated,
             respondent_id: cmd.respondent_id,
             submitted_at: event.submitted_at,
         };
@@ -118,8 +121,12 @@ impl SondService {
     }
 
     pub async fn get_response(&self, response_id: Uuid) -> SondResult<Response> {
-        self.repo.get_response(response_id).await
-            .map_err(|e| SondServiceError::Repository(e.to_string()))?
+        self.repo.get_response(response_id).await?
             .ok_or(SondServiceError::ResponseNotFound)
+    }
+
+    pub async fn list_responses(&self, tenant_id: TenantId, form_id: Uuid, limit: u64, offset: u64) -> SondResult<Vec<Response>> {
+        self.repo.list_responses(&tenant_id, form_id, limit, offset).await
+            .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
 }

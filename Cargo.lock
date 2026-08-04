@@ -353,6 +353,7 @@ dependencies = [
  "jsonwebtoken",
  "mockall",
  "rand 0.8.7",
+ "rust_decimal",
  "sea-orm",
  "serde",
  "serde_json",

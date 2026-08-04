@@ -7,21 +7,39 @@ use chrono::{DateTime, Utc};
 
 use ataqu_kernel::TenantId;
 use ataqu_domain_dial::chat::{
-    Channel, ChannelId, Message, MessageId, Thread, ThreadId, Mention, UserId,
+    Channel, ChannelId, Message, MessageId, Thread, ThreadId, Mention, UserId, ChannelType,
 };
 use ataqu_domain_dial::repository::DialRepository;
 use ataqu_domain_dial::presence::{PresenceStore, PresenceStatus};
 use ataqu_domain_dial::error::DialError;
 
-// Import SeaORM entity modules
 use crate::entities::dial::channel as channel_entity;
 use crate::entities::dial::message as message_entity;
 use crate::entities::dial::thread as thread_entity;
 use crate::entities::dial::mention as mention_entity;
+use crate::entities::dial::channel_participant as participant_entity;
+use crate::entities::dial::presence as presence_entity;
 
 // ---------- Conversion helpers ----------
 fn system_time_to_utc(st: SystemTime) -> DateTime<Utc> {
     st.into()
+}
+
+fn channel_type_to_str(ct: ChannelType) -> &'static str {
+    match ct {
+        ChannelType::Public => "public",
+        ChannelType::Private => "private",
+        ChannelType::DirectMessage => "direct_message",
+    }
+}
+
+fn str_to_channel_type(s: &str) -> ChannelType {
+    match s {
+        "public" => ChannelType::Public,
+        "private" => ChannelType::Private,
+        "direct_message" => ChannelType::DirectMessage,
+        _ => ChannelType::Public,
+    }
 }
 
 fn channel_domain_to_active(channel: &Channel) -> channel_entity::ActiveModel {
@@ -29,6 +47,7 @@ fn channel_domain_to_active(channel: &Channel) -> channel_entity::ActiveModel {
         id: Set(channel.id.as_uuid()),
         tenant_id: Set(channel.tenant_id.as_uuid()),
         name: Set(channel.name.clone()),
+        channel_type: Set(channel_type_to_str(channel.channel_type).to_string()),
         created_by: Set(channel.created_by.as_uuid()),
         created_at: Set(system_time_to_utc(channel.created_at)),
         updated_at: Set(system_time_to_utc(channel.created_at)),
@@ -41,9 +60,9 @@ fn channel_model_to_domain(model: channel_entity::Model) -> Channel {
         id: ChannelId::new(model.id),
         tenant_id: TenantId::new(model.tenant_id),
         name: model.name,
-        channel_type: ataqu_domain_dial::chat::ChannelType::Public,
+        channel_type: str_to_channel_type(&model.channel_type),
         created_by: UserId::new(model.created_by),
-        participants: Vec::new(),
+        participants: Vec::new(), // loaded separately
         created_at: model.created_at.into(),
         archived_at: model.archived_at.map(|dt| dt.into()),
     }
@@ -137,6 +156,18 @@ impl DialRepository for DialRepositoryImpl {
             .exec(&self.db)
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
+        // Insert participants
+        for user_id in &channel.participants {
+            let participant_active = participant_entity::ActiveModel {
+                channel_id: Set(channel.id.as_uuid()),
+                user_id: Set(user_id.as_uuid()),
+                joined_at: Set(system_time_to_utc(channel.created_at)),
+            };
+            participant_entity::Entity::insert(participant_active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| DialError::Repository(e.to_string()))?;
+        }
         Ok(())
     }
 
@@ -163,7 +194,18 @@ impl DialRepository for DialRepositoryImpl {
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?
             .ok_or_else(|| DialError::Repository("Channel not found".to_string()))?;
-        Ok(channel_model_to_domain(model))
+        // Load participants
+        let participants: Vec<UserId> = participant_entity::Entity::find()
+            .filter(participant_entity::Column::ChannelId.eq(channel_id.as_uuid()))
+            .all(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?
+            .into_iter()
+            .map(|p| UserId::new(p.user_id))
+            .collect();
+        let mut channel = channel_model_to_domain(model);
+        channel.participants = participants;
+        Ok(channel)
     }
 
     async fn insert_message(&self, message: &Message) -> Result<(), DialError> {
@@ -260,7 +302,6 @@ impl DialRepository for DialRepositoryImpl {
         Ok(())
     }
 
-    // ---------- New methods ----------
     async fn list_channels(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Channel>, DialError> {
         let models = channel_entity::Entity::find()
             .filter(channel_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -269,7 +310,22 @@ impl DialRepository for DialRepositoryImpl {
             .all(&self.db)
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
-        Ok(models.into_iter().map(channel_model_to_domain).collect())
+        let mut channels = Vec::new();
+        for model in models {
+            let mut channel = channel_model_to_domain(model);
+            // Load participants
+            let participants = participant_entity::Entity::find()
+                .filter(participant_entity::Column::ChannelId.eq(channel.id.as_uuid()))
+                .all(&self.db)
+                .await
+                .map_err(|e| DialError::Repository(e.to_string()))?
+                .into_iter()
+                .map(|p| UserId::new(p.user_id))
+                .collect();
+            channel.participants = participants;
+            channels.push(channel);
+        }
+        Ok(channels)
     }
 
     async fn list_messages(&self, tenant_id: &TenantId, channel_id: &ChannelId, limit: u64, offset: u64) -> Result<Vec<Message>, DialError> {
@@ -296,7 +352,7 @@ impl DialRepository for DialRepositoryImpl {
     }
 }
 
-// ---------- DB-backed Presence Store ----------
+// Presence store (unchanged)
 pub struct DbPresenceStore {
     db: DatabaseConnection,
 }
@@ -310,7 +366,6 @@ impl DbPresenceStore {
 #[async_trait]
 impl PresenceStore for DbPresenceStore {
     async fn set_presence(&self, tenant_id: &TenantId, user_id: &UserId, status: PresenceStatus) -> Result<(), DialError> {
-        use crate::entities::dial::presence as presence_entity;
         let status_str = match status {
             PresenceStatus::Online => "online",
             PresenceStatus::Away => "away",
@@ -322,7 +377,6 @@ impl PresenceStore for DbPresenceStore {
             status: Set(status_str.to_string()),
             last_seen: Set(Utc::now()),
         };
-        // Upsert
         let existing = presence_entity::Entity::find()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
@@ -344,7 +398,6 @@ impl PresenceStore for DbPresenceStore {
     }
 
     async fn get_presence(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<Option<PresenceStatus>, DialError> {
-        use crate::entities::dial::presence as presence_entity;
         let model = presence_entity::Entity::find()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
@@ -359,7 +412,6 @@ impl PresenceStore for DbPresenceStore {
     }
 
     async fn remove_presence(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<(), DialError> {
-        use crate::entities::dial::presence as presence_entity;
         presence_entity::Entity::delete_many()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
@@ -370,7 +422,6 @@ impl PresenceStore for DbPresenceStore {
     }
 
     async fn get_online_users(&self, tenant_id: &TenantId) -> Result<Vec<UserId>, DialError> {
-        use crate::entities::dial::presence as presence_entity;
         let models = presence_entity::Entity::find()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::Status.eq("online"))

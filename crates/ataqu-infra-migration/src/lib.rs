@@ -10,6 +10,14 @@ pub mod m_sond;
 pub mod m_spark;
 pub mod m_tempo;
 pub mod m_vault;
+pub mod m_cinq_add_activity_stage;
+pub mod m_dial_add_threads_mentions;
+pub mod m_pivot_add_blocks_relations;
+pub mod m_dial_add_presence;
+pub mod m_vault_add_products_variants;
+pub mod m_vault_add_price_column;
+pub mod m_vista_tables;
+pub mod m_dial_add_participants;
 
 pub struct Migrator;
 
@@ -20,19 +28,21 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000001_core::Migration), // MUST be first!
             Box::new(m_aegis::Migration),
             Box::new(m_cinq::Migration),
+            Box::new(m_cinq_add_activity_stage::Migration),
             Box::new(m_dial::Migration),
+            Box::new(m_dial_add_threads_mentions::Migration),
+            Box::new(m_dial_add_presence::Migration),
+            Box::new(m_dial_add_participants::Migration), // ADDED
             Box::new(m_pause::Migration),
             Box::new(m_pivot::Migration),
+            Box::new(m_pivot_add_blocks_relations::Migration),
             Box::new(m_sond::Migration),
             Box::new(m_spark::Migration),
             Box::new(m_tempo::Migration),
             Box::new(m_vault::Migration),
+            Box::new(m_vault_add_products_variants::Migration),
+            Box::new(m_vault_add_price_column::Migration),
+            Box::new(m_vista_tables::Migration),
         ]
     }
 }
-pub mod m_dial_add_threads_mentions;
-pub mod m_pivot_add_blocks_relations;
-pub mod m_dial_add_presence;
-pub mod m_vault_add_products_variants;
-pub mod m_vault_add_price_column;
-pub mod m_vista_tables;
