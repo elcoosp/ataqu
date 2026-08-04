@@ -13,6 +13,7 @@ use ataqu_security::Email;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateUserRequest {
+    pub tenant_id: uuid::Uuid,
     pub email: String,
     pub password: String,
     pub name: Option<String>,
@@ -24,7 +25,7 @@ pub async fn create_user(
 ) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
     info!("Create user request");
     let cmd = CreateUserCommand {
-        tenant_id: ataqu_kernel::TenantId::new(Uuid::nil()),
+        tenant_id: ataqu_kernel::TenantId::new(req.tenant_id),
         email: Email::new(req.email),
         password_hash: req.password,
         name: req.name,

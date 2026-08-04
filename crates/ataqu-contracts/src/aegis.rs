@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 /// Command to create a new user.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateUser {
+    pub tenant_id: uuid::Uuid,
     pub email: String,
     pub password: String,
     pub name: Option<String>,
