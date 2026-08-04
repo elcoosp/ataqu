@@ -2,7 +2,6 @@
 use async_trait::async_trait;
 use sea_orm::{ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, ActiveModelTrait};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 use ataqu_kernel::TenantId;
 use ataqu_security::Email;
 use ataqu_domain_aegis::{User as DomainUser, AuthRepository, AuthError};

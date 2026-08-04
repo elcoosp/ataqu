@@ -14,6 +14,7 @@ pub struct CreateProductCommand {
     pub tenant_id: TenantId,
     pub name: String,
     pub description: String,
+    pub sku: String,
 }
 
 #[derive(Debug, Clone)]
@@ -41,7 +42,7 @@ pub enum VaultServiceError {
     #[error("Repository error: {0}")]
     Repository(String),
     #[error("Stock error: {0}")]
-    Stock(String),
+    Stock(#[from] ataqu_domain_vault::inventory::StockError),
     #[error("Validation error: {0}")]
     Validation(String),
 }
@@ -67,8 +68,8 @@ impl VaultService {
         if cmd.name.trim().is_empty() {
             return Err(VaultServiceError::Validation("Name cannot be empty".to_string()));
         }
-        let id = self.id_gen.new_uuid_v7().to_string();
-        let product = Product::new(id, cmd.tenant_id, cmd.name, cmd.description, self.clock.as_ref());
+        let id = self.id_gen.new_uuid_v7();
+        let product = Product::new(id, cmd.tenant_id, cmd.name, cmd.description, cmd.sku, self.clock.as_ref());
         self.repo.save_product(&product).await.map_err(|e| VaultServiceError::Repository(e))?;
         Ok(product)
     }
@@ -94,11 +95,13 @@ impl VaultService {
         if cmd.price < 0 {
             return Err(VaultServiceError::Validation("Price cannot be negative".to_string()));
         }
-        let id = self.id_gen.new_uuid_v7().to_string();
+        // Validate product exists
+        let _ = self.get_product(cmd.tenant_id, cmd.product_id).await?;
+        let id = self.id_gen.new_uuid_v7();
         let mut variant = Variant::new(
             id,
             cmd.tenant_id,
-            cmd.product_id.to_string(),
+            cmd.product_id,
             cmd.sku,
             cmd.price,
             self.clock.as_ref(),
@@ -120,7 +123,9 @@ impl VaultService {
     }
 
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
-        self.repo.update_variant_stock(&cmd.tenant_id, &cmd.variant_id, cmd.delta).await
-            .map_err(|e| VaultServiceError::Stock(e))
+        let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
+        let new_variant = variant.adjust_stock(cmd.delta, self.clock.as_ref())?;
+        self.repo.save_variant(&new_variant).await.map_err(|e| VaultServiceError::Repository(e))?;
+        Ok(new_variant)
     }
 }

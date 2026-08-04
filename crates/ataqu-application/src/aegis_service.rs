@@ -17,14 +17,12 @@ use rand::thread_rng;
 use rand::Rng;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use ataqu_security::Email;
 use ataqu_domain_aegis::{
     User, UserCreated, AuthRepository, AuthError,
     CreateUserCommand as DomainCreateUserCommand,
     AuthenticateCommand as DomainAuthenticateCommand,
-    SetupMfaCommand as DomainSetupMfaCommand,
 };
-use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_kernel::{Clock, IdGenerator};
 
 pub use ataqu_domain_aegis::CreateUserCommand as CreateUserCommand;
 pub use ataqu_domain_aegis::AuthenticateCommand as AuthenticateCommand;

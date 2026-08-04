@@ -1,6 +1,6 @@
 //! SeaORM implementations for SOND domain repository.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect};
+use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QuerySelect};
 use uuid::Uuid;
 
 use ataqu_kernel::TenantId;

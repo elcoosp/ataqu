@@ -14,10 +14,11 @@ impl MigrationTrait for Migration {
                 tenant_id UUID NOT NULL,
                 name TEXT NOT NULL,
                 description TEXT NOT NULL,
+                sku TEXT NOT NULL UNIQUE,
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL
             );
-            "#,
+            "#
         ).await?;
         conn.execute_unprepared(
             r#"
@@ -25,19 +26,20 @@ impl MigrationTrait for Migration {
                 id UUID PRIMARY KEY,
                 product_id UUID NOT NULL,
                 tenant_id UUID NOT NULL,
-                sku TEXT NOT NULL,
+                sku TEXT NOT NULL UNIQUE,
+                price BIGINT NOT NULL DEFAULT 0,
                 stock_quantity BIGINT NOT NULL,
                 reserved_quantity BIGINT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL
             );
-            "#,
+            "#
         ).await?;
         conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_variants_product ON vault.variants (product_id);",
+            "CREATE INDEX IF NOT EXISTS idx_variants_product ON vault.variants (product_id);"
         ).await?;
         conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_variants_tenant ON vault.variants (tenant_id);",
+            "CREATE INDEX IF NOT EXISTS idx_variants_tenant ON vault.variants (tenant_id);"
         ).await?;
         Ok(())
     }

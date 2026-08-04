@@ -1,7 +1,6 @@
 //! SeaORM implementations for TEMPO domain repository.
 use async_trait::async_trait;
 use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect, ActiveModelTrait};
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use std::time::SystemTime;
 

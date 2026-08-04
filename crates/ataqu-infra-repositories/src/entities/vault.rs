@@ -12,6 +12,7 @@ pub mod product {
         pub tenant_id: Uuid,
         pub name: String,
         pub description: String,
+        pub sku: String,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
     }

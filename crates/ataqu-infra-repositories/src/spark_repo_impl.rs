@@ -106,7 +106,7 @@ impl SparkRepository for SparkRepositoryImpl {
         let now = Utc::now();
         let expires_at = now + chrono::Duration::hours(1);
 
-        if let Some(lease) = existing {
+        if let Some(_lease) = existing {
             // Update lease atomically
             // We'll use raw SQL to avoid complex SeaORM expressions
             let sql = r#"

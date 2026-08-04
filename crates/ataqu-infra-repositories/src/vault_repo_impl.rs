@@ -2,7 +2,6 @@
 use async_trait::async_trait;
 use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect, ActiveModelTrait};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use ataqu_kernel::TenantId;
 use ataqu_domain_vault::inventory::{Product, Variant};
@@ -14,10 +13,11 @@ use crate::entities::vault::variant as variant_entity;
 // Helpers
 fn product_to_model(product: &Product) -> product_entity::ActiveModel {
     product_entity::ActiveModel {
-        id: Set(Uuid::parse_str(&product.id).unwrap_or(Uuid::new_v4())),
+        id: Set(product.id),
         tenant_id: Set(product.tenant_id.as_uuid()),
         name: Set(product.name.clone()),
         description: Set(product.description.clone()),
+        sku: Set(product.sku.clone()),
         created_at: Set(product.created_at.into()),
         updated_at: Set(product.updated_at.into()),
     }
@@ -25,10 +25,11 @@ fn product_to_model(product: &Product) -> product_entity::ActiveModel {
 
 fn model_to_product(model: product_entity::Model) -> Product {
     Product {
-        id: model.id.to_string(),
+        id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
         name: model.name,
         description: model.description,
+        sku: model.sku,
         created_at: model.created_at.into(),
         updated_at: model.updated_at.into(),
     }
@@ -36,8 +37,8 @@ fn model_to_product(model: product_entity::Model) -> Product {
 
 fn variant_to_model(variant: &Variant) -> variant_entity::ActiveModel {
     variant_entity::ActiveModel {
-        id: Set(Uuid::parse_str(&variant.id).unwrap_or(Uuid::new_v4())),
-        product_id: Set(Uuid::parse_str(&variant.product_id).unwrap_or(Uuid::new_v4())),
+        id: Set(variant.id),
+        product_id: Set(variant.product_id),
         tenant_id: Set(variant.tenant_id.as_uuid()),
         sku: Set(variant.sku.clone()),
         price: Set(variant.price),
@@ -50,8 +51,8 @@ fn variant_to_model(variant: &Variant) -> variant_entity::ActiveModel {
 
 fn model_to_variant(model: variant_entity::Model) -> Variant {
     Variant {
-        id: model.id.to_string(),
-        product_id: model.product_id.to_string(),
+        id: model.id,
+        product_id: model.product_id,
         tenant_id: TenantId::new(model.tenant_id),
         sku: model.sku,
         price: model.price,

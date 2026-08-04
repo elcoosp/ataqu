@@ -561,7 +561,9 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "ataqu-kernel",
+ "rust_decimal",
  "serde",
+ "serde_json",
  "thiserror",
  "uuid",
 ]

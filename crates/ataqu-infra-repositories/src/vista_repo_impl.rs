@@ -15,6 +15,15 @@ fn view_to_model(view: &AggregatedView) -> view_entity::ActiveModel {
     view_entity::ActiveModel {
         tenant_id: Set(view.tenant_id.as_uuid()),
         total_events: Set(view.total_events as i64),
+        total_contacts: Set(view.total_contacts as i64),
+        total_deals: Set(view.total_deals as i64),
+        total_deals_won: Set(view.total_deals_won as i64),
+        total_pipeline_value: Set(view.total_pipeline_value),
+        total_revenue: Set(view.total_revenue),
+        total_products: Set(view.total_products as i64),
+        low_stock_variants: Set(view.low_stock_variants as i64),
+        total_bookings: Set(view.total_bookings as i64),
+        pending_leave_requests: Set(view.pending_leave_requests as i64),
         last_updated_at: Set(view.last_updated_at.into()),
     }
 }
@@ -23,6 +32,15 @@ fn model_to_view(model: view_entity::Model) -> AggregatedView {
     AggregatedView {
         tenant_id: TenantId::new(model.tenant_id),
         total_events: model.total_events as u64,
+        total_contacts: model.total_contacts as u64,
+        total_deals: model.total_deals as u64,
+        total_deals_won: model.total_deals_won as u64,
+        total_pipeline_value: model.total_pipeline_value,
+        total_revenue: model.total_revenue,
+        total_products: model.total_products as u64,
+        low_stock_variants: model.low_stock_variants as u64,
+        total_bookings: model.total_bookings as u64,
+        pending_leave_requests: model.pending_leave_requests as u64,
         last_updated_at: model.last_updated_at.into(),
     }
 }
@@ -70,7 +88,6 @@ impl VistaRepository for VistaRepositoryImpl {
 
     async fn save_aggregated_view(&self, view: &AggregatedView) -> Result<(), String> {
         let active = view_to_model(view);
-        // Upsert
         let existing = view_entity::Entity::find()
             .filter(view_entity::Column::TenantId.eq(view.tenant_id.as_uuid()))
             .one(&self.db)
@@ -79,6 +96,15 @@ impl VistaRepository for VistaRepositoryImpl {
         if let Some(model) = existing {
             let mut active_model = model.into_active_model();
             active_model.total_events = active.total_events;
+            active_model.total_contacts = active.total_contacts;
+            active_model.total_deals = active.total_deals;
+            active_model.total_deals_won = active.total_deals_won;
+            active_model.total_pipeline_value = active.total_pipeline_value;
+            active_model.total_revenue = active.total_revenue;
+            active_model.total_products = active.total_products;
+            active_model.low_stock_variants = active.low_stock_variants;
+            active_model.total_bookings = active.total_bookings;
+            active_model.pending_leave_requests = active.pending_leave_requests;
             active_model.last_updated_at = active.last_updated_at;
             active_model.update(&self.db).await.map_err(|e| e.to_string())?;
         } else {

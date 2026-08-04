@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use sea_orm::{DatabaseConnection, EntityTrait, Set, QueryFilter, ColumnTrait, QuerySelect, ActiveModelTrait, IntoActiveModel, QueryOrder, Condition};
 use sea_orm::PaginatorTrait;
 use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDate};
+use chrono::Utc;
 use std::time::SystemTime;
 
 use ataqu_kernel::TenantId;
