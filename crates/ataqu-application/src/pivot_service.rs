@@ -143,4 +143,17 @@ impl PivotService {
             .collect();
         Ok(relations)
     }
+
+    pub async fn search_documents(&self, tenant_id: TenantId, query: String, limit: u64, offset: u64) -> PivotResult<Vec<Document>> {
+        // Since we don't have a search method in the repository trait yet, we'll implement a simple in-memory search using the existing list.
+        let all_docs = self.doc_repo.list_documents(&tenant_id, limit + offset, 0).await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        // Filter by title/content (simple contains)
+        let query_lower = query.to_lowercase();
+        let results = all_docs.into_iter()
+            .filter(|d| d.title.to_lowercase().contains(&query_lower) || d.content.to_lowercase().contains(&query_lower))
+            .collect();
+        Ok(results)
+    }
+
 }

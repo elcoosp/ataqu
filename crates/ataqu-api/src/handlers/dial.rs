@@ -83,7 +83,7 @@ pub async fn list_channels(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<ChannelResponse>>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let channels = state.dial_service.list_channels(tenant_id).await
+    let channels = state.dial_service.list_channels(tenant_id, 100, 0).await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(channels.into_iter().map(|c| c.into()).collect()))
 }
@@ -127,7 +127,7 @@ pub async fn list_messages(
     Path(channel_id): Path<Uuid>,
 ) -> Result<Json<Vec<MessageResponse>>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let msgs = state.dial_service.list_messages(tenant_id, channel_id).await
+    let msgs = state.dial_service.list_messages(tenant_id, channel_id, 100, 0).await
         .map_err(|_| StatusCode::NOT_FOUND)?;
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
 }

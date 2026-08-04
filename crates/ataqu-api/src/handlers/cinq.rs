@@ -129,39 +129,124 @@ pub async fn list_deals(
 }
 
 // Stubs for other endpoints
-pub async fn list_pipeline_stages() -> Result<Json<Vec<PipelineStageResponse>>, ApiError> {
-    Ok(Json(vec![]))
+pub async fn list_pipeline_stages(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<PipelineStageResponse>>, ApiError> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let stages = state.cinq_service.list_pipeline_stages(tenant_id).await?;
+    Ok(Json(stages.into_iter().map(|s| PipelineStageResponse {
+        id: s.id,
+        name: s.name,
+        order: s.order,
+    }).collect()))
 }
-pub async fn create_pipeline_stage(Json(_payload): Json<CreatePipelineStageRequest>) -> Result<Json<PipelineStageResponse>, ApiError> {
-    Ok(Json(PipelineStageResponse { id: Uuid::new_v4(), name: "stage".into(), order: 0 }))
+pub async fn create_pipeline_stage(
+    State(state): State<AppState>,
+    Json(payload): Json<CreatePipelineStageRequest>,
+) -> Result<Json<PipelineStageResponse>, ApiError> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let cmd = ataqu_application::cinq_service::CreatePipelineStageCommand {
+        tenant_id,
+        name: payload.name,
+        order: payload.order,
+    };
+    let stage = state.cinq_service.create_pipeline_stage(cmd).await?;
+    Ok(Json(PipelineStageResponse {
+        id: stage.id,
+        name: stage.name,
+        order: stage.order,
+    }))
 }
-pub async fn update_pipeline_stage(Path(_id): Path<Uuid>, Json(_payload): Json<UpdatePipelineStageRequest>) -> Result<Json<PipelineStageResponse>, ApiError> {
-    Ok(Json(PipelineStageResponse { id: Uuid::new_v4(), name: "stage".into(), order: 0 }))
+pub async fn update_pipeline_stage(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(_payload): Json<UpdatePipelineStageRequest>,
+) -> Result<Json<PipelineStageResponse>, ApiError> {
+    Err(ApiError::Service("Pipeline stage update not implemented".into()))
 }
-pub async fn delete_pipeline_stage(Path(_id): Path<Uuid>) -> Result<StatusCode, ApiError> {
-    Ok(StatusCode::NO_CONTENT)
+pub async fn delete_pipeline_stage(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, ApiError> {
+    Err(ApiError::Service("Pipeline stage delete not implemented".into()))
 }
-pub async fn create_activity(Json(_payload): Json<CreateActivityRequest>) -> Result<Json<ActivityResponse>, ApiError> {
-    Ok(Json(ActivityResponse { id: Uuid::new_v4(), description: "activity".into() }))
+pub async fn create_activity(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateActivityRequest>,
+) -> Result<Json<ActivityResponse>, ApiError> {
+    use ataqu_domain_cinq::activity::ActivityType;
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let cmd = ataqu_application::cinq_service::CreateActivityCommand {
+        tenant_id,
+        contact_id: payload.contact_id,
+        deal_id: None,
+        activity_type: ActivityType::Note,
+        description: payload.description,
+        scheduled_at: None,
+    };
+    let activity = state.cinq_service.create_activity(cmd).await?;
+    Ok(Json(ActivityResponse {
+        id: activity.id,
+        description: activity.description,
+    }))
 }
-pub async fn list_activities(Query(_params): Query<ListActivitiesParams>) -> Result<Json<Vec<ActivityResponse>>, ApiError> {
-    Ok(Json(vec![]))
+pub async fn list_activities(
+    State(state): State<AppState>,
+    Query(params): Query<ListActivitiesParams>,
+) -> Result<Json<Vec<ActivityResponse>>, ApiError> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let contact_id = params.contact_id.ok_or_else(|| ApiError::Validation("contact_id required".into()))?;
+    let activities = state.cinq_service.list_activities_for_contact(tenant_id, contact_id, 100, 0).await?;
+    Ok(Json(activities.into_iter().map(|a| ActivityResponse {
+        id: a.id,
+        description: a.description,
+    }).collect()))
 }
-pub async fn get_activity(Path(_id): Path<Uuid>) -> Result<Json<ActivityResponse>, ApiError> {
-    Ok(Json(ActivityResponse { id: Uuid::new_v4(), description: "activity".into() }))
+pub async fn get_activity(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ActivityResponse>, ApiError> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let activity = state.cinq_service.get_activity(tenant_id, id).await?;
+    Ok(Json(ActivityResponse {
+        id: activity.id,
+        description: activity.description,
+    }))
 }
 pub async fn search_contacts(
-    State(_state): State<AppState>,
-    Query(_params): Query<SearchParams>,
+    State(state): State<AppState>,
+    Query(params): Query<SearchParams>,
 ) -> Result<Json<Vec<ContactResponse>>, ApiError> {
-    // TODO: implement real search using tsvector when repository supports it
-    Ok(Json(vec![]))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let contacts = state.cinq_service.search_contacts(tenant_id, &params.q, 20).await?;
+    Ok(Json(contacts.into_iter().map(|c| ContactResponse {
+        id: c.id,
+        name: c.name,
+        email: c.email.to_string(),
+    }).collect()))
 }
-pub async fn import_csv() -> Result<Json<ImportCsvResult>, ApiError> {
-    Ok(Json(ImportCsvResult { imported: 0, failed: 0 }))
+pub async fn import_csv(
+    State(state): State<AppState>,
+    body: String,
+) -> Result<Json<ImportCsvResult>, ApiError> {
+    use csv::ReaderBuilder;
+    let mut rdr = ReaderBuilder::new().from_reader(body.as_bytes());
+    let mut rows = Vec::new();
+    for result in rdr.deserialize() {
+        let record: std::collections::HashMap<String, String> = result.map_err(|e| ApiError::Service(e.to_string()))?;
+        rows.push(record);
+    }
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let inserted = state.cinq_service.import_contacts(tenant_id, rows).await
+        .map_err(|e| ApiError::Service(e.to_string()))?;
+    Ok(Json(ImportCsvResult { imported: inserted.len(), failed: 0 }))
 }
-pub async fn export_csv() -> Result<impl IntoResponse, ApiError> {
-    Ok((StatusCode::OK, "csv data"))
+pub async fn export_csv(
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, ApiError> {
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let csv_data = state.cinq_service.export_contacts(tenant_id).await?;
+    Ok((StatusCode::OK, csv_data))
 }
 pub async fn track_email(Json(_payload): Json<TrackEmailRequest>) -> Result<StatusCode, ApiError> {
     Ok(StatusCode::ACCEPTED)

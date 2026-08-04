@@ -64,10 +64,12 @@ pub async fn create_form(
 }
 
 pub async fn list_forms(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<FormResponse>>, StatusCode> {
-    // TODO: implement list_forms in service
-    Ok(Json(vec![]))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    let forms = state.sond_service.list_forms(tenant_id, 100, 0).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(forms.into_iter().map(|f| f.into()).collect()))
 }
 
 pub async fn get_form(

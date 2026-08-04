@@ -1,6 +1,6 @@
 //! SeaORM-based repository implementation for DIAL domain.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, ActiveModelTrait, IntoActiveModel};
+use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, ActiveModelTrait, IntoActiveModel, QuerySelect, QueryOrder};
 use uuid::Uuid;
 use std::time::SystemTime;
 use chrono::{DateTime, Utc};
@@ -18,10 +18,8 @@ use crate::entities::dial::channel as channel_entity;
 use crate::entities::dial::message as message_entity;
 use crate::entities::dial::thread as thread_entity;
 use crate::entities::dial::mention as mention_entity;
-use crate::entities::dial::presence as presence_entity;
 
 // ---------- Conversion helpers ----------
-
 fn system_time_to_utc(st: SystemTime) -> DateTime<Utc> {
     st.into()
 }
@@ -121,7 +119,6 @@ fn mention_model_to_domain(model: mention_entity::Model) -> Mention {
     }
 }
 
-// ---------- Repository Implementation ----------
 pub struct DialRepositoryImpl {
     db: DatabaseConnection,
 }
@@ -262,6 +259,41 @@ impl DialRepository for DialRepositoryImpl {
         active.update(&self.db).await.map_err(|e| DialError::Repository(e.to_string()))?;
         Ok(())
     }
+
+    // ---------- New methods ----------
+    async fn list_channels(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Channel>, DialError> {
+        let models = channel_entity::Entity::find()
+            .filter(channel_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(channel_model_to_domain).collect())
+    }
+
+    async fn list_messages(&self, tenant_id: &TenantId, channel_id: &ChannelId, limit: u64, offset: u64) -> Result<Vec<Message>, DialError> {
+        let models = message_entity::Entity::find()
+            .filter(message_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(message_entity::Column::ChannelId.eq(channel_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(message_model_to_domain).collect())
+    }
+
+    async fn get_thread(&self, tenant_id: &TenantId, thread_id: &ThreadId) -> Result<Thread, DialError> {
+        let model = thread_entity::Entity::find()
+            .filter(thread_entity::Column::Id.eq(thread_id.as_uuid()))
+            .filter(thread_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?
+            .ok_or_else(|| DialError::Repository("Thread not found".to_string()))?;
+        Ok(thread_model_to_domain(model))
+    }
 }
 
 // ---------- DB-backed Presence Store ----------
@@ -278,6 +310,7 @@ impl DbPresenceStore {
 #[async_trait]
 impl PresenceStore for DbPresenceStore {
     async fn set_presence(&self, tenant_id: &TenantId, user_id: &UserId, status: PresenceStatus) -> Result<(), DialError> {
+        use crate::entities::dial::presence as presence_entity;
         let status_str = match status {
             PresenceStatus::Online => "online",
             PresenceStatus::Away => "away",
@@ -289,7 +322,7 @@ impl PresenceStore for DbPresenceStore {
             status: Set(status_str.to_string()),
             last_seen: Set(Utc::now()),
         };
-        // Upsert: insert or update on conflict
+        // Upsert
         let existing = presence_entity::Entity::find()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
@@ -311,6 +344,7 @@ impl PresenceStore for DbPresenceStore {
     }
 
     async fn get_presence(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<Option<PresenceStatus>, DialError> {
+        use crate::entities::dial::presence as presence_entity;
         let model = presence_entity::Entity::find()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
@@ -325,6 +359,7 @@ impl PresenceStore for DbPresenceStore {
     }
 
     async fn remove_presence(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<(), DialError> {
+        use crate::entities::dial::presence as presence_entity;
         presence_entity::Entity::delete_many()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
@@ -335,6 +370,7 @@ impl PresenceStore for DbPresenceStore {
     }
 
     async fn get_online_users(&self, tenant_id: &TenantId) -> Result<Vec<UserId>, DialError> {
+        use crate::entities::dial::presence as presence_entity;
         let models = presence_entity::Entity::find()
             .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(presence_entity::Column::Status.eq("online"))

@@ -88,9 +88,9 @@ impl SondService {
             .ok_or(SondServiceError::FormNotFound)
     }
 
-    pub async fn list_forms(&self, _tenant_id: TenantId) -> SondResult<Vec<Form>> {
-        // TODO: implement list_forms in repository
-        Ok(Vec::new())
+    pub async fn list_forms(&self, tenant_id: TenantId, limit: u64, offset: u64) -> SondResult<Vec<Form>> {
+        self.repo.list_forms(&tenant_id, limit, offset).await
+            .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
 
     pub async fn submit_response(&self, cmd: SubmitResponseCommand) -> SondResult<Response> {

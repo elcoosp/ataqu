@@ -150,6 +150,24 @@ impl DomainContactRepo for CinqContactRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_contact).collect())
     }
+
+
+    async fn search_contacts(&self, tenant_id: &TenantId, query: &str, limit: u64) -> Result<Vec<Contact>, CinqDomainError> {
+        use sea_orm::Condition;
+        let cond = Condition::any()
+            .add(contact_entity::Column::Name.ilike(format!("%{}%", query)))
+            .add(contact_entity::Column::Email.ilike(format!("%{}%", query)));
+        let models = contact_entity::Entity::find()
+            .filter(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(cond)
+            .limit(limit)
+            .all(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(models.into_iter().map(model_to_contact).collect())
+    }
+
+
 }
 
 // ---------- Deal Repository ----------

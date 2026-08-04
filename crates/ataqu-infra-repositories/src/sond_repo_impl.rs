@@ -1,6 +1,6 @@
-//! SeaORM implementations for SOND domain repositories.
+//! SeaORM implementations for SOND domain repository.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set};
+use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
@@ -99,5 +99,16 @@ impl SondRepository for SondRepositoryImpl {
             .await
             .map_err(|e| SondError::Repository(e.to_string()))?;
         Ok(())
+    }
+
+    async fn list_forms(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Form>, SondError> {
+        let models = form_entity::Entity::find()
+            .filter(form_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| SondError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(form_model_to_domain).collect())
     }
 }

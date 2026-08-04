@@ -32,3 +32,4 @@ ataqu-domain-vault = { version = "0.1.0", path = "../ataqu-domain-vault" }
 ataqu-domain-vista = { version = "0.1.0", path = "../ataqu-domain-vista" }
 ataqu-domain-gdpr = { version = "0.1.0", path = "../ataqu-domain-gdpr" }
 ataqu-infra-outbox = { path = "../ataqu-infra-outbox" }
+csv = "1.3"

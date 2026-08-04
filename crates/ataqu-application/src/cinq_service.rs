@@ -1,6 +1,7 @@
 //! CINQ CRM orchestration service – uses domain repositories and outbox.
 use std::sync::Arc;
 use uuid::Uuid;
+use std::collections::HashMap;
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::{Email, PhoneNumber};
@@ -126,6 +127,60 @@ impl CinqService {
     pub async fn list_contacts(&self, tenant_id: TenantId, limit: u64, offset: u64) -> CinqResult<Vec<Contact>> {
         self.contact_repo.list_contacts(&tenant_id, limit, offset).await
             .map_err(|e| CinqServiceError::Repository(e.to_string()))
+    }
+
+    pub async fn search_contacts(&self, tenant_id: TenantId, query: &str, limit: u64) -> CinqResult<Vec<Contact>> {
+        self.contact_repo.search_contacts(&tenant_id, query, limit).await
+            .map_err(|e| CinqServiceError::Repository(e.to_string()))
+    }
+
+    pub async fn import_contacts(&self, _tenant_id: TenantId, rows: Vec<HashMap<String, String>>) -> CinqResult<Vec<Uuid>> {
+        use ataqu_domain_cinq::csv_validation::validate_contact_row;
+        let mut inserted = Vec::new();
+        for row in rows {
+            let values: Vec<String> = row.values().cloned().collect();
+            let cmd = validate_contact_row(&values)?;
+            let domain_cmd = DomainCreateContact {
+                tenant_id: cmd.tenant_id,
+                name: cmd.name,
+                email: cmd.email,
+                phone: cmd.phone,
+            };
+            let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+            let contact = Contact {
+                id: event.id,
+                tenant_id: event.tenant_id,
+                name: event.name,
+                email: event.email,
+                phone: event.phone,
+                created_at: event.created_at,
+                updated_at: event.created_at,
+            };
+            self.contact_repo.save_contact(&contact).await?;
+            inserted.push(contact.id);
+        }
+        Ok(inserted)
+    }
+
+    pub async fn export_contacts(&self, tenant_id: TenantId) -> CinqResult<String> {
+        use csv::Writer;
+        let contacts = self.contact_repo.list_contacts(&tenant_id, 10000, 0).await?;
+        let mut wtr = Writer::from_writer(vec![]);
+        // Write header
+        wtr.write_record(&["id", "name", "email", "phone", "created_at"])
+            .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
+        for c in contacts {
+            wtr.write_record(&[
+                c.id.to_string(),
+                c.name.clone(),
+                c.email.as_ref().to_string(),
+                c.phone.as_ref().map(|p| p.as_ref().to_string()).unwrap_or_default(),
+                c.created_at.to_rfc3339(),
+            ]).map_err(|e| CinqServiceError::Validation(e.to_string()))?;
+        }
+        let data = String::from_utf8(wtr.into_inner().map_err(|e| CinqServiceError::Validation(e.to_string()))?)
+            .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
+        Ok(data)
     }
 
     // ---------- Deals ----------

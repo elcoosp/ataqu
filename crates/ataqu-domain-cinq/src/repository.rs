@@ -14,6 +14,9 @@ pub type CinqRepositoryResult<T> = Result<T, CinqDomainError>;
 pub trait ContactRepository: Send + Sync {
     async fn save_contact(&self, contact: &Contact) -> CinqRepositoryResult<()>;
     async fn find_contact_by_id(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<Option<Contact>>;
+    
+    async fn search_contacts(&self, tenant_id: &TenantId, query: &str, limit: u64) -> CinqRepositoryResult<Vec<Contact>>;
+
     async fn list_contacts(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> CinqRepositoryResult<Vec<Contact>>;
 }
 

@@ -28,6 +28,10 @@ ataqu-domain-dial = { path = "../ataqu-domain-dial" }
 ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
 ataqu-domain-sond = { path = "../ataqu-domain-sond" }
 ataqu-domain-vault = { path = "../ataqu-domain-vault" }
+ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
+ataqu-domain-spark = { path = "../ataqu-domain-spark" }
+ataqu-domain-vista = { path = "../ataqu-domain-vista" }
+csv = "1.3"
 
 [dev-dependencies]
 mockall = "0.15.0"

@@ -109,8 +109,9 @@ impl DialService {
             .map_err(DialServiceError::Domain)
     }
 
-    pub async fn list_channels(&self, _tenant_id: TenantId) -> DialResult<Vec<Channel>> {
-        unimplemented!("list_channels not yet implemented")
+    pub async fn list_channels(&self, tenant_id: TenantId, limit: u64, offset: u64) -> DialResult<Vec<Channel>> {
+        self.repo.list_channels(&tenant_id, limit, offset).await
+            .map_err(|e| DialServiceError::Domain(e))
     }
 
     // -- Message methods --
@@ -141,8 +142,10 @@ impl DialService {
         Ok(message)
     }
 
-    pub async fn list_messages(&self, _tenant_id: TenantId, _channel_id: Uuid) -> DialResult<Vec<Message>> {
-        unimplemented!("list_messages not yet implemented")
+    pub async fn list_messages(&self, tenant_id: TenantId, channel_id: Uuid, limit: u64, offset: u64) -> DialResult<Vec<Message>> {
+        let channel_id_obj = ChannelId::new(channel_id);
+        self.repo.list_messages(&tenant_id, &channel_id_obj, limit, offset).await
+            .map_err(|e| DialServiceError::Domain(e))
     }
 
     // -- Thread methods --
@@ -167,8 +170,9 @@ impl DialService {
         Ok(thread)
     }
 
-    pub async fn get_thread(&self, _tenant_id: TenantId, _thread_id: Uuid) -> DialResult<Thread> {
-        unimplemented!("get_thread not yet implemented")
+    pub async fn get_thread(&self, tenant_id: TenantId, thread_id: Uuid) -> DialResult<Thread> {
+        self.repo.get_thread(&tenant_id, &ThreadId::new(thread_id)).await
+            .map_err(|e| DialServiceError::Domain(e))
     }
 
     // -- Mention methods --
@@ -187,7 +191,7 @@ impl DialService {
 
     pub async fn list_mentions(&self, tenant_id: TenantId, user_id: Uuid) -> DialResult<Vec<Mention>> {
         self.repo.get_mentions_for_user(&tenant_id, &UserId::new(user_id)).await
-            .map_err(DialServiceError::Domain)
+            .map_err(|e| DialServiceError::Domain(e))
     }
 
     // -- Presence methods --
