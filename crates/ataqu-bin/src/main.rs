@@ -117,13 +117,15 @@ async fn main() -> anyhow::Result<()> {
 
     // PIVOT
     use ataqu_infra_repositories::pivot_repo_impl::{
-        PivotBlockRepository, PivotDocumentRepository, PivotRelationRepository,
+        PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository, PivotRelationRepository,
     };
     let pivot_doc_repo = Arc::new(PivotDocumentRepository::new(pools.core.clone()));
+    let pivot_db_repo = Arc::new(PivotDatabaseRepository::new(pools.core.clone()));
     let pivot_block_repo = Arc::new(PivotBlockRepository::new(pools.core.clone()));
     let pivot_rel_repo = Arc::new(PivotRelationRepository::new(pools.core.clone()));
     let pivot_service = Arc::new(PivotService::new(
         pivot_doc_repo,
+        pivot_db_repo,
         pivot_block_repo,
         pivot_rel_repo,
         id_gen.clone(),

@@ -1,12 +1,14 @@
 use async_trait::async_trait;
 use ataqu_domain_pivot::block::{BlockCreatedEvent, BlockType, RelationCreatedEvent, Relation};
+use ataqu_domain_pivot::database::DatabaseCreatedEvent;
 use ataqu_domain_pivot::document::DocumentCreatedEvent;
-use ataqu_domain_pivot::repository::{BlockRepository, DocumentRepository, RelationRepository};
+use ataqu_domain_pivot::repository::{BlockRepository, DatabaseRepository, DocumentRepository, RelationRepository};
 use ataqu_kernel::{RepositoryError, TenantId};
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
 
 use crate::entities::pivot::block as block_entity;
+use crate::entities::pivot::database as database_entity;
 use crate::entities::pivot::document as document_entity;
 use crate::entities::pivot::relation as relation_entity;
 
@@ -137,6 +139,85 @@ impl DocumentRepository for PivotDocumentRepository {
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
 
         Ok(models.into_iter().map(doc_model_to_event).collect())
+    }
+}
+
+pub struct PivotDatabaseRepository {
+    db: DatabaseConnection,
+}
+
+impl PivotDatabaseRepository {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
+}
+
+fn db_model_to_event(model: database_entity::Model) -> DatabaseCreatedEvent {
+    DatabaseCreatedEvent {
+        id: model.id,
+        tenant_id: TenantId::new(model.tenant_id),
+        name: model.name,
+        created_at: model.created_at.into(),
+    }
+}
+
+#[async_trait]
+impl DatabaseRepository for PivotDatabaseRepository {
+    async fn save_database(&self, event: &DatabaseCreatedEvent) -> Result<(), RepositoryError> {
+        let active = database_entity::ActiveModel {
+            id: Set(event.id),
+            tenant_id: Set(event.tenant_id.as_uuid()),
+            name: Set(event.name.clone()),
+            created_at: Set(event.created_at.into()),
+            updated_at: Set(event.created_at.into()),
+        };
+        let exists = database_entity::Entity::find_by_id(event.id)
+            .one(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?
+            .is_some();
+        if exists {
+            database_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        } else {
+            database_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        }
+        Ok(())
+    }
+
+    async fn list_databases(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<DatabaseCreatedEvent>, RepositoryError> {
+        let models = database_entity::Entity::find()
+            .filter(database_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(models.into_iter().map(db_model_to_event).collect())
+    }
+
+    async fn delete_database(
+        &self,
+        tenant_id: &TenantId,
+        db_id: Uuid,
+    ) -> Result<(), RepositoryError> {
+        database_entity::Entity::delete_many()
+            .filter(database_entity::Column::Id.eq(db_id))
+            .filter(database_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
     }
 }
 

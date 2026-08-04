@@ -1,4 +1,5 @@
 use crate::block::{BlockCreatedEvent, RelationCreatedEvent};
+use crate::database::DatabaseCreatedEvent;
 use crate::document::DocumentCreatedEvent;
 use async_trait::async_trait;
 use ataqu_kernel::{RepositoryError, TenantId};
@@ -30,6 +31,22 @@ pub trait DocumentRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError>;
+}
+
+#[async_trait]
+pub trait DatabaseRepository: Send + Sync {
+    async fn save_database(&self, event: &DatabaseCreatedEvent) -> Result<(), RepositoryError>;
+    async fn list_databases(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<DatabaseCreatedEvent>, RepositoryError>;
+    async fn delete_database(
+        &self,
+        tenant_id: &TenantId,
+        db_id: Uuid,
+    ) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]

@@ -123,10 +123,21 @@ pub async fn execute_workflow(
     Ok(StatusCode::ACCEPTED)
 }
 
+pub async fn webhook_trigger(
+    State(state): State<AppState>,
+    Path(workflow_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResult<StatusCode> {
+    state.spark_service.trigger_workflow_public(workflow_id, payload).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::ACCEPTED)
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post};
     Router::new()
         .route("/workflows", get(list_workflows).post(create_workflow))
         .route("/workflows/:id", get(get_workflow))
         .route("/workflows/:id/execute", post(execute_workflow))
+        .route("/webhooks/:workflow_id", post(webhook_trigger))
 }

@@ -17,6 +17,62 @@ use ataqu_application::pivot_service::{
 };
 use ataqu_domain_pivot::block::BlockType;
 
+// ---------- Databases ----------
+#[derive(Debug, Deserialize)]
+pub struct CreateDbRequest {
+    pub name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DatabaseResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<ataqu_application::pivot_service::Database> for DatabaseResponse {
+    fn from(db: ataqu_application::pivot_service::Database) -> Self {
+        Self {
+            id: db.id,
+            name: db.name,
+            created_at: db.created_at.into(),
+        }
+    }
+}
+
+pub async fn create_db(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<CreateDbRequest>,
+) -> ApiResult<(StatusCode, Json<DatabaseResponse>)> {
+    let cmd = ataqu_application::pivot_service::CreateDatabaseCommand {
+        tenant_id: auth.tenant_id,
+        name: payload.name,
+    };
+    let db = state.pivot_service.create_database(cmd).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok((StatusCode::CREATED, Json(db.into())))
+}
+
+pub async fn list_dbs(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<DatabaseResponse>>> {
+    let dbs = state.pivot_service.list_databases(auth.tenant_id, 100, 0).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(dbs.into_iter().map(|d| d.into()).collect()))
+}
+
+pub async fn delete_db(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.pivot_service.delete_database(auth.tenant_id, id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 // ---------- Documents ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateDocRequest {
@@ -289,6 +345,8 @@ pub async fn search_docs(
 // ---------- Router ----------
 pub fn routes() -> Router<AppState> {
     Router::new()
+        .route("/databases", axum::routing::post(create_db).get(list_dbs))
+        .route("/databases/:id", axum::routing::delete(delete_db))
         .route("/docs", axum::routing::post(create_doc).get(list_docs))
         .route(
             "/docs/:id",

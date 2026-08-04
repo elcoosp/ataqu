@@ -3,18 +3,28 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use ataqu_domain_pivot::block::{self as block_domain, BlockType};
+use ataqu_domain_pivot::database::{
+    self as database_domain, CreateDatabaseCommand as DomainCreateDatabase,
+};
 use ataqu_domain_pivot::document::{
     self as document_domain, CreateDocumentCommand as DomainCreateDocument,
 };
-use ataqu_domain_pivot::repository::{BlockRepository, DocumentRepository, RelationRepository};
+use ataqu_domain_pivot::repository::{BlockRepository, DatabaseRepository, DocumentRepository, RelationRepository};
 use ataqu_kernel::{Clock, IdGenerator, RepositoryError, TenantId};
 
 // Re-export domain types for API layer
 pub use ataqu_domain_pivot::block::BlockCreatedEvent as Block;
 pub use ataqu_domain_pivot::block::Relation;
+pub use ataqu_domain_pivot::database::DatabaseCreatedEvent as Database;
 pub use ataqu_domain_pivot::document::DocumentCreatedEvent as Document;
 
 // Application commands
+#[derive(Debug, Clone)]
+pub struct CreateDatabaseCommand {
+    pub tenant_id: TenantId,
+    pub name: String,
+}
+
 #[derive(Debug, Clone)]
 pub struct CreateDocumentCommand {
     pub tenant_id: TenantId,
@@ -53,6 +63,7 @@ pub type PivotResult<T> = Result<T, PivotServiceError>;
 
 pub struct PivotService {
     doc_repo: Arc<dyn DocumentRepository + Send + Sync>,
+    db_repo: Arc<dyn DatabaseRepository + Send + Sync>,
     block_repo: Arc<dyn BlockRepository + Send + Sync>,
     rel_repo: Arc<dyn RelationRepository + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
@@ -62,6 +73,7 @@ pub struct PivotService {
 impl PivotService {
     pub fn new(
         doc_repo: Arc<dyn DocumentRepository + Send + Sync>,
+        db_repo: Arc<dyn DatabaseRepository + Send + Sync>,
         block_repo: Arc<dyn BlockRepository + Send + Sync>,
         rel_repo: Arc<dyn RelationRepository + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
@@ -69,11 +81,40 @@ impl PivotService {
     ) -> Self {
         Self {
             doc_repo,
+            db_repo,
             block_repo,
             rel_repo,
             id_gen,
             clock,
         }
+    }
+
+    // -- Databases --
+    pub async fn create_database(&self, cmd: CreateDatabaseCommand) -> PivotResult<Database> {
+        let domain_cmd = DomainCreateDatabase {
+            tenant_id: cmd.tenant_id,
+            name: cmd.name,
+        };
+        let event = database_domain::create_database(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        self.db_repo
+            .save_database(&event)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        Ok(event)
+    }
+
+    pub async fn list_databases(&self, tenant_id: TenantId, limit: u64, offset: u64) -> PivotResult<Vec<Database>> {
+        self.db_repo
+            .list_databases(&tenant_id, limit, offset)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))
+    }
+
+    pub async fn delete_database(&self, tenant_id: TenantId, db_id: Uuid) -> PivotResult<()> {
+        self.db_repo
+            .delete_database(&tenant_id, db_id)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
     // -- Documents --
