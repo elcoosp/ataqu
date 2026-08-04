@@ -52,6 +52,7 @@ impl CsvImporter {
                 email: ActiveValue::Set(email),
                 phone: ActiveValue::Set(phone),
                 custom_fields: ActiveValue::Set(custom_fields),
+                lead_score: ActiveValue::Set(0),
                 created_at: ActiveValue::Set(now),
                 updated_at: ActiveValue::Set(now),
             };

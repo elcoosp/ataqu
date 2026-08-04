@@ -35,6 +35,7 @@ pub struct CreateContactCommand {
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: serde_json::Value,
+    pub lead_score: Option<i32>,
 }
 
 #[derive(Debug, Clone)]
@@ -149,6 +150,7 @@ impl CinqService {
             email: cmd.email.clone(),
             phone: cmd.phone.clone(),
             custom_fields: cmd.custom_fields.clone(),
+            lead_score: cmd.lead_score,
         };
         let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
         let contact = Contact {
@@ -158,6 +160,7 @@ impl CinqService {
             email: event.email.clone(),
             phone: event.phone.clone(),
             custom_fields: event.custom_fields.clone(),
+            lead_score: event.lead_score,
             created_at: event.created_at,
             updated_at: event.created_at,
         };
@@ -192,6 +195,7 @@ impl CinqService {
             phone: cmd.phone,
             custom_fields: cmd.custom_fields,
         };
+        // Lead score is not updated via UpdateContactCommand in this version
         let event = contact_domain::update_contact(domain_cmd, self.clock.as_ref());
         if let Some(name) = event.name {
             contact.name = name;
@@ -205,6 +209,7 @@ impl CinqService {
         if let Some(custom_fields) = event.custom_fields {
             contact.custom_fields = custom_fields;
         }
+        // Lead score is updated separately or via rules engine
         contact.updated_at = event.updated_at;
         self.contact_repo.save_contact(&contact).await?;
         Ok(contact)
@@ -314,6 +319,7 @@ impl CinqService {
                     Some(PhoneNumber::new(phone_str.clone()))
                 },
                 custom_fields: serde_json::Value::Object(custom),
+                lead_score: None,
             };
             let event = contact_domain::create_contact(
                 domain_cmd,
@@ -327,6 +333,7 @@ impl CinqService {
                 email: event.email,
                 phone: event.phone,
                 custom_fields: event.custom_fields,
+                lead_score: event.lead_score,
                 created_at: event.created_at,
                 updated_at: event.created_at,
             };

@@ -12,6 +12,7 @@ pub struct Model {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub custom_fields: JsonValue,
+    pub lead_score: i32,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }

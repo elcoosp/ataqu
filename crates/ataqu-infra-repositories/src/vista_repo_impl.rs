@@ -7,6 +7,30 @@ use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, Que
 use chrono::Utc;
 
 // We define a local entity for the aggregated_views table
+mod dashboard_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+    use serde_json::Value;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "dashboards", schema_name = "core")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub name: String,
+        pub config: Value,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
 mod aggregated_view_entity {
     use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
@@ -165,6 +189,50 @@ impl VistaRepository for VistaRepositoryImpl {
             metric_name: m.metric_name,
             value: m.value,
         }).collect())
+    }
+
+    async fn save_dashboard(&self, dashboard: &ataqu_domain_vista::dashboard::Dashboard) -> Result<(), String> {
+        let active = dashboard_entity::ActiveModel {
+            id: sea_orm::Set(dashboard.id),
+            tenant_id: sea_orm::Set(dashboard.tenant_id.as_uuid()),
+            name: sea_orm::Set(dashboard.name.clone()),
+            config: sea_orm::Set(dashboard.config.clone()),
+            created_at: sea_orm::Set(dashboard.created_at),
+            updated_at: sea_orm::Set(dashboard.updated_at),
+        };
+        let exists = dashboard_entity::Entity::find_by_id(dashboard.id).one(&self.db).await.map_err(|e| e.to_string())?.is_some();
+        if exists {
+            dashboard_entity::Entity::update(active).exec(&self.db).await.map_err(|e| e.to_string())?;
+        } else {
+            dashboard_entity::Entity::insert(active).exec(&self.db).await.map_err(|e| e.to_string())?;
+        }
+        Ok(())
+    }
+
+    async fn list_dashboards(&self, tenant_id: &TenantId) -> Result<Vec<ataqu_domain_vista::dashboard::Dashboard>, String> {
+        let models = dashboard_entity::Entity::find()
+            .filter(dashboard_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .all(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(models.into_iter().map(|m| ataqu_domain_vista::dashboard::Dashboard {
+            id: m.id,
+            tenant_id: TenantId::new(m.tenant_id),
+            name: m.name,
+            config: m.config,
+            created_at: m.created_at,
+            updated_at: m.updated_at,
+        }).collect())
+    }
+
+    async fn delete_dashboard(&self, tenant_id: &TenantId, id: uuid::Uuid) -> Result<(), String> {
+        dashboard_entity::Entity::delete_many()
+            .filter(dashboard_entity::Column::Id.eq(id))
+            .filter(dashboard_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
     }
 
     async fn execute_raw_sql(

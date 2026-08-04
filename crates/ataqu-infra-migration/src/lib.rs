@@ -8,6 +8,7 @@ pub mod m_cinq;
 pub mod m_cinq_add_activity_stage;
 pub mod m_cinq_add_deal_pipeline_stage;
 pub mod m_cinq_add_tasks;
+pub mod m_cinq_add_lead_score;
 pub mod m_dial;
 pub mod m_dial_add_message_columns;
 pub mod m_dial_add_participants;
@@ -33,6 +34,7 @@ pub mod m_vault_add_price_column;
 pub mod m_vault_add_products_variants;
 pub mod m_vault_add_stock_movements;
 pub mod m_vista_tables;
+pub mod m_vista_add_dashboards;
 
 pub struct Migrator;
 
@@ -48,6 +50,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_cinq_add_activity_stage::Migration),
             Box::new(m_cinq_add_deal_pipeline_stage::Migration),
             Box::new(m_cinq_add_tasks::Migration),
+            Box::new(m_cinq_add_lead_score::Migration),
             Box::new(m_dial::Migration),
             Box::new(m_dial_add_threads_mentions::Migration),
             Box::new(m_dial_add_message_columns::Migration),
@@ -73,6 +76,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_vault_add_price_column::Migration),
             Box::new(m_vault_add_stock_movements::Migration),
             Box::new(m_vista_tables::Migration),
+            Box::new(m_vista_add_dashboards::Migration),
         ]
     }
 }

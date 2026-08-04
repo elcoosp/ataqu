@@ -148,6 +148,7 @@ impl ContactRepository {
             email: ActiveValue::Set(email.map(|s| s.to_string())),
             phone: ActiveValue::Set(phone.map(|s| s.to_string())),
             custom_fields: ActiveValue::Set(custom_fields),
+            lead_score: ActiveValue::Set(0),
             created_at: ActiveValue::Set(now),
             updated_at: ActiveValue::Set(now),
         };

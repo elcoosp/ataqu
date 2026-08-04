@@ -1,4 +1,5 @@
 pub mod aggregation;
+pub mod dashboard;
 pub mod analytics;
 pub mod repository;
 

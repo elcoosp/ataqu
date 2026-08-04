@@ -17,6 +17,7 @@ pub struct Contact {
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: JsonValue,
+    pub lead_score: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -29,6 +30,7 @@ pub struct CreateContactCommand {
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: JsonValue,
+    pub lead_score: Option<i32>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,6 +52,7 @@ pub struct ContactCreated {
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: JsonValue,
+    pub lead_score: i32,
     pub created_at: DateTime<Utc>,
 }
 
@@ -79,6 +82,7 @@ pub fn create_contact(
         email: cmd.email,
         phone: cmd.phone,
         custom_fields: cmd.custom_fields,
+        lead_score: cmd.lead_score.unwrap_or(0),
         created_at: now,
     }
 }
@@ -166,6 +170,7 @@ mod tests {
             email: Email::new("alice@example.com".to_string()),
             phone: None,
             custom_fields: serde_json::Value::Null,
+            lead_score: None,
         };
         let mut id_gen = MockIdGenerator::new();
         let fixed_id = Uuid::new_v4();

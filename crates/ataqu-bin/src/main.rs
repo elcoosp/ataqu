@@ -210,6 +210,7 @@ async fn main() -> anyhow::Result<()> {
                         email: Email::new(email.clone()),
                         phone: phone.clone().map(PhoneNumber::new),
                         custom_fields: serde_json::Value::Null,
+                        lead_score: None,
                     }).await.map_err(|e| e.to_string())?;
                 }
                 Action::CreateCinqActivity { contact_id, activity_type, description } => {
@@ -379,6 +380,7 @@ async fn main() -> anyhow::Result<()> {
                                     email: ataqu_security::Email::new(em),
                                     phone: None,
                                     custom_fields: serde_json::Value::Null,
+                                    lead_score: None,
                                 };
                                 if let Err(e) = cinq.create_contact(cmd).await {
                                     tracing::error!(error = %e, "SOND -> CINQ contact creation failed");

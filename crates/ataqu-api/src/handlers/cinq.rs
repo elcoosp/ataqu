@@ -98,6 +98,7 @@ pub async fn create_contact(
         email: Email::new(payload.email),
         phone: payload.phone.map(PhoneNumber::new),
         custom_fields: payload.custom_fields,
+        lead_score: None,
     };
     let contact = state
         .cinq_service

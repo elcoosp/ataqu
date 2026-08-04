@@ -90,6 +90,7 @@ fn contact_to_active(contact: &Contact) -> contact_entity::ActiveModel {
         email: Set(Some(contact.email.as_ref().to_string())),
         phone: Set(contact.phone.as_ref().map(|p| p.as_ref().to_string())),
         custom_fields: Set(contact.custom_fields.clone()),
+        lead_score: Set(contact.lead_score),
         created_at: Set(contact.created_at),
         updated_at: Set(contact.updated_at),
     }
@@ -105,6 +106,7 @@ fn model_to_contact(model: contact_entity::Model) -> Contact {
         email,
         phone,
         custom_fields: model.custom_fields,
+        lead_score: model.lead_score,
         created_at: model.created_at,
         updated_at: model.updated_at,
     }
