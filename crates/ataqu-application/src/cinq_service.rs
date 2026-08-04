@@ -109,6 +109,7 @@ pub struct CinqService {
     contact_repo: Arc<dyn ContactRepository + Send + Sync>,
     deal_repo: Arc<dyn DealRepository + Send + Sync>,
     activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
+    task_repo: Arc<dyn ataqu_domain_cinq::repository::TaskRepository + Send + Sync>,
     stage_repo: Arc<dyn PipelineStageRepository + Send + Sync>,
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
@@ -122,6 +123,7 @@ impl CinqService {
         contact_repo: Arc<dyn ContactRepository + Send + Sync>,
         deal_repo: Arc<dyn DealRepository + Send + Sync>,
         activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
+    task_repo: Arc<dyn ataqu_domain_cinq::repository::TaskRepository + Send + Sync>,
         stage_repo: Arc<dyn PipelineStageRepository + Send + Sync>,
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
@@ -131,6 +133,7 @@ impl CinqService {
             contact_repo,
             deal_repo,
             activity_repo,
+            task_repo,
             stage_repo,
             outbox,
             id_gen,
@@ -599,6 +602,55 @@ impl CinqService {
         self.stage_repo
             .delete_pipeline_stage(&tenant_id, id)
             .await?;
+        Ok(())
+    }
+
+    pub async fn create_task(&self, cmd: ataqu_domain_cinq::task::CreateTaskCommand) -> CinqResult<ataqu_domain_cinq::task::Task> {
+        let event = ataqu_domain_cinq::task::create_task(cmd, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(CinqServiceError::Validation)?;
+        let task = ataqu_domain_cinq::task::Task {
+            id: event.id,
+            tenant_id: event.tenant_id,
+            contact_id: event.contact_id,
+            deal_id: event.deal_id,
+            assigned_to: event.assigned_to,
+            title: event.title,
+            description: event.description,
+            due_date: event.due_date,
+            status: event.status,
+            created_at: event.created_at,
+            updated_at: event.created_at,
+        };
+        self.task_repo.save_task(&task).await?;
+        Ok(task)
+    }
+
+    pub async fn get_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<ataqu_domain_cinq::task::Task> {
+        self.task_repo.find_task_by_id(&tenant_id, id).await?
+            .ok_or(CinqServiceError::Validation("Task not found".to_string()))
+    }
+
+    pub async fn list_tasks(&self, tenant_id: TenantId, limit: u64, offset: u64) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {
+        Ok(self.task_repo.list_tasks(&tenant_id, limit, offset).await?)
+    }
+
+    pub async fn list_tasks_for_contact(&self, tenant_id: TenantId, contact_id: Uuid, limit: u64, offset: u64) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {
+        Ok(self.task_repo.list_tasks_for_contact(&tenant_id, contact_id, limit, offset).await?)
+    }
+
+    pub async fn update_task(&self, cmd: ataqu_domain_cinq::task::UpdateTaskCommand) -> CinqResult<ataqu_domain_cinq::task::Task> {
+        let mut task = self.get_task(cmd.tenant_id, cmd.id).await?;
+        if let Some(title) = cmd.title { task.title = title; }
+        if let Some(desc) = cmd.description { task.description = Some(desc); }
+        if let Some(due) = cmd.due_date { task.due_date = Some(due); }
+        if let Some(status) = cmd.status { task.status = status; }
+        task.updated_at = self.clock.now().into();
+        self.task_repo.save_task(&task).await?;
+        Ok(task)
+    }
+
+    pub async fn delete_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+        self.task_repo.delete_task(&tenant_id, id).await?;
         Ok(())
     }
 }

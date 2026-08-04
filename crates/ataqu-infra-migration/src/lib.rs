@@ -7,6 +7,7 @@ pub mod m_aegis_add_tenant_index;
 pub mod m_cinq;
 pub mod m_cinq_add_activity_stage;
 pub mod m_cinq_add_deal_pipeline_stage;
+pub mod m_cinq_add_tasks;
 pub mod m_dial;
 pub mod m_dial_add_message_columns;
 pub mod m_dial_add_participants;
@@ -46,6 +47,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_cinq::Migration),
             Box::new(m_cinq_add_activity_stage::Migration),
             Box::new(m_cinq_add_deal_pipeline_stage::Migration),
+            Box::new(m_cinq_add_tasks::Migration),
             Box::new(m_dial::Migration),
             Box::new(m_dial_add_threads_mentions::Migration),
             Box::new(m_dial_add_message_columns::Migration),

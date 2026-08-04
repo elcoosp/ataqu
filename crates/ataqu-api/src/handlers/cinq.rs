@@ -524,6 +524,141 @@ pub async fn export_csv(
     Ok((StatusCode::OK, csv_data))
 }
 
+// ---------- Tasks ----------
+#[derive(Debug, Deserialize)]
+pub struct CreateTaskRequest {
+    pub contact_id: Option<Uuid>,
+    pub deal_id: Option<Uuid>,
+    pub assigned_to: Option<Uuid>,
+    pub title: String,
+    pub description: Option<String>,
+    pub due_date: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TaskResponse {
+    pub id: Uuid,
+    pub contact_id: Option<Uuid>,
+    pub deal_id: Option<Uuid>,
+    pub assigned_to: Option<Uuid>,
+    pub title: String,
+    pub description: Option<String>,
+    pub due_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<ataqu_domain_cinq::task::Task> for TaskResponse {
+    fn from(t: ataqu_domain_cinq::task::Task) -> Self {
+        Self {
+            id: t.id,
+            contact_id: t.contact_id,
+            deal_id: t.deal_id,
+            assigned_to: t.assigned_to,
+            title: t.title,
+            description: t.description,
+            due_date: t.due_date,
+            status: format!("{:?}", t.status).to_lowercase(),
+            created_at: t.created_at,
+            updated_at: t.updated_at,
+        }
+    }
+}
+
+pub async fn create_task(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<CreateTaskRequest>,
+) -> ApiResult<(StatusCode, Json<TaskResponse>)> {
+    let cmd = ataqu_domain_cinq::task::CreateTaskCommand {
+        tenant_id: auth.tenant_id,
+        contact_id: payload.contact_id,
+        deal_id: payload.deal_id,
+        assigned_to: payload.assigned_to,
+        title: payload.title,
+        description: payload.description,
+        due_date: payload.due_date,
+    };
+    let task = state.cinq_service.create_task(cmd).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok((StatusCode::CREATED, Json(task.into())))
+}
+
+pub async fn list_tasks(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<PaginationParams>,
+) -> ApiResult<Json<Vec<TaskResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let tasks = state.cinq_service.list_tasks(auth.tenant_id, limit, offset).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
+}
+
+pub async fn get_task(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<TaskResponse>> {
+    let task = state.cinq_service.get_task(auth.tenant_id, id).await
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+    Ok(Json(task.into()))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTaskRequest {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub due_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub status: Option<String>,
+}
+
+pub async fn update_task(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateTaskRequest>,
+) -> ApiResult<Json<TaskResponse>> {
+    let status = payload.status.map(|s| match s.to_lowercase().as_str() {
+        "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
+        "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
+        _ => ataqu_domain_cinq::task::TaskStatus::Pending,
+    });
+    let cmd = ataqu_domain_cinq::task::UpdateTaskCommand {
+        id,
+        tenant_id: auth.tenant_id,
+        title: payload.title,
+        description: payload.description,
+        due_date: payload.due_date,
+        status,
+    };
+    let task = state.cinq_service.update_task(cmd).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(task.into()))
+}
+
+pub async fn delete_task(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.cinq_service.delete_task(auth.tenant_id, id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn list_contact_tasks(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<Vec<TaskResponse>>> {
+    let tasks = state.cinq_service.list_tasks_for_contact(auth.tenant_id, id, 100, 0).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
+}
+
 // ---------- Email Tracking ----------
 pub async fn track_email(
     state: State<AppState>,
@@ -557,6 +692,9 @@ pub fn cinq_routes() -> Router<AppState> {
         )
         .route("/activities", post(create_activity).get(list_activities))
         .route("/activities/:id", get(get_activity))
+        .route("/tasks", post(create_task).get(list_tasks))
+        .route("/tasks/:id", get(get_task).put(update_task).delete(delete_task))
+        .route("/contacts/:id/tasks", get(list_contact_tasks))
         .route("/search", get(search_contacts))
         .route("/search/custom", get(search_by_custom_field))
         .route("/csv/import", post(import_csv))

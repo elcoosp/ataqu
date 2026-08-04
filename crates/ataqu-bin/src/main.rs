@@ -92,12 +92,14 @@ async fn main() -> anyhow::Result<()> {
     let contact_repo = Arc::new(CinqContactRepository::new(pools.core.clone()));
     let deal_repo = Arc::new(CinqDealRepository::new(pools.core.clone()));
     let activity_repo = Arc::new(CinqActivityRepository::new(pools.core.clone()));
+    let task_repo = Arc::new(CinqActivityRepository::new(pools.core.clone()));
     let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.core.clone()));
     let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
     let cinq_service = Arc::new(CinqService::new(
         contact_repo,
         deal_repo,
         activity_repo,
+        task_repo,
         stage_repo,
         cinq_outbox,
         id_gen.clone(),
