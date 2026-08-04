@@ -201,8 +201,53 @@ pub async fn update_user_role(
     Ok(StatusCode::OK)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CreateApiKeyRequest {
+    pub name: String,
+}
+
+pub async fn create_api_key(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<CreateApiKeyRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let key = state.aegis_service.create_api_key(auth.tenant_id, auth.user_id, req.name, None).await
+        .map_err(map_aegis_error)?;
+    Ok(Json(serde_json::json!({
+        "id": key.id,
+        "name": key.name,
+        "key": key.key,
+        "prefix": key.prefix,
+    })))
+}
+
+pub async fn list_api_keys(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let keys = state.aegis_service.list_api_keys(auth.tenant_id, auth.user_id).await
+        .map_err(map_aegis_error)?;
+    let resp = keys.into_iter().map(|k| serde_json::json!({
+        "id": k.id,
+        "name": k.name,
+        "prefix": k.prefix,
+        "created_at": k.created_at,
+    })).collect();
+    Ok(Json(resp))
+}
+
+pub async fn delete_api_key(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.aegis_service.delete_api_key(auth.tenant_id, id).await
+        .map_err(map_aegis_error)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::{post, patch};
+    use axum::routing::{post, patch, delete};
     axum::Router::new()
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))
@@ -210,4 +255,6 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/refresh", post(refresh_token))
         .route("/mfa/setup", post(mfa_setup))
         .route("/mfa/verify", post(mfa_verify))
+        .route("/api-keys", post(create_api_key).get(list_api_keys))
+        .route("/api-keys/:id", delete(delete_api_key))
 }

@@ -141,4 +141,98 @@ impl AuthRepository for AegisUserRepository {
             .map_err(|e| AuthError::Database(e.to_string()))?;
         Ok(models.into_iter().map(model_to_domain).collect())
     }
+
+    async fn save_api_key(&self, key: &ataqu_domain_aegis::api_key::ApiKey) -> Result<(), AuthError> {
+        let active = api_key_entity::ActiveModel {
+            id: Set(key.id),
+            tenant_id: Set(key.tenant_id.as_uuid()),
+            user_id: Set(key.user_id),
+            name: Set(key.name.clone()),
+            key_hash: Set(key.key_hash.clone()),
+            prefix: Set(key.prefix.clone()),
+            last_used_at: Set(key.last_used_at.map(|t| t.into())),
+            expires_at: Set(key.expires_at.map(|t| t.into())),
+            created_at: Set(key.created_at.into()),
+        };
+        api_key_entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn find_api_key_by_hash(&self, hash: &str) -> Result<Option<ataqu_domain_aegis::api_key::ApiKey>, AuthError> {
+        let model = api_key_entity::Entity::find()
+            .filter(api_key_entity::Column::KeyHash.eq(hash))
+            .one(&self.db)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(model.map(|m| ataqu_domain_aegis::api_key::ApiKey {
+            id: m.id,
+            tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
+            user_id: m.user_id,
+            name: m.name,
+            key_hash: m.key_hash,
+            prefix: m.prefix,
+            last_used_at: m.last_used_at.map(|t| t.into()),
+            expires_at: m.expires_at.map(|t| t.into()),
+            created_at: m.created_at.into(),
+        }))
+    }
+
+    async fn list_api_keys(&self, tenant_id: Uuid, user_id: Uuid) -> Result<Vec<ataqu_domain_aegis::api_key::ApiKey>, AuthError> {
+        let models = api_key_entity::Entity::find()
+            .filter(api_key_entity::Column::TenantId.eq(tenant_id))
+            .filter(api_key_entity::Column::UserId.eq(user_id))
+            .all(&self.db)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(models.into_iter().map(|m| ataqu_domain_aegis::api_key::ApiKey {
+            id: m.id,
+            tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
+            user_id: m.user_id,
+            name: m.name,
+            key_hash: m.key_hash,
+            prefix: m.prefix,
+            last_used_at: m.last_used_at.map(|t| t.into()),
+            expires_at: m.expires_at.map(|t| t.into()),
+            created_at: m.created_at.into(),
+        }).collect())
+    }
+
+    async fn delete_api_key(&self, tenant_id: Uuid, id: Uuid) -> Result<(), AuthError> {
+        api_key_entity::Entity::delete_many()
+            .filter(api_key_entity::Column::Id.eq(id))
+            .filter(api_key_entity::Column::TenantId.eq(tenant_id))
+            .exec(&self.db)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(())
+    }
+}
+
+mod api_key_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "api_keys", schema_name = "core")]
+    pub struct Model {
+        #[sea_orm(primary_key, auto_increment = false)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub user_id: Uuid,
+        pub name: String,
+        pub key_hash: String,
+        pub prefix: String,
+        pub last_used_at: Option<DateTime<Utc>>,
+        pub expires_at: Option<DateTime<Utc>>,
+        pub created_at: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
 }

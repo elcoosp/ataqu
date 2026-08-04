@@ -400,6 +400,69 @@ where
         self.repo.save_user(&user).await?;
         Ok(())
     }
+
+    pub async fn create_api_key(&self, tenant_id: ataqu_kernel::TenantId, user_id: Uuid, name: String, expires_at: Option<SystemTime>) -> Result<ataqu_domain_aegis::api_key::ApiKeyCreated, AegisServiceError> {
+        let cmd = ataqu_domain_aegis::api_key::CreateApiKeyCommand {
+            tenant_id,
+            user_id,
+            name,
+            expires_at,
+        };
+        let created = ataqu_domain_aegis::api_key::generate_api_key(cmd, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(AegisServiceError::Validation)?;
+
+        let key_entity = ataqu_domain_aegis::api_key::ApiKey {
+            id: created.id,
+            tenant_id,
+            user_id,
+            name: created.name.clone(),
+            key_hash: {
+                use sha2::{Digest, Sha256};
+                let mut hasher = Sha256::new();
+                hasher.update(created.key.as_bytes());
+                format!("{:x}", hasher.finalize())
+            },
+            prefix: created.prefix.clone(),
+            last_used_at: None,
+            expires_at,
+            created_at: created.created_at,
+        };
+        self.repo.save_api_key(&key_entity).await?;
+        Ok(created)
+    }
+
+    pub async fn list_api_keys(&self, tenant_id: ataqu_kernel::TenantId, user_id: Uuid) -> Result<Vec<ataqu_domain_aegis::api_key::ApiKey>, AegisServiceError> {
+        self.repo.list_api_keys(tenant_id.as_uuid(), user_id).await.map_err(AegisServiceError::Domain)
+    }
+
+    pub async fn delete_api_key(&self, tenant_id: ataqu_kernel::TenantId, id: Uuid) -> Result<(), AegisServiceError> {
+        self.repo.delete_api_key(tenant_id.as_uuid(), id).await.map_err(AegisServiceError::Domain)
+    }
+
+    pub async fn validate_api_key(&self, key: &str) -> Result<User, AegisServiceError> {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(key.as_bytes());
+        let hash = format!("{:x}", hasher.finalize());
+
+        let api_key = self.repo.find_api_key_by_hash(&hash).await?
+            .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+        if let Some(expires_at) = api_key.expires_at {
+            if expires_at < self.clock.now() {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+        }
+
+        let user = self.repo.find_by_id(api_key.user_id).await?
+            .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+        if !user.is_active {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+
+        Ok(user)
+    }
 }
 
 pub struct NoopOutbox;
