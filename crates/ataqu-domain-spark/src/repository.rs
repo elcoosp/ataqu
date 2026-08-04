@@ -24,6 +24,7 @@ pub trait SparkRepository: Send + Sync {
         schema: &str,
         event_type: &str,
     ) -> Result<Vec<Workflow>, SparkError>;
+    async fn list_active_scheduled_workflows(&self) -> Result<Vec<Workflow>, SparkError>;
     async fn get_workflow_lease(
         &self,
         tenant_id: &TenantId,

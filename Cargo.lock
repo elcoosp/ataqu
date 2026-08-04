@@ -427,6 +427,7 @@ dependencies = [
  "async-trait",
  "ataqu-api",
  "ataqu-application",
+ "ataqu-domain-aegis",
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
  "ataqu-domain-spark",

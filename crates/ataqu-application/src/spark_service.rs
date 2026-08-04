@@ -121,6 +121,28 @@ impl SparkService {
         Ok(())
     }
 
+    pub async fn poll_scheduled_triggers(&self) -> SparkResult<()> {
+        let workflows = self.repo.list_active_scheduled_workflows().await?;
+        let now = chrono::Utc::now();
+
+        for workflow in workflows {
+            if let Trigger::Schedule { cron } = &workflow.trigger {
+                // Simple cron check: if it contains "*" for minute and hour, we just run it every minute for demo.
+                // In production, use a real cron parser like `croner`.
+                if cron.contains("* * *") {
+                    tracing::info!("Triggering scheduled workflow {}", workflow.id);
+                    let payload = serde_json::json!({ "time": now.to_rfc3339() });
+                    if evaluate_conditions(&workflow.conditions, &payload) {
+                        if let Err(e) = self.execute_workflow(&workflow).await {
+                            tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     async fn execute_workflow(&self, workflow: &Workflow) -> SparkResult<()> {
         let tenant_id = TenantId::new(workflow.tenant_id);
         for action in &workflow.actions {

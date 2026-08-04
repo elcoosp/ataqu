@@ -163,6 +163,39 @@ fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct SsoLoginRequest {
+    pub provider: String,
+}
+
+pub async fn sso_login(
+    State(_state): State<AppState>,
+    Json(req): Json<SsoLoginRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let provider = match req.provider.as_str() {
+        "google" => ataqu_domain_aegis::sso::SsoProvider::Google,
+        "microsoft" => ataqu_domain_aegis::sso::SsoProvider::Microsoft,
+        _ => return Err(ApiResponseError::validation("Invalid provider")),
+    };
+
+    let config = ataqu_domain_aegis::sso::SsoConfig {
+        google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
+        google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
+        google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
+        microsoft_client_id: std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default(),
+        microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
+        microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
+    };
+
+    let state = uuid::Uuid::new_v4().to_string();
+    let redirect = ataqu_domain_aegis::sso::build_authorization_url(&provider, &config, &state);
+
+    Ok(Json(serde_json::json!({
+        "url": redirect.url,
+        "state": redirect.state,
+    })))
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UpdateRoleRequest {
     pub role: String,
 }
@@ -252,6 +285,7 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))
         .route("/login", post(login))
+        .route("/sso/login", post(sso_login))
         .route("/refresh", post(refresh_token))
         .route("/mfa/setup", post(mfa_setup))
         .route("/mfa/verify", post(mfa_verify))

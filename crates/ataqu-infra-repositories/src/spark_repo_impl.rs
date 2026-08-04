@@ -142,6 +142,17 @@ impl SparkRepository for SparkRepositoryImpl {
         }).collect())
     }
 
+    async fn list_active_scheduled_workflows(&self) -> Result<Vec<Workflow>, SparkError> {
+        let models = workflow_entity::Entity::find()
+            .filter(workflow_entity::Column::Enabled.eq(true))
+            .all(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+
+        let workflows: Vec<Workflow> = models.into_iter().map(workflow_model_to_domain).collect();
+        Ok(workflows.into_iter().filter(|w| matches!(w.trigger, Trigger::Schedule { .. })).collect())
+    }
+
     async fn get_workflow_lease(
         &self,
         tenant_id: &TenantId,

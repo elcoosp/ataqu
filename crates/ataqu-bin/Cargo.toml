@@ -22,6 +22,7 @@ ataqu-infra-migration = { path = "../ataqu-infra-migration" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
 
 ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
+ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
 ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-security = { path = "../ataqu-security" }
