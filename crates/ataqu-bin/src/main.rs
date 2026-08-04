@@ -260,11 +260,13 @@ async fn main() -> anyhow::Result<()> {
     let pause_idempotency = Arc::new(RealIdempotency::new(pools.core.clone()));
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
+    let pause_doc_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_outbox = Arc::new(RealOutbox::new(pools.core.clone()));
     let pause_service = Arc::new(PauseService::new(
         pause_idempotency,
         pause_employee_repo,
         pause_leave_repo,
+        pause_doc_repo,
         pause_outbox,
     ));
 

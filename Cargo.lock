@@ -345,6 +345,7 @@ dependencies = [
  "ataqu-domain-aegis",
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
+ "ataqu-domain-pause",
  "ataqu-domain-pivot",
  "ataqu-domain-sond",
  "ataqu-domain-spark",

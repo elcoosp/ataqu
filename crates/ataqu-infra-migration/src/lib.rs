@@ -12,6 +12,7 @@ pub mod m_dial_add_presence;
 pub mod m_dial_add_threads_mentions;
 pub mod m_pause;
 pub mod m_pause_add_columns;
+pub mod m_pause_add_documents;
 pub mod m_pause_rename_to_full_name;
 pub mod m_pivot;
 pub mod m_pivot_add_blocks_relations;
@@ -46,6 +47,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_pause::Migration),
             Box::new(m_pause_add_columns::Migration),
             Box::new(m_pause_rename_to_full_name::Migration),
+            Box::new(m_pause_add_documents::Migration),
             Box::new(m_pivot::Migration),
             Box::new(m_pivot_add_blocks_relations::Migration),
             Box::new(m_sond::Migration),

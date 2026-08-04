@@ -15,6 +15,7 @@ use crate::serializers::{ApiEmail, ApiPhone};
 use ataqu_application::pause_service::{
     CreateEmployeeCommand, Employee, LeaveRequest, LeaveType, RequestLeaveCommand,
 };
+use ataqu_domain_pause;
 use ataqu_security::{Email, PhoneNumber};
 
 #[derive(Debug, Deserialize)]
@@ -262,6 +263,51 @@ pub async fn reject_leave(
     Ok(Json(request.into()))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UploadDocumentRequest {
+    pub file_name: String,
+    pub file_url: String,
+    pub doc_type: String,
+}
+
+pub async fn upload_document(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(employee_id): Path<Uuid>,
+    Json(payload): Json<UploadDocumentRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let cmd = ataqu_domain_pause::CreateDocumentCommand {
+        tenant_id: auth.tenant_id,
+        employee_id,
+        file_name: payload.file_name,
+        file_url: payload.file_url,
+        doc_type: payload.doc_type,
+    };
+    let doc = state.pause_service.upload_document(cmd).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(serde_json::json!({
+        "id": doc.id,
+        "file_name": doc.file_name,
+        "file_url": doc.file_url,
+    })))
+}
+
+pub async fn list_documents(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(employee_id): Path<Uuid>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let docs = state.pause_service.list_documents(auth.tenant_id, employee_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let list = docs.iter().map(|d| serde_json::json!({
+        "id": d.id,
+        "file_name": d.file_name,
+        "file_url": d.file_url,
+        "doc_type": d.doc_type,
+    })).collect();
+    Ok(Json(list))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{patch, post};
     Router::new()
@@ -272,4 +318,5 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/leave-requests/:id/approve", patch(approve_leave))
         .route("/leave-requests/:id/reject", patch(reject_leave))
+        .route("/employees/:id/documents", post(upload_document).get(list_documents))
 }

@@ -381,3 +381,71 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
         Ok(())
     }
 }
+
+
+mod employee_document_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "employee_documents", schema_name = "collab_ops")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub employee_id: Uuid,
+        pub file_name: String,
+        pub file_url: String,
+        pub doc_type: String,
+        pub created_at: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
+#[async_trait::async_trait]
+impl ataqu_domain_pause::repository::EmployeeDocumentRepository for PauseRepositoryImpl {
+    async fn save_document(&self, doc: &ataqu_domain_pause::EmployeeDocument) -> Result<(), ataqu_domain_pause::PauseDomainError> {
+        let active = employee_document_entity::ActiveModel {
+            id: sea_orm::Set(doc.id),
+            tenant_id: sea_orm::Set(doc.tenant_id.as_uuid()),
+            employee_id: sea_orm::Set(doc.employee_id),
+            file_name: sea_orm::Set(doc.file_name.clone()),
+            file_url: sea_orm::Set(doc.file_url.clone()),
+            doc_type: sea_orm::Set(doc.doc_type.clone()),
+            created_at: sea_orm::Set(doc.created_at),
+        };
+        employee_document_entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| ataqu_domain_pause::PauseDomainError::Persistence(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn list_documents_for_employee(
+        &self,
+        tenant_id: &ataqu_kernel::TenantId,
+        employee_id: uuid::Uuid,
+    ) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, ataqu_domain_pause::PauseDomainError> {
+        let models = employee_document_entity::Entity::find()
+            .filter(employee_document_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(employee_document_entity::Column::EmployeeId.eq(employee_id))
+            .all(&self.db)
+            .await
+            .map_err(|e| ataqu_domain_pause::PauseDomainError::Persistence(e.to_string()))?;
+
+        Ok(models.into_iter().map(|m| ataqu_domain_pause::EmployeeDocument {
+            id: m.id,
+            tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
+            employee_id: m.employee_id,
+            file_name: m.file_name,
+            file_url: m.file_url,
+            doc_type: m.doc_type,
+            created_at: m.created_at,
+        }).collect())
+    }
+}

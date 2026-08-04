@@ -38,6 +38,16 @@ pub trait EmployeeRepositoryPort: Send + Sync {
 }
 
 #[async_trait]
+pub trait EmployeeDocumentRepository: Send + Sync {
+    async fn save_document(&self, doc: &crate::EmployeeDocument) -> Result<(), PauseDomainError>;
+    async fn list_documents_for_employee(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+    ) -> Result<Vec<crate::EmployeeDocument>, PauseDomainError>;
+}
+
+#[async_trait]
 pub trait LeaveRequestRepositoryPort: Send + Sync {
     async fn insert(
         &self,

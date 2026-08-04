@@ -82,6 +82,7 @@ pub struct PauseService {
     idempotency: Arc<dyn IdempotencyPort>,
     employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
     leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
+    document_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
     outbox: Arc<dyn OutboxPort>,
 }
 
@@ -90,12 +91,14 @@ impl PauseService {
         idempotency: Arc<dyn IdempotencyPort>,
         employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
         leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
+        document_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
         outbox: Arc<dyn OutboxPort>,
     ) -> Self {
         Self {
             idempotency,
             employee_repo,
             leave_request_repo,
+            document_repo,
             outbox,
         }
     }
@@ -249,5 +252,23 @@ impl PauseService {
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await?;
         Ok(request)
+    }
+
+    pub async fn upload_document(&self, cmd: ataqu_domain_pause::CreateDocumentCommand) -> Result<ataqu_domain_pause::EmployeeDocument, PauseServiceError> {
+        let doc = ataqu_domain_pause::EmployeeDocument {
+            id: Uuid::new_v4(),
+            tenant_id: cmd.tenant_id,
+            employee_id: cmd.employee_id,
+            file_name: cmd.file_name,
+            file_url: cmd.file_url,
+            doc_type: cmd.doc_type,
+            created_at: chrono::Utc::now(),
+        };
+        self.document_repo.save_document(&doc).await?;
+        Ok(doc)
+    }
+
+    pub async fn list_documents(&self, tenant_id: TenantId, employee_id: Uuid) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, PauseServiceError> {
+        self.document_repo.list_documents_for_employee(&tenant_id, employee_id).await.map_err(PauseServiceError::Domain)
     }
 }
