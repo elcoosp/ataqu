@@ -85,7 +85,7 @@ pub struct TokenPair {
 
 #[async_trait]
 pub trait OutboxAppender: Send + Sync {
-    async fn append_event(&self, event: &(impl Serialize + Send + Sync)) -> Result<(), String>;
+    async fn append_event(&self, event: &serde_json::Value) -> Result<(), String>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -309,8 +309,9 @@ where
             .create_user(cmd, self.id_gen.as_ref(), self.clock.as_ref())
             .map_err(AegisServiceError::Domain)?;
         self.repo.save_user(&user).await?;
+        let payload = serde_json::to_value(&event).map_err(|e| AegisServiceError::Internal(e.to_string()))?;
         self.outbox
-            .append_event(&event)
+            .append_event(&payload)
             .await
             .map_err(AegisServiceError::Outbox)?;
         Ok(CreateUserResponse {
@@ -412,7 +413,7 @@ where
 pub struct NoopOutbox;
 #[async_trait]
 impl OutboxAppender for NoopOutbox {
-    async fn append_event(&self, _event: &(impl Serialize + Send + Sync)) -> Result<(), String> {
+    async fn append_event(&self, _event: &serde_json::Value) -> Result<(), String> {
         Ok(())
     }
 }

@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
-use serde::Serialize;
 use uuid::Uuid;
 
 #[async_trait]
@@ -10,7 +9,7 @@ pub trait Outbox: Send + Sync {
         schema: &str,
         event_type: &str,
         aggregate_id: Uuid,
-        payload: &(impl Serialize + Send + Sync),
+        payload: &serde_json::Value,
     ) -> Result<(), String>;
 }
 
@@ -31,10 +30,8 @@ impl Outbox for SeaOrmOutbox {
         schema: &str,
         event_type: &str,
         aggregate_id: Uuid,
-        payload: &(impl Serialize + Send + Sync),
+        payload: &serde_json::Value,
     ) -> Result<(), String> {
-        let payload_json = serde_json::to_value(payload).map_err(|e| e.to_string())?;
-
         let sql = r#"
             INSERT INTO core.outbox (schema, event_type, aggregate_id, payload, status, priority)
             VALUES ($1::app_schema, $2, $3, $4, 'pending', 'normal')
@@ -46,7 +43,7 @@ impl Outbox for SeaOrmOutbox {
                 schema.into(),
                 event_type.into(),
                 aggregate_id.into(),
-                payload_json.into(),
+                payload.clone().into(),
             ],
         );
         self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;

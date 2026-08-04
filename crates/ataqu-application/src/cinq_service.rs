@@ -24,7 +24,9 @@ use ataqu_domain_cinq::repository::{
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::{Email, PhoneNumber};
 
-// Application commands (converted to domain commands later)
+use crate::outbox::Outbox;
+
+// Application commands
 #[derive(Debug, Clone)]
 pub struct CreateContactCommand {
     pub tenant_id: TenantId,
@@ -105,9 +107,12 @@ pub struct CinqService {
     deal_repo: Arc<dyn DealRepository + Send + Sync>,
     activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
     stage_repo: Arc<dyn PipelineStageRepository + Send + Sync>,
+    outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
+
+const CINQ_SCHEMA: &str = "collab_crm";
 
 impl CinqService {
     pub fn new(
@@ -115,6 +120,7 @@ impl CinqService {
         deal_repo: Arc<dyn DealRepository + Send + Sync>,
         activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
         stage_repo: Arc<dyn PipelineStageRepository + Send + Sync>,
+        outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
@@ -123,6 +129,7 @@ impl CinqService {
             deal_repo,
             activity_repo,
             stage_repo,
+            outbox,
             id_gen,
             clock,
         }
@@ -132,22 +139,34 @@ impl CinqService {
     pub async fn create_contact(&self, cmd: CreateContactCommand) -> CinqResult<Contact> {
         let domain_cmd = DomainCreateContact {
             tenant_id: cmd.tenant_id,
-            name: cmd.name,
-            email: cmd.email,
-            phone: cmd.phone,
+            name: cmd.name.clone(),
+            email: cmd.email.clone(),
+            phone: cmd.phone.clone(),
         };
-        let event =
-            contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
         let contact = Contact {
             id: event.id,
             tenant_id: event.tenant_id,
-            name: event.name,
-            email: event.email,
-            phone: event.phone,
+            name: event.name.clone(),
+            email: event.email.clone(),
+            phone: event.phone.clone(),
             created_at: event.created_at,
             updated_at: event.created_at,
         };
         self.contact_repo.save_contact(&contact).await?;
+
+        let payload = serde_json::json!({
+            "contact_id": contact.id,
+            "tenant_id": contact.tenant_id.as_uuid(),
+            "name": contact.name,
+            "email": contact.email.as_ref(),
+            "created_at": contact.created_at,
+        });
+        self.outbox
+            .append(CINQ_SCHEMA, "ContactCreated", contact.id, &payload)
+            .await
+            .map_err(|e| CinqServiceError::Repository(e))?;
+
         Ok(contact)
     }
 
@@ -217,19 +236,28 @@ impl CinqService {
 
     pub async fn import_contacts(
         &self,
-        _tenant_id: TenantId,
+        tenant_id: TenantId,
         rows: Vec<HashMap<String, String>>,
     ) -> CinqResult<Vec<Uuid>> {
-        use ataqu_domain_cinq::csv_validation::validate_contact_row;
         let mut inserted = Vec::new();
         for row in rows {
-            let values: Vec<String> = row.values().cloned().collect();
-            let cmd = validate_contact_row(&values)?;
+            let name = row.get("name").or_else(|| row.get("Name")).or_else(|| row.get("NAME")).cloned().unwrap_or_default();
+            let email_str = row.get("email").or_else(|| row.get("Email")).or_else(|| row.get("EMAIL")).cloned().unwrap_or_default();
+            let phone_str = row.get("phone").or_else(|| row.get("Phone")).or_else(|| row.get("PHONE")).cloned().unwrap_or_default();
+
+            if name.trim().is_empty() || email_str.trim().is_empty() || !email_str.contains('@') {
+                continue;
+            }
+
             let domain_cmd = DomainCreateContact {
-                tenant_id: cmd.tenant_id,
-                name: cmd.name,
-                email: cmd.email,
-                phone: cmd.phone,
+                tenant_id,
+                name: name.clone(),
+                email: Email::new(email_str.clone()),
+                phone: if phone_str.is_empty() {
+                    None
+                } else {
+                    Some(PhoneNumber::new(phone_str.clone()))
+                },
             };
             let event = contact_domain::create_contact(
                 domain_cmd,
@@ -245,8 +273,9 @@ impl CinqService {
                 created_at: event.created_at,
                 updated_at: event.created_at,
             };
-            self.contact_repo.save_contact(&contact).await?;
-            inserted.push(contact.id);
+            if self.contact_repo.save_contact(&contact).await.is_ok() {
+                inserted.push(contact.id);
+            }
         }
         Ok(inserted)
     }
@@ -306,6 +335,22 @@ impl CinqService {
             updated_at: event.created_at,
         };
         self.deal_repo.save_deal(&deal).await?;
+
+        let payload = serde_json::json!({
+            "deal_id": deal.id,
+            "tenant_id": deal.tenant_id.as_uuid(),
+            "contact_id": deal.contact_id,
+            "title": deal.title,
+            "amount": deal.amount,
+            "status": format!("{:?}", deal.status),
+            "pipeline_stage_id": deal.pipeline_stage_id,
+            "created_at": deal.created_at,
+        });
+        self.outbox
+            .append(CINQ_SCHEMA, "DealCreated", deal.id, &payload)
+            .await
+            .map_err(|e| CinqServiceError::Repository(e))?;
+
         Ok(deal)
     }
 
@@ -342,6 +387,21 @@ impl CinqService {
         }
         deal.updated_at = event.updated_at;
         self.deal_repo.save_deal(&deal).await?;
+
+        if let Some(DealStatus::Won) = event.status {
+            let payload = serde_json::json!({
+                "deal_id": deal.id,
+                "tenant_id": deal.tenant_id.as_uuid(),
+                "contact_id": deal.contact_id,
+                "amount": deal.amount,
+                "title": deal.title,
+            });
+            self.outbox
+                .append(CINQ_SCHEMA, "DealWon", deal.id, &payload)
+                .await
+                .map_err(|e| CinqServiceError::Repository(e))?;
+        }
+
         Ok(deal)
     }
 

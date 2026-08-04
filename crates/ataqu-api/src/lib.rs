@@ -41,7 +41,7 @@ pub struct OutboxPlaceholder;
 impl OutboxAppender for OutboxPlaceholder {
     async fn append_event(
         &self,
-        _event: &(impl serde::Serialize + Send + Sync),
+        _event: &serde_json::Value,
     ) -> Result<(), String> {
         Ok(())
     }
