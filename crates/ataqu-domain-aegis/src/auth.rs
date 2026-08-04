@@ -99,6 +99,7 @@ pub trait AuthRepository: Send + Sync {
     async fn find_by_email(&self, email: &Email) -> Result<Option<User>, AuthError>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AuthError>;
     async fn save_user(&self, user: &User) -> Result<(), AuthError>;
+    async fn list_users(&self, tenant_id: Uuid) -> Result<Vec<User>, AuthError>;
 }
 
 /// Pure function to create a user. Returns a UserCreated event.

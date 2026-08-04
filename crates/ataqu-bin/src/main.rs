@@ -299,9 +299,13 @@ async fn main() -> anyhow::Result<()> {
         email_tracking_tx,
     };
 
+    let cors = tower_http::cors::CorsLayer::new()
+        .allow_origin(tower_http::cors::Any)
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::DELETE, axum::http::Method::PATCH])
+        .allow_headers(tower_http::cors::Any);
     let app = create_router(state)
         .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::permissive());
+        .layer(cors);
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();

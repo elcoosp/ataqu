@@ -131,4 +131,14 @@ impl AuthRepository for AegisUserRepository {
         }
         Ok(())
     }
+
+    async fn list_users(&self, tenant_id: Uuid) -> Result<Vec<DomainUser>, AuthError> {
+        let models = user_entity::Entity::find()
+            .filter(user_entity::Column::TenantId.eq(tenant_id))
+            .filter(user_entity::Column::DeletedAt.is_null())
+            .all(&self.db)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(models.into_iter().map(model_to_domain).collect())
+    }
 }

@@ -1,6 +1,6 @@
 //! AEGIS API handlers using AuthContext.
 
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{Json, extract::{Path, State}, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use uuid::Uuid;
@@ -23,7 +23,6 @@ pub async fn create_user(
     Json(req): Json<CreateUserRequest>,
 ) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
     info!("Create user request");
-    // For now, use a nil tenant_id; proper tenant registration will come later.
     let cmd = CreateUserCommand {
         tenant_id: ataqu_kernel::TenantId::new(Uuid::nil()),
         email: Email::new(req.email),
@@ -162,10 +161,50 @@ fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateRoleRequest {
+    pub role: String,
+}
+
+pub async fn list_users(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+    }
+    let users = state.aegis_service.list_users(auth.tenant_id.as_uuid()).await
+        .map_err(map_aegis_error)?;
+    let resp = users.into_iter().map(|u| serde_json::json!({
+        "id": u.id,
+        "email": u.email.to_string(),
+        "name": u.name,
+        "role": u.role,
+        "is_active": u.is_active,
+        "mfa_enabled": u.mfa_enabled,
+    })).collect();
+    Ok(Json(resp))
+}
+
+pub async fn update_user_role(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(user_id): Path<Uuid>,
+    Json(req): Json<UpdateRoleRequest>,
+) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+    }
+    state.aegis_service.update_user_role(user_id, req.role).await
+        .map_err(map_aegis_error)?;
+    Ok(StatusCode::OK)
+}
+
 pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::post;
+    use axum::routing::{post, patch};
     axum::Router::new()
-        .route("/users", post(create_user))
+        .route("/users", post(create_user).get(list_users))
+        .route("/users/:id/role", patch(update_user_role))
         .route("/login", post(login))
         .route("/refresh", post(refresh_token))
         .route("/mfa/setup", post(mfa_setup))

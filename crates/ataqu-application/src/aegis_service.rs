@@ -7,9 +7,6 @@ use argon2::{
 };
 use async_trait::async_trait;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
-use rand::Rng;
-use rand::distributions::Alphanumeric;
-use rand::thread_rng;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -17,6 +14,7 @@ use thiserror::Error;
 use tracing::{info, instrument};
 use uuid::Uuid;
 
+use ataqu_domain_aegis::mfa::{generate_otpauth_url, generate_secret, verify_totp};
 use ataqu_domain_aegis::{
     AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
     CreateUserCommand as DomainCreateUserCommand, User, UserCreated,
@@ -111,7 +109,7 @@ impl RealAegisDomain {
         if !cmd.email.as_ref().contains('@') {
             return Err(AuthError::InvalidCredentials);
         }
-        let salt = SaltString::generate(&mut thread_rng());
+        let salt = SaltString::generate(&mut rand::thread_rng());
         let argon2 = Argon2::default();
         let password_hash = argon2
             .hash_password(cmd.password_hash.as_bytes(), &salt)
@@ -164,7 +162,6 @@ impl RealAegisDomain {
             if cmd.totp_code.is_none() {
                 return Err(AegisServiceError::MfaRequired);
             }
-            // verify TOTP (simplified)
             let secret = user.mfa_secret.as_deref().unwrap_or("");
             if !verify_totp(secret, cmd.totp_code.as_ref().unwrap()) {
                 return Err(AegisServiceError::AuthenticationFailed);
@@ -192,16 +189,8 @@ impl RealAegisDomain {
                 "MFA already enabled".to_string(),
             ));
         }
-        let secret: String = thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(16)
-            .map(char::from)
-            .collect();
-        let qr_code_url = format!(
-            "otpauth://totp/Ataqu:{}?secret={}&issuer=Ataqu",
-            user.email.as_ref(),
-            secret
-        );
+        let secret = generate_secret();
+        let qr_code_url = generate_otpauth_url(&secret, user.email.as_ref());
         user.mfa_secret = Some(secret.clone());
         user.updated_at = clock.now();
         Ok((secret, qr_code_url))
@@ -262,11 +251,6 @@ fn generate_token_pair(
     Ok((access, refresh))
 }
 
-fn verify_totp(secret: &str, code: &str) -> bool {
-    // simplified: just check length
-    code.len() == 6 && !secret.is_empty()
-}
-
 pub struct AegisService<O> {
     repo: Arc<dyn AuthRepository + Send + Sync>,
     outbox: Arc<O>,
@@ -310,10 +294,7 @@ where
             .map_err(AegisServiceError::Domain)?;
         self.repo.save_user(&user).await?;
         let payload = serde_json::to_value(&event).map_err(|e| AegisServiceError::Internal(e.to_string()))?;
-        self.outbox
-            .append_event(&payload)
-            .await
-            .map_err(AegisServiceError::Outbox)?;
+        self.outbox.append_event(&payload).await.map_err(AegisServiceError::Outbox)?;
         Ok(CreateUserResponse {
             user_id: user.id,
             email: user.email.to_string(),
@@ -369,7 +350,6 @@ where
         if !self.domain.verify_mfa(&user, code)? {
             return Err(AegisServiceError::AuthenticationFailed);
         }
-        // enable MFA after verification
         let mut user = user;
         self.domain.enable_mfa(&mut user, self.clock.as_ref())?;
         self.repo.save_user(&user).await?;
@@ -407,6 +387,18 @@ where
             refresh_token: refresh,
             user_id: user.id,
         })
+    }
+
+    pub async fn list_users(&self, tenant_id: Uuid) -> Result<Vec<User>, AegisServiceError> {
+        self.repo.list_users(tenant_id).await.map_err(AegisServiceError::Domain)
+    }
+
+    pub async fn update_user_role(&self, user_id: Uuid, role: String) -> Result<(), AegisServiceError> {
+        let mut user = self.repo.find_by_id(user_id).await?
+            .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+        user.role = role;
+        self.repo.save_user(&user).await?;
+        Ok(())
     }
 }
 
