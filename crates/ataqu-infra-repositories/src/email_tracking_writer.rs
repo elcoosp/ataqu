@@ -9,7 +9,7 @@ use tokio::sync::mpsc;
 use tracing::{error, warn};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TrackingEvent {
     pub tenant_id: Uuid,
     pub contact_id: Uuid,

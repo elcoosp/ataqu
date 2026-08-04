@@ -504,12 +504,11 @@ pub async fn export_csv(
 
 // ---------- Email Tracking ----------
 pub async fn track_email(
-    _state: State<AppState>,
-    _auth: AuthContext,
-    Json(_payload): Json<TrackEmailRequest>,
+    state: State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<TrackEmailRequest>,
 ) -> ApiResult<StatusCode> {
-    // TODO: implement email tracking via bounded channel
-    Ok(StatusCode::ACCEPTED)
+    super::email_tracking::track_email(state, auth, Json(payload)).await.map(|_| StatusCode::ACCEPTED)
 }
 
 // ---------- Router ----------

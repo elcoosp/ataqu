@@ -344,6 +344,7 @@ dependencies = [
  "ataqu-domain-tempo",
  "ataqu-domain-vault",
  "ataqu-domain-vista",
+ "ataqu-infra-repositories",
  "ataqu-kernel",
  "ataqu-security",
  "axum",
@@ -634,6 +635,7 @@ dependencies = [
 name = "ataqu-infra-repositories"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-trait",
  "ataqu-contracts",
  "ataqu-domain-aegis",
@@ -653,9 +655,11 @@ dependencies = [
  "once_cell",
  "rust_decimal",
  "sea-orm",
+ "serde",
  "serde_json",
  "sqlx",
  "thiserror",
+ "tokio",
  "tracing",
  "uuid",
 ]

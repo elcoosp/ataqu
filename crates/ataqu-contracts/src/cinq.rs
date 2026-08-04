@@ -99,6 +99,7 @@ pub struct ImportCsvResult {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct TrackEmailRequest {
-    pub email: String,
-    pub action: String,
+    pub contact_id: uuid::Uuid,
+    pub event_type: String,
+    pub metadata: serde_json::Value,
 }

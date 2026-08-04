@@ -113,6 +113,7 @@ impl DealRepository {
             title: ActiveValue::Set(title.to_string()),
             amount: ActiveValue::Set(amount),
             status: ActiveValue::Set(status.to_string()),
+            pipeline_stage_id: ActiveValue::Set(Uuid::nil()),
             custom_fields: ActiveValue::Set(custom_fields),
             created_at: ActiveValue::Set(now),
             updated_at: ActiveValue::Set(now),

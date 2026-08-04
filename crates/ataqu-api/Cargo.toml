@@ -16,7 +16,7 @@ rust_decimal = "1.32"
 anyhow = "1.0.103"
 chrono = "0.4.45"
 thiserror = "2.0.18"
-tokio = { version = "1.52", features = ["sync", "rt", "time"] }
+tokio = { version = "1.52", features = ["sync", "rt", "time", "macros"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
 async-trait = "0.1"
@@ -25,7 +25,6 @@ ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
-sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
 ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
@@ -34,6 +33,8 @@ ataqu-domain-vault = { path = "../ataqu-domain-vault" }
 ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-vista = { path = "../ataqu-domain-vista" }
+ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
+sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 csv = "1.3"
 rand = "0.8.5"
 dashmap = "6.0.1"

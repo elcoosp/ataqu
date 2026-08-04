@@ -6,6 +6,7 @@ pub mod middleware;
 pub mod serializers;
 
 use axum::Router;
+use axum::extract::State;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -63,14 +64,18 @@ pub struct AppState {
     pub id_gen: Arc<dyn IdGenerator>,
     pub clock: Arc<dyn Clock>,
     pub ws_registry: handlers::dial_ws::ConnectionRegistry,
+    pub email_tracking_tx: tokio::sync::mpsc::Sender<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
 }
 
 async fn health_check() -> &'static str {
     "ok"
 }
 
-async fn readiness_check() -> &'static str {
-    "ready"
+async fn readiness_check(State(state): State<AppState>) -> impl axum::response::IntoResponse {
+    match state.cinq_service.list_contacts(ataqu_kernel::TenantId::new(uuid::Uuid::nil()), 1, 0).await {
+        Ok(_) => (axum::http::StatusCode::OK, "ready"),
+        Err(_) => (axum::http::StatusCode::SERVICE_UNAVAILABLE, "not ready"),
+    }
 }
 
 pub fn create_router(state: AppState) -> Router {

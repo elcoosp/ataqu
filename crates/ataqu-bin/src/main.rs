@@ -170,6 +170,18 @@ async fn main() -> anyhow::Result<()> {
         pause_outbox,
     ));
 
+    // Email tracking writer
+    let (email_writer, email_tracking_tx) = ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
+        pools.core.clone(),
+        std::path::PathBuf::from("/tmp/ataqu_email_spill"),
+        100 * 1024 * 1024,
+    );
+    tokio::spawn(async move {
+        if let Err(e) = email_writer.run().await {
+            tracing::error!("Email tracking writer crashed: {}", e);
+        }
+    });
+
     // Build AppState
     use dashmap::DashMap;
     let ws_registry = Arc::new(DashMap::new());
@@ -190,6 +202,7 @@ async fn main() -> anyhow::Result<()> {
         id_gen: id_gen.clone(),
         clock: clock.clone(),
         ws_registry,
+        email_tracking_tx,
     };
 
     let app = create_router(state)
