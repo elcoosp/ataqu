@@ -350,6 +350,7 @@ dependencies = [
  "chrono",
  "csv",
  "dotenvy",
+ "jsonwebtoken",
  "mockall",
  "rand 0.8.7",
  "sea-orm",

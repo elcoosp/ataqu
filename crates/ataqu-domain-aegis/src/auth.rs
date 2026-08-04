@@ -3,14 +3,14 @@
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use serde::Serialize;
 use async_trait::async_trait;
-
-use crate::Email;
-use std::time::SystemTime;
 use uuid::Uuid;
+use std::time::SystemTime;
+use crate::types::Email;
 
 /// Command to create a new user.
 #[derive(Debug, Clone)]
 pub struct CreateUserCommand {
+    pub tenant_id: TenantId,
     pub email: Email,
     pub password_hash: String,
     pub name: Option<String>,
@@ -21,6 +21,8 @@ pub struct CreateUserCommand {
 pub struct AuthenticateCommand {
     pub email: Email,
     pub password_plain: String,
+    pub totp_code: Option<String>,
+    pub tenant_id: Option<TenantId>,
 }
 
 /// Command to set up MFA for a user.
@@ -38,9 +40,13 @@ pub struct User {
     pub email: Email,
     pub password_hash: String,
     pub name: Option<String>,
+    pub mfa_secret: Option<String>,
     pub mfa_enabled: bool,
+    pub is_active: bool,
+    pub role: String,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
+    pub last_login_at: Option<SystemTime>,
 }
 
 /// Event emitted when a user is created.
@@ -91,14 +97,15 @@ pub enum AuthError {
 #[async_trait]
 pub trait AuthRepository: Send + Sync {
     async fn find_by_email(&self, email: &Email) -> Result<Option<User>, AuthError>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AuthError>;
     async fn save_user(&self, user: &User) -> Result<(), AuthError>;
 }
 
 /// Pure function to create a user. Returns a UserCreated event.
 pub fn create_user(
     cmd: CreateUserCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> UserCreated {
     let user_id = id_gen.new_uuid_v7();
     let now = clock.now();
@@ -114,7 +121,7 @@ pub fn authenticate(
     cmd: AuthenticateCommand,
     stored_user: &User,
     password_match: bool,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> Result<AuthenticationSucceeded, AuthenticationFailed> {
     let now = clock.now();
     if !password_match {
@@ -134,7 +141,7 @@ pub fn authenticate(
 pub fn setup_mfa(
     cmd: SetupMfaCommand,
     user: &mut User,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> Result<MfaSetupCompleted, AuthError> {
     if user.mfa_enabled {
         return Err(AuthError::MfaAlreadyEnabled);

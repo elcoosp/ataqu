@@ -9,7 +9,6 @@ use axum::Router;
 use std::sync::Arc;
 use uuid::Uuid;
 
-// Import all application services.
 use ataqu_application::aegis_service::{AegisService, OutboxAppender};
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
@@ -20,41 +19,27 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
-
-// Kernel capabilities
 use ataqu_kernel::{Clock, IdGenerator};
 
-// Simple system implementations
 pub struct SystemIdGenerator;
 impl IdGenerator for SystemIdGenerator {
-    fn new_uuid_v7(&self) -> Uuid {
-        Uuid::now_v7()
-    }
+    fn new_uuid_v7(&self) -> Uuid { Uuid::now_v7() }
 }
 
 pub struct SystemClock;
 impl Clock for SystemClock {
-    fn now(&self) -> std::time::SystemTime {
-        std::time::SystemTime::now()
-    }
+    fn now(&self) -> std::time::SystemTime { std::time::SystemTime::now() }
 }
 
-// Placeholder outbox (implements the new OutboxAppender trait)
 #[derive(Clone)]
 pub struct OutboxPlaceholder;
-
 #[async_trait::async_trait]
 impl OutboxAppender for OutboxPlaceholder {
-    async fn append_event(
-        &self,
-        _event: &(impl serde::Serialize + Send + Sync),
-    ) -> Result<(), String> {
+    async fn append_event(&self, _event: &(impl serde::Serialize + Send + Sync)) -> Result<(), String> {
         Ok(())
     }
 }
 
-// AppState with all services.
-// The AegisService takes only the outbox placeholder as generic parameter.
 #[derive(Clone)]
 pub struct AppState {
     pub cinq_service: Arc<CinqService>,
@@ -67,9 +52,9 @@ pub struct AppState {
     pub vista_service: Arc<VistaService>,
     pub aegis_service: Arc<AegisService<OutboxPlaceholder>>,
     pub pause_service: Arc<PauseService>,
+    pub jwt_secret: Arc<Vec<u8>>,
 }
 
-// Helper to create a router with all app routes.
 pub fn create_router(state: AppState) -> Router {
     use handlers::aegis::routes as aegis_routes;
     use handlers::cinq::cinq_routes;

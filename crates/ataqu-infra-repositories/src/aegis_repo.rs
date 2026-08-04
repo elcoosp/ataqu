@@ -1,6 +1,8 @@
 //! AEGIS user repository implementation using SeaORM for the domain trait.
 use async_trait::async_trait;
 use sea_orm::{ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, ActiveModelTrait};
+use uuid::Uuid;
+use chrono::{DateTime, Utc};
 use ataqu_kernel::TenantId;
 use ataqu_security::Email;
 use ataqu_domain_aegis::{User as DomainUser, AuthRepository, AuthError};
@@ -22,8 +24,11 @@ mod user_entity {
         pub mfa_secret: Option<String>,
         pub name: Option<String>,
         pub mfa_enabled: bool,
+        pub is_active: bool,
+        pub role: String,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
+        pub last_login_at: Option<DateTime<Utc>>,
         pub deleted_at: Option<DateTime<Utc>>,
     }
 
@@ -51,11 +56,14 @@ fn domain_to_active(user: &DomainUser) -> user_entity::ActiveModel {
         tenant_id: Set(user.tenant_id.as_uuid()),
         email: Set(user.email.as_ref().to_string()),
         password_hash: Set(user.password_hash.clone()),
-        mfa_secret: Set(None),
+        mfa_secret: Set(user.mfa_secret.clone()),
         name: Set(user.name.clone()),
         mfa_enabled: Set(user.mfa_enabled),
+        is_active: Set(user.is_active),
+        role: Set(user.role.clone()),
         created_at: Set(user.created_at.into()),
         updated_at: Set(user.updated_at.into()),
+        last_login_at: Set(user.last_login_at.map(|t| t.into())),
         deleted_at: Set(None),
     }
 }
@@ -66,10 +74,14 @@ fn model_to_domain(model: user_entity::Model) -> DomainUser {
         tenant_id: TenantId::new(model.tenant_id),
         email: Email::new(model.email),
         password_hash: model.password_hash,
+        mfa_secret: model.mfa_secret,
         name: model.name,
         mfa_enabled: model.mfa_enabled,
+        is_active: model.is_active,
+        role: model.role,
         created_at: model.created_at.into(),
         updated_at: model.updated_at.into(),
+        last_login_at: model.last_login_at.map(|t| t.into()),
     }
 }
 
@@ -78,6 +90,16 @@ impl AuthRepository for AegisUserRepository {
     async fn find_by_email(&self, email: &Email) -> Result<Option<DomainUser>, AuthError> {
         let model = user_entity::Entity::find()
             .filter(user_entity::Column::Email.eq(email.as_ref()))
+            .filter(user_entity::Column::DeletedAt.is_null())
+            .one(&self.db)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(model.map(model_to_domain))
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<DomainUser>, AuthError> {
+        let model = user_entity::Entity::find()
+            .filter(user_entity::Column::Id.eq(id))
             .filter(user_entity::Column::DeletedAt.is_null())
             .one(&self.db)
             .await
@@ -96,10 +118,14 @@ impl AuthRepository for AegisUserRepository {
         if exists {
             let mut active_update = active;
             active_update.updated_at = Set(chrono::Utc::now());
-            user_entity::Entity::update(active_update).exec(&self.db).await
+            user_entity::Entity::update(active_update)
+                .exec(&self.db)
+                .await
                 .map_err(|e| AuthError::Database(e.to_string()))?;
         } else {
-            user_entity::Entity::insert(active).exec(&self.db).await
+            user_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
                 .map_err(|e| AuthError::Database(e.to_string()))?;
         }
         Ok(())

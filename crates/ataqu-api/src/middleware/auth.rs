@@ -1,0 +1,70 @@
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
+use axum::response::{IntoResponse, Response};
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use ataqu_kernel::TenantId;
+use crate::error::ApiResponseError;
+use crate::AppState;
+use axum::extract::FromRef;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JwtClaims {
+    pub sub: String,
+    pub tenant_id: Uuid,
+    pub email: String,
+    pub roles: Vec<String>,
+    pub exp: usize,
+    pub iat: usize,
+    pub token_type: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct AuthContext {
+    pub user_id: Uuid,
+    pub tenant_id: TenantId,
+    pub email: String,
+    pub roles: Vec<String>,
+}
+
+impl AuthContext {
+    pub fn has_role(&self, role: &str) -> bool {
+        self.roles.iter().any(|r| r == role)
+    }
+}
+
+impl<S> FromRequestParts<S> for AuthContext
+where
+    S: Send + Sync,
+    AppState: FromRef<S>,
+{
+    type Rejection = ApiResponseError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let auth_header = parts
+            .headers
+            .get("Authorization")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| s.strip_prefix("Bearer "))
+            .ok_or_else(|| ApiResponseError::unauthorized("Missing or invalid Authorization header"))?;
+
+        let token_data = decode::<JwtClaims>(
+            auth_header,
+            &DecodingKey::from_secret(&app_state.jwt_secret),
+            &Validation::default(),
+        )
+        .map_err(|_| ApiResponseError::unauthorized("Invalid token"))?;
+
+        let user_id = Uuid::parse_str(&token_data.claims.sub)
+            .map_err(|_| ApiResponseError::unauthorized("Invalid user ID in token"))?;
+
+        Ok(AuthContext {
+            user_id,
+            tenant_id: TenantId::new(token_data.claims.tenant_id),
+            email: token_data.claims.email,
+            roles: token_data.claims.roles,
+        })
+    }
+}

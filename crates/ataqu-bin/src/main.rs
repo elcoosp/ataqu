@@ -5,32 +5,29 @@
 use dotenvy::dotenv;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::{info};
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 
-use ataqu_api::{AppState, create_router};
-use ataqu_application::{
-    aegis_service::{AegisService, RealAegisDomain},
-    cinq_service::CinqService,
-    dial_service::DialService,
-    pivot_service::PivotService,
-    sond_service::SondService,
-    spark_service::SparkService,
-    tempo_service::TempoService,
-    vault_service::VaultService,
-    vista_service::VistaService,
-    pause_service::PauseService,
-};
+use ataqu_api::{AppState, OutboxPlaceholder, create_router};
+use ataqu_application::aegis_service::{AegisService, RealAegisDomain, AegisConfig};
+use ataqu_application::cinq_service::CinqService;
+use ataqu_application::dial_service::DialService;
+use ataqu_application::pivot_service::PivotService;
+use ataqu_application::sond_service::SondService;
+use ataqu_application::spark_service::SparkService;
+use ataqu_application::tempo_service::TempoService;
+use ataqu_application::vault_service::VaultService;
+use ataqu_application::vista_service::VistaService;
+use ataqu_application::pause_service::PauseService;
 use ataqu_kernel::{Clock, IdGenerator};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_idempotency::IdempotencyCache;
 use ataqu_infra_pools::Pools;
-use ataqu_infra_repositories;
-use ataqu_api::OutboxPlaceholder;
 
 // ------------------------------------------------------------------------------
 // System implementations
@@ -74,6 +71,17 @@ async fn main() -> anyhow::Result<()> {
     let id_gen = Arc::new(SystemIdGenerator);
     let clock = Arc::new(SystemClock);
 
+    // JWT secret configuration
+    let jwt_secret_raw = std::env::var("JWT_SECRET")
+        .unwrap_or_else(|_| "change-me-in-production-32-bytes!!".into())
+        .into_bytes();
+    let jwt_secret = Arc::new(jwt_secret_raw.clone());
+    let aegis_config = AegisConfig {
+        jwt_secret: jwt_secret_raw,
+        access_token_ttl: Duration::from_secs(900),
+        refresh_token_ttl: Duration::from_secs(604800),
+    };
+
     // Idempotency cache (hot path) – use in middleware later
     let _idempotency_cache = IdempotencyCache::new();
 
@@ -90,6 +98,7 @@ async fn main() -> anyhow::Result<()> {
         aegis_domain,
         id_gen.clone(),
         clock.clone(),
+        aegis_config,
     ));
 
     // CINQ
@@ -208,6 +217,7 @@ async fn main() -> anyhow::Result<()> {
         vista_service,
         aegis_service,
         pause_service,
+        jwt_secret: jwt_secret.clone(),
     };
 
     // Create router
@@ -217,7 +227,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
-    
+
     let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
         let vista = vista_service_for_outbox.clone();
         async move {

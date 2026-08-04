@@ -1,26 +1,23 @@
-//! AEGIS API handlers.
-//! Uses AppState to access the service (no generics).
+//! AEGIS API handlers using AuthContext.
 
 use axum::{
-    Json as AxumJson,
     extract::State,
-    http::{HeaderName, HeaderValue, StatusCode},
-    response::{IntoResponse, Json, Response},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
-use rand::distributions::Alphanumeric;
-use rand::thread_rng;
-use rand::Rng;
 use uuid::Uuid;
 
 use ataqu_application::aegis_service::{
-    AegisServiceError, AuthenticateCommand, SetupMfaCommand, CreateUserCommand,
+    AegisServiceError, AuthenticateCommand, CreateUserCommand,
 };
 use ataqu_security::Email;
 use crate::AppState;
+use crate::middleware::AuthContext;
+use crate::error::{ApiResponseError, ApiResult};
 
-// ---------- Create User ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateUserRequest {
     pub email: String,
@@ -31,128 +28,150 @@ pub struct CreateUserRequest {
 pub async fn create_user(
     State(state): State<AppState>,
     Json(req): Json<CreateUserRequest>,
-) -> Response {
+) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
     info!("Create user request");
+    // For now, use a nil tenant_id; proper tenant registration will come later.
     let cmd = CreateUserCommand {
+        tenant_id: ataqu_kernel::TenantId::new(Uuid::nil()),
         email: Email::new(req.email),
         password_hash: req.password,
         name: req.name,
     };
     match state.aegis_service.create_user(cmd).await {
         Ok(resp) => {
-            (StatusCode::CREATED, Json(serde_json::json!({
+            Ok((StatusCode::CREATED, Json(serde_json::json!({
                 "user_id": resp.user_id,
                 "email": resp.email,
-            }))).into_response()
+            }))))
         }
         Err(err) => {
             error!(error = ?err, "User creation failed");
-            map_aegis_error(err)
+            Err(map_aegis_error(err))
         }
     }
 }
 
-// ---------- Login ----------
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {
     pub email: String,
     pub password: String,
     #[serde(default)]
-    pub tenant_id: Option<Uuid>,
+    pub totp_code: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct LoginResponseBody {
+pub struct LoginResponse {
     pub access_token: String,
     pub refresh_token: String,
+    pub user_id: Uuid,
 }
 
 pub async fn login(
     State(state): State<AppState>,
     Json(req): Json<LoginRequest>,
-) -> Response {
-    info!(tenant_id = ?req.tenant_id, "Login attempt");
+) -> ApiResult<Json<LoginResponse>> {
+    info!("Login attempt");
     let cmd = AuthenticateCommand {
         email: Email::new(req.email),
         password_plain: req.password,
+        totp_code: req.totp_code,
+        tenant_id: None,
     };
     match state.aegis_service.authenticate(cmd).await {
         Ok(resp) => {
-            let body = LoginResponseBody {
+            Ok(Json(LoginResponse {
                 access_token: resp.access_token,
                 refresh_token: resp.refresh_token,
-            };
-            (StatusCode::OK, Json(body)).into_response()
+                user_id: resp.user_id,
+            }))
         }
         Err(err) => {
             error!(error = ?err, "Login failed");
-            map_aegis_error(err)
+            Err(map_aegis_error(err))
         }
     }
 }
 
-// ---------- MFA Setup ----------
-#[derive(Debug, Deserialize)]
-pub struct MfaSetupRequest {
-    pub user_id: Uuid,
-}
-
 #[derive(Debug, Serialize)]
-pub struct MfaSetupResponseBody {
+pub struct MfaSetupResponse {
     pub secret: String,
     pub qr_code_url: String,
 }
 
 pub async fn mfa_setup(
     State(state): State<AppState>,
-    Json(req): Json<MfaSetupRequest>,
-) -> Response {
-    info!(user_id = ?req.user_id, "MFA setup request");
-    let secret: String = thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(16)
-        .map(char::from)
-        .collect();
-    let cmd = SetupMfaCommand { user_id: req.user_id, totp_secret: secret };
-    match state.aegis_service.setup_mfa(cmd).await {
+    auth: AuthContext,
+) -> ApiResult<Json<MfaSetupResponse>> {
+    info!(user_id = ?auth.user_id, "MFA setup request");
+    match state.aegis_service.setup_mfa(auth.user_id).await {
         Ok(resp) => {
-            let body = MfaSetupResponseBody {
+            Ok(Json(MfaSetupResponse {
                 secret: resp.secret,
                 qr_code_url: resp.qr_code_url,
-            };
-            (StatusCode::OK, Json(body)).into_response()
+            }))
         }
         Err(err) => {
             error!(error = ?err, "MFA setup failed");
-            map_aegis_error(err)
+            Err(map_aegis_error(err))
         }
     }
 }
 
-// ---------- Error mapping ----------
-fn map_aegis_error(err: AegisServiceError) -> Response {
-    let (status, msg) = match &err {
-        AegisServiceError::Validation(_) => (StatusCode::UNPROCESSABLE_ENTITY, err.to_string()),
-        AegisServiceError::AuthenticationFailed => (StatusCode::UNAUTHORIZED, err.to_string()),
-        AegisServiceError::MfaSetupFailed(_) => (StatusCode::BAD_REQUEST, err.to_string()),
-        AegisServiceError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()),
-        AegisServiceError::Outbox(_) => (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()),
-        AegisServiceError::Domain(_) => (StatusCode::UNAUTHORIZED, err.to_string()),
-    };
-    let mut response = (status, Json(serde_json::json!({ "error": msg }))).into_response();
-    if matches!(err, AegisServiceError::Database(_) | AegisServiceError::Outbox(_)) {
-        response
-            .headers_mut()
-            .insert("Retry-After", HeaderValue::from_static("5"));
-    }
-    response
+#[derive(Debug, Deserialize)]
+pub struct MfaVerifyRequest {
+    pub code: String,
 }
 
-// ---------- Routes ----------
+pub async fn mfa_verify(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<MfaVerifyRequest>,
+) -> ApiResult<StatusCode> {
+    state.aegis_service.verify_mfa(auth.user_id, &req.code).await
+        .map_err(map_aegis_error)?;
+    Ok(StatusCode::OK)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RefreshTokenRequest {
+    pub refresh_token: String,
+}
+
+pub async fn refresh_token(
+    State(state): State<AppState>,
+    Json(req): Json<RefreshTokenRequest>,
+) -> ApiResult<Json<LoginResponse>> {
+    let resp = state.aegis_service.refresh_token(&req.refresh_token).await
+        .map_err(map_aegis_error)?;
+    Ok(Json(LoginResponse {
+        access_token: resp.access_token,
+        refresh_token: resp.refresh_token,
+        user_id: resp.user_id,
+    }))
+}
+
+fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
+    use AegisServiceError::*;
+    match err {
+        Validation(msg) => ApiResponseError::validation(&msg),
+        AuthenticationFailed => ApiResponseError::unauthorized("Authentication failed"),
+        MfaSetupFailed(msg) => ApiResponseError::validation(&msg),
+        Database(msg) => ApiResponseError::internal(&msg),
+        Outbox(msg) => ApiResponseError::internal(&msg),
+        Domain(e) => ApiResponseError::internal(&e.to_string()),
+        NotFound(msg) => ApiResponseError::not_found(&msg),
+        Conflict(msg) => ApiResponseError::conflict(&msg),
+        MfaRequired => ApiResponseError::unauthorized("MFA required"),
+        Internal(msg) => ApiResponseError::internal(&msg),
+    }
+}
+
 pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::{post};
+    use axum::routing::{post, get, patch};
     axum::Router::new()
         .route("/users", post(create_user))
         .route("/login", post(login))
+        .route("/refresh", post(refresh_token))
         .route("/mfa/setup", post(mfa_setup))
+        .route("/mfa/verify", post(mfa_verify))
 }
