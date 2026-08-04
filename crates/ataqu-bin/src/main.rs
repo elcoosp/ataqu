@@ -124,9 +124,9 @@ async fn main() -> anyhow::Result<()> {
 
     // DIAL
         // DIAL with real repository and presence
-    use ataqu_infra_repositories::dial_repo_impl::{DialRepositoryImpl, InMemoryPresenceStore};
+    use ataqu_infra_repositories::dial_repo_impl::{DialRepositoryImpl, DbPresenceStore};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
-    let dial_presence = Arc::new(InMemoryPresenceStore::new());
+        let dial_presence = Arc::new(ataqu_infra_repositories::dial_repo_impl::DbPresenceStore::new(pools.core.clone()));
     let dial_service = Arc::new(DialService::new(
         dial_repo,
         dial_presence,

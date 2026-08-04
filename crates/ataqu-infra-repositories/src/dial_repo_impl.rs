@@ -18,6 +18,7 @@ use crate::entities::dial::channel as channel_entity;
 use crate::entities::dial::message as message_entity;
 use crate::entities::dial::thread as thread_entity;
 use crate::entities::dial::mention as mention_entity;
+use crate::entities::dial::presence as presence_entity;
 
 // ---------- Conversion helpers ----------
 
@@ -32,21 +33,19 @@ fn channel_domain_to_active(channel: &Channel) -> channel_entity::ActiveModel {
         name: Set(channel.name.clone()),
         created_by: Set(channel.created_by.as_uuid()),
         created_at: Set(system_time_to_utc(channel.created_at)),
-        updated_at: Set(system_time_to_utc(channel.created_at)), // initially same
+        updated_at: Set(system_time_to_utc(channel.created_at)),
         archived_at: Set(channel.archived_at.map(system_time_to_utc)),
     }
 }
 
 fn channel_model_to_domain(model: channel_entity::Model) -> Channel {
-    // We need to store channel_type in the DB; for now we default to Public.
-    // We'll add a column later.
     Channel {
         id: ChannelId::new(model.id),
         tenant_id: TenantId::new(model.tenant_id),
         name: model.name,
         channel_type: ataqu_domain_dial::chat::ChannelType::Public,
         created_by: UserId::new(model.created_by),
-        participants: Vec::new(), // not stored yet
+        participants: Vec::new(),
         created_at: model.created_at.into(),
         archived_at: model.archived_at.map(|dt| dt.into()),
     }
@@ -265,48 +264,83 @@ impl DialRepository for DialRepositoryImpl {
     }
 }
 
-// ---------- Presence Store (In-memory – can be replaced with Redis later) ----------
-pub struct InMemoryPresenceStore {
-    store: std::sync::Arc<dashmap::DashMap<Uuid, dashmap::DashSet<Uuid>>>,
+// ---------- DB-backed Presence Store ----------
+pub struct DbPresenceStore {
+    db: DatabaseConnection,
 }
 
-impl InMemoryPresenceStore {
-    pub fn new() -> Self {
-        Self {
-            store: std::sync::Arc::new(dashmap::DashMap::new()),
-        }
+impl DbPresenceStore {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
     }
 }
 
 #[async_trait]
-impl PresenceStore for InMemoryPresenceStore {
+impl PresenceStore for DbPresenceStore {
     async fn set_presence(&self, tenant_id: &TenantId, user_id: &UserId, status: PresenceStatus) -> Result<(), DialError> {
-        if status == PresenceStatus::Online {
-            self.store.entry(tenant_id.as_uuid())
-                .or_insert_with(dashmap::DashSet::new)
-                .insert(user_id.as_uuid());
+        let status_str = match status {
+            PresenceStatus::Online => "online",
+            PresenceStatus::Away => "away",
+            PresenceStatus::Offline => "offline",
+        };
+        let active = presence_entity::ActiveModel {
+            tenant_id: Set(tenant_id.as_uuid()),
+            user_id: Set(user_id.as_uuid()),
+            status: Set(status_str.to_string()),
+            last_seen: Set(Utc::now()),
+        };
+        // Upsert: insert or update on conflict
+        let existing = presence_entity::Entity::find()
+            .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        if let Some(model) = existing {
+            let mut active_model = model.into_active_model();
+            active_model.status = Set(status_str.to_string());
+            active_model.last_seen = Set(Utc::now());
+            active_model.update(&self.db).await.map_err(|e| DialError::Repository(e.to_string()))?;
         } else {
-            if let Some(set) = self.store.get(&tenant_id.as_uuid()) {
-                set.remove(&user_id.as_uuid());
-            }
+            presence_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| DialError::Repository(e.to_string()))?;
         }
         Ok(())
     }
 
-    async fn get_presence(&self, _tenant_id: &TenantId, _user_id: &UserId) -> Result<Option<PresenceStatus>, DialError> {
-        Ok(None) // we could implement, but not needed for now
+    async fn get_presence(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<Option<PresenceStatus>, DialError> {
+        let model = presence_entity::Entity::find()
+            .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(model.and_then(|m| match m.status.as_str() {
+            "online" => Some(PresenceStatus::Online),
+            "away" => Some(PresenceStatus::Away),
+            _ => Some(PresenceStatus::Offline),
+        }))
     }
 
     async fn remove_presence(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<(), DialError> {
-        if let Some(set) = self.store.get(&tenant_id.as_uuid()) {
-            set.remove(&user_id.as_uuid());
-        }
+        presence_entity::Entity::delete_many()
+            .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(presence_entity::Column::UserId.eq(user_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
         Ok(())
     }
 
     async fn get_online_users(&self, tenant_id: &TenantId) -> Result<Vec<UserId>, DialError> {
-        let set = self.store.get(&tenant_id.as_uuid());
-        let users = set.map(|s| s.iter().map(|id| UserId::new(*id)).collect()).unwrap_or_default();
-        Ok(users)
+        let models = presence_entity::Entity::find()
+            .filter(presence_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(presence_entity::Column::Status.eq("online"))
+            .all(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(|m| UserId::new(m.user_id)).collect())
     }
 }
