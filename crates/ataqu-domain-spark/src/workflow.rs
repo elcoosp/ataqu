@@ -1,14 +1,14 @@
 use crate::{
     action::Action,
-    condition::Condition,
     commands::{CreateWorkflowCommand, TriggerWorkflowCommand},
+    condition::Condition,
     errors::SparkError,
     events::{WorkflowCreated, WorkflowTriggered},
     trigger::Trigger,
 };
 use ataqu_kernel::{Clock, IdGenerator};
-use uuid::Uuid;
 use serde_json::Value;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Workflow {
@@ -43,8 +43,8 @@ pub fn create_workflow(
         conditions: cmd.conditions,
         actions: cmd.actions,
         is_active: true,
-            created_at: created_at,
-            updated_at: created_at,
+        created_at,
+        updated_at: created_at,
     };
 
     let event = WorkflowCreated {

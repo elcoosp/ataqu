@@ -1,9 +1,9 @@
 //! Employee domain: pure functions for employee management.
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use chrono::NaiveDate;
 use std::time::SystemTime;
 use uuid::Uuid;
-use chrono::NaiveDate;
 
 #[derive(Debug, Clone)]
 pub struct Employee {

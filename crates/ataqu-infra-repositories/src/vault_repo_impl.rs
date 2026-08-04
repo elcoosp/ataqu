@@ -1,11 +1,14 @@
 //! SeaORM implementations for VAULT domain repository.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect, ActiveModelTrait};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
+    QuerySelect, Set,
+};
 use uuid::Uuid;
 
-use ataqu_kernel::TenantId;
 use ataqu_domain_vault::inventory::{Product, Variant};
 use ataqu_domain_vault::repository::VaultRepository;
+use ataqu_kernel::TenantId;
 
 use crate::entities::vault::product as product_entity;
 use crate::entities::vault::variant as variant_entity;
@@ -84,7 +87,11 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 
-    async fn get_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Product>, String> {
+    async fn get_product(
+        &self,
+        tenant_id: &TenantId,
+        id: &Uuid,
+    ) -> Result<Option<Product>, String> {
         let model = product_entity::Entity::find()
             .filter(product_entity::Column::Id.eq(*id))
             .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -94,7 +101,12 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(model.map(model_to_product))
     }
 
-    async fn list_products(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Product>, String> {
+    async fn list_products(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Product>, String> {
         let models = product_entity::Entity::find()
             .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -114,7 +126,11 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 
-    async fn get_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Variant>, String> {
+    async fn get_variant(
+        &self,
+        tenant_id: &TenantId,
+        id: &Uuid,
+    ) -> Result<Option<Variant>, String> {
         let model = variant_entity::Entity::find()
             .filter(variant_entity::Column::Id.eq(*id))
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -124,7 +140,12 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(model.map(model_to_variant))
     }
 
-    async fn list_variants(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Variant>, String> {
+    async fn list_variants(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Variant>, String> {
         let models = variant_entity::Entity::find()
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -135,7 +156,12 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(models.into_iter().map(model_to_variant).collect())
     }
 
-    async fn update_variant_stock(&self, tenant_id: &TenantId, id: &Uuid, delta: i64) -> Result<Variant, String> {
+    async fn update_variant_stock(
+        &self,
+        tenant_id: &TenantId,
+        id: &Uuid,
+        delta: i64,
+    ) -> Result<Variant, String> {
         let mut active = variant_entity::Entity::find()
             .filter(variant_entity::Column::Id.eq(*id))
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -150,7 +176,8 @@ impl VaultRepository for VaultRepositoryImpl {
         }
         active.stock_quantity = Set(new_stock);
         active.update(&self.db).await.map_err(|e| e.to_string())?;
-        self.get_variant(tenant_id, id).await?
+        self.get_variant(tenant_id, id)
+            .await?
             .ok_or_else(|| "Variant not found after update".to_string())
     }
 }

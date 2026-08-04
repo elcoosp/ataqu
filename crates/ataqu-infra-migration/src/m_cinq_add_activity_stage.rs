@@ -22,7 +22,8 @@ impl MigrationTrait for Migration {
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
             "#,
-        ).await?;
+        )
+        .await?;
 
         // Create pipeline stages table
         conn.execute_unprepared(
@@ -36,7 +37,8 @@ impl MigrationTrait for Migration {
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
             "#,
-        ).await?;
+        )
+        .await?;
 
         // Indexes
         conn.execute_unprepared(
@@ -51,8 +53,10 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS collab_crm.activities;").await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS collab_crm.pipeline_stages;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS collab_crm.activities;")
+            .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS collab_crm.pipeline_stages;")
+            .await?;
         Ok(())
     }
 }

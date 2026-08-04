@@ -1,16 +1,28 @@
 //! CINQ CRM orchestration service – uses domain repositories and outbox.
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
-use std::collections::HashMap;
 
+use ataqu_domain_cinq::activity::{
+    self as activity_domain, Activity, ActivityType, CreateActivityCommand as DomainCreateActivity,
+};
+use ataqu_domain_cinq::contact::{
+    self as contact_domain, Contact, CreateContactCommand as DomainCreateContact,
+    UpdateContactCommand as DomainUpdateContact,
+};
+use ataqu_domain_cinq::deal::{
+    self as deal_domain, CreateDealCommand as DomainCreateDeal, Deal, DealStatus,
+    UpdateDealCommand as DomainUpdateDeal,
+};
+use ataqu_domain_cinq::error::CinqDomainError;
+use ataqu_domain_cinq::pipeline::{
+    self as pipeline_domain, CreatePipelineStageCommand as DomainCreateStage, PipelineStage,
+};
+use ataqu_domain_cinq::repository::{
+    ActivityRepository, ContactRepository, DealRepository, PipelineStageRepository,
+};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::{Email, PhoneNumber};
-use ataqu_domain_cinq::contact::{self as contact_domain, Contact, CreateContactCommand as DomainCreateContact, UpdateContactCommand as DomainUpdateContact};
-use ataqu_domain_cinq::deal::{self as deal_domain, Deal, CreateDealCommand as DomainCreateDeal, UpdateDealCommand as DomainUpdateDeal, DealStatus};
-use ataqu_domain_cinq::activity::{self as activity_domain, Activity, CreateActivityCommand as DomainCreateActivity, ActivityType};
-use ataqu_domain_cinq::pipeline::{self as pipeline_domain, PipelineStage, CreatePipelineStageCommand as DomainCreateStage, UpdatePipelineStageCommand as DomainUpdateStage};
-use ataqu_domain_cinq::error::CinqDomainError;
-use ataqu_domain_cinq::repository::{ContactRepository, DealRepository, ActivityRepository, PipelineStageRepository};
 
 // Application commands (converted to domain commands later)
 #[derive(Debug, Clone)]
@@ -124,7 +136,8 @@ impl CinqService {
             email: cmd.email,
             phone: cmd.phone,
         };
-        let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        let event =
+            contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
         let contact = Contact {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -139,7 +152,10 @@ impl CinqService {
     }
 
     pub async fn update_contact(&self, cmd: UpdateContactCommand) -> CinqResult<Contact> {
-        let mut contact = self.contact_repo.find_contact_by_id(&cmd.tenant_id, cmd.id).await?
+        let mut contact = self
+            .contact_repo
+            .find_contact_by_id(&cmd.tenant_id, cmd.id)
+            .await?
             .ok_or(CinqServiceError::ContactNotFound)?;
         let domain_cmd = DomainUpdateContact {
             id: cmd.id,
@@ -169,19 +185,41 @@ impl CinqService {
     }
 
     pub async fn get_contact(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<Contact> {
-        self.contact_repo.find_contact_by_id(&tenant_id, id).await?
+        self.contact_repo
+            .find_contact_by_id(&tenant_id, id)
+            .await?
             .ok_or(CinqServiceError::ContactNotFound)
     }
 
-    pub async fn list_contacts(&self, tenant_id: TenantId, limit: u64, offset: u64) -> CinqResult<Vec<Contact>> {
-        Ok(self.contact_repo.list_contacts(&tenant_id, limit, offset).await?)
+    pub async fn list_contacts(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<Contact>> {
+        Ok(self
+            .contact_repo
+            .list_contacts(&tenant_id, limit, offset)
+            .await?)
     }
 
-    pub async fn search_contacts(&self, tenant_id: TenantId, query: &str, limit: u64) -> CinqResult<Vec<Contact>> {
-        Ok(self.contact_repo.search_contacts(&tenant_id, query, limit).await?)
+    pub async fn search_contacts(
+        &self,
+        tenant_id: TenantId,
+        query: &str,
+        limit: u64,
+    ) -> CinqResult<Vec<Contact>> {
+        Ok(self
+            .contact_repo
+            .search_contacts(&tenant_id, query, limit)
+            .await?)
     }
 
-    pub async fn import_contacts(&self, _tenant_id: TenantId, rows: Vec<HashMap<String, String>>) -> CinqResult<Vec<Uuid>> {
+    pub async fn import_contacts(
+        &self,
+        _tenant_id: TenantId,
+        rows: Vec<HashMap<String, String>>,
+    ) -> CinqResult<Vec<Uuid>> {
         use ataqu_domain_cinq::csv_validation::validate_contact_row;
         let mut inserted = Vec::new();
         for row in rows {
@@ -193,7 +231,11 @@ impl CinqService {
                 email: cmd.email,
                 phone: cmd.phone,
             };
-            let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+            let event = contact_domain::create_contact(
+                domain_cmd,
+                self.id_gen.as_ref(),
+                self.clock.as_ref(),
+            );
             let contact = Contact {
                 id: event.id,
                 tenant_id: event.tenant_id,
@@ -211,21 +253,31 @@ impl CinqService {
 
     pub async fn export_contacts(&self, tenant_id: TenantId) -> CinqResult<String> {
         use csv::Writer;
-        let contacts = self.contact_repo.list_contacts(&tenant_id, 10000, 0).await?;
+        let contacts = self
+            .contact_repo
+            .list_contacts(&tenant_id, 10000, 0)
+            .await?;
         let mut wtr = Writer::from_writer(vec![]);
-        wtr.write_record(&["id", "name", "email", "phone", "created_at"])
+        wtr.write_record(["id", "name", "email", "phone", "created_at"])
             .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
         for c in contacts {
             wtr.write_record(&[
                 c.id.to_string(),
                 c.name.clone(),
                 c.email.as_ref().to_string(),
-                c.phone.as_ref().map(|p| p.as_ref().to_string()).unwrap_or_default(),
+                c.phone
+                    .as_ref()
+                    .map(|p| p.as_ref().to_string())
+                    .unwrap_or_default(),
                 c.created_at.to_rfc3339(),
-            ]).map_err(|e| CinqServiceError::Validation(e.to_string()))?;
-        }
-        let data = String::from_utf8(wtr.into_inner().map_err(|e| CinqServiceError::Validation(e.to_string()))?)
+            ])
             .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
+        }
+        let data = String::from_utf8(
+            wtr.into_inner()
+                .map_err(|e| CinqServiceError::Validation(e.to_string()))?,
+        )
+        .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
         Ok(data)
     }
 
@@ -240,7 +292,8 @@ impl CinqService {
             amount: cmd.amount,
             status: cmd.status,
         };
-        let event = deal_domain::create_deal(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
+        let event =
+            deal_domain::create_deal(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
         let deal = Deal {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -257,7 +310,10 @@ impl CinqService {
     }
 
     pub async fn update_deal(&self, cmd: UpdateDealCommand) -> CinqResult<Deal> {
-        let mut deal = self.deal_repo.find_deal_by_id(&cmd.tenant_id, cmd.id).await?
+        let mut deal = self
+            .deal_repo
+            .find_deal_by_id(&cmd.tenant_id, cmd.id)
+            .await?
             .ok_or(CinqServiceError::DealNotFound)?;
         let domain_cmd = DomainUpdateDeal {
             id: cmd.id,
@@ -295,11 +351,18 @@ impl CinqService {
     }
 
     pub async fn get_deal(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<Deal> {
-        self.deal_repo.find_deal_by_id(&tenant_id, id).await?
+        self.deal_repo
+            .find_deal_by_id(&tenant_id, id)
+            .await?
             .ok_or(CinqServiceError::DealNotFound)
     }
 
-    pub async fn list_deals(&self, tenant_id: TenantId, limit: u64, offset: u64) -> CinqResult<Vec<Deal>> {
+    pub async fn list_deals(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<Deal>> {
         Ok(self.deal_repo.list_deals(&tenant_id, limit, offset).await?)
     }
 
@@ -314,7 +377,8 @@ impl CinqService {
             description: cmd.description,
             scheduled_at: cmd.scheduled_at,
         };
-        let event = activity_domain::create_activity(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        let event =
+            activity_domain::create_activity(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
         let activity = Activity {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -331,22 +395,40 @@ impl CinqService {
     }
 
     pub async fn get_activity(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<Activity> {
-        self.activity_repo.find_activity_by_id(&tenant_id, id).await?
+        self.activity_repo
+            .find_activity_by_id(&tenant_id, id)
+            .await?
             .ok_or(CinqServiceError::ActivityNotFound)
     }
 
-    pub async fn list_activities_for_contact(&self, tenant_id: TenantId, contact_id: Uuid, limit: u64, offset: u64) -> CinqResult<Vec<Activity>> {
-        Ok(self.activity_repo.list_activities_for_contact(&tenant_id, contact_id, limit, offset).await?)
+    pub async fn list_activities_for_contact(
+        &self,
+        tenant_id: TenantId,
+        contact_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<Activity>> {
+        Ok(self
+            .activity_repo
+            .list_activities_for_contact(&tenant_id, contact_id, limit, offset)
+            .await?)
     }
 
     // ---------- Pipeline Stages ----------
-    pub async fn create_pipeline_stage(&self, cmd: CreatePipelineStageCommand) -> CinqResult<PipelineStage> {
+    pub async fn create_pipeline_stage(
+        &self,
+        cmd: CreatePipelineStageCommand,
+    ) -> CinqResult<PipelineStage> {
         let domain_cmd = DomainCreateStage {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
             order: cmd.order,
         };
-        let event = pipeline_domain::create_pipeline_stage(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
+        let event = pipeline_domain::create_pipeline_stage(
+            domain_cmd,
+            self.id_gen.as_ref(),
+            self.clock.as_ref(),
+        )?;
         let stage = PipelineStage {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -359,17 +441,35 @@ impl CinqService {
         Ok(stage)
     }
 
-    pub async fn list_pipeline_stages(&self, tenant_id: TenantId) -> CinqResult<Vec<PipelineStage>> {
+    pub async fn list_pipeline_stages(
+        &self,
+        tenant_id: TenantId,
+    ) -> CinqResult<Vec<PipelineStage>> {
         Ok(self.stage_repo.list_pipeline_stages(&tenant_id).await?)
     }
 
-    pub async fn get_pipeline_stage(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<PipelineStage> {
-        self.stage_repo.find_pipeline_stage_by_id(&tenant_id, id).await?
+    pub async fn get_pipeline_stage(
+        &self,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> CinqResult<PipelineStage> {
+        self.stage_repo
+            .find_pipeline_stage_by_id(&tenant_id, id)
+            .await?
             .ok_or(CinqServiceError::PipelineStageNotFound)
     }
 
-    pub async fn update_pipeline_stage(&self, tenant_id: TenantId, id: Uuid, name: Option<String>, order: Option<i32>) -> CinqResult<PipelineStage> {
-        let mut stage = self.stage_repo.find_pipeline_stage_by_id(&tenant_id, id).await?
+    pub async fn update_pipeline_stage(
+        &self,
+        tenant_id: TenantId,
+        id: Uuid,
+        name: Option<String>,
+        order: Option<i32>,
+    ) -> CinqResult<PipelineStage> {
+        let mut stage = self
+            .stage_repo
+            .find_pipeline_stage_by_id(&tenant_id, id)
+            .await?
             .ok_or(CinqServiceError::PipelineStageNotFound)?;
         if let Some(name) = name {
             stage.name = name;
@@ -382,7 +482,9 @@ impl CinqService {
     }
 
     pub async fn delete_pipeline_stage(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
-        self.stage_repo.delete_pipeline_stage(&tenant_id, id).await?;
+        self.stage_repo
+            .delete_pipeline_stage(&tenant_id, id)
+            .await?;
         Ok(())
     }
 }

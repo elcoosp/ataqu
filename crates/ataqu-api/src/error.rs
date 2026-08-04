@@ -1,6 +1,5 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -42,13 +41,25 @@ impl ApiResponseError {
 impl IntoResponse for ApiResponseError {
     fn into_response(self) -> Response {
         let (status, code, message) = match &self {
-            Self::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, "VALIDATION_ERROR", msg.as_str()),
+            Self::Validation(msg) => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "VALIDATION_ERROR",
+                msg.as_str(),
+            ),
             Self::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", msg.as_str()),
             Self::Forbidden(msg) => (StatusCode::FORBIDDEN, "FORBIDDEN", msg.as_str()),
             Self::NotFound(msg) => (StatusCode::NOT_FOUND, "NOT_FOUND", msg.as_str()),
             Self::Conflict(msg) => (StatusCode::CONFLICT, "CONFLICT", msg.as_str()),
-            Self::RateLimited => (StatusCode::TOO_MANY_REQUESTS, "RATE_LIMITED", "Rate limit exceeded"),
-            Self::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", msg.as_str()),
+            Self::RateLimited => (
+                StatusCode::TOO_MANY_REQUESTS,
+                "RATE_LIMITED",
+                "Rate limit exceeded",
+            ),
+            Self::Internal(msg) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR",
+                msg.as_str(),
+            ),
         };
         let body = serde_json::json!({
             "error": {

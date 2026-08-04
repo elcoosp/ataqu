@@ -23,9 +23,21 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Contacts::Name).string().not_null())
                     .col(ColumnDef::new(Contacts::Email).string())
                     .col(ColumnDef::new(Contacts::Phone).string())
-                    .col(ColumnDef::new(Contacts::CustomFields).json_binary().not_null())
-                    .col(ColumnDef::new(Contacts::CreatedAt).timestamp_with_time_zone().not_null())
-                    .col(ColumnDef::new(Contacts::UpdatedAt).timestamp_with_time_zone().not_null())
+                    .col(
+                        ColumnDef::new(Contacts::CustomFields)
+                            .json_binary()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(Contacts::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(Contacts::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -43,8 +55,16 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Deals::Amount).decimal().not_null())
                     .col(ColumnDef::new(Deals::Status).string().not_null())
                     .col(ColumnDef::new(Deals::CustomFields).json_binary().not_null())
-                    .col(ColumnDef::new(Deals::CreatedAt).timestamp_with_time_zone().not_null())
-                    .col(ColumnDef::new(Deals::UpdatedAt).timestamp_with_time_zone().not_null())
+                    .col(
+                        ColumnDef::new(Deals::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(Deals::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -55,13 +75,30 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table((Alias::new("collab_crm"), EmailTracking::Table))
                     .if_not_exists()
-                    .col(ColumnDef::new(EmailTracking::Id).big_integer().not_null().primary_key())
+                    .col(
+                        ColumnDef::new(EmailTracking::Id)
+                            .big_integer()
+                            .not_null()
+                            .primary_key(),
+                    )
                     .col(ColumnDef::new(EmailTracking::TenantId).uuid().not_null())
                     .col(ColumnDef::new(EmailTracking::ContactId).uuid().not_null())
                     .col(ColumnDef::new(EmailTracking::EventType).string().not_null())
-                    .col(ColumnDef::new(EmailTracking::Metadata).json_binary().not_null())
-                    .col(ColumnDef::new(EmailTracking::OccurredAt).timestamp_with_time_zone().not_null())
-                    .col(ColumnDef::new(EmailTracking::CreatedAt).timestamp_with_time_zone().not_null())
+                    .col(
+                        ColumnDef::new(EmailTracking::Metadata)
+                            .json_binary()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(EmailTracking::OccurredAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(EmailTracking::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -112,13 +149,25 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_crm"), Contacts::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_crm"), Contacts::Table))
+                    .to_owned(),
+            )
             .await?;
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_crm"), Deals::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_crm"), Deals::Table))
+                    .to_owned(),
+            )
             .await?;
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_crm"), EmailTracking::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_crm"), EmailTracking::Table))
+                    .to_owned(),
+            )
             .await?;
         Ok(())
     }

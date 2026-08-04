@@ -1,20 +1,25 @@
 //! Real SeaORM-based repositories for PAUSE domain.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, Set, QueryFilter, ColumnTrait, QuerySelect, ActiveModelTrait, IntoActiveModel, QueryOrder, Condition};
-use sea_orm::PaginatorTrait;
-use uuid::Uuid;
 use chrono::Utc;
+use sea_orm::PaginatorTrait;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, IntoActiveModel,
+    QueryFilter, QueryOrder, QuerySelect, Set,
+};
 use std::time::SystemTime;
+use uuid::Uuid;
 
-use ataqu_kernel::TenantId;
-use ataqu_domain_pause::{EmployeeCreatedEvent, LeaveRequestedEvent, LeaveRequest, LeaveStatus, PauseDomainError};
-use ataqu_domain_pause::repository::{EmployeeRepositoryPort, LeaveRequestRepositoryPort};
 use ataqu_domain_pause::employee::Employee;
+use ataqu_domain_pause::repository::{EmployeeRepositoryPort, LeaveRequestRepositoryPort};
+use ataqu_domain_pause::{
+    EmployeeCreatedEvent, LeaveRequest, LeaveRequestedEvent, LeaveStatus, PauseDomainError,
+};
+use ataqu_kernel::TenantId;
 
 mod employee {
+    use chrono::{DateTime, NaiveDate, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc, NaiveDate};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "employees", schema_name = "collab_ops")]
@@ -40,9 +45,9 @@ mod employee {
 }
 
 mod leave_request {
+    use chrono::{DateTime, NaiveDate, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{NaiveDate, DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "leave_requests", schema_name = "collab_ops")]
@@ -87,7 +92,9 @@ impl PauseRepositoryImpl {
             phone: m.phone,
             job_title: m.job_title,
             department: m.department,
-            hire_date: m.hire_date.unwrap_or_else(|| chrono::Utc::now().date_naive()),
+            hire_date: m
+                .hire_date
+                .unwrap_or_else(|| chrono::Utc::now().date_naive()),
             is_active: m.is_active,
             created_at: m.created_at.into(),
             updated_at: m.updated_at.into(),
@@ -128,7 +135,11 @@ impl PauseRepositoryImpl {
 
 #[async_trait]
 impl EmployeeRepositoryPort for PauseRepositoryImpl {
-    async fn insert(&self, tenant_id: &TenantId, event: &EmployeeCreatedEvent) -> Result<(), PauseDomainError> {
+    async fn insert(
+        &self,
+        tenant_id: &TenantId,
+        event: &EmployeeCreatedEvent,
+    ) -> Result<(), PauseDomainError> {
         use employee::Entity as EmployeeEntity;
         let active = employee::ActiveModel {
             id: Set(event.employee_id),
@@ -150,7 +161,11 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
         Ok(())
     }
 
-    async fn find_by_id(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<Option<Employee>, PauseDomainError> {
+    async fn find_by_id(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+    ) -> Result<Option<Employee>, PauseDomainError> {
         use employee::Entity as EmployeeEntity;
         let model = EmployeeEntity::find()
             .filter(employee::Column::Id.eq(employee_id))
@@ -161,7 +176,12 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
         Ok(model.map(Self::model_to_employee))
     }
 
-    async fn list(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Employee>, PauseDomainError> {
+    async fn list(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Employee>, PauseDomainError> {
         use employee::Entity as EmployeeEntity;
         let models = EmployeeEntity::find()
             .filter(employee::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -174,7 +194,12 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
         Ok(models.into_iter().map(Self::model_to_employee).collect())
     }
 
-    async fn search(&self, tenant_id: &TenantId, query: &str, limit: u64) -> Result<Vec<Employee>, PauseDomainError> {
+    async fn search(
+        &self,
+        tenant_id: &TenantId,
+        query: &str,
+        limit: u64,
+    ) -> Result<Vec<Employee>, PauseDomainError> {
         use employee::Entity as EmployeeEntity;
         let pattern = format!("%{}%", query);
         let condition = Condition::any()
@@ -191,7 +216,11 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
         Ok(models.into_iter().map(Self::model_to_employee).collect())
     }
 
-    async fn deactivate(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<(), PauseDomainError> {
+    async fn deactivate(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+    ) -> Result<(), PauseDomainError> {
         use employee::Entity as EmployeeEntity;
         let mut active = EmployeeEntity::find()
             .filter(employee::Column::Id.eq(employee_id))
@@ -203,7 +232,10 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             .into_active_model();
         active.is_active = Set(false);
         active.updated_at = Set(Utc::now());
-        active.update(&self.db).await.map_err(|e| PauseDomainError::Persistence(e.to_string()))?;
+        active
+            .update(&self.db)
+            .await
+            .map_err(|e| PauseDomainError::Persistence(e.to_string()))?;
         Ok(())
     }
 
@@ -220,7 +252,11 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
 
 #[async_trait]
 impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
-    async fn insert(&self, tenant_id: &TenantId, event: &LeaveRequestedEvent) -> Result<(), PauseDomainError> {
+    async fn insert(
+        &self,
+        tenant_id: &TenantId,
+        event: &LeaveRequestedEvent,
+    ) -> Result<(), PauseDomainError> {
         use leave_request::Entity as LeaveEntity;
         let active = leave_request::ActiveModel {
             id: Set(event.leave_request_id),
@@ -243,7 +279,11 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
         Ok(())
     }
 
-    async fn find_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<LeaveRequest>, PauseDomainError> {
+    async fn find_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<LeaveRequest>, PauseDomainError> {
         use leave_request::Entity as LeaveEntity;
         let model = LeaveEntity::find()
             .filter(leave_request::Column::Id.eq(id))
@@ -254,7 +294,12 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
         Ok(model.map(Self::model_to_leave))
     }
 
-    async fn list(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<LeaveRequest>, PauseDomainError> {
+    async fn list(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<LeaveRequest>, PauseDomainError> {
         use leave_request::Entity as LeaveEntity;
         let models = LeaveEntity::find()
             .filter(leave_request::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -267,7 +312,11 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
         Ok(models.into_iter().map(Self::model_to_leave).collect())
     }
 
-    async fn list_for_employee(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<Vec<LeaveRequest>, PauseDomainError> {
+    async fn list_for_employee(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+    ) -> Result<Vec<LeaveRequest>, PauseDomainError> {
         use leave_request::Entity as LeaveEntity;
         let models = LeaveEntity::find()
             .filter(leave_request::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -279,7 +328,12 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
         Ok(models.into_iter().map(Self::model_to_leave).collect())
     }
 
-    async fn list_pending(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<LeaveRequest>, PauseDomainError> {
+    async fn list_pending(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<LeaveRequest>, PauseDomainError> {
         use leave_request::Entity as LeaveEntity;
         let models = LeaveEntity::find()
             .filter(leave_request::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -320,7 +374,10 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
         active.reviewer_id = Set(Some(reviewer_id));
         active.reviewed_at = Set(Some(updated_at.into()));
         active.updated_at = Set(updated_at.into());
-        active.update(&self.db).await.map_err(|e| PauseDomainError::Persistence(e.to_string()))?;
+        active
+            .update(&self.db)
+            .await
+            .map_err(|e| PauseDomainError::Persistence(e.to_string()))?;
         Ok(())
     }
 }

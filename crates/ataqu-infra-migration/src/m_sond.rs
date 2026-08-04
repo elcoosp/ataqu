@@ -22,9 +22,24 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Forms::Title).text().not_null())
                     .col(ColumnDef::new(Forms::Description).text())
                     .col(ColumnDef::new(Forms::SchemaJson).json_binary().not_null())
-                    .col(ColumnDef::new(Forms::IsActive).boolean().not_null().default(true))
-                    .col(ColumnDef::new(Forms::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
-                    .col(ColumnDef::new(Forms::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Forms::IsActive)
+                            .boolean()
+                            .not_null()
+                            .default(true),
+                    )
+                    .col(
+                        ColumnDef::new(Forms::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(Forms::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -35,12 +50,26 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table((Alias::new("collab_ops"), Submissions::Table))
                     .if_not_exists()
-                    .col(ColumnDef::new(Submissions::Id).uuid().not_null().primary_key())
+                    .col(
+                        ColumnDef::new(Submissions::Id)
+                            .uuid()
+                            .not_null()
+                            .primary_key(),
+                    )
                     .col(ColumnDef::new(Submissions::TenantId).uuid().not_null())
                     .col(ColumnDef::new(Submissions::FormId).uuid().not_null())
                     .col(ColumnDef::new(Submissions::RespondentId).uuid())
-                    .col(ColumnDef::new(Submissions::ResponseData).json_binary().not_null())
-                    .col(ColumnDef::new(Submissions::SubmittedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Submissions::ResponseData)
+                            .json_binary()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(Submissions::SubmittedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -76,10 +105,18 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_ops"), Submissions::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_ops"), Submissions::Table))
+                    .to_owned(),
+            )
             .await?;
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_ops"), Forms::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_ops"), Forms::Table))
+                    .to_owned(),
+            )
             .await?;
         Ok(())
     }

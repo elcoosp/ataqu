@@ -3,9 +3,9 @@
 //! This module defines foundational newtypes that enforce architectural
 //! invariants at compile time.
 
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 // ---------------------------------------------------------------------------
 // TenantId  (ADR-024)

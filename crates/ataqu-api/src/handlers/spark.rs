@@ -1,18 +1,17 @@
 use axum::{
+    Router,
     extract::{Path, State},
     http::StatusCode,
     response::Json,
-    Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
-use ataqu_application::spark_service::{SparkService, CreateWorkflowCommand, TriggerWorkflowCommand};
-use ataqu_kernel::TenantId;
 use crate::AppState;
-use crate::middleware::AuthContext;
 use crate::error::{ApiResponseError, ApiResult};
+use crate::middleware::AuthContext;
+use ataqu_application::spark_service::{CreateWorkflowCommand, TriggerWorkflowCommand};
 
 #[derive(Debug, Serialize)]
 pub struct WorkflowResponse {
@@ -40,15 +39,21 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<WorkflowResponse>>> {
-    let workflows = state.spark_service.list_workflows(auth.tenant_id, 100, 0).await
+    let workflows = state
+        .spark_service
+        .list_workflows(auth.tenant_id, 100, 0)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let resp = workflows.into_iter().map(|w| WorkflowResponse {
-        id: w.id,
-        name: w.name,
-        is_active: w.is_active,
-        created_at: w.created_at.into(),
-        updated_at: w.updated_at.into(),
-    }).collect();
+    let resp = workflows
+        .into_iter()
+        .map(|w| WorkflowResponse {
+            id: w.id,
+            name: w.name,
+            is_active: w.is_active,
+            created_at: w.created_at.into(),
+            updated_at: w.updated_at.into(),
+        })
+        .collect();
     Ok(Json(resp))
 }
 
@@ -64,7 +69,10 @@ pub async fn create_workflow(
         conditions: payload.conditions,
         actions: payload.actions,
     };
-    let workflow = state.spark_service.create_workflow(cmd).await
+    let workflow = state
+        .spark_service
+        .create_workflow(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let resp = WorkflowResponse {
         id: workflow.id,
@@ -81,7 +89,10 @@ pub async fn get_workflow(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<WorkflowResponse>> {
-    let workflow = state.spark_service.get_workflow(auth.tenant_id, id).await
+    let workflow = state
+        .spark_service
+        .get_workflow(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     let resp = WorkflowResponse {
         id: workflow.id,
@@ -104,7 +115,10 @@ pub async fn execute_workflow(
         workflow_id: id,
         payload: payload.payload,
     };
-    state.spark_service.trigger_workflow(cmd).await
+    state
+        .spark_service
+        .trigger_workflow(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }

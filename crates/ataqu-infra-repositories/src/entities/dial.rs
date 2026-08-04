@@ -3,9 +3,9 @@
 
 // Channel entity
 pub mod channel {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "channels", schema_name = "dial")]
@@ -29,9 +29,9 @@ pub mod channel {
 
 // Channel participant entity (new)
 pub mod channel_participant {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "channel_participants", schema_name = "dial")]
@@ -51,9 +51,9 @@ pub mod channel_participant {
 
 // Message entity
 pub mod message {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "messages", schema_name = "dial")]
@@ -78,9 +78,9 @@ pub mod message {
 
 // Thread entity
 pub mod thread {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "threads", schema_name = "dial")]
@@ -101,9 +101,9 @@ pub mod thread {
 
 // Mention entity
 pub mod mention {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "mentions", schema_name = "dial")]
@@ -125,9 +125,9 @@ pub mod mention {
 
 // Presence entity
 pub mod presence {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "presence", schema_name = "dial")]

@@ -4,7 +4,7 @@ pub mod deal;
 pub mod dial;
 pub mod pivot;
 pub mod sond;
+pub mod spark;
 pub mod tempo;
 pub mod vault;
-pub mod spark;
 pub mod vista;

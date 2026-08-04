@@ -2,10 +2,10 @@
 //! Each entity is defined in its own module.
 
 pub mod document {
-    use sea_orm::entity::prelude::*;
-    use uuid::Uuid;
     use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
     use serde_json::Value as JsonValue;
+    use uuid::Uuid;
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "documents", schema_name = "collab_ops")]
@@ -27,10 +27,10 @@ pub mod document {
 }
 
 pub mod block {
-    use sea_orm::entity::prelude::*;
-    use uuid::Uuid;
     use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
     use serde_json::Value as JsonValue;
+    use uuid::Uuid;
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "blocks", schema_name = "collab_ops")]
@@ -52,9 +52,9 @@ pub mod block {
 }
 
 pub mod relation {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "relations", schema_name = "collab_ops")]

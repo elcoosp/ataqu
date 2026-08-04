@@ -25,13 +25,15 @@ impl MigrationTrait for Migration {
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMPTZ
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Indexes
         db.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_users_tenant ON core.users (tenant_id);"
-        ).await?;
+            "CREATE INDEX IF NOT EXISTS idx_users_tenant ON core.users (tenant_id);",
+        )
+        .await?;
 
         Ok(())
     }

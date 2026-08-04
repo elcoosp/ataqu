@@ -1,9 +1,9 @@
 //! SeaORM entities for VISTA tables.
 pub mod aggregated_view {
-    use sea_orm::entity::prelude::*;
-    use uuid::Uuid;
     use chrono::{DateTime, Utc};
     use rust_decimal::Decimal;
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
 
     #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
     #[sea_orm(table_name = "aggregated_views", schema_name = "core")]
@@ -30,9 +30,9 @@ pub mod aggregated_view {
 }
 
 pub mod data_point {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
     #[sea_orm(table_name = "analytics_data_points", schema_name = "core")]

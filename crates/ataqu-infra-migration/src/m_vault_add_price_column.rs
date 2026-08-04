@@ -12,7 +12,8 @@ impl MigrationTrait for Migration {
             ALTER TABLE vault.variants
             ADD COLUMN IF NOT EXISTS price BIGINT NOT NULL DEFAULT 0;
             "#,
-        ).await?;
+        )
+        .await?;
         Ok(())
     }
 
@@ -23,7 +24,8 @@ impl MigrationTrait for Migration {
             ALTER TABLE vault.variants
             DROP COLUMN IF EXISTS price;
             "#,
-        ).await?;
+        )
+        .await?;
         Ok(())
     }
 }

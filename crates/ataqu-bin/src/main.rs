@@ -13,20 +13,20 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 use ataqu_api::{AppState, OutboxPlaceholder, create_router};
-use ataqu_application::aegis_service::{AegisService, RealAegisDomain, AegisConfig};
+use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
+use ataqu_application::pause_service::PauseService;
 use ataqu_application::pivot_service::PivotService;
 use ataqu_application::sond_service::SondService;
 use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
-use ataqu_application::pause_service::PauseService;
 use ataqu_kernel::{Clock, IdGenerator};
 
-use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_idempotency::IdempotencyCache;
+use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
 
 // ------------------------------------------------------------------------------
@@ -103,8 +103,8 @@ async fn main() -> anyhow::Result<()> {
 
     // CINQ
     use ataqu_infra_repositories::cinq_repo_impl::{
-        CinqContactRepository, CinqDealRepository,
-        CinqActivityRepository, CinqPipelineStageRepository,
+        CinqActivityRepository, CinqContactRepository, CinqDealRepository,
+        CinqPipelineStageRepository,
     };
     let contact_repo = Arc::new(CinqContactRepository::new(pools.core.clone()));
     let deal_repo = Arc::new(CinqDealRepository::new(pools.core.clone()));
@@ -120,7 +120,7 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // DIAL
-    use ataqu_infra_repositories::dial_repo_impl::{DialRepositoryImpl, DbPresenceStore};
+    use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.core.clone()));
     let dial_service = Arc::new(DialService::new(
@@ -132,7 +132,7 @@ async fn main() -> anyhow::Result<()> {
 
     // PIVOT
     use ataqu_infra_repositories::pivot_repo_impl::{
-        PivotDocumentRepository, PivotBlockRepository, PivotRelationRepository,
+        PivotBlockRepository, PivotDocumentRepository, PivotRelationRepository,
     };
     let pivot_doc_repo = Arc::new(PivotDocumentRepository::new(pools.core.clone()));
     let pivot_block_repo = Arc::new(PivotBlockRepository::new(pools.core.clone()));
@@ -148,50 +148,31 @@ async fn main() -> anyhow::Result<()> {
     // SOND
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
-    let sond_service = Arc::new(SondService::new(
-        sond_repo,
-        id_gen.clone(),
-        clock.clone(),
-    ));
+    let sond_service = Arc::new(SondService::new(sond_repo, id_gen.clone(), clock.clone()));
 
     // SPARK
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
     let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.core.clone()));
-    let spark_service = Arc::new(SparkService::new(
-        spark_repo,
-        id_gen.clone(),
-        clock.clone(),
-    ));
+    let spark_service = Arc::new(SparkService::new(spark_repo, id_gen.clone(), clock.clone()));
 
     // TEMPO
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
-    let tempo_service = Arc::new(TempoService::new(
-        tempo_repo,
-        id_gen.clone(),
-        clock.clone(),
-    ));
+    let tempo_service = Arc::new(TempoService::new(tempo_repo, id_gen.clone(), clock.clone()));
 
     // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.core.clone()));
-    let vault_service = Arc::new(VaultService::new(
-        vault_repo,
-        id_gen.clone(),
-        clock.clone(),
-    ));
+    let vault_service = Arc::new(VaultService::new(vault_repo, id_gen.clone(), clock.clone()));
 
     // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.core.clone()));
-    let vista_service = Arc::new(VistaService::new(
-        vista_repo,
-        clock.clone(),
-    ));
+    let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone()));
 
     // PAUSE – real repositories, real idempotency, real outbox
-    use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
     use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
+    use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
 
     let pause_idempotency = Arc::new(RealIdempotency::new(pools.core.clone()));
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));

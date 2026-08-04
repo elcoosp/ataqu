@@ -1,8 +1,8 @@
 //! SeaORM entities for VAULT tables.
 pub mod product {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "products", schema_name = "vault")]
@@ -24,9 +24,9 @@ pub mod product {
 }
 
 pub mod variant {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "variants", schema_name = "vault")]

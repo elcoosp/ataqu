@@ -1,19 +1,19 @@
 use axum::{
+    Router,
     extract::{Path, State},
     http::StatusCode,
     response::Json,
-    Router,
 };
-use uuid::Uuid;
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
+use crate::AppState;
+use crate::error::{ApiResponseError, ApiResult};
+use crate::middleware::AuthContext;
 use ataqu_application::vault_service::{
     CreateProductCommand, CreateVariantCommand, UpdateStockCommand,
 };
-use crate::AppState;
-use crate::middleware::AuthContext;
-use crate::error::{ApiResponseError, ApiResult};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateProductRequest {
@@ -56,7 +56,10 @@ pub async fn create_product(
         description: payload.description,
         sku: payload.sku,
     };
-    let product = state.vault_service.create_product(cmd).await
+    let product = state
+        .vault_service
+        .create_product(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(product.into())))
 }
@@ -65,9 +68,14 @@ pub async fn list_products(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<ProductResponse>>> {
-    let products = state.vault_service.list_products(auth.tenant_id, 100, 0).await
+    let products = state
+        .vault_service
+        .list_products(auth.tenant_id, 100, 0)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(products.into_iter().map(ProductResponse::from).collect()))
+    Ok(Json(
+        products.into_iter().map(ProductResponse::from).collect(),
+    ))
 }
 
 pub async fn get_product(
@@ -75,7 +83,10 @@ pub async fn get_product(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<ProductResponse>> {
-    let product = state.vault_service.get_product(auth.tenant_id, id).await
+    let product = state
+        .vault_service
+        .get_product(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(product.into()))
 }
@@ -127,7 +138,10 @@ pub async fn create_variant(
         initial_stock: payload.initial_stock,
         price: payload.price,
     };
-    let variant = state.vault_service.create_variant(cmd).await
+    let variant = state
+        .vault_service
+        .create_variant(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(variant.into())))
 }
@@ -136,9 +150,14 @@ pub async fn list_variants(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<VariantResponse>>> {
-    let variants = state.vault_service.list_variants(auth.tenant_id, 100, 0).await
+    let variants = state
+        .vault_service
+        .list_variants(auth.tenant_id, 100, 0)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(variants.into_iter().map(VariantResponse::from).collect()))
+    Ok(Json(
+        variants.into_iter().map(VariantResponse::from).collect(),
+    ))
 }
 
 pub async fn get_variant(
@@ -146,7 +165,10 @@ pub async fn get_variant(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<VariantResponse>> {
-    let variant = state.vault_service.get_variant(auth.tenant_id, id).await
+    let variant = state
+        .vault_service
+        .get_variant(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(variant.into()))
 }
@@ -167,7 +189,10 @@ pub async fn update_stock(
         variant_id,
         delta: payload.delta,
     };
-    let variant = state.vault_service.update_stock(cmd).await
+    let variant = state
+        .vault_service
+        .update_stock(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(variant.into()))
 }

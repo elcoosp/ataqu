@@ -1,12 +1,15 @@
 //! SeaORM implementations for VISTA domain repository.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect, ActiveModelTrait, QueryOrder};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
+    QueryOrder, QuerySelect, Set,
+};
 use uuid::Uuid;
 
-use ataqu_kernel::TenantId;
 use ataqu_domain_vista::aggregation::AggregatedView;
 use ataqu_domain_vista::analytics::AnalyticsDataPoint;
 use ataqu_domain_vista::repository::VistaRepository;
+use ataqu_kernel::TenantId;
 
 use crate::entities::vista::aggregated_view as view_entity;
 use crate::entities::vista::data_point as point_entity;
@@ -106,7 +109,10 @@ impl VistaRepository for VistaRepositoryImpl {
             active_model.total_bookings = active.total_bookings;
             active_model.pending_leave_requests = active.pending_leave_requests;
             active_model.last_updated_at = active.last_updated_at;
-            active_model.update(&self.db).await.map_err(|e| e.to_string())?;
+            active_model
+                .update(&self.db)
+                .await
+                .map_err(|e| e.to_string())?;
         } else {
             view_entity::Entity::insert(active)
                 .exec(&self.db)
@@ -125,7 +131,12 @@ impl VistaRepository for VistaRepositoryImpl {
         Ok(())
     }
 
-    async fn get_data_points(&self, tenant_id: &TenantId, metric: &str, limit: u64) -> Result<Vec<AnalyticsDataPoint>, String> {
+    async fn get_data_points(
+        &self,
+        tenant_id: &TenantId,
+        metric: &str,
+        limit: u64,
+    ) -> Result<Vec<AnalyticsDataPoint>, String> {
         let models = point_entity::Entity::find()
             .filter(point_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(point_entity::Column::MetricName.eq(metric))

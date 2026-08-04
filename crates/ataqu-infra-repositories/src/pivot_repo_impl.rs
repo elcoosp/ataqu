@@ -1,15 +1,17 @@
 //! SeaORM implementations for PIVOT domain repositories.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QuerySelect, Condition};
+use sea_orm::{
+    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set,
+};
 use uuid::Uuid;
 
-use ataqu_kernel::{TenantId, RepositoryError};
+use ataqu_domain_pivot::block::{BlockCreatedEvent, BlockType, Relation, RelationCreatedEvent};
 use ataqu_domain_pivot::document::DocumentCreatedEvent;
-use ataqu_domain_pivot::block::{BlockCreatedEvent, RelationCreatedEvent, BlockType, Relation};
-use ataqu_domain_pivot::repository::{DocumentRepository, BlockRepository, RelationRepository};
+use ataqu_domain_pivot::repository::{BlockRepository, DocumentRepository, RelationRepository};
+use ataqu_kernel::{RepositoryError, TenantId};
 
-use crate::entities::pivot::document as doc_entity;
 use crate::entities::pivot::block as block_entity;
+use crate::entities::pivot::document as doc_entity;
 use crate::entities::pivot::relation as rel_entity;
 
 // ---------- Document Repository ----------
@@ -17,7 +19,9 @@ pub struct PivotDocumentRepository {
     db: DatabaseConnection,
 }
 impl PivotDocumentRepository {
-    pub fn new(db: DatabaseConnection) -> Self { Self { db } }
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
 }
 
 fn document_event_to_active(event: &DocumentCreatedEvent) -> doc_entity::ActiveModel {
@@ -53,7 +57,11 @@ impl DocumentRepository for PivotDocumentRepository {
         Ok(())
     }
 
-    async fn get_document(&self, tenant_id: &TenantId, doc_id: Uuid) -> Result<DocumentCreatedEvent, RepositoryError> {
+    async fn get_document(
+        &self,
+        tenant_id: &TenantId,
+        doc_id: Uuid,
+    ) -> Result<DocumentCreatedEvent, RepositoryError> {
         let model = doc_entity::Entity::find()
             .filter(doc_entity::Column::Id.eq(doc_id))
             .filter(doc_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -64,7 +72,12 @@ impl DocumentRepository for PivotDocumentRepository {
         Ok(document_model_to_event(model))
     }
 
-    async fn list_documents(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<DocumentCreatedEvent>, RepositoryError> {
+    async fn list_documents(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError> {
         let models = doc_entity::Entity::find()
             .filter(doc_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -81,7 +94,9 @@ pub struct PivotBlockRepository {
     db: DatabaseConnection,
 }
 impl PivotBlockRepository {
-    pub fn new(db: DatabaseConnection) -> Self { Self { db } }
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
 }
 
 fn block_event_to_active(event: &BlockCreatedEvent) -> block_entity::ActiveModel {
@@ -92,7 +107,9 @@ fn block_event_to_active(event: &BlockCreatedEvent) -> block_entity::ActiveModel
     };
     let content = match &event.block_type {
         BlockType::Markdown(text) => serde_json::json!({ "text": text }),
-        BlockType::Table { columns, rows } => serde_json::json!({ "columns": columns, "rows": rows }),
+        BlockType::Table { columns, rows } => {
+            serde_json::json!({ "columns": columns, "rows": rows })
+        }
         BlockType::View { filter } => serde_json::json!({ "filter": filter }),
     };
     block_entity::ActiveModel {
@@ -109,16 +126,50 @@ fn block_event_to_active(event: &BlockCreatedEvent) -> block_entity::ActiveModel
 fn block_model_to_event(model: block_entity::Model) -> BlockCreatedEvent {
     let block_type = match model.block_type.as_str() {
         "markdown" => {
-            let text = model.content.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let text = model
+                .content
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
             BlockType::Markdown(text)
         }
         "table" => {
-            let columns = model.content.get("columns").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
-            let rows = model.content.get("rows").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|row| row.as_array().map(|r| r.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())).collect()).unwrap_or_default();
+            let columns = model
+                .content
+                .get("columns")
+                .and_then(|v| v.as_array())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let rows = model
+                .content
+                .get("rows")
+                .and_then(|v| v.as_array())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|row| {
+                            row.as_array().map(|r| {
+                                r.iter()
+                                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                    .collect()
+                            })
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
             BlockType::Table { columns, rows }
         }
         "view" => {
-            let filter = model.content.get("filter").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let filter = model
+                .content
+                .get("filter")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
             BlockType::View { filter }
         }
         _ => BlockType::Markdown("".to_string()),
@@ -143,7 +194,11 @@ impl BlockRepository for PivotBlockRepository {
         Ok(())
     }
 
-    async fn get_blocks_for_document(&self, tenant_id: &TenantId, doc_id: Uuid) -> Result<Vec<BlockCreatedEvent>, RepositoryError> {
+    async fn get_blocks_for_document(
+        &self,
+        tenant_id: &TenantId,
+        doc_id: Uuid,
+    ) -> Result<Vec<BlockCreatedEvent>, RepositoryError> {
         let models = block_entity::Entity::find()
             .filter(block_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(block_entity::Column::DocumentId.eq(doc_id))
@@ -159,7 +214,9 @@ pub struct PivotRelationRepository {
     db: DatabaseConnection,
 }
 impl PivotRelationRepository {
-    pub fn new(db: DatabaseConnection) -> Self { Self { db } }
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
 }
 
 fn relation_event_to_active(event: &RelationCreatedEvent) -> rel_entity::ActiveModel {
@@ -198,7 +255,11 @@ impl RelationRepository for PivotRelationRepository {
         Ok(())
     }
 
-    async fn get_relations_for_document(&self, tenant_id: &TenantId, doc_id: Uuid) -> Result<Vec<RelationCreatedEvent>, RepositoryError> {
+    async fn get_relations_for_document(
+        &self,
+        tenant_id: &TenantId,
+        doc_id: Uuid,
+    ) -> Result<Vec<RelationCreatedEvent>, RepositoryError> {
         // Get all blocks of the document
         let block_models = block_entity::Entity::find()
             .filter(block_entity::Column::TenantId.eq(tenant_id.as_uuid()))

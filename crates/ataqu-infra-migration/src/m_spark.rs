@@ -17,13 +17,37 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table((Alias::new("collab_crm"), Workflows::Table))
                     .if_not_exists()
-                    .col(ColumnDef::new(Workflows::Id).uuid().not_null().primary_key())
+                    .col(
+                        ColumnDef::new(Workflows::Id)
+                            .uuid()
+                            .not_null()
+                            .primary_key(),
+                    )
                     .col(ColumnDef::new(Workflows::TenantId).uuid().not_null())
                     .col(ColumnDef::new(Workflows::Name).string().not_null())
-                    .col(ColumnDef::new(Workflows::Definition).json_binary().not_null())
-                    .col(ColumnDef::new(Workflows::Enabled).boolean().not_null().default(true))
-                    .col(ColumnDef::new(Workflows::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
-                    .col(ColumnDef::new(Workflows::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Workflows::Definition)
+                            .json_binary()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(Workflows::Enabled)
+                            .boolean()
+                            .not_null()
+                            .default(true),
+                    )
+                    .col(
+                        ColumnDef::new(Workflows::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(Workflows::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -40,8 +64,18 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Leases::FenceToken).big_integer().not_null())
                     .col(ColumnDef::new(Leases::Holder).string())
                     .col(ColumnDef::new(Leases::ExpiresAt).timestamp_with_time_zone())
-                    .col(ColumnDef::new(Leases::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
-                    .col(ColumnDef::new(Leases::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Leases::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(Leases::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -72,10 +106,18 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_crm"), Leases::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_crm"), Leases::Table))
+                    .to_owned(),
+            )
             .await?;
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_crm"), Workflows::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_crm"), Workflows::Table))
+                    .to_owned(),
+            )
             .await?;
         Ok(())
     }

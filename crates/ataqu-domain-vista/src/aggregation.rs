@@ -1,9 +1,9 @@
 use ataqu_kernel::{Clock, TenantId};
-use std::time::SystemTime;
-use serde::{Serialize, Deserialize};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::time::SystemTime;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AggregatedView {
@@ -67,10 +67,10 @@ pub fn process_aggregation_event(
         ("vault", "LowStockAlert") => state.low_stock_variants += 1,
         ("tempo", "BookingCreated") => state.total_bookings += 1,
         ("collab_ops", "LeaveRequestedEvent") => state.pending_leave_requests += 1,
-        ("collab_ops", "LeaveStatusChanged") => {
-            if payload.get("new_status").and_then(|v| v.as_str()) != Some("pending") {
-                state.pending_leave_requests = state.pending_leave_requests.saturating_sub(1);
-            }
+        ("collab_ops", "LeaveStatusChanged")
+            if payload.get("new_status").and_then(|v| v.as_str()) != Some("pending") =>
+        {
+            state.pending_leave_requests = state.pending_leave_requests.saturating_sub(1);
         }
         _ => {}
     }

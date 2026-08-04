@@ -19,14 +19,36 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(Bookings::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Bookings::TenantId).uuid().not_null())
-                    .col(ColumnDef::new(Bookings::StartsAt).timestamp_with_time_zone().not_null())
-                    .col(ColumnDef::new(Bookings::DurationSeconds).integer().not_null())
-                    .col(ColumnDef::new(Bookings::EndsAt).timestamp_with_time_zone().not_null())
+                    .col(
+                        ColumnDef::new(Bookings::StartsAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(Bookings::DurationSeconds)
+                            .integer()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(Bookings::EndsAt)
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
                     .col(ColumnDef::new(Bookings::OauthAccessToken).string())
                     .col(ColumnDef::new(Bookings::OauthRefreshToken).string())
                     .col(ColumnDef::new(Bookings::OauthTokenExpiresAt).timestamp_with_time_zone())
-                    .col(ColumnDef::new(Bookings::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
-                    .col(ColumnDef::new(Bookings::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Bookings::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(Bookings::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -57,7 +79,11 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_ops"), Bookings::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_ops"), Bookings::Table))
+                    .to_owned(),
+            )
             .await?;
         Ok(())
     }

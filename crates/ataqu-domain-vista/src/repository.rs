@@ -1,12 +1,17 @@
-use async_trait::async_trait;
-use ataqu_kernel::TenantId;
 use crate::aggregation::AggregatedView;
 use crate::analytics::AnalyticsDataPoint;
+use async_trait::async_trait;
+use ataqu_kernel::TenantId;
 
 #[async_trait]
 pub trait VistaRepository: Send + Sync {
     async fn get_aggregated_view(&self, tenant_id: &TenantId) -> Result<AggregatedView, String>;
     async fn save_aggregated_view(&self, view: &AggregatedView) -> Result<(), String>;
     async fn save_data_point(&self, point: &AnalyticsDataPoint) -> Result<(), String>;
-    async fn get_data_points(&self, tenant_id: &TenantId, metric: &str, limit: u64) -> Result<Vec<AnalyticsDataPoint>, String>;
+    async fn get_data_points(
+        &self,
+        tenant_id: &TenantId,
+        metric: &str,
+        limit: u64,
+    ) -> Result<Vec<AnalyticsDataPoint>, String>;
 }

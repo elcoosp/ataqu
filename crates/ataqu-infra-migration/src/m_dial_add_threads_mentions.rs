@@ -17,7 +17,8 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL
             );
             "#,
-        ).await?;
+        )
+        .await?;
         conn.execute_unprepared(
             r#"
             CREATE TABLE IF NOT EXISTS dial.mentions (
@@ -29,20 +30,25 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL
             );
             "#,
-        ).await?;
+        )
+        .await?;
         conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_threads_channel ON dial.threads (channel_id);",
-        ).await?;
+        )
+        .await?;
         conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_mentions_user ON dial.mentions (user_id);",
-        ).await?;
+        )
+        .await?;
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS dial.mentions;").await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS dial.threads;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS dial.mentions;")
+            .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS dial.threads;")
+            .await?;
         Ok(())
     }
 }

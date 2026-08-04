@@ -1,32 +1,31 @@
 // AEGIS application service – orchestrates auth flows.
 // Uses domain repository trait (AuthRepository) and domain command structs.
 
-use std::sync::Arc;
+use argon2::{
+    Argon2,
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+};
 use async_trait::async_trait;
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use rand::Rng;
+use rand::distributions::Alphanumeric;
+use rand::thread_rng;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 use tracing::{info, instrument};
 use uuid::Uuid;
-use argon2::{
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2,
-};
-use jsonwebtoken::{encode, EncodingKey, Header, decode, DecodingKey, Validation};
-use rand::distributions::Alphanumeric;
-use rand::thread_rng;
-use rand::Rng;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use ataqu_domain_aegis::{
-    User, UserCreated, AuthRepository, AuthError,
-    CreateUserCommand as DomainCreateUserCommand,
-    AuthenticateCommand as DomainAuthenticateCommand,
+    AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
+    CreateUserCommand as DomainCreateUserCommand, User, UserCreated,
 };
 use ataqu_kernel::{Clock, IdGenerator};
 
-pub use ataqu_domain_aegis::CreateUserCommand as CreateUserCommand;
-pub use ataqu_domain_aegis::AuthenticateCommand as AuthenticateCommand;
-pub use ataqu_domain_aegis::SetupMfaCommand as SetupMfaCommand;
+pub use ataqu_domain_aegis::AuthenticateCommand;
+pub use ataqu_domain_aegis::CreateUserCommand;
+pub use ataqu_domain_aegis::SetupMfaCommand;
 
 #[derive(Debug, Clone)]
 pub struct AegisConfig {
@@ -152,7 +151,10 @@ impl RealAegisDomain {
         let parsed_hash = PasswordHash::new(&user.password_hash)
             .map_err(|_| AegisServiceError::AuthenticationFailed)?;
         let argon2 = Argon2::default();
-        if argon2.verify_password(cmd.password_plain.as_bytes(), &parsed_hash).is_err() {
+        if argon2
+            .verify_password(cmd.password_plain.as_bytes(), &parsed_hash)
+            .is_err()
+        {
             return Err(AegisServiceError::AuthenticationFailed);
         }
         if !user.is_active {
@@ -171,7 +173,13 @@ impl RealAegisDomain {
         let (access, refresh) = generate_token_pair(&user, config)?;
         let mut updated_user = user;
         updated_user.last_login_at = Some(clock.now());
-        Ok((updated_user, TokenPair { access_token: access, refresh_token: refresh }))
+        Ok((
+            updated_user,
+            TokenPair {
+                access_token: access,
+                refresh_token: refresh,
+            },
+        ))
     }
 
     pub fn setup_mfa(
@@ -180,34 +188,34 @@ impl RealAegisDomain {
         clock: &dyn Clock,
     ) -> Result<(String, String), AegisServiceError> {
         if user.mfa_enabled {
-            return Err(AegisServiceError::Conflict("MFA already enabled".to_string()));
+            return Err(AegisServiceError::Conflict(
+                "MFA already enabled".to_string(),
+            ));
         }
         let secret: String = thread_rng()
             .sample_iter(&Alphanumeric)
             .take(16)
             .map(char::from)
             .collect();
-        let qr_code_url = format!("otpauth://totp/Ataqu:{}?secret={}&issuer=Ataqu", user.email.as_ref(), secret);
+        let qr_code_url = format!(
+            "otpauth://totp/Ataqu:{}?secret={}&issuer=Ataqu",
+            user.email.as_ref(),
+            secret
+        );
         user.mfa_secret = Some(secret.clone());
         user.updated_at = clock.now();
         Ok((secret, qr_code_url))
     }
 
-    pub fn verify_mfa(
-        &self,
-        user: &User,
-        code: &str,
-    ) -> Result<bool, AegisServiceError> {
-        let secret = user.mfa_secret.as_deref()
+    pub fn verify_mfa(&self, user: &User, code: &str) -> Result<bool, AegisServiceError> {
+        let secret = user
+            .mfa_secret
+            .as_deref()
             .ok_or_else(|| AegisServiceError::Validation("MFA not set up".to_string()))?;
         Ok(verify_totp(secret, code))
     }
 
-    pub fn enable_mfa(
-        &self,
-        user: &mut User,
-        clock: &dyn Clock,
-    ) -> Result<(), AegisServiceError> {
+    pub fn enable_mfa(&self, user: &mut User, clock: &dyn Clock) -> Result<(), AegisServiceError> {
         if user.mfa_secret.is_none() {
             return Err(AegisServiceError::Validation("MFA not set up".to_string()));
         }
@@ -217,7 +225,10 @@ impl RealAegisDomain {
     }
 }
 
-fn generate_token_pair(user: &User, config: &AegisConfig) -> Result<(String, String), AegisServiceError> {
+fn generate_token_pair(
+    user: &User,
+    config: &AegisConfig,
+) -> Result<(String, String), AegisServiceError> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -236,10 +247,18 @@ fn generate_token_pair(user: &User, config: &AegisConfig) -> Result<(String, Str
         token_type: "refresh".to_string(),
         ..claims.clone()
     };
-    let access = encode(&Header::default(), &claims, &EncodingKey::from_secret(&config.jwt_secret))
-        .map_err(|e| AegisServiceError::Internal(e.to_string()))?;
-    let refresh = encode(&Header::default(), &refresh_claims, &EncodingKey::from_secret(&config.jwt_secret))
-        .map_err(|e| AegisServiceError::Internal(e.to_string()))?;
+    let access = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(&config.jwt_secret),
+    )
+    .map_err(|e| AegisServiceError::Internal(e.to_string()))?;
+    let refresh = encode(
+        &Header::default(),
+        &refresh_claims,
+        &EncodingKey::from_secret(&config.jwt_secret),
+    )
+    .map_err(|e| AegisServiceError::Internal(e.to_string()))?;
     Ok((access, refresh))
 }
 
@@ -269,7 +288,14 @@ where
         clock: Arc<dyn Clock>,
         config: AegisConfig,
     ) -> Self {
-        Self { repo, outbox, domain, id_gen, clock, config }
+        Self {
+            repo,
+            outbox,
+            domain,
+            id_gen,
+            clock,
+            config,
+        }
     }
 
     #[instrument(skip(self, cmd), fields(email = %cmd.email))]
@@ -281,10 +307,12 @@ where
         let (event, user) = self
             .domain
             .create_user(cmd, self.id_gen.as_ref(), self.clock.as_ref())
-            .map_err(|e| AegisServiceError::Domain(e))?;
+            .map_err(AegisServiceError::Domain)?;
         self.repo.save_user(&user).await?;
-        self.outbox.append_event(&event).await
-            .map_err(|e| AegisServiceError::Outbox(e))?;
+        self.outbox
+            .append_event(&event)
+            .await
+            .map_err(AegisServiceError::Outbox)?;
         Ok(CreateUserResponse {
             user_id: user.id,
             email: user.email.to_string(),
@@ -302,9 +330,9 @@ where
             .find_by_email(&cmd.email)
             .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
-        let (updated_user, token_pair) = self
-            .domain
-            .authenticate(cmd, user, self.clock.as_ref(), &self.config)?;
+        let (updated_user, token_pair) =
+            self.domain
+                .authenticate(cmd, user, self.clock.as_ref(), &self.config)?;
         self.repo.save_user(&updated_user).await?;
         Ok(AuthenticateResponse {
             access_token: token_pair.access_token,
@@ -316,19 +344,26 @@ where
     #[instrument(skip(self), fields(user_id = %user_id))]
     pub async fn setup_mfa(&self, user_id: Uuid) -> Result<MfaSetupResponse, AegisServiceError> {
         info!("Setting up MFA");
-        let mut user = self.repo.find_by_id(user_id).await?
+        let mut user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
-        let (secret, qr_code_url) = self
-            .domain
-            .setup_mfa(&mut user, self.clock.as_ref())?;
+        let (secret, qr_code_url) = self.domain.setup_mfa(&mut user, self.clock.as_ref())?;
         self.repo.save_user(&user).await?;
-        Ok(MfaSetupResponse { secret, qr_code_url })
+        Ok(MfaSetupResponse {
+            secret,
+            qr_code_url,
+        })
     }
 
     #[instrument(skip(self), fields(user_id = %user_id))]
     pub async fn verify_mfa(&self, user_id: Uuid, code: &str) -> Result<(), AegisServiceError> {
         info!("Verifying MFA");
-        let user = self.repo.find_by_id(user_id).await?
+        let user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
         if !self.domain.verify_mfa(&user, code)? {
             return Err(AegisServiceError::AuthenticationFailed);
@@ -341,7 +376,10 @@ where
     }
 
     #[instrument(skip(self), fields(token = %refresh_token))]
-    pub async fn refresh_token(&self, refresh_token: &str) -> Result<AuthenticateResponse, AegisServiceError> {
+    pub async fn refresh_token(
+        &self,
+        refresh_token: &str,
+    ) -> Result<AuthenticateResponse, AegisServiceError> {
         let claims: JwtClaims = decode(
             refresh_token,
             &DecodingKey::from_secret(&self.config.jwt_secret),
@@ -352,9 +390,12 @@ where
         if claims.token_type != "refresh" {
             return Err(AegisServiceError::AuthenticationFailed);
         }
-        let user_id = Uuid::parse_str(&claims.sub)
-            .map_err(|_| AegisServiceError::AuthenticationFailed)?;
-        let user = self.repo.find_by_id(user_id).await?
+        let user_id =
+            Uuid::parse_str(&claims.sub).map_err(|_| AegisServiceError::AuthenticationFailed)?;
+        let user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);

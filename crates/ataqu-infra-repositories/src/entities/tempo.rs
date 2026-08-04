@@ -1,7 +1,7 @@
 //! SeaORM entities for TEMPO tables.
+use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "bookings", schema_name = "collab_ops")]

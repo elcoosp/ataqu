@@ -1,5 +1,5 @@
-use std::fmt;
 use serde::Serialize;
+use std::fmt;
 
 /// A capability token that allows revealing PII.
 #[derive(Clone, Copy)]

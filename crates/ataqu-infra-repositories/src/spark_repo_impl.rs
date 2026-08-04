@@ -1,17 +1,20 @@
 //! SeaORM implementations for SPARK domain repository.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QuerySelect, Statement, DbBackend, ConnectionTrait};
-use uuid::Uuid;
 use chrono::Utc;
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DatabaseConnection, DbBackend, EntityTrait, QueryFilter,
+    QuerySelect, Set, Statement,
+};
+use uuid::Uuid;
 
-use ataqu_kernel::TenantId;
-use ataqu_domain_spark::workflow::Workflow;
 use ataqu_domain_spark::action::Action;
 use ataqu_domain_spark::errors::SparkError;
 use ataqu_domain_spark::repository::SparkRepository;
+use ataqu_domain_spark::workflow::Workflow;
+use ataqu_kernel::TenantId;
 
-use crate::entities::spark::workflow as workflow_entity;
 use crate::entities::spark::lease as lease_entity;
+use crate::entities::spark::workflow as workflow_entity;
 
 // ---------- Helpers ----------
 fn workflow_to_model(workflow: &Workflow) -> workflow_entity::ActiveModel {
@@ -33,12 +36,20 @@ fn workflow_to_model(workflow: &Workflow) -> workflow_entity::ActiveModel {
 
 fn model_to_workflow(model: workflow_entity::Model) -> Workflow {
     let def = model.definition;
-    let trigger: ataqu_domain_spark::Trigger = serde_json::from_value(def.get("trigger").cloned().unwrap_or(serde_json::json!({})))
-        .unwrap_or(ataqu_domain_spark::Trigger::Webhook { path: "/default".to_string() });
-    let conditions: Vec<ataqu_domain_spark::Condition> = serde_json::from_value(def.get("conditions").cloned().unwrap_or(serde_json::json!([])))
-        .unwrap_or_default();
-    let actions: Vec<ataqu_domain_spark::Action> = serde_json::from_value(def.get("actions").cloned().unwrap_or(serde_json::json!([])))
-        .unwrap_or_default();
+    let trigger: ataqu_domain_spark::Trigger =
+        serde_json::from_value(def.get("trigger").cloned().unwrap_or(serde_json::json!({})))
+            .unwrap_or(ataqu_domain_spark::Trigger::Webhook {
+                path: "/default".to_string(),
+            });
+    let conditions: Vec<ataqu_domain_spark::Condition> = serde_json::from_value(
+        def.get("conditions")
+            .cloned()
+            .unwrap_or(serde_json::json!([])),
+    )
+    .unwrap_or_default();
+    let actions: Vec<ataqu_domain_spark::Action> =
+        serde_json::from_value(def.get("actions").cloned().unwrap_or(serde_json::json!([])))
+            .unwrap_or_default();
     Workflow {
         id: model.id,
         tenant_id: model.tenant_id,
@@ -64,7 +75,11 @@ impl SparkRepositoryImpl {
 
 #[async_trait]
 impl SparkRepository for SparkRepositoryImpl {
-    async fn get_workflow(&self, tenant_id: &TenantId, workflow_id: &Uuid) -> Result<Option<Workflow>, SparkError> {
+    async fn get_workflow(
+        &self,
+        tenant_id: &TenantId,
+        workflow_id: &Uuid,
+    ) -> Result<Option<Workflow>, SparkError> {
         let model = workflow_entity::Entity::find()
             .filter(workflow_entity::Column::Id.eq(*workflow_id))
             .filter(workflow_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -83,7 +98,12 @@ impl SparkRepository for SparkRepositoryImpl {
         Ok(())
     }
 
-    async fn list_workflows(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Workflow>, SparkError> {
+    async fn list_workflows(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Workflow>, SparkError> {
         let models = workflow_entity::Entity::find()
             .filter(workflow_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -94,7 +114,13 @@ impl SparkRepository for SparkRepositoryImpl {
         Ok(models.into_iter().map(model_to_workflow).collect())
     }
 
-    async fn acquire_lease_and_dispatch(&self, tenant_id: &TenantId, workflow_id: &Uuid, expected_token: u64, actions: &[Action]) -> Result<(), SparkError> {
+    async fn acquire_lease_and_dispatch(
+        &self,
+        tenant_id: &TenantId,
+        workflow_id: &Uuid,
+        expected_token: u64,
+        actions: &[Action],
+    ) -> Result<(), SparkError> {
         // Check if lease exists
         let existing = lease_entity::Entity::find()
             .filter(lease_entity::Column::WorkflowId.eq(*workflow_id))
@@ -129,7 +155,11 @@ impl SparkRepository for SparkRepositoryImpl {
                     (expected_token as i64).into(),
                 ],
             );
-            let res = self.db.execute_raw(stmt).await.map_err(|_| SparkError::WorkflowNotFound)?;
+            let res = self
+                .db
+                .execute_raw(stmt)
+                .await
+                .map_err(|_| SparkError::WorkflowNotFound)?;
             if res.rows_affected() == 0 {
                 return Err(SparkError::WorkflowNotFound);
             }
@@ -168,7 +198,10 @@ impl SparkRepository for SparkRepositoryImpl {
                 outbox_sql,
                 vec![(*workflow_id).into(), payload.into()],
             );
-            self.db.execute_raw(stmt).await.map_err(|_| SparkError::WorkflowNotFound)?;
+            self.db
+                .execute_raw(stmt)
+                .await
+                .map_err(|_| SparkError::WorkflowNotFound)?;
         }
 
         // Notify dispatcher
@@ -177,7 +210,10 @@ impl SparkRepository for SparkRepositoryImpl {
             "SELECT pg_notify('outbox_event', '')",
             vec![],
         );
-        self.db.execute_raw(notify).await.map_err(|_| SparkError::WorkflowNotFound)?;
+        self.db
+            .execute_raw(notify)
+            .await
+            .map_err(|_| SparkError::WorkflowNotFound)?;
 
         Ok(())
     }

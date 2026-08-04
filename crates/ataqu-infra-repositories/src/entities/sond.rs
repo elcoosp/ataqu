@@ -1,8 +1,8 @@
 //! SeaORM entities for SOND tables.
-use sea_orm::entity::prelude::*;
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
+use sea_orm::entity::prelude::*;
 use serde_json::Value as JsonValue;
+use uuid::Uuid;
 
 pub mod form {
     use super::*;

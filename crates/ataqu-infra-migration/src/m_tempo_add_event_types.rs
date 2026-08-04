@@ -28,15 +28,18 @@ impl MigrationTrait for Migration {
                 is_booked BOOLEAN NOT NULL DEFAULT false,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.availability_slots;").await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.event_types;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.availability_slots;")
+            .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.event_types;")
+            .await?;
         Ok(())
     }
 }

@@ -1,8 +1,8 @@
 //! Inventory domain: Products and Variants.
-use std::time::SystemTime;
 use ataqu_kernel::{Clock, TenantId};
-use uuid::Uuid;
+use std::time::SystemTime;
 use thiserror::Error;
+use uuid::Uuid;
 
 /// A product in the inventory.
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +17,14 @@ pub struct Product {
 }
 
 impl Product {
-    pub fn new(id: Uuid, tenant_id: TenantId, name: String, description: String, sku: String, clock: &dyn Clock) -> Self {
+    pub fn new(
+        id: Uuid,
+        tenant_id: TenantId,
+        name: String,
+        description: String,
+        sku: String,
+        clock: &dyn Clock,
+    ) -> Self {
         let now = clock.now();
         Self {
             id,
@@ -90,18 +97,19 @@ impl Variant {
 
 #[derive(Debug, Clone, PartialEq, Error)]
 pub enum StockError {
-    #[error("Insufficient stock for variant {variant_id}: available {available}, requested {requested}")]
+    #[error(
+        "Insufficient stock for variant {variant_id}: available {available}, requested {requested}"
+    )]
     InsufficientStock {
         variant_id: Uuid,
         available: i64,
         requested: i64,
     },
     #[error("Invalid quantity {quantity} for variant {variant_id}")]
-    InvalidQuantity {
-        variant_id: Uuid,
-        quantity: i64,
-    },
-    #[error("Reservation not found for variant {variant_id}: reserved {reserved}, requested {requested}")]
+    InvalidQuantity { variant_id: Uuid, quantity: i64 },
+    #[error(
+        "Reservation not found for variant {variant_id}: reserved {reserved}, requested {requested}"
+    )]
     ReservationNotFound {
         variant_id: Uuid,
         reserved: i64,

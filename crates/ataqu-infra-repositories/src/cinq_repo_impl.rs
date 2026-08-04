@@ -1,33 +1,33 @@
 //! SeaORM-based repositories for CINQ domain.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QuerySelect, QueryOrder, Condition};
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
+use sea_orm::{
+    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect,
+    Set,
+};
+use uuid::Uuid;
 
-use ataqu_kernel::TenantId;
-use ataqu_security::{Email, PhoneNumber};
+use ataqu_domain_cinq::activity::{Activity, ActivityType};
 use ataqu_domain_cinq::contact::Contact;
 use ataqu_domain_cinq::deal::{Deal, DealStatus};
-use ataqu_domain_cinq::activity::{Activity, ActivityType};
+use ataqu_domain_cinq::error::CinqDomainError;
 use ataqu_domain_cinq::pipeline::PipelineStage;
 use ataqu_domain_cinq::repository::{
-    ContactRepository as DomainContactRepo,
-    DealRepository as DomainDealRepo,
-    ActivityRepository as DomainActivityRepo,
-    PipelineStageRepository as DomainPipelineRepo,
+    ActivityRepository as DomainActivityRepo, ContactRepository as DomainContactRepo,
+    DealRepository as DomainDealRepo, PipelineStageRepository as DomainPipelineRepo,
 };
-use ataqu_domain_cinq::error::CinqDomainError;
+use ataqu_kernel::TenantId;
+use ataqu_security::{Email, PhoneNumber};
 
 use crate::entities::contact as contact_entity;
 use crate::entities::deal as deal_entity;
 
 // Define activity and pipeline_stage entities in their own modules
 mod activity_entity {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "activities", schema_name = "collab_crm")]
@@ -51,9 +51,9 @@ mod activity_entity {
 }
 
 mod pipeline_stage_entity {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "pipeline_stages", schema_name = "collab_crm")]
@@ -78,7 +78,9 @@ pub struct CinqContactRepository {
     db: DatabaseConnection,
 }
 impl CinqContactRepository {
-    pub fn new(db: DatabaseConnection) -> Self { Self { db } }
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
 }
 
 fn contact_to_active(contact: &Contact) -> contact_entity::ActiveModel {
@@ -131,7 +133,11 @@ impl DomainContactRepo for CinqContactRepository {
         Ok(())
     }
 
-    async fn find_contact_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<Contact>, CinqDomainError> {
+    async fn find_contact_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<Contact>, CinqDomainError> {
         let model = contact_entity::Entity::find()
             .filter(contact_entity::Column::Id.eq(id))
             .filter(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -141,7 +147,12 @@ impl DomainContactRepo for CinqContactRepository {
         Ok(model.map(model_to_contact))
     }
 
-    async fn list_contacts(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Contact>, CinqDomainError> {
+    async fn list_contacts(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Contact>, CinqDomainError> {
         let models = contact_entity::Entity::find()
             .filter(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -152,7 +163,12 @@ impl DomainContactRepo for CinqContactRepository {
         Ok(models.into_iter().map(model_to_contact).collect())
     }
 
-    async fn search_contacts(&self, tenant_id: &TenantId, query: &str, limit: u64) -> Result<Vec<Contact>, CinqDomainError> {
+    async fn search_contacts(
+        &self,
+        tenant_id: &TenantId,
+        query: &str,
+        limit: u64,
+    ) -> Result<Vec<Contact>, CinqDomainError> {
         let cond = Condition::any()
             .add(contact_entity::Column::Name.ilike(format!("%{}%", query)))
             .add(contact_entity::Column::Email.ilike(format!("%{}%", query)));
@@ -185,7 +201,9 @@ pub struct CinqDealRepository {
     db: DatabaseConnection,
 }
 impl CinqDealRepository {
-    pub fn new(db: DatabaseConnection) -> Self { Self { db } }
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
 }
 
 fn deal_to_active(deal: &Deal) -> deal_entity::ActiveModel {
@@ -200,7 +218,8 @@ fn deal_to_active(deal: &Deal) -> deal_entity::ActiveModel {
             DealStatus::Open => "open",
             DealStatus::Won => "won",
             DealStatus::Lost => "lost",
-        }.to_string()),
+        }
+        .to_string()),
         pipeline_stage_id: Set(deal.pipeline_stage_id),
         custom_fields: Set(serde_json::json!({})),
         created_at: Set(deal.created_at),
@@ -251,7 +270,11 @@ impl DomainDealRepo for CinqDealRepository {
         Ok(())
     }
 
-    async fn find_deal_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<Deal>, CinqDomainError> {
+    async fn find_deal_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<Deal>, CinqDomainError> {
         let model = deal_entity::Entity::find()
             .filter(deal_entity::Column::Id.eq(id))
             .filter(deal_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -261,7 +284,12 @@ impl DomainDealRepo for CinqDealRepository {
         Ok(model.map(model_to_deal))
     }
 
-    async fn list_deals(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Deal>, CinqDomainError> {
+    async fn list_deals(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Deal>, CinqDomainError> {
         let models = deal_entity::Entity::find()
             .filter(deal_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -291,7 +319,9 @@ pub struct CinqActivityRepository {
     db: DatabaseConnection,
 }
 impl CinqActivityRepository {
-    pub fn new(db: DatabaseConnection) -> Self { Self { db } }
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
 }
 
 fn activity_type_to_str(t: ActivityType) -> &'static str {
@@ -365,7 +395,11 @@ impl DomainActivityRepo for CinqActivityRepository {
         Ok(())
     }
 
-    async fn find_activity_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<Activity>, CinqDomainError> {
+    async fn find_activity_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<Activity>, CinqDomainError> {
         let model = activity_entity::Entity::find()
             .filter(activity_entity::Column::Id.eq(id))
             .filter(activity_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -375,7 +409,13 @@ impl DomainActivityRepo for CinqActivityRepository {
         Ok(model.map(model_to_activity))
     }
 
-    async fn list_activities_for_contact(&self, tenant_id: &TenantId, contact_id: Uuid, limit: u64, offset: u64) -> Result<Vec<Activity>, CinqDomainError> {
+    async fn list_activities_for_contact(
+        &self,
+        tenant_id: &TenantId,
+        contact_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Activity>, CinqDomainError> {
         let models = activity_entity::Entity::find()
             .filter(activity_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(activity_entity::Column::ContactId.eq(contact_id))
@@ -393,7 +433,9 @@ pub struct CinqPipelineStageRepository {
     db: DatabaseConnection,
 }
 impl CinqPipelineStageRepository {
-    pub fn new(db: DatabaseConnection) -> Self { Self { db } }
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
 }
 
 fn stage_to_model(stage: &PipelineStage) -> pipeline_stage_entity::ActiveModel {
@@ -441,7 +483,11 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
         Ok(())
     }
 
-    async fn find_pipeline_stage_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<PipelineStage>, CinqDomainError> {
+    async fn find_pipeline_stage_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<PipelineStage>, CinqDomainError> {
         let model = pipeline_stage_entity::Entity::find()
             .filter(pipeline_stage_entity::Column::Id.eq(id))
             .filter(pipeline_stage_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -451,7 +497,10 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
         Ok(model.map(model_to_stage))
     }
 
-    async fn list_pipeline_stages(&self, tenant_id: &TenantId) -> Result<Vec<PipelineStage>, CinqDomainError> {
+    async fn list_pipeline_stages(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<PipelineStage>, CinqDomainError> {
         let models = pipeline_stage_entity::Entity::find()
             .filter(pipeline_stage_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .order_by_asc(pipeline_stage_entity::Column::Order)
@@ -461,7 +510,11 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
         Ok(models.into_iter().map(model_to_stage).collect())
     }
 
-    async fn delete_pipeline_stage(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), CinqDomainError> {
+    async fn delete_pipeline_stage(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<(), CinqDomainError> {
         let result = pipeline_stage_entity::Entity::delete_many()
             .filter(pipeline_stage_entity::Column::Id.eq(id))
             .filter(pipeline_stage_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -469,7 +522,9 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         if result.rows_affected == 0 {
-            return Err(CinqDomainError::Validation("Pipeline stage not found".to_string()));
+            return Err(CinqDomainError::Validation(
+                "Pipeline stage not found".to_string(),
+            ));
         }
         Ok(())
     }

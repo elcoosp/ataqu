@@ -24,8 +24,9 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
         conn.execute_unprepared(
-            "ALTER TABLE collab_crm.deals DROP COLUMN IF EXISTS pipeline_stage_id;"
-        ).await?;
+            "ALTER TABLE collab_crm.deals DROP COLUMN IF EXISTS pipeline_stage_id;",
+        )
+        .await?;
         Ok(())
     }
 }

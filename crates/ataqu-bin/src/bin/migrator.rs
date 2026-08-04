@@ -1,5 +1,5 @@
-use sea_orm::{Database, DbErr};
 use ataqu_infra_migration::Migrator;
+use sea_orm::{Database, DbErr};
 use sea_orm_migration::MigratorTrait;
 
 #[tokio::main]

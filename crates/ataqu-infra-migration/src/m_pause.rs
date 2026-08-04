@@ -46,7 +46,12 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Employee::FirstName).string().not_null())
                     .col(ColumnDef::new(Employee::LastName).string().not_null())
                     .col(ColumnDef::new(Employee::Email).string().not_null())
-                    .col(ColumnDef::new(Employee::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Employee::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -57,13 +62,28 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table((Alias::new("collab_ops"), LeaveRequest::Table))
                     .if_not_exists()
-                    .col(ColumnDef::new(LeaveRequest::Id).uuid().not_null().primary_key())
+                    .col(
+                        ColumnDef::new(LeaveRequest::Id)
+                            .uuid()
+                            .not_null()
+                            .primary_key(),
+                    )
                     .col(ColumnDef::new(LeaveRequest::TenantId).uuid().not_null())
                     .col(ColumnDef::new(LeaveRequest::EmployeeId).uuid().not_null())
                     .col(ColumnDef::new(LeaveRequest::StartDate).date().not_null())
                     .col(ColumnDef::new(LeaveRequest::EndDate).date().not_null())
-                    .col(ColumnDef::new(LeaveRequest::Status).string().not_null().default("pending"))
-                    .col(ColumnDef::new(LeaveRequest::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(LeaveRequest::Status)
+                            .string()
+                            .not_null()
+                            .default("pending"),
+                    )
+                    .col(
+                        ColumnDef::new(LeaveRequest::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -73,10 +93,18 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_ops"), LeaveRequest::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_ops"), LeaveRequest::Table))
+                    .to_owned(),
+            )
             .await?;
         manager
-            .drop_table(Table::drop().table((Alias::new("collab_ops"), Employee::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("collab_ops"), Employee::Table))
+                    .to_owned(),
+            )
             .await?;
         Ok(())
     }

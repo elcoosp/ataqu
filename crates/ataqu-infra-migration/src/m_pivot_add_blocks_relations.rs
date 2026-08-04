@@ -19,7 +19,8 @@ impl MigrationTrait for Migration {
                 updated_at TIMESTAMPTZ NOT NULL
             );
             "#,
-        ).await?;
+        )
+        .await?;
         conn.execute_unprepared(
             r#"
             CREATE TABLE IF NOT EXISTS collab_ops.relations (
@@ -31,10 +32,12 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL
             );
             "#,
-        ).await?;
+        )
+        .await?;
         conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_blocks_document ON collab_ops.blocks (document_id);",
-        ).await?;
+        )
+        .await?;
         conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_relations_blocks ON collab_ops.relations (from_block_id, to_block_id);",
         ).await?;
@@ -43,8 +46,10 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.relations;").await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.blocks;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.relations;")
+            .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS collab_ops.blocks;")
+            .await?;
         Ok(())
     }
 }

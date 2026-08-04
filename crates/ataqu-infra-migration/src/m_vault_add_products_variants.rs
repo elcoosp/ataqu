@@ -18,8 +18,9 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         conn.execute_unprepared(
             r#"
             CREATE TABLE IF NOT EXISTS vault.variants (
@@ -33,21 +34,26 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL,
                 updated_at TIMESTAMPTZ NOT NULL
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_variants_product ON vault.variants (product_id);"
-        ).await?;
+            "CREATE INDEX IF NOT EXISTS idx_variants_product ON vault.variants (product_id);",
+        )
+        .await?;
         conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_variants_tenant ON vault.variants (tenant_id);"
-        ).await?;
+            "CREATE INDEX IF NOT EXISTS idx_variants_tenant ON vault.variants (tenant_id);",
+        )
+        .await?;
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS vault.variants;").await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS vault.products;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS vault.variants;")
+            .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS vault.products;")
+            .await?;
         Ok(())
     }
 }

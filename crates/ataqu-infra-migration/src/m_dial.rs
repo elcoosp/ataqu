@@ -21,8 +21,18 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Channels::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Channels::TenantId).uuid().not_null())
                     .col(ColumnDef::new(Channels::Name).string().not_null())
-                    .col(ColumnDef::new(Channels::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
-                    .col(ColumnDef::new(Channels::UpdatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Channels::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(Channels::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -38,8 +48,18 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Messages::TenantId).uuid().not_null())
                     .col(ColumnDef::new(Messages::SenderId).uuid().not_null())
                     .col(ColumnDef::new(Messages::Content).string().not_null())
-                    .col(ColumnDef::new(Messages::SentAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
-                    .col(ColumnDef::new(Messages::CreatedAt).timestamp_with_time_zone().not_null().default(Expr::current_timestamp()))
+                    .col(
+                        ColumnDef::new(Messages::SentAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(Messages::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -81,10 +101,18 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table((Alias::new("dial"), Messages::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("dial"), Messages::Table))
+                    .to_owned(),
+            )
             .await?;
         manager
-            .drop_table(Table::drop().table((Alias::new("dial"), Channels::Table)).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table((Alias::new("dial"), Channels::Table))
+                    .to_owned(),
+            )
             .await?;
         Ok(())
     }

@@ -1,16 +1,14 @@
 //! PAUSE application service — HR orchestration.
 //! Uses domain types and repository traits from domain crate.
+use async_trait::async_trait;
+use serde_json::Value;
 use std::sync::Arc;
 use uuid::Uuid;
-use serde_json::Value;
-use async_trait::async_trait;
 
 // Re-export domain types for convenience
 pub use ataqu_domain_pause::{
-    Employee, CreateEmployeeCommand, EmployeeCreatedEvent,
-    LeaveRequest, RequestLeaveCommand, LeaveRequestedEvent,
-    LeaveStatus, LeaveType,
-    PauseDomainError,
+    CreateEmployeeCommand, Employee, EmployeeCreatedEvent, LeaveRequest, LeaveRequestedEvent,
+    LeaveStatus, LeaveType, PauseDomainError, RequestLeaveCommand,
 };
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
@@ -37,8 +35,13 @@ pub const PAUSE_SCHEMA: &str = "collab_ops";
 // Idempotency port (still application-specific)
 #[async_trait]
 pub trait IdempotencyPort: Send + Sync {
-    async fn acquire(&self, command_id: &Uuid) -> Result<IdempotencyGuardHandle, PauseServiceError>;
-    async fn commit(&self, command_id: &Uuid, response_body: Value) -> Result<(), PauseServiceError>;
+    async fn acquire(&self, command_id: &Uuid)
+    -> Result<IdempotencyGuardHandle, PauseServiceError>;
+    async fn commit(
+        &self,
+        command_id: &Uuid,
+        response_body: Value,
+    ) -> Result<(), PauseServiceError>;
     async fn rollback(&self, command_id: &Uuid) -> Result<(), PauseServiceError>;
 }
 
@@ -53,7 +56,9 @@ impl IdempotencyGuardHandle {
         self.cached_response.is_some()
     }
     pub fn get_cached<T: serde::de::DeserializeOwned>(&self) -> Result<T, PauseServiceError> {
-        let value = self.cached_response.as_ref()
+        let value = self
+            .cached_response
+            .as_ref()
             .ok_or_else(|| PauseServiceError::Idempotency("no cached response".into()))?;
         serde_json::from_value(value.clone())
             .map_err(|e| PauseServiceError::Idempotency(format!("cache deserialization: {e}")))
@@ -63,7 +68,13 @@ impl IdempotencyGuardHandle {
 // Outbox port (application-specific)
 #[async_trait]
 pub trait OutboxPort: Send + Sync {
-    async fn append(&self, schema: &str, event_type: &str, aggregate_id: Uuid, payload: &Value) -> Result<(), PauseServiceError>;
+    async fn append(
+        &self,
+        schema: &str,
+        event_type: &str,
+        aggregate_id: Uuid,
+        payload: &Value,
+    ) -> Result<(), PauseServiceError>;
 }
 
 // The service itself, using domain repository traits and application ports.
@@ -81,7 +92,12 @@ impl PauseService {
         leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
         outbox: Arc<dyn OutboxPort>,
     ) -> Self {
-        Self { idempotency, employee_repo, leave_request_repo, outbox }
+        Self {
+            idempotency,
+            employee_repo,
+            leave_request_repo,
+            outbox,
+        }
     }
 
     pub async fn create_employee(
@@ -98,10 +114,22 @@ impl PauseService {
         }
         let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock);
         self.employee_repo.insert(tenant_id, &event).await?;
-        let payload = serde_json::to_value(&event)
-            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
-        self.outbox.append(PAUSE_SCHEMA, "EmployeeCreatedEvent", event.employee_id, &payload).await?;
-        self.idempotency.commit(&command_id, serde_json::to_value(&event.employee_id).unwrap()).await?;
+        let payload =
+            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        self.outbox
+            .append(
+                PAUSE_SCHEMA,
+                "EmployeeCreatedEvent",
+                event.employee_id,
+                &payload,
+            )
+            .await?;
+        self.idempotency
+            .commit(
+                &command_id,
+                serde_json::to_value(event.employee_id).unwrap(),
+            )
+            .await?;
         Ok(event.employee_id)
     }
 
@@ -119,10 +147,22 @@ impl PauseService {
         }
         let event = ataqu_domain_pause::leave::request_leave(command, id_gen, clock);
         self.leave_request_repo.insert(tenant_id, &event).await?;
-        let payload = serde_json::to_value(&event)
-            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
-        self.outbox.append(PAUSE_SCHEMA, "LeaveRequestedEvent", event.leave_request_id, &payload).await?;
-        self.idempotency.commit(&command_id, serde_json::to_value(&event.leave_request_id).unwrap()).await?;
+        let payload =
+            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        self.outbox
+            .append(
+                PAUSE_SCHEMA,
+                "LeaveRequestedEvent",
+                event.leave_request_id,
+                &payload,
+            )
+            .await?;
+        self.idempotency
+            .commit(
+                &command_id,
+                serde_json::to_value(event.leave_request_id).unwrap(),
+            )
+            .await?;
         Ok(event.leave_request_id)
     }
 
@@ -132,7 +172,9 @@ impl PauseService {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Employee>, PauseServiceError> {
-        self.employee_repo.list(tenant_id, limit, offset).await
+        self.employee_repo
+            .list(tenant_id, limit, offset)
+            .await
             .map_err(|e| PauseServiceError::Persistence(e.to_string()))
     }
 
@@ -142,7 +184,9 @@ impl PauseService {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<LeaveRequest>, PauseServiceError> {
-        self.leave_request_repo.list(tenant_id, limit, offset).await
+        self.leave_request_repo
+            .list(tenant_id, limit, offset)
+            .await
             .map_err(|e| PauseServiceError::Persistence(e.to_string()))
     }
 
@@ -153,20 +197,27 @@ impl PauseService {
         reviewer_id: Uuid,
         clock: &dyn Clock,
     ) -> Result<LeaveRequest, PauseServiceError> {
-        let mut request = self.leave_request_repo.find_by_id(tenant_id, leave_id).await?
+        let mut request = self
+            .leave_request_repo
+            .find_by_id(tenant_id, leave_id)
+            .await?
             .ok_or(PauseServiceError::NotFound)?;
         let event = ataqu_domain_pause::leave::approve_leave(&mut request, reviewer_id, clock);
-        self.leave_request_repo.update_status(
-            tenant_id,
-            leave_id,
-            LeaveStatus::Approved,
-            reviewer_id,
-            clock.now(),
-        ).await?;
+        self.leave_request_repo
+            .update_status(
+                tenant_id,
+                leave_id,
+                LeaveStatus::Approved,
+                reviewer_id,
+                clock.now(),
+            )
+            .await?;
         // Outbox event
-        let payload = serde_json::to_value(&event)
-            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
-        self.outbox.append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload).await?;
+        let payload =
+            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        self.outbox
+            .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
+            .await?;
         Ok(request)
     }
 
@@ -177,19 +228,26 @@ impl PauseService {
         reviewer_id: Uuid,
         clock: &dyn Clock,
     ) -> Result<LeaveRequest, PauseServiceError> {
-        let mut request = self.leave_request_repo.find_by_id(tenant_id, leave_id).await?
+        let mut request = self
+            .leave_request_repo
+            .find_by_id(tenant_id, leave_id)
+            .await?
             .ok_or(PauseServiceError::NotFound)?;
         let event = ataqu_domain_pause::leave::reject_leave(&mut request, reviewer_id, clock);
-        self.leave_request_repo.update_status(
-            tenant_id,
-            leave_id,
-            LeaveStatus::Rejected,
-            reviewer_id,
-            clock.now(),
-        ).await?;
-        let payload = serde_json::to_value(&event)
-            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
-        self.outbox.append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload).await?;
+        self.leave_request_repo
+            .update_status(
+                tenant_id,
+                leave_id,
+                LeaveStatus::Rejected,
+                reviewer_id,
+                clock.now(),
+            )
+            .await?;
+        let payload =
+            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        self.outbox
+            .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
+            .await?;
         Ok(request)
     }
 }

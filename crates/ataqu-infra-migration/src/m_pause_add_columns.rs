@@ -17,8 +17,9 @@ impl MigrationTrait for Migration {
             ADD COLUMN IF NOT EXISTS hire_date DATE,
             ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true,
             ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Add columns to leave_requests
         conn.execute_unprepared(
@@ -29,8 +30,9 @@ impl MigrationTrait for Migration {
             ADD COLUMN IF NOT EXISTS reviewer_id UUID,
             ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ,
             ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         Ok(())
     }
@@ -46,8 +48,9 @@ impl MigrationTrait for Migration {
             DROP COLUMN IF EXISTS hire_date,
             DROP COLUMN IF EXISTS is_active,
             DROP COLUMN IF EXISTS updated_at;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         conn.execute_unprepared(
             r#"
             ALTER TABLE collab_ops.leave_requests
@@ -56,8 +59,9 @@ impl MigrationTrait for Migration {
             DROP COLUMN IF EXISTS reviewer_id,
             DROP COLUMN IF EXISTS reviewed_at,
             DROP COLUMN IF EXISTS updated_at;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         Ok(())
     }
 }

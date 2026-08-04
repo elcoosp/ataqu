@@ -1,16 +1,18 @@
 //! AEGIS user repository implementation using SeaORM for the domain trait.
 use async_trait::async_trait;
-use sea_orm::{ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, ActiveModelTrait};
-use uuid::Uuid;
+use ataqu_domain_aegis::{AuthError, AuthRepository, User as DomainUser};
 use ataqu_kernel::TenantId;
 use ataqu_security::Email;
-use ataqu_domain_aegis::{User as DomainUser, AuthRepository, AuthError};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+};
+use uuid::Uuid;
 
 // SeaORM entity for users (module-scoped)
 mod user_entity {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "users", schema_name = "core")]

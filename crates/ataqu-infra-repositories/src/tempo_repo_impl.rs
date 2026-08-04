@@ -1,12 +1,15 @@
 //! SeaORM implementations for TEMPO domain repository.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, IntoActiveModel, QuerySelect, ActiveModelTrait};
 use chrono::{DateTime, Utc};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
+    QuerySelect, Set,
+};
 use std::time::SystemTime;
 
-use ataqu_kernel::TenantId;
-use ataqu_domain_tempo::schedule::{Booking, BookingId, BookingStatus};
 use ataqu_domain_tempo::repository::TempoRepository;
+use ataqu_domain_tempo::schedule::{Booking, BookingId, BookingStatus};
+use ataqu_kernel::TenantId;
 
 use crate::entities::tempo as tempo_entity;
 
@@ -80,7 +83,11 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn find_booking_by_id(&self, tenant_id: &TenantId, id: &BookingId) -> Result<Option<Booking>, String> {
+    async fn find_booking_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: &BookingId,
+    ) -> Result<Option<Booking>, String> {
         let model = tempo_entity::Entity::find()
             .filter(tempo_entity::Column::Id.eq(id.0))
             .filter(tempo_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -90,7 +97,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(model.map(model_to_booking))
     }
 
-    async fn list_bookings(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Booking>, String> {
+    async fn list_bookings(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Booking>, String> {
         let models = tempo_entity::Entity::find()
             .filter(tempo_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -101,7 +113,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(models.into_iter().map(model_to_booking).collect())
     }
 
-    async fn update_booking_status(&self, tenant_id: &TenantId, id: &BookingId, status: BookingStatus) -> Result<(), String> {
+    async fn update_booking_status(
+        &self,
+        tenant_id: &TenantId,
+        id: &BookingId,
+        status: BookingStatus,
+    ) -> Result<(), String> {
         let mut active = tempo_entity::Entity::find()
             .filter(tempo_entity::Column::Id.eq(id.0))
             .filter(tempo_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -115,7 +132,11 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn find_bookings_for_no_show_check(&self, tenant_id: &TenantId, upper_bound: SystemTime) -> Result<Vec<Booking>, String> {
+    async fn find_bookings_for_no_show_check(
+        &self,
+        tenant_id: &TenantId,
+        upper_bound: SystemTime,
+    ) -> Result<Vec<Booking>, String> {
         let upper_dt: DateTime<Utc> = upper_bound.into();
         let models = tempo_entity::Entity::find()
             .filter(tempo_entity::Column::TenantId.eq(tenant_id.as_uuid()))

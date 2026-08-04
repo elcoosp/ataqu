@@ -1,10 +1,10 @@
 //! Leave domain: pure functions for leave requests.
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
-use chrono::NaiveDate;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

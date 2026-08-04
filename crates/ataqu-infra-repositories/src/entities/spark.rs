@@ -1,9 +1,9 @@
 //! SeaORM entities for SPARK tables.
 pub mod workflow {
-    use sea_orm::entity::prelude::*;
-    use uuid::Uuid;
     use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
     use serde_json::Value as JsonValue;
+    use uuid::Uuid;
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "workflows", schema_name = "collab_crm")]
@@ -25,9 +25,9 @@ pub mod workflow {
 }
 
 pub mod lease {
+    use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use chrono::{DateTime, Utc};
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "leases", schema_name = "collab_crm")]

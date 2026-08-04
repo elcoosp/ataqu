@@ -1,8 +1,8 @@
 //! PII serialization wrappers (ADR-007)
 //! Use ApiEmail and ApiPhone at the API boundary to safely serialize PII.
 
-use serde::Serializer;
 use ataqu_security::{Email, PhoneNumber, PiiAccessKey};
+use serde::Serializer;
 
 #[derive(Debug)]
 pub struct ApiEmail(pub Email);

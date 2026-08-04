@@ -9,7 +9,8 @@ impl MigrationTrait for Migration {
         let conn = manager.get_connection();
         // Drop and recreate aggregated_views with new columns
         // We'll drop if exists and create new one
-        conn.execute_unprepared("DROP TABLE IF EXISTS core.aggregated_views CASCADE;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS core.aggregated_views CASCADE;")
+            .await?;
         conn.execute_unprepared(
             r#"
             CREATE TABLE core.aggregated_views (
@@ -26,8 +27,9 @@ impl MigrationTrait for Migration {
                 pending_leave_requests BIGINT NOT NULL DEFAULT 0,
                 last_updated_at TIMESTAMPTZ NOT NULL
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         conn.execute_unprepared(
             r#"
             CREATE TABLE IF NOT EXISTS core.analytics_data_points (
@@ -37,8 +39,9 @@ impl MigrationTrait for Migration {
                 value DOUBLE PRECISION NOT NULL,
                 timestamp TIMESTAMPTZ NOT NULL
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         conn.execute_unprepared(
             "CREATE INDEX IF NOT EXISTS idx_data_points_tenant_metric ON core.analytics_data_points (tenant_id, metric_name);"
         ).await?;
@@ -47,8 +50,10 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS core.analytics_data_points;").await?;
-        conn.execute_unprepared("DROP TABLE IF EXISTS core.aggregated_views;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS core.analytics_data_points;")
+            .await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS core.aggregated_views;")
+            .await?;
         Ok(())
     }
 }

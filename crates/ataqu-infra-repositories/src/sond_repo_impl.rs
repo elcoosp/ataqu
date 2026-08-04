@@ -1,13 +1,13 @@
 //! SeaORM implementations for SOND domain repository.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QuerySelect};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
 
-use ataqu_kernel::TenantId;
-use ataqu_domain_sond::form::Form;
-use ataqu_domain_sond::response::Response;
-use ataqu_domain_sond::repository::SondRepository;
 use ataqu_domain_sond::errors::SondError;
+use ataqu_domain_sond::form::Form;
+use ataqu_domain_sond::repository::SondRepository;
+use ataqu_domain_sond::response::Response;
+use ataqu_kernel::TenantId;
 
 use crate::entities::sond::form as form_entity;
 use crate::entities::sond::submission as submission_entity;
@@ -105,7 +105,12 @@ impl SondRepository for SondRepositoryImpl {
         Ok(())
     }
 
-    async fn list_forms(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Form>, SondError> {
+    async fn list_forms(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Form>, SondError> {
         let models = form_entity::Entity::find()
             .filter(form_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -116,7 +121,13 @@ impl SondRepository for SondRepositoryImpl {
         Ok(models.into_iter().map(form_model_to_domain).collect())
     }
 
-    async fn list_responses(&self, tenant_id: &TenantId, form_id: Uuid, limit: u64, offset: u64) -> Result<Vec<Response>, SondError> {
+    async fn list_responses(
+        &self,
+        tenant_id: &TenantId,
+        form_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Response>, SondError> {
         let models = submission_entity::Entity::find()
             .filter(submission_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(submission_entity::Column::FormId.eq(form_id))

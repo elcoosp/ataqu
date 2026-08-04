@@ -1,16 +1,18 @@
 use axum::{
+    Router,
     extract::{Path, State},
     http::StatusCode,
-    response::{IntoResponse, Json},
-    Router,
+    response::Json,
 };
-use uuid::Uuid;
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use ataqu_application::tempo_service::{TempoService, CreateBookingCommand, UpdateBookingStatusCommand, BookingStatus};
-use ataqu_kernel::TenantId;
 use crate::AppState;
+use ataqu_application::tempo_service::{
+    BookingStatus, CreateBookingCommand, UpdateBookingStatusCommand,
+};
+use ataqu_kernel::TenantId;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateBookingRequest {
@@ -53,7 +55,10 @@ pub async fn create_booking(
         starts_at: payload.starts_at,
         duration_minutes: payload.duration_minutes,
     };
-    let booking = state.tempo_service.create_booking(cmd).await
+    let booking = state
+        .tempo_service
+        .create_booking(cmd)
+        .await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
     Ok((StatusCode::CREATED, Json(booking.into())))
 }
@@ -62,7 +67,10 @@ pub async fn list_bookings(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<BookingResponse>>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let bookings = state.tempo_service.list_bookings(tenant_id, 100, 0).await
+    let bookings = state
+        .tempo_service
+        .list_bookings(tenant_id, 100, 0)
+        .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(bookings.into_iter().map(|b| b.into()).collect()))
 }
@@ -72,7 +80,10 @@ pub async fn get_booking(
     Path(id): Path<Uuid>,
 ) -> Result<Json<BookingResponse>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let booking = state.tempo_service.get_booking(tenant_id, id).await
+    let booking = state
+        .tempo_service
+        .get_booking(tenant_id, id)
+        .await
         .map_err(|_| StatusCode::NOT_FOUND)?;
     Ok(Json(booking.into()))
 }
@@ -87,7 +98,10 @@ pub async fn cancel_booking(
         booking_id: id,
         status: BookingStatus::Cancelled,
     };
-    let booking = state.tempo_service.update_booking_status(cmd).await
+    let booking = state
+        .tempo_service
+        .update_booking_status(cmd)
+        .await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
     Ok(Json(booking.into()))
 }

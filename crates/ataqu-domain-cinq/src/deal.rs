@@ -77,7 +77,9 @@ pub fn create_deal(
         return Err(CinqDomainError::InvalidAmount);
     }
     if cmd.title.trim().is_empty() {
-        return Err(CinqDomainError::Validation("Deal title cannot be empty".to_string()));
+        return Err(CinqDomainError::Validation(
+            "Deal title cannot be empty".to_string(),
+        ));
     }
     let id = id_gen.new_uuid_v7();
     let now = clock.now().into();
@@ -102,7 +104,9 @@ pub fn update_deal(cmd: UpdateDealCommand, clock: &dyn Clock) -> CinqResult<Deal
     if let Some(ref title) = cmd.title
         && title.trim().is_empty()
     {
-        return Err(CinqDomainError::Validation("Deal title cannot be empty".to_string()));
+        return Err(CinqDomainError::Validation(
+            "Deal title cannot be empty".to_string(),
+        ));
     }
     let now = clock.now().into();
     Ok(DealUpdated {

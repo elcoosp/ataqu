@@ -2,15 +2,17 @@
 use std::sync::Arc;
 use uuid::Uuid;
 
-use ataqu_kernel::{Clock, IdGenerator, TenantId, RepositoryError};
-use ataqu_domain_pivot::document::{self as document_domain, CreateDocumentCommand as DomainCreateDocument};
 use ataqu_domain_pivot::block::{self as block_domain, BlockType};
-use ataqu_domain_pivot::repository::{DocumentRepository, BlockRepository, RelationRepository};
+use ataqu_domain_pivot::document::{
+    self as document_domain, CreateDocumentCommand as DomainCreateDocument,
+};
+use ataqu_domain_pivot::repository::{BlockRepository, DocumentRepository, RelationRepository};
+use ataqu_kernel::{Clock, IdGenerator, RepositoryError, TenantId};
 
 // Re-export domain types for API layer
-pub use ataqu_domain_pivot::document::DocumentCreatedEvent as Document;
 pub use ataqu_domain_pivot::block::BlockCreatedEvent as Block;
 pub use ataqu_domain_pivot::block::Relation;
+pub use ataqu_domain_pivot::document::DocumentCreatedEvent as Document;
 
 // Application commands
 #[derive(Debug, Clone)]
@@ -65,7 +67,13 @@ impl PivotService {
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
-        Self { doc_repo, block_repo, rel_repo, id_gen, clock }
+        Self {
+            doc_repo,
+            block_repo,
+            rel_repo,
+            id_gen,
+            clock,
+        }
     }
 
     // -- Documents --
@@ -75,21 +83,34 @@ impl PivotService {
             title: cmd.title,
             content: cmd.content,
         };
-        let event = document_domain::create_document(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
-        self.doc_repo.save_document(&event).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        let event =
+            document_domain::create_document(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        self.doc_repo
+            .save_document(&event)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
         Ok(event)
     }
 
     pub async fn get_document(&self, tenant_id: TenantId, doc_id: Uuid) -> PivotResult<Document> {
-        self.doc_repo.get_document(&tenant_id, doc_id).await
+        self.doc_repo
+            .get_document(&tenant_id, doc_id)
+            .await
             .map_err(|e| match e {
                 RepositoryError::NotFound => PivotServiceError::DocumentNotFound,
                 _ => PivotServiceError::Repository(e.to_string()),
             })
     }
 
-    pub async fn list_documents(&self, tenant_id: TenantId, limit: u64, offset: u64) -> PivotResult<Vec<Document>> {
-        self.doc_repo.list_documents(&tenant_id, limit, offset).await
+    pub async fn list_documents(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> PivotResult<Vec<Document>> {
+        self.doc_repo
+            .list_documents(&tenant_id, limit, offset)
+            .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
@@ -100,13 +121,23 @@ impl PivotService {
             document_id: cmd.document_id,
             block_type: cmd.block_type,
         };
-        let event = block_domain::create_block(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
-        self.block_repo.save_block(&event).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        let event =
+            block_domain::create_block(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        self.block_repo
+            .save_block(&event)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
         Ok(event)
     }
 
-    pub async fn get_blocks_for_document(&self, tenant_id: TenantId, doc_id: Uuid) -> PivotResult<Vec<Block>> {
-        self.block_repo.get_blocks_for_document(&tenant_id, doc_id).await
+    pub async fn get_blocks_for_document(
+        &self,
+        tenant_id: TenantId,
+        doc_id: Uuid,
+    ) -> PivotResult<Vec<Block>> {
+        self.block_repo
+            .get_blocks_for_document(&tenant_id, doc_id)
+            .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
@@ -121,8 +152,12 @@ impl PivotService {
             tenant_id: cmd.tenant_id,
             relation: rel,
         };
-        let event = block_domain::create_relation(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
-        self.rel_repo.save_relation(&event).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        let event =
+            block_domain::create_relation(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        self.rel_repo
+            .save_relation(&event)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
         let relation = Relation {
             from_block_id: event.relation.from_block_id,
             to_block_id: event.relation.to_block_id,
@@ -131,10 +166,18 @@ impl PivotService {
         Ok(relation)
     }
 
-    pub async fn get_relations_for_document(&self, tenant_id: TenantId, doc_id: Uuid) -> PivotResult<Vec<Relation>> {
-        let events = self.rel_repo.get_relations_for_document(&tenant_id, doc_id).await
+    pub async fn get_relations_for_document(
+        &self,
+        tenant_id: TenantId,
+        doc_id: Uuid,
+    ) -> PivotResult<Vec<Relation>> {
+        let events = self
+            .rel_repo
+            .get_relations_for_document(&tenant_id, doc_id)
+            .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
-        let relations = events.into_iter()
+        let relations = events
+            .into_iter()
             .map(|e| Relation {
                 from_block_id: e.relation.from_block_id,
                 to_block_id: e.relation.to_block_id,
@@ -144,16 +187,28 @@ impl PivotService {
         Ok(relations)
     }
 
-    pub async fn search_documents(&self, tenant_id: TenantId, query: String, limit: u64, offset: u64) -> PivotResult<Vec<Document>> {
+    pub async fn search_documents(
+        &self,
+        tenant_id: TenantId,
+        query: String,
+        limit: u64,
+        offset: u64,
+    ) -> PivotResult<Vec<Document>> {
         // Since we don't have a search method in the repository trait yet, we'll implement a simple in-memory search using the existing list.
-        let all_docs = self.doc_repo.list_documents(&tenant_id, limit + offset, 0).await
+        let all_docs = self
+            .doc_repo
+            .list_documents(&tenant_id, limit + offset, 0)
+            .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
         // Filter by title/content (simple contains)
         let query_lower = query.to_lowercase();
-        let results = all_docs.into_iter()
-            .filter(|d| d.title.to_lowercase().contains(&query_lower) || d.content.to_lowercase().contains(&query_lower))
+        let results = all_docs
+            .into_iter()
+            .filter(|d| {
+                d.title.to_lowercase().contains(&query_lower)
+                    || d.content.to_lowercase().contains(&query_lower)
+            })
             .collect();
         Ok(results)
     }
-
 }

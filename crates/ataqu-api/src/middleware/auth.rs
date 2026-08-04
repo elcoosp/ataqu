@@ -1,13 +1,12 @@
+use crate::AppState;
+use crate::error::ApiResponseError;
+use ataqu_kernel::TenantId;
+use axum::extract::FromRef;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
-use axum::response::{IntoResponse, Response};
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use ataqu_kernel::TenantId;
-use crate::error::ApiResponseError;
-use crate::AppState;
-use axum::extract::FromRef;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JwtClaims {
@@ -48,7 +47,9 @@ where
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .and_then(|s| s.strip_prefix("Bearer "))
-            .ok_or_else(|| ApiResponseError::unauthorized("Missing or invalid Authorization header"))?;
+            .ok_or_else(|| {
+                ApiResponseError::unauthorized("Missing or invalid Authorization header")
+            })?;
 
         let token_data = decode::<JwtClaims>(
             auth_header,

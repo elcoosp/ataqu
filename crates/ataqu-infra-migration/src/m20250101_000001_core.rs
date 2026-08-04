@@ -11,7 +11,8 @@ impl MigrationTrait for Migration {
         println!("🔵 Running CORE migration...");
 
         // Create core schema
-        db.execute_unprepared("CREATE SCHEMA IF NOT EXISTS core;").await?;
+        db.execute_unprepared("CREATE SCHEMA IF NOT EXISTS core;")
+            .await?;
         println!("  ✅ core schema created");
 
         // Create app_schema ENUM (with error handling)
@@ -41,8 +42,9 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 completed_at TIMESTAMPTZ
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         println!("  ✅ core.outbox created");
 
         // Create core.idempotency_records with CHECK constraint in-line
@@ -58,8 +60,9 @@ impl MigrationTrait for Migration {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 completed_at TIMESTAMPTZ
             );
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         println!("  ✅ core.idempotency_records created");
 
         Ok(())
@@ -67,9 +70,12 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
-        db.execute_unprepared("DROP TABLE IF EXISTS core.idempotency_records;").await?;
-        db.execute_unprepared("DROP TABLE IF EXISTS core.outbox;").await?;
-        db.execute_unprepared("DROP TYPE IF EXISTS app_schema;").await?;
+        db.execute_unprepared("DROP TABLE IF EXISTS core.idempotency_records;")
+            .await?;
+        db.execute_unprepared("DROP TABLE IF EXISTS core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP TYPE IF EXISTS app_schema;")
+            .await?;
         Ok(())
     }
 }

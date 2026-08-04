@@ -1,20 +1,19 @@
 use axum::{
+    Router,
     extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
-    Router,
 };
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDate};
 
-use ataqu_application::pause_service::{
-    Employee, LeaveRequest, LeaveType, LeaveStatus,
-    CreateEmployeeCommand, RequestLeaveCommand,
-};
 use crate::AppState;
-use crate::middleware::AuthContext;
 use crate::error::{ApiResponseError, ApiResult};
+use crate::middleware::AuthContext;
+use ataqu_application::pause_service::{
+    CreateEmployeeCommand, Employee, LeaveRequest, LeaveType, RequestLeaveCommand,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateEmployeeRequest {
@@ -115,26 +114,33 @@ pub async fn create_employee(
         department: req.department.clone(),
         hire_date: req.hire_date,
     };
-    let employee_id = state.pause_service.create_employee(
-        &auth.tenant_id,
-        cmd,
-        &*state.id_gen,
-        &*state.clock,
-        Uuid::new_v4(),
-    ).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let employee_id = state
+        .pause_service
+        .create_employee(
+            &auth.tenant_id,
+            cmd,
+            &*state.id_gen,
+            &*state.clock,
+            Uuid::new_v4(),
+        )
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    Ok((StatusCode::CREATED, Json(EmployeeResponse {
-        id: employee_id,
-        full_name: req.full_name,
-        email: req.email,
-        phone: req.phone,
-        job_title: req.job_title,
-        department: req.department,
-        hire_date: req.hire_date,
-        is_active: true,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(EmployeeResponse {
+            id: employee_id,
+            full_name: req.full_name,
+            email: req.email,
+            phone: req.phone,
+            job_title: req.job_title,
+            department: req.department,
+            hire_date: req.hire_date,
+            is_active: true,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }),
+    ))
 }
 
 pub async fn request_leave(
@@ -157,25 +163,32 @@ pub async fn request_leave(
         end_date: req.end_date,
         reason: req.reason.clone(),
     };
-    let request_id = state.pause_service.request_leave(
-        &auth.tenant_id,
-        cmd,
-        &*state.id_gen,
-        &*state.clock,
-        Uuid::new_v4(),
-    ).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let request_id = state
+        .pause_service
+        .request_leave(
+            &auth.tenant_id,
+            cmd,
+            &*state.id_gen,
+            &*state.clock,
+            Uuid::new_v4(),
+        )
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    Ok((StatusCode::CREATED, Json(LeaveRequestResponse {
-        id: request_id,
-        employee_id: req.employee_id,
-        leave_type: req.leave_type,
-        start_date: req.start_date,
-        end_date: req.end_date,
-        reason: req.reason,
-        status: "pending".to_string(),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(LeaveRequestResponse {
+            id: request_id,
+            employee_id: req.employee_id,
+            leave_type: req.leave_type,
+            start_date: req.start_date,
+            end_date: req.end_date,
+            reason: req.reason,
+            status: "pending".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }),
+    ))
 }
 
 pub async fn list_employees(
@@ -185,9 +198,14 @@ pub async fn list_employees(
 ) -> ApiResult<Json<Vec<EmployeeResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let employees = state.pause_service.list_employees(&auth.tenant_id, limit, offset).await
+    let employees = state
+        .pause_service
+        .list_employees(&auth.tenant_id, limit, offset)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(employees.into_iter().map(EmployeeResponse::from).collect()))
+    Ok(Json(
+        employees.into_iter().map(EmployeeResponse::from).collect(),
+    ))
 }
 
 pub async fn list_leave_requests(
@@ -197,9 +215,17 @@ pub async fn list_leave_requests(
 ) -> ApiResult<Json<Vec<LeaveRequestResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let requests = state.pause_service.list_leave_requests(&auth.tenant_id, limit, offset).await
+    let requests = state
+        .pause_service
+        .list_leave_requests(&auth.tenant_id, limit, offset)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(requests.into_iter().map(LeaveRequestResponse::from).collect()))
+    Ok(Json(
+        requests
+            .into_iter()
+            .map(LeaveRequestResponse::from)
+            .collect(),
+    ))
 }
 
 pub async fn approve_leave(
@@ -207,12 +233,11 @@ pub async fn approve_leave(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let request = state.pause_service.approve_leave(
-        &auth.tenant_id,
-        id,
-        auth.user_id,
-        &*state.clock,
-    ).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let request = state
+        .pause_service
+        .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(request.into()))
 }
 
@@ -221,20 +246,22 @@ pub async fn reject_leave(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let request = state.pause_service.reject_leave(
-        &auth.tenant_id,
-        id,
-        auth.user_id,
-        &*state.clock,
-    ).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let request = state
+        .pause_service
+        .reject_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(request.into()))
 }
 
 pub fn routes() -> Router<AppState> {
-    use axum::routing::{get, post, patch};
+    use axum::routing::{patch, post};
     Router::new()
         .route("/employees", post(create_employee).get(list_employees))
-        .route("/leave-requests", post(request_leave).get(list_leave_requests))
+        .route(
+            "/leave-requests",
+            post(request_leave).get(list_leave_requests),
+        )
         .route("/leave-requests/:id/approve", patch(approve_leave))
         .route("/leave-requests/:id/reject", patch(reject_leave))
 }

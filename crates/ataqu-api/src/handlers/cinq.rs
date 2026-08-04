@@ -2,33 +2,29 @@
 //! Only implements endpoints that are fully supported by CinqService.
 
 use axum::{
+    Router,
     extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
-    Router,
 };
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use ataqu_application::cinq_service::{
-    CreateContactCommand, CreateDealCommand, CreateActivityCommand,
-    CreatePipelineStageCommand,
+    CreateActivityCommand, CreateContactCommand, CreateDealCommand, CreatePipelineStageCommand,
 };
 use ataqu_contracts::cinq::*;
-use ataqu_kernel::TenantId;
-use ataqu_security::{Email, PhoneNumber};
-use ataqu_domain_cinq::deal::DealStatus;
 use ataqu_domain_cinq::contact::Contact;
 use ataqu_domain_cinq::deal::Deal;
-use ataqu_domain_cinq::activity::Activity;
-use ataqu_domain_cinq::pipeline::PipelineStage;
+use ataqu_domain_cinq::deal::DealStatus;
+use ataqu_security::{Email, PhoneNumber};
 
 use crate::AppState;
-use crate::middleware::AuthContext;
 use crate::error::{ApiResponseError, ApiResult};
+use crate::middleware::AuthContext;
 
 // ---------- Pagination ----------
 #[derive(Debug, Deserialize, Default)]
@@ -101,7 +97,10 @@ pub async fn create_contact(
         email: Email::new(payload.email),
         phone: payload.phone.map(PhoneNumber::new),
     };
-    let contact = state.cinq_service.create_contact(cmd).await
+    let contact = state
+        .cinq_service
+        .create_contact(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(ContactResponse::from(contact))))
 }
@@ -113,9 +112,14 @@ pub async fn list_contacts(
 ) -> ApiResult<Json<Vec<ContactResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let contacts = state.cinq_service.list_contacts(auth.tenant_id, limit, offset).await
+    let contacts = state
+        .cinq_service
+        .list_contacts(auth.tenant_id, limit, offset)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(contacts.into_iter().map(ContactResponse::from).collect()))
+    Ok(Json(
+        contacts.into_iter().map(ContactResponse::from).collect(),
+    ))
 }
 
 pub async fn get_contact(
@@ -123,7 +127,10 @@ pub async fn get_contact(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<ContactResponse>> {
-    let contact = state.cinq_service.get_contact(auth.tenant_id, id).await
+    let contact = state
+        .cinq_service
+        .get_contact(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(ContactResponse::from(contact)))
 }
@@ -136,7 +143,9 @@ pub async fn update_contact(
     Path(_id): Path<Uuid>,
     Json(_payload): Json<UpdateContactRequest>,
 ) -> ApiResult<Json<ContactResponse>> {
-    Err(ApiResponseError::internal("Update contact not yet implemented"))
+    Err(ApiResponseError::internal(
+        "Update contact not yet implemented",
+    ))
 }
 
 pub async fn delete_contact(
@@ -144,7 +153,9 @@ pub async fn delete_contact(
     _auth: AuthContext,
     Path(_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    Err(ApiResponseError::internal("Delete contact not yet implemented"))
+    Err(ApiResponseError::internal(
+        "Delete contact not yet implemented",
+    ))
 }
 
 // ---------- Deal Endpoints ----------
@@ -153,8 +164,8 @@ pub async fn create_deal(
     auth: AuthContext,
     Json(payload): Json<CreateDealRequest>,
 ) -> ApiResult<(StatusCode, Json<DealResponse>)> {
-    let default_stage = Uuid::parse_str("00000000-0000-0000-0000-000000000001")
-        .unwrap_or_else(|_| Uuid::new_v4());
+    let default_stage =
+        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or_else(|_| Uuid::new_v4());
     let cmd = CreateDealCommand {
         tenant_id: auth.tenant_id,
         contact_id: payload.contact_id,
@@ -163,7 +174,10 @@ pub async fn create_deal(
         pipeline_stage_id: default_stage,
         status: DealStatus::Open,
     };
-    let deal = state.cinq_service.create_deal(cmd).await
+    let deal = state
+        .cinq_service
+        .create_deal(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(DealResponse::from(deal))))
 }
@@ -175,7 +189,10 @@ pub async fn list_deals(
 ) -> ApiResult<Json<Vec<DealResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let deals = state.cinq_service.list_deals(auth.tenant_id, limit, offset).await
+    let deals = state
+        .cinq_service
+        .list_deals(auth.tenant_id, limit, offset)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(deals.into_iter().map(DealResponse::from).collect()))
 }
@@ -185,7 +202,10 @@ pub async fn get_deal(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<DealResponse>> {
-    let deal = state.cinq_service.get_deal(auth.tenant_id, id).await
+    let deal = state
+        .cinq_service
+        .get_deal(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(DealResponse::from(deal)))
 }
@@ -196,7 +216,9 @@ pub async fn update_deal(
     Path(_id): Path<Uuid>,
     Json(_payload): Json<UpdateDealRequest>,
 ) -> ApiResult<Json<DealResponse>> {
-    Err(ApiResponseError::internal("Update deal not yet implemented"))
+    Err(ApiResponseError::internal(
+        "Update deal not yet implemented",
+    ))
 }
 
 pub async fn delete_deal(
@@ -204,7 +226,9 @@ pub async fn delete_deal(
     _auth: AuthContext,
     Path(_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    Err(ApiResponseError::internal("Delete deal not yet implemented"))
+    Err(ApiResponseError::internal(
+        "Delete deal not yet implemented",
+    ))
 }
 
 // ---------- Pipeline Stages ----------
@@ -212,13 +236,21 @@ pub async fn list_pipeline_stages(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<PipelineStageResponse>>> {
-    let stages = state.cinq_service.list_pipeline_stages(auth.tenant_id).await
+    let stages = state
+        .cinq_service
+        .list_pipeline_stages(auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(stages.into_iter().map(|s| PipelineStageResponse {
-        id: s.id,
-        name: s.name,
-        order: s.order,
-    }).collect()))
+    Ok(Json(
+        stages
+            .into_iter()
+            .map(|s| PipelineStageResponse {
+                id: s.id,
+                name: s.name,
+                order: s.order,
+            })
+            .collect(),
+    ))
 }
 
 pub async fn create_pipeline_stage(
@@ -231,13 +263,19 @@ pub async fn create_pipeline_stage(
         name: payload.name,
         order: payload.order,
     };
-    let stage = state.cinq_service.create_pipeline_stage(cmd).await
+    let stage = state
+        .cinq_service
+        .create_pipeline_stage(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(PipelineStageResponse {
-        id: stage.id,
-        name: stage.name,
-        order: stage.order,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(PipelineStageResponse {
+            id: stage.id,
+            name: stage.name,
+            order: stage.order,
+        }),
+    ))
 }
 
 pub async fn update_pipeline_stage(
@@ -246,9 +284,10 @@ pub async fn update_pipeline_stage(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePipelineStageRequest>,
 ) -> ApiResult<Json<PipelineStageResponse>> {
-    let stage = state.cinq_service.update_pipeline_stage(
-        auth.tenant_id, id, payload.name, payload.order
-    ).await
+    let stage = state
+        .cinq_service
+        .update_pipeline_stage(auth.tenant_id, id, payload.name, payload.order)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(PipelineStageResponse {
         id: stage.id,
@@ -262,7 +301,10 @@ pub async fn delete_pipeline_stage(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.cinq_service.delete_pipeline_stage(auth.tenant_id, id).await
+    state
+        .cinq_service
+        .delete_pipeline_stage(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -282,12 +324,18 @@ pub async fn create_activity(
         description: payload.description,
         scheduled_at: None,
     };
-    let activity = state.cinq_service.create_activity(cmd).await
+    let activity = state
+        .cinq_service
+        .create_activity(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(ActivityResponse {
-        id: activity.id,
-        description: activity.description,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(ActivityResponse {
+            id: activity.id,
+            description: activity.description,
+        }),
+    ))
 }
 
 pub async fn list_activities(
@@ -295,15 +343,23 @@ pub async fn list_activities(
     auth: AuthContext,
     Query(params): Query<ListActivitiesParams>,
 ) -> ApiResult<Json<Vec<ActivityResponse>>> {
-    let contact_id = params.contact_id.ok_or_else(|| ApiResponseError::validation("contact_id required"))?;
-    let activities = state.cinq_service.list_activities_for_contact(
-        auth.tenant_id, contact_id, 100, 0
-    ).await
+    let contact_id = params
+        .contact_id
+        .ok_or_else(|| ApiResponseError::validation("contact_id required"))?;
+    let activities = state
+        .cinq_service
+        .list_activities_for_contact(auth.tenant_id, contact_id, 100, 0)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(activities.into_iter().map(|a| ActivityResponse {
-        id: a.id,
-        description: a.description,
-    }).collect()))
+    Ok(Json(
+        activities
+            .into_iter()
+            .map(|a| ActivityResponse {
+                id: a.id,
+                description: a.description,
+            })
+            .collect(),
+    ))
 }
 
 pub async fn get_activity(
@@ -311,7 +367,10 @@ pub async fn get_activity(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<ActivityResponse>> {
-    let activity = state.cinq_service.get_activity(auth.tenant_id, id).await
+    let activity = state
+        .cinq_service
+        .get_activity(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(ActivityResponse {
         id: activity.id,
@@ -325,9 +384,14 @@ pub async fn search_contacts(
     auth: AuthContext,
     Query(params): Query<SearchParams>,
 ) -> ApiResult<Json<Vec<ContactResponse>>> {
-    let contacts = state.cinq_service.search_contacts(auth.tenant_id, &params.q, 20).await
+    let contacts = state
+        .cinq_service
+        .search_contacts(auth.tenant_id, &params.q, 20)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(contacts.into_iter().map(ContactResponse::from).collect()))
+    Ok(Json(
+        contacts.into_iter().map(ContactResponse::from).collect(),
+    ))
 }
 
 // ---------- CSV ----------
@@ -340,19 +404,29 @@ pub async fn import_csv(
     let mut rdr = ReaderBuilder::new().from_reader(body.as_bytes());
     let mut rows = Vec::new();
     for result in rdr.deserialize() {
-        let record: std::collections::HashMap<String, String> = result.map_err(|e| ApiResponseError::validation(&e.to_string()))?;
+        let record: std::collections::HashMap<String, String> =
+            result.map_err(|e| ApiResponseError::validation(&e.to_string()))?;
         rows.push(record);
     }
-    let inserted = state.cinq_service.import_contacts(auth.tenant_id, rows).await
+    let inserted = state
+        .cinq_service
+        .import_contacts(auth.tenant_id, rows)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(ImportCsvResult { imported: inserted.len(), failed: 0 }))
+    Ok(Json(ImportCsvResult {
+        imported: inserted.len(),
+        failed: 0,
+    }))
 }
 
 pub async fn export_csv(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<impl axum::response::IntoResponse> {
-    let csv_data = state.cinq_service.export_contacts(auth.tenant_id).await
+    let csv_data = state
+        .cinq_service
+        .export_contacts(auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::OK, csv_data))
 }
@@ -368,14 +442,26 @@ pub async fn track_email(
 
 // ---------- Router ----------
 pub fn cinq_routes() -> Router<AppState> {
-    use axum::routing::{get, post, put, delete};
+    use axum::routing::{get, post, put};
     Router::new()
         .route("/contacts", post(create_contact).get(list_contacts))
-        .route("/contacts/:id", get(get_contact).put(update_contact).delete(delete_contact))
+        .route(
+            "/contacts/:id",
+            get(get_contact).put(update_contact).delete(delete_contact),
+        )
         .route("/deals", post(create_deal).get(list_deals))
-        .route("/deals/:id", get(get_deal).put(update_deal).delete(delete_deal))
-        .route("/pipeline/stages", get(list_pipeline_stages).post(create_pipeline_stage))
-        .route("/pipeline/stages/:id", put(update_pipeline_stage).delete(delete_pipeline_stage))
+        .route(
+            "/deals/:id",
+            get(get_deal).put(update_deal).delete(delete_deal),
+        )
+        .route(
+            "/pipeline/stages",
+            get(list_pipeline_stages).post(create_pipeline_stage),
+        )
+        .route(
+            "/pipeline/stages/:id",
+            put(update_pipeline_stage).delete(delete_pipeline_stage),
+        )
         .route("/activities", post(create_activity).get(list_activities))
         .route("/activities/:id", get(get_activity))
         .route("/search", get(search_contacts))

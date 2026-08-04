@@ -1,4 +1,3 @@
-use serde::{Serialize, Deserialize};
 use crate::primitives::{Clock, IdGenerator, TenantId, Uuid};
 use std::time::SystemTime;
 

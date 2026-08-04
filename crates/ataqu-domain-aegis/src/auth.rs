@@ -1,11 +1,11 @@
 //! AEGIS authentication domain logic.
 
+use crate::types::Email;
+use async_trait::async_trait;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use serde::Serialize;
-use async_trait::async_trait;
-use uuid::Uuid;
 use std::time::SystemTime;
-use crate::types::Email;
+use uuid::Uuid;
 
 /// Command to create a new user.
 #[derive(Debug, Clone)]

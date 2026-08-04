@@ -23,19 +23,26 @@ use ataqu_kernel::{Clock, IdGenerator};
 
 pub struct SystemIdGenerator;
 impl IdGenerator for SystemIdGenerator {
-    fn new_uuid_v7(&self) -> Uuid { Uuid::now_v7() }
+    fn new_uuid_v7(&self) -> Uuid {
+        Uuid::now_v7()
+    }
 }
 
 pub struct SystemClock;
 impl Clock for SystemClock {
-    fn now(&self) -> std::time::SystemTime { std::time::SystemTime::now() }
+    fn now(&self) -> std::time::SystemTime {
+        std::time::SystemTime::now()
+    }
 }
 
 #[derive(Clone)]
 pub struct OutboxPlaceholder;
 #[async_trait::async_trait]
 impl OutboxAppender for OutboxPlaceholder {
-    async fn append_event(&self, _event: &(impl serde::Serialize + Send + Sync)) -> Result<(), String> {
+    async fn append_event(
+        &self,
+        _event: &(impl serde::Serialize + Send + Sync),
+    ) -> Result<(), String> {
         Ok(())
     }
 }

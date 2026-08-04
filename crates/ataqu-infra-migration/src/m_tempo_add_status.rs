@@ -12,8 +12,9 @@ impl MigrationTrait for Migration {
             ALTER TABLE collab_ops.bookings
             ADD COLUMN IF NOT EXISTS event_type_id UUID,
             ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         Ok(())
     }
 
@@ -24,8 +25,9 @@ impl MigrationTrait for Migration {
             ALTER TABLE collab_ops.bookings
             DROP COLUMN IF EXISTS event_type_id,
             DROP COLUMN IF EXISTS status;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         Ok(())
     }
 }
