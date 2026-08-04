@@ -633,8 +633,18 @@ mod task_entity {
     impl ActiveModelBehavior for ActiveModel {}
 }
 
+pub struct CinqTaskRepository {
+    db: DatabaseConnection,
+}
+
+impl CinqTaskRepository {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
+}
+
 #[async_trait]
-impl ataqu_domain_cinq::repository::TaskRepository for CinqActivityRepository {
+impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
     async fn save_task(&self, task: &ataqu_domain_cinq::task::Task) -> Result<(), CinqDomainError> {
         let status_str = match task.status {
             ataqu_domain_cinq::task::TaskStatus::Pending => "pending",

@@ -87,12 +87,12 @@ async fn main() -> anyhow::Result<()> {
 
     // CINQ
     use ataqu_infra_repositories::cinq_repo_impl::{
-        CinqActivityRepository, CinqContactRepository, CinqDealRepository, CinqPipelineStageRepository,
+        CinqActivityRepository, CinqContactRepository, CinqDealRepository, CinqPipelineStageRepository, CinqTaskRepository,
     };
     let contact_repo = Arc::new(CinqContactRepository::new(pools.core.clone()));
     let deal_repo = Arc::new(CinqDealRepository::new(pools.core.clone()));
     let activity_repo = Arc::new(CinqActivityRepository::new(pools.core.clone()));
-    let task_repo = Arc::new(CinqActivityRepository::new(pools.core.clone()));
+    let task_repo = Arc::new(CinqTaskRepository::new(pools.core.clone()));
     let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.core.clone()));
     let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
     let cinq_service = Arc::new(CinqService::new(
