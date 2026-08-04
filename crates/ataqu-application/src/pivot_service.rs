@@ -11,6 +11,7 @@ use ataqu_domain_pivot::document::{
 };
 use ataqu_domain_pivot::repository::{BlockRepository, DatabaseRepository, DocumentRepository, RelationRepository};
 use ataqu_kernel::{Clock, IdGenerator, RepositoryError, TenantId};
+use crate::outbox::Outbox;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_pivot::block::BlockCreatedEvent as Block;
@@ -66,6 +67,7 @@ pub struct PivotService {
     db_repo: Arc<dyn DatabaseRepository + Send + Sync>,
     block_repo: Arc<dyn BlockRepository + Send + Sync>,
     rel_repo: Arc<dyn RelationRepository + Send + Sync>,
+    outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
@@ -76,6 +78,7 @@ impl PivotService {
         db_repo: Arc<dyn DatabaseRepository + Send + Sync>,
         block_repo: Arc<dyn BlockRepository + Send + Sync>,
         rel_repo: Arc<dyn RelationRepository + Send + Sync>,
+        outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
@@ -84,6 +87,7 @@ impl PivotService {
             db_repo,
             block_repo,
             rel_repo,
+            outbox,
             id_gen,
             clock,
         }
@@ -100,6 +104,14 @@ impl PivotService {
             .save_database(&event)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+
+        let payload = serde_json::json!({
+            "database_id": event.id,
+            "tenant_id": event.tenant_id.as_uuid(),
+            "name": event.name,
+        });
+        self.outbox.append("collab_ops", "DatabaseCreated", event.id, &payload).await.map_err(|e| PivotServiceError::Repository(e))?;
+
         Ok(event)
     }
 
@@ -130,6 +142,14 @@ impl PivotService {
             .save_document(&event)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+
+        let payload = serde_json::json!({
+            "document_id": event.id,
+            "tenant_id": event.tenant_id.as_uuid(),
+            "title": event.title,
+        });
+        self.outbox.append("collab_ops", "DocumentCreated", event.id, &payload).await.map_err(|e| PivotServiceError::Repository(e))?;
+
         Ok(event)
     }
 

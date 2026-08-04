@@ -108,9 +108,11 @@ async fn main() -> anyhow::Result<()> {
     use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.core.clone()));
+    let dial_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
     let dial_service = Arc::new(DialService::new(
         dial_repo,
         dial_presence,
+        dial_outbox,
         id_gen.clone(),
         clock.clone(),
     ));
@@ -123,11 +125,13 @@ async fn main() -> anyhow::Result<()> {
     let pivot_db_repo = Arc::new(PivotDatabaseRepository::new(pools.core.clone()));
     let pivot_block_repo = Arc::new(PivotBlockRepository::new(pools.core.clone()));
     let pivot_rel_repo = Arc::new(PivotRelationRepository::new(pools.core.clone()));
+    let pivot_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
     let pivot_service = Arc::new(PivotService::new(
         pivot_doc_repo,
         pivot_db_repo,
         pivot_block_repo,
         pivot_rel_repo,
+        pivot_outbox,
         id_gen.clone(),
         clock.clone(),
     ));

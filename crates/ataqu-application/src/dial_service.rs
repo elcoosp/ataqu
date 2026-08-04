@@ -11,6 +11,7 @@ use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::PresenceStore;
 use ataqu_domain_dial::repository::DialRepository;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::outbox::Outbox;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_dial::chat::{Channel, Message};
@@ -62,6 +63,7 @@ pub type DialResult<T> = Result<T, DialServiceError>;
 pub struct DialService {
     repo: Arc<dyn DialRepository + Send + Sync>,
     presence: Arc<dyn PresenceStore + Send + Sync>,
+    outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
@@ -70,12 +72,14 @@ impl DialService {
     pub fn new(
         repo: Arc<dyn DialRepository + Send + Sync>,
         presence: Arc<dyn PresenceStore + Send + Sync>,
+        outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
         Self {
             repo,
             presence,
+            outbox,
             id_gen,
             clock,
         }
@@ -105,6 +109,15 @@ impl DialService {
             archived_at: None,
         };
         self.repo.insert_channel(&channel).await?;
+
+        let payload = serde_json::json!({
+            "channel_id": channel.id.as_uuid(),
+            "tenant_id": channel.tenant_id.as_uuid(),
+            "name": channel.name,
+            "created_by": channel.created_by.as_uuid(),
+        });
+        self.outbox.append("dial", "ChannelCreated", channel.id.as_uuid(), &payload).await.map_err(|e| DialServiceError::Repository(e))?;
+
         Ok(channel)
     }
 
@@ -165,6 +178,16 @@ impl DialService {
             deleted_at: None,
         };
         self.repo.insert_message(&message).await?;
+
+        let payload = serde_json::json!({
+            "message_id": message.id.as_uuid(),
+            "tenant_id": message.tenant_id.as_uuid(),
+            "channel_id": message.channel_id.as_uuid(),
+            "author_id": message.author_id.as_uuid(),
+            "content": message.content,
+        });
+        self.outbox.append("dial", "MessageSent", message.id.as_uuid(), &payload).await.map_err(|e| DialServiceError::Repository(e))?;
+
         Ok(message)
     }
 
