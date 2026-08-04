@@ -4,7 +4,7 @@ use ataqu_domain_aegis::{AuthError, AuthRepository, User as DomainUser};
 use ataqu_kernel::TenantId;
 use ataqu_security::Email;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+    ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
 };
 use uuid::Uuid;
 

@@ -88,8 +88,8 @@ impl PauseRepositoryImpl {
             id: m.id,
             tenant_id: TenantId::new(m.tenant_id),
             full_name: m.full_name,
-            email: m.email,
-            phone: m.phone,
+            email: ataqu_security::Email::new(m.email),
+            phone: m.phone.map(ataqu_security::PhoneNumber::new),
             job_title: m.job_title,
             department: m.department,
             hire_date: m

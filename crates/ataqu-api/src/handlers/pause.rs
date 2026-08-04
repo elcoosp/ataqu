@@ -11,9 +11,11 @@ use uuid::Uuid;
 use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
+use crate::serializers::{ApiEmail, ApiPhone};
 use ataqu_application::pause_service::{
     CreateEmployeeCommand, Employee, LeaveRequest, LeaveType, RequestLeaveCommand,
 };
+use ataqu_security::{Email, PhoneNumber};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateEmployeeRequest {
@@ -29,8 +31,8 @@ pub struct CreateEmployeeRequest {
 pub struct EmployeeResponse {
     pub id: Uuid,
     pub full_name: String,
-    pub email: String,
-    pub phone: Option<String>,
+    pub email: ApiEmail,
+    pub phone: Option<ApiPhone>,
     pub job_title: String,
     pub department: Option<String>,
     pub hire_date: NaiveDate,
@@ -44,8 +46,8 @@ impl From<Employee> for EmployeeResponse {
         Self {
             id: e.id,
             full_name: e.full_name,
-            email: e.email,
-            phone: e.phone,
+            email: ApiEmail::new(e.email),
+            phone: e.phone.map(ApiPhone::new),
             job_title: e.job_title,
             department: e.department,
             hire_date: e.hire_date,
@@ -108,8 +110,8 @@ pub async fn create_employee(
     let cmd = CreateEmployeeCommand {
         tenant_id: auth.tenant_id,
         full_name: req.full_name.clone(),
-        email: req.email.clone(),
-        phone: req.phone.clone(),
+        email: Email::new(req.email.clone()),
+        phone: req.phone.clone().map(PhoneNumber::new),
         job_title: req.job_title.clone(),
         department: req.department.clone(),
         hire_date: req.hire_date,
@@ -131,8 +133,8 @@ pub async fn create_employee(
         Json(EmployeeResponse {
             id: employee_id,
             full_name: req.full_name,
-            email: req.email,
-            phone: req.phone,
+            email: ApiEmail::new(Email::new(req.email)),
+            phone: req.phone.map(|p| ApiPhone::new(PhoneNumber::new(p))),
             job_title: req.job_title,
             department: req.department,
             hire_date: req.hire_date,

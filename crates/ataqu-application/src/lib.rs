@@ -1,6 +1,7 @@
 pub mod aegis_service;
 pub mod cinq_service;
 pub mod dial_service;
+pub mod outbox;
 pub mod pause_infra;
 pub mod pause_service;
 pub mod pivot_service;

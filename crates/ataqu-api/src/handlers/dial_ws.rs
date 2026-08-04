@@ -6,7 +6,6 @@ use axum::{
     },
     response::Response,
 };
-use futures::SinkExt;
 use tracing::info;
 
 use crate::AppState;
