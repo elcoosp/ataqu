@@ -34,6 +34,7 @@ pub struct UpdateBookingStatusCommand {
 pub struct CreateEventTypeCommand {
     pub tenant_id: TenantId,
     pub name: String,
+    pub slug: String,
     pub description: Option<String>,
     pub duration_minutes: i32,
 }
@@ -198,6 +199,7 @@ impl TempoService {
         let domain_cmd = ataqu_domain_tempo::CreateEventTypeCommand {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
+            slug: cmd.slug,
             description: cmd.description,
             duration_minutes: cmd.duration_minutes,
         };
@@ -209,6 +211,12 @@ impl TempoService {
 
     pub async fn list_event_types(&self, tenant_id: TenantId) -> TempoResult<Vec<EventType>> {
         self.repo.list_event_types(&tenant_id).await.map_err(TempoServiceError::Repository)
+    }
+
+    pub async fn get_event_type_by_slug(&self, tenant_id: TenantId, slug: String) -> TempoResult<EventType> {
+        self.repo.find_event_type_by_slug(&tenant_id, &slug).await
+            .map_err(TempoServiceError::Repository)?
+            .ok_or(TempoServiceError::BookingNotFound)
     }
 
     pub async fn create_availability_slot(&self, cmd: CreateAvailabilitySlotCommand) -> TempoResult<AvailabilitySlot> {
@@ -229,5 +237,17 @@ impl TempoService {
 
     pub async fn delete_availability_slot(&self, tenant_id: TenantId, slot_id: Uuid) -> TempoResult<()> {
         self.repo.delete_availability_slot(&tenant_id, &slot_id).await.map_err(TempoServiceError::Repository)
+    }
+
+    pub async fn public_create_booking(&self, tenant_id: TenantId, slug: String, starts_at: DateTime<Utc>, timezone: String) -> TempoResult<Booking> {
+        let event_type = self.get_event_type_by_slug(tenant_id, slug).await?;
+        let cmd = CreateBookingCommand {
+            tenant_id,
+            event_type_id: event_type.id.0,
+            starts_at,
+            duration_minutes: event_type.duration_minutes,
+            timezone,
+        };
+        self.create_booking(cmd).await
     }
 }

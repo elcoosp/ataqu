@@ -117,6 +117,7 @@ pub async fn cancel_booking(
 #[derive(Debug, Deserialize)]
 pub struct CreateEventTypeRequest {
     pub name: String,
+    pub slug: String,
     pub description: Option<String>,
     pub duration_minutes: i32,
 }
@@ -125,6 +126,7 @@ pub struct CreateEventTypeRequest {
 pub struct EventTypeResponse {
     pub id: Uuid,
     pub name: String,
+    pub slug: String,
     pub description: Option<String>,
     pub duration_minutes: i32,
     pub is_active: bool,
@@ -135,6 +137,7 @@ impl From<ataqu_application::tempo_service::EventType> for EventTypeResponse {
         Self {
             id: e.id.0,
             name: e.name,
+            slug: e.slug,
             description: e.description,
             duration_minutes: e.duration_minutes,
             is_active: e.is_active,
@@ -150,6 +153,7 @@ pub async fn create_event_type(
     let cmd = CreateEventTypeCommand {
         tenant_id: auth.tenant_id,
         name: payload.name,
+        slug: payload.slug,
         description: payload.description,
         duration_minutes: payload.duration_minutes,
     };
@@ -231,6 +235,33 @@ pub async fn delete_availability_slot(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct PublicBookingRequest {
+    pub slug: String,
+    pub starts_at: chrono::DateTime<chrono::Utc>,
+    #[serde(default = "default_timezone")]
+    pub timezone: String,
+}
+
+pub async fn public_create_booking(
+    State(state): State<AppState>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<PublicBookingRequest>,
+) -> ApiResult<(StatusCode, Json<BookingResponse>)> {
+    let booking = state.tempo_service.public_create_booking(ataqu_kernel::TenantId::new(tenant_id), payload.slug, payload.starts_at, payload.timezone).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok((StatusCode::CREATED, Json(booking.into())))
+}
+
+pub async fn get_public_event_type(
+    State(state): State<AppState>,
+    Path((tenant_id, slug)): Path<(Uuid, String)>,
+) -> ApiResult<Json<EventTypeResponse>> {
+    let event_type = state.tempo_service.get_event_type_by_slug(ataqu_kernel::TenantId::new(tenant_id), slug).await
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+    Ok(Json(event_type.into()))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/bookings", axum::routing::post(create_booking))
@@ -241,4 +272,6 @@ pub fn routes() -> Router<AppState> {
         .route("/availability-slots", axum::routing::post(create_availability_slot))
         .route("/availability-slots/:event_type_id", axum::routing::get(list_availability_slots))
         .route("/availability-slots/:id", axum::routing::delete(delete_availability_slot))
+        .route("/public/:tenant_id/event-types/:slug", axum::routing::get(get_public_event_type))
+        .route("/public/:tenant_id/bookings", axum::routing::post(public_create_booking))
 }

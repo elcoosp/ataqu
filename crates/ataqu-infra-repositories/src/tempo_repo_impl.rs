@@ -50,6 +50,7 @@ mod event_type_entity {
         pub id: Uuid,
         pub tenant_id: Uuid,
         pub name: String,
+        pub slug: String,
         pub description: Option<String>,
         pub duration_minutes: i32,
         pub is_active: bool,
@@ -228,6 +229,7 @@ impl TempoRepository for TempoRepositoryImpl {
             id: Set(event_type.id.0),
             tenant_id: Set(event_type.tenant_id.as_uuid()),
             name: Set(event_type.name.clone()),
+            slug: Set(event_type.slug.clone()),
             description: Set(event_type.description.clone()),
             duration_minutes: Set(event_type.duration_minutes),
             is_active: Set(event_type.is_active),
@@ -252,12 +254,33 @@ impl TempoRepository for TempoRepositoryImpl {
             id: EventTypeId(m.id),
             tenant_id: TenantId::new(m.tenant_id),
             name: m.name,
+            slug: m.slug,
             description: m.description,
             duration_minutes: m.duration_minutes,
             is_active: m.is_active,
             created_at: m.created_at,
             updated_at: m.updated_at,
         }).collect())
+    }
+
+    async fn find_event_type_by_slug(&self, tenant_id: &TenantId, slug: &str) -> Result<Option<EventType>, String> {
+        let model = event_type_entity::Entity::find()
+            .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(event_type_entity::Column::Slug.eq(slug))
+            .one(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(model.map(|m| EventType {
+            id: EventTypeId(m.id),
+            tenant_id: TenantId::new(m.tenant_id),
+            name: m.name,
+            slug: m.slug,
+            description: m.description,
+            duration_minutes: m.duration_minutes,
+            is_active: m.is_active,
+            created_at: m.created_at,
+            updated_at: m.updated_at,
+        }))
     }
 
     async fn save_availability_slot(&self, slot: &AvailabilitySlot) -> Result<(), String> {

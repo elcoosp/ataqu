@@ -24,6 +24,7 @@ pub mod m_tempo;
 pub mod m_tempo_add_event_types;
 pub mod m_tempo_add_status;
 pub mod m_tempo_fix_duration;
+pub mod m_tempo_add_slug;
 pub mod m_tempo_add_reminder_tz;
 pub mod m_vault;
 pub mod m_vault_add_price_column;
@@ -62,6 +63,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_tempo_fix_duration::Migration),
             Box::new(m_tempo_add_event_types::Migration),
             Box::new(m_tempo_add_reminder_tz::Migration),
+            Box::new(m_tempo_add_slug::Migration),
             Box::new(m_vault::Migration),
             Box::new(m_vault_add_products_variants::Migration),
             Box::new(m_vault_add_price_column::Migration),

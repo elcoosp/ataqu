@@ -1,4 +1,3 @@
-use crate::types::Email;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use serde::Serialize;
 use std::time::SystemTime;
@@ -55,7 +54,7 @@ pub fn generate_api_key(
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(raw_key.as_bytes());
-    let key_hash = format!("{:x}", hasher.finalize());
+    let _key_hash = format!("{:x}", hasher.finalize());
 
     Ok(ApiKeyCreated {
         id,

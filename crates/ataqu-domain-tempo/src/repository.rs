@@ -42,6 +42,7 @@ pub trait TempoRepository: Send + Sync {
 
     async fn save_event_type(&self, event_type: &EventType) -> Result<(), String>;
     async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, String>;
+    async fn find_event_type_by_slug(&self, tenant_id: &TenantId, slug: &str) -> Result<Option<EventType>, String>;
 
     async fn save_availability_slot(&self, slot: &AvailabilitySlot) -> Result<(), String>;
     async fn list_availability_slots(&self, tenant_id: &TenantId, event_type_id: &Uuid) -> Result<Vec<AvailabilitySlot>, String>;

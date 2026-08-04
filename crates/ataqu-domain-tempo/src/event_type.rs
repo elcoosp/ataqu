@@ -7,6 +7,7 @@ pub struct EventType {
     pub id: EventTypeId,
     pub tenant_id: TenantId,
     pub name: String,
+    pub slug: String,
     pub description: Option<String>,
     pub duration_minutes: i32,
     pub is_active: bool,
@@ -18,6 +19,7 @@ pub struct EventType {
 pub struct CreateEventTypeCommand {
     pub tenant_id: TenantId,
     pub name: String,
+    pub slug: String,
     pub description: Option<String>,
     pub duration_minutes: i32,
 }
@@ -41,6 +43,7 @@ pub fn create_event_type(
         id,
         tenant_id: cmd.tenant_id,
         name: cmd.name,
+        slug: cmd.slug,
         description: cmd.description,
         duration_minutes: cmd.duration_minutes,
         is_active: true,
