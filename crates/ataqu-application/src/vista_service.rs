@@ -49,16 +49,28 @@ impl VistaService {
             .save_aggregated_view(&new_view)
             .await
             .map_err(VistaServiceError::Repository)?;
-        if let Ok(point) = prepare_data_point(
-            tenant_id,
-            "event_count".to_string(),
-            1.0,
-            self.clock.as_ref(),
-        ) {
-            self.repo
-                .save_data_point(&point)
-                .await
-                .map_err(VistaServiceError::Repository)?;
+
+        // Save specific data points for time-series charts
+        let metrics_to_log: Vec<(&str, f64)> = match (event.schema.as_str(), event.event_type.as_str()) {
+            ("collab_crm", "DealCreated") => vec![("pipeline_value", event.payload.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))],
+            ("collab_crm", "DealWon") => vec![("revenue", event.payload.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))],
+            ("collab_crm", "ContactCreated") => vec![("contacts_created", 1.0)],
+            ("vault", "ProductCreated") => vec![("products_created", 1.0)],
+            _ => vec![],
+        };
+
+        for (metric, value) in metrics_to_log {
+            if let Ok(point) = prepare_data_point(
+                tenant_id,
+                metric.to_string(),
+                value,
+                self.clock.as_ref(),
+            ) {
+                self.repo
+                    .save_data_point(&point)
+                    .await
+                    .map_err(VistaServiceError::Repository)?;
+            }
         }
         Ok(())
     }

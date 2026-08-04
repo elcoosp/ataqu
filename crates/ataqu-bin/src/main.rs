@@ -282,7 +282,9 @@ async fn main() -> anyhow::Result<()> {
 
     // Build AppState
     use dashmap::DashMap;
+    use std::time::Duration;
     let ws_registry = Arc::new(DashMap::new());
+    let rate_limiter = ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let cinq_service_for_outbox = cinq_service.clone();
@@ -305,6 +307,7 @@ async fn main() -> anyhow::Result<()> {
         clock: clock.clone(),
         ws_registry,
         email_tracking_tx,
+        rate_limiter,
     };
 
     let cors = tower_http::cors::CorsLayer::new()

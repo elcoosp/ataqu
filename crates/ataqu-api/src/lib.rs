@@ -11,6 +11,7 @@ use axum::response::Response;
 
 use axum::Router;
 use axum::extract::State;
+use crate::middleware::rate_limit::RateLimiter;
 use uuid::Uuid;
 use std::sync::Arc;
 
@@ -69,6 +70,7 @@ pub struct AppState {
     pub clock: Arc<dyn Clock>,
     pub ws_registry: handlers::dial_ws::ConnectionRegistry,
     pub email_tracking_tx: tokio::sync::mpsc::Sender<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
+    pub rate_limiter: RateLimiter,
 }
 
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
