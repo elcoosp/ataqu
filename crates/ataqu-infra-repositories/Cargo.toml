@@ -26,3 +26,5 @@ ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-vault = { path = "../ataqu-domain-vault" }
 ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-vista = { path = "../ataqu-domain-vista" }
+once_cell = "1.19"
+ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }

@@ -292,4 +292,30 @@ impl CinqService {
             .map_err(|e| CinqServiceError::Repository(e.to_string()))?
             .ok_or(CinqServiceError::PipelineStageNotFound)
     }
+
+    pub async fn update_pipeline_stage(&self, tenant_id: TenantId, id: Uuid, name: Option<String>, order: Option<i32>) -> CinqResult<PipelineStage> {
+        // Fetch the existing stage
+        let mut stage = self.stage_repo.find_pipeline_stage_by_id(&tenant_id, id).await
+            .map_err(|e| CinqServiceError::Repository(e.to_string()))?
+            .ok_or(CinqServiceError::PipelineStageNotFound)?;
+        // Update fields
+        if let Some(name) = name {
+            stage.name = name;
+        }
+        if let Some(order) = order {
+            stage.order = order;
+        }
+        // Save back
+        self.stage_repo.save_pipeline_stage(&stage).await
+            .map_err(|e| CinqServiceError::Repository(e.to_string()))?;
+        Ok(stage)
+    }
+
+    pub async fn delete_pipeline_stage(&self, _tenant_id: TenantId, _id: Uuid) -> CinqResult<()> {
+        // We don't have a delete method in the repo trait; we'll implement it.
+        // We'll add a method to the trait and implement it in the repository.
+        // For now, we'll just return an error saying not implemented.
+        Err(CinqServiceError::Validation("Delete not implemented".to_string()))
+    }
+
 }

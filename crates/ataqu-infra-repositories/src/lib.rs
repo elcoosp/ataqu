@@ -42,3 +42,4 @@ pub mod tempo_repo_impl;
 pub mod vault_repo_impl;
 pub mod spark_repo_impl;
 pub mod vista_repo_impl;
+pub mod aegis_repo;

@@ -432,4 +432,19 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_stage).collect())
     }
+
+    async fn delete_pipeline_stage(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), CinqDomainError> {
+        use pipeline_stage_entity::Entity as StageEntity;
+        let result = StageEntity::delete_many()
+            .filter(pipeline_stage_entity::Column::Id.eq(id))
+            .filter(pipeline_stage_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        if result.rows_affected == 0 {
+            return Err(CinqDomainError::Validation("Stage not found".to_string()));
+        }
+        Ok(())
+    }
+
 }

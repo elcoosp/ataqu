@@ -168,7 +168,9 @@ pub async fn delete_pipeline_stage(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
-    Err(ApiError::Service("Pipeline stage delete not implemented".into()))
+    let tenant_id = TenantId::new(Uuid::new_v4());
+    state.cinq_service.delete_pipeline_stage(tenant_id, id).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 pub async fn create_activity(
     State(state): State<AppState>,

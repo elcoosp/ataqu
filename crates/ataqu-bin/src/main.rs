@@ -8,12 +8,12 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::{info, warn, error};
+use tracing::{info};
 use tracing_subscriber::EnvFilter;
 
-use ataqu_api::{AppState, create_router, UserRepoPlaceholder, OutboxPlaceholder, AegisDomainPlaceholder};
+use ataqu_api::{AppState, create_router};
 use ataqu_application::{
-    aegis_service::AegisService,
+    aegis_service::{AegisService, RealAegisDomain},
     cinq_service::CinqService,
     dial_service::DialService,
     pivot_service::PivotService,
@@ -30,6 +30,7 @@ use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_idempotency::IdempotencyCache;
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories;
+use ataqu_api::OutboxPlaceholder;
 
 // ------------------------------------------------------------------------------
 // System implementations
@@ -78,10 +79,11 @@ async fn main() -> anyhow::Result<()> {
 
     // Build services
 
-    // AEGIS – use the placeholders defined in ataqu-api/lib.rs
-    let aegis_repo = Arc::new(UserRepoPlaceholder);
+    // AEGIS – real SeaORM repository and domain, using OutboxPlaceholder from ataqu-api
+    use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
+    let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
     let aegis_outbox = Arc::new(OutboxPlaceholder);
-    let aegis_domain = Arc::new(AegisDomainPlaceholder);
+    let aegis_domain = Arc::new(RealAegisDomain);
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
         aegis_outbox,
@@ -178,9 +180,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // Clone vista_service before it is moved into AppState
-    let vista_service_for_outbox = vista_service.clone();
-
     // PAUSE – real repositories, real idempotency, real outbox
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
     use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
@@ -197,6 +196,7 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // Build AppState
+    let vista_service_for_outbox = vista_service.clone();
     let state = AppState {
         cinq_service,
         dial_service,
@@ -217,6 +217,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
+    
     let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
         let vista = vista_service_for_outbox.clone();
         async move {

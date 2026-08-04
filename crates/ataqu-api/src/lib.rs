@@ -8,10 +8,9 @@ pub mod serializers;
 use axum::Router;
 use std::sync::Arc;
 use uuid::Uuid;
-use sea_orm::{DatabaseTransaction, DbErr};
 
 // Import all application services.
-use ataqu_application::aegis_service::{AegisService, AegisDomain, UserRepository, OutboxAppender, DomainError, CreateUserCommand, AuthenticateCommand, TokenPair};
+use ataqu_application::aegis_service::{AegisService, OutboxAppender};
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
 use ataqu_application::pause_service::PauseService;
@@ -24,8 +23,6 @@ use ataqu_application::vista_service::VistaService;
 
 // Kernel capabilities
 use ataqu_kernel::{Clock, IdGenerator};
-use ataqu_security::Email;
-use ataqu_domain_aegis::{User, UserCreated};
 
 // Simple system implementations
 pub struct SystemIdGenerator;
@@ -42,69 +39,22 @@ impl Clock for SystemClock {
     }
 }
 
-// Placeholder implementations for Aegis (no-op, returning errors)
-pub struct AegisDomainPlaceholder;
-#[async_trait::async_trait]
-impl AegisDomain for AegisDomainPlaceholder {
-    async fn create_user(
-        &self,
-        _cmd: CreateUserCommand,
-        _id_gen: &dyn IdGenerator,
-        _clock: &dyn Clock,
-    ) -> Result<(UserCreated, User), DomainError> {
-        Err(DomainError::InvalidEmail)
-    }
-    async fn authenticate(
-        &self,
-        _cmd: AuthenticateCommand,
-        _user: User,
-        _clock: &dyn Clock,
-    ) -> Result<TokenPair, DomainError> {
-        Err(DomainError::InvalidEmail)
-    }
-    async fn setup_mfa(
-        &self,
-        _user: &mut User,
-        _clock: &dyn Clock,
-    ) -> Result<(String, String), DomainError> {
-        Err(DomainError::InvalidEmail)
-    }
-}
-
-pub struct UserRepoPlaceholder;
-#[async_trait::async_trait]
-impl UserRepository for UserRepoPlaceholder {
-    async fn begin(&self) -> Result<DatabaseTransaction, DbErr> {
-        unimplemented!()
-    }
-    async fn create_user(&self, _txn: &mut DatabaseTransaction, _user: &User) -> Result<(), DbErr> {
-        unimplemented!()
-    }
-    async fn find_by_email(&self, _txn: &mut DatabaseTransaction, _email: &Email) -> Result<Option<User>, DbErr> {
-        unimplemented!()
-    }
-    async fn find_by_id(&self, _txn: &mut DatabaseTransaction, _id: &Uuid) -> Result<Option<User>, DbErr> {
-        unimplemented!()
-    }
-    async fn update_user(&self, _txn: &mut DatabaseTransaction, _user: &User) -> Result<(), DbErr> {
-        unimplemented!()
-    }
-}
-
+// Placeholder outbox (implements the new OutboxAppender trait)
+#[derive(Clone)]
 pub struct OutboxPlaceholder;
+
 #[async_trait::async_trait]
 impl OutboxAppender for OutboxPlaceholder {
     async fn append_event(
         &self,
-        _txn: &mut DatabaseTransaction,
-        _schema: &str,
         _event: &(impl serde::Serialize + Send + Sync),
-    ) -> Result<(), DbErr> {
+    ) -> Result<(), String> {
         Ok(())
     }
 }
 
-// AppState with all services
+// AppState with all services.
+// The AegisService takes only the outbox placeholder as generic parameter.
 #[derive(Clone)]
 pub struct AppState {
     pub cinq_service: Arc<CinqService>,
@@ -115,8 +65,8 @@ pub struct AppState {
     pub tempo_service: Arc<TempoService>,
     pub vault_service: Arc<VaultService>,
     pub vista_service: Arc<VistaService>,
-    pub aegis_service: Arc<AegisService<UserRepoPlaceholder, OutboxPlaceholder, AegisDomainPlaceholder>>,
-    pub pause_service: Arc<PauseService>, // Will need dependencies later
+    pub aegis_service: Arc<AegisService<OutboxPlaceholder>>,
+    pub pause_service: Arc<PauseService>,
 }
 
 // Helper to create a router with all app routes.
@@ -134,7 +84,6 @@ pub fn create_router(state: AppState) -> Router {
 
     Router::new()
         .nest("/api/aegis", aegis_routes())
-        .route("/api/aegis/users", axum::routing::post(handlers::aegis::create_user_app))
         .nest("/api/cinq", cinq_routes())
         .nest("/api/dial", dial_routes())
         .nest("/api/pause", pause_routes())

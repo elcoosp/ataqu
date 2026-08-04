@@ -31,6 +31,9 @@ pub trait DealRepository: Send + Sync {
 pub trait PipelineStageRepository: Send + Sync {
     async fn save_pipeline_stage(&self, stage: &PipelineStage) -> CinqRepositoryResult<()>;
     async fn find_pipeline_stage_by_id(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<Option<PipelineStage>>;
+    
+    async fn delete_pipeline_stage(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<()>;
+
     async fn list_pipeline_stages(&self, tenant_id: &TenantId) -> CinqRepositoryResult<Vec<PipelineStage>>;
 }
 
