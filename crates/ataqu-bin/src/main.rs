@@ -286,6 +286,7 @@ async fn main() -> anyhow::Result<()> {
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let cinq_service_for_outbox = cinq_service.clone();
+    let vault_service_for_outbox = vault_service.clone();
     let dial_service_for_outbox = dial_service.clone();
     let spark_service_for_outbox = spark_service.clone();
     let state = AppState {
@@ -322,6 +323,7 @@ async fn main() -> anyhow::Result<()> {
         let spark = spark_service_for_outbox.clone();
         let cinq = cinq_service_for_outbox.clone();
         let dial = dial_service_for_outbox.clone();
+        let vault = vault_service_for_outbox.clone();
         async move {
             match event.schema.as_str() {
                 "vista" | "core" => {
@@ -386,6 +388,15 @@ async fn main() -> anyhow::Result<()> {
                                 };
                                 if let Err(e) = dial.send_message(cmd).await {
                                     tracing::error!(error = %e, "VAULT -> DIAL alert failed");
+                                }
+                            }
+                        }
+                        ("collab_crm", "DealWon") => {
+                            let variant_id = event.payload.get("variant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                            let quantity = event.payload.get("quantity").and_then(|v| v.as_i64());
+                            if let (Some(v_id), Some(q)) = (variant_id, quantity) {
+                                if let Err(e) = vault.reserve_stock(ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()), v_id, q).await {
+                                    tracing::error!(error = %e, "CRM DealWon -> VAULT reserve stock failed");
                                 }
                             }
                         }

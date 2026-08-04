@@ -215,6 +215,60 @@ impl DomainContactRepo for CinqContactRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_contact).collect())
     }
+
+    async fn find_by_custom_field_text(
+        &self,
+        tenant_id: &TenantId,
+        field: &str,
+        search: &str,
+    ) -> Result<Vec<Contact>, CinqDomainError> {
+        let pattern = format!("%{}%", search);
+        let cond = Condition::all()
+            .add(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .add(Expr::cust_with_values(
+                "custom_fields ->> $1 ILIKE $2",
+                vec![sea_orm::Value::from(field.to_string()), sea_orm::Value::from(pattern)],
+            ));
+        let models = contact_entity::Entity::find()
+            .filter(cond)
+            .all(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(models.into_iter().map(model_to_contact).collect())
+    }
+
+    async fn find_by_custom_fields_cross(
+        &self,
+        tenant_id: &TenantId,
+        search: &str,
+        limit: u64,
+    ) -> Result<Vec<Contact>, CinqDomainError> {
+        let sql = r#"
+            SELECT *
+            FROM collab_crm.contacts
+            WHERE tenant_id = $1
+            AND EXISTS (
+                SELECT 1 FROM jsonb_each_text(custom_fields)
+                WHERE value ILIKE $2
+            )
+            LIMIT $3
+        "#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DatabaseBackend::Postgres,
+            sql,
+            vec![
+                tenant_id.as_uuid().into(),
+                format!("%{}%", search).into(),
+                (limit as i64).into(),
+            ],
+        );
+        let models = contact_entity::Entity::find()
+            .from_raw_sql(stmt)
+            .all(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(models.into_iter().map(model_to_contact).collect())
+    }
 }
 
 // ---------- Deal Repository ----------

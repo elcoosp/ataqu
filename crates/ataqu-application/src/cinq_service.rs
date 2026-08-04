@@ -255,6 +255,30 @@ impl CinqService {
             .await?)
     }
 
+    pub async fn search_by_custom_field_text(
+        &self,
+        tenant_id: TenantId,
+        field: &str,
+        search: &str,
+    ) -> CinqResult<Vec<Contact>> {
+        Ok(self
+            .contact_repo
+            .find_by_custom_field_text(&tenant_id, field, search)
+            .await?)
+    }
+
+    pub async fn search_custom_fields_cross(
+        &self,
+        tenant_id: TenantId,
+        search: &str,
+        limit: u64,
+    ) -> CinqResult<Vec<Contact>> {
+        Ok(self
+            .contact_repo
+            .find_by_custom_fields_cross(&tenant_id, search, limit)
+            .await?)
+    }
+
     pub async fn import_contacts(
         &self,
         tenant_id: TenantId,

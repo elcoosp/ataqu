@@ -257,4 +257,20 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)
     }
+
+    pub async fn reserve_stock(&self, tenant_id: TenantId, variant_id: Uuid, quantity: i64) -> VaultResult<Variant> {
+        let variant = self.get_variant(tenant_id, variant_id).await?;
+        if variant.available() < quantity {
+            return Err(VaultServiceError::Stock(ataqu_domain_vault::inventory::StockError::InsufficientStock {
+                variant_id,
+                available: variant.available(),
+                requested: quantity,
+            }));
+        }
+        let mut new_variant = variant.clone();
+        new_variant.reserved_quantity += quantity;
+        new_variant.updated_at = self.clock.now();
+        self.repo.save_variant(&new_variant).await.map_err(VaultServiceError::Repository)?;
+        Ok(new_variant)
+    }
 }

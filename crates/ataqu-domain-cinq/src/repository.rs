@@ -30,6 +30,18 @@ pub trait ContactRepository: Send + Sync {
         field: &str,
         value: &serde_json::Value,
     ) -> CinqRepositoryResult<Vec<Contact>>;
+    async fn find_by_custom_field_text(
+        &self,
+        tenant_id: &TenantId,
+        field: &str,
+        search: &str,
+    ) -> CinqRepositoryResult<Vec<Contact>>;
+    async fn find_by_custom_fields_cross(
+        &self,
+        tenant_id: &TenantId,
+        search: &str,
+        limit: u64,
+    ) -> CinqRepositoryResult<Vec<Contact>>;
     async fn list_contacts(
         &self,
         tenant_id: &TenantId,
