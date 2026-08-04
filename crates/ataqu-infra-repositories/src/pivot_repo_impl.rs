@@ -1,42 +1,26 @@
-//! SeaORM implementations for PIVOT domain repositories.
 use async_trait::async_trait;
-use sea_orm::{
-    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set,
-};
-use uuid::Uuid;
-
-use ataqu_domain_pivot::block::{BlockCreatedEvent, BlockType, Relation, RelationCreatedEvent};
+use ataqu_domain_pivot::block::{BlockCreatedEvent, BlockType, RelationCreatedEvent, Relation};
 use ataqu_domain_pivot::document::DocumentCreatedEvent;
 use ataqu_domain_pivot::repository::{BlockRepository, DocumentRepository, RelationRepository};
 use ataqu_kernel::{RepositoryError, TenantId};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
+use uuid::Uuid;
 
 use crate::entities::pivot::block as block_entity;
-use crate::entities::pivot::document as doc_entity;
-use crate::entities::pivot::relation as rel_entity;
+use crate::entities::pivot::document as document_entity;
+use crate::entities::pivot::relation as relation_entity;
 
-// ---------- Document Repository ----------
 pub struct PivotDocumentRepository {
     db: DatabaseConnection,
 }
+
 impl PivotDocumentRepository {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
 }
 
-fn document_event_to_active(event: &DocumentCreatedEvent) -> doc_entity::ActiveModel {
-    doc_entity::ActiveModel {
-        id: Set(event.id),
-        tenant_id: Set(event.tenant_id.as_uuid()),
-        title: Set(event.title.clone()),
-        content: Set(Some(event.content.clone())),
-        metadata: Set(None),
-        created_at: Set(event.created_at.into()),
-        updated_at: Set(event.created_at.into()),
-    }
-}
-
-fn document_model_to_event(model: doc_entity::Model) -> DocumentCreatedEvent {
+fn doc_model_to_event(model: document_entity::Model) -> DocumentCreatedEvent {
     DocumentCreatedEvent {
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
@@ -49,11 +33,31 @@ fn document_model_to_event(model: doc_entity::Model) -> DocumentCreatedEvent {
 #[async_trait]
 impl DocumentRepository for PivotDocumentRepository {
     async fn save_document(&self, event: &DocumentCreatedEvent) -> Result<(), RepositoryError> {
-        let active = document_event_to_active(event);
-        doc_entity::Entity::insert(active)
-            .exec(&self.db)
+        let active = document_entity::ActiveModel {
+            id: Set(event.id),
+            tenant_id: Set(event.tenant_id.as_uuid()),
+            title: Set(event.title.clone()),
+            content: Set(Some(event.content.clone())),
+            metadata: Set(None),
+            created_at: Set(event.created_at.into()),
+            updated_at: Set(event.created_at.into()),
+        };
+        let exists = document_entity::Entity::find_by_id(event.id)
+            .one(&self.db)
             .await
-            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?
+            .is_some();
+        if exists {
+            document_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        } else {
+            document_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        }
         Ok(())
     }
 
@@ -62,14 +66,14 @@ impl DocumentRepository for PivotDocumentRepository {
         tenant_id: &TenantId,
         doc_id: Uuid,
     ) -> Result<DocumentCreatedEvent, RepositoryError> {
-        let model = doc_entity::Entity::find()
-            .filter(doc_entity::Column::Id.eq(doc_id))
-            .filter(doc_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+        let model = document_entity::Entity::find()
+            .filter(document_entity::Column::Id.eq(doc_id))
+            .filter(document_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?
             .ok_or(RepositoryError::NotFound)?;
-        Ok(document_model_to_event(model))
+        Ok(doc_model_to_event(model))
     }
 
     async fn list_documents(
@@ -78,79 +82,68 @@ impl DocumentRepository for PivotDocumentRepository {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError> {
-        let models = doc_entity::Entity::find()
-            .filter(doc_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+        let models = document_entity::Entity::find()
+            .filter(document_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
             .offset(offset)
             .all(&self.db)
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
-        Ok(models.into_iter().map(document_model_to_event).collect())
+        Ok(models.into_iter().map(doc_model_to_event).collect())
+    }
+
+    async fn delete_document(
+        &self,
+        tenant_id: &TenantId,
+        doc_id: Uuid,
+    ) -> Result<(), RepositoryError> {
+        document_entity::Entity::delete_many()
+            .filter(document_entity::Column::Id.eq(doc_id))
+            .filter(document_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
     }
 }
 
-// ---------- Block Repository ----------
 pub struct PivotBlockRepository {
     db: DatabaseConnection,
 }
+
 impl PivotBlockRepository {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
 }
 
-fn block_event_to_active(event: &BlockCreatedEvent) -> block_entity::ActiveModel {
-    let block_type_str = match &event.block_type {
-        BlockType::Markdown(_) => "markdown".to_string(),
-        BlockType::Table { .. } => "table".to_string(),
-        BlockType::View { .. } => "view".to_string(),
-    };
-    let content = match &event.block_type {
-        BlockType::Markdown(text) => serde_json::json!({ "text": text }),
-        BlockType::Table { columns, rows } => {
-            serde_json::json!({ "columns": columns, "rows": rows })
-        }
-        BlockType::View { filter } => serde_json::json!({ "filter": filter }),
-    };
-    block_entity::ActiveModel {
-        id: Set(event.id),
-        tenant_id: Set(event.tenant_id.as_uuid()),
-        document_id: Set(event.document_id),
-        block_type: Set(block_type_str),
-        content: Set(content),
-        created_at: Set(event.created_at.into()),
-        updated_at: Set(event.created_at.into()),
-    }
-}
-
 fn block_model_to_event(model: block_entity::Model) -> BlockCreatedEvent {
     let block_type = match model.block_type.as_str() {
-        "markdown" => {
-            let text = model
+        "markdown" => BlockType::Markdown(
+            model
                 .content
                 .get("text")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
-                .to_string();
-            BlockType::Markdown(text)
-        }
-        "table" => {
-            let columns = model
+                .to_string(),
+        ),
+        "table" => BlockType::Table {
+            columns: model
                 .content
                 .get("columns")
                 .and_then(|v| v.as_array())
-                .map(|a| {
-                    a.iter()
+                .map(|arr| {
+                    arr.iter()
                         .filter_map(|v| v.as_str().map(|s| s.to_string()))
                         .collect()
                 })
-                .unwrap_or_default();
-            let rows = model
+                .unwrap_or_default(),
+            rows: model
                 .content
                 .get("rows")
                 .and_then(|v| v.as_array())
-                .map(|a| {
-                    a.iter()
+                .map(|arr| {
+                    arr.iter()
                         .filter_map(|row| {
                             row.as_array().map(|r| {
                                 r.iter()
@@ -160,20 +153,19 @@ fn block_model_to_event(model: block_entity::Model) -> BlockCreatedEvent {
                         })
                         .collect()
                 })
-                .unwrap_or_default();
-            BlockType::Table { columns, rows }
-        }
-        "view" => {
-            let filter = model
+                .unwrap_or_default(),
+        },
+        "view" => BlockType::View {
+            filter: model
                 .content
                 .get("filter")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
-                .to_string();
-            BlockType::View { filter }
-        }
+                .to_string(),
+        },
         _ => BlockType::Markdown("".to_string()),
     };
+
     BlockCreatedEvent {
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
@@ -186,7 +178,23 @@ fn block_model_to_event(model: block_entity::Model) -> BlockCreatedEvent {
 #[async_trait]
 impl BlockRepository for PivotBlockRepository {
     async fn save_block(&self, event: &BlockCreatedEvent) -> Result<(), RepositoryError> {
-        let active = block_event_to_active(event);
+        let (block_type_str, content_json) = match &event.block_type {
+            BlockType::Markdown(text) => ("markdown", serde_json::json!({ "text": text })),
+            BlockType::Table { columns, rows } => {
+                ("table", serde_json::json!({ "columns": columns, "rows": rows }))
+            }
+            BlockType::View { filter } => ("view", serde_json::json!({ "filter": filter })),
+        };
+
+        let active = block_entity::ActiveModel {
+            id: Set(event.id),
+            tenant_id: Set(event.tenant_id.as_uuid()),
+            document_id: Set(event.document_id),
+            block_type: Set(block_type_str.to_string()),
+            content: Set(content_json),
+            created_at: Set(event.created_at.into()),
+            updated_at: Set(event.created_at.into()),
+        };
         block_entity::Entity::insert(active)
             .exec(&self.db)
             .await
@@ -209,46 +217,28 @@ impl BlockRepository for PivotBlockRepository {
     }
 }
 
-// ---------- Relation Repository ----------
 pub struct PivotRelationRepository {
     db: DatabaseConnection,
 }
+
 impl PivotRelationRepository {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
 }
 
-fn relation_event_to_active(event: &RelationCreatedEvent) -> rel_entity::ActiveModel {
-    rel_entity::ActiveModel {
-        id: Set(event.id),
-        tenant_id: Set(event.tenant_id.as_uuid()),
-        from_block_id: Set(event.relation.from_block_id),
-        to_block_id: Set(event.relation.to_block_id),
-        relation_type: Set(event.relation.relation_type.clone()),
-        created_at: Set(event.created_at.into()),
-    }
-}
-
-fn relation_model_to_event(model: rel_entity::Model) -> RelationCreatedEvent {
-    let rel = Relation {
-        from_block_id: model.from_block_id,
-        to_block_id: model.to_block_id,
-        relation_type: model.relation_type,
-    };
-    RelationCreatedEvent {
-        id: model.id,
-        tenant_id: TenantId::new(model.tenant_id),
-        relation: rel,
-        created_at: model.created_at.into(),
-    }
-}
-
 #[async_trait]
 impl RelationRepository for PivotRelationRepository {
     async fn save_relation(&self, event: &RelationCreatedEvent) -> Result<(), RepositoryError> {
-        let active = relation_event_to_active(event);
-        rel_entity::Entity::insert(active)
+        let active = relation_entity::ActiveModel {
+            id: Set(event.id),
+            tenant_id: Set(event.tenant_id.as_uuid()),
+            from_block_id: Set(event.relation.from_block_id),
+            to_block_id: Set(event.relation.to_block_id),
+            relation_type: Set(event.relation.relation_type.clone()),
+            created_at: Set(event.created_at.into()),
+        };
+        relation_entity::Entity::insert(active)
             .exec(&self.db)
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
@@ -260,27 +250,35 @@ impl RelationRepository for PivotRelationRepository {
         tenant_id: &TenantId,
         doc_id: Uuid,
     ) -> Result<Vec<RelationCreatedEvent>, RepositoryError> {
-        // Get all blocks of the document
-        let block_models = block_entity::Entity::find()
+        let block_ids: Vec<Uuid> = block_entity::Entity::find()
             .filter(block_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(block_entity::Column::DocumentId.eq(doc_id))
             .all(&self.db)
             .await
-            .map_err(|e| RepositoryError::Database(e.to_string()))?;
-        let block_ids: Vec<Uuid> = block_models.into_iter().map(|b| b.id).collect();
-        if block_ids.is_empty() {
-            return Ok(Vec::new());
-        }
-        // Find relations where either from_block_id or to_block_id is in the block_ids
-        let condition = Condition::any()
-            .add(rel_entity::Column::FromBlockId.is_in(block_ids.clone()))
-            .add(rel_entity::Column::ToBlockId.is_in(block_ids));
-        let models = rel_entity::Entity::find()
-            .filter(rel_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .filter(condition)
+            .map_err(|e| RepositoryError::Database(e.to_string()))?
+            .into_iter()
+            .map(|m| m.id)
+            .collect();
+
+        let models = relation_entity::Entity::find()
+            .filter(relation_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(relation_entity::Column::FromBlockId.is_in(block_ids))
             .all(&self.db)
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
-        Ok(models.into_iter().map(relation_model_to_event).collect())
+
+        Ok(models
+            .into_iter()
+            .map(|m| RelationCreatedEvent {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                relation: Relation {
+                    from_block_id: m.from_block_id,
+                    to_block_id: m.to_block_id,
+                    relation_type: m.relation_type,
+                },
+                created_at: m.created_at.into(),
+            })
+            .collect())
     }
 }

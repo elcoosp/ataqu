@@ -102,6 +102,38 @@ impl PivotService {
             })
     }
 
+    pub async fn update_document(
+        &self,
+        tenant_id: TenantId,
+        doc_id: Uuid,
+        title: Option<String>,
+        content: Option<String>,
+    ) -> PivotResult<Document> {
+        let mut doc = self.get_document(tenant_id, doc_id).await?;
+        if let Some(t) = title {
+            doc.title = t;
+        }
+        if let Some(c) = content {
+            doc.content = c;
+        }
+        self.doc_repo
+            .save_document(&doc)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        Ok(doc)
+    }
+
+    pub async fn delete_document(
+        &self,
+        tenant_id: TenantId,
+        doc_id: Uuid,
+    ) -> PivotResult<()> {
+        self.doc_repo
+            .delete_document(&tenant_id, doc_id)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))
+    }
+
     pub async fn list_documents(
         &self,
         tenant_id: TenantId,

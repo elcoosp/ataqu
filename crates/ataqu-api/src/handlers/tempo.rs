@@ -9,10 +9,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::AppState;
+use crate::error::{ApiResponseError, ApiResult};
+use crate::middleware::AuthContext;
 use ataqu_application::tempo_service::{
     BookingStatus, CreateBookingCommand, UpdateBookingStatusCommand,
 };
-use ataqu_kernel::TenantId;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateBookingRequest {
@@ -38,19 +39,19 @@ impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
             event_type_id: b.event_type_id.0,
             starts_at: b.starts_at.into(),
             duration_minutes: b.duration_minutes,
-            status: format!("{:?}", b.status),
-            created_at: b.starts_at.into(),
+            status: format!("{:?}", b.status).to_lowercase(),
+            created_at: Utc::now(),
         }
     }
 }
 
 pub async fn create_booking(
     State(state): State<AppState>,
+    auth: AuthContext,
     Json(payload): Json<CreateBookingRequest>,
-) -> Result<(StatusCode, Json<BookingResponse>), StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+) -> ApiResult<(StatusCode, Json<BookingResponse>)> {
     let cmd = CreateBookingCommand {
-        tenant_id,
+        tenant_id: auth.tenant_id,
         event_type_id: payload.event_type_id,
         starts_at: payload.starts_at,
         duration_minutes: payload.duration_minutes,
@@ -59,42 +60,42 @@ pub async fn create_booking(
         .tempo_service
         .create_booking(cmd)
         .await
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(booking.into())))
 }
 
 pub async fn list_bookings(
     State(state): State<AppState>,
-) -> Result<Json<Vec<BookingResponse>>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<BookingResponse>>> {
     let bookings = state
         .tempo_service
-        .list_bookings(tenant_id, 100, 0)
+        .list_bookings(auth.tenant_id, 100, 0)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(bookings.into_iter().map(|b| b.into()).collect()))
 }
 
 pub async fn get_booking(
     State(state): State<AppState>,
+    auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> Result<Json<BookingResponse>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+) -> ApiResult<Json<BookingResponse>> {
     let booking = state
         .tempo_service
-        .get_booking(tenant_id, id)
+        .get_booking(auth.tenant_id, id)
         .await
-        .map_err(|_| StatusCode::NOT_FOUND)?;
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(booking.into()))
 }
 
 pub async fn cancel_booking(
     State(state): State<AppState>,
+    auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> Result<Json<BookingResponse>, StatusCode> {
-    let tenant_id = TenantId::new(Uuid::new_v4());
+) -> ApiResult<Json<BookingResponse>> {
     let cmd = UpdateBookingStatusCommand {
-        tenant_id,
+        tenant_id: auth.tenant_id,
         booking_id: id,
         status: BookingStatus::Cancelled,
     };
@@ -102,7 +103,7 @@ pub async fn cancel_booking(
         .tempo_service
         .update_booking_status(cmd)
         .await
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(booking.into()))
 }
 

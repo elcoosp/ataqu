@@ -18,6 +18,11 @@ pub trait DocumentRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError>;
+    async fn delete_document(
+        &self,
+        tenant_id: &TenantId,
+        doc_id: Uuid,
+    ) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]

@@ -74,7 +74,6 @@ impl SondService {
         };
         let event =
             form_domain::create_form(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
-        // Build questions with IDs
         let questions: Vec<ataqu_domain_sond::question::Question> = cmd
             .questions
             .into_iter()
@@ -133,7 +132,6 @@ impl SondService {
             self.id_gen.as_ref(),
             self.clock.as_ref(),
         )?;
-        // Validate answers again to get proper structure
         let validated = response_domain::validate_answers(&cmd.answers, &form.questions)?;
         let response = Response {
             id: event.id,
