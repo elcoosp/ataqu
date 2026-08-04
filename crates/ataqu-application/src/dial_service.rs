@@ -211,4 +211,10 @@ impl DialService {
             .map_err(DialServiceError::Domain)
             .map(|users| users.into_iter().map(|u| u.as_uuid()).collect())
     }
+
+    // -- Search messages --
+    pub async fn search_messages(&self, tenant_id: TenantId, query: &str, limit: u64, offset: u64) -> DialResult<Vec<Message>> {
+        self.repo.search_messages(&tenant_id, query, limit, offset).await
+            .map_err(|e| DialServiceError::Domain(e))
+    }
 }
