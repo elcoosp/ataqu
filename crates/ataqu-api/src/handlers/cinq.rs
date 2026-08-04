@@ -97,6 +97,7 @@ pub async fn create_contact(
         name: payload.name,
         email: Email::new(payload.email),
         phone: payload.phone.map(PhoneNumber::new),
+        custom_fields: payload.custom_fields,
     };
     let contact = state
         .cinq_service
@@ -148,6 +149,7 @@ pub async fn update_contact(
         name: payload.name,
         email: payload.email.map(Email::new),
         phone: payload.phone.map(|p| p.map(PhoneNumber::new)),
+        custom_fields: payload.custom_fields,
     };
     let contact = state
         .cinq_service
@@ -464,6 +466,27 @@ pub async fn search_contacts(
     ))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CustomFieldSearchParams {
+    pub field: String,
+    pub value: String,
+}
+
+pub async fn search_by_custom_field(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<CustomFieldSearchParams>,
+) -> ApiResult<Json<Vec<ContactResponse>>> {
+    let contacts = state
+        .cinq_service
+        .search_by_custom_field(auth.tenant_id, &params.field, serde_json::json!(params.value))
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(
+        contacts.into_iter().map(ContactResponse::from).collect(),
+    ))
+}
+
 // ---------- CSV ----------
 pub async fn import_csv(
     State(state): State<AppState>,
@@ -535,6 +558,7 @@ pub fn cinq_routes() -> Router<AppState> {
         .route("/activities", post(create_activity).get(list_activities))
         .route("/activities/:id", get(get_activity))
         .route("/search", get(search_contacts))
+        .route("/search/custom", get(search_by_custom_field))
         .route("/csv/import", post(import_csv))
         .route("/csv/export", get(export_csv))
         .route("/email/track", post(track_email))

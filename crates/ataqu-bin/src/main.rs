@@ -7,7 +7,6 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
@@ -201,6 +200,7 @@ async fn main() -> anyhow::Result<()> {
                         name: name.clone(),
                         email: Email::new(email.clone()),
                         phone: phone.clone().map(PhoneNumber::new),
+                        custom_fields: serde_json::Value::Null,
                     }).await.map_err(|e| e.to_string())?;
                 }
                 Action::CreateCinqActivity { contact_id, activity_type, description } => {

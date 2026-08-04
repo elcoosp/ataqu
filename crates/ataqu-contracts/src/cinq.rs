@@ -34,6 +34,8 @@ pub struct CreateContactRequest {
     pub name: String,
     pub email: String,
     pub phone: Option<String>,
+    #[serde(default)]
+    pub custom_fields: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -41,6 +43,7 @@ pub struct UpdateContactRequest {
     pub name: Option<String>,
     pub email: Option<String>,
     pub phone: Option<Option<String>>,
+    pub custom_fields: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

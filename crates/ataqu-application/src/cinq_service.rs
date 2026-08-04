@@ -34,6 +34,7 @@ pub struct CreateContactCommand {
     pub name: String,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
+    pub custom_fields: serde_json::Value,
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +44,7 @@ pub struct UpdateContactCommand {
     pub name: Option<String>,
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>,
+    pub custom_fields: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -143,6 +145,7 @@ impl CinqService {
             name: cmd.name.clone(),
             email: cmd.email.clone(),
             phone: cmd.phone.clone(),
+            custom_fields: cmd.custom_fields.clone(),
         };
         let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
         let contact = Contact {
@@ -151,6 +154,7 @@ impl CinqService {
             name: event.name.clone(),
             email: event.email.clone(),
             phone: event.phone.clone(),
+            custom_fields: event.custom_fields.clone(),
             created_at: event.created_at,
             updated_at: event.created_at,
         };
@@ -183,6 +187,7 @@ impl CinqService {
             name: cmd.name,
             email: cmd.email,
             phone: cmd.phone,
+            custom_fields: cmd.custom_fields,
         };
         let event = contact_domain::update_contact(domain_cmd, self.clock.as_ref());
         if let Some(name) = event.name {
@@ -193,6 +198,9 @@ impl CinqService {
         }
         if let Some(phone) = event.phone {
             contact.phone = phone;
+        }
+        if let Some(custom_fields) = event.custom_fields {
+            contact.custom_fields = custom_fields;
         }
         contact.updated_at = event.updated_at;
         self.contact_repo.save_contact(&contact).await?;
@@ -235,6 +243,18 @@ impl CinqService {
             .await?)
     }
 
+    pub async fn search_by_custom_field(
+        &self,
+        tenant_id: TenantId,
+        field: &str,
+        value: serde_json::Value,
+    ) -> CinqResult<Vec<Contact>> {
+        Ok(self
+            .contact_repo
+            .find_by_custom_field_exact(&tenant_id, field, &value)
+            .await?)
+    }
+
     pub async fn import_contacts(
         &self,
         tenant_id: TenantId,
@@ -250,6 +270,13 @@ impl CinqService {
                 continue;
             }
 
+            let mut custom = serde_json::Map::new();
+            for (k, v) in &row {
+                let k_lower = k.to_lowercase();
+                if !["name", "email", "phone"].contains(&k_lower.as_str()) {
+                    custom.insert(k.clone(), serde_json::Value::String(v.clone()));
+                }
+            }
             let domain_cmd = DomainCreateContact {
                 tenant_id,
                 name: name.clone(),
@@ -259,6 +286,7 @@ impl CinqService {
                 } else {
                     Some(PhoneNumber::new(phone_str.clone()))
                 },
+                custom_fields: serde_json::Value::Object(custom),
             };
             let event = contact_domain::create_contact(
                 domain_cmd,
@@ -271,6 +299,7 @@ impl CinqService {
                 name: event.name,
                 email: event.email,
                 phone: event.phone,
+                custom_fields: event.custom_fields,
                 created_at: event.created_at,
                 updated_at: event.created_at,
             };

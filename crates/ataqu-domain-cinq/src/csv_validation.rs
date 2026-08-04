@@ -35,6 +35,7 @@ pub fn validate_contact_row(row: &[String]) -> CinqResult<CreateContactCommand> 
         name,
         email,
         phone,
+        custom_fields: serde_json::Value::Null,
     })
 }
 

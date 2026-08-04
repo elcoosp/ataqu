@@ -3,6 +3,7 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use chrono::{DateTime, Utc};
 
 use ataqu_security::{Email, PhoneNumber};
+use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
 use crate::error::{CinqDomainError, CinqResult};
@@ -15,6 +16,7 @@ pub struct Contact {
     pub name: String,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
+    pub custom_fields: JsonValue,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -26,6 +28,7 @@ pub struct CreateContactCommand {
     pub name: String,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
+    pub custom_fields: JsonValue,
 }
 
 #[derive(Debug, Clone)]
@@ -35,6 +38,7 @@ pub struct UpdateContactCommand {
     pub name: Option<String>,
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>, // None = no change, Some(None) = clear
+    pub custom_fields: Option<JsonValue>,
 }
 
 // ---------- Events ----------
@@ -45,6 +49,7 @@ pub struct ContactCreated {
     pub name: String,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
+    pub custom_fields: JsonValue,
     pub created_at: DateTime<Utc>,
 }
 
@@ -55,6 +60,7 @@ pub struct ContactUpdated {
     pub name: Option<String>,
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>,
+    pub custom_fields: Option<JsonValue>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -72,6 +78,7 @@ pub fn create_contact(
         name: cmd.name,
         email: cmd.email,
         phone: cmd.phone,
+        custom_fields: cmd.custom_fields,
         created_at: now,
     }
 }
@@ -84,6 +91,7 @@ pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> ContactUp
         name: cmd.name,
         email: cmd.email,
         phone: cmd.phone,
+        custom_fields: cmd.custom_fields,
         updated_at: now,
     }
 }
@@ -157,6 +165,7 @@ mod tests {
             name: "Alice".to_string(),
             email: Email::new("alice@example.com".to_string()),
             phone: None,
+            custom_fields: serde_json::Value::Null,
         };
         let mut id_gen = MockIdGenerator::new();
         let fixed_id = Uuid::new_v4();
@@ -182,6 +191,7 @@ mod tests {
             name: Some("Bob".to_string()),
             email: None,
             phone: Some(Some(PhoneNumber::new("+1234567890".to_string()))),
+            custom_fields: None,
         };
         let clock = MockClock::new(Utc.with_ymd_and_hms(2026, 8, 1, 13, 0, 0).unwrap());
 

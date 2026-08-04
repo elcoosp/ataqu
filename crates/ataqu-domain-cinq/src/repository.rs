@@ -24,6 +24,12 @@ pub trait ContactRepository: Send + Sync {
         query: &str,
         limit: u64,
     ) -> CinqRepositoryResult<Vec<Contact>>;
+    async fn find_by_custom_field_exact(
+        &self,
+        tenant_id: &TenantId,
+        field: &str,
+        value: &serde_json::Value,
+    ) -> CinqRepositoryResult<Vec<Contact>>;
     async fn list_contacts(
         &self,
         tenant_id: &TenantId,

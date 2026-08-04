@@ -105,7 +105,7 @@ pub struct PaginationParams {
 pub async fn create_employee(
     State(state): State<AppState>,
     auth: AuthContext,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> ApiResult<(StatusCode, Json<EmployeeResponse>)> {
     let cmd = CreateEmployeeCommand {

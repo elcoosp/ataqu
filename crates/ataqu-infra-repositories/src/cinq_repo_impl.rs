@@ -1,5 +1,6 @@
 //! SeaORM-based repositories for CINQ domain.
 use async_trait::async_trait;
+use sea_orm::sea_query::Expr;
 use sea_orm::{
     ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect,
     Set,
@@ -88,7 +89,7 @@ fn contact_to_active(contact: &Contact) -> contact_entity::ActiveModel {
         name: Set(contact.name.clone()),
         email: Set(Some(contact.email.as_ref().to_string())),
         phone: Set(contact.phone.as_ref().map(|p| p.as_ref().to_string())),
-        custom_fields: Set(serde_json::json!({})),
+        custom_fields: Set(contact.custom_fields.clone()),
         created_at: Set(contact.created_at),
         updated_at: Set(contact.updated_at),
     }
@@ -103,6 +104,7 @@ fn model_to_contact(model: contact_entity::Model) -> Contact {
         name: model.name,
         email,
         phone,
+        custom_fields: model.custom_fields,
         created_at: model.created_at,
         updated_at: model.updated_at,
     }
@@ -191,6 +193,27 @@ impl DomainContactRepo for CinqContactRepository {
             return Err(CinqDomainError::Validation("Contact not found".to_string()));
         }
         Ok(())
+    }
+
+    async fn find_by_custom_field_exact(
+        &self,
+        tenant_id: &TenantId,
+        field: &str,
+        value: &serde_json::Value,
+    ) -> Result<Vec<Contact>, CinqDomainError> {
+        let obj = serde_json::json!({ field: value });
+        let cond = Condition::all()
+            .add(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .add(Expr::cust_with_values(
+                "custom_fields @> $1",
+                vec![sea_orm::Value::from(obj)],
+            ));
+        let models = contact_entity::Entity::find()
+            .filter(cond)
+            .all(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(models.into_iter().map(model_to_contact).collect())
     }
 }
 
