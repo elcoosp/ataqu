@@ -1,7 +1,8 @@
 //! SeaORM-based repositories for CINQ domain.
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QuerySelect, QueryOrder};
+use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QuerySelect, QueryOrder, Condition};
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 
@@ -19,7 +20,6 @@ use ataqu_domain_cinq::repository::{
 };
 use ataqu_domain_cinq::error::CinqDomainError;
 
-// Import existing entities for contact and deal
 use crate::entities::contact as contact_entity;
 use crate::entities::deal as deal_entity;
 
@@ -130,6 +130,7 @@ impl DomainContactRepo for CinqContactRepository {
         }
         Ok(())
     }
+
     async fn find_contact_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<Contact>, CinqDomainError> {
         let model = contact_entity::Entity::find()
             .filter(contact_entity::Column::Id.eq(id))
@@ -139,6 +140,7 @@ impl DomainContactRepo for CinqContactRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(model.map(model_to_contact))
     }
+
     async fn list_contacts(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Contact>, CinqDomainError> {
         let models = contact_entity::Entity::find()
             .filter(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -150,9 +152,7 @@ impl DomainContactRepo for CinqContactRepository {
         Ok(models.into_iter().map(model_to_contact).collect())
     }
 
-
     async fn search_contacts(&self, tenant_id: &TenantId, query: &str, limit: u64) -> Result<Vec<Contact>, CinqDomainError> {
-        use sea_orm::Condition;
         let cond = Condition::any()
             .add(contact_entity::Column::Name.ilike(format!("%{}%", query)))
             .add(contact_entity::Column::Email.ilike(format!("%{}%", query)));
@@ -166,7 +166,18 @@ impl DomainContactRepo for CinqContactRepository {
         Ok(models.into_iter().map(model_to_contact).collect())
     }
 
-
+    async fn delete_contact(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), CinqDomainError> {
+        let result = contact_entity::Entity::delete_many()
+            .filter(contact_entity::Column::Id.eq(id))
+            .filter(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        if result.rows_affected == 0 {
+            return Err(CinqDomainError::Validation("Contact not found".to_string()));
+        }
+        Ok(())
+    }
 }
 
 // ---------- Deal Repository ----------
@@ -178,7 +189,6 @@ impl CinqDealRepository {
 }
 
 fn deal_to_active(deal: &Deal) -> deal_entity::ActiveModel {
-    // Convert f64 to Decimal
     let amount_decimal = Decimal::from_f64(deal.amount).unwrap_or(Decimal::ZERO);
     deal_entity::ActiveModel {
         id: Set(deal.id),
@@ -191,6 +201,7 @@ fn deal_to_active(deal: &Deal) -> deal_entity::ActiveModel {
             DealStatus::Won => "won",
             DealStatus::Lost => "lost",
         }.to_string()),
+        pipeline_stage_id: Set(deal.pipeline_stage_id),
         custom_fields: Set(serde_json::json!({})),
         created_at: Set(deal.created_at),
         updated_at: Set(deal.updated_at),
@@ -203,14 +214,13 @@ fn model_to_deal(model: deal_entity::Model) -> Deal {
         "lost" => DealStatus::Lost,
         _ => DealStatus::Open,
     };
-    // Convert Decimal to f64 (might lose precision, but okay for now)
     let amount = model.amount.to_string().parse::<f64>().unwrap_or(0.0);
     Deal {
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
         contact_id: model.contact_id,
         title: model.title,
-        pipeline_stage_id: Uuid::nil(),
+        pipeline_stage_id: model.pipeline_stage_id,
         amount,
         status,
         created_at: model.created_at,
@@ -240,6 +250,7 @@ impl DomainDealRepo for CinqDealRepository {
         }
         Ok(())
     }
+
     async fn find_deal_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<Deal>, CinqDomainError> {
         let model = deal_entity::Entity::find()
             .filter(deal_entity::Column::Id.eq(id))
@@ -249,6 +260,7 @@ impl DomainDealRepo for CinqDealRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(model.map(model_to_deal))
     }
+
     async fn list_deals(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Deal>, CinqDomainError> {
         let models = deal_entity::Entity::find()
             .filter(deal_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -258,6 +270,19 @@ impl DomainDealRepo for CinqDealRepository {
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_deal).collect())
+    }
+
+    async fn delete_deal(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), CinqDomainError> {
+        let result = deal_entity::Entity::delete_many()
+            .filter(deal_entity::Column::Id.eq(id))
+            .filter(deal_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        if result.rows_affected == 0 {
+            return Err(CinqDomainError::Validation("Deal not found".to_string()));
+        }
+        Ok(())
     }
 }
 
@@ -339,6 +364,7 @@ impl DomainActivityRepo for CinqActivityRepository {
         }
         Ok(())
     }
+
     async fn find_activity_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<Activity>, CinqDomainError> {
         let model = activity_entity::Entity::find()
             .filter(activity_entity::Column::Id.eq(id))
@@ -348,6 +374,7 @@ impl DomainActivityRepo for CinqActivityRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(model.map(model_to_activity))
     }
+
     async fn list_activities_for_contact(&self, tenant_id: &TenantId, contact_id: Uuid, limit: u64, offset: u64) -> Result<Vec<Activity>, CinqDomainError> {
         let models = activity_entity::Entity::find()
             .filter(activity_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -413,6 +440,7 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
         }
         Ok(())
     }
+
     async fn find_pipeline_stage_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<PipelineStage>, CinqDomainError> {
         let model = pipeline_stage_entity::Entity::find()
             .filter(pipeline_stage_entity::Column::Id.eq(id))
@@ -422,6 +450,7 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(model.map(model_to_stage))
     }
+
     async fn list_pipeline_stages(&self, tenant_id: &TenantId) -> Result<Vec<PipelineStage>, CinqDomainError> {
         let models = pipeline_stage_entity::Entity::find()
             .filter(pipeline_stage_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -433,17 +462,15 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
     }
 
     async fn delete_pipeline_stage(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), CinqDomainError> {
-        use pipeline_stage_entity::Entity as StageEntity;
-        let result = StageEntity::delete_many()
+        let result = pipeline_stage_entity::Entity::delete_many()
             .filter(pipeline_stage_entity::Column::Id.eq(id))
             .filter(pipeline_stage_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .exec(&self.db)
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         if result.rows_affected == 0 {
-            return Err(CinqDomainError::Validation("Stage not found".to_string()));
+            return Err(CinqDomainError::Validation("Pipeline stage not found".to_string()));
         }
         Ok(())
     }
-
 }

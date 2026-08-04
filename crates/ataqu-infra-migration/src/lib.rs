@@ -19,8 +19,9 @@ pub mod m_vault_add_price_column;
 pub mod m_vista_tables;
 pub mod m_dial_add_participants;
 pub mod m_pause_add_columns;
-pub mod m_tempo_add_event_types;   // we'll create this
-pub mod m_tempo_add_status;        // we'll create this
+pub mod m_tempo_add_event_types;
+pub mod m_tempo_add_status;
+pub mod m_cinq_add_deal_pipeline_stage;
 
 pub struct Migrator;
 
@@ -32,6 +33,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_aegis::Migration),
             Box::new(m_cinq::Migration),
             Box::new(m_cinq_add_activity_stage::Migration),
+            Box::new(m_cinq_add_deal_pipeline_stage::Migration), // ADDED
             Box::new(m_dial::Migration),
             Box::new(m_dial_add_threads_mentions::Migration),
             Box::new(m_dial_add_presence::Migration),

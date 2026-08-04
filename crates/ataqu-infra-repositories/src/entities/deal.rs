@@ -12,6 +12,7 @@ pub struct Model {
     pub title: String,
     pub amount: rust_decimal::Decimal,
     pub status: String,
+    pub pipeline_stage_id: Uuid,
     pub custom_fields: JsonValue,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,

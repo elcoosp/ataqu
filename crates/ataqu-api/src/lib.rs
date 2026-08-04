@@ -57,6 +57,14 @@ pub struct AppState {
     pub clock: Arc<dyn Clock>,
 }
 
+async fn health_check() -> &'static str {
+    "ok"
+}
+
+async fn readiness_check() -> &'static str {
+    "ready"
+}
+
 pub fn create_router(state: AppState) -> Router {
     use handlers::aegis::routes as aegis_routes;
     use handlers::cinq::cinq_routes;
@@ -70,6 +78,8 @@ pub fn create_router(state: AppState) -> Router {
     use handlers::vista::routes as vista_routes;
 
     Router::new()
+        .route("/health", axum::routing::get(health_check))
+        .route("/ready", axum::routing::get(readiness_check))
         .nest("/api/aegis", aegis_routes())
         .nest("/api/cinq", cinq_routes())
         .nest("/api/dial", dial_routes())

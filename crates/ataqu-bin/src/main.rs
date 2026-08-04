@@ -252,11 +252,22 @@ async fn main() -> anyhow::Result<()> {
         dispatcher.run().await;
     });
 
-    // Start server using axum::serve (new style)
+    // Start server with graceful shutdown
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     info!("Listening on http://{}", addr);
     let listener = TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
 
+    let shutdown = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+        info!("Shutdown signal received, gracefully shutting down...");
+    };
+
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown)
+        .await?;
+
+    info!("Server shut down.");
     Ok(())
 }
