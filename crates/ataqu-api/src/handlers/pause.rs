@@ -105,6 +105,7 @@ pub struct PaginationParams {
 pub async fn create_employee(
     State(state): State<AppState>,
     auth: AuthContext,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> ApiResult<(StatusCode, Json<EmployeeResponse>)> {
     let cmd = CreateEmployeeCommand {
@@ -148,6 +149,7 @@ pub async fn create_employee(
 pub async fn request_leave(
     State(state): State<AppState>,
     auth: AuthContext,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateLeaveRequest>,
 ) -> ApiResult<(StatusCode, Json<LeaveRequestResponse>)> {
     let leave_type = match req.leave_type.as_str() {
@@ -165,6 +167,10 @@ pub async fn request_leave(
         end_date: req.end_date,
         reason: req.reason.clone(),
     };
+    let command_id = headers.get("Idempotency-Key")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::new_v4);
     let request_id = state
         .pause_service
         .request_leave(
@@ -172,7 +178,7 @@ pub async fn request_leave(
             cmd,
             &*state.id_gen,
             &*state.clock,
-            Uuid::new_v4(),
+            command_id,
         )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
