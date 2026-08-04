@@ -1,70 +1,63 @@
-//! SeaORM implementations for VISTA domain repository.
 use async_trait::async_trait;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
-    QueryOrder, QuerySelect, Set,
-};
-use uuid::Uuid;
-
 use ataqu_domain_vista::aggregation::AggregatedView;
 use ataqu_domain_vista::analytics::AnalyticsDataPoint;
 use ataqu_domain_vista::repository::VistaRepository;
 use ataqu_kernel::TenantId;
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, QueryFilter, QuerySelect, Statement};
+use chrono::Utc;
 
-use crate::entities::vista::aggregated_view as view_entity;
-use crate::entities::vista::data_point as point_entity;
+// We define a local entity for the aggregated_views table
+mod aggregated_view_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+    use rust_decimal::Decimal;
 
-fn view_to_model(view: &AggregatedView) -> view_entity::ActiveModel {
-    view_entity::ActiveModel {
-        tenant_id: Set(view.tenant_id.as_uuid()),
-        total_events: Set(view.total_events as i64),
-        total_contacts: Set(view.total_contacts as i64),
-        total_deals: Set(view.total_deals as i64),
-        total_deals_won: Set(view.total_deals_won as i64),
-        total_pipeline_value: Set(view.total_pipeline_value),
-        total_revenue: Set(view.total_revenue),
-        total_products: Set(view.total_products as i64),
-        low_stock_variants: Set(view.low_stock_variants as i64),
-        total_bookings: Set(view.total_bookings as i64),
-        pending_leave_requests: Set(view.pending_leave_requests as i64),
-        last_updated_at: Set(view.last_updated_at.into()),
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "aggregated_views", schema_name = "core")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub tenant_id: Uuid,
+        pub total_events: i64,
+        pub total_contacts: i64,
+        pub total_deals: i64,
+        pub total_deals_won: i64,
+        pub total_pipeline_value: Decimal,
+        pub total_revenue: Decimal,
+        pub total_products: i64,
+        pub low_stock_variants: i64,
+        pub total_bookings: i64,
+        pub pending_leave_requests: i64,
+        pub last_updated_at: DateTime<Utc>,
     }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
 }
 
-fn model_to_view(model: view_entity::Model) -> AggregatedView {
-    AggregatedView {
-        tenant_id: TenantId::new(model.tenant_id),
-        total_events: model.total_events as u64,
-        total_contacts: model.total_contacts as u64,
-        total_deals: model.total_deals as u64,
-        total_deals_won: model.total_deals_won as u64,
-        total_pipeline_value: model.total_pipeline_value,
-        total_revenue: model.total_revenue,
-        total_products: model.total_products as u64,
-        low_stock_variants: model.low_stock_variants as u64,
-        total_bookings: model.total_bookings as u64,
-        pending_leave_requests: model.pending_leave_requests as u64,
-        last_updated_at: model.last_updated_at.into(),
-    }
-}
+// Local entity for analytics_data_points
+mod data_point_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
 
-fn point_to_model(point: &AnalyticsDataPoint) -> point_entity::ActiveModel {
-    point_entity::ActiveModel {
-        id: Set(Uuid::new_v4()),
-        tenant_id: Set(point.tenant_id.as_uuid()),
-        metric_name: Set(point.metric_name.clone()),
-        value: Set(point.value),
-        timestamp: Set(point.timestamp.into()),
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+    #[sea_orm(table_name = "analytics_data_points", schema_name = "core")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub metric_name: String,
+        pub value: f64,
+        pub timestamp: DateTime<Utc>,
     }
-}
 
-fn model_to_point(model: point_entity::Model) -> AnalyticsDataPoint {
-    AnalyticsDataPoint {
-        tenant_id: TenantId::new(model.tenant_id),
-        timestamp: model.timestamp.into(),
-        metric_name: model.metric_name,
-        value: model.value,
-    }
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
 }
 
 pub struct VistaRepositoryImpl {
@@ -80,41 +73,56 @@ impl VistaRepositoryImpl {
 #[async_trait]
 impl VistaRepository for VistaRepositoryImpl {
     async fn get_aggregated_view(&self, tenant_id: &TenantId) -> Result<AggregatedView, String> {
-        let model = view_entity::Entity::find()
-            .filter(view_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .one(&self.db)
-            .await
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "View not found".to_string())?;
-        Ok(model_to_view(model))
-    }
-
-    async fn save_aggregated_view(&self, view: &AggregatedView) -> Result<(), String> {
-        let active = view_to_model(view);
-        let existing = view_entity::Entity::find()
-            .filter(view_entity::Column::TenantId.eq(view.tenant_id.as_uuid()))
+        let model = aggregated_view_entity::Entity::find_by_id(tenant_id.as_uuid())
             .one(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        if let Some(model) = existing {
-            let mut active_model = model.into_active_model();
-            active_model.total_events = active.total_events;
-            active_model.total_contacts = active.total_contacts;
-            active_model.total_deals = active.total_deals;
-            active_model.total_deals_won = active.total_deals_won;
-            active_model.total_pipeline_value = active.total_pipeline_value;
-            active_model.total_revenue = active.total_revenue;
-            active_model.total_products = active.total_products;
-            active_model.low_stock_variants = active.low_stock_variants;
-            active_model.total_bookings = active.total_bookings;
-            active_model.pending_leave_requests = active.pending_leave_requests;
-            active_model.last_updated_at = active.last_updated_at;
-            active_model
-                .update(&self.db)
+
+        Ok(model.map(|m| AggregatedView {
+            tenant_id: TenantId::new(m.tenant_id),
+            total_events: m.total_events as u64,
+            total_contacts: m.total_contacts as u64,
+            total_deals: m.total_deals as u64,
+            total_deals_won: m.total_deals_won as u64,
+            total_pipeline_value: m.total_pipeline_value,
+            total_revenue: m.total_revenue,
+            total_products: m.total_products as u64,
+            low_stock_variants: m.low_stock_variants as u64,
+            total_bookings: m.total_bookings as u64,
+            pending_leave_requests: m.pending_leave_requests as u64,
+            last_updated_at: m.last_updated_at.into(),
+        }).unwrap_or_else(|| AggregatedView::new(*tenant_id)))
+    }
+
+    async fn save_aggregated_view(&self, view: &AggregatedView) -> Result<(), String> {
+        let active = aggregated_view_entity::ActiveModel {
+            tenant_id: sea_orm::Set(view.tenant_id.as_uuid()),
+            total_events: sea_orm::Set(view.total_events as i64),
+            total_contacts: sea_orm::Set(view.total_contacts as i64),
+            total_deals: sea_orm::Set(view.total_deals as i64),
+            total_deals_won: sea_orm::Set(view.total_deals_won as i64),
+            total_pipeline_value: sea_orm::Set(view.total_pipeline_value),
+            total_revenue: sea_orm::Set(view.total_revenue),
+            total_products: sea_orm::Set(view.total_products as i64),
+            low_stock_variants: sea_orm::Set(view.low_stock_variants as i64),
+            total_bookings: sea_orm::Set(view.total_bookings as i64),
+            pending_leave_requests: sea_orm::Set(view.pending_leave_requests as i64),
+            last_updated_at: sea_orm::Set(Utc::now()),
+        };
+
+        let exists = aggregated_view_entity::Entity::find_by_id(view.tenant_id.as_uuid())
+            .one(&self.db)
+            .await
+            .map_err(|e| e.to_string())?
+            .is_some();
+
+        if exists {
+            aggregated_view_entity::Entity::update(active)
+                .exec(&self.db)
                 .await
                 .map_err(|e| e.to_string())?;
         } else {
-            view_entity::Entity::insert(active)
+            aggregated_view_entity::Entity::insert(active)
                 .exec(&self.db)
                 .await
                 .map_err(|e| e.to_string())?;
@@ -123,8 +131,14 @@ impl VistaRepository for VistaRepositoryImpl {
     }
 
     async fn save_data_point(&self, point: &AnalyticsDataPoint) -> Result<(), String> {
-        let active = point_to_model(point);
-        point_entity::Entity::insert(active)
+        let active = data_point_entity::ActiveModel {
+            id: sea_orm::Set(uuid::Uuid::new_v4()),
+            tenant_id: sea_orm::Set(point.tenant_id.as_uuid()),
+            metric_name: sea_orm::Set(point.metric_name.clone()),
+            value: sea_orm::Set(point.value),
+            timestamp: sea_orm::Set(point.timestamp.into()),
+        };
+        data_point_entity::Entity::insert(active)
             .exec(&self.db)
             .await
             .map_err(|e| e.to_string())?;
@@ -137,14 +151,47 @@ impl VistaRepository for VistaRepositoryImpl {
         metric: &str,
         limit: u64,
     ) -> Result<Vec<AnalyticsDataPoint>, String> {
-        let models = point_entity::Entity::find()
-            .filter(point_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .filter(point_entity::Column::MetricName.eq(metric))
+        let models = data_point_entity::Entity::find()
+            .filter(data_point_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(data_point_entity::Column::MetricName.eq(metric))
             .limit(limit)
-            .order_by_desc(point_entity::Column::Timestamp)
             .all(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        Ok(models.into_iter().map(model_to_point).collect())
+
+        Ok(models.into_iter().map(|m| AnalyticsDataPoint {
+            tenant_id: TenantId::new(m.tenant_id),
+            timestamp: m.timestamp.into(),
+            metric_name: m.metric_name,
+            value: m.value,
+        }).collect())
+    }
+
+    async fn execute_raw_sql(
+        &self,
+        tenant_id: &TenantId,
+        sql: &str,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        #[derive(Debug, FromQueryResult)]
+        struct GenericRow {
+            data: serde_json::Value,
+        }
+
+        let wrapped_sql = format!("SELECT jsonb_agg(row_to_json(t)) as data FROM ({}) t", sql);
+        let stmt = Statement::from_sql_and_values(
+            sea_orm::DatabaseBackend::Postgres,
+            wrapped_sql,
+            vec![tenant_id.as_uuid().into()],
+        );
+
+        let result = GenericRow::find_by_statement(stmt)
+            .one(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        match result {
+            Some(row) => Ok(row.data.as_array().cloned().unwrap_or_default()),
+            None => Ok(Vec::new()),
+        }
     }
 }

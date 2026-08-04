@@ -14,4 +14,10 @@ pub trait VistaRepository: Send + Sync {
         metric: &str,
         limit: u64,
     ) -> Result<Vec<AnalyticsDataPoint>, String>;
+
+    async fn execute_raw_sql(
+        &self,
+        tenant_id: &TenantId,
+        sql: &str,
+    ) -> Result<Vec<serde_json::Value>, String>;
 }
