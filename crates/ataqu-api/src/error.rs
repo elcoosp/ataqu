@@ -69,6 +69,8 @@ impl IntoResponse for ApiResponseError {
             },
             "request_id": None::<String>,
         });
+        // TODO: In a real implementation, extract request_id from request extensions.
+        // For now, we leave it as None, but the structure is ready.
         (status, axum::Json(body)).into_response()
     }
 }

@@ -5,10 +5,14 @@ pub mod handlers;
 pub mod middleware;
 pub mod serializers;
 
+use axum::middleware::Next;
+use axum::extract::Request;
+use axum::response::Response;
+
 use axum::Router;
 use axum::extract::State;
-use std::sync::Arc;
 use uuid::Uuid;
+use std::sync::Arc;
 
 use ataqu_application::aegis_service::{AegisService, OutboxAppender};
 use ataqu_application::cinq_service::CinqService;
@@ -67,6 +71,14 @@ pub struct AppState {
     pub email_tracking_tx: tokio::sync::mpsc::Sender<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
 }
 
+async fn request_id_middleware(mut req: Request, next: Next) -> Response {
+    let request_id = Uuid::new_v4().to_string();
+    req.extensions_mut().insert(request_id.clone());
+    let mut resp = next.run(req).await;
+    resp.headers_mut().insert("x-request-id", request_id.parse().unwrap());
+    resp
+}
+
 async fn health_check() -> &'static str {
     "ok"
 }
@@ -93,6 +105,7 @@ pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
+        .layer(axum::middleware::from_fn(request_id_middleware))
         .nest("/api/aegis", aegis_routes())
         .nest("/api/cinq", cinq_routes())
         .nest("/api/dial", dial_routes())

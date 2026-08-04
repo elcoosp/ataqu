@@ -281,6 +281,9 @@ async fn main() -> anyhow::Result<()> {
     let ws_registry = Arc::new(DashMap::new());
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
+    let cinq_service_for_outbox = cinq_service.clone();
+    let dial_service_for_outbox = dial_service.clone();
+    let spark_service_for_outbox = spark_service.clone();
     let state = AppState {
         cinq_service,
         dial_service,
@@ -313,6 +316,8 @@ async fn main() -> anyhow::Result<()> {
     let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
         let vista = vista_service_for_outbox.clone();
         let spark = spark_service_for_outbox.clone();
+        let cinq = cinq_service_for_outbox.clone();
+        let dial = dial_service_for_outbox.clone();
         async move {
             match event.schema.as_str() {
                 "vista" | "core" => {
@@ -326,6 +331,61 @@ async fn main() -> anyhow::Result<()> {
                     }
                     if let Err(e) = spark.evaluate_trigger(&event).await {
                         tracing::error!(error = %e, "CRM/OPS event -> SPARK failed");
+                    }
+
+                    // Native cross-app integrations
+                    match (event.schema.as_str(), event.event_type.as_str()) {
+                        ("tempo", "BookingCreated") => {
+                            let contact_id = event.payload.get("contact_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                            if let Some(cid) = contact_id {
+                                let cmd = ataqu_application::cinq_service::CreateActivityCommand {
+                                    tenant_id: ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()),
+                                    contact_id: cid,
+                                    deal_id: None,
+                                    activity_type: ataqu_domain_cinq::activity::ActivityType::Meeting,
+                                    description: "Meeting booked via TEMPO".to_string(),
+                                    scheduled_at: event.payload.get("starts_at").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|dt| dt.with_timezone(&chrono::Utc)),
+                                };
+                                if let Err(e) = cinq.create_activity(cmd).await {
+                                    tracing::error!(error = %e, "TEMPO -> CINQ activity creation failed");
+                                }
+                            }
+                        }
+                        ("sond", "ResponseSubmitted") => {
+                            let email = event.payload.get("email").and_then(|v| v.as_str()).map(String::from);
+                            let name = event.payload.get("name").and_then(|v| v.as_str()).map(String::from).unwrap_or_else(|| "Form Lead".to_string());
+                            if let Some(em) = email {
+                                let cmd = ataqu_application::cinq_service::CreateContactCommand {
+                                    tenant_id: ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()),
+                                    name,
+                                    email: ataqu_security::Email::new(em),
+                                    phone: None,
+                                    custom_fields: serde_json::Value::Null,
+                                };
+                                if let Err(e) = cinq.create_contact(cmd).await {
+                                    tracing::error!(error = %e, "SOND -> CINQ contact creation failed");
+                                }
+                            }
+                        }
+                        ("vault", "LowStockAlert") => {
+                            let variant_id = event.payload.get("variant_id").and_then(|v| v.as_str()).map(String::from);
+                            let sku = event.payload.get("sku").and_then(|v| v.as_str()).map(String::from);
+                            let channel_id = event.payload.get("alert_channel_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+
+                            if let (Some(v_id), Some(s), Some(c_id)) = (variant_id, sku, channel_id) {
+                                let cmd = ataqu_application::dial_service::SendMessageCommand {
+                                    tenant_id: ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()),
+                                    channel_id: c_id,
+                                    thread_id: None,
+                                    author_id: Uuid::nil(),
+                                    content: format!("⚠️ Low Stock Alert: Variant {} (SKU: {}) is running low!", v_id, s),
+                                };
+                                if let Err(e) = dial.send_message(cmd).await {
+                                    tracing::error!(error = %e, "VAULT -> DIAL alert failed");
+                                }
+                            }
+                        }
+                        _ => {}
                     }
                 }
                 _ => {
