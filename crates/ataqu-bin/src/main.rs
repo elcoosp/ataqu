@@ -163,9 +163,14 @@ async fn main() -> anyhow::Result<()> {
     // SPARK
     let spark_service = Arc::new(SparkService::new(id_gen.clone(), clock.clone()));
 
-    // TEMPO
-    let tempo_outbox = Arc::new(ataqu_application::tempo_service::DummyOutbox);
-    let tempo_service = Arc::new(TempoService::new(tempo_outbox, id_gen.clone(), clock.clone()));
+    // TEMPO with real repository
+    use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
+    let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
+    let tempo_service = Arc::new(TempoService::new(
+        tempo_repo,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // VAULT
     let vault_service = Arc::new(VaultService::new(id_gen.clone(), clock.clone()));

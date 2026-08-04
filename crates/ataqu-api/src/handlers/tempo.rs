@@ -1,20 +1,20 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::Json,
+    response::{IntoResponse, Json},
     Router,
 };
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
-use ataqu_application::tempo_service::{CreateBookingCommand, Booking};
+use ataqu_application::tempo_service::{TempoService, CreateBookingCommand, UpdateBookingStatusCommand, BookingStatus};
 use ataqu_kernel::TenantId;
 use crate::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateBookingRequest {
-    pub event_type: String,
+    pub event_type_id: Uuid,
     pub starts_at: DateTime<Utc>,
     pub duration_minutes: i32,
 }
@@ -22,21 +22,22 @@ pub struct CreateBookingRequest {
 #[derive(Debug, Serialize)]
 pub struct BookingResponse {
     pub id: Uuid,
-    pub event_type: String,
+    pub event_type_id: Uuid,
     pub starts_at: DateTime<Utc>,
     pub duration_minutes: i32,
     pub status: String,
     pub created_at: DateTime<Utc>,
 }
-impl From<Booking> for BookingResponse {
-    fn from(b: Booking) -> Self {
+
+impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
+    fn from(b: ataqu_application::tempo_service::Booking) -> Self {
         Self {
-            id: b.id,
-            event_type: b.event_type,
-            starts_at: b.starts_at,
+            id: b.id.0,
+            event_type_id: b.event_type_id.0,
+            starts_at: b.starts_at.into(),
             duration_minutes: b.duration_minutes,
-            status: b.status,
-            created_at: b.created_at,
+            status: format!("{:?}", b.status),
+            created_at: b.starts_at.into(),
         }
     }
 }
@@ -48,7 +49,7 @@ pub async fn create_booking(
     let tenant_id = TenantId::new(Uuid::new_v4());
     let cmd = CreateBookingCommand {
         tenant_id,
-        event_type: payload.event_type,
+        event_type_id: payload.event_type_id,
         starts_at: payload.starts_at,
         duration_minutes: payload.duration_minutes,
     };
@@ -61,7 +62,7 @@ pub async fn list_bookings(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<BookingResponse>>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let bookings = state.tempo_service.list_bookings(tenant_id).await
+    let bookings = state.tempo_service.list_bookings(tenant_id, 100, 0).await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(bookings.into_iter().map(|b| b.into()).collect()))
 }
@@ -81,8 +82,13 @@ pub async fn cancel_booking(
     Path(id): Path<Uuid>,
 ) -> Result<Json<BookingResponse>, StatusCode> {
     let tenant_id = TenantId::new(Uuid::new_v4());
-    let booking = state.tempo_service.cancel_booking(tenant_id, id).await
-        .map_err(|_| StatusCode::NOT_FOUND)?;
+    let cmd = UpdateBookingStatusCommand {
+        tenant_id,
+        booking_id: id,
+        status: BookingStatus::Cancelled,
+    };
+    let booking = state.tempo_service.update_booking_status(cmd).await
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
     Ok(Json(booking.into()))
 }
 

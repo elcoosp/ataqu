@@ -69,7 +69,7 @@ pub fn create_booking(
     event_type_id: EventTypeId,
     starts_at: SystemTime,
     duration_minutes: i32,
-    id_gen: &impl IdGenerator,
+    id_gen: &dyn IdGenerator,
 ) -> Booking {
     let id = BookingId(id_gen.new_uuid_v7());
     Booking {

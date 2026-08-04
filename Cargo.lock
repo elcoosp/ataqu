@@ -507,7 +507,9 @@ dependencies = [
 name = "ataqu-domain-tempo"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-kernel",
+ "serde",
  "uuid",
 ]
 
@@ -591,6 +593,7 @@ dependencies = [
  "ataqu-domain-pause",
  "ataqu-domain-pivot",
  "ataqu-domain-sond",
+ "ataqu-domain-tempo",
  "ataqu-kernel",
  "ataqu-security",
  "chrono",

@@ -38,3 +38,4 @@ pub mod pause_repo_impl;
 pub mod dial_repo_impl;
 pub mod pivot_repo_impl;
 pub mod sond_repo_impl;
+pub mod tempo_repo_impl;

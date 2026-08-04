@@ -1,156 +1,109 @@
-//! TEMPO scheduling service – in-memory bookings with outbox events.
-
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+//! TEMPO application service – orchestrates scheduling using domain repositories.
+use std::sync::Arc;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use serde_json::json;
+use ataqu_domain_tempo::schedule::{self as tempo_domain, BookingId, EventTypeId};
+use ataqu_domain_tempo::repository::TempoRepository;
 
-#[derive(Debug, Clone)]
-pub struct Booking {
-    pub id: Uuid,
-    pub tenant_id: TenantId,
-    pub event_type: String,
-    pub starts_at: DateTime<Utc>,
-    pub duration_minutes: i32,
-    pub status: String,
-    pub created_at: DateTime<Utc>,
-}
+// Re-export domain types for API
+pub use ataqu_domain_tempo::schedule::Booking;
+pub use ataqu_domain_tempo::schedule::BookingStatus;
 
 #[derive(Debug, Clone)]
 pub struct CreateBookingCommand {
     pub tenant_id: TenantId,
-    pub event_type: String,
+    pub event_type_id: Uuid,
     pub starts_at: DateTime<Utc>,
     pub duration_minutes: i32,
 }
 
 #[derive(Debug, Clone)]
-pub struct OutboxEvent {
-    pub id: i64,
-    pub schema: String,
-    pub event_type: String,
-    pub aggregate_id: Uuid,
-    pub payload: serde_json::Value,
-    pub created_at: DateTime<Utc>,
+pub struct UpdateBookingStatusCommand {
+    pub tenant_id: TenantId,
+    pub booking_id: Uuid,
+    pub status: BookingStatus,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum TempoServiceError {
     #[error("Booking not found")]
     BookingNotFound,
+    #[error("Repository error: {0}")]
+    Repository(String),
+    #[error("Domain error: {0}")]
+    Domain(String),
     #[error("Validation error: {0}")]
     Validation(String),
-    #[error("Outbox error: {0}")]
-    Outbox(String),
 }
 
 pub type TempoResult<T> = Result<T, TempoServiceError>;
 
-#[derive(Default)]
-struct BookingStore {
-    bookings: Arc<RwLock<HashMap<Uuid, Booking>>>,
-}
-
-// Outbox trait (simplified)
-pub trait OutboxAppender: Send + Sync {
-    fn append_event(&self, schema: &str, event_type: &str, aggregate_id: Uuid, payload: serde_json::Value) -> Result<(), String>;
-}
-
-// Dummy outbox that just prints
-pub struct DummyOutbox;
-impl OutboxAppender for DummyOutbox {
-    fn append_event(&self, _schema: &str, _event_type: &str, _aggregate_id: Uuid, _payload: serde_json::Value) -> Result<(), String> {
-        // In real impl, insert into DB
-        Ok(())
-    }
-}
-
 pub struct TempoService {
-    bookings: BookingStore,
-    outbox: Arc<dyn OutboxAppender>,
+    repo: Arc<dyn TempoRepository + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
 
 impl TempoService {
     pub fn new(
-        outbox: Arc<dyn OutboxAppender>,
+        repo: Arc<dyn TempoRepository + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
-        Self {
-            bookings: BookingStore::default(),
-            outbox,
-            id_gen,
-            clock,
-        }
+        Self { repo, id_gen, clock }
     }
 
     pub async fn create_booking(&self, cmd: CreateBookingCommand) -> TempoResult<Booking> {
-        if cmd.event_type.trim().is_empty() {
-            return Err(TempoServiceError::Validation("Event type cannot be empty".into()));
-        }
         if cmd.duration_minutes <= 0 {
-            return Err(TempoServiceError::Validation("Duration must be positive".into()));
+            return Err(TempoServiceError::Validation("Duration must be positive".to_string()));
         }
-        let id = self.id_gen.new_uuid_v7();
-        let now = self.clock.now().into();
-        let event_type = cmd.event_type.clone(); // Clone to use later
-        let booking = Booking {
-            id,
-            tenant_id: cmd.tenant_id,
-            event_type: event_type.clone(), // Use cloned value
-            starts_at: cmd.starts_at,
-            duration_minutes: cmd.duration_minutes,
-            status: "pending".to_string(),
-            created_at: now,
-        };
-        self.bookings.bookings.write().unwrap().insert(id, booking.clone());
-
-        // Append outbox event
-        let payload = json!({
-            "booking_id": id,
-            "tenant_id": cmd.tenant_id,
-            "event_type": event_type, // Use the cloned variable
-            "starts_at": cmd.starts_at,
-        });
-        if let Err(e) = self.outbox.append_event("collab_ops", "BookingCreated", id, payload) {
-            return Err(TempoServiceError::Outbox(e));
-        }
+        let event_type_id = EventTypeId(cmd.event_type_id);
+        let booking = tempo_domain::create_booking(
+            cmd.tenant_id,
+            event_type_id,
+            cmd.starts_at.into(),
+            cmd.duration_minutes,
+            self.id_gen.as_ref(),
+        );
+        self.repo.create_booking(&booking).await.map_err(|e| TempoServiceError::Repository(e))?;
         Ok(booking)
     }
 
     pub async fn get_booking(&self, tenant_id: TenantId, id: Uuid) -> TempoResult<Booking> {
-        let map = self.bookings.bookings.read().unwrap();
-        map.get(&id)
-            .filter(|b| b.tenant_id == tenant_id)
-            .cloned()
+        let booking_id = BookingId(id);
+        self.repo.find_booking_by_id(&tenant_id, &booking_id).await
+            .map_err(|e| TempoServiceError::Repository(e))?
             .ok_or(TempoServiceError::BookingNotFound)
     }
 
-    pub async fn list_bookings(&self, tenant_id: TenantId) -> TempoResult<Vec<Booking>> {
-        let map = self.bookings.bookings.read().unwrap();
-        let bookings = map.values().filter(|b| b.tenant_id == tenant_id).cloned().collect();
-        Ok(bookings)
+    pub async fn list_bookings(&self, tenant_id: TenantId, limit: u64, offset: u64) -> TempoResult<Vec<Booking>> {
+        self.repo.list_bookings(&tenant_id, limit, offset).await
+            .map_err(|e| TempoServiceError::Repository(e))
     }
 
-    pub async fn cancel_booking(&self, tenant_id: TenantId, id: Uuid) -> TempoResult<Booking> {
-        let mut map = self.bookings.bookings.write().unwrap();
-        let mut booking = map.get(&id).cloned().ok_or(TempoServiceError::BookingNotFound)?;
-        if booking.tenant_id != tenant_id {
-            return Err(TempoServiceError::BookingNotFound);
-        }
-        booking.status = "cancelled".to_string();
-        map.insert(id, booking.clone());
+    pub async fn update_booking_status(&self, cmd: UpdateBookingStatusCommand) -> TempoResult<Booking> {
+        let booking_id = BookingId(cmd.booking_id);
+        self.repo.update_booking_status(&cmd.tenant_id, &booking_id, cmd.status).await
+            .map_err(|e| TempoServiceError::Repository(e))?;
+        self.get_booking(cmd.tenant_id, cmd.booking_id).await
+    }
 
-        // Append outbox event
-        let payload = json!({ "booking_id": id, "tenant_id": tenant_id });
-        if let Err(e) = self.outbox.append_event("collab_ops", "BookingCancelled", id, payload) {
-            return Err(TempoServiceError::Outbox(e));
+    pub async fn no_show_worker(&self, tenant_id: TenantId) -> TempoResult<Vec<Uuid>> {
+        let now = self.clock.now();
+        let upper_bound = now + std::time::Duration::from_secs(24 * 60 * 60);
+        let bookings = self.repo.find_bookings_for_no_show_check(&tenant_id, upper_bound).await
+            .map_err(|e| TempoServiceError::Repository(e))?;
+        let mut updated = Vec::new();
+        for booking in bookings {
+            if tempo_domain::evaluate_no_show(&booking, now, 15) {
+                // Fix: pass booking.id directly, not booking.id::NoShow
+                self.repo.update_booking_status(&tenant_id, &booking.id, BookingStatus::NoShow).await
+                    .map_err(|e| TempoServiceError::Repository(e))?;
+                updated.push(booking.id.0);
+            }
         }
-        Ok(booking)
+        Ok(updated)
     }
 }
