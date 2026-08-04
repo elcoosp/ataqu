@@ -343,11 +343,27 @@ pub async fn search_docs(
 }
 
 // ---------- Router ----------
+pub async fn list_doc_versions(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let versions = state.pivot_service.list_document_versions(auth.tenant_id, id, 20).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let list = versions.iter().map(|v| serde_json::json!({
+        "id": v.id,
+        "title": v.title,
+        "created_at": v.created_at,
+    })).collect();
+    Ok(Json(list))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
         .route("/databases/:id", axum::routing::delete(delete_db))
         .route("/docs", axum::routing::post(create_doc).get(list_docs))
+        .route("/docs/:id/versions", axum::routing::get(list_doc_versions))
         .route(
             "/docs/:id",
             axum::routing::get(get_doc).put(update_doc).delete(delete_doc),

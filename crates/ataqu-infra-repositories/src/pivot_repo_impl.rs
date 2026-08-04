@@ -12,6 +12,29 @@ use crate::entities::pivot::database as database_entity;
 use crate::entities::pivot::document as document_entity;
 use crate::entities::pivot::relation as relation_entity;
 
+mod document_version_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "document_versions", schema_name = "collab_ops")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub document_id: Uuid,
+        pub title: String,
+        pub content: String,
+        pub created_at: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
 pub struct PivotDocumentRepository {
     db: DatabaseConnection,
 }
@@ -139,6 +162,40 @@ impl DocumentRepository for PivotDocumentRepository {
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
 
         Ok(models.into_iter().map(doc_model_to_event).collect())
+    }
+
+    async fn save_document_version(&self, version: &ataqu_domain_pivot::document::DocumentVersion) -> Result<(), RepositoryError> {
+        let active = document_version_entity::ActiveModel {
+            id: Set(version.id),
+            tenant_id: Set(version.tenant_id.as_uuid()),
+            document_id: Set(version.document_id),
+            title: Set(version.title.clone()),
+            content: Set(version.content.clone()),
+            created_at: Set(version.created_at.into()),
+        };
+        document_version_entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn list_document_versions(&self, tenant_id: &TenantId, doc_id: Uuid, limit: u64) -> Result<Vec<ataqu_domain_pivot::document::DocumentVersion>, RepositoryError> {
+        let models = document_version_entity::Entity::find()
+            .filter(document_version_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(document_version_entity::Column::DocumentId.eq(doc_id))
+            .limit(limit)
+            .all(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(models.into_iter().map(|m| ataqu_domain_pivot::document::DocumentVersion {
+            id: m.id,
+            tenant_id: TenantId::new(m.tenant_id),
+            document_id: m.document_id,
+            title: m.title,
+            content: m.content,
+            created_at: m.created_at.into(),
+        }).collect())
     }
 }
 

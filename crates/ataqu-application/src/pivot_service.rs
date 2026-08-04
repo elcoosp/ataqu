@@ -181,6 +181,17 @@ impl PivotService {
             .save_document(&doc)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+
+        let version = ataqu_domain_pivot::document::DocumentVersion {
+            id: self.id_gen.new_uuid_v7(),
+            tenant_id: doc.tenant_id,
+            document_id: doc.id,
+            title: doc.title.clone(),
+            content: doc.content.clone(),
+            created_at: self.clock.now(),
+        };
+        self.doc_repo.save_document_version(&version).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+
         Ok(doc)
     }
 
@@ -289,6 +300,13 @@ impl PivotService {
     ) -> PivotResult<Vec<Document>> {
         self.doc_repo
             .search_documents(&tenant_id, &query, limit, offset)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))
+    }
+
+    pub async fn list_document_versions(&self, tenant_id: TenantId, doc_id: Uuid, limit: u64) -> PivotResult<Vec<ataqu_domain_pivot::document::DocumentVersion>> {
+        self.doc_repo
+            .list_document_versions(&tenant_id, doc_id, limit)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }

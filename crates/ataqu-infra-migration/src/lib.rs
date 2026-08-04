@@ -17,6 +17,7 @@ pub mod m_pause_add_columns;
 pub mod m_pause_add_documents;
 pub mod m_pause_rename_to_full_name;
 pub mod m_pivot;
+pub mod m_pivot_add_document_versions;
 pub mod m_pivot_add_blocks_relations;
 pub mod m_sond;
 pub mod m_spark;
@@ -55,6 +56,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_pause_rename_to_full_name::Migration),
             Box::new(m_pause_add_documents::Migration),
             Box::new(m_pivot::Migration),
+            Box::new(m_pivot_add_document_versions::Migration),
             Box::new(m_pivot_add_blocks_relations::Migration),
             Box::new(m_sond::Migration),
             Box::new(m_spark::Migration),

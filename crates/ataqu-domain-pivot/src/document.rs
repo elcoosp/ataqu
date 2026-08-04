@@ -67,3 +67,13 @@ mod tests {
         );
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct DocumentVersion {
+    pub id: uuid::Uuid,
+    pub tenant_id: crate::primitives::TenantId,
+    pub document_id: uuid::Uuid,
+    pub title: String,
+    pub content: String,
+    pub created_at: std::time::SystemTime,
+}
