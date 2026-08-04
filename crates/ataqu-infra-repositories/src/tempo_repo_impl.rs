@@ -26,6 +26,8 @@ mod booking_entity {
         pub duration_seconds: i32,
         pub ends_at: DateTime<Utc>,
         pub status: String,
+        pub timezone: Option<String>,
+        pub reminder_sent_at: Option<DateTime<Utc>>,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
     }
@@ -110,6 +112,8 @@ fn booking_model_to_domain(model: booking_entity::Model) -> Booking {
         starts_at: model.starts_at.into(),
         duration_minutes: model.duration_seconds / 60,
         status,
+        timezone: model.timezone.unwrap_or_else(|| "UTC".to_string()),
+        reminder_sent_at: model.reminder_sent_at.map(|dt| dt.into()),
     }
 }
 
@@ -135,6 +139,8 @@ impl TempoRepository for TempoRepositoryImpl {
             duration_seconds: Set(booking.duration_minutes * 60),
             ends_at: Set(ends_at_dt),
             status: Set(status_str.to_string()),
+            timezone: Set(Some(booking.timezone.clone())),
+            reminder_sent_at: Set(None),
             created_at: Set(Utc::now()),
             updated_at: Set(Utc::now()),
         };
@@ -295,6 +301,40 @@ impl TempoRepository for TempoRepositoryImpl {
             .exec(&self.db)
             .await
             .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    async fn find_upcoming_bookings_for_reminder(
+        &self,
+        tenant_id: &TenantId,
+        start_bound: std::time::SystemTime,
+        end_bound: std::time::SystemTime,
+    ) -> Result<Vec<Booking>, String> {
+        let start_dt = chrono::DateTime::<chrono::Utc>::from(start_bound);
+        let end_dt = chrono::DateTime::<chrono::Utc>::from(end_bound);
+        let models = booking_entity::Entity::find()
+            .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(booking_entity::Column::StartsAt.between(start_dt, end_dt))
+            .filter(booking_entity::Column::ReminderSentAt.is_null())
+            .filter(booking_entity::Column::Status.is_in(vec!["pending", "confirmed"]))
+            .all(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(models.into_iter().map(booking_model_to_domain).collect())
+    }
+
+    async fn mark_reminder_sent(&self, tenant_id: &TenantId, booking_id: &BookingId, sent_at: std::time::SystemTime) -> Result<(), String> {
+        let sent_dt = chrono::DateTime::<chrono::Utc>::from(sent_at);
+        let mut active: booking_entity::ActiveModel = booking_entity::Entity::find()
+            .filter(booking_entity::Column::Id.eq(booking_id.0))
+            .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Booking not found".to_string())?
+            .into();
+        active.reminder_sent_at = Set(Some(sent_dt));
+        active.update(&self.db).await.map_err(|e| e.to_string())?;
         Ok(())
     }
 }

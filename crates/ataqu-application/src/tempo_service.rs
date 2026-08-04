@@ -20,6 +20,7 @@ pub struct CreateBookingCommand {
     pub event_type_id: Uuid,
     pub starts_at: DateTime<Utc>,
     pub duration_minutes: i32,
+    pub timezone: String,
 }
 
 #[derive(Debug, Clone)]
@@ -93,6 +94,7 @@ impl TempoService {
             event_type_id,
             cmd.starts_at.into(),
             cmd.duration_minutes,
+            cmd.timezone,
             self.id_gen.as_ref(),
         );
         self.repo
@@ -105,6 +107,7 @@ impl TempoService {
             "tenant_id": booking.tenant_id.as_uuid(),
             "event_type_id": booking.event_type_id.0,
             "starts_at": booking.starts_at,
+            "timezone": booking.timezone,
         });
         self.outbox.append("tempo", "BookingCreated", booking.id.0, &payload).await.map_err(|e| TempoServiceError::Repository(e))?;
 
@@ -163,6 +166,32 @@ impl TempoService {
             }
         }
         Ok(updated)
+    }
+
+    pub async fn reminder_worker(&self, tenant_id: TenantId) -> TempoResult<Vec<Uuid>> {
+        let now = self.clock.now();
+        let start_bound = now;
+        let end_bound = now + std::time::Duration::from_secs(15 * 60); // Next 15 minutes
+
+        let bookings = self.repo.find_upcoming_bookings_for_reminder(&tenant_id, start_bound, end_bound).await
+            .map_err(TempoServiceError::Repository)?;
+
+        let mut sent = Vec::new();
+        for booking in bookings {
+            let payload = serde_json::json!({
+                "booking_id": booking.id.0,
+                "tenant_id": booking.tenant_id.as_uuid(),
+                "starts_at": booking.starts_at,
+                "timezone": booking.timezone,
+            });
+            self.outbox.append("tempo", "SendBookingReminder", booking.id.0, &payload).await
+                .map_err(|e| TempoServiceError::Repository(e))?;
+
+            self.repo.mark_reminder_sent(&tenant_id, &booking.id, now).await
+                .map_err(TempoServiceError::Repository)?;
+            sent.push(booking.id.0);
+        }
+        Ok(sent)
     }
 
     pub async fn create_event_type(&self, cmd: CreateEventTypeCommand) -> TempoResult<EventType> {

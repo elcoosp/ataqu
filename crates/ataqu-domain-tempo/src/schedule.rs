@@ -25,6 +25,8 @@ pub struct Booking {
     pub starts_at: SystemTime,
     pub duration_minutes: i32,
     pub status: BookingStatus,
+    pub timezone: String,
+    pub reminder_sent_at: Option<SystemTime>,
 }
 
 impl Identifiable for Booking {
@@ -69,6 +71,7 @@ pub fn create_booking(
     event_type_id: EventTypeId,
     starts_at: SystemTime,
     duration_minutes: i32,
+    timezone: String,
     id_gen: &dyn IdGenerator,
 ) -> Booking {
     let id = BookingId(id_gen.new_uuid_v7());
@@ -79,6 +82,8 @@ pub fn create_booking(
         starts_at,
         duration_minutes,
         status: BookingStatus::Pending,
+        timezone,
+        reminder_sent_at: None,
     }
 }
 

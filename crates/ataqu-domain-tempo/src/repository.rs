@@ -31,6 +31,15 @@ pub trait TempoRepository: Send + Sync {
         upper_bound: std::time::SystemTime,
     ) -> Result<Vec<Booking>, String>;
 
+    async fn find_upcoming_bookings_for_reminder(
+        &self,
+        tenant_id: &TenantId,
+        start_bound: std::time::SystemTime,
+        end_bound: std::time::SystemTime,
+    ) -> Result<Vec<Booking>, String>;
+
+    async fn mark_reminder_sent(&self, tenant_id: &TenantId, booking_id: &BookingId, sent_at: std::time::SystemTime) -> Result<(), String>;
+
     async fn save_event_type(&self, event_type: &EventType) -> Result<(), String>;
     async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, String>;
 

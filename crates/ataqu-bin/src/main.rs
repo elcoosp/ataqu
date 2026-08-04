@@ -282,10 +282,11 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    let tempo_service_for_reminder = tempo_service.clone();
+
     // Build AppState
     use dashmap::DashMap;
-    use std::time::Duration;
-    let ws_registry = Arc::new(DashMap::new());
+        let ws_registry = Arc::new(DashMap::new());
     let rate_limiter = ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
@@ -433,6 +434,24 @@ async fn main() -> anyhow::Result<()> {
                 }
                 Err(e) => {
                     tracing::error!("No-show worker error: {}", e);
+                }
+            }
+        }
+    });
+
+    // Start reminder worker
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            let tenant_id = TenantId::new(uuid::Uuid::nil());
+            match tempo_service_for_reminder.reminder_worker(tenant_id).await {
+                Ok(sent) => {
+                    if !sent.is_empty() {
+                        tracing::info!("Reminder worker sent {} reminders", sent.len());
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Reminder worker error: {}", e);
                 }
             }
         }
