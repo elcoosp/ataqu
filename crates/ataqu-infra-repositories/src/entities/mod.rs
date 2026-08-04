@@ -6,3 +6,5 @@ pub mod pivot;
 pub mod sond;
 pub mod tempo;
 pub mod vault;
+pub mod spark;
+pub mod vista;

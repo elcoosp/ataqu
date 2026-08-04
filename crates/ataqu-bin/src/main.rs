@@ -5,11 +5,10 @@
 use dotenvy::dotenv;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use uuid::Uuid;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::info;
+use tracing::{info, warn, error};
 use tracing_subscriber::EnvFilter;
 
 use ataqu_api::{AppState, create_router, UserRepoPlaceholder, OutboxPlaceholder, AegisDomainPlaceholder};
@@ -47,18 +46,6 @@ impl Clock for SystemClock {
     fn now(&self) -> std::time::SystemTime {
         std::time::SystemTime::now()
     }
-}
-
-// ------------------------------------------------------------------------------
-// Outbox event handler (placeholder – will be expanded later)
-// ------------------------------------------------------------------------------
-async fn handle_outbox_event(event: ataqu_infra_outbox::OutboxEvent) -> Result<(), ataqu_infra_outbox::DispatcherError> {
-    info!(
-        "Processing outbox event: id={}, schema={}, event_type={}",
-        event.id, event.schema, event.event_type
-    );
-    // TODO: Route to appropriate handlers based on schema/event_type
-    Ok(())
 }
 
 // ------------------------------------------------------------------------------
@@ -104,7 +91,6 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // CINQ
-        // CINQ with real repositories
     use ataqu_infra_repositories::cinq_repo_impl::{
         CinqContactRepository, CinqDealRepository,
         CinqActivityRepository, CinqPipelineStageRepository,
@@ -123,10 +109,9 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // DIAL
-        // DIAL with real repository and presence
     use ataqu_infra_repositories::dial_repo_impl::{DialRepositoryImpl, DbPresenceStore};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
-        let dial_presence = Arc::new(ataqu_infra_repositories::dial_repo_impl::DbPresenceStore::new(pools.core.clone()));
+    let dial_presence = Arc::new(DbPresenceStore::new(pools.core.clone()));
     let dial_service = Arc::new(DialService::new(
         dial_repo,
         dial_presence,
@@ -135,7 +120,6 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // PIVOT
-        // PIVOT with real repositories
     use ataqu_infra_repositories::pivot_repo_impl::{
         PivotDocumentRepository, PivotBlockRepository, PivotRelationRepository,
     };
@@ -151,7 +135,6 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // SOND
-        // SOND with real repository
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
     let sond_service = Arc::new(SondService::new(
@@ -161,9 +144,15 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // SPARK
-    let spark_service = Arc::new(SparkService::new(id_gen.clone(), clock.clone()));
+    use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
+    let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.core.clone()));
+    let spark_service = Arc::new(SparkService::new(
+        spark_repo,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
-    // TEMPO with real repository
+    // TEMPO
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
     let tempo_service = Arc::new(TempoService::new(
@@ -173,7 +162,6 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // VAULT
-        // VAULT with real repository
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.core.clone()));
     let vault_service = Arc::new(VaultService::new(
@@ -183,9 +171,15 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // VISTA
-    let vista_outbox = Arc::new(ataqu_application::vista_service::InMemoryOutbox::default());
-    let vista_kpi = Arc::new(ataqu_application::vista_service::InMemoryKpiStore::default());
-    let vista_service = Arc::new(VistaService::new(vista_outbox, vista_kpi, clock.clone()));
+    use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
+    let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.core.clone()));
+    let vista_service = Arc::new(VistaService::new(
+        vista_repo,
+        clock.clone(),
+    ));
+
+    // Clone vista_service before it is moved into AppState
+    let vista_service_for_outbox = vista_service.clone();
 
     // PAUSE – real repositories, real idempotency, real outbox
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
@@ -223,7 +217,24 @@ async fn main() -> anyhow::Result<()> {
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
-    let dispatcher = OutboxDispatcher::new(dispatcher_pool, handle_outbox_event);
+    let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
+        let vista = vista_service_for_outbox.clone();
+        async move {
+            // Process the event only if it's for VISTA or SPARK
+            match event.schema.as_str() {
+                "vista" | "spark" | "core" => {
+                    if let Err(e) = vista.process_event(&event).await {
+                        tracing::error!(error = %e, "Failed to process outbox event");
+                    }
+                }
+                _ => {
+                    tracing::warn!("Unknown schema: {}", event.schema);
+                }
+            }
+            Ok(())
+        }
+    };
+    let dispatcher = OutboxDispatcher::new(dispatcher_pool, handler);
     tokio::spawn(async move {
         dispatcher.run().await;
     });

@@ -498,8 +498,11 @@ dependencies = [
 name = "ataqu-domain-spark"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-contracts",
  "ataqu-kernel",
+ "serde",
+ "serde_json",
  "thiserror",
  "uuid",
 ]
@@ -529,7 +532,9 @@ dependencies = [
 name = "ataqu-domain-vista"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "ataqu-kernel",
+ "serde",
  "thiserror",
  "uuid",
 ]
@@ -598,8 +603,10 @@ dependencies = [
  "ataqu-domain-pause",
  "ataqu-domain-pivot",
  "ataqu-domain-sond",
+ "ataqu-domain-spark",
  "ataqu-domain-tempo",
  "ataqu-domain-vault",
+ "ataqu-domain-vista",
  "ataqu-kernel",
  "ataqu-security",
  "chrono",

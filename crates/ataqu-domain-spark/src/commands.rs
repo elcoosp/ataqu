@@ -14,5 +14,5 @@ pub struct CreateWorkflowCommand {
 pub struct TriggerWorkflowCommand {
     pub tenant_id: Uuid,
     pub workflow_id: Uuid,
-    pub payload: String,
+    pub payload: serde_json::Value,
 }

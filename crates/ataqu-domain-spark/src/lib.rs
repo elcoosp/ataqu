@@ -1,27 +1,17 @@
-use ataqu_contracts::spark::{ExecuteWorkflowCommand, WorkflowExecutedEvent};
-use ataqu_kernel::{Clock, IdGenerator};
-use thiserror::Error;
+pub mod action;
+pub mod condition;
+pub mod commands;
+pub mod errors;
+pub mod events;
+pub mod trigger;
+pub mod workflow;
+pub mod repository;
 
-#[derive(Error, Debug)]
-pub enum SparkDomainError {
-    #[error("Invalid command")]
-    InvalidCommand,
-}
-
-pub struct SparkDomain;
-
-impl SparkDomain {
-    pub fn execute_workflow(
-        &self,
-        cmd: ExecuteWorkflowCommand,
-        _id_gen: &impl IdGenerator,
-        _clock: &impl Clock,
-    ) -> Result<WorkflowExecutedEvent, SparkDomainError> {
-        // Pure domain logic: Command + IdGenerator + Clock → Event
-        Ok(WorkflowExecutedEvent {
-            workflow_id: cmd.workflow_id,
-            fence_token: 1,
-            actions: vec![],
-        })
-    }
-}
+// Re-export key types for convenience
+pub use action::Action;
+pub use condition::Condition;
+pub use commands::{CreateWorkflowCommand, TriggerWorkflowCommand};
+pub use errors::SparkError;
+pub use events::{WorkflowCreated, WorkflowTriggered, ActionExecuted};
+pub use trigger::Trigger;
+pub use workflow::{Workflow, create_workflow, trigger_workflow, evaluate_conditions};

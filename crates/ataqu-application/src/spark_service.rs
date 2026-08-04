@@ -1,136 +1,95 @@
-//! SPARK workflow service – in-memory workflow execution.
-
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+//! SPARK application service – orchestrates workflows using domain repositories.
+use std::sync::Arc;
 use uuid::Uuid;
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_domain_spark::{Workflow, Action, Trigger, Condition, SparkError, evaluate_conditions};
+use ataqu_domain_spark::repository::SparkRepository;
 
-#[derive(Debug, Clone)]
-pub struct Workflow {
-    pub id: Uuid,
-    pub tenant_id: TenantId,
-    pub name: String,
-    pub steps: Vec<String>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Clone)]
-pub struct WorkflowExecution {
-    pub id: Uuid,
-    pub workflow_id: Uuid,
-    pub tenant_id: TenantId,
-    pub status: String,
-    pub started_at: chrono::DateTime<chrono::Utc>,
-    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
-}
 
 #[derive(Debug, Clone)]
 pub struct CreateWorkflowCommand {
     pub tenant_id: TenantId,
     pub name: String,
-    pub steps: Vec<String>,
+    pub trigger: Trigger,
+    pub conditions: Vec<Condition>,
+    pub actions: Vec<Action>,
 }
 
 #[derive(Debug, Clone)]
-pub struct ExecuteWorkflowCommand {
+pub struct TriggerWorkflowCommand {
     pub tenant_id: TenantId,
     pub workflow_id: Uuid,
+    pub payload: serde_json::Value,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum SparkServiceError {
     #[error("Workflow not found")]
     WorkflowNotFound,
-    #[error("Workflow already executing")]
-    AlreadyExecuting,
+    #[error("Conditions not satisfied")]
+    ConditionsNotSatisfied,
+    #[error("Repository error: {0}")]
+    Repository(String),
+    #[error("Domain error: {0}")]
+    Domain(#[from] SparkError),
     #[error("Validation error: {0}")]
     Validation(String),
 }
 
 pub type SparkResult<T> = Result<T, SparkServiceError>;
 
-#[derive(Default)]
-struct WorkflowStore {
-    workflows: Arc<RwLock<HashMap<Uuid, Workflow>>>,
-}
-
-#[derive(Default)]
-struct ExecutionStore {
-    executions: Arc<RwLock<Vec<WorkflowExecution>>>,
-}
-
 pub struct SparkService {
-    workflows: WorkflowStore,
-    executions: ExecutionStore,
+    repo: Arc<dyn SparkRepository + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
 
 impl SparkService {
-    pub fn new(id_gen: Arc<dyn IdGenerator>, clock: Arc<dyn Clock>) -> Self {
-        Self {
-            workflows: WorkflowStore::default(),
-            executions: ExecutionStore::default(),
-            id_gen,
-            clock,
-        }
+    pub fn new(
+        repo: Arc<dyn SparkRepository + Send + Sync>,
+        id_gen: Arc<dyn IdGenerator>,
+        clock: Arc<dyn Clock>,
+    ) -> Self {
+        Self { repo, id_gen, clock }
     }
 
     pub async fn create_workflow(&self, cmd: CreateWorkflowCommand) -> SparkResult<Workflow> {
-        if cmd.name.trim().is_empty() {
-            return Err(SparkServiceError::Validation("Name cannot be empty".into()));
-        }
-        if cmd.steps.is_empty() {
-            return Err(SparkServiceError::Validation("At least one step required".into()));
-        }
-        let id = self.id_gen.new_uuid_v7();
-        let now = self.clock.now().into();
-        let wf = Workflow {
-            id,
-            tenant_id: cmd.tenant_id,
+        let domain_cmd = ataqu_domain_spark::CreateWorkflowCommand {
+            tenant_id: cmd.tenant_id.as_uuid(),
             name: cmd.name,
-            steps: cmd.steps,
-            created_at: now,
+            trigger: cmd.trigger,
+            conditions: cmd.conditions,
+            actions: cmd.actions,
         };
-        self.workflows.workflows.write().unwrap().insert(id, wf.clone());
-        Ok(wf)
+        let (workflow, _) = ataqu_domain_spark::create_workflow(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())
+            .map_err(SparkServiceError::Domain)?;
+        self.repo.save_workflow(&workflow).await.map_err(|e| SparkServiceError::Repository(e.to_string()))?;
+        Ok(workflow)
     }
 
     pub async fn get_workflow(&self, tenant_id: TenantId, id: Uuid) -> SparkResult<Workflow> {
-        let map = self.workflows.workflows.read().unwrap();
-        map.get(&id)
-            .filter(|w| w.tenant_id == tenant_id)
-            .cloned()
+        self.repo.get_workflow(&tenant_id, &id).await
+            .map_err(|e| SparkServiceError::Repository(e.to_string()))?
             .ok_or(SparkServiceError::WorkflowNotFound)
     }
 
-    pub async fn execute_workflow(&self, cmd: ExecuteWorkflowCommand) -> SparkResult<WorkflowExecution> {
-        let _wf = self.get_workflow(cmd.tenant_id, cmd.workflow_id).await?;
-        // Check if already executing (simplistic: check last execution status)
-        let execs = self.executions.executions.read().unwrap();
-        let already = execs.iter().any(|e| e.workflow_id == cmd.workflow_id && e.status == "running");
-        if already {
-            return Err(SparkServiceError::AlreadyExecuting);
-        }
-        let id = self.id_gen.new_uuid_v7();
-        let now = self.clock.now().into();
-        let exec = WorkflowExecution {
-            id,
-            workflow_id: cmd.workflow_id,
-            tenant_id: cmd.tenant_id,
-            status: "running".to_string(),
-            started_at: now,
-            completed_at: None,
-        };
-        self.executions.executions.write().unwrap().push(exec.clone());
-        // In real implementation, would actually run steps.
-        Ok(exec)
+    pub async fn list_workflows(&self, tenant_id: TenantId, limit: u64, offset: u64) -> SparkResult<Vec<Workflow>> {
+        self.repo.list_workflows(&tenant_id, limit, offset).await
+            .map_err(|e| SparkServiceError::Repository(e.to_string()))
     }
 
-    pub async fn list_workflows(&self, tenant_id: TenantId) -> SparkResult<Vec<Workflow>> {
-        let map = self.workflows.workflows.read().unwrap();
-        let wfs = map.values().filter(|w| w.tenant_id == tenant_id).cloned().collect();
-        Ok(wfs)
+    pub async fn trigger_workflow(&self, cmd: TriggerWorkflowCommand) -> SparkResult<()> {
+        let workflow = self.get_workflow(cmd.tenant_id, cmd.workflow_id).await?;
+        // Evaluate conditions against payload
+        if !evaluate_conditions(&workflow.conditions, &cmd.payload) {
+            return Err(SparkServiceError::ConditionsNotSatisfied);
+        }
+        // Acquire lease and dispatch actions (with fence token 0 for first execution)
+        // In a real implementation, we'd get the current fence token from the lease.
+        // For simplicity, we'll use 0 as expected token; the repo will handle it.
+        self.repo.acquire_lease_and_dispatch(&cmd.tenant_id, &cmd.workflow_id, 0, &workflow.actions).await
+            .map_err(|e| SparkServiceError::Repository(e.to_string()))?;
+        Ok(())
     }
 }

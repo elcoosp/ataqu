@@ -1,9 +1,14 @@
 use crate::{
-    Action, Condition, CreateWorkflowCommand, SparkError, Trigger, TriggerWorkflowCommand,
-    WorkflowCreated, WorkflowTriggered,
+    action::Action,
+    condition::Condition,
+    commands::{CreateWorkflowCommand, TriggerWorkflowCommand},
+    errors::SparkError,
+    events::{WorkflowCreated, WorkflowTriggered},
+    trigger::Trigger,
 };
 use ataqu_kernel::{Clock, IdGenerator};
 use uuid::Uuid;
+use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Workflow {
@@ -14,12 +19,14 @@ pub struct Workflow {
     pub conditions: Vec<Condition>,
     pub actions: Vec<Action>,
     pub is_active: bool,
+    pub created_at: std::time::SystemTime,
+    pub updated_at: std::time::SystemTime,
 }
 
 pub fn create_workflow(
     cmd: CreateWorkflowCommand,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<(Workflow, WorkflowCreated), SparkError> {
     if cmd.name.trim().is_empty() {
         return Err(SparkError::InvalidWorkflowName);
@@ -36,6 +43,8 @@ pub fn create_workflow(
         conditions: cmd.conditions,
         actions: cmd.actions,
         is_active: true,
+            created_at: created_at,
+            updated_at: created_at,
     };
 
     let event = WorkflowCreated {
@@ -51,8 +60,8 @@ pub fn create_workflow(
 pub fn trigger_workflow(
     cmd: &TriggerWorkflowCommand,
     workflow: &Workflow,
-    id_gen: &impl IdGenerator,
-    clock: &impl Clock,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Result<WorkflowTriggered, SparkError> {
     if !workflow.is_active {
         return Err(SparkError::WorkflowInactive);
@@ -69,4 +78,34 @@ pub fn trigger_workflow(
         execution_id,
         triggered_at,
     })
+}
+
+pub fn evaluate_conditions(conditions: &[Condition], payload: &Value) -> bool {
+    for cond in conditions {
+        match cond {
+            Condition::FieldEquals { field, value } => {
+                if let Some(v) = payload.get(field) {
+                    if v.as_str() != Some(value) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            Condition::FieldContains { field, value } => {
+                if let Some(v) = payload.get(field) {
+                    if let Some(s) = v.as_str() {
+                        if !s.contains(value) {
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+    }
+    true
 }

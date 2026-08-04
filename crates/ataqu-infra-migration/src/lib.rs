@@ -35,3 +35,4 @@ pub mod m_pivot_add_blocks_relations;
 pub mod m_dial_add_presence;
 pub mod m_vault_add_products_variants;
 pub mod m_vault_add_price_column;
+pub mod m_vista_tables;

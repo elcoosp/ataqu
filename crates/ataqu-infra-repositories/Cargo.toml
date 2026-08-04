@@ -24,3 +24,5 @@ ataqu-domain-pivot = { path = "../ataqu-domain-pivot" }
 ataqu-domain-sond = { path = "../ataqu-domain-sond" }
 ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-vault = { path = "../ataqu-domain-vault" }
+ataqu-domain-spark = { path = "../ataqu-domain-spark" }
+ataqu-domain-vista = { path = "../ataqu-domain-vista" }

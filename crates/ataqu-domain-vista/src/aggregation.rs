@@ -27,7 +27,7 @@ pub fn process_aggregation_event(
     mut current_state: AggregatedView,
     _event_type: &str,
     _aggregate_id: Uuid,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> AggregatedView {
     // In a real scenario, this would match on event_type and update specific metrics.
     // For now, we increment total_events and update the timestamp.

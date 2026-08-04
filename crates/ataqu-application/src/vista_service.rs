@@ -1,108 +1,57 @@
-//! VISTA analytics service – outbox event processor and KPI broadcaster.
-
+//! VISTA application service – orchestrates analytics using real repositories.
 use std::sync::Arc;
 use uuid::Uuid;
-use serde_json::Value;
 
 use ataqu_kernel::{Clock, TenantId};
+use ataqu_domain_vista::aggregation::{AggregatedView, process_aggregation_event};
+use ataqu_domain_vista::analytics::{AnalyticsDataPoint, prepare_data_point};
+use ataqu_domain_vista::repository::VistaRepository;
+use ataqu_infra_outbox::OutboxEvent;
 
-#[derive(Debug, Clone)]
-pub struct KpiSnapshot {
-    pub tenant_id: TenantId,
-    pub metric_name: String,
-    pub metric_value: f64,
-    pub computed_at: chrono::DateTime<chrono::Utc>,
-}
 
-#[derive(Debug, Clone)]
-pub struct OutboxEvent {
-    pub id: i64,
-    pub schema: String,
-    pub event_type: String,
-    pub aggregate_id: Uuid,
-    pub payload: Value,
+#[derive(Debug, thiserror::Error)]
+pub enum VistaServiceError {
+    #[error("Repository error: {0}")]
+    Repository(String),
+    #[error("Domain error: {0}")]
+    Domain(String),
 }
 
-pub trait OutboxReader: Send + Sync {
-    fn fetch_unconsumed(&self, limit: u32) -> Result<Vec<OutboxEvent>, String>;
-    fn mark_consumed(&self, event_id: i64) -> Result<(), String>;
-}
-
-pub trait KpiStore: Send + Sync {
-    fn save_snapshot(&self, snapshot: KpiSnapshot) -> Result<(), String>;
-    fn get_snapshots(&self, tenant_id: TenantId) -> Result<Vec<KpiSnapshot>, String>;
-}
-
-// In-memory implementations
-#[derive(Default)]
-pub struct InMemoryOutbox {
-    events: Arc<std::sync::RwLock<Vec<OutboxEvent>>>,
-    consumed: Arc<std::sync::RwLock<Vec<i64>>>,
-}
-impl OutboxReader for InMemoryOutbox {
-    fn fetch_unconsumed(&self, limit: u32) -> Result<Vec<OutboxEvent>, String> {
-        let all = self.events.read().unwrap();
-        let consumed = self.consumed.read().unwrap();
-        let unconsumed: Vec<_> = all.iter().filter(|e| !consumed.contains(&e.id)).take(limit as usize).cloned().collect();
-        Ok(unconsumed)
-    }
-    fn mark_consumed(&self, event_id: i64) -> Result<(), String> {
-        self.consumed.write().unwrap().push(event_id);
-        Ok(())
-    }
-}
-
-#[derive(Default)]
-pub struct InMemoryKpiStore {
-    snapshots: Arc<std::sync::RwLock<Vec<KpiSnapshot>>>,
-}
-impl KpiStore for InMemoryKpiStore {
-    fn save_snapshot(&self, snapshot: KpiSnapshot) -> Result<(), String> {
-        self.snapshots.write().unwrap().push(snapshot);
-        Ok(())
-    }
-    fn get_snapshots(&self, tenant_id: TenantId) -> Result<Vec<KpiSnapshot>, String> {
-        let all = self.snapshots.read().unwrap();
-        let filtered = all.iter().filter(|s| s.tenant_id == tenant_id).cloned().collect();
-        Ok(filtered)
-    }
-}
+pub type VistaResult<T> = Result<T, VistaServiceError>;
 
 pub struct VistaService {
-    outbox: Arc<dyn OutboxReader>,
-    kpi_store: Arc<dyn KpiStore>,
+    repo: Arc<dyn VistaRepository + Send + Sync>,
     clock: Arc<dyn Clock>,
 }
 
 impl VistaService {
-    pub fn new(
-        outbox: Arc<dyn OutboxReader>,
-        kpi_store: Arc<dyn KpiStore>,
-        clock: Arc<dyn Clock>,
-    ) -> Self {
-        Self { outbox, kpi_store, clock }
+    pub fn new(repo: Arc<dyn VistaRepository + Send + Sync>, clock: Arc<dyn Clock>) -> Self {
+        Self { repo, clock }
     }
 
-    pub async fn process_batch(&self) -> Result<usize, String> {
-        let events = self.outbox.fetch_unconsumed(10)?;
-        let mut processed = 0;
-        for event in events {
-            // Aggregate logic: for simplicity, just count events per tenant
-            let tenant_id = TenantId::new(event.aggregate_id); // In real, extract from payload
-            let snapshot = KpiSnapshot {
-                tenant_id,
-                metric_name: "event_count".to_string(),
-                metric_value: 1.0,
-                computed_at: self.clock.now().into(),
-            };
-            self.kpi_store.save_snapshot(snapshot)?;
-            self.outbox.mark_consumed(event.id)?;
-            processed += 1;
+    pub async fn process_event(&self, event: &OutboxEvent) -> VistaResult<()> {
+        let tenant_id = event.aggregate_id.map(TenantId::new).unwrap_or_else(|| TenantId::new(Uuid::nil()));
+        // Get current view
+        let current_view = self.repo.get_aggregated_view(&tenant_id).await
+            .unwrap_or_else(|_| AggregatedView::new(tenant_id));
+        // Process event
+        let new_view = process_aggregation_event(current_view, &event.event_type, event.aggregate_id.unwrap_or(Uuid::nil()), self.clock.as_ref());
+        // Save updated view
+        self.repo.save_aggregated_view(&new_view).await.map_err(|e| VistaServiceError::Repository(e))?;
+        // Also save a data point (simplified)
+        if let Ok(point) = prepare_data_point(tenant_id, "event_count".to_string(), 1.0, self.clock.as_ref()) {
+            self.repo.save_data_point(&point).await.map_err(|e| VistaServiceError::Repository(e))?;
         }
-        Ok(processed)
+        Ok(())
     }
 
-    pub async fn get_kpis(&self, tenant_id: TenantId) -> Result<Vec<KpiSnapshot>, String> {
-        self.kpi_store.get_snapshots(tenant_id)
+    pub async fn get_kpis(&self, tenant_id: TenantId) -> VistaResult<Vec<AnalyticsDataPoint>> {
+        self.repo.get_data_points(&tenant_id, "event_count", 100).await
+            .map_err(|e| VistaServiceError::Repository(e))
+    }
+
+    pub async fn get_aggregated_view(&self, tenant_id: TenantId) -> VistaResult<AggregatedView> {
+        self.repo.get_aggregated_view(&tenant_id).await
+            .map_err(|e| VistaServiceError::Repository(e))
     }
 }

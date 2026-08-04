@@ -15,7 +15,7 @@ pub fn prepare_data_point(
     tenant_id: TenantId,
     metric_name: String,
     value: f64,
-    clock: &impl Clock,
+    clock: &dyn Clock,
 ) -> Result<AnalyticsDataPoint, AnalyticsError> {
     if metric_name.trim().is_empty() {
         return Err(AnalyticsError::InvalidMetricName);
