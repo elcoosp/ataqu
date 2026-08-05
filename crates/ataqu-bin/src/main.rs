@@ -62,7 +62,7 @@ async fn main() -> anyhow::Result<()> {
     let clock = Arc::new(SystemClock);
 
     let jwt_secret_raw = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "change-me-in-production-32-bytes".into())
+        .expect("JWT_SECRET must be set")
         .into_bytes();
     let jwt_secret = Arc::new(jwt_secret_raw.clone());
     let aegis_config = AegisConfig {
@@ -290,10 +290,12 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let tempo_service_for_reminder = tempo_service.clone();
+    let aegis_service_for_noshow = aegis_service.clone();
+    let aegis_service_for_reminder = aegis_service.clone();
 
     // Build AppState
     use dashmap::DashMap;
-        let ws_registry = Arc::new(DashMap::new());
+    let ws_registry = Arc::new(DashMap::new());
     let rate_limiter = ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
@@ -344,7 +346,7 @@ async fn main() -> anyhow::Result<()> {
                         tracing::error!(error = %e, "VISTA event processing failed");
                     }
                 }
-                "collab_crm" | "collab_ops" | "vault" | "dial" | "tempo" => {
+                "collab_crm" | "collab_ops" | "vault" | "dial" | "tempo" | "sond" => {
                     if let Err(e) = vista.process_event(&event).await {
                         tracing::error!(error = %e, "CRM/OPS event -> VISTA failed");
                     }
@@ -433,15 +435,11 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(300)).await;
-            let tenant_id = TenantId::new(uuid::Uuid::nil()); // TODO: iterate real tenants
-            match tempo_service_for_noshow.no_show_worker(tenant_id).await {
-                Ok(updated) => {
-                    if !updated.is_empty() {
-                        tracing::info!("No-show worker marked {} bookings as no-show", updated.len());
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("No-show worker error: {}", e);
+            let tenants = aegis_service_for_noshow.list_tenants().await.unwrap_or_default();
+            for tid in tenants {
+                let tenant_id = TenantId::new(tid);
+                if let Err(e) = tempo_service_for_noshow.no_show_worker(tenant_id).await {
+                    tracing::error!("No-show worker error for tenant {}: {}", tid, e);
                 }
             }
         }
@@ -451,15 +449,11 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
-            let tenant_id = TenantId::new(uuid::Uuid::nil());
-            match tempo_service_for_reminder.reminder_worker(tenant_id).await {
-                Ok(sent) => {
-                    if !sent.is_empty() {
-                        tracing::info!("Reminder worker sent {} reminders", sent.len());
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("Reminder worker error: {}", e);
+            let tenants = aegis_service_for_reminder.list_tenants().await.unwrap_or_default();
+            for tid in tenants {
+                let tenant_id = TenantId::new(tid);
+                if let Err(e) = tempo_service_for_reminder.reminder_worker(tenant_id).await {
+                    tracing::error!("Reminder worker error for tenant {}: {}", tid, e);
                 }
             }
         }

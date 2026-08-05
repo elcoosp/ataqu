@@ -242,6 +242,9 @@ pub async fn approve_leave(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+    }
     let request = state
         .pause_service
         .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
@@ -255,6 +258,9 @@ pub async fn reject_leave(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+    }
     let request = state
         .pause_service
         .reject_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)

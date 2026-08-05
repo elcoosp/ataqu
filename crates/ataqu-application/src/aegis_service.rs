@@ -307,6 +307,12 @@ impl AegisService {
             .find_by_email(&cmd.email)
             .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+        if let Some(tenant_id) = cmd.tenant_id {
+            if user.tenant_id != tenant_id {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+        }
         let (updated_user, token_pair) =
             self.domain
                 .authenticate(cmd, user, self.clock.as_ref(), &self.config)?;
@@ -388,6 +394,10 @@ impl AegisService {
         self.repo.list_users(tenant_id).await.map_err(AegisServiceError::Domain)
     }
 
+    pub async fn list_tenants(&self) -> Result<Vec<Uuid>, AegisServiceError> {
+        self.repo.list_tenants().await.map_err(AegisServiceError::Domain)
+    }
+
     pub async fn update_user_role(&self, user_id: Uuid, role: String) -> Result<(), AegisServiceError> {
         let mut user = self.repo.find_by_id(user_id).await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
@@ -455,6 +465,8 @@ impl AegisService {
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
+
+        let _ = self.repo.update_api_key_last_used(api_key.id, self.clock.now()).await;
 
         Ok(user)
     }

@@ -673,7 +673,7 @@ pub async fn track_email(
 }
 
 // ---------- Router ----------
-pub fn cinq_routes() -> Router<AppState> {
+pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
         .route("/contacts", post(create_contact).get(list_contacts))

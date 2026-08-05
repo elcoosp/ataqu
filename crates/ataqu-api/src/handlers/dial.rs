@@ -353,17 +353,22 @@ pub async fn upload_file(
     let _ = state;
     let _ = auth;
     while let Ok(Some(field)) = multipart.next_field().await {
-        let file_name = field.file_name().unwrap_or("upload.bin").to_string();
+        let raw_name = field.file_name().unwrap_or("upload.bin").to_string();
+        let safe_name = std::path::Path::new(&raw_name)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("upload.bin")
+            .to_string();
         let data = field.bytes().await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
         let upload_dir = std::path::PathBuf::from("./uploads");
         tokio::fs::create_dir_all(&upload_dir).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-        let file_path = upload_dir.join(format!("{}_{}", auth.user_id, file_name));
+        let file_path = upload_dir.join(format!("{}_{}", auth.user_id, safe_name));
         tokio::fs::write(&file_path, &data).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
         return Ok(Json(serde_json::json!({
             "url": file_path.to_string_lossy(),
-            "name": file_name,
+            "name": safe_name,
         })));
     }
     Err(ApiResponseError::validation("No file uploaded"))

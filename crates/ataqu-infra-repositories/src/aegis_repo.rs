@@ -1,4 +1,5 @@
 //! AEGIS user repository implementation using SeaORM for the domain trait.
+use sea_orm::ConnectionTrait;
 use async_trait::async_trait;
 use ataqu_domain_aegis::{AuthError, AuthRepository, User as DomainUser};
 use ataqu_kernel::TenantId;
@@ -207,6 +208,33 @@ impl AuthRepository for AegisUserRepository {
             .exec(&self.db)
             .await
             .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn list_tenants(&self) -> Result<Vec<Uuid>, AuthError> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "SELECT DISTINCT tenant_id FROM core.users",
+            vec![],
+        );
+        let rows = self.db.query_all_raw(stmt).await.map_err(|e| AuthError::Database(e.to_string()))?;
+
+        let mut tenants = Vec::new();
+        for row in rows {
+            let tenant_id: Uuid = row.try_get("", "tenant_id").map_err(|e| AuthError::Database(e.to_string()))?;
+            tenants.push(tenant_id);
+        }
+        Ok(tenants)
+    }
+
+    async fn update_api_key_last_used(&self, id: Uuid, last_used_at: std::time::SystemTime) -> Result<(), AuthError> {
+        let dt: chrono::DateTime<chrono::Utc> = last_used_at.into();
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "UPDATE core.api_keys SET last_used_at = $1 WHERE id = $2",
+            vec![dt.into(), id.into()],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| AuthError::Database(e.to_string()))?;
         Ok(())
     }
 }

@@ -82,7 +82,7 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 
 pub fn create_router(state: AppState) -> Router {
     use handlers::aegis::routes as aegis_routes;
-    use handlers::cinq::cinq_routes;
+    use handlers::cinq::routes as cinq_routes;
     use handlers::dial::routes as dial_routes;
     use handlers::pause::routes as pause_routes;
     use handlers::pivot::routes as pivot_routes;
