@@ -5,9 +5,7 @@ use ataqu_domain_spark::repository::SparkRepository;
 use ataqu_domain_spark::workflow::Workflow;
 use ataqu_domain_spark::{Action, Condition, Trigger};
 use ataqu_kernel::TenantId;
-use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set,
-};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
 
 use crate::entities::spark::lease as lease_entity;
@@ -26,17 +24,22 @@ impl SparkRepositoryImpl {
 fn workflow_model_to_domain(model: workflow_entity::Model) -> Workflow {
     let def = model.definition;
 
-    let trigger = serde_json::from_value(
-        def.get("trigger").cloned().unwrap_or(serde_json::json!({}))
-    ).unwrap_or(Trigger::Event { event_type: "unknown".to_string() });
+    let trigger =
+        serde_json::from_value(def.get("trigger").cloned().unwrap_or(serde_json::json!({})))
+            .unwrap_or(Trigger::Event {
+                event_type: "unknown".to_string(),
+            });
 
     let conditions: Vec<Condition> = serde_json::from_value(
-        def.get("conditions").cloned().unwrap_or(serde_json::json!([]))
-    ).unwrap_or_default();
+        def.get("conditions")
+            .cloned()
+            .unwrap_or(serde_json::json!([])),
+    )
+    .unwrap_or_default();
 
-    let actions: Vec<Action> = serde_json::from_value(
-        def.get("actions").cloned().unwrap_or(serde_json::json!([]))
-    ).unwrap_or_default();
+    let actions: Vec<Action> =
+        serde_json::from_value(def.get("actions").cloned().unwrap_or(serde_json::json!([])))
+            .unwrap_or_default();
 
     Workflow {
         id: model.id,
@@ -133,13 +136,16 @@ impl SparkRepository for SparkRepositoryImpl {
 
         let workflows: Vec<Workflow> = models.into_iter().map(workflow_model_to_domain).collect();
 
-        Ok(workflows.into_iter().filter(|w| {
-            if let Trigger::Event { event_type: et } = &w.trigger {
-                et == event_type
-            } else {
-                false
-            }
-        }).collect())
+        Ok(workflows
+            .into_iter()
+            .filter(|w| {
+                if let Trigger::Event { event_type: et } = &w.trigger {
+                    et == event_type
+                } else {
+                    false
+                }
+            })
+            .collect())
     }
 
     async fn list_active_scheduled_workflows(&self) -> Result<Vec<Workflow>, SparkError> {
@@ -150,7 +156,10 @@ impl SparkRepository for SparkRepositoryImpl {
             .map_err(|e| SparkError::Database(e.to_string()))?;
 
         let workflows: Vec<Workflow> = models.into_iter().map(workflow_model_to_domain).collect();
-        Ok(workflows.into_iter().filter(|w| matches!(w.trigger, Trigger::Schedule { .. })).collect())
+        Ok(workflows
+            .into_iter()
+            .filter(|w| matches!(w.trigger, Trigger::Schedule { .. }))
+            .collect())
     }
 
     async fn get_workflow_lease(

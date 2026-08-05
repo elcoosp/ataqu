@@ -20,12 +20,14 @@ impl MigrationTrait for Migration {
             );
             CREATE INDEX IF NOT EXISTS idx_reactions_message ON dial.reactions (message_id);
             "#,
-        ).await?;
+        )
+        .await?;
         Ok(())
     }
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS dial.reactions;").await?;
+        conn.execute_unprepared("DROP TABLE IF EXISTS dial.reactions;")
+            .await?;
         Ok(())
     }
 }

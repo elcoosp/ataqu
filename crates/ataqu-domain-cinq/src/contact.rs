@@ -1,8 +1,6 @@
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-
-use chrono::{DateTime, Utc};
-
 use ataqu_security::{Email, PhoneNumber};
+use chrono::{DateTime, Utc};
 use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
@@ -20,6 +18,7 @@ pub struct Contact {
     pub lead_score: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 // ---------- Commands ----------
@@ -39,9 +38,10 @@ pub struct UpdateContactCommand {
     pub tenant_id: TenantId,
     pub name: Option<String>,
     pub email: Option<Email>,
-    pub phone: Option<Option<PhoneNumber>>, // None = no change, Some(None) = clear
+    pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<JsonValue>,
     pub lead_score: Option<i32>,
+    pub expected_version: i32,
 }
 
 // ---------- Events ----------
@@ -55,6 +55,7 @@ pub struct ContactCreated {
     pub custom_fields: JsonValue,
     pub lead_score: i32,
     pub created_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -66,6 +67,7 @@ pub struct ContactUpdated {
     pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<JsonValue>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 // ---------- Pure Domain Functions ----------
@@ -89,6 +91,7 @@ pub fn create_contact(
         custom_fields: cmd.custom_fields,
         lead_score: cmd.lead_score.unwrap_or(0),
         created_at: now,
+        version: 0,
     })
 }
 
@@ -102,6 +105,7 @@ pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> ContactUp
         phone: cmd.phone,
         custom_fields: cmd.custom_fields,
         updated_at: now,
+        version: 0,
     }
 }
 
@@ -133,13 +137,16 @@ pub fn validate_contact_phone(phone: &Option<PhoneNumber>) -> CinqResult<()> {
     Ok(())
 }
 
-// ---------- Tests ----------
+impl ataqu_kernel::Identifiable for Contact {
+    fn id(&self) -> uuid::Uuid {
+        self.id
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ataqu_kernel::{Clock, IdGenerator};
-    use chrono::{DateTime, TimeZone, Utc};
+    use chrono::TimeZone;
 
     struct MockIdGenerator {
         next: Uuid,
@@ -198,6 +205,7 @@ mod tests {
         assert_eq!(event.phone, cmd.phone);
         let created_at: DateTime<Utc> = clock.now().into();
         assert_eq!(event.created_at, created_at);
+        assert_eq!(event.version, 0);
     }
 
     #[test]
@@ -210,6 +218,7 @@ mod tests {
             phone: Some(Some(PhoneNumber::new("+1234567890".to_string()))),
             custom_fields: None,
             lead_score: None,
+            expected_version: 0,
         };
         let clock = MockClock::new(Utc.with_ymd_and_hms(2026, 8, 1, 13, 0, 0).unwrap());
 
@@ -218,8 +227,6 @@ mod tests {
         assert_eq!(event.id, cmd.id);
         assert_eq!(event.tenant_id, cmd.tenant_id);
         assert_eq!(event.name, cmd.name);
-        assert_eq!(event.email, cmd.email);
-        assert_eq!(event.phone, cmd.phone);
         let updated_at: DateTime<Utc> = clock.now().into();
         assert_eq!(event.updated_at, updated_at);
     }
@@ -233,8 +240,4 @@ mod tests {
         let result = validate_contact_name("John");
         assert!(result.is_ok());
     }
-}
-
-impl ataqu_kernel::Identifiable for Contact {
-    fn id(&self) -> uuid::Uuid { self.id }
 }

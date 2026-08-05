@@ -2,6 +2,7 @@
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::outbox::Outbox;
 use ataqu_domain_pivot::block::{self as block_domain, BlockType};
 use ataqu_domain_pivot::database::{
     self as database_domain, CreateDatabaseCommand as DomainCreateDatabase,
@@ -9,9 +10,10 @@ use ataqu_domain_pivot::database::{
 use ataqu_domain_pivot::document::{
     self as document_domain, CreateDocumentCommand as DomainCreateDocument,
 };
-use ataqu_domain_pivot::repository::{BlockRepository, DatabaseRepository, DocumentRepository, RelationRepository};
+use ataqu_domain_pivot::repository::{
+    BlockRepository, DatabaseRepository, DocumentRepository, RelationRepository,
+};
 use ataqu_kernel::{Clock, IdGenerator, RepositoryError, TenantId};
-use crate::outbox::Outbox;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_pivot::block::BlockCreatedEvent as Block;
@@ -99,7 +101,8 @@ impl PivotService {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
         };
-        let event = database_domain::create_database(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        let event =
+            database_domain::create_database(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
         self.db_repo
             .save_database(&event)
             .await
@@ -110,12 +113,20 @@ impl PivotService {
             "tenant_id": event.tenant_id.as_uuid(),
             "name": event.name,
         });
-        self.outbox.append("collab_ops", "DatabaseCreated", event.id, &payload).await.map_err(|e| PivotServiceError::Repository(e))?;
+        self.outbox
+            .append("collab_ops", "DatabaseCreated", event.id, &payload)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e))?;
 
         Ok(event)
     }
 
-    pub async fn list_databases(&self, tenant_id: TenantId, limit: u64, offset: u64) -> PivotResult<Vec<Database>> {
+    pub async fn list_databases(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> PivotResult<Vec<Database>> {
         self.db_repo
             .list_databases(&tenant_id, limit, offset)
             .await
@@ -148,7 +159,10 @@ impl PivotService {
             "tenant_id": event.tenant_id.as_uuid(),
             "title": event.title,
         });
-        self.outbox.append("collab_ops", "DocumentCreated", event.id, &payload).await.map_err(|e| PivotServiceError::Repository(e))?;
+        self.outbox
+            .append("collab_ops", "DocumentCreated", event.id, &payload)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e))?;
 
         Ok(event)
     }
@@ -190,16 +204,15 @@ impl PivotService {
             content: doc.content.clone(),
             created_at: self.clock.now(),
         };
-        self.doc_repo.save_document_version(&version).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        self.doc_repo
+            .save_document_version(&version)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
 
         Ok(doc)
     }
 
-    pub async fn delete_document(
-        &self,
-        tenant_id: TenantId,
-        doc_id: Uuid,
-    ) -> PivotResult<()> {
+    pub async fn delete_document(&self, tenant_id: TenantId, doc_id: Uuid) -> PivotResult<()> {
         self.doc_repo
             .delete_document(&tenant_id, doc_id)
             .await
@@ -245,8 +258,16 @@ impl PivotService {
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
-    pub async fn update_block(&self, tenant_id: TenantId, block_id: Uuid, block_type: BlockType) -> PivotResult<Block> {
-        let block = self.block_repo.get_block_by_id(&tenant_id, block_id).await
+    pub async fn update_block(
+        &self,
+        tenant_id: TenantId,
+        block_id: Uuid,
+        block_type: BlockType,
+    ) -> PivotResult<Block> {
+        let block = self
+            .block_repo
+            .get_block_by_id(&tenant_id, block_id)
+            .await
             .map_err(|e| match e {
                 ataqu_kernel::RepositoryError::NotFound => PivotServiceError::BlockNotFound,
                 _ => PivotServiceError::Repository(e.to_string()),
@@ -259,12 +280,18 @@ impl PivotService {
             block_type,
             created_at: block.created_at,
         };
-        self.block_repo.save_block(&updated_block).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        self.block_repo
+            .save_block(&updated_block)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
         Ok(updated_block)
     }
 
     pub async fn delete_block(&self, tenant_id: TenantId, block_id: Uuid) -> PivotResult<()> {
-        self.block_repo.delete_block(&tenant_id, block_id).await.map_err(|e| PivotServiceError::Repository(e.to_string()))
+        self.block_repo
+            .delete_block(&tenant_id, block_id)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
     // -- Relations --
@@ -326,14 +353,24 @@ impl PivotService {
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
-    pub async fn list_document_versions(&self, tenant_id: TenantId, doc_id: Uuid, limit: u64) -> PivotResult<Vec<ataqu_domain_pivot::document::DocumentVersion>> {
+    pub async fn list_document_versions(
+        &self,
+        tenant_id: TenantId,
+        doc_id: Uuid,
+        limit: u64,
+    ) -> PivotResult<Vec<ataqu_domain_pivot::document::DocumentVersion>> {
         self.doc_repo
             .list_document_versions(&tenant_id, doc_id, limit)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
-    pub async fn create_template(&self, tenant_id: TenantId, name: String, content: String) -> PivotResult<ataqu_domain_pivot::document::Template> {
+    pub async fn create_template(
+        &self,
+        tenant_id: TenantId,
+        name: String,
+        content: String,
+    ) -> PivotResult<ataqu_domain_pivot::document::Template> {
         let template = ataqu_domain_pivot::document::Template {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,
@@ -341,11 +378,20 @@ impl PivotService {
             content,
             created_at: self.clock.now(),
         };
-        self.doc_repo.save_template(&template).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        self.doc_repo
+            .save_template(&template)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
         Ok(template)
     }
 
-    pub async fn list_templates(&self, tenant_id: TenantId) -> PivotResult<Vec<ataqu_domain_pivot::document::Template>> {
-        self.doc_repo.list_templates(&tenant_id).await.map_err(|e| PivotServiceError::Repository(e.to_string()))
+    pub async fn list_templates(
+        &self,
+        tenant_id: TenantId,
+    ) -> PivotResult<Vec<ataqu_domain_pivot::document::Template>> {
+        self.doc_repo
+            .list_templates(&tenant_id)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 }

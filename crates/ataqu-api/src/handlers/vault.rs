@@ -288,7 +288,9 @@ pub async fn get_low_stock(
         .find_low_stock_variants(auth.tenant_id, params.threshold)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(variants.into_iter().map(VariantResponse::from).collect()))
+    Ok(Json(
+        variants.into_iter().map(VariantResponse::from).collect(),
+    ))
 }
 
 pub fn routes() -> Router<AppState> {
@@ -299,16 +301,26 @@ pub fn routes() -> Router<AppState> {
         )
         .route(
             "/products/:id",
-            axum::routing::get(get_product).put(update_product).delete(delete_product),
+            axum::routing::get(get_product)
+                .put(update_product)
+                .delete(delete_product),
         )
-        .route("/variants", axum::routing::post(create_variant).get(list_variants))
+        .route(
+            "/variants",
+            axum::routing::post(create_variant).get(list_variants),
+        )
         .route("/variants/:id", axum::routing::get(get_variant))
         .route("/variants/:id/stock", axum::routing::put(update_stock))
-        .route("/variants/:id/movements", axum::routing::get(list_movements))
+        .route(
+            "/variants/:id/movements",
+            axum::routing::get(list_movements),
+        )
         .route("/alerts/low-stock", axum::routing::get(get_low_stock))
-        .route("/warehouses", axum::routing::post(create_warehouse).get(list_warehouses))
+        .route(
+            "/warehouses",
+            axum::routing::post(create_warehouse).get(list_warehouses),
+        )
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct CreateWarehouseRequest {
@@ -321,7 +333,10 @@ pub async fn create_warehouse(
     auth: AuthContext,
     Json(payload): Json<CreateWarehouseRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let warehouse = state.vault_service.create_warehouse(auth.tenant_id, payload.name, payload.location).await
+    let warehouse = state
+        .vault_service
+        .create_warehouse(auth.tenant_id, payload.name, payload.location)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({ "id": warehouse.id })))
 }
@@ -330,12 +345,20 @@ pub async fn list_warehouses(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let warehouses = state.vault_service.list_warehouses(auth.tenant_id).await
+    let warehouses = state
+        .vault_service
+        .list_warehouses(auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let list = warehouses.iter().map(|w| serde_json::json!({
-        "id": w.id,
-        "name": w.name,
-        "location": w.location,
-    })).collect();
+    let list = warehouses
+        .iter()
+        .map(|w| {
+            serde_json::json!({
+                "id": w.id,
+                "name": w.name,
+                "location": w.location,
+            })
+        })
+        .collect();
     Ok(Json(list))
 }

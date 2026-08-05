@@ -67,7 +67,9 @@ pub fn create_task(
     clock: &dyn Clock,
 ) -> CinqResult<TaskCreated> {
     if cmd.title.trim().is_empty() {
-        return Err(CinqDomainError::Validation("Task title cannot be empty".to_string()));
+        return Err(CinqDomainError::Validation(
+            "Task title cannot be empty".to_string(),
+        ));
     }
     let id = id_gen.new_uuid_v7();
     let now = clock.now().into();

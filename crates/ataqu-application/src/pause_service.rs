@@ -10,8 +10,8 @@ pub use ataqu_domain_pause::{
     LeaveStatus, LeaveType, PauseDomainError, RequestLeaveCommand,
 };
 
-use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use crate::outbox::Outbox;
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 // Application-specific error type.
 #[derive(Debug, thiserror::Error)]
@@ -70,7 +70,8 @@ pub struct PauseService {
     idempotency: Arc<dyn IdempotencyPort>,
     employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
     leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
-    document_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
+    document_repo:
+        Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
     outbox: Arc<dyn Outbox + Send + Sync>,
 }
 
@@ -79,7 +80,9 @@ impl PauseService {
         idempotency: Arc<dyn IdempotencyPort>,
         employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
         leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
-        document_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
+        document_repo: Arc<
+            dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync,
+        >,
         outbox: Arc<dyn Outbox + Send + Sync>,
     ) -> Self {
         Self {
@@ -215,7 +218,9 @@ impl PauseService {
             .await?
             .ok_or(PauseServiceError::NotFound)?;
         if request.status != LeaveStatus::Pending {
-            return Err(PauseServiceError::Validation("Leave request is not pending".to_string()));
+            return Err(PauseServiceError::Validation(
+                "Leave request is not pending".to_string(),
+            ));
         }
         let event = ataqu_domain_pause::leave::approve_leave(&mut request, reviewer_id, clock);
         self.leave_request_repo
@@ -250,7 +255,9 @@ impl PauseService {
             .await?
             .ok_or(PauseServiceError::NotFound)?;
         if request.status != LeaveStatus::Pending {
-            return Err(PauseServiceError::Validation("Leave request is not pending".to_string()));
+            return Err(PauseServiceError::Validation(
+                "Leave request is not pending".to_string(),
+            ));
         }
         let event = ataqu_domain_pause::leave::reject_leave(&mut request, reviewer_id, clock);
         self.leave_request_repo
@@ -271,7 +278,12 @@ impl PauseService {
         Ok(request)
     }
 
-    pub async fn upload_document(&self, cmd: ataqu_domain_pause::CreateDocumentCommand, id_gen: &dyn IdGenerator, clock: &dyn Clock) -> Result<ataqu_domain_pause::EmployeeDocument, PauseServiceError> {
+    pub async fn upload_document(
+        &self,
+        cmd: ataqu_domain_pause::CreateDocumentCommand,
+        id_gen: &dyn IdGenerator,
+        clock: &dyn Clock,
+    ) -> Result<ataqu_domain_pause::EmployeeDocument, PauseServiceError> {
         let doc = ataqu_domain_pause::EmployeeDocument {
             id: id_gen.new_uuid_v7(),
             tenant_id: cmd.tenant_id,
@@ -285,7 +297,14 @@ impl PauseService {
         Ok(doc)
     }
 
-    pub async fn list_documents(&self, tenant_id: TenantId, employee_id: Uuid) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, PauseServiceError> {
-        self.document_repo.list_documents_for_employee(&tenant_id, employee_id).await.map_err(PauseServiceError::Domain)
+    pub async fn list_documents(
+        &self,
+        tenant_id: TenantId,
+        employee_id: Uuid,
+    ) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, PauseServiceError> {
+        self.document_repo
+            .list_documents_for_employee(&tenant_id, employee_id)
+            .await
+            .map_err(PauseServiceError::Domain)
     }
 }

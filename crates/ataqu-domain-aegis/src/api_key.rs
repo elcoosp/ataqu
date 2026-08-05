@@ -46,7 +46,10 @@ pub fn generate_api_key(
     let now = clock.now();
 
     // Generate a random key. In production, use a more secure RNG.
-    let raw_key = format!("ataqu_{}", uuid::Uuid::new_v4().to_string().replace("-", ""));
+    let raw_key = format!(
+        "ataqu_{}",
+        uuid::Uuid::new_v4().to_string().replace("-", "")
+    );
     let prefix = raw_key[..12].to_string();
 
     // Hash the key. In production, use Argon2 or bcrypt.

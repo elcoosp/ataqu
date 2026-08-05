@@ -12,7 +12,8 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_application::tempo_service::{
-    BookingStatus, CreateBookingCommand, UpdateBookingStatusCommand, CreateEventTypeCommand, CreateAvailabilitySlotCommand,
+    BookingStatus, CreateAvailabilitySlotCommand, CreateBookingCommand, CreateEventTypeCommand,
+    UpdateBookingStatusCommand,
 };
 
 #[derive(Debug, Deserialize)]
@@ -175,7 +176,10 @@ pub async fn create_event_type(
         description: payload.description,
         duration_minutes: payload.duration_minutes,
     };
-    let event_type = state.tempo_service.create_event_type(cmd).await
+    let event_type = state
+        .tempo_service
+        .create_event_type(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(event_type.into())))
 }
@@ -184,7 +188,10 @@ pub async fn list_event_types(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<EventTypeResponse>>> {
-    let event_types = state.tempo_service.list_event_types(auth.tenant_id).await
+    let event_types = state
+        .tempo_service
+        .list_event_types(auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(event_types.into_iter().map(|e| e.into()).collect()))
 }
@@ -228,7 +235,10 @@ pub async fn create_availability_slot(
         start_time: payload.start_time,
         end_time: payload.end_time,
     };
-    let slot = state.tempo_service.create_availability_slot(cmd).await
+    let slot = state
+        .tempo_service
+        .create_availability_slot(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(slot.into())))
 }
@@ -238,7 +248,10 @@ pub async fn list_availability_slots(
     auth: AuthContext,
     Path(event_type_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<AvailabilitySlotResponse>>> {
-    let slots = state.tempo_service.list_availability_slots(auth.tenant_id, event_type_id).await
+    let slots = state
+        .tempo_service
+        .list_availability_slots(auth.tenant_id, event_type_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(slots.into_iter().map(|s| s.into()).collect()))
 }
@@ -248,7 +261,10 @@ pub async fn delete_availability_slot(
     auth: AuthContext,
     Path(slot_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.tempo_service.delete_availability_slot(auth.tenant_id, slot_id).await
+    state
+        .tempo_service
+        .delete_availability_slot(auth.tenant_id, slot_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -273,20 +289,34 @@ pub async fn public_create_booking(
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<PublicBookingRequest>,
 ) -> ApiResult<(StatusCode, Json<PublicBookingResponse>)> {
-    let booking = state.tempo_service.public_create_booking(ataqu_kernel::TenantId::new(tenant_id), payload.slug, payload.starts_at, payload.timezone).await
+    let booking = state
+        .tempo_service
+        .public_create_booking(
+            ataqu_kernel::TenantId::new(tenant_id),
+            payload.slug,
+            payload.starts_at,
+            payload.timezone,
+        )
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(PublicBookingResponse {
-        id: booking.id.0,
-        starts_at: booking.starts_at.into(),
-        status: format!("{:?}", booking.status).to_lowercase(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(PublicBookingResponse {
+            id: booking.id.0,
+            starts_at: booking.starts_at.into(),
+            status: format!("{:?}", booking.status).to_lowercase(),
+        }),
+    ))
 }
 
 pub async fn get_public_event_type(
     State(state): State<AppState>,
     Path((tenant_id, slug)): Path<(Uuid, String)>,
 ) -> ApiResult<Json<EventTypeResponse>> {
-    let event_type = state.tempo_service.get_event_type_by_slug(ataqu_kernel::TenantId::new(tenant_id), slug).await
+    let event_type = state
+        .tempo_service
+        .get_event_type_by_slug(ataqu_kernel::TenantId::new(tenant_id), slug)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(event_type.into()))
 }
@@ -297,11 +327,32 @@ pub fn routes() -> Router<AppState> {
         .route("/bookings", axum::routing::get(list_bookings))
         .route("/bookings/:id", axum::routing::get(get_booking))
         .route("/bookings/:id/cancel", axum::routing::post(cancel_booking))
-        .route("/bookings/:id/confirm", axum::routing::post(confirm_booking))
-        .route("/event-types", axum::routing::post(create_event_type).get(list_event_types))
-        .route("/availability-slots", axum::routing::post(create_availability_slot))
-        .route("/availability-slots/:event_type_id", axum::routing::get(list_availability_slots))
-        .route("/availability-slots/:id", axum::routing::delete(delete_availability_slot))
-        .route("/public/:tenant_id/event-types/:slug", axum::routing::get(get_public_event_type))
-        .route("/public/:tenant_id/bookings", axum::routing::post(public_create_booking))
+        .route(
+            "/bookings/:id/confirm",
+            axum::routing::post(confirm_booking),
+        )
+        .route(
+            "/event-types",
+            axum::routing::post(create_event_type).get(list_event_types),
+        )
+        .route(
+            "/availability-slots",
+            axum::routing::post(create_availability_slot),
+        )
+        .route(
+            "/availability-slots/:event_type_id",
+            axum::routing::get(list_availability_slots),
+        )
+        .route(
+            "/availability-slots/:id",
+            axum::routing::delete(delete_availability_slot),
+        )
+        .route(
+            "/public/:tenant_id/event-types/:slug",
+            axum::routing::get(get_public_event_type),
+        )
+        .route(
+            "/public/:tenant_id/bookings",
+            axum::routing::post(public_create_booking),
+        )
 }

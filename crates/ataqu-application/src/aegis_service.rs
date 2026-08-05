@@ -13,13 +13,13 @@ use thiserror::Error;
 use tracing::{info, instrument};
 use uuid::Uuid;
 
-use ataqu_security::Email;
 use ataqu_domain_aegis::mfa::{generate_otpauth_url, generate_secret, verify_totp};
 use ataqu_domain_aegis::{
     AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
     CreateUserCommand as DomainCreateUserCommand, User, UserCreated,
 };
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_security::Email;
 
 pub use ataqu_domain_aegis::AuthenticateCommand;
 pub use ataqu_domain_aegis::CreateUserCommand;
@@ -101,7 +101,11 @@ impl RealAegisDomain {
         id_gen: &dyn IdGenerator,
         clock: &dyn Clock,
     ) -> Result<(UserCreated, User), AuthError> {
-        if !cmd.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).contains('@') {
+        if !cmd
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+            .contains('@')
+        {
             return Err(AuthError::InvalidCredentials);
         }
         let salt = SaltString::generate(&mut rand::thread_rng());
@@ -290,7 +294,10 @@ impl AegisService {
             "tenant_id": user.tenant_id.as_uuid(),
             "created_at": event.created_at,
         });
-        self.outbox.append("core", "UserCreated", user.id, &payload).await.map_err(AegisServiceError::Outbox)?;
+        self.outbox
+            .append("core", "UserCreated", user.id, &payload)
+            .await
+            .map_err(AegisServiceError::Outbox)?;
         Ok(CreateUserResponse {
             user_id: user.id,
             email: user.email.to_string(),
@@ -392,30 +399,53 @@ impl AegisService {
     }
 
     pub async fn list_users(&self, tenant_id: Uuid) -> Result<Vec<User>, AegisServiceError> {
-        self.repo.list_users(tenant_id).await.map_err(AegisServiceError::Domain)
+        self.repo
+            .list_users(tenant_id)
+            .await
+            .map_err(AegisServiceError::Domain)
     }
 
     pub async fn list_tenants(&self) -> Result<Vec<Uuid>, AegisServiceError> {
-        self.repo.list_tenants().await.map_err(AegisServiceError::Domain)
+        self.repo
+            .list_tenants()
+            .await
+            .map_err(AegisServiceError::Domain)
     }
 
-    pub async fn update_user_role(&self, user_id: Uuid, role: String) -> Result<(), AegisServiceError> {
-        let mut user = self.repo.find_by_id(user_id).await?
+    pub async fn update_user_role(
+        &self,
+        user_id: Uuid,
+        role: String,
+    ) -> Result<(), AegisServiceError> {
+        let mut user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
         user.role = role;
         self.repo.save_user(&user).await?;
         Ok(())
     }
 
-    pub async fn create_api_key(&self, tenant_id: ataqu_kernel::TenantId, user_id: Uuid, name: String, expires_at: Option<SystemTime>) -> Result<ataqu_domain_aegis::api_key::ApiKeyCreated, AegisServiceError> {
+    pub async fn create_api_key(
+        &self,
+        tenant_id: ataqu_kernel::TenantId,
+        user_id: Uuid,
+        name: String,
+        expires_at: Option<SystemTime>,
+    ) -> Result<ataqu_domain_aegis::api_key::ApiKeyCreated, AegisServiceError> {
         let cmd = ataqu_domain_aegis::api_key::CreateApiKeyCommand {
             tenant_id,
             user_id,
             name,
             expires_at,
         };
-        let created = ataqu_domain_aegis::api_key::generate_api_key(cmd, self.id_gen.as_ref(), self.clock.as_ref())
-            .map_err(AegisServiceError::Validation)?;
+        let created = ataqu_domain_aegis::api_key::generate_api_key(
+            cmd,
+            self.id_gen.as_ref(),
+            self.clock.as_ref(),
+        )
+        .map_err(AegisServiceError::Validation)?;
 
         let key_entity = ataqu_domain_aegis::api_key::ApiKey {
             id: created.id,
@@ -437,12 +467,26 @@ impl AegisService {
         Ok(created)
     }
 
-    pub async fn list_api_keys(&self, tenant_id: ataqu_kernel::TenantId, user_id: Uuid) -> Result<Vec<ataqu_domain_aegis::api_key::ApiKey>, AegisServiceError> {
-        self.repo.list_api_keys(tenant_id.as_uuid(), user_id).await.map_err(AegisServiceError::Domain)
+    pub async fn list_api_keys(
+        &self,
+        tenant_id: ataqu_kernel::TenantId,
+        user_id: Uuid,
+    ) -> Result<Vec<ataqu_domain_aegis::api_key::ApiKey>, AegisServiceError> {
+        self.repo
+            .list_api_keys(tenant_id.as_uuid(), user_id)
+            .await
+            .map_err(AegisServiceError::Domain)
     }
 
-    pub async fn delete_api_key(&self, tenant_id: ataqu_kernel::TenantId, id: Uuid) -> Result<(), AegisServiceError> {
-        self.repo.delete_api_key(tenant_id.as_uuid(), id).await.map_err(AegisServiceError::Domain)
+    pub async fn delete_api_key(
+        &self,
+        tenant_id: ataqu_kernel::TenantId,
+        id: Uuid,
+    ) -> Result<(), AegisServiceError> {
+        self.repo
+            .delete_api_key(tenant_id.as_uuid(), id)
+            .await
+            .map_err(AegisServiceError::Domain)
     }
 
     pub async fn validate_api_key(&self, key: &str) -> Result<User, AegisServiceError> {
@@ -451,7 +495,10 @@ impl AegisService {
         hasher.update(key.as_bytes());
         let hash = format!("{:x}", hasher.finalize());
 
-        let api_key = self.repo.find_api_key_by_hash(&hash).await?
+        let api_key = self
+            .repo
+            .find_api_key_by_hash(&hash)
+            .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
 
         if let Some(expires_at) = api_key.expires_at {
@@ -460,19 +507,29 @@ impl AegisService {
             }
         }
 
-        let user = self.repo.find_by_id(api_key.user_id).await?
+        let user = self
+            .repo
+            .find_by_id(api_key.user_id)
+            .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
 
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
 
-        let _ = self.repo.update_api_key_last_used(api_key.id, self.clock.now()).await;
+        let _ = self
+            .repo
+            .update_api_key_last_used(api_key.id, self.clock.now())
+            .await;
 
         Ok(user)
     }
 
-    pub async fn validate_api_key_for_tenant(&self, key: &str, tenant_id: TenantId) -> Result<User, AegisServiceError> {
+    pub async fn validate_api_key_for_tenant(
+        &self,
+        key: &str,
+        tenant_id: TenantId,
+    ) -> Result<User, AegisServiceError> {
         let user = self.validate_api_key(key).await?;
         if user.tenant_id != tenant_id {
             return Err(AegisServiceError::AuthenticationFailed);
@@ -480,9 +537,17 @@ impl AegisService {
         Ok(user)
     }
 
-    pub async fn sso_exchange(&self, email: Email) -> Result<AuthenticateResponse, AegisServiceError> {
-        let user = self.repo.find_by_email(&email).await?
-            .ok_or(AegisServiceError::NotFound("SSO User not found".to_string()))?;
+    pub async fn sso_exchange(
+        &self,
+        email: Email,
+    ) -> Result<AuthenticateResponse, AegisServiceError> {
+        let user = self
+            .repo
+            .find_by_email(&email)
+            .await?
+            .ok_or(AegisServiceError::NotFound(
+                "SSO User not found".to_string(),
+            ))?;
 
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
@@ -496,4 +561,3 @@ impl AegisService {
         })
     }
 }
-

@@ -1,6 +1,10 @@
 //! AEGIS API handlers using AuthContext.
 
-use axum::{Json, extract::{Path, State}, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::StatusCode,
+};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use uuid::Uuid;
@@ -208,10 +212,16 @@ pub async fn sso_callback(
     // MOCK IMPLEMENTATION: In a real system, we would exchange `req.code` for an access token
     // with Google/Microsoft, fetch the user profile, and then find/create the user.
     // Here we mock the email extraction to allow testing the flow.
-    let mock_email_str = format!("sso_user_{}@example.com", &req.code[..6.min(req.code.len())]);
+    let mock_email_str = format!(
+        "sso_user_{}@example.com",
+        &req.code[..6.min(req.code.len())]
+    );
     let email = Email::new(mock_email_str);
 
-    let resp = state.aegis_service.sso_exchange(email).await
+    let resp = state
+        .aegis_service
+        .sso_exchange(email)
+        .await
         .map_err(map_aegis_error)?;
 
     Ok(Json(LoginResponse {
@@ -231,18 +241,28 @@ pub async fn list_users(
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
-    let users = state.aegis_service.list_users(auth.tenant_id.as_uuid()).await
+    let users = state
+        .aegis_service
+        .list_users(auth.tenant_id.as_uuid())
+        .await
         .map_err(map_aegis_error)?;
-    let resp = users.into_iter().map(|u| serde_json::json!({
-        "id": u.id,
-        "email": crate::serializers::ApiEmail::new(u.email),
-        "name": u.name,
-        "role": u.role,
-        "is_active": u.is_active,
-        "mfa_enabled": u.mfa_enabled,
-    })).collect();
+    let resp = users
+        .into_iter()
+        .map(|u| {
+            serde_json::json!({
+                "id": u.id,
+                "email": crate::serializers::ApiEmail::new(u.email),
+                "name": u.name,
+                "role": u.role,
+                "is_active": u.is_active,
+                "mfa_enabled": u.mfa_enabled,
+            })
+        })
+        .collect();
     Ok(Json(resp))
 }
 
@@ -253,12 +273,17 @@ pub async fn update_user_role(
     Json(req): Json<UpdateRoleRequest>,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
     if !["admin", "member", "viewer"].contains(&req.role.as_str()) {
         return Err(ApiResponseError::validation("Invalid role"));
     }
-    state.aegis_service.update_user_role(user_id, req.role).await
+    state
+        .aegis_service
+        .update_user_role(user_id, req.role)
+        .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::OK)
 }
@@ -273,7 +298,10 @@ pub async fn create_api_key(
     auth: AuthContext,
     Json(req): Json<CreateApiKeyRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let key = state.aegis_service.create_api_key(auth.tenant_id, auth.user_id, req.name, None).await
+    let key = state
+        .aegis_service
+        .create_api_key(auth.tenant_id, auth.user_id, req.name, None)
+        .await
         .map_err(map_aegis_error)?;
     Ok(Json(serde_json::json!({
         "id": key.id,
@@ -287,14 +315,22 @@ pub async fn list_api_keys(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let keys = state.aegis_service.list_api_keys(auth.tenant_id, auth.user_id).await
+    let keys = state
+        .aegis_service
+        .list_api_keys(auth.tenant_id, auth.user_id)
+        .await
         .map_err(map_aegis_error)?;
-    let resp = keys.into_iter().map(|k| serde_json::json!({
-        "id": k.id,
-        "name": k.name,
-        "prefix": k.prefix,
-        "created_at": k.created_at,
-    })).collect();
+    let resp = keys
+        .into_iter()
+        .map(|k| {
+            serde_json::json!({
+                "id": k.id,
+                "name": k.name,
+                "prefix": k.prefix,
+                "created_at": k.created_at,
+            })
+        })
+        .collect();
     Ok(Json(resp))
 }
 
@@ -303,13 +339,16 @@ pub async fn delete_api_key(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.aegis_service.delete_api_key(auth.tenant_id, id).await
+    state
+        .aegis_service
+        .delete_api_key(auth.tenant_id, id)
+        .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::{post, patch, delete};
+    use axum::routing::{delete, patch, post};
     axum::Router::new()
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))

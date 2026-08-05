@@ -5,15 +5,16 @@ pub mod handlers;
 pub mod middleware;
 pub mod serializers;
 
-use axum::middleware::Next;
 use axum::extract::Request;
+use axum::middleware::Next;
 use axum::response::Response;
 
+use crate::middleware::rate_limit::RateLimiter;
 use axum::Router;
 use axum::extract::State;
-use crate::middleware::rate_limit::RateLimiter;
-use uuid::Uuid;
+use metrics_exporter_prometheus::PrometheusHandle;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use ataqu_application::aegis_service::AegisService;
 use ataqu_application::cinq_service::CinqService;
@@ -57,15 +58,18 @@ pub struct AppState {
     pub id_gen: Arc<dyn IdGenerator>,
     pub clock: Arc<dyn Clock>,
     pub ws_registry: handlers::dial_ws::ConnectionRegistry,
-    pub email_tracking_tx: tokio::sync::mpsc::Sender<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
+    pub email_tracking_tx:
+        tokio::sync::mpsc::Sender<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
     pub rate_limiter: RateLimiter,
+    pub metrics_handle: PrometheusHandle,
 }
 
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
     let request_id = Uuid::new_v4().to_string();
     req.extensions_mut().insert(request_id.clone());
     let mut resp = next.run(req).await;
-    resp.headers_mut().insert("x-request-id", request_id.parse().unwrap());
+    resp.headers_mut()
+        .insert("x-request-id", request_id.parse().unwrap());
     resp
 }
 
@@ -73,8 +77,16 @@ async fn health_check() -> &'static str {
     "ok"
 }
 
+async fn metrics_handler(State(state): State<AppState>) -> String {
+    state.metrics_handle.render()
+}
+
 async fn readiness_check(State(state): State<AppState>) -> impl axum::response::IntoResponse {
-    match state.cinq_service.list_contacts(ataqu_kernel::TenantId::new(uuid::Uuid::nil()), 1, 0).await {
+    match state
+        .cinq_service
+        .list_contacts(ataqu_kernel::TenantId::new(uuid::Uuid::nil()), 1, 0)
+        .await
+    {
         Ok(_) => (axum::http::StatusCode::OK, "ready"),
         Err(_) => (axum::http::StatusCode::SERVICE_UNAVAILABLE, "not ready"),
     }
@@ -82,6 +94,8 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 
 pub fn create_router(state: AppState) -> Router {
     use handlers::aegis::routes as aegis_routes;
+
+    let _api_state = state.clone();
     use handlers::cinq::routes as cinq_routes;
     use handlers::dial::routes as dial_routes;
     use handlers::pause::routes as pause_routes;
@@ -94,9 +108,12 @@ pub fn create_router(state: AppState) -> Router {
 
     Router::new()
         .route("/health", axum::routing::get(health_check))
+        .route("/metrics", axum::routing::get(metrics_handler))
         .route("/ready", axum::routing::get(readiness_check))
         .layer(axum::middleware::from_fn(request_id_middleware))
-        .layer(axum::middleware::from_fn(crate::middleware::idempotency::idempotency_middleware))
+        .layer(axum::middleware::from_fn(
+            crate::middleware::idempotency::idempotency_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,

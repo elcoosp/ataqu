@@ -1,12 +1,10 @@
-use sea_orm::ConnectionTrait;
 use async_trait::async_trait;
 use ataqu_domain_vault::inventory::{Product, Variant};
 use ataqu_domain_vault::repository::VaultRepository;
 use ataqu_domain_vault::stock::StockMovement;
 use ataqu_kernel::TenantId;
-use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set,
-};
+use sea_orm::ConnectionTrait;
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
 
 use crate::entities::vault::product as product_entity;
@@ -121,7 +119,11 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 
-    async fn get_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Product>, String> {
+    async fn get_product(
+        &self,
+        tenant_id: &TenantId,
+        id: &Uuid,
+    ) -> Result<Option<Product>, String> {
         let model = product_entity::Entity::find()
             .filter(product_entity::Column::Id.eq(*id))
             .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -178,7 +180,11 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 
-    async fn get_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<Option<Variant>, String> {
+    async fn get_variant(
+        &self,
+        tenant_id: &TenantId,
+        id: &Uuid,
+    ) -> Result<Option<Variant>, String> {
         let model = variant_entity::Entity::find()
             .filter(variant_entity::Column::Id.eq(*id))
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -217,7 +223,10 @@ impl VaultRepository for VaultRepositoryImpl {
 
         let new_stock = variant.stock_quantity + delta;
         if new_stock < 0 {
-            return Err(format!("Insufficient stock for variant {}: available {}, requested {}", id, variant.stock_quantity, -delta));
+            return Err(format!(
+                "Insufficient stock for variant {}: available {}, requested {}",
+                id, variant.stock_quantity, -delta
+            ));
         }
         variant.stock_quantity = new_stock;
 
@@ -263,15 +272,18 @@ impl VaultRepository for VaultRepositoryImpl {
             .await
             .map_err(|e| e.to_string())?;
 
-        Ok(models.into_iter().map(|m| StockMovement {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            variant_id: m.variant_id,
-            quantity: m.quantity,
-            reason: m.reason,
-            reference: m.reference,
-            timestamp: m.timestamp.into(),
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| StockMovement {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                variant_id: m.variant_id,
+                quantity: m.quantity,
+                reason: m.reason,
+                reference: m.reference,
+                timestamp: m.timestamp.into(),
+            })
+            .collect())
     }
 
     async fn find_low_stock_variants(
@@ -289,9 +301,13 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(models.into_iter().map(variant_model_to_domain).collect())
     }
 
-    async fn save_reservation(&self, reservation: &ataqu_domain_vault::stock::Reservation) -> Result<(), String> {
+    async fn save_reservation(
+        &self,
+        reservation: &ataqu_domain_vault::stock::Reservation,
+    ) -> Result<(), String> {
         let created_at: chrono::DateTime<chrono::Utc> = reservation.created_at.into();
-        let expires_at: Option<chrono::DateTime<chrono::Utc>> = reservation.expires_at.map(|t| t.into());
+        let expires_at: Option<chrono::DateTime<chrono::Utc>> =
+            reservation.expires_at.map(|t| t.into());
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             r#"INSERT INTO vault.reservations (id, tenant_id, variant_id, quantity, status, expires_at, created_at)
@@ -310,19 +326,29 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 
-    async fn list_warehouses(&self, tenant_id: &ataqu_kernel::TenantId) -> Result<Vec<ataqu_domain_vault::inventory::Warehouse>, String> {
+    async fn list_warehouses(
+        &self,
+        tenant_id: &ataqu_kernel::TenantId,
+    ) -> Result<Vec<ataqu_domain_vault::inventory::Warehouse>, String> {
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             "SELECT id, tenant_id, name, location, created_at FROM vault.warehouses WHERE tenant_id = $1",
             vec![tenant_id.as_uuid().into()],
         );
-        let rows = self.db.query_all_raw(stmt).await.map_err(|e| e.to_string())?;
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
+            .map_err(|e| e.to_string())?;
         let mut whs = Vec::new();
         for row in rows {
-            let created_at: chrono::DateTime<chrono::Utc> = row.try_get("", "created_at").map_err(|e| e.to_string())?;
+            let created_at: chrono::DateTime<chrono::Utc> =
+                row.try_get("", "created_at").map_err(|e| e.to_string())?;
             whs.push(ataqu_domain_vault::inventory::Warehouse {
                 id: row.try_get("", "id").map_err(|e| e.to_string())?,
-                tenant_id: ataqu_kernel::TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
+                tenant_id: ataqu_kernel::TenantId::new(
+                    row.try_get("", "tenant_id").map_err(|e| e.to_string())?,
+                ),
                 name: row.try_get("", "name").map_err(|e| e.to_string())?,
                 location: row.try_get("", "location").map_err(|e| e.to_string())?,
                 created_at: created_at.into(),
@@ -331,7 +357,10 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(whs)
     }
 
-    async fn save_warehouse(&self, warehouse: &ataqu_domain_vault::inventory::Warehouse) -> Result<(), String> {
+    async fn save_warehouse(
+        &self,
+        warehouse: &ataqu_domain_vault::inventory::Warehouse,
+    ) -> Result<(), String> {
         let created_at: chrono::DateTime<chrono::Utc> = warehouse.created_at.into();
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,

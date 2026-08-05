@@ -38,13 +38,30 @@ pub trait TempoRepository: Send + Sync {
         end_bound: std::time::SystemTime,
     ) -> Result<Vec<Booking>, String>;
 
-    async fn mark_reminder_sent(&self, tenant_id: &TenantId, booking_id: &BookingId, sent_at: std::time::SystemTime) -> Result<(), String>;
+    async fn mark_reminder_sent(
+        &self,
+        tenant_id: &TenantId,
+        booking_id: &BookingId,
+        sent_at: std::time::SystemTime,
+    ) -> Result<(), String>;
 
     async fn save_event_type(&self, event_type: &EventType) -> Result<(), String>;
     async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, String>;
-    async fn find_event_type_by_slug(&self, tenant_id: &TenantId, slug: &str) -> Result<Option<EventType>, String>;
+    async fn find_event_type_by_slug(
+        &self,
+        tenant_id: &TenantId,
+        slug: &str,
+    ) -> Result<Option<EventType>, String>;
 
     async fn save_availability_slot(&self, slot: &AvailabilitySlot) -> Result<(), String>;
-    async fn list_availability_slots(&self, tenant_id: &TenantId, event_type_id: &Uuid) -> Result<Vec<AvailabilitySlot>, String>;
-    async fn delete_availability_slot(&self, tenant_id: &TenantId, slot_id: &Uuid) -> Result<(), String>;
+    async fn list_availability_slots(
+        &self,
+        tenant_id: &TenantId,
+        event_type_id: &Uuid,
+    ) -> Result<Vec<AvailabilitySlot>, String>;
+    async fn delete_availability_slot(
+        &self,
+        tenant_id: &TenantId,
+        slot_id: &Uuid,
+    ) -> Result<(), String>;
 }

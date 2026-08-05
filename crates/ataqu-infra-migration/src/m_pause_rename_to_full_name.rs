@@ -14,7 +14,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Alias::new("first_name"))
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         manager
             .alter_table(
@@ -23,7 +24,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Alias::new("last_name"))
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         // Add full_name
         manager
@@ -49,7 +51,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Employees::FullName)
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         manager
             .alter_table(
@@ -63,7 +66,8 @@ impl MigrationTrait for Migration {
                     )
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         manager
             .alter_table(

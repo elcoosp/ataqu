@@ -85,6 +85,14 @@ pub trait DialRepository: Send + Sync {
     ) -> Result<Vec<Message>, DialError>;
 
     async fn insert_reaction(&self, reaction: &Reaction) -> Result<(), DialError>;
-    async fn list_reactions_for_message(&self, tenant_id: &TenantId, message_id: &MessageId) -> Result<Vec<Reaction>, DialError>;
-    async fn delete_reaction(&self, tenant_id: &TenantId, reaction_id: &Uuid) -> Result<(), DialError>;
+    async fn list_reactions_for_message(
+        &self,
+        tenant_id: &TenantId,
+        message_id: &MessageId,
+    ) -> Result<Vec<Reaction>, DialError>;
+    async fn delete_reaction(
+        &self,
+        tenant_id: &TenantId,
+        reaction_id: &Uuid,
+    ) -> Result<(), DialError>;
 }

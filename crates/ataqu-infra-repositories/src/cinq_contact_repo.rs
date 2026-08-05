@@ -151,6 +151,7 @@ impl ContactRepository {
             lead_score: ActiveValue::Set(0),
             created_at: ActiveValue::Set(now),
             updated_at: ActiveValue::Set(now),
+            version: ActiveValue::Set(0),
         };
         model.insert(&self.db).await
     }

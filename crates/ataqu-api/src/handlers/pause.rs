@@ -168,7 +168,8 @@ pub async fn request_leave(
         end_date: req.end_date,
         reason: req.reason.clone(),
     };
-    let command_id = headers.get("Idempotency-Key")
+    let command_id = headers
+        .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
         .unwrap_or_else(Uuid::new_v4);
@@ -269,7 +270,9 @@ pub async fn approve_leave(
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
     if !auth.has_role("admin") && !auth.has_role("manager") {
-        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
     }
     let request = state
         .pause_service
@@ -285,7 +288,9 @@ pub async fn reject_leave(
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
     if !auth.has_role("admin") && !auth.has_role("manager") {
-        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
     }
     let request = state
         .pause_service
@@ -309,7 +314,9 @@ pub async fn upload_document(
     Json(payload): Json<UploadDocumentRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     if !auth.has_role("admin") && !auth.has_role("manager") {
-        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
     }
     let cmd = ataqu_domain_pause::CreateDocumentCommand {
         tenant_id: auth.tenant_id,
@@ -318,7 +325,10 @@ pub async fn upload_document(
         file_url: payload.file_url,
         doc_type: payload.doc_type,
     };
-    let doc = state.pause_service.upload_document(cmd, &*state.id_gen, &*state.clock).await
+    let doc = state
+        .pause_service
+        .upload_document(cmd, &*state.id_gen, &*state.clock)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({
         "id": doc.id,
@@ -332,14 +342,22 @@ pub async fn list_documents(
     auth: AuthContext,
     Path(employee_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let docs = state.pause_service.list_documents(auth.tenant_id, employee_id).await
+    let docs = state
+        .pause_service
+        .list_documents(auth.tenant_id, employee_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let list = docs.iter().map(|d| serde_json::json!({
-        "id": d.id,
-        "file_name": d.file_name,
-        "file_url": d.file_url,
-        "doc_type": d.doc_type,
-    })).collect();
+    let list = docs
+        .iter()
+        .map(|d| {
+            serde_json::json!({
+                "id": d.id,
+                "file_name": d.file_name,
+                "file_url": d.file_url,
+                "doc_type": d.doc_type,
+            })
+        })
+        .collect();
     Ok(Json(list))
 }
 
@@ -354,5 +372,8 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/leave-requests/:id/approve", patch(approve_leave))
         .route("/leave-requests/:id/reject", patch(reject_leave))
-        .route("/employees/:id/documents", post(upload_document).get(list_documents))
+        .route(
+            "/employees/:id/documents",
+            post(upload_document).get(list_documents),
+        )
 }

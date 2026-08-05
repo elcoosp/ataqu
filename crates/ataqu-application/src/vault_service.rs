@@ -89,7 +89,9 @@ impl VaultService {
 
     pub async fn create_product(&self, cmd: CreateProductCommand) -> VaultResult<Product> {
         if cmd.name.trim().is_empty() {
-            return Err(VaultServiceError::Validation("Name cannot be empty".to_string()));
+            return Err(VaultServiceError::Validation(
+                "Name cannot be empty".to_string(),
+            ));
         }
         let id = self.id_gen.new_uuid_v7();
         let product = Product::new(
@@ -154,13 +156,19 @@ impl VaultService {
 
     pub async fn create_variant(&self, cmd: CreateVariantCommand) -> VaultResult<Variant> {
         if cmd.sku.trim().is_empty() {
-            return Err(VaultServiceError::Validation("SKU cannot be empty".to_string()));
+            return Err(VaultServiceError::Validation(
+                "SKU cannot be empty".to_string(),
+            ));
         }
         if cmd.initial_stock < 0 {
-            return Err(VaultServiceError::Validation("Initial stock cannot be negative".to_string()));
+            return Err(VaultServiceError::Validation(
+                "Initial stock cannot be negative".to_string(),
+            ));
         }
         if cmd.price < 0 {
-            return Err(VaultServiceError::Validation("Price cannot be negative".to_string()));
+            return Err(VaultServiceError::Validation(
+                "Price cannot be negative".to_string(),
+            ));
         }
         let _ = self.get_product(cmd.tenant_id, cmd.product_id).await?;
         let id = self.id_gen.new_uuid_v7();
@@ -219,7 +227,10 @@ impl VaultService {
             self.id_gen.as_ref(),
             self.clock.as_ref(),
         );
-        self.repo.save_movement(&movement).await.map_err(VaultServiceError::Repository)?;
+        self.repo
+            .save_movement(&movement)
+            .await
+            .map_err(VaultServiceError::Repository)?;
 
         if new_variant.stock_quantity <= 5 {
             let payload = serde_json::json!({
@@ -251,14 +262,23 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn find_low_stock_variants(&self, tenant_id: TenantId, threshold: i64) -> VaultResult<Vec<Variant>> {
+    pub async fn find_low_stock_variants(
+        &self,
+        tenant_id: TenantId,
+        threshold: i64,
+    ) -> VaultResult<Vec<Variant>> {
         self.repo
             .find_low_stock_variants(&tenant_id, threshold)
             .await
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn create_warehouse(&self, tenant_id: TenantId, name: String, location: Option<String>) -> VaultResult<ataqu_domain_vault::inventory::Warehouse> {
+    pub async fn create_warehouse(
+        &self,
+        tenant_id: TenantId,
+        name: String,
+        location: Option<String>,
+    ) -> VaultResult<ataqu_domain_vault::inventory::Warehouse> {
         let warehouse = ataqu_domain_vault::inventory::Warehouse {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,
@@ -266,22 +286,38 @@ impl VaultService {
             location,
             created_at: self.clock.now(),
         };
-        self.repo.save_warehouse(&warehouse).await.map_err(VaultServiceError::Repository)?;
+        self.repo
+            .save_warehouse(&warehouse)
+            .await
+            .map_err(VaultServiceError::Repository)?;
         Ok(warehouse)
     }
 
-    pub async fn list_warehouses(&self, tenant_id: TenantId) -> VaultResult<Vec<ataqu_domain_vault::inventory::Warehouse>> {
-        self.repo.list_warehouses(&tenant_id).await.map_err(VaultServiceError::Repository)
+    pub async fn list_warehouses(
+        &self,
+        tenant_id: TenantId,
+    ) -> VaultResult<Vec<ataqu_domain_vault::inventory::Warehouse>> {
+        self.repo
+            .list_warehouses(&tenant_id)
+            .await
+            .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn reserve_stock(&self, tenant_id: TenantId, variant_id: Uuid, quantity: i64) -> VaultResult<Variant> {
+    pub async fn reserve_stock(
+        &self,
+        tenant_id: TenantId,
+        variant_id: Uuid,
+        quantity: i64,
+    ) -> VaultResult<Variant> {
         let variant = self.get_variant(tenant_id, variant_id).await?;
         if variant.available() < quantity {
-            return Err(VaultServiceError::Stock(ataqu_domain_vault::inventory::StockError::InsufficientStock {
-                variant_id,
-                available: variant.available(),
-                requested: quantity,
-            }));
+            return Err(VaultServiceError::Stock(
+                ataqu_domain_vault::inventory::StockError::InsufficientStock {
+                    variant_id,
+                    available: variant.available(),
+                    requested: quantity,
+                },
+            ));
         }
 
         let reservation = ataqu_domain_vault::stock::create_reservation(
@@ -294,12 +330,18 @@ impl VaultService {
             self.id_gen.as_ref(),
             self.clock.as_ref(),
         );
-        self.repo.save_reservation(&reservation).await.map_err(VaultServiceError::Repository)?;
+        self.repo
+            .save_reservation(&reservation)
+            .await
+            .map_err(VaultServiceError::Repository)?;
 
         let mut new_variant = variant.clone();
         new_variant.reserved_quantity += quantity;
         new_variant.updated_at = self.clock.now();
-        self.repo.save_variant(&new_variant).await.map_err(VaultServiceError::Repository)?;
+        self.repo
+            .save_variant(&new_variant)
+            .await
+            .map_err(VaultServiceError::Repository)?;
         Ok(new_variant)
     }
 }

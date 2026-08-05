@@ -117,7 +117,6 @@ pub enum StockError {
     },
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Warehouse {
     pub id: Uuid,

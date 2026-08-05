@@ -19,7 +19,11 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
                     .col(ColumnDef::new(Alias::new("name")).text().not_null())
-                    .col(ColumnDef::new(Alias::new("config")).json_binary().not_null())
+                    .col(
+                        ColumnDef::new(Alias::new("config"))
+                            .json_binary()
+                            .not_null(),
+                    )
                     .col(
                         ColumnDef::new(Alias::new("created_at"))
                             .timestamp_with_time_zone()

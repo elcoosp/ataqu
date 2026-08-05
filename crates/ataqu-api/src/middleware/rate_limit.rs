@@ -26,7 +26,10 @@ impl RateLimiter {
 
     pub fn check(&self, key: &str) -> bool {
         let now = Instant::now();
-        let mut entry = self.requests.entry(key.to_string()).or_insert_with(Vec::new);
+        let mut entry = self
+            .requests
+            .entry(key.to_string())
+            .or_insert_with(Vec::new);
         entry.retain(|t| now.duration_since(*t) < self.window);
         if entry.len() >= self.max_requests {
             false
@@ -44,10 +47,13 @@ pub async fn rate_limit_middleware(
 ) -> Result<Response, StatusCode> {
     // Try to extract tenant_id from extension (set by auth middleware)
     // If not present, fall back to IP.
-    let key = req.extensions().get::<crate::middleware::AuthContext>()
+    let key = req
+        .extensions()
+        .get::<crate::middleware::AuthContext>()
         .map(|auth| format!("tenant:{}", auth.tenant_id.as_uuid()))
         .or_else(|| {
-            req.headers().get("x-forwarded-for")
+            req.headers()
+                .get("x-forwarded-for")
                 .and_then(|v| v.to_str().ok())
                 .map(|s| format!("ip:{}", s))
         })

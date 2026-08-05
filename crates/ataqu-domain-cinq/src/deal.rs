@@ -194,5 +194,7 @@ mod tests {
 }
 
 impl ataqu_kernel::Identifiable for Deal {
-    fn id(&self) -> uuid::Uuid { self.id }
+    fn id(&self) -> uuid::Uuid {
+        self.id
+    }
 }

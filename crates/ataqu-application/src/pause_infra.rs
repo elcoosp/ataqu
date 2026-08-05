@@ -5,10 +5,10 @@ use serde_json::Value;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::pause_service::{
-    IdempotencyGuardHandle, IdempotencyPort, PauseServiceError,
+use crate::pause_service::{IdempotencyGuardHandle, IdempotencyPort, PauseServiceError};
+use ataqu_infra_idempotency::{
+    CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore, guard::split_uuid_to_int4_pair,
 };
-use ataqu_infra_idempotency::{CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore, guard::split_uuid_to_int4_pair};
 
 /// Real Idempotency using the idempotency infrastructure crate (without advisory locks for simplicity)
 pub struct RealIdempotency {
@@ -41,7 +41,9 @@ impl IdempotencyPort for RealIdempotency {
             "SELECT pg_advisory_xact_lock($1::int4, $2::int4)",
             vec![key1.into(), key2.into()],
         );
-        txn.execute_raw(lock_stmt).await.map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+        txn.execute_raw(lock_stmt)
+            .await
+            .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
 
         // Try to get existing record
         let record = store
@@ -165,10 +167,7 @@ impl crate::outbox::Outbox for RealOutbox {
                 payload.clone().into(),
             ],
         );
-        self.db
-            .execute_raw(stmt)
-            .await
-            .map_err(|e| e.to_string())?;
+        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
         // Notify the dispatcher
         let notify = Statement::from_sql_and_values(
             DbBackend::Postgres,

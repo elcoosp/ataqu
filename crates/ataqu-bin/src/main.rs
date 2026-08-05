@@ -3,15 +3,16 @@
 //! and sets up idempotency middleware.
 
 use dotenvy::dotenv;
+use metrics_exporter_prometheus::PrometheusBuilder;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::info;
-use tracing_subscriber::EnvFilter;
 use tracing_appender::non_blocking;
 use tracing_appender::rolling;
+use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
 use ataqu_api::{AppState, create_router};
@@ -25,12 +26,10 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
-use ataqu_kernel::{TenantId, SystemIdGenerator, SystemClock};
+use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
-
-
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -68,7 +67,9 @@ async fn main() -> anyhow::Result<()> {
     // AEGIS
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
-    let aegis_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let aegis_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
     let aegis_domain = Arc::new(RealAegisDomain);
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
@@ -81,14 +82,17 @@ async fn main() -> anyhow::Result<()> {
 
     // CINQ
     use ataqu_infra_repositories::cinq_repo_impl::{
-        CinqActivityRepository, CinqContactRepository, CinqDealRepository, CinqPipelineStageRepository, CinqTaskRepository,
+        CinqActivityRepository, CinqContactRepository, CinqDealRepository,
+        CinqPipelineStageRepository, CinqTaskRepository,
     };
     let contact_repo = Arc::new(CinqContactRepository::new(pools.core.clone()));
     let deal_repo = Arc::new(CinqDealRepository::new(pools.core.clone()));
     let activity_repo = Arc::new(CinqActivityRepository::new(pools.core.clone()));
     let task_repo = Arc::new(CinqTaskRepository::new(pools.core.clone()));
     let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.core.clone()));
-    let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
     let cinq_service = Arc::new(CinqService::new(
         contact_repo,
         deal_repo,
@@ -104,7 +108,9 @@ async fn main() -> anyhow::Result<()> {
     use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.core.clone()));
-    let dial_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let dial_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
     let dial_service = Arc::new(DialService::new(
         dial_repo,
         dial_presence,
@@ -115,13 +121,16 @@ async fn main() -> anyhow::Result<()> {
 
     // PIVOT
     use ataqu_infra_repositories::pivot_repo_impl::{
-        PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository, PivotRelationRepository,
+        PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository,
+        PivotRelationRepository,
     };
     let pivot_doc_repo = Arc::new(PivotDocumentRepository::new(pools.core.clone()));
     let pivot_db_repo = Arc::new(PivotDatabaseRepository::new(pools.core.clone()));
     let pivot_block_repo = Arc::new(PivotBlockRepository::new(pools.core.clone()));
     let pivot_rel_repo = Arc::new(PivotRelationRepository::new(pools.core.clone()));
-    let pivot_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let pivot_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
     let pivot_service = Arc::new(PivotService::new(
         pivot_doc_repo,
         pivot_db_repo,
@@ -135,14 +144,28 @@ async fn main() -> anyhow::Result<()> {
     // SOND
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
-    let sond_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
-    let sond_service = Arc::new(SondService::new(sond_repo, sond_outbox, id_gen.clone(), clock.clone()));
+    let sond_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
+    let sond_service = Arc::new(SondService::new(
+        sond_repo,
+        sond_outbox,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.core.clone()));
-    let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
-    let vault_service = Arc::new(VaultService::new(vault_repo, vault_outbox, id_gen.clone(), clock.clone()));
+    let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
+    let vault_service = Arc::new(VaultService::new(
+        vault_repo,
+        vault_outbox,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
@@ -154,13 +177,13 @@ async fn main() -> anyhow::Result<()> {
     let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.core.clone()));
 
     // SPARK Action Dispatcher
-    use ataqu_application::spark_service::ActionDispatcher;
-    use ataqu_domain_spark::Action;
-    use ataqu_application::cinq_service::{CreateContactCommand, CreateActivityCommand};
+    use ataqu_application::cinq_service::{CreateActivityCommand, CreateContactCommand};
     use ataqu_application::dial_service::{CreateChannelCommand, SendMessageCommand};
+    use ataqu_application::spark_service::ActionDispatcher;
     use ataqu_application::vault_service::UpdateStockCommand;
     use ataqu_domain_cinq::activity::ActivityType;
     use ataqu_domain_dial::chat::ChannelType;
+    use ataqu_domain_spark::Action;
     use ataqu_security::{Email, PhoneNumber};
 
     struct AtaquActionDispatcher {
@@ -173,41 +196,61 @@ async fn main() -> anyhow::Result<()> {
     impl ActionDispatcher for AtaquActionDispatcher {
         async fn dispatch(&self, action: &Action, tenant_id: &TenantId) -> Result<(), String> {
             match action {
-                Action::CreateDialChannel { name, channel_type, participants } => {
+                Action::CreateDialChannel {
+                    name,
+                    channel_type,
+                    participants,
+                } => {
                     let ct = match channel_type.as_str() {
                         "public" => ChannelType::Public,
                         "private" => ChannelType::Private,
                         "dm" => ChannelType::DirectMessage,
                         _ => ChannelType::Public,
                     };
-                    self.dial_service.create_channel(CreateChannelCommand {
-                        tenant_id: *tenant_id,
-                        name: name.clone(),
-                        channel_type: ct,
-                        created_by: Uuid::nil(),
-                        participants: participants.clone(),
-                    }).await.map_err(|e| e.to_string())?;
+                    self.dial_service
+                        .create_channel(CreateChannelCommand {
+                            tenant_id: *tenant_id,
+                            name: name.clone(),
+                            channel_type: ct,
+                            created_by: Uuid::nil(),
+                            participants: participants.clone(),
+                        })
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
-                Action::SendDialMessage { channel_id, content } => {
-                    self.dial_service.send_message(SendMessageCommand {
-                        tenant_id: *tenant_id,
-                        channel_id: *channel_id,
-                        thread_id: None,
-                        author_id: Uuid::nil(),
-                        content: content.clone(),
-                    }).await.map_err(|e| e.to_string())?;
+                Action::SendDialMessage {
+                    channel_id,
+                    content,
+                } => {
+                    self.dial_service
+                        .send_message(SendMessageCommand {
+                            tenant_id: *tenant_id,
+                            channel_id: *channel_id,
+                            thread_id: None,
+                            author_id: Uuid::nil(),
+                            content: content.clone(),
+                        })
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
                 Action::CreateCinqContact { name, email, phone } => {
-                    self.cinq_service.create_contact(CreateContactCommand {
-                        tenant_id: *tenant_id,
-                        name: name.clone(),
-                        email: Email::new(email.clone()),
-                        phone: phone.clone().map(PhoneNumber::new),
-                        custom_fields: serde_json::Value::Null,
-                        lead_score: None,
-                    }).await.map_err(|e| e.to_string())?;
+                    self.cinq_service
+                        .create_contact(CreateContactCommand {
+                            tenant_id: *tenant_id,
+                            name: name.clone(),
+                            email: Email::new(email.clone()),
+                            phone: phone.clone().map(PhoneNumber::new),
+                            custom_fields: serde_json::Value::Null,
+                            lead_score: None,
+                        })
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
-                Action::CreateCinqActivity { contact_id, activity_type, description } => {
+                Action::CreateCinqActivity {
+                    contact_id,
+                    activity_type,
+                    description,
+                } => {
                     let act_type = match activity_type.as_str() {
                         "call" => ActivityType::Call,
                         "email" => ActivityType::Email,
@@ -215,36 +258,59 @@ async fn main() -> anyhow::Result<()> {
                         "task" => ActivityType::Task,
                         _ => ActivityType::Note,
                     };
-                    self.cinq_service.create_activity(CreateActivityCommand {
-                        tenant_id: *tenant_id,
-                        contact_id: *contact_id,
-                        deal_id: None,
-                        activity_type: act_type,
-                        description: description.clone(),
-                        scheduled_at: None,
-                    }).await.map_err(|e| e.to_string())?;
+                    self.cinq_service
+                        .create_activity(CreateActivityCommand {
+                            tenant_id: *tenant_id,
+                            contact_id: *contact_id,
+                            deal_id: None,
+                            activity_type: act_type,
+                            description: description.clone(),
+                            scheduled_at: None,
+                        })
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
-                Action::AdjustVaultStock { variant_id, delta, reason } => {
-                    self.vault_service.update_stock(UpdateStockCommand {
-                        tenant_id: *tenant_id,
-                        variant_id: *variant_id,
-                        delta: *delta,
-                        reason: reason.clone(),
-                        reference: None,
-                    }).await.map_err(|e| e.to_string())?;
+                Action::AdjustVaultStock {
+                    variant_id,
+                    delta,
+                    reason,
+                } => {
+                    self.vault_service
+                        .update_stock(UpdateStockCommand {
+                            tenant_id: *tenant_id,
+                            variant_id: *variant_id,
+                            delta: *delta,
+                            reason: reason.clone(),
+                            reference: None,
+                        })
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
-                Action::ReserveVaultStock { variant_id, quantity } => {
-                    self.vault_service.reserve_stock(*tenant_id, *variant_id, *quantity).await.map_err(|e| e.to_string())?;
+                Action::ReserveVaultStock {
+                    variant_id,
+                    quantity,
+                } => {
+                    self.vault_service
+                        .reserve_stock(*tenant_id, *variant_id, *quantity)
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
-                Action::CreateCinqLead { name, email, source } => {
-                    self.cinq_service.create_contact(CreateContactCommand {
-                        tenant_id: *tenant_id,
-                        name: name.clone(),
-                        email: Email::new(email.clone()),
-                        phone: None,
-                        custom_fields: serde_json::json!({ "source": source }),
-                        lead_score: None,
-                    }).await.map_err(|e| e.to_string())?;
+                Action::CreateCinqLead {
+                    name,
+                    email,
+                    source,
+                } => {
+                    self.cinq_service
+                        .create_contact(CreateContactCommand {
+                            tenant_id: *tenant_id,
+                            name: name.clone(),
+                            email: Email::new(email.clone()),
+                            phone: None,
+                            custom_fields: serde_json::json!({ "source": source }),
+                            lead_score: None,
+                        })
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
                 _ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
@@ -260,13 +326,25 @@ async fn main() -> anyhow::Result<()> {
         vault_service: vault_service.clone(),
     });
 
-    let spark_service = Arc::new(SparkService::new(spark_repo.clone(), action_dispatcher, id_gen.clone(), clock.clone()));
+    let spark_service = Arc::new(SparkService::new(
+        spark_repo.clone(),
+        action_dispatcher,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // TEMPO
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
-    let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
-    let tempo_service = Arc::new(TempoService::new(tempo_repo, tempo_outbox, id_gen.clone(), clock.clone()));
+    let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
+    let tempo_service = Arc::new(TempoService::new(
+        tempo_repo,
+        tempo_outbox,
+        id_gen.clone(),
+        clock.clone(),
+    ));
 
     // PAUSE
     use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
@@ -285,11 +363,12 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // Email tracking writer
-    let (email_writer, email_tracking_tx) = ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
-        pools.core.clone(),
-        std::path::PathBuf::from("/tmp/ataqu_email_spill"),
-        100 * 1024 * 1024,
-    );
+    let (email_writer, email_tracking_tx) =
+        ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
+            pools.core.clone(),
+            std::path::PathBuf::from("/tmp/ataqu_email_spill"),
+            100 * 1024 * 1024,
+        );
     tokio::spawn(async move {
         if let Err(e) = email_writer.run().await {
             tracing::error!("Email tracking writer crashed: {}", e);
@@ -302,10 +381,15 @@ async fn main() -> anyhow::Result<()> {
     let spark_service_for_cron = spark_service.clone();
     // let _spark_service_for_outbox = spark_service.clone();
 
+    let metrics_handle = metrics_exporter_prometheus::PrometheusBuilder::new()
+        .install_recorder()
+        .expect("failed to install Prometheus recorder");
+
     // Build AppState
     use dashmap::DashMap;
     let ws_registry = Arc::new(DashMap::new());
-    let rate_limiter = ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
+    let rate_limiter =
+        ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let cinq_service_for_outbox = cinq_service.clone();
@@ -328,11 +412,18 @@ async fn main() -> anyhow::Result<()> {
         ws_registry,
         email_tracking_tx,
         rate_limiter,
+        metrics_handle,
     };
 
     let cors = tower_http::cors::CorsLayer::new()
         .allow_origin(tower_http::cors::Any)
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::DELETE, axum::http::Method::PATCH])
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::DELETE,
+            axum::http::Method::PATCH,
+        ])
         .allow_headers(tower_http::cors::Any);
     let app = create_router(state)
         .layer(TraceLayer::new_for_http())
@@ -364,15 +455,32 @@ async fn main() -> anyhow::Result<()> {
                     // Native cross-app integrations
                     match (event.schema.as_str(), event.event_type.as_str()) {
                         ("tempo", "BookingCreated") => {
-                            let contact_id = event.payload.get("contact_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                            let contact_id = event
+                                .payload
+                                .get("contact_id")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| Uuid::parse_str(s).ok());
                             if let Some(cid) = contact_id {
                                 let cmd = ataqu_application::cinq_service::CreateActivityCommand {
-                                    tenant_id: ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()),
+                                    tenant_id: ataqu_kernel::TenantId::new(
+                                        event
+                                            .payload
+                                            .get("tenant_id")
+                                            .and_then(|v| v.as_str())
+                                            .and_then(|s| Uuid::parse_str(s).ok())
+                                            .unwrap_or_default(),
+                                    ),
                                     contact_id: cid,
                                     deal_id: None,
-                                    activity_type: ataqu_domain_cinq::activity::ActivityType::Meeting,
+                                    activity_type:
+                                        ataqu_domain_cinq::activity::ActivityType::Meeting,
                                     description: "Meeting booked via TEMPO".to_string(),
-                                    scheduled_at: event.payload.get("starts_at").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|dt| dt.with_timezone(&chrono::Utc)),
+                                    scheduled_at: event
+                                        .payload
+                                        .get("starts_at")
+                                        .and_then(|v| v.as_str())
+                                        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+                                        .map(|dt| dt.with_timezone(&chrono::Utc)),
                                 };
                                 if let Err(e) = cinq.create_activity(cmd).await {
                                     tracing::error!(error = %e, "TEMPO -> CINQ activity creation failed");
@@ -380,11 +488,27 @@ async fn main() -> anyhow::Result<()> {
                             }
                         }
                         ("sond", "ResponseSubmitted") => {
-                            let email = event.payload.get("email").and_then(|v| v.as_str()).map(String::from);
-                            let name = event.payload.get("name").and_then(|v| v.as_str()).map(String::from).unwrap_or_else(|| "Form Lead".to_string());
+                            let email = event
+                                .payload
+                                .get("email")
+                                .and_then(|v| v.as_str())
+                                .map(String::from);
+                            let name = event
+                                .payload
+                                .get("name")
+                                .and_then(|v| v.as_str())
+                                .map(String::from)
+                                .unwrap_or_else(|| "Form Lead".to_string());
                             if let Some(em) = email {
                                 let cmd = ataqu_application::cinq_service::CreateContactCommand {
-                                    tenant_id: ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()),
+                                    tenant_id: ataqu_kernel::TenantId::new(
+                                        event
+                                            .payload
+                                            .get("tenant_id")
+                                            .and_then(|v| v.as_str())
+                                            .and_then(|s| Uuid::parse_str(s).ok())
+                                            .unwrap_or_default(),
+                                    ),
                                     name,
                                     email: ataqu_security::Email::new(em),
                                     phone: None,
@@ -397,17 +521,40 @@ async fn main() -> anyhow::Result<()> {
                             }
                         }
                         ("vault", "LowStockAlert") => {
-                            let variant_id = event.payload.get("variant_id").and_then(|v| v.as_str()).map(String::from);
-                            let sku = event.payload.get("sku").and_then(|v| v.as_str()).map(String::from);
-                            let channel_id = event.payload.get("alert_channel_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                            let variant_id = event
+                                .payload
+                                .get("variant_id")
+                                .and_then(|v| v.as_str())
+                                .map(String::from);
+                            let sku = event
+                                .payload
+                                .get("sku")
+                                .and_then(|v| v.as_str())
+                                .map(String::from);
+                            let channel_id = event
+                                .payload
+                                .get("alert_channel_id")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| Uuid::parse_str(s).ok());
 
-                            if let (Some(v_id), Some(s), Some(c_id)) = (variant_id, sku, channel_id) {
+                            if let (Some(v_id), Some(s), Some(c_id)) = (variant_id, sku, channel_id)
+                            {
                                 let cmd = ataqu_application::dial_service::SendMessageCommand {
-                                    tenant_id: ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()),
+                                    tenant_id: ataqu_kernel::TenantId::new(
+                                        event
+                                            .payload
+                                            .get("tenant_id")
+                                            .and_then(|v| v.as_str())
+                                            .and_then(|s| Uuid::parse_str(s).ok())
+                                            .unwrap_or_default(),
+                                    ),
                                     channel_id: c_id,
                                     thread_id: None,
                                     author_id: Uuid::nil(),
-                                    content: format!("⚠️ Low Stock Alert: Variant {} (SKU: {}) is running low!", v_id, s),
+                                    content: format!(
+                                        "⚠️ Low Stock Alert: Variant {} (SKU: {}) is running low!",
+                                        v_id, s
+                                    ),
                                 };
                                 if let Err(e) = dial.send_message(cmd).await {
                                     tracing::error!(error = %e, "VAULT -> DIAL alert failed");
@@ -415,10 +562,28 @@ async fn main() -> anyhow::Result<()> {
                             }
                         }
                         ("collab_crm", "DealWon") => {
-                            let variant_id = event.payload.get("variant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                            let variant_id = event
+                                .payload
+                                .get("variant_id")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| Uuid::parse_str(s).ok());
                             let quantity = event.payload.get("quantity").and_then(|v| v.as_i64());
                             if let (Some(v_id), Some(q)) = (variant_id, quantity) {
-                                if let Err(e) = vault.reserve_stock(ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()), v_id, q).await {
+                                if let Err(e) = vault
+                                    .reserve_stock(
+                                        ataqu_kernel::TenantId::new(
+                                            event
+                                                .payload
+                                                .get("tenant_id")
+                                                .and_then(|v| v.as_str())
+                                                .and_then(|s| Uuid::parse_str(s).ok())
+                                                .unwrap_or_default(),
+                                        ),
+                                        v_id,
+                                        q,
+                                    )
+                                    .await
+                                {
                                     tracing::error!(error = %e, "CRM DealWon -> VAULT reserve stock failed");
                                 }
                             }
@@ -452,7 +617,10 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(300)).await;
-            let tenants = aegis_service_for_noshow.list_tenants().await.unwrap_or_default();
+            let tenants = aegis_service_for_noshow
+                .list_tenants()
+                .await
+                .unwrap_or_default();
             for tid in tenants {
                 let tenant_id = TenantId::new(tid);
                 if let Err(e) = tempo_service_for_noshow.no_show_worker(tenant_id).await {
@@ -466,7 +634,10 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
-            let tenants = aegis_service_for_reminder.list_tenants().await.unwrap_or_default();
+            let tenants = aegis_service_for_reminder
+                .list_tenants()
+                .await
+                .unwrap_or_default();
             for tid in tenants {
                 let tenant_id = TenantId::new(tid);
                 if let Err(e) = tempo_service_for_reminder.reminder_worker(tenant_id).await {

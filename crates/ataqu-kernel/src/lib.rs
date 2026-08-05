@@ -1,12 +1,16 @@
-pub use uuid::Uuid;
 use std::time::SystemTime;
+pub use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct TenantId(Uuid);
 
 impl TenantId {
-    pub fn new(uuid: Uuid) -> Self { Self(uuid) }
-    pub fn as_uuid(&self) -> Uuid { self.0 }
+    pub fn new(uuid: Uuid) -> Self {
+        Self(uuid)
+    }
+    pub fn as_uuid(&self) -> Uuid {
+        self.0
+    }
 }
 
 pub trait IdGenerator: Send + Sync {
@@ -19,12 +23,16 @@ pub trait Clock: Send + Sync {
 
 pub struct SystemIdGenerator;
 impl IdGenerator for SystemIdGenerator {
-    fn new_uuid_v7(&self) -> Uuid { Uuid::now_v7() }
+    fn new_uuid_v7(&self) -> Uuid {
+        Uuid::now_v7()
+    }
 }
 
 pub struct SystemClock;
 impl Clock for SystemClock {
-    fn now(&self) -> SystemTime { SystemTime::now() }
+    fn now(&self) -> SystemTime {
+        SystemTime::now()
+    }
 }
 
 pub trait Identifiable {

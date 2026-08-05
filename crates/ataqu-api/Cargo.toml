@@ -39,6 +39,9 @@ sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio
 csv = "1.3"
 rand = "0.8.5"
 dashmap = "6.0.1"
+lazy_static = "1.4"
+moka = { version = "0.12", features = ["sync"] }
+metrics-exporter-prometheus = "0.15"
 
 [dev-dependencies]
 mockall = "0.15.0"

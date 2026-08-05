@@ -81,7 +81,11 @@ pub async fn list_forms(
 ) -> ApiResult<Json<Vec<FormResponse>>> {
     let forms = state
         .sond_service
-        .list_forms(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_forms(
+            auth.tenant_id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(forms.into_iter().map(|f| f.into()).collect()))
@@ -120,7 +124,10 @@ pub async fn update_form(
         questions: payload.questions,
     };
 
-    let updated_form = state.sond_service.update_form(auth.tenant_id, cmd).await
+    let updated_form = state
+        .sond_service
+        .update_form(auth.tenant_id, cmd)
+        .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(updated_form.into()))
 }
@@ -130,7 +137,10 @@ pub async fn delete_form(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.sond_service.delete_form(auth.tenant_id, id).await
+    state
+        .sond_service
+        .delete_form(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -198,7 +208,12 @@ pub struct PaginationParams {
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form).get(list_forms))
-        .route("/forms/:id", axum::routing::get(get_form).put(update_form).delete(delete_form))
+        .route(
+            "/forms/:id",
+            axum::routing::get(get_form)
+                .put(update_form)
+                .delete(delete_form),
+        )
         .route("/forms/:id/submit", axum::routing::post(submit_form))
         .route("/forms/:id/export", axum::routing::get(export_responses))
 }

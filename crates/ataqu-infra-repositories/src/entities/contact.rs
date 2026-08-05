@@ -1,20 +1,20 @@
+use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
-use serde_json::Value as JsonValue;
-use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "contacts", schema_name = "collab_crm")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key)]
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub name: String,
     pub email: Option<String>,
     pub phone: Option<String>,
-    pub custom_fields: JsonValue,
+    pub custom_fields: Json,
     pub lead_score: i32,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

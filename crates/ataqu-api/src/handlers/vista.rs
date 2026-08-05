@@ -1,6 +1,10 @@
-use axum::{Router, extract::{Path, State}, response::Json};
+use axum::{
+    Router,
+    extract::{Path, State},
+    response::Json,
+};
 use chrono::{DateTime, Utc};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -65,7 +69,10 @@ pub async fn create_dashboard(
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
-    state.vista_service.save_dashboard(&dashboard).await
+    state
+        .vista_service
+        .save_dashboard(&dashboard)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({ "id": dashboard.id })))
 }
@@ -74,15 +81,23 @@ pub async fn list_dashboards(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let dashboards = state.vista_service.list_dashboards(auth.tenant_id).await
+    let dashboards = state
+        .vista_service
+        .list_dashboards(auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let resp = dashboards.into_iter().map(|d| serde_json::json!({
-        "id": d.id,
-        "name": d.name,
-        "config": d.config,
-        "created_at": d.created_at,
-        "updated_at": d.updated_at,
-    })).collect();
+    let resp = dashboards
+        .into_iter()
+        .map(|d| {
+            serde_json::json!({
+                "id": d.id,
+                "name": d.name,
+                "config": d.config,
+                "created_at": d.created_at,
+                "updated_at": d.updated_at,
+            })
+        })
+        .collect();
     Ok(Json(resp))
 }
 
@@ -91,7 +106,10 @@ pub async fn delete_dashboard(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<axum::http::StatusCode> {
-    state.vista_service.delete_dashboard(auth.tenant_id, id).await
+    state
+        .vista_service
+        .delete_dashboard(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -107,7 +125,9 @@ pub async fn execute_raw_sql(
     Json(payload): Json<RawSqlRequest>,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
     let results = state
         .vista_service
@@ -120,7 +140,10 @@ pub async fn execute_raw_sql(
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/kpis", axum::routing::get(get_kpis))
-        .route("/dashboards", axum::routing::post(create_dashboard).get(list_dashboards))
+        .route(
+            "/dashboards",
+            axum::routing::post(create_dashboard).get(list_dashboards),
+        )
         .route("/dashboards/:id", axum::routing::delete(delete_dashboard))
         .route("/raw-sql", axum::routing::post(execute_raw_sql))
 }

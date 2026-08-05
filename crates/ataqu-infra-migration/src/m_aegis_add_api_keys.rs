@@ -20,7 +20,12 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
                     .col(ColumnDef::new(Alias::new("user_id")).uuid().not_null())
                     .col(ColumnDef::new(Alias::new("name")).text().not_null())
-                    .col(ColumnDef::new(Alias::new("key_hash")).text().not_null().unique_key())
+                    .col(
+                        ColumnDef::new(Alias::new("key_hash"))
+                            .text()
+                            .not_null()
+                            .unique_key(),
+                    )
                     .col(ColumnDef::new(Alias::new("prefix")).text().not_null())
                     .col(ColumnDef::new(Alias::new("last_used_at")).timestamp_with_time_zone())
                     .col(ColumnDef::new(Alias::new("expires_at")).timestamp_with_time_zone())

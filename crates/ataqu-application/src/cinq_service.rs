@@ -47,6 +47,7 @@ pub struct UpdateContactCommand {
     pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<serde_json::Value>,
     pub lead_score: Option<i32>,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -127,7 +128,7 @@ impl CinqService {
         contact_repo: Arc<dyn ContactRepository + Send + Sync>,
         deal_repo: Arc<dyn DealRepository + Send + Sync>,
         activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
-    task_repo: Arc<dyn ataqu_domain_cinq::repository::TaskRepository + Send + Sync>,
+        task_repo: Arc<dyn ataqu_domain_cinq::repository::TaskRepository + Send + Sync>,
         stage_repo: Arc<dyn PipelineStageRepository + Send + Sync>,
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
@@ -155,7 +156,8 @@ impl CinqService {
             custom_fields: cmd.custom_fields.clone(),
             lead_score: cmd.lead_score,
         };
-        let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
+        let event =
+            contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
         let contact = Contact {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -166,6 +168,7 @@ impl CinqService {
             lead_score: event.lead_score,
             created_at: event.created_at,
             updated_at: event.created_at,
+            version: 0,
         };
         self.contact_repo.save_contact(&contact).await?;
 
@@ -190,6 +193,15 @@ impl CinqService {
             .find_contact_by_id(&cmd.tenant_id, cmd.id)
             .await?
             .ok_or(CinqServiceError::ContactNotFound)?;
+
+        // ADR-005: Optimistic Concurrency Control
+        if contact.version != cmd.expected_version {
+            return Err(CinqServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, contact.version
+            )));
+        }
+
         let domain_cmd = DomainUpdateContact {
             id: cmd.id,
             tenant_id: cmd.tenant_id,
@@ -198,6 +210,7 @@ impl CinqService {
             phone: cmd.phone,
             custom_fields: cmd.custom_fields,
             lead_score: cmd.lead_score,
+            expected_version: cmd.expected_version,
         };
         let event = contact_domain::update_contact(domain_cmd, self.clock.as_ref());
         if let Some(name) = event.name {
@@ -216,6 +229,7 @@ impl CinqService {
             contact.lead_score = lead_score;
         }
         contact.updated_at = event.updated_at;
+        contact.version += 1;
         self.contact_repo.save_contact(&contact).await?;
         Ok(contact)
     }
@@ -302,9 +316,24 @@ impl CinqService {
         let mut seen_emails = std::collections::HashSet::new();
 
         for row in rows {
-            let name = row.get("name").or_else(|| row.get("Name")).or_else(|| row.get("NAME")).cloned().unwrap_or_default();
-            let email_str = row.get("email").or_else(|| row.get("Email")).or_else(|| row.get("EMAIL")).cloned().unwrap_or_default();
-            let phone_str = row.get("phone").or_else(|| row.get("Phone")).or_else(|| row.get("PHONE")).cloned().unwrap_or_default();
+            let name = row
+                .get("name")
+                .or_else(|| row.get("Name"))
+                .or_else(|| row.get("NAME"))
+                .cloned()
+                .unwrap_or_default();
+            let email_str = row
+                .get("email")
+                .or_else(|| row.get("Email"))
+                .or_else(|| row.get("EMAIL"))
+                .cloned()
+                .unwrap_or_default();
+            let phone_str = row
+                .get("phone")
+                .or_else(|| row.get("Phone"))
+                .or_else(|| row.get("PHONE"))
+                .cloned()
+                .unwrap_or_default();
 
             if name.trim().is_empty() || email_str.trim().is_empty() || !email_str.contains('@') {
                 failed += 1;
@@ -343,7 +372,10 @@ impl CinqService {
                 self.clock.as_ref(),
             ) {
                 Ok(e) => e,
-                Err(_) => { failed += 1; continue; }
+                Err(_) => {
+                    failed += 1;
+                    continue;
+                }
             };
             let contact = Contact {
                 id: event.id,
@@ -355,6 +387,7 @@ impl CinqService {
                 lead_score: event.lead_score,
                 created_at: event.created_at,
                 updated_at: event.created_at,
+                version: 0,
             };
             if self.contact_repo.save_contact(&contact).await.is_ok() {
                 inserted += 1;
@@ -385,10 +418,15 @@ impl CinqService {
                 wtr.write_record(&[
                     c.id.to_string(),
                     c.name.clone(),
-                    c.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string(),
+                    c.email
+                        .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                        .to_string(),
                     c.phone
                         .as_ref()
-                        .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string())
+                        .map(|p| {
+                            p.reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                                .to_string()
+                        })
                         .unwrap_or_default(),
                     c.created_at.to_rfc3339(),
                 ])
@@ -643,9 +681,13 @@ impl CinqService {
         Ok(())
     }
 
-    pub async fn create_task(&self, cmd: ataqu_domain_cinq::task::CreateTaskCommand) -> CinqResult<ataqu_domain_cinq::task::Task> {
-        let event = ataqu_domain_cinq::task::create_task(cmd, self.id_gen.as_ref(), self.clock.as_ref())
-            .map_err(CinqServiceError::Domain)?;
+    pub async fn create_task(
+        &self,
+        cmd: ataqu_domain_cinq::task::CreateTaskCommand,
+    ) -> CinqResult<ataqu_domain_cinq::task::Task> {
+        let event =
+            ataqu_domain_cinq::task::create_task(cmd, self.id_gen.as_ref(), self.clock.as_ref())
+                .map_err(CinqServiceError::Domain)?;
         let task = ataqu_domain_cinq::task::Task {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -663,25 +705,56 @@ impl CinqService {
         Ok(task)
     }
 
-    pub async fn get_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<ataqu_domain_cinq::task::Task> {
-        self.task_repo.find_task_by_id(&tenant_id, id).await?
+    pub async fn get_task(
+        &self,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> CinqResult<ataqu_domain_cinq::task::Task> {
+        self.task_repo
+            .find_task_by_id(&tenant_id, id)
+            .await?
             .ok_or(CinqServiceError::TaskNotFound)
     }
 
-    pub async fn list_tasks(&self, tenant_id: TenantId, limit: u64, offset: u64) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {
+    pub async fn list_tasks(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {
         Ok(self.task_repo.list_tasks(&tenant_id, limit, offset).await?)
     }
 
-    pub async fn list_tasks_for_contact(&self, tenant_id: TenantId, contact_id: Uuid, limit: u64, offset: u64) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {
-        Ok(self.task_repo.list_tasks_for_contact(&tenant_id, contact_id, limit, offset).await?)
+    pub async fn list_tasks_for_contact(
+        &self,
+        tenant_id: TenantId,
+        contact_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {
+        Ok(self
+            .task_repo
+            .list_tasks_for_contact(&tenant_id, contact_id, limit, offset)
+            .await?)
     }
 
-    pub async fn update_task(&self, cmd: ataqu_domain_cinq::task::UpdateTaskCommand) -> CinqResult<ataqu_domain_cinq::task::Task> {
+    pub async fn update_task(
+        &self,
+        cmd: ataqu_domain_cinq::task::UpdateTaskCommand,
+    ) -> CinqResult<ataqu_domain_cinq::task::Task> {
         let mut task = self.get_task(cmd.tenant_id, cmd.id).await?;
-        if let Some(title) = cmd.title { task.title = title; }
-        if let Some(desc) = cmd.description { task.description = Some(desc); }
-        if let Some(due) = cmd.due_date { task.due_date = Some(due); }
-        if let Some(status) = cmd.status { task.status = status; }
+        if let Some(title) = cmd.title {
+            task.title = title;
+        }
+        if let Some(desc) = cmd.description {
+            task.description = Some(desc);
+        }
+        if let Some(due) = cmd.due_date {
+            task.due_date = Some(due);
+        }
+        if let Some(status) = cmd.status {
+            task.status = status;
+        }
         task.updated_at = self.clock.now().into();
         self.task_repo.save_task(&task).await?;
         Ok(task)

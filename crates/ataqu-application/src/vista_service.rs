@@ -54,21 +54,33 @@ impl VistaService {
             .map_err(VistaServiceError::Repository)?;
 
         // Save specific data points for time-series charts
-        let metrics_to_log: Vec<(&str, f64)> = match (event.schema.as_str(), event.event_type.as_str()) {
-            ("collab_crm", "DealCreated") => vec![("pipeline_value", event.payload.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))],
-            ("collab_crm", "DealWon") => vec![("revenue", event.payload.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))],
-            ("collab_crm", "ContactCreated") => vec![("contacts_created", 1.0)],
-            ("vault", "ProductCreated") => vec![("products_created", 1.0)],
-            _ => vec![],
-        };
+        let metrics_to_log: Vec<(&str, f64)> =
+            match (event.schema.as_str(), event.event_type.as_str()) {
+                ("collab_crm", "DealCreated") => vec![(
+                    "pipeline_value",
+                    event
+                        .payload
+                        .get("amount")
+                        .and_then(|v| v.as_f64())
+                        .unwrap_or(0.0),
+                )],
+                ("collab_crm", "DealWon") => vec![(
+                    "revenue",
+                    event
+                        .payload
+                        .get("amount")
+                        .and_then(|v| v.as_f64())
+                        .unwrap_or(0.0),
+                )],
+                ("collab_crm", "ContactCreated") => vec![("contacts_created", 1.0)],
+                ("vault", "ProductCreated") => vec![("products_created", 1.0)],
+                _ => vec![],
+            };
 
         for (metric, value) in metrics_to_log {
-            if let Ok(point) = prepare_data_point(
-                tenant_id,
-                metric.to_string(),
-                value,
-                self.clock.as_ref(),
-            ) {
+            if let Ok(point) =
+                prepare_data_point(tenant_id, metric.to_string(), value, self.clock.as_ref())
+            {
                 self.repo
                     .save_data_point(&point)
                     .await
@@ -92,23 +104,53 @@ impl VistaService {
             .map_err(VistaServiceError::Repository)
     }
 
-    pub async fn get_data_points(&self, tenant_id: TenantId, metric: &str, limit: u64) -> VistaResult<Vec<ataqu_domain_vista::AnalyticsDataPoint>> {
-        self.repo.get_data_points(&tenant_id, metric, limit).await.map_err(VistaServiceError::Repository)
+    pub async fn get_data_points(
+        &self,
+        tenant_id: TenantId,
+        metric: &str,
+        limit: u64,
+    ) -> VistaResult<Vec<ataqu_domain_vista::AnalyticsDataPoint>> {
+        self.repo
+            .get_data_points(&tenant_id, metric, limit)
+            .await
+            .map_err(VistaServiceError::Repository)
     }
 
-    pub async fn save_dashboard(&self, dashboard: &ataqu_domain_vista::Dashboard) -> VistaResult<()> {
-        self.repo.save_dashboard(dashboard).await.map_err(VistaServiceError::Repository)
+    pub async fn save_dashboard(
+        &self,
+        dashboard: &ataqu_domain_vista::Dashboard,
+    ) -> VistaResult<()> {
+        self.repo
+            .save_dashboard(dashboard)
+            .await
+            .map_err(VistaServiceError::Repository)
     }
 
-    pub async fn list_dashboards(&self, tenant_id: TenantId) -> VistaResult<Vec<ataqu_domain_vista::Dashboard>> {
-        self.repo.list_dashboards(&tenant_id).await.map_err(VistaServiceError::Repository)
+    pub async fn list_dashboards(
+        &self,
+        tenant_id: TenantId,
+    ) -> VistaResult<Vec<ataqu_domain_vista::Dashboard>> {
+        self.repo
+            .list_dashboards(&tenant_id)
+            .await
+            .map_err(VistaServiceError::Repository)
     }
 
     pub async fn delete_dashboard(&self, tenant_id: TenantId, id: Uuid) -> VistaResult<()> {
-        self.repo.delete_dashboard(&tenant_id, id).await.map_err(VistaServiceError::Repository)
+        self.repo
+            .delete_dashboard(&tenant_id, id)
+            .await
+            .map_err(VistaServiceError::Repository)
     }
 
-    pub async fn execute_raw_sql(&self, tenant_id: TenantId, sql: &str) -> VistaResult<Vec<serde_json::Value>> {
-        self.repo.execute_raw_sql(&tenant_id, sql).await.map_err(VistaServiceError::Repository)
+    pub async fn execute_raw_sql(
+        &self,
+        tenant_id: TenantId,
+        sql: &str,
+    ) -> VistaResult<Vec<serde_json::Value>> {
+        self.repo
+            .execute_raw_sql(&tenant_id, sql)
+            .await
+            .map_err(VistaServiceError::Repository)
     }
 }

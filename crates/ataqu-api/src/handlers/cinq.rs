@@ -133,21 +133,36 @@ pub async fn get_contact(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<ContactResponse>> {
+) -> ApiResult<(axum::http::HeaderMap, Json<ContactResponse>)> {
     let contact = state
         .cinq_service
         .get_contact(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
-    Ok(Json(ContactResponse::from(contact)))
+
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", contact.version).parse().unwrap(),
+    );
+    Ok((headers, Json(ContactResponse::from(contact))))
 }
 
 pub async fn update_contact(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateContactRequest>,
 ) -> ApiResult<Json<ContactResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let cmd = UpdateContactCommand {
         id,
         tenant_id: auth.tenant_id,
@@ -156,6 +171,7 @@ pub async fn update_contact(
         phone: payload.phone.map(|p| p.map(PhoneNumber::new)),
         custom_fields: payload.custom_fields,
         lead_score: payload.lead_score,
+        expected_version: if_match,
     };
     let contact = state
         .cinq_service
@@ -194,7 +210,10 @@ pub async fn create_deal(
     auth: AuthContext,
     Json(payload): Json<CreateDealRequest>,
 ) -> ApiResult<(StatusCode, Json<DealResponse>)> {
-    state.cinq_service.get_pipeline_stage(auth.tenant_id, payload.pipeline_stage_id).await
+    state
+        .cinq_service
+        .get_pipeline_stage(auth.tenant_id, payload.pipeline_stage_id)
+        .await
         .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
 
     let cmd = CreateDealCommand {
@@ -254,7 +273,9 @@ pub async fn update_deal(
             "lost" => Some(DealStatus::Lost),
             _ => return Err(ApiResponseError::validation("Invalid deal status")),
         }
-    } else { None };
+    } else {
+        None
+    };
     let cmd = UpdateDealCommand {
         id,
         tenant_id: auth.tenant_id,
@@ -478,7 +499,11 @@ pub async fn search_by_custom_field(
 ) -> ApiResult<Json<Vec<ContactResponse>>> {
     let contacts = state
         .cinq_service
-        .search_by_custom_field(auth.tenant_id, &params.field, serde_json::json!(params.value))
+        .search_by_custom_field(
+            auth.tenant_id,
+            &params.field,
+            serde_json::json!(params.value),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(
@@ -530,10 +555,7 @@ pub async fn import_csv(
         .import_contacts(auth.tenant_id, rows)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(ImportCsvResult {
-        imported,
-        failed,
-    }))
+    Ok(Json(ImportCsvResult { imported, failed }))
 }
 
 pub async fn export_csv(
@@ -604,7 +626,10 @@ pub async fn create_task(
         description: payload.description,
         due_date: payload.due_date,
     };
-    let task = state.cinq_service.create_task(cmd).await
+    let task = state
+        .cinq_service
+        .create_task(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(task.into())))
 }
@@ -616,7 +641,10 @@ pub async fn list_tasks(
 ) -> ApiResult<Json<Vec<TaskResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let tasks = state.cinq_service.list_tasks(auth.tenant_id, limit, offset).await
+    let tasks = state
+        .cinq_service
+        .list_tasks(auth.tenant_id, limit, offset)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
@@ -626,9 +654,14 @@ pub async fn get_task(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<TaskResponse>> {
-    let task = state.cinq_service.get_task(auth.tenant_id, id).await
+    let task = state
+        .cinq_service
+        .get_task(auth.tenant_id, id)
+        .await
         .map_err(|e| match e {
-            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => ApiResponseError::not_found("Task not found"),
+            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
+                ApiResponseError::not_found("Task not found")
+            }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
     Ok(Json(task.into()))
@@ -661,7 +694,10 @@ pub async fn update_task(
         due_date: payload.due_date,
         status,
     };
-    let task = state.cinq_service.update_task(cmd).await
+    let task = state
+        .cinq_service
+        .update_task(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(task.into()))
 }
@@ -671,7 +707,10 @@ pub async fn delete_task(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.cinq_service.delete_task(auth.tenant_id, id).await
+    state
+        .cinq_service
+        .delete_task(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -681,7 +720,10 @@ pub async fn list_contact_tasks(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<TaskResponse>>> {
-    let tasks = state.cinq_service.list_tasks_for_contact(auth.tenant_id, id, 100, 0).await
+    let tasks = state
+        .cinq_service
+        .list_tasks_for_contact(auth.tenant_id, id, 100, 0)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
@@ -720,7 +762,10 @@ pub fn routes() -> Router<AppState> {
         .route("/activities", post(create_activity).get(list_activities))
         .route("/activities/:id", get(get_activity))
         .route("/tasks", post(create_task).get(list_tasks))
-        .route("/tasks/:id", get(get_task).put(update_task).delete(delete_task))
+        .route(
+            "/tasks/:id",
+            get(get_task).put(update_task).delete(delete_task),
+        )
         .route("/contacts/:id/tasks", get(list_contact_tasks))
         .route("/search", get(search_contacts))
         .route("/search/custom", get(search_by_custom_field))

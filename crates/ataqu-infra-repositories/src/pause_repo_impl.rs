@@ -145,8 +145,14 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             id: Set(event.employee_id),
             tenant_id: Set(tenant_id.as_uuid()),
             full_name: Set(event.full_name.clone()),
-            email: Set(event.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string()),
-            phone: Set(event.phone.clone().map(|p| p.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string())),
+            email: Set(event
+                .email
+                .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                .to_string()),
+            phone: Set(event.phone.clone().map(|p| {
+                p.reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                    .to_string()
+            })),
             job_title: Set(event.job_title.clone()),
             department: Set(event.department.clone()),
             hire_date: Set(Some(event.hire_date)),
@@ -382,7 +388,6 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
     }
 }
 
-
 mod employee_document_entity {
     use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
@@ -409,7 +414,10 @@ mod employee_document_entity {
 
 #[async_trait::async_trait]
 impl ataqu_domain_pause::repository::EmployeeDocumentRepository for PauseRepositoryImpl {
-    async fn save_document(&self, doc: &ataqu_domain_pause::EmployeeDocument) -> Result<(), ataqu_domain_pause::PauseDomainError> {
+    async fn save_document(
+        &self,
+        doc: &ataqu_domain_pause::EmployeeDocument,
+    ) -> Result<(), ataqu_domain_pause::PauseDomainError> {
         let active = employee_document_entity::ActiveModel {
             id: sea_orm::Set(doc.id),
             tenant_id: sea_orm::Set(doc.tenant_id.as_uuid()),
@@ -430,7 +438,8 @@ impl ataqu_domain_pause::repository::EmployeeDocumentRepository for PauseReposit
         &self,
         tenant_id: &ataqu_kernel::TenantId,
         employee_id: uuid::Uuid,
-    ) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, ataqu_domain_pause::PauseDomainError> {
+    ) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, ataqu_domain_pause::PauseDomainError>
+    {
         let models = employee_document_entity::Entity::find()
             .filter(employee_document_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(employee_document_entity::Column::EmployeeId.eq(employee_id))
@@ -438,14 +447,17 @@ impl ataqu_domain_pause::repository::EmployeeDocumentRepository for PauseReposit
             .await
             .map_err(|e| ataqu_domain_pause::PauseDomainError::Persistence(e.to_string()))?;
 
-        Ok(models.into_iter().map(|m| ataqu_domain_pause::EmployeeDocument {
-            id: m.id,
-            tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
-            employee_id: m.employee_id,
-            file_name: m.file_name,
-            file_url: m.file_url,
-            doc_type: m.doc_type,
-            created_at: m.created_at,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| ataqu_domain_pause::EmployeeDocument {
+                id: m.id,
+                tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
+                employee_id: m.employee_id,
+                file_name: m.file_name,
+                file_url: m.file_url,
+                doc_type: m.doc_type,
+                created_at: m.created_at,
+            })
+            .collect())
     }
 }

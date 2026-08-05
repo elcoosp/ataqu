@@ -8,13 +8,14 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("CREATE SCHEMA IF NOT EXISTS sond")
-            .await?;
+        conn.execute_unprepared(
+            "ALTER TABLE collab_crm.contacts ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 0;"
+        ).await?;
         Ok(())
     }
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP SCHEMA IF EXISTS sond CASCADE")
+        conn.execute_unprepared("ALTER TABLE collab_crm.contacts DROP COLUMN IF EXISTS version;")
             .await?;
         Ok(())
     }

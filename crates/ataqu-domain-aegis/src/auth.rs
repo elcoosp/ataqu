@@ -103,10 +103,21 @@ pub trait AuthRepository: Send + Sync {
     async fn list_tenants(&self) -> Result<Vec<Uuid>, AuthError>;
 
     async fn save_api_key(&self, key: &crate::api_key::ApiKey) -> Result<(), AuthError>;
-    async fn find_api_key_by_hash(&self, hash: &str) -> Result<Option<crate::api_key::ApiKey>, AuthError>;
-    async fn list_api_keys(&self, tenant_id: Uuid, user_id: Uuid) -> Result<Vec<crate::api_key::ApiKey>, AuthError>;
+    async fn find_api_key_by_hash(
+        &self,
+        hash: &str,
+    ) -> Result<Option<crate::api_key::ApiKey>, AuthError>;
+    async fn list_api_keys(
+        &self,
+        tenant_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Vec<crate::api_key::ApiKey>, AuthError>;
     async fn delete_api_key(&self, tenant_id: Uuid, id: uuid::Uuid) -> Result<(), AuthError>;
-    async fn update_api_key_last_used(&self, id: Uuid, last_used_at: std::time::SystemTime) -> Result<(), AuthError>;
+    async fn update_api_key_last_used(
+        &self,
+        id: Uuid,
+        last_used_at: std::time::SystemTime,
+    ) -> Result<(), AuthError>;
 }
 
 /// Pure function to create a user. Returns a UserCreated event.

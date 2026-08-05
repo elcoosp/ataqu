@@ -1,5 +1,6 @@
 pub mod auth;
 pub use auth::AuthContext;
 
-pub mod rate_limit;
+pub mod etag;
 pub mod idempotency;
+pub mod rate_limit;

@@ -1,6 +1,6 @@
+use ataqu_kernel::Clock;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use ataqu_kernel::Clock;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lease {

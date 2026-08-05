@@ -19,7 +19,11 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
                     .col(ColumnDef::new(Alias::new("variant_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("quantity")).big_integer().not_null())
+                    .col(
+                        ColumnDef::new(Alias::new("quantity"))
+                            .big_integer()
+                            .not_null(),
+                    )
                     .col(ColumnDef::new(Alias::new("reason")).text().not_null())
                     .col(ColumnDef::new(Alias::new("reference")).text())
                     .col(

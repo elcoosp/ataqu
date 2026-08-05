@@ -31,11 +31,25 @@ pub trait DocumentRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError>;
-    async fn save_document_version(&self, version: &crate::document::DocumentVersion) -> Result<(), RepositoryError>;
-    async fn list_document_versions(&self, tenant_id: &TenantId, doc_id: Uuid, limit: u64) -> Result<Vec<crate::document::DocumentVersion>, RepositoryError>;
+    async fn save_document_version(
+        &self,
+        version: &crate::document::DocumentVersion,
+    ) -> Result<(), RepositoryError>;
+    async fn list_document_versions(
+        &self,
+        tenant_id: &TenantId,
+        doc_id: Uuid,
+        limit: u64,
+    ) -> Result<Vec<crate::document::DocumentVersion>, RepositoryError>;
 
-    async fn list_templates(&self, tenant_id: &TenantId) -> Result<Vec<crate::document::Template>, RepositoryError>;
-    async fn save_template(&self, template: &crate::document::Template) -> Result<(), RepositoryError>;
+    async fn list_templates(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<crate::document::Template>, RepositoryError>;
+    async fn save_template(
+        &self,
+        template: &crate::document::Template,
+    ) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]
@@ -62,8 +76,16 @@ pub trait BlockRepository: Send + Sync {
         tenant_id: &TenantId,
         doc_id: Uuid,
     ) -> Result<Vec<BlockCreatedEvent>, RepositoryError>;
-    async fn get_block_by_id(&self, tenant_id: &TenantId, block_id: Uuid) -> Result<BlockCreatedEvent, RepositoryError>;
-    async fn delete_block(&self, tenant_id: &TenantId, block_id: Uuid) -> Result<(), RepositoryError>;
+    async fn get_block_by_id(
+        &self,
+        tenant_id: &TenantId,
+        block_id: Uuid,
+    ) -> Result<BlockCreatedEvent, RepositoryError>;
+    async fn delete_block(
+        &self,
+        tenant_id: &TenantId,
+        block_id: Uuid,
+    ) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]

@@ -1,11 +1,11 @@
+use crate::action::Action;
+use crate::condition::Condition;
+use crate::trigger::Trigger;
 use crate::{
     commands::{CreateWorkflowCommand, TriggerWorkflowCommand},
     errors::SparkError,
     events::{WorkflowCreated, WorkflowTriggered},
 };
-use crate::action::Action;
-use crate::condition::Condition;
-use crate::trigger::Trigger;
 use ataqu_kernel::{Clock, IdGenerator};
 use std::time::SystemTime;
 use uuid::Uuid;

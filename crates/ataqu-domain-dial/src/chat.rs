@@ -917,7 +917,6 @@ mod tests {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Reaction {
     pub id: Uuid,

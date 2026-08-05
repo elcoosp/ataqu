@@ -93,6 +93,7 @@ fn contact_to_active(contact: &Contact) -> contact_entity::ActiveModel {
         lead_score: Set(contact.lead_score),
         created_at: Set(contact.created_at),
         updated_at: Set(contact.updated_at),
+        version: Set(contact.version),
     }
 }
 
@@ -109,6 +110,7 @@ fn model_to_contact(model: contact_entity::Model) -> Contact {
         lead_score: model.lead_score,
         created_at: model.created_at,
         updated_at: model.updated_at,
+        version: model.version,
     }
 }
 
@@ -229,7 +231,10 @@ impl DomainContactRepo for CinqContactRepository {
             .add(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .add(Expr::cust_with_values(
                 "custom_fields ->> $1 ILIKE $2",
-                vec![sea_orm::Value::from(field.to_string()), sea_orm::Value::from(pattern)],
+                vec![
+                    sea_orm::Value::from(field.to_string()),
+                    sea_orm::Value::from(pattern),
+                ],
             ));
         let models = contact_entity::Entity::find()
             .filter(cond)
@@ -666,16 +671,30 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
             created_at: Set(task.created_at),
             updated_at: Set(task.updated_at),
         };
-        let exists = task_entity::Entity::find_by_id(task.id).one(&self.db).await.map_err(|e| CinqDomainError::Validation(e.to_string()))?.is_some();
+        let exists = task_entity::Entity::find_by_id(task.id)
+            .one(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?
+            .is_some();
         if exists {
-            task_entity::Entity::update(active).exec(&self.db).await.map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+            task_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         } else {
-            task_entity::Entity::insert(active).exec(&self.db).await.map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+            task_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         }
         Ok(())
     }
 
-    async fn find_task_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<ataqu_domain_cinq::task::Task>, CinqDomainError> {
+    async fn find_task_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<ataqu_domain_cinq::task::Task>, CinqDomainError> {
         let model = task_entity::Entity::find()
             .filter(task_entity::Column::Id.eq(id))
             .filter(task_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -701,7 +720,12 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
         }))
     }
 
-    async fn list_tasks(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<ataqu_domain_cinq::task::Task>, CinqDomainError> {
+    async fn list_tasks(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<ataqu_domain_cinq::task::Task>, CinqDomainError> {
         let models = task_entity::Entity::find()
             .filter(task_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -709,26 +733,35 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
             .all(&self.db)
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
-        Ok(models.into_iter().map(|m| ataqu_domain_cinq::task::Task {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            contact_id: m.contact_id,
-            deal_id: m.deal_id,
-            assigned_to: m.assigned_to,
-            title: m.title,
-            description: m.description,
-            due_date: m.due_date,
-            status: match m.status.as_str() {
-                "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
-                "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
-                _ => ataqu_domain_cinq::task::TaskStatus::Pending,
-            },
-            created_at: m.created_at,
-            updated_at: m.updated_at,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| ataqu_domain_cinq::task::Task {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                contact_id: m.contact_id,
+                deal_id: m.deal_id,
+                assigned_to: m.assigned_to,
+                title: m.title,
+                description: m.description,
+                due_date: m.due_date,
+                status: match m.status.as_str() {
+                    "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
+                    "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
+                    _ => ataqu_domain_cinq::task::TaskStatus::Pending,
+                },
+                created_at: m.created_at,
+                updated_at: m.updated_at,
+            })
+            .collect())
     }
 
-    async fn list_tasks_for_contact(&self, tenant_id: &TenantId, contact_id: Uuid, limit: u64, offset: u64) -> Result<Vec<ataqu_domain_cinq::task::Task>, CinqDomainError> {
+    async fn list_tasks_for_contact(
+        &self,
+        tenant_id: &TenantId,
+        contact_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<ataqu_domain_cinq::task::Task>, CinqDomainError> {
         let models = task_entity::Entity::find()
             .filter(task_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(task_entity::Column::ContactId.eq(contact_id))
@@ -737,23 +770,26 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
             .all(&self.db)
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
-        Ok(models.into_iter().map(|m| ataqu_domain_cinq::task::Task {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            contact_id: m.contact_id,
-            deal_id: m.deal_id,
-            assigned_to: m.assigned_to,
-            title: m.title,
-            description: m.description,
-            due_date: m.due_date,
-            status: match m.status.as_str() {
-                "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
-                "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
-                _ => ataqu_domain_cinq::task::TaskStatus::Pending,
-            },
-            created_at: m.created_at,
-            updated_at: m.updated_at,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| ataqu_domain_cinq::task::Task {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                contact_id: m.contact_id,
+                deal_id: m.deal_id,
+                assigned_to: m.assigned_to,
+                title: m.title,
+                description: m.description,
+                due_date: m.due_date,
+                status: match m.status.as_str() {
+                    "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
+                    "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
+                    _ => ataqu_domain_cinq::task::TaskStatus::Pending,
+                },
+                created_at: m.created_at,
+                updated_at: m.updated_at,
+            })
+            .collect())
     }
 
     async fn delete_task(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), CinqDomainError> {

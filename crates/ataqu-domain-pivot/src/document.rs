@@ -78,7 +78,6 @@ pub struct DocumentVersion {
     pub created_at: std::time::SystemTime,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct Template {
     pub id: Uuid,

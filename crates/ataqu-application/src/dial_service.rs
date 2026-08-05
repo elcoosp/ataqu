@@ -2,6 +2,7 @@
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::outbox::Outbox;
 use ataqu_domain_dial::chat::{
     self as dial_domain, ChannelId, ChannelType, CreateChannelCommand as DomainCreateChannel,
     Mention, MessageId, SendMessageCommand as DomainSendMessage,
@@ -11,7 +12,6 @@ use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::PresenceStore;
 use ataqu_domain_dial::repository::DialRepository;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use crate::outbox::Outbox;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_dial::chat::{Channel, Message, Reaction};
@@ -116,24 +116,42 @@ impl DialService {
             "name": channel.name,
             "created_by": channel.created_by.as_uuid(),
         });
-        self.outbox.append("dial", "ChannelCreated", channel.id.as_uuid(), &payload).await.map_err(|e| DialServiceError::Repository(e))?;
+        self.outbox
+            .append("dial", "ChannelCreated", channel.id.as_uuid(), &payload)
+            .await
+            .map_err(|e| DialServiceError::Repository(e))?;
 
         Ok(channel)
     }
 
     pub async fn archive_channel(&self, tenant_id: TenantId, channel_id: Uuid) -> DialResult<()> {
-        let channel = self.repo.get_channel(&tenant_id, &ChannelId::new(channel_id)).await?;
+        let channel = self
+            .repo
+            .get_channel(&tenant_id, &ChannelId::new(channel_id))
+            .await?;
         let event = dial_domain::archive_channel(&channel, self.clock.as_ref())
             .map_err(DialServiceError::Domain)?;
-        self.repo.archive_channel(&tenant_id, &ChannelId::new(channel_id), event.archived_at).await?;
+        self.repo
+            .archive_channel(&tenant_id, &ChannelId::new(channel_id), event.archived_at)
+            .await?;
         Ok(())
     }
 
-    pub async fn update_channel(&self, tenant_id: TenantId, channel_id: Uuid, name: Option<String>) -> DialResult<Channel> {
-        let mut channel = self.repo.get_channel(&tenant_id, &ChannelId::new(channel_id)).await?;
+    pub async fn update_channel(
+        &self,
+        tenant_id: TenantId,
+        channel_id: Uuid,
+        name: Option<String>,
+    ) -> DialResult<Channel> {
+        let mut channel = self
+            .repo
+            .get_channel(&tenant_id, &ChannelId::new(channel_id))
+            .await?;
         if let Some(n) = name {
             if n.trim().is_empty() {
-                return Err(DialServiceError::Validation("Channel name cannot be empty".to_string()));
+                return Err(DialServiceError::Validation(
+                    "Channel name cannot be empty".to_string(),
+                ));
             }
             channel.name = n;
         }
@@ -165,8 +183,12 @@ impl DialService {
         let channel_id = ChannelId::new(cmd.channel_id);
         let channel = self.repo.get_channel(&cmd.tenant_id, &channel_id).await?;
 
-        if channel.channel_type == ChannelType::Private && !channel.participants.contains(&UserId::new(cmd.author_id)) {
-            return Err(DialServiceError::Validation("User is not a participant in this private channel".to_string()));
+        if channel.channel_type == ChannelType::Private
+            && !channel.participants.contains(&UserId::new(cmd.author_id))
+        {
+            return Err(DialServiceError::Validation(
+                "User is not a participant in this private channel".to_string(),
+            ));
         }
 
         let domain_cmd = DomainSendMessage {
@@ -203,29 +225,67 @@ impl DialService {
             "author_id": message.author_id.as_uuid(),
             "content": message.content,
         });
-        self.outbox.append("dial", "MessageSent", message.id.as_uuid(), &payload).await.map_err(|e| DialServiceError::Repository(e))?;
+        self.outbox
+            .append("dial", "MessageSent", message.id.as_uuid(), &payload)
+            .await
+            .map_err(|e| DialServiceError::Repository(e))?;
 
         Ok(message)
     }
 
-    pub async fn edit_message(&self, tenant_id: TenantId, message_id: Uuid, editor_id: Uuid, new_content: String) -> DialResult<Message> {
-        let message = self.repo.get_message(&tenant_id, &MessageId::new(message_id)).await?;
-        let event = dial_domain::edit_message(&message, UserId::new(editor_id), new_content, self.clock.as_ref())
-            .map_err(DialServiceError::Domain)?;
-        self.repo.update_message_content(&tenant_id, &message_id, &event.new_content, event.edited_at).await?;
+    pub async fn edit_message(
+        &self,
+        tenant_id: TenantId,
+        message_id: Uuid,
+        editor_id: Uuid,
+        new_content: String,
+    ) -> DialResult<Message> {
+        let message = self
+            .repo
+            .get_message(&tenant_id, &MessageId::new(message_id))
+            .await?;
+        let event = dial_domain::edit_message(
+            &message,
+            UserId::new(editor_id),
+            new_content,
+            self.clock.as_ref(),
+        )
+        .map_err(DialServiceError::Domain)?;
+        self.repo
+            .update_message_content(&tenant_id, &message_id, &event.new_content, event.edited_at)
+            .await?;
         self.get_message(tenant_id, message_id).await
     }
 
-    pub async fn delete_message(&self, tenant_id: TenantId, message_id: Uuid, deleter_id: Uuid, is_moderator: bool) -> DialResult<()> {
-        let message = self.repo.get_message(&tenant_id, &MessageId::new(message_id)).await?;
-        let event = dial_domain::delete_message(&message, UserId::new(deleter_id), is_moderator, self.clock.as_ref())
-            .map_err(DialServiceError::Domain)?;
-        self.repo.soft_delete_message(&tenant_id, &message_id, event.deleted_at).await?;
+    pub async fn delete_message(
+        &self,
+        tenant_id: TenantId,
+        message_id: Uuid,
+        deleter_id: Uuid,
+        is_moderator: bool,
+    ) -> DialResult<()> {
+        let message = self
+            .repo
+            .get_message(&tenant_id, &MessageId::new(message_id))
+            .await?;
+        let event = dial_domain::delete_message(
+            &message,
+            UserId::new(deleter_id),
+            is_moderator,
+            self.clock.as_ref(),
+        )
+        .map_err(DialServiceError::Domain)?;
+        self.repo
+            .soft_delete_message(&tenant_id, &message_id, event.deleted_at)
+            .await?;
         Ok(())
     }
 
     pub async fn get_message(&self, tenant_id: TenantId, message_id: Uuid) -> DialResult<Message> {
-        self.repo.get_message(&tenant_id, &MessageId::new(message_id)).await.map_err(DialServiceError::Domain)
+        self.repo
+            .get_message(&tenant_id, &MessageId::new(message_id))
+            .await
+            .map_err(DialServiceError::Domain)
     }
 
     pub async fn list_messages(
@@ -242,11 +302,20 @@ impl DialService {
             .map_err(DialServiceError::Domain)
     }
 
-    pub async fn list_thread_messages(&self, tenant_id: TenantId, thread_id: Uuid, limit: u64, offset: u64) -> DialResult<Vec<Message>> {
+    pub async fn list_thread_messages(
+        &self,
+        tenant_id: TenantId,
+        thread_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> DialResult<Vec<Message>> {
         // This assumes repo has a method to list by thread_id. Let's add it to repo trait if missing, or filter in service.
         // For now, let's filter via list_messages and filter. Better: add to repo trait.
         // I will add `list_messages_for_thread` to DialRepository trait.
-        self.repo.list_messages_for_thread(&tenant_id, &ThreadId::new(thread_id), limit, offset).await.map_err(DialServiceError::Domain)
+        self.repo
+            .list_messages_for_thread(&tenant_id, &ThreadId::new(thread_id), limit, offset)
+            .await
+            .map_err(DialServiceError::Domain)
     }
 
     // -- Thread methods --
@@ -316,8 +385,15 @@ impl DialService {
             .map_err(DialServiceError::Domain)
     }
 
-    pub async fn mark_mention_as_read(&self, tenant_id: TenantId, mention_id: Uuid) -> DialResult<()> {
-        self.repo.mark_mention_as_read(&tenant_id, &mention_id, self.clock.now()).await.map_err(DialServiceError::Domain)
+    pub async fn mark_mention_as_read(
+        &self,
+        tenant_id: TenantId,
+        mention_id: Uuid,
+    ) -> DialResult<()> {
+        self.repo
+            .mark_mention_as_read(&tenant_id, &mention_id, self.clock.now())
+            .await
+            .map_err(DialServiceError::Domain)
     }
 
     // -- Presence methods --
@@ -369,7 +445,13 @@ impl DialService {
             .map_err(DialServiceError::Domain)
     }
 
-    pub async fn add_reaction(&self, tenant_id: TenantId, message_id: Uuid, user_id: Uuid, emoji: String) -> DialResult<Reaction> {
+    pub async fn add_reaction(
+        &self,
+        tenant_id: TenantId,
+        message_id: Uuid,
+        user_id: Uuid,
+        emoji: String,
+    ) -> DialResult<Reaction> {
         let reaction = Reaction {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,
@@ -382,11 +464,21 @@ impl DialService {
         Ok(reaction)
     }
 
-    pub async fn list_reactions(&self, tenant_id: TenantId, message_id: Uuid) -> DialResult<Vec<Reaction>> {
-        self.repo.list_reactions_for_message(&tenant_id, &MessageId::new(message_id)).await.map_err(DialServiceError::Domain)
+    pub async fn list_reactions(
+        &self,
+        tenant_id: TenantId,
+        message_id: Uuid,
+    ) -> DialResult<Vec<Reaction>> {
+        self.repo
+            .list_reactions_for_message(&tenant_id, &MessageId::new(message_id))
+            .await
+            .map_err(DialServiceError::Domain)
     }
 
     pub async fn delete_reaction(&self, tenant_id: TenantId, reaction_id: Uuid) -> DialResult<()> {
-        self.repo.delete_reaction(&tenant_id, &reaction_id).await.map_err(DialServiceError::Domain)
+        self.repo
+            .delete_reaction(&tenant_id, &reaction_id)
+            .await
+            .map_err(DialServiceError::Domain)
     }
 }

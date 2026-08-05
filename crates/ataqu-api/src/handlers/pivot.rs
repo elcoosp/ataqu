@@ -49,7 +49,10 @@ pub async fn create_db(
         tenant_id: auth.tenant_id,
         name: payload.name,
     };
-    let db = state.pivot_service.create_database(cmd).await
+    let db = state
+        .pivot_service
+        .create_database(cmd)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(db.into())))
 }
@@ -58,7 +61,10 @@ pub async fn list_dbs(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<DatabaseResponse>>> {
-    let dbs = state.pivot_service.list_databases(auth.tenant_id, 100, 0).await
+    let dbs = state
+        .pivot_service
+        .list_databases(auth.tenant_id, 100, 0)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(dbs.into_iter().map(|d| d.into()).collect()))
 }
@@ -68,7 +74,10 @@ pub async fn delete_db(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.pivot_service.delete_database(auth.tenant_id, id).await
+    state
+        .pivot_service
+        .delete_database(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -133,7 +142,11 @@ pub async fn list_docs(
 ) -> ApiResult<Json<Vec<DocumentResponse>>> {
     let docs = state
         .pivot_service
-        .list_documents(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_documents(
+            auth.tenant_id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(docs.into_iter().map(|d| d.into()).collect()))
@@ -281,19 +294,56 @@ pub async fn update_block(
     let block_type = if let Some(bt_str) = payload.block_type {
         let content = payload.content.unwrap_or(JsonValue::Null);
         match bt_str.as_str() {
-            "markdown" => BlockType::Markdown(content.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string()),
+            "markdown" => BlockType::Markdown(
+                content
+                    .get("text")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+            ),
             "table" => BlockType::Table {
-                columns: content.get("columns").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default(),
-                rows: content.get("rows").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|row| row.as_array().map(|r| r.iter().filter_map(|v| v.as_str().map(String::from)).collect())).collect()).unwrap_or_default(),
+                columns: content
+                    .get("columns")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(String::from))
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                rows: content
+                    .get("rows")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|row| {
+                                row.as_array().map(|r| {
+                                    r.iter()
+                                        .filter_map(|v| v.as_str().map(String::from))
+                                        .collect()
+                                })
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
             },
-            "view" => BlockType::View { filter: content.get("filter").and_then(|v| v.as_str()).unwrap_or("").to_string() },
+            "view" => BlockType::View {
+                filter: content
+                    .get("filter")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+            },
             _ => return Err(ApiResponseError::validation("Invalid block_type")),
         }
     } else {
         return Err(ApiResponseError::validation("block_type required"));
     };
 
-    let block = state.pivot_service.update_block(auth.tenant_id, id, block_type).await
+    let block = state
+        .pivot_service
+        .update_block(auth.tenant_id, id, block_type)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(block.into()))
 }
@@ -303,7 +353,10 @@ pub async fn delete_block(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.pivot_service.delete_block(auth.tenant_id, id).await
+    state
+        .pivot_service
+        .delete_block(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -390,14 +443,22 @@ pub async fn list_doc_versions(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let versions = state.pivot_service.list_document_versions(auth.tenant_id, id, 20).await
+    let versions = state
+        .pivot_service
+        .list_document_versions(auth.tenant_id, id, 20)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let list = versions.iter().map(|v| serde_json::json!({
-        "id": v.id,
-        "title": v.title,
-        "content": v.content,
-        "created_at": v.created_at,
-    })).collect();
+    let list = versions
+        .iter()
+        .map(|v| {
+            serde_json::json!({
+                "id": v.id,
+                "title": v.title,
+                "content": v.content,
+                "created_at": v.created_at,
+            })
+        })
+        .collect();
     Ok(Json(list))
 }
 
@@ -409,15 +470,23 @@ pub fn routes() -> Router<AppState> {
         .route("/docs/:id/versions", axum::routing::get(list_doc_versions))
         .route(
             "/docs/:id",
-            axum::routing::get(get_doc).put(update_doc).delete(delete_doc),
+            axum::routing::get(get_doc)
+                .put(update_doc)
+                .delete(delete_doc),
         )
         .route("/docs/:id/blocks", axum::routing::get(list_blocks))
         .route("/blocks", axum::routing::post(create_block))
-        .route("/blocks/:id", axum::routing::put(update_block).delete(delete_block))
+        .route(
+            "/blocks/:id",
+            axum::routing::put(update_block).delete(delete_block),
+        )
         .route("/relations", axum::routing::post(create_relation))
         .route("/docs/:id/relations", axum::routing::get(list_relations))
         .route("/search", axum::routing::get(search_docs))
-        .route("/templates", axum::routing::post(create_template).get(list_templates))
+        .route(
+            "/templates",
+            axum::routing::post(create_template).get(list_templates),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -425,7 +494,6 @@ pub struct PaginationParams {
     pub limit: Option<u64>,
     pub offset: Option<u64>,
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct CreateTemplateRequest {
@@ -438,7 +506,10 @@ pub async fn create_template(
     auth: AuthContext,
     Json(payload): Json<CreateTemplateRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let template = state.pivot_service.create_template(auth.tenant_id, payload.name, payload.content).await
+    let template = state
+        .pivot_service
+        .create_template(auth.tenant_id, payload.name, payload.content)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({ "id": template.id })))
 }
@@ -447,13 +518,21 @@ pub async fn list_templates(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let templates = state.pivot_service.list_templates(auth.tenant_id).await
+    let templates = state
+        .pivot_service
+        .list_templates(auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let list = templates.iter().map(|t| serde_json::json!({
-        "id": t.id,
-        "name": t.name,
-        "content": t.content,
-        "created_at": t.created_at,
-    })).collect();
+    let list = templates
+        .iter()
+        .map(|t| {
+            serde_json::json!({
+                "id": t.id,
+                "name": t.name,
+                "content": t.content,
+                "created_at": t.created_at,
+            })
+        })
+        .collect();
     Ok(Json(list))
 }

@@ -14,7 +14,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Alias::new("sender_id"))
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         // Add author_id
         manager
@@ -74,7 +75,8 @@ impl MigrationTrait for Migration {
                     .col(Messages::ThreadId)
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         Ok(())
     }
@@ -87,7 +89,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Messages::EditedAt)
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
         manager
             .alter_table(
                 Table::alter()
@@ -95,7 +98,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Messages::DeletedAt)
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
         manager
             .alter_table(
                 Table::alter()
@@ -103,7 +107,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Messages::ThreadId)
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
         Ok(())
     }
 }

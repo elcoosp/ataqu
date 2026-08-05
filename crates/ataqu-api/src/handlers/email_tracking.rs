@@ -3,8 +3,8 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::middleware::AuthContext;
 use crate::error::{ApiResponseError, ApiResult};
+use crate::middleware::AuthContext;
 use ataqu_contracts::cinq::TrackEmailRequest;
 
 #[derive(Debug, serde::Serialize)]
@@ -21,7 +21,9 @@ pub async fn track_email_public(
         _ => return Err(ApiResponseError::validation("Invalid event_type")),
     }
 
-    let tenant_id = req.metadata.get("tenant_id")
+    let tenant_id = req
+        .metadata
+        .get("tenant_id")
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok())
         .unwrap_or_else(Uuid::nil);
@@ -35,9 +37,13 @@ pub async fn track_email_public(
     };
 
     match state.email_tracking_tx.try_send(tracking_event) {
-        Ok(()) => Ok(Json(TrackEmailResponse { status: "accepted".to_string() })),
+        Ok(()) => Ok(Json(TrackEmailResponse {
+            status: "accepted".to_string(),
+        })),
         Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => Err(ApiResponseError::RateLimited),
-        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(ApiResponseError::internal("Email tracking service unavailable")),
+        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(ApiResponseError::internal(
+            "Email tracking service unavailable",
+        )),
     }
 }
 
@@ -60,8 +66,12 @@ pub async fn track_email(
     };
 
     match state.email_tracking_tx.try_send(tracking_event) {
-        Ok(()) => Ok(Json(TrackEmailResponse { status: "accepted".to_string() })),
+        Ok(()) => Ok(Json(TrackEmailResponse {
+            status: "accepted".to_string(),
+        })),
         Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => Err(ApiResponseError::RateLimited),
-        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(ApiResponseError::internal("Email tracking service unavailable")),
+        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(ApiResponseError::internal(
+            "Email tracking service unavailable",
+        )),
     }
 }

@@ -3,15 +3,18 @@ use ataqu_domain_vista::aggregation::AggregatedView;
 use ataqu_domain_vista::analytics::AnalyticsDataPoint;
 use ataqu_domain_vista::repository::VistaRepository;
 use ataqu_kernel::TenantId;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, QueryFilter, QuerySelect, Statement};
 use chrono::Utc;
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
+    Statement,
+};
 
 // We define a local entity for the aggregated_views table
 mod dashboard_entity {
     use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
-    use uuid::Uuid;
     use serde_json::Value;
+    use uuid::Uuid;
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "dashboards", schema_name = "core")]
@@ -33,9 +36,9 @@ mod dashboard_entity {
 
 mod aggregated_view_entity {
     use chrono::{DateTime, Utc};
+    use rust_decimal::Decimal;
     use sea_orm::entity::prelude::*;
     use uuid::Uuid;
-    use rust_decimal::Decimal;
 
     #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
     #[sea_orm(table_name = "aggregated_views", schema_name = "core")]
@@ -102,20 +105,22 @@ impl VistaRepository for VistaRepositoryImpl {
             .await
             .map_err(|e| e.to_string())?;
 
-        Ok(model.map(|m| AggregatedView {
-            tenant_id: TenantId::new(m.tenant_id),
-            total_events: m.total_events as u64,
-            total_contacts: m.total_contacts as u64,
-            total_deals: m.total_deals as u64,
-            total_deals_won: m.total_deals_won as u64,
-            total_pipeline_value: m.total_pipeline_value,
-            total_revenue: m.total_revenue,
-            total_products: m.total_products as u64,
-            low_stock_variants: m.low_stock_variants as u64,
-            total_bookings: m.total_bookings as u64,
-            pending_leave_requests: m.pending_leave_requests as u64,
-            last_updated_at: m.last_updated_at.into(),
-        }).unwrap_or_else(|| AggregatedView::new(*tenant_id)))
+        Ok(model
+            .map(|m| AggregatedView {
+                tenant_id: TenantId::new(m.tenant_id),
+                total_events: m.total_events as u64,
+                total_contacts: m.total_contacts as u64,
+                total_deals: m.total_deals as u64,
+                total_deals_won: m.total_deals_won as u64,
+                total_pipeline_value: m.total_pipeline_value,
+                total_revenue: m.total_revenue,
+                total_products: m.total_products as u64,
+                low_stock_variants: m.low_stock_variants as u64,
+                total_bookings: m.total_bookings as u64,
+                pending_leave_requests: m.pending_leave_requests as u64,
+                last_updated_at: m.last_updated_at.into(),
+            })
+            .unwrap_or_else(|| AggregatedView::new(*tenant_id)))
     }
 
     async fn save_aggregated_view(&self, view: &AggregatedView) -> Result<(), String> {
@@ -183,15 +188,21 @@ impl VistaRepository for VistaRepositoryImpl {
             .await
             .map_err(|e| e.to_string())?;
 
-        Ok(models.into_iter().map(|m| AnalyticsDataPoint {
-            tenant_id: TenantId::new(m.tenant_id),
-            timestamp: m.timestamp.into(),
-            metric_name: m.metric_name,
-            value: m.value,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| AnalyticsDataPoint {
+                tenant_id: TenantId::new(m.tenant_id),
+                timestamp: m.timestamp.into(),
+                metric_name: m.metric_name,
+                value: m.value,
+            })
+            .collect())
     }
 
-    async fn save_dashboard(&self, dashboard: &ataqu_domain_vista::dashboard::Dashboard) -> Result<(), String> {
+    async fn save_dashboard(
+        &self,
+        dashboard: &ataqu_domain_vista::dashboard::Dashboard,
+    ) -> Result<(), String> {
         let active = dashboard_entity::ActiveModel {
             id: sea_orm::Set(dashboard.id),
             tenant_id: sea_orm::Set(dashboard.tenant_id.as_uuid()),
@@ -200,29 +211,45 @@ impl VistaRepository for VistaRepositoryImpl {
             created_at: sea_orm::Set(dashboard.created_at),
             updated_at: sea_orm::Set(dashboard.updated_at),
         };
-        let exists = dashboard_entity::Entity::find_by_id(dashboard.id).one(&self.db).await.map_err(|e| e.to_string())?.is_some();
+        let exists = dashboard_entity::Entity::find_by_id(dashboard.id)
+            .one(&self.db)
+            .await
+            .map_err(|e| e.to_string())?
+            .is_some();
         if exists {
-            dashboard_entity::Entity::update(active).exec(&self.db).await.map_err(|e| e.to_string())?;
+            dashboard_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| e.to_string())?;
         } else {
-            dashboard_entity::Entity::insert(active).exec(&self.db).await.map_err(|e| e.to_string())?;
+            dashboard_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| e.to_string())?;
         }
         Ok(())
     }
 
-    async fn list_dashboards(&self, tenant_id: &TenantId) -> Result<Vec<ataqu_domain_vista::dashboard::Dashboard>, String> {
+    async fn list_dashboards(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<ataqu_domain_vista::dashboard::Dashboard>, String> {
         let models = dashboard_entity::Entity::find()
             .filter(dashboard_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .all(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        Ok(models.into_iter().map(|m| ataqu_domain_vista::dashboard::Dashboard {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            name: m.name,
-            config: m.config,
-            created_at: m.created_at,
-            updated_at: m.updated_at,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| ataqu_domain_vista::dashboard::Dashboard {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                name: m.name,
+                config: m.config,
+                created_at: m.created_at,
+                updated_at: m.updated_at,
+            })
+            .collect())
     }
 
     async fn delete_dashboard(&self, tenant_id: &TenantId, id: uuid::Uuid) -> Result<(), String> {

@@ -59,7 +59,11 @@ pub struct SsoLink {
     pub created_at: SystemTime,
 }
 
-pub fn build_authorization_url(provider: &SsoProvider, config: &SsoConfig, state: &str) -> SsoRedirect {
+pub fn build_authorization_url(
+    provider: &SsoProvider,
+    config: &SsoConfig,
+    state: &str,
+) -> SsoRedirect {
     let url = match provider {
         SsoProvider::Google => format!(
             "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&redirect_uri={}&response_type=code&scope=openid+email+profile&state={}",

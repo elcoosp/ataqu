@@ -21,7 +21,11 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Alias::new("document_id")).uuid().not_null())
                     .col(ColumnDef::new(Alias::new("title")).text().not_null())
                     .col(ColumnDef::new(Alias::new("content")).text().not_null())
-                    .col(ColumnDef::new(Alias::new("created_at")).timestamp_with_time_zone().not_null())
+                    .col(
+                        ColumnDef::new(Alias::new("created_at"))
+                            .timestamp_with_time_zone()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await?;

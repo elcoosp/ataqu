@@ -14,7 +14,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Alias::new("duration_seconds"))
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         // Add duration_minutes
         manager
@@ -40,7 +41,8 @@ impl MigrationTrait for Migration {
                     .drop_column(Bookings::DurationMinutes)
                     .to_owned(),
             )
-            .await.ok();
+            .await
+            .ok();
 
         manager
             .alter_table(

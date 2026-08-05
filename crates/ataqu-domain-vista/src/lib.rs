@@ -1,6 +1,6 @@
 pub mod aggregation;
-pub mod dashboard;
 pub mod analytics;
+pub mod dashboard;
 pub mod repository;
 
 pub use aggregation::{AggregatedView, process_aggregation_event};

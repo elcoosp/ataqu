@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use ataqu_domain_spark::repository::SparkRepository;
 use ataqu_domain_spark::{Action, Condition, SparkError, Trigger, Workflow, evaluate_conditions};
-use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_infra_outbox::OutboxEvent;
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use uuid::Uuid;
 
 #[async_trait::async_trait]
@@ -57,7 +57,12 @@ impl SparkService {
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
-        Self { repo, dispatcher, id_gen, clock }
+        Self {
+            repo,
+            dispatcher,
+            id_gen,
+            clock,
+        }
     }
 
     pub async fn create_workflow(&self, cmd: CreateWorkflowCommand) -> SparkResult<Workflow> {
@@ -78,11 +83,18 @@ impl SparkService {
     }
 
     pub async fn get_workflow(&self, tenant_id: TenantId, id: Uuid) -> SparkResult<Workflow> {
-        self.repo.get_workflow(&tenant_id, &id).await?
+        self.repo
+            .get_workflow(&tenant_id, &id)
+            .await?
             .ok_or(SparkServiceError::WorkflowNotFound)
     }
 
-    pub async fn list_workflows(&self, tenant_id: TenantId, limit: u64, offset: u64) -> SparkResult<Vec<Workflow>> {
+    pub async fn list_workflows(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> SparkResult<Vec<Workflow>> {
         Ok(self.repo.list_workflows(&tenant_id, limit, offset).await?)
     }
 
@@ -95,8 +107,16 @@ impl SparkService {
         Ok(())
     }
 
-    pub async fn trigger_workflow_public(&self, tenant_id: TenantId, workflow_id: Uuid, payload: serde_json::Value) -> SparkResult<()> {
-        let workflow = self.repo.get_workflow(&tenant_id, &workflow_id).await?
+    pub async fn trigger_workflow_public(
+        &self,
+        tenant_id: TenantId,
+        workflow_id: Uuid,
+        payload: serde_json::Value,
+    ) -> SparkResult<()> {
+        let workflow = self
+            .repo
+            .get_workflow(&tenant_id, &workflow_id)
+            .await?
             .ok_or(SparkServiceError::WorkflowNotFound)?;
 
         if !evaluate_conditions(&workflow.conditions, &payload) {
@@ -107,8 +127,16 @@ impl SparkService {
     }
 
     pub async fn evaluate_trigger(&self, event: &OutboxEvent) -> SparkResult<()> {
-        let workflows = self.repo.list_active_workflows_by_event_type(&event.schema, &event.event_type).await?;
-        let event_tenant_id = event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+        let workflows = self
+            .repo
+            .list_active_workflows_by_event_type(&event.schema, &event.event_type)
+            .await?;
+        let event_tenant_id = event
+            .payload
+            .get("tenant_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .unwrap_or(Uuid::nil());
         for workflow in workflows {
             if workflow.tenant_id != event_tenant_id {
                 continue;

@@ -90,9 +90,24 @@ pub trait PipelineStageRepository: Send + Sync {
 #[async_trait]
 pub trait TaskRepository: Send + Sync {
     async fn save_task(&self, task: &crate::task::Task) -> CinqRepositoryResult<()>;
-    async fn find_task_by_id(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<Option<crate::task::Task>>;
-    async fn list_tasks(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> CinqRepositoryResult<Vec<crate::task::Task>>;
-    async fn list_tasks_for_contact(&self, tenant_id: &TenantId, contact_id: Uuid, limit: u64, offset: u64) -> CinqRepositoryResult<Vec<crate::task::Task>>;
+    async fn find_task_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> CinqRepositoryResult<Option<crate::task::Task>>;
+    async fn list_tasks(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqRepositoryResult<Vec<crate::task::Task>>;
+    async fn list_tasks_for_contact(
+        &self,
+        tenant_id: &TenantId,
+        contact_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> CinqRepositoryResult<Vec<crate::task::Task>>;
     async fn delete_task(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<()>;
 }
 

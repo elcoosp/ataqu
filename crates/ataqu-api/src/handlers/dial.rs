@@ -81,7 +81,9 @@ pub async fn create_channel(
     }
 
     if channel_type == ChannelType::DirectMessage && participants.len() != 2 {
-        return Err(ApiResponseError::validation("Direct message channels must have exactly 2 participants"));
+        return Err(ApiResponseError::validation(
+            "Direct message channels must have exactly 2 participants",
+        ));
     }
 
     let cmd = CreateChannelCommand {
@@ -129,7 +131,10 @@ pub async fn archive_channel(
     auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.dial_service.archive_channel(auth.tenant_id, id).await
+    state
+        .dial_service
+        .archive_channel(auth.tenant_id, id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
     // Broadcast archive event to WebSocket subscribers
@@ -137,7 +142,8 @@ pub async fn archive_channel(
     let broadcast = serde_json::json!({
         "type": "channel_archived",
         "channel_id": id,
-    }).to_string();
+    })
+    .to_string();
     if let Some(subscribers) = state.ws_registry.get(&key) {
         for entry in subscribers.iter() {
             let _ = entry.value().send(broadcast.clone());
@@ -158,7 +164,10 @@ pub async fn update_channel(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateChannelRequest>,
 ) -> ApiResult<Json<ChannelResponse>> {
-    let channel = state.dial_service.update_channel(auth.tenant_id, id, payload.name).await
+    let channel = state
+        .dial_service
+        .update_channel(auth.tenant_id, id, payload.name)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(channel.into()))
 }
@@ -213,7 +222,10 @@ pub async fn edit_message(
     Path(message_id): Path<Uuid>,
     Json(payload): Json<EditMessageRequest>,
 ) -> ApiResult<Json<MessageResponse>> {
-    let edited = state.dial_service.edit_message(auth.tenant_id, message_id, auth.user_id, payload.content).await
+    let edited = state
+        .dial_service
+        .edit_message(auth.tenant_id, message_id, auth.user_id, payload.content)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(edited.into()))
 }
@@ -224,7 +236,10 @@ pub async fn delete_message(
     Path(message_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     let is_moderator = auth.has_role("admin");
-    state.dial_service.delete_message(auth.tenant_id, message_id, auth.user_id, is_moderator).await
+    state
+        .dial_service
+        .delete_message(auth.tenant_id, message_id, auth.user_id, is_moderator)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -281,7 +296,10 @@ pub async fn list_thread_messages(
     auth: AuthContext,
     Path(thread_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<MessageResponse>>> {
-    let msgs = state.dial_service.list_thread_messages(auth.tenant_id, thread_id, 100, 0).await
+    let msgs = state
+        .dial_service
+        .list_thread_messages(auth.tenant_id, thread_id, 100, 0)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
 }
@@ -297,7 +315,10 @@ pub async fn add_mention(
     auth: AuthContext,
     Json(payload): Json<AddMentionRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let mention = state.dial_service.add_mention(auth.tenant_id, payload.message_id, payload.user_id).await
+    let mention = state
+        .dial_service
+        .add_mention(auth.tenant_id, payload.message_id, payload.user_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({
         "id": mention.id,
@@ -335,7 +356,10 @@ pub async fn mark_mention_read(
     auth: AuthContext,
     Path(mention_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.dial_service.mark_mention_as_read(auth.tenant_id, mention_id).await
+    state
+        .dial_service
+        .mark_mention_as_read(auth.tenant_id, mention_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -344,7 +368,10 @@ pub async fn get_online_users(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let users = state.dial_service.get_online_users(auth.tenant_id).await
+    let users = state
+        .dial_service
+        .get_online_users(auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({ "online_users": users })))
 }
@@ -388,12 +415,19 @@ pub async fn upload_file(
             .and_then(|n| n.to_str())
             .unwrap_or("upload.bin")
             .to_string();
-        let data = field.bytes().await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        let data = field
+            .bytes()
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
         let upload_dir = std::path::PathBuf::from("./uploads");
-        tokio::fs::create_dir_all(&upload_dir).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        tokio::fs::create_dir_all(&upload_dir)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
         let file_path = upload_dir.join(format!("{}_{}", auth.user_id, safe_name));
-        tokio::fs::write(&file_path, &data).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        tokio::fs::write(&file_path, &data)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
         return Ok(Json(serde_json::json!({
             "url": format!("/uploads/{}_{}", auth.user_id, safe_name),
@@ -414,7 +448,10 @@ pub async fn add_reaction(
     Path(message_id): Path<Uuid>,
     Json(payload): Json<AddReactionRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let reaction = state.dial_service.add_reaction(auth.tenant_id, message_id, auth.user_id, payload.emoji).await
+    let reaction = state
+        .dial_service
+        .add_reaction(auth.tenant_id, message_id, auth.user_id, payload.emoji)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({
         "id": reaction.id,
@@ -429,13 +466,21 @@ pub async fn list_reactions(
     auth: AuthContext,
     Path(message_id): Path<Uuid>,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let reactions = state.dial_service.list_reactions(auth.tenant_id, message_id).await
+    let reactions = state
+        .dial_service
+        .list_reactions(auth.tenant_id, message_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let list = reactions.into_iter().map(|r| serde_json::json!({
-        "id": r.id,
-        "user_id": r.user_id.as_uuid(),
-        "emoji": r.emoji
-    })).collect();
+    let list = reactions
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.id,
+                "user_id": r.user_id.as_uuid(),
+                "emoji": r.emoji
+            })
+        })
+        .collect();
     Ok(Json(list))
 }
 
@@ -444,7 +489,10 @@ pub async fn delete_reaction(
     auth: AuthContext,
     Path((_message_id, reaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
-    state.dial_service.delete_reaction(auth.tenant_id, reaction_id).await
+    state
+        .dial_service
+        .delete_reaction(auth.tenant_id, reaction_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -453,14 +501,23 @@ pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
         .route("/channels", post(create_channel).get(list_channels))
-        .route("/channels/:id", get(get_channel).delete(archive_channel).put(update_channel))
+        .route(
+            "/channels/:id",
+            get(get_channel).delete(archive_channel).put(update_channel),
+        )
         .route(
             "/channels/:id/messages",
             post(send_message).get(list_messages),
         )
         .route("/messages/:id", put(edit_message).delete(delete_message))
-        .route("/messages/:id/reactions", post(add_reaction).get(list_reactions))
-        .route("/messages/:id/reactions/:reaction_id", axum::routing::delete(delete_reaction))
+        .route(
+            "/messages/:id/reactions",
+            post(add_reaction).get(list_reactions),
+        )
+        .route(
+            "/messages/:id/reactions/:reaction_id",
+            axum::routing::delete(delete_reaction),
+        )
         .route("/threads", post(start_thread))
         .route("/threads/:id", get(get_thread))
         .route("/threads/:id/messages", get(list_thread_messages))

@@ -5,41 +5,42 @@ pub mod m_aegis;
 pub mod m_aegis_add_api_keys;
 pub mod m_cinq;
 pub mod m_cinq_add_activity_stage;
-pub mod m_cinq_add_deal_pipeline_stage;
-pub mod m_cinq_add_tasks;
-pub mod m_cinq_add_lead_score;
 pub mod m_cinq_add_contact_unique;
+pub mod m_cinq_add_contact_version;
+pub mod m_cinq_add_deal_pipeline_stage;
+pub mod m_cinq_add_lead_score;
+pub mod m_cinq_add_tasks;
 pub mod m_dial;
 pub mod m_dial_add_message_columns;
 pub mod m_dial_add_participants;
-pub mod m_dial_add_reactions;
 pub mod m_dial_add_presence;
+pub mod m_dial_add_reactions;
 pub mod m_dial_add_threads_mentions;
 pub mod m_pause;
 pub mod m_pause_add_columns;
 pub mod m_pause_add_documents;
 pub mod m_pause_rename_to_full_name;
 pub mod m_pivot;
-pub mod m_pivot_add_document_versions;
 pub mod m_pivot_add_blocks_relations;
+pub mod m_pivot_add_document_versions;
 pub mod m_pivot_add_templates;
 pub mod m_sond;
 pub mod m_sond_add_schema;
 pub mod m_spark;
 pub mod m_tempo;
 pub mod m_tempo_add_event_types;
+pub mod m_tempo_add_reminder_tz;
+pub mod m_tempo_add_slug;
 pub mod m_tempo_add_status;
 pub mod m_tempo_fix_duration;
-pub mod m_tempo_add_slug;
-pub mod m_tempo_add_reminder_tz;
 pub mod m_vault;
 pub mod m_vault_add_price_column;
 pub mod m_vault_add_products_variants;
-pub mod m_vault_add_stock_movements;
 pub mod m_vault_add_reservations;
+pub mod m_vault_add_stock_movements;
 pub mod m_vault_add_warehouses;
-pub mod m_vista_tables;
 pub mod m_vista_add_dashboards;
+pub mod m_vista_tables;
 
 pub struct Migrator;
 
@@ -56,6 +57,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_cinq_add_tasks::Migration),
             Box::new(m_cinq_add_lead_score::Migration),
             Box::new(m_cinq_add_contact_unique::Migration),
+            Box::new(m_cinq_add_contact_version::Migration),
             Box::new(m_dial::Migration),
             Box::new(m_dial_add_threads_mentions::Migration),
             Box::new(m_dial_add_message_columns::Migration),

@@ -1,13 +1,13 @@
 use async_trait::async_trait;
 use ataqu_domain_tempo::availability::AvailabilitySlot;
 use ataqu_domain_tempo::event_type::EventType;
-use ataqu_domain_tempo::schedule::{Booking, BookingId, BookingStatus, EventTypeId};
 use ataqu_domain_tempo::repository::TempoRepository;
+use ataqu_domain_tempo::schedule::{Booking, BookingId, BookingStatus, EventTypeId};
 use ataqu_kernel::TenantId;
+use chrono::{DateTime, Utc};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set,
 };
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 mod booking_entity {
@@ -250,20 +250,27 @@ impl TempoRepository for TempoRepositoryImpl {
             .await
             .map_err(|e| e.to_string())?;
 
-        Ok(models.into_iter().map(|m| EventType {
-            id: EventTypeId(m.id),
-            tenant_id: TenantId::new(m.tenant_id),
-            name: m.name,
-            slug: m.slug,
-            description: m.description,
-            duration_minutes: m.duration_minutes,
-            is_active: m.is_active,
-            created_at: m.created_at,
-            updated_at: m.updated_at,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| EventType {
+                id: EventTypeId(m.id),
+                tenant_id: TenantId::new(m.tenant_id),
+                name: m.name,
+                slug: m.slug,
+                description: m.description,
+                duration_minutes: m.duration_minutes,
+                is_active: m.is_active,
+                created_at: m.created_at,
+                updated_at: m.updated_at,
+            })
+            .collect())
     }
 
-    async fn find_event_type_by_slug(&self, tenant_id: &TenantId, slug: &str) -> Result<Option<EventType>, String> {
+    async fn find_event_type_by_slug(
+        &self,
+        tenant_id: &TenantId,
+        slug: &str,
+    ) -> Result<Option<EventType>, String> {
         let model = event_type_entity::Entity::find()
             .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(event_type_entity::Column::Slug.eq(slug))
@@ -300,24 +307,35 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn list_availability_slots(&self, tenant_id: &TenantId, event_type_id: &Uuid) -> Result<Vec<AvailabilitySlot>, String> {
+    async fn list_availability_slots(
+        &self,
+        tenant_id: &TenantId,
+        event_type_id: &Uuid,
+    ) -> Result<Vec<AvailabilitySlot>, String> {
         let models = availability_slot_entity::Entity::find()
             .filter(availability_slot_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(availability_slot_entity::Column::EventTypeId.eq(*event_type_id))
             .all(&self.db)
             .await
             .map_err(|e| e.to_string())?;
-        Ok(models.into_iter().map(|m| AvailabilitySlot {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            event_type_id: m.event_type_id,
-            start_time: m.start_time,
-            end_time: m.end_time,
-            is_booked: m.is_booked,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| AvailabilitySlot {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                event_type_id: m.event_type_id,
+                start_time: m.start_time,
+                end_time: m.end_time,
+                is_booked: m.is_booked,
+            })
+            .collect())
     }
 
-    async fn delete_availability_slot(&self, tenant_id: &TenantId, slot_id: &Uuid) -> Result<(), String> {
+    async fn delete_availability_slot(
+        &self,
+        tenant_id: &TenantId,
+        slot_id: &Uuid,
+    ) -> Result<(), String> {
         availability_slot_entity::Entity::delete_many()
             .filter(availability_slot_entity::Column::Id.eq(*slot_id))
             .filter(availability_slot_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -346,7 +364,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(models.into_iter().map(booking_model_to_domain).collect())
     }
 
-    async fn mark_reminder_sent(&self, tenant_id: &TenantId, booking_id: &BookingId, sent_at: std::time::SystemTime) -> Result<(), String> {
+    async fn mark_reminder_sent(
+        &self,
+        tenant_id: &TenantId,
+        booking_id: &BookingId,
+        sent_at: std::time::SystemTime,
+    ) -> Result<(), String> {
         let sent_dt = chrono::DateTime::<chrono::Utc>::from(sent_at);
         let mut active: booking_entity::ActiveModel = booking_entity::Entity::find()
             .filter(booking_entity::Column::Id.eq(booking_id.0))

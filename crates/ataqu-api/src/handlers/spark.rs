@@ -128,7 +128,10 @@ pub async fn webhook_trigger(
     Path((tenant_id, workflow_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResult<StatusCode> {
-    state.spark_service.trigger_workflow_public(ataqu_kernel::TenantId::new(tenant_id), workflow_id, payload).await
+    state
+        .spark_service
+        .trigger_workflow_public(ataqu_kernel::TenantId::new(tenant_id), workflow_id, payload)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }

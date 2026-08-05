@@ -96,6 +96,7 @@ mod tests {
     use super::*;
     use std::time::{Duration, UNIX_EPOCH};
 
+    #[allow(dead_code)]
     struct MockIdGenerator;
     impl IdGenerator for MockIdGenerator {
         fn new_uuid_v7(&self) -> Uuid {

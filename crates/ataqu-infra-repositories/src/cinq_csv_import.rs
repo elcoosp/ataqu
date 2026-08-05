@@ -55,6 +55,7 @@ impl CsvImporter {
                 lead_score: ActiveValue::Set(0),
                 created_at: ActiveValue::Set(now),
                 updated_at: ActiveValue::Set(now),
+                version: ActiveValue::Set(0),
             };
             items.push(ContactImportItem { id, model });
         }
