@@ -106,6 +106,27 @@ impl SondService {
             .ok_or(SondServiceError::FormNotFound)
     }
 
+    pub async fn update_form(&self, tenant_id: TenantId, cmd: ataqu_domain_sond::form::UpdateFormCommand) -> SondResult<Form> {
+        let current_form = self.get_form(tenant_id, cmd.form_id).await?;
+        let questions_clone = cmd.questions.clone();
+        let event = ataqu_domain_sond::form::update_form(cmd, &current_form, self.id_gen.as_ref(), self.clock.as_ref())?;
+
+        let mut form = current_form;
+        if let Some(title) = event.title { form.title = title; }
+        if let Some(desc) = event.description { form.description = Some(desc); }
+        if let Some(qs) = questions_clone {
+            form.questions = qs.into_iter().map(|qi| qi.into_question(self.id_gen.as_ref())).collect();
+        }
+        form.updated_at = event.updated_at;
+
+        self.repo.save_form(&form).await.map_err(|e| SondServiceError::Repository(e.to_string()))?;
+        Ok(form)
+    }
+
+    pub async fn delete_form(&self, tenant_id: TenantId, form_id: Uuid) -> SondResult<()> {
+        self.repo.delete_form(tenant_id, form_id).await.map_err(|e| SondServiceError::Repository(e.to_string()))
+    }
+
     pub async fn list_forms(
         &self,
         tenant_id: TenantId,

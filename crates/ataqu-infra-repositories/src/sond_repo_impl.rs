@@ -1,4 +1,5 @@
 //! SeaORM implementations for SOND domain repository.
+use sea_orm::ConnectionTrait;
 use async_trait::async_trait;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
@@ -137,5 +138,15 @@ impl SondRepository for SondRepositoryImpl {
             .await
             .map_err(|e| SondError::Repository(e.to_string()))?;
         Ok(models.into_iter().map(submission_model_to_domain).collect())
+    }
+
+    async fn delete_form(&self, tenant_id: ataqu_kernel::TenantId, form_id: uuid::Uuid) -> Result<(), ataqu_domain_sond::errors::SondError> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "DELETE FROM sond.forms WHERE tenant_id = $1 AND id = $2",
+            vec![tenant_id.as_uuid().into(), form_id.into()],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| ataqu_domain_sond::errors::SondError::Repository(e.to_string()))?;
+        Ok(())
     }
 }

@@ -486,6 +486,9 @@ dependencies = [
 [[package]]
 name = "ataqu-domain-billing"
 version = "0.1.0"
+dependencies = [
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-cinq"
@@ -516,6 +519,9 @@ dependencies = [
 [[package]]
 name = "ataqu-domain-gdpr"
 version = "0.1.0"
+dependencies = [
+ "uuid",
+]
 
 [[package]]
 name = "ataqu-domain-pause"

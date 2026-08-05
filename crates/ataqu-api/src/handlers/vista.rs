@@ -1,6 +1,6 @@
 use axum::{Router, extract::{Path, State}, response::Json};
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -46,7 +46,7 @@ pub async fn get_kpis(
     }))
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct CreateDashboardRequest {
     pub name: String,
     pub config: serde_json::Value,
@@ -96,9 +96,31 @@ pub async fn delete_dashboard(
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RawSqlRequest {
+    pub sql: String,
+}
+
+pub async fn execute_raw_sql(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<RawSqlRequest>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+    }
+    let results = state
+        .vista_service
+        .execute_raw_sql(auth.tenant_id, &payload.sql)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(results))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/kpis", axum::routing::get(get_kpis))
         .route("/dashboards", axum::routing::post(create_dashboard).get(list_dashboards))
         .route("/dashboards/:id", axum::routing::delete(delete_dashboard))
+        .route("/raw-sql", axum::routing::post(execute_raw_sql))
 }

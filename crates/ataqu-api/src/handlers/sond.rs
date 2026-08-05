@@ -101,6 +101,41 @@ pub async fn get_form(
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UpdateFormRequest {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub questions: Option<Vec<ataqu_domain_sond::question::QuestionInput>>,
+}
+
+pub async fn update_form(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateFormRequest>,
+) -> ApiResult<Json<FormResponse>> {
+    let cmd = ataqu_domain_sond::form::UpdateFormCommand {
+        form_id: id,
+        title: payload.title,
+        description: payload.description,
+        questions: payload.questions,
+    };
+
+    let updated_form = state.sond_service.update_form(auth.tenant_id, cmd).await
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+    Ok(Json(updated_form.into()))
+}
+
+pub async fn delete_form(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.sond_service.delete_form(auth.tenant_id, id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
 pub struct SubmitRequest {
     pub answers: Vec<AnswerInput>,
     pub respondent_id: Option<Uuid>,
@@ -163,7 +198,7 @@ pub struct PaginationParams {
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form).get(list_forms))
-        .route("/forms/:id", axum::routing::get(get_form))
+        .route("/forms/:id", axum::routing::get(get_form).put(update_form).delete(delete_form))
         .route("/forms/:id/submit", axum::routing::post(submit_form))
         .route("/forms/:id/export", axum::routing::get(export_responses))
 }
