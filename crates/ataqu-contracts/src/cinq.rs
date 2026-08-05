@@ -34,13 +34,17 @@ pub struct ActivityResponse {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+fn default_custom_fields() -> serde_json::Value {
+    serde_json::json!({})
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateContactRequest {
     pub name: String,
     pub company: Option<String>,
     pub email: String,
     pub phone: Option<String>,
-    #[serde(default)]
+    #[serde(default = "default_custom_fields")]
     pub custom_fields: serde_json::Value,
 }
 
