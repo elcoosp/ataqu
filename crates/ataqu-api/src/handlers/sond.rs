@@ -45,7 +45,10 @@ impl From<ataqu_application::sond_service::Form> for FormResponse {
                     obj.insert("id".into(), q.id.to_string().into());
                     obj.insert("label".into(), q.label.clone().into());
                     obj.insert("required".into(), q.required.into());
-                    obj.insert("conditions".into(), serde_json::to_value(&q.conditions).unwrap_or(serde_json::Value::Null));
+                    obj.insert(
+                        "conditions".into(),
+                        serde_json::to_value(&q.conditions).unwrap_or(serde_json::Value::Null),
+                    );
                     obj.insert("page".into(), q.page.into());
                 }
                 val

@@ -372,11 +372,20 @@ impl DialService {
         channel_id: Uuid,
         requester_id: Uuid,
     ) -> DialResult<String> {
-        let messages = self.list_messages(tenant_id, channel_id, requester_id, 100000, 0).await?;
+        let messages = self
+            .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
+            .await?;
 
         let mut wtr = csv::Writer::from_writer(vec![]);
-        wtr.write_record(&["message_id", "author_id", "content", "sent_at", "edited_at", "deleted_at"])
-            .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+        wtr.write_record(&[
+            "message_id",
+            "author_id",
+            "content",
+            "sent_at",
+            "edited_at",
+            "deleted_at",
+        ])
+        .map_err(|e| DialServiceError::Repository(e.to_string()))?;
 
         for msg in messages {
             wtr.write_record(&[
@@ -384,8 +393,12 @@ impl DialService {
                 msg.author_id.as_uuid().to_string(),
                 msg.content,
                 chrono::DateTime::<chrono::Utc>::from(msg.created_at).to_rfc3339(),
-                msg.edited_at.map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()).unwrap_or_default(),
-                msg.deleted_at.map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()).unwrap_or_default(),
+                msg.edited_at
+                    .map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339())
+                    .unwrap_or_default(),
+                msg.deleted_at
+                    .map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339())
+                    .unwrap_or_default(),
             ])
             .map_err(|e| DialServiceError::Repository(e.to_string()))?;
         }

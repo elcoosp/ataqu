@@ -110,7 +110,11 @@ impl RealAegisDomain {
         id_gen: &dyn IdGenerator,
         clock: &dyn Clock,
     ) -> Result<(UserCreated, User), AuthError> {
-        if !cmd.email.reveal(&ataqu_security::PiiAccessKey::new()).contains('@') {
+        if !cmd
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .contains('@')
+        {
             return Err(AuthError::InvalidCredentials);
         }
         let salt = SaltString::generate(&mut rand::thread_rng());
@@ -300,7 +304,9 @@ impl AegisService {
         match self.repo.save_user(&user).await {
             Ok(_) => (),
             Err(AuthError::Database(msg)) if msg.contains("duplicate key") => {
-                return Err(AegisServiceError::Conflict("Email already exists".to_string()));
+                return Err(AegisServiceError::Conflict(
+                    "Email already exists".to_string(),
+                ));
             }
             Err(e) => return Err(AegisServiceError::Domain(e)),
         }
@@ -579,7 +585,10 @@ impl AegisService {
         Ok(user)
     }
 
-    pub async fn validate_api_key_data(&self, key: &str) -> Result<ApiKeyAuthData, AegisServiceError> {
+    pub async fn validate_api_key_data(
+        &self,
+        key: &str,
+    ) -> Result<ApiKeyAuthData, AegisServiceError> {
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(key.as_bytes());

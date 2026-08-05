@@ -336,7 +336,10 @@ impl VaultService {
         Ok(new_variant)
     }
 
-    pub async fn bulk_adjust_stock(&self, cmd: BulkStockAdjustCommand) -> VaultResult<Vec<Variant>> {
+    pub async fn bulk_adjust_stock(
+        &self,
+        cmd: BulkStockAdjustCommand,
+    ) -> VaultResult<Vec<Variant>> {
         let mut updated_variants = Vec::new();
         for (variant_id, delta) in cmd.adjustments {
             let variant = self.get_variant(cmd.tenant_id, variant_id).await?;

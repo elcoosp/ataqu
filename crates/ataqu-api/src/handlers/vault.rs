@@ -433,7 +433,10 @@ pub fn routes() -> Router<AppState> {
                 .delete(delete_variant),
         )
         .route("/variants/:id/stock", axum::routing::put(update_stock))
-        .route("/variants/bulk-stock-adjust", axum::routing::post(bulk_adjust_stock))
+        .route(
+            "/variants/bulk-stock-adjust",
+            axum::routing::post(bulk_adjust_stock),
+        )
         .route(
             "/variants/:id/movements",
             axum::routing::get(list_movements),

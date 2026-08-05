@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, DbBackend, Statement, ConnectionTrait};
+use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
 use uuid::Uuid;
 
 #[async_trait]

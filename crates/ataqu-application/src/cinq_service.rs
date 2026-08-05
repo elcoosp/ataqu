@@ -256,7 +256,11 @@ impl CinqService {
         Ok(())
     }
 
-    pub async fn bulk_delete_contacts(&self, tenant_id: TenantId, ids: Vec<Uuid>) -> CinqResult<()> {
+    pub async fn bulk_delete_contacts(
+        &self,
+        tenant_id: TenantId,
+        ids: Vec<Uuid>,
+    ) -> CinqResult<()> {
         for id in ids {
             self.contact_repo.delete_contact(&tenant_id, id).await?;
         }

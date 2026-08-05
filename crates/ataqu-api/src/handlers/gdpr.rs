@@ -1,7 +1,14 @@
-use axum::{extract::{Path, State}, http::StatusCode};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+};
 use uuid::Uuid;
 
-use crate::{AppState, error::{ApiResponseError, ApiResult}, middleware::AuthContext};
+use crate::{
+    AppState,
+    error::{ApiResponseError, ApiResult},
+    middleware::AuthContext,
+};
 
 pub async fn request_tenant_deletion(
     State(state): State<AppState>,
@@ -9,10 +16,14 @@ pub async fn request_tenant_deletion(
     Path(tenant_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
     if auth.tenant_id.as_uuid() != tenant_id {
-        return Err(ApiResponseError::Forbidden("Cannot delete data for another tenant".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Cannot delete data for another tenant".to_string(),
+        ));
     }
 
     state
@@ -25,6 +36,8 @@ pub async fn request_tenant_deletion(
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {
-    axum::Router::new()
-        .route("/tenants/:id", axum::routing::delete(request_tenant_deletion))
+    axum::Router::new().route(
+        "/tenants/:id",
+        axum::routing::delete(request_tenant_deletion),
+    )
 }

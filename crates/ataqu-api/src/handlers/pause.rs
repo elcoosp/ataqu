@@ -6,8 +6,8 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
@@ -184,7 +184,9 @@ pub async fn request_leave(
     let resp = LeaveRequestResponse {
         id: request.id,
         employee_id: request.employee_id,
-        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        employee_name: employee
+            .map(|e| e.full_name)
+            .unwrap_or_else(|| "Unknown".to_string()),
         leave_type: format!("{:?}", request.leave_type).to_lowercase(),
         start_date: request.start_date,
         end_date: request.end_date,
@@ -278,15 +280,16 @@ pub async fn list_leave_requests(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    let emp_map: HashMap<Uuid, String> = employees
-        .into_iter()
-        .map(|e| (e.id, e.full_name))
-        .collect();
+    let emp_map: HashMap<Uuid, String> =
+        employees.into_iter().map(|e| (e.id, e.full_name)).collect();
 
     let responses = requests
         .into_iter()
         .map(|r| {
-            let employee_name = emp_map.get(&r.employee_id).cloned().unwrap_or_else(|| "Unknown".to_string());
+            let employee_name = emp_map
+                .get(&r.employee_id)
+                .cloned()
+                .unwrap_or_else(|| "Unknown".to_string());
             LeaveRequestResponse {
                 id: r.id,
                 employee_id: r.employee_id,
@@ -330,7 +333,9 @@ pub async fn approve_leave(
     let resp = LeaveRequestResponse {
         id: request.id,
         employee_id: request.employee_id,
-        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        employee_name: employee
+            .map(|e| e.full_name)
+            .unwrap_or_else(|| "Unknown".to_string()),
         leave_type: format!("{:?}", request.leave_type).to_lowercase(),
         start_date: request.start_date,
         end_date: request.end_date,
@@ -367,7 +372,9 @@ pub async fn reject_leave(
     let resp = LeaveRequestResponse {
         id: request.id,
         employee_id: request.employee_id,
-        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        employee_name: employee
+            .map(|e| e.full_name)
+            .unwrap_or_else(|| "Unknown".to_string()),
         leave_type: format!("{:?}", request.leave_type).to_lowercase(),
         start_date: request.start_date,
         end_date: request.end_date,
@@ -404,7 +411,9 @@ pub async fn cancel_leave(
     let resp = LeaveRequestResponse {
         id: request.id,
         employee_id: request.employee_id,
-        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        employee_name: employee
+            .map(|e| e.full_name)
+            .unwrap_or_else(|| "Unknown".to_string()),
         leave_type: format!("{:?}", request.leave_type).to_lowercase(),
         start_date: request.start_date,
         end_date: request.end_date,

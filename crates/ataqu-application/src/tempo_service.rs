@@ -131,13 +131,11 @@ impl TempoService {
             .list_availability_slots(&cmd.tenant_id, &cmd.event_type_id)
             .await
             .map_err(TempoServiceError::Repository)?;
-        let is_available = slots
-            .iter()
-            .any(|slot| {
-                let slot_start: std::time::SystemTime = slot.start_time.into();
-                let slot_end: std::time::SystemTime = slot.end_time.into();
-                slot_start <= starts_at && slot_end >= ends_at
-            });
+        let is_available = slots.iter().any(|slot| {
+            let slot_start: std::time::SystemTime = slot.start_time.into();
+            let slot_end: std::time::SystemTime = slot.end_time.into();
+            slot_start <= starts_at && slot_end >= ends_at
+        });
         if !is_available {
             return Err(TempoServiceError::Validation(
                 "Booking time is outside of available slots".to_string(),

@@ -27,11 +27,24 @@ pub struct VistaService {
 }
 
 impl VistaService {
-    pub fn new(repo: Arc<dyn VistaRepository + Send + Sync>, clock: Arc<dyn Clock>, id_gen: Arc<dyn IdGenerator>) -> Self {
-        Self { repo, clock, id_gen }
+    pub fn new(
+        repo: Arc<dyn VistaRepository + Send + Sync>,
+        clock: Arc<dyn Clock>,
+        id_gen: Arc<dyn IdGenerator>,
+    ) -> Self {
+        Self {
+            repo,
+            clock,
+            id_gen,
+        }
     }
 
-    pub async fn create_dashboard(&self, tenant_id: TenantId, name: String, config: serde_json::Value) -> VistaResult<ataqu_domain_vista::Dashboard> {
+    pub async fn create_dashboard(
+        &self,
+        tenant_id: TenantId,
+        name: String,
+        config: serde_json::Value,
+    ) -> VistaResult<ataqu_domain_vista::Dashboard> {
         let dashboard = ataqu_domain_vista::Dashboard {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,
@@ -40,7 +53,10 @@ impl VistaService {
             created_at: chrono::DateTime::<chrono::Utc>::from(self.clock.now()),
             updated_at: chrono::DateTime::<chrono::Utc>::from(self.clock.now()),
         };
-        self.repo.save_dashboard(&dashboard).await.map_err(VistaServiceError::Repository)?;
+        self.repo
+            .save_dashboard(&dashboard)
+            .await
+            .map_err(VistaServiceError::Repository)?;
         Ok(dashboard)
     }
 
@@ -223,11 +239,19 @@ impl VistaService {
         if !upper_sql.contains("TENANT_ID") {
             if upper_sql.contains("WHERE") {
                 let new_sql = sql.replacen("WHERE", &format!("WHERE {} AND", tenant_filter), 1);
-                return self.repo.execute_raw_sql(&tenant_id, &new_sql).await.map_err(VistaServiceError::Repository);
+                return self
+                    .repo
+                    .execute_raw_sql(&tenant_id, &new_sql)
+                    .await
+                    .map_err(VistaServiceError::Repository);
             } else {
                 // No WHERE clause, append one. This is risky for JOINs but acceptable for MLP.
                 let new_sql = format!("{} WHERE {}", sql, tenant_filter);
-                return self.repo.execute_raw_sql(&tenant_id, &new_sql).await.map_err(VistaServiceError::Repository);
+                return self
+                    .repo
+                    .execute_raw_sql(&tenant_id, &new_sql)
+                    .await
+                    .map_err(VistaServiceError::Repository);
             }
         }
 

@@ -92,9 +92,18 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", handlers::tempo::public_routes())
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
-        .route("/api/search", axum::routing::get(handlers::search::unified_search))
-        .route("/api/search", axum::routing::get(handlers::search::unified_search))
-        .route("/api/search", axum::routing::get(handlers::search::unified_search))
+        .route(
+            "/api/search",
+            axum::routing::get(handlers::search::unified_search),
+        )
+        .route(
+            "/api/search",
+            axum::routing::get(handlers::search::unified_search),
+        )
+        .route(
+            "/api/search",
+            axum::routing::get(handlers::search::unified_search),
+        )
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,

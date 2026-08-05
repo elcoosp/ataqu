@@ -23,7 +23,8 @@ async fn main() -> anyhow::Result<()> {
                             if !admin_token.is_empty() && command.starts_with(&admin_token) {
                                 let actual_cmd = command.trim_start_matches(&admin_token).trim();
                                 tracing::info!("Authorized admin command: {}", actual_cmd);
-                                let response = format!("Command '{}' authorized and executed.\n", actual_cmd);
+                                let response =
+                                    format!("Command '{}' authorized and executed.\n", actual_cmd);
                                 use tokio::io::AsyncWriteExt;
                                 let _ = stream.write_all(response.as_bytes()).await;
                             } else {

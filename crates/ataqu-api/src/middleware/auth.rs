@@ -87,11 +87,25 @@ pub async fn auth_middleware(
         if let Ok(api_key_data) = app_state.aegis_service.validate_api_key_data(api_key).await {
             // Basic scope enforcement: require "read" for GET, "write" for others
             let needs_write = req.method() != axum::http::Method::GET;
-            if needs_write && !api_key_data.scopes.iter().any(|s| s == "write" || s == "admin") {
-                return Err(ApiResponseError::Forbidden("API key lacks write scope".to_string()));
+            if needs_write
+                && !api_key_data
+                    .scopes
+                    .iter()
+                    .any(|s| s == "write" || s == "admin")
+            {
+                return Err(ApiResponseError::Forbidden(
+                    "API key lacks write scope".to_string(),
+                ));
             }
-            if !needs_write && !api_key_data.scopes.iter().any(|s| s == "read" || s == "write" || s == "admin") {
-                return Err(ApiResponseError::Forbidden("API key lacks read scope".to_string()));
+            if !needs_write
+                && !api_key_data
+                    .scopes
+                    .iter()
+                    .any(|s| s == "read" || s == "write" || s == "admin")
+            {
+                return Err(ApiResponseError::Forbidden(
+                    "API key lacks read scope".to_string(),
+                ));
             }
 
             let auth_ctx = AuthContext {
