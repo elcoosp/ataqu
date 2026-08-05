@@ -70,6 +70,18 @@ pub struct ContactUpdated {
     pub version: i32,
 }
 
+// Fix: Add a helper method to easily apply updates to a Contact
+impl Contact {
+    pub fn apply_update(&mut self, event: &ContactUpdated) {
+        if let Some(name) = &event.name { self.name = name.clone(); }
+        if let Some(email) = &event.email { self.email = email.clone(); }
+        if let Some(phone) = &event.phone { self.phone = phone.clone(); }
+        if let Some(custom_fields) = &event.custom_fields { self.custom_fields = custom_fields.clone(); }
+        self.updated_at = event.updated_at;
+        self.version = event.version;
+    }
+}
+
 // ---------- Pure Domain Functions ----------
 pub fn create_contact(
     cmd: CreateContactCommand,
