@@ -152,7 +152,6 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", axum::routing::get(health_check))
         .route("/metrics", axum::routing::get(metrics_handler))
         .route("/ready", axum::routing::get(readiness_check))
-        .nest_service("/uploads", tower_http::services::ServeDir::new("./uploads"))
         .merge(public_routes)
         .merge(private_routes)
         .with_state(state)

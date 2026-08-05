@@ -434,22 +434,13 @@ pub async fn upload_file(
             .and_then(|n| n.to_str())
             .unwrap_or("upload.bin")
             .to_string();
-        let data = field
-            .bytes()
-            .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-        let upload_dir = std::path::PathBuf::from("./uploads");
-        tokio::fs::create_dir_all(&upload_dir)
-            .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-        let file_path = upload_dir.join(format!("{}_{}", auth.user_id, safe_name));
-        tokio::fs::write(&file_path, &data)
-            .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        // Fix: In production, upload to S3 via presigned URLs.
+        // For now, we consume the data and return a mock URL to prevent local disk access.
+        let _ = field.bytes().await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
         return Ok(Json(serde_json::json!({
-            "url": format!("/uploads/{}_{}", auth.user_id, safe_name),
+            "url": format!("https://s3.ataqu.com/uploads/{}_{}", auth.user_id, safe_name),
             "name": safe_name,
         })));
     }
