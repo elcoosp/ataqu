@@ -299,6 +299,8 @@ impl CinqService {
     ) -> CinqResult<(usize, usize)> {
         let mut inserted = 0;
         let mut failed = 0;
+        let mut seen_emails = std::collections::HashSet::new();
+
         for row in rows {
             let name = row.get("name").or_else(|| row.get("Name")).or_else(|| row.get("NAME")).cloned().unwrap_or_default();
             let email_str = row.get("email").or_else(|| row.get("Email")).or_else(|| row.get("EMAIL")).cloned().unwrap_or_default();
@@ -308,6 +310,13 @@ impl CinqService {
                 failed += 1;
                 continue;
             }
+
+            let email_lower = email_str.to_lowercase();
+            if seen_emails.contains(&email_lower) {
+                failed += 1;
+                continue;
+            }
+            seen_emails.insert(email_lower);
 
             let mut custom = serde_json::Map::new();
             for (k, v) in &row {
@@ -358,26 +367,36 @@ impl CinqService {
 
     pub async fn export_contacts(&self, tenant_id: TenantId) -> CinqResult<String> {
         use csv::Writer;
-        let contacts = self
-            .contact_repo
-            .list_contacts(&tenant_id, 10000, 0)
-            .await?;
         let mut wtr = Writer::from_writer(vec![]);
         wtr.write_record(["id", "name", "email", "phone", "created_at"])
             .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
-        for c in contacts {
-            wtr.write_record(&[
-                c.id.to_string(),
-                c.name.clone(),
-                c.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string(),
-                c.phone
-                    .as_ref()
-                    .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string())
-                    .unwrap_or_default(),
-                c.created_at.to_rfc3339(),
-            ])
-            .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
+
+        let page_size = 1000u64;
+        let mut offset = 0u64;
+        loop {
+            let contacts = self
+                .contact_repo
+                .list_contacts(&tenant_id, page_size, offset)
+                .await?;
+            if contacts.is_empty() {
+                break;
+            }
+            for c in contacts {
+                wtr.write_record(&[
+                    c.id.to_string(),
+                    c.name.clone(),
+                    c.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string(),
+                    c.phone
+                        .as_ref()
+                        .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string())
+                        .unwrap_or_default(),
+                    c.created_at.to_rfc3339(),
+                ])
+                .map_err(|e| CinqServiceError::Validation(e.to_string()))?;
+            }
+            offset += page_size;
         }
+
         let data = String::from_utf8(
             wtr.into_inner()
                 .map_err(|e| CinqServiceError::Validation(e.to_string()))?,

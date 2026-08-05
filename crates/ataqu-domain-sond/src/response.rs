@@ -15,6 +15,8 @@ pub enum AnswerValue {
     Choice(String),
     MultipleChoice(Vec<String>),
     Rating(u8),
+    // PII values are stored as strings but should be wrapped in newtypes
+    // at the application boundary. See ADR-007.
     Email(String),
     Phone(String),
     Boolean(bool),

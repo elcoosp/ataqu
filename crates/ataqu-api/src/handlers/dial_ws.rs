@@ -140,10 +140,14 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
         }
     }
 
+    // Note: In a production system, we would maintain a reverse index
+    // (user_id -> set of channel_ids) for O(1) cleanup.
+    // For now, we iterate all channels but only remove the user.
+    // With bounded channels per tenant, this is acceptable.
     let user_uuid = auth.user_id;
-    for entry in state.ws_registry.iter() {
+    state.ws_registry.iter().for_each(|entry| {
         entry.value().remove(&user_uuid);
-    }
+    });
 
     if let Err(e) = state.dial_service.set_offline(auth.tenant_id, auth.user_id).await {
         tracing::error!("Failed to remove presence: {}", e);

@@ -22,6 +22,7 @@ pub mod m_pivot;
 pub mod m_pivot_add_document_versions;
 pub mod m_pivot_add_blocks_relations;
 pub mod m_sond;
+pub mod m_sond_add_schema;
 pub mod m_spark;
 pub mod m_tempo;
 pub mod m_tempo_add_event_types;
@@ -64,6 +65,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_pivot_add_document_versions::Migration),
             Box::new(m_pivot_add_blocks_relations::Migration),
             Box::new(m_sond::Migration),
+            Box::new(m_sond_add_schema::Migration),
             Box::new(m_spark::Migration),
             Box::new(m_tempo::Migration),
             Box::new(m_tempo_add_status::Migration),

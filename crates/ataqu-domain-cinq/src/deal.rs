@@ -192,3 +192,7 @@ mod tests {
         assert!(matches!(result, Err(CinqDomainError::InvalidAmount)));
     }
 }
+
+impl ataqu_kernel::Identifiable for Deal {
+    fn id(&self) -> uuid::Uuid { self.id }
+}

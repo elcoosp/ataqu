@@ -234,3 +234,7 @@ mod tests {
         assert!(result.is_ok());
     }
 }
+
+impl ataqu_kernel::Identifiable for Contact {
+    fn id(&self) -> uuid::Uuid { self.id }
+}
