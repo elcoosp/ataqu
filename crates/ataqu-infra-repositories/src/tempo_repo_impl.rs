@@ -384,4 +384,30 @@ impl TempoRepository for TempoRepositoryImpl {
         active.update(&self.db).await.map_err(|e| e.to_string())?;
         Ok(())
     }
+
+    async fn check_overlap(
+        &self,
+        tenant_id: &TenantId,
+        event_type_id: Uuid,
+        starts_at: std::time::SystemTime,
+        ends_at: std::time::SystemTime,
+    ) -> Result<bool, String> {
+        use sea_orm::EntityTrait;
+use sea_orm::PaginatorTrait;
+        let starts_at_dt: chrono::DateTime<chrono::Utc> = starts_at.into();
+        let ends_at_dt: chrono::DateTime<chrono::Utc> = ends_at.into();
+
+        let count = booking_entity::Entity::find()
+            .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(booking_entity::Column::EventTypeId.eq(event_type_id))
+            .filter(booking_entity::Column::Status.ne("cancelled"))
+            .filter(booking_entity::Column::StartsAt.lt(ends_at_dt))
+            .filter(booking_entity::Column::StartsAt.gt(starts_at_dt))
+            .count(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(count > 0)
+    }
+
 }

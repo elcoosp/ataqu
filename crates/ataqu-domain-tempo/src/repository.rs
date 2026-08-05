@@ -19,6 +19,13 @@ pub trait TempoRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Booking>, String>;
+    async fn check_overlap(
+        &self,
+        tenant_id: &TenantId,
+        event_type_id: Uuid,
+        starts_at: std::time::SystemTime,
+        ends_at: std::time::SystemTime,
+    ) -> Result<bool, String>;
     async fn update_booking_status(
         &self,
         tenant_id: &TenantId,

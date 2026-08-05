@@ -195,6 +195,25 @@ pub async fn send_message(
         .send_message(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    // Broadcast to WebSocket subscribers
+    let key = (auth.tenant_id.as_uuid(), channel_id);
+    let broadcast = serde_json::json!({
+        "type": "message",
+        "id": msg.id.as_uuid(),
+        "channel_id": msg.channel_id.as_uuid(),
+        "author_id": msg.author_id.as_uuid(),
+        "content": msg.content,
+        "created_at": msg.created_at,
+    }).to_string();
+    if let Some(subscribers) = state.ws_registry.get(&key) {
+        for entry in subscribers.iter() {
+            if entry.key() != &auth.user_id {
+                let _ = entry.value().send(broadcast.clone());
+            }
+        }
+    }
+
     Ok((StatusCode::CREATED, Json(msg.into())))
 }
 

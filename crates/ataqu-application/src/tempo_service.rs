@@ -96,16 +96,9 @@ impl TempoService {
             .ok_or(TempoServiceError::Validation("Event type not found".to_string()))?;
 
         let starts_at: std::time::SystemTime = cmd.starts_at.into();
-        let existing_bookings = self
-            .repo
-            .list_bookings(&cmd.tenant_id, 1000, 0)
-            .await
-            .map_err(TempoServiceError::Repository)?;
-        if ataqu_domain_tempo::schedule::check_overlap(
-            starts_at,
-            cmd.duration_minutes,
-            &existing_bookings,
-        ) {
+        let ends_at = starts_at + std::time::Duration::from_secs((cmd.duration_minutes * 60) as u64);
+
+        if self.repo.check_overlap(&cmd.tenant_id, cmd.event_type_id, starts_at, ends_at).await.map_err(TempoServiceError::Repository)? {
             return Err(TempoServiceError::Validation(
                 "Booking overlaps with existing booking".to_string(),
             ));
