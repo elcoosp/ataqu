@@ -70,6 +70,7 @@ pub struct DealUpdated {
     pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 pub fn create_deal(
@@ -122,6 +123,7 @@ pub fn update_deal(cmd: UpdateDealCommand, clock: &dyn Clock) -> CinqResult<Deal
         amount: cmd.amount,
         status: cmd.status,
         updated_at: now,
+        version: cmd.expected_version + 1,
     })
 }
 

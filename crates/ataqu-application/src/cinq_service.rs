@@ -494,6 +494,15 @@ impl CinqService {
             .find_deal_by_id(&cmd.tenant_id, cmd.id)
             .await?
             .ok_or(CinqServiceError::DealNotFound)?;
+
+        // Enforce OCC
+        if deal.version != cmd.expected_version {
+            return Err(CinqServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, deal.version
+            )));
+        }
+
         let domain_cmd = DomainUpdateDeal {
             id: cmd.id,
             tenant_id: cmd.tenant_id,
@@ -521,6 +530,7 @@ impl CinqService {
             deal.status = status;
         }
         deal.updated_at = event.updated_at;
+        deal.version = event.version; // Fix: Use version from domain event
         self.deal_repo.save_deal(&deal).await?;
 
         if let Some(DealStatus::Won) = event.status {
