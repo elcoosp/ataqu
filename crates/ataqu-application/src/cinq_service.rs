@@ -232,7 +232,7 @@ impl CinqService {
             contact.lead_score = lead_score;
         }
         contact.updated_at = event.updated_at;
-        contact.version += 1;
+        contact.version = event.version;
         self.contact_repo.save_contact(&contact).await?;
         Ok(contact)
     }

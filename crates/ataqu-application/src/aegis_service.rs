@@ -59,7 +59,7 @@ pub enum AegisServiceError {
 #[derive(Debug, Clone, Serialize)]
 pub struct CreateUserResponse {
     pub user_id: Uuid,
-    pub email: String,
+    pub email: Email,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -300,7 +300,7 @@ impl AegisService {
             .map_err(AegisServiceError::Outbox)?;
         Ok(CreateUserResponse {
             user_id: user.id,
-            email: user.email.to_string(),
+            email: user.email.clone(),
         })
     }
 

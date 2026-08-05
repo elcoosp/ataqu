@@ -526,6 +526,7 @@ dependencies = [
 name = "ataqu-domain-gdpr"
 version = "0.1.0"
 dependencies = [
+ "tracing",
  "uuid",
 ]
 

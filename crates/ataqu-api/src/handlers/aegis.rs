@@ -43,7 +43,7 @@ pub async fn create_user(
             StatusCode::CREATED,
             Json(serde_json::json!({
                 "user_id": resp.user_id,
-                "email": crate::serializers::ApiEmail::new(Email::new(resp.email)), // Fix: use ApiEmail wrapper
+                "email": crate::serializers::ApiEmail::new(resp.email), // Fix: use ApiEmail wrapper
             })),
         )),
         Err(err) => {
