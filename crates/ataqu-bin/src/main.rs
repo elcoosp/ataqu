@@ -23,24 +23,12 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
-use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_kernel::{Clock, IdGenerator, TenantId, SystemIdGenerator, SystemClock};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
 
-pub struct SystemIdGenerator;
-impl IdGenerator for SystemIdGenerator {
-    fn new_uuid_v7(&self) -> uuid::Uuid {
-        uuid::Uuid::now_v7()
-    }
-}
 
-pub struct SystemClock;
-impl Clock for SystemClock {
-    fn now(&self) -> std::time::SystemTime {
-        std::time::SystemTime::now()
-    }
-}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
