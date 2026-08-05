@@ -156,9 +156,8 @@ impl SparkService {
 
         for workflow in workflows {
             if let Trigger::Schedule { cron } = &workflow.trigger {
-                // Simple cron check: if it contains "*" for minute and hour, we just run it every minute for demo.
-                // In production, use a real cron parser like `croner`.
-                // TODO: Replace with proper croner::Cron API once version is stabilized
+                // Reverted to simple placeholder to avoid croner API mismatch.
+                // In production, use a real cron parser like `croner` with correct API calls.
                 if cron.contains("* * *") {
                     tracing::info!("Triggering scheduled workflow {}", workflow.id);
                     let payload = serde_json::json!({ "time": now.to_rfc3339() });
