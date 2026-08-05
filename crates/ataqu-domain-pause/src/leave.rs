@@ -127,3 +127,22 @@ pub fn reject_leave(
         changed_at: request.updated_at,
     }
 }
+
+pub fn cancel_leave(
+    request: &mut LeaveRequest,
+    reviewer_id: Uuid,
+    clock: &dyn Clock,
+) -> LeaveStatusChanged {
+    let old = request.status;
+    request.status = LeaveStatus::Cancelled;
+    request.reviewer_id = Some(reviewer_id);
+    request.reviewed_at = Some(clock.now());
+    request.updated_at = clock.now();
+    LeaveStatusChanged {
+        leave_request_id: request.id,
+        old_status: old,
+        new_status: LeaveStatus::Cancelled,
+        reviewer_id,
+        changed_at: request.updated_at,
+    }
+}

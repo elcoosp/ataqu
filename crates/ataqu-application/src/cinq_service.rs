@@ -32,6 +32,7 @@ use crate::outbox::Outbox;
 pub struct CreateContactCommand {
     pub tenant_id: TenantId,
     pub name: String,
+    pub company: Option<String>,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: serde_json::Value,
@@ -43,6 +44,7 @@ pub struct UpdateContactCommand {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: Option<String>,
+    pub company: Option<Option<String>>,
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<serde_json::Value>,
@@ -58,6 +60,10 @@ pub struct CreateDealCommand {
     pub pipeline_stage_id: Uuid,
     pub amount: Decimal,
     pub status: DealStatus,
+    pub owner_id: Option<Uuid>,
+    pub probability: Option<i32>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
 }
 
 #[derive(Debug, Clone)]
@@ -69,8 +75,10 @@ pub struct UpdateDealCommand {
     pub pipeline_stage_id: Option<Uuid>,
     pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
-    pub variant_id: Option<Uuid>,
-    pub quantity: Option<i64>,
+    pub owner_id: Option<Option<Uuid>>,
+    pub probability: Option<Option<i32>>,
+    pub variant_id: Option<Option<Uuid>>,
+    pub quantity: Option<Option<i64>>,
     pub expected_version: i32,
 }
 
@@ -154,6 +162,7 @@ impl CinqService {
         let domain_cmd = DomainCreateContact {
             tenant_id: cmd.tenant_id,
             name: cmd.name.clone(),
+            company: cmd.company.clone(),
             email: cmd.email.clone(),
             phone: cmd.phone.clone(),
             custom_fields: cmd.custom_fields.clone(),
@@ -165,6 +174,7 @@ impl CinqService {
             id: event.id,
             tenant_id: event.tenant_id,
             name: event.name.clone(),
+            company: event.company.clone(),
             email: event.email.clone(),
             phone: event.phone.clone(),
             custom_fields: event.custom_fields.clone(),
@@ -209,6 +219,7 @@ impl CinqService {
             id: cmd.id,
             tenant_id: cmd.tenant_id,
             name: cmd.name,
+            company: cmd.company.clone(),
             email: cmd.email,
             phone: cmd.phone,
             custom_fields: cmd.custom_fields,
@@ -218,6 +229,9 @@ impl CinqService {
         let event = contact_domain::update_contact(domain_cmd, self.clock.as_ref());
         if let Some(name) = event.name {
             contact.name = name;
+        }
+        if let Some(company) = event.company {
+            contact.company = company;
         }
         if let Some(email) = event.email {
             contact.email = email;
@@ -360,6 +374,7 @@ impl CinqService {
             let domain_cmd = DomainCreateContact {
                 tenant_id,
                 name: name.clone(),
+                company: None,
                 email: Email::new(email_str.clone()),
                 phone: if phone_str.is_empty() {
                     None
@@ -384,6 +399,7 @@ impl CinqService {
                 id: event.id,
                 tenant_id: event.tenant_id,
                 name: event.name,
+                company: event.company,
                 email: event.email,
                 phone: event.phone,
                 custom_fields: event.custom_fields,
@@ -453,6 +469,10 @@ impl CinqService {
             pipeline_stage_id: cmd.pipeline_stage_id,
             amount: cmd.amount,
             status: cmd.status,
+            owner_id: cmd.owner_id,
+            probability: cmd.probability,
+            variant_id: cmd.variant_id,
+            quantity: cmd.quantity,
         };
         let event =
             deal_domain::create_deal(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
@@ -464,6 +484,10 @@ impl CinqService {
             pipeline_stage_id: event.pipeline_stage_id,
             amount: event.amount,
             status: event.status,
+            owner_id: event.owner_id,
+            probability: event.probability,
+            variant_id: event.variant_id,
+            quantity: event.quantity,
             created_at: event.created_at,
             updated_at: event.created_at,
             version: 0,
@@ -511,6 +535,10 @@ impl CinqService {
             pipeline_stage_id: cmd.pipeline_stage_id,
             amount: cmd.amount,
             status: cmd.status,
+            owner_id: cmd.owner_id,
+            probability: cmd.probability,
+            variant_id: cmd.variant_id,
+            quantity: cmd.quantity,
             expected_version: cmd.expected_version,
         };
         let event = deal_domain::update_deal(domain_cmd, self.clock.as_ref())?;
@@ -529,8 +557,20 @@ impl CinqService {
         if let Some(status) = event.status {
             deal.status = status;
         }
+        if let Some(owner_id) = event.owner_id {
+            deal.owner_id = owner_id;
+        }
+        if let Some(probability) = event.probability {
+            deal.probability = probability;
+        }
+        if let Some(variant_id) = event.variant_id {
+            deal.variant_id = variant_id;
+        }
+        if let Some(quantity) = event.quantity {
+            deal.quantity = quantity;
+        }
         deal.updated_at = event.updated_at;
-        deal.version = event.version; // Fix: Use version from domain event
+        deal.version = event.version;
         self.deal_repo.save_deal(&deal).await?;
 
         if let Some(DealStatus::Won) = event.status {

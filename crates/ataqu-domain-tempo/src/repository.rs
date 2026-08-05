@@ -52,6 +52,13 @@ pub trait TempoRepository: Send + Sync {
         sent_at: std::time::SystemTime,
     ) -> Result<(), String>;
 
+    async fn reschedule_booking(
+        &self,
+        tenant_id: &TenantId,
+        booking_id: &BookingId,
+        new_starts_at: std::time::SystemTime,
+    ) -> Result<(), String>;
+
     async fn save_event_type(&self, event_type: &EventType) -> Result<(), String>;
     async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, String>;
     async fn find_event_type_by_slug(

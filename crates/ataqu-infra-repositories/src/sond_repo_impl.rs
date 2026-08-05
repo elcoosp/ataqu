@@ -17,6 +17,8 @@ use crate::entities::sond::submission as submission_entity;
 fn form_model_to_domain(model: form_entity::Model) -> Form {
     // In a real implementation, we would deserialize questions from schema_json
     Form {
+            version: 0,
+
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
         title: model.title,
@@ -50,6 +52,12 @@ impl SondRepositoryImpl {
 
 #[async_trait]
 impl SondRepository for SondRepositoryImpl {
+
+    async fn get_form_by_id(&self, _form_id: Uuid) -> Result<Option<Form>, SondError> {
+        // TODO: implement actual query
+        Ok(None)
+    }
+
     async fn get_form(
         &self,
         _tenant_id: TenantId,

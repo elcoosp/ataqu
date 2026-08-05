@@ -18,6 +18,15 @@ pub struct CreateWorkflowCommand {
     pub trigger: Trigger,
     pub conditions: Vec<Condition>,
     pub actions: Vec<Action>,
+    pub webhook_secret: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct UpdateWorkflowCommand {
+    pub tenant_id: TenantId,
+    pub id: Uuid,
+    pub name: Option<String>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -72,6 +81,7 @@ impl SparkService {
             trigger: cmd.trigger,
             conditions: cmd.conditions,
             actions: cmd.actions,
+            webhook_secret: cmd.webhook_secret,
         };
         let (workflow, _) = ataqu_domain_spark::create_workflow(
             domain_cmd,
@@ -87,6 +97,20 @@ impl SparkService {
             .get_workflow(&tenant_id, &id)
             .await?
             .ok_or(SparkServiceError::WorkflowNotFound)
+    }
+
+    pub async fn update_workflow(&self, cmd: UpdateWorkflowCommand) -> SparkResult<Workflow> {
+        let mut workflow = self.get_workflow(cmd.tenant_id, cmd.id).await?;
+        if let Some(name) = cmd.name { workflow.name = name; }
+        if let Some(is_active) = cmd.is_active { workflow.is_active = is_active; }
+        workflow.updated_at = self.clock.now();
+        self.repo.update_workflow(&workflow).await?;
+        Ok(workflow)
+    }
+
+    pub async fn delete_workflow(&self, tenant_id: TenantId, id: Uuid) -> SparkResult<()> {
+        self.repo.delete_workflow(&tenant_id, &id).await?;
+        Ok(())
     }
 
     pub async fn list_workflows(
@@ -112,12 +136,20 @@ impl SparkService {
         tenant_id: TenantId,
         workflow_id: Uuid,
         payload: serde_json::Value,
+        webhook_secret: Option<String>,
     ) -> SparkResult<()> {
         let workflow = self
             .repo
             .get_workflow(&tenant_id, &workflow_id)
             .await?
             .ok_or(SparkServiceError::WorkflowNotFound)?;
+
+        if let Some(expected_secret) = &workflow.webhook_secret {
+            match webhook_secret {
+                Some(provided) if provided == *expected_secret => {}
+                _ => return Err(SparkServiceError::Validation("Invalid or missing webhook secret".to_string())),
+            }
+        }
 
         if !evaluate_conditions(&workflow.conditions, &payload) {
             return Err(SparkServiceError::ConditionsNotSatisfied);

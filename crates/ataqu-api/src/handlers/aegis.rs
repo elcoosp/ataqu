@@ -210,27 +210,11 @@ pub struct SsoCallbackRequest {
 }
 
 pub async fn sso_callback(
-    State(state): State<AppState>,
-    Json(req): Json<SsoCallbackRequest>,
+    State(_state): State<AppState>,
+    Json(_req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
-    // MOCK IMPLEMENTATION: In a real system, we would exchange `req.code` for an access token
-    // with Google/Microsoft, fetch the user profile, and then find/create the user.
-    // Here we mock the email extraction to allow testing the flow.
-    let safe_prefix: String = req.code.chars().take(6).collect();
-    let mock_email_str = format!("sso_user_{}@example.com", safe_prefix);
-    let email = Email::new(mock_email_str);
-
-    let resp = state
-        .aegis_service
-        .sso_exchange(email)
-        .await
-        .map_err(map_aegis_error)?;
-
-    Ok(Json(LoginResponse {
-        access_token: resp.access_token,
-        refresh_token: resp.refresh_token,
-        user_id: resp.user_id,
-    }))
+    // SSO token exchange and user profile fetch are not yet implemented.
+    Err(ApiResponseError::Internal("SSO callback not fully implemented".to_string()))
 }
 
 #[derive(Debug, Deserialize)]

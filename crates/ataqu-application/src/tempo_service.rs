@@ -91,6 +91,12 @@ impl TempoService {
             ));
         }
 
+        if cmd.timezone.parse::<chrono_tz::Tz>().is_err() {
+            return Err(TempoServiceError::Validation(
+                "Invalid timezone".to_string(),
+            ));
+        }
+
         let event_types = self.repo.list_event_types(&cmd.tenant_id).await.map_err(TempoServiceError::Repository)?;
         let _event_type = event_types.iter().find(|et| et.id.0 == cmd.event_type_id).cloned()
             .ok_or(TempoServiceError::Validation("Event type not found".to_string()))?;
@@ -101,6 +107,17 @@ impl TempoService {
         if self.repo.check_overlap(&cmd.tenant_id, cmd.event_type_id, starts_at, ends_at).await.map_err(TempoServiceError::Repository)? {
             return Err(TempoServiceError::Validation(
                 "Booking overlaps with existing booking".to_string(),
+            ));
+        }
+
+        // ADR-032: Check availability slots
+        let slots = self.repo.list_availability_slots(&cmd.tenant_id, &cmd.event_type_id).await.map_err(TempoServiceError::Repository)?;
+        let is_available = slots.iter().any(|slot| {
+            slot.start_time <= cmd.starts_at && slot.end_time >= cmd.starts_at
+        });
+        if !is_available {
+            return Err(TempoServiceError::Validation(
+                "Booking time is outside of available slots".to_string(),
             ));
         }
 
@@ -302,6 +319,30 @@ impl TempoService {
             .delete_availability_slot(&tenant_id, &slot_id)
             .await
             .map_err(TempoServiceError::Repository)
+    }
+
+    pub async fn reschedule_booking(
+        &self,
+        tenant_id: TenantId,
+        booking_id: Uuid,
+        new_starts_at: DateTime<Utc>,
+    ) -> TempoResult<Booking> {
+        let booking_id_obj = BookingId(booking_id);
+        let mut booking = self
+            .repo
+            .find_booking_by_id(&tenant_id, &booking_id_obj)
+            .await
+            .map_err(TempoServiceError::Repository)?
+            .ok_or(TempoServiceError::BookingNotFound)?;
+
+        tempo_domain::reschedule_booking(&mut booking, new_starts_at.into());
+
+        self.repo
+            .reschedule_booking(&tenant_id, &booking_id_obj, booking.starts_at)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+
+        Ok(booking)
     }
 
     pub async fn public_create_booking(

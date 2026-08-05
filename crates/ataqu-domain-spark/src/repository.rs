@@ -13,6 +13,8 @@ pub trait SparkRepository: Send + Sync {
         workflow_id: &Uuid,
     ) -> Result<Option<Workflow>, SparkError>;
     async fn save_workflow(&self, workflow: &Workflow) -> Result<(), SparkError>;
+    async fn update_workflow(&self, workflow: &Workflow) -> Result<(), SparkError>;
+    async fn delete_workflow(&self, tenant_id: &TenantId, workflow_id: &Uuid) -> Result<(), SparkError>;
     async fn list_workflows(
         &self,
         tenant_id: &TenantId,

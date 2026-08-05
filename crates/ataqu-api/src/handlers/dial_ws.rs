@@ -40,6 +40,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
 
     let (mut ws_sender, mut ws_receiver) = socket.split();
     let (tx, mut rx) = mpsc::unbounded_channel::<String>();
+    let connection_id = uuid::Uuid::new_v4();
 
     let send_task = tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
@@ -64,7 +65,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     let key = (auth.tenant_id.as_uuid(), channel_id);
                                     let entry =
                                         state.ws_registry.entry(key).or_insert_with(DashMap::new);
-                                    entry.insert(auth.user_id, tx.clone());
+                                    entry.insert(connection_id, tx.clone());
 
                                     let _ = tx.send(
                                         serde_json::json!({
@@ -108,7 +109,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
 
                                             if let Some(subscribers) = state.ws_registry.get(&key) {
                                                 for entry in subscribers.iter() {
-                                                    if entry.key() != &auth.user_id {
+                                                    if entry.key() != &connection_id {
                                                         let _ =
                                                             entry.value().send(broadcast.clone());
                                                     }
@@ -163,9 +164,8 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     // (user_id -> set of channel_ids) for O(1) cleanup.
     // For now, we iterate all channels but only remove the user.
     // With bounded channels per tenant, this is acceptable.
-    let user_uuid = auth.user_id;
     state.ws_registry.iter().for_each(|entry| {
-        entry.value().remove(&user_uuid);
+        entry.value().remove(&connection_id);
     });
 
     if let Err(e) = state

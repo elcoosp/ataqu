@@ -12,6 +12,7 @@ pub struct Contact {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: String,
+    pub company: Option<String>,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: JsonValue,
@@ -26,6 +27,7 @@ pub struct Contact {
 pub struct CreateContactCommand {
     pub tenant_id: TenantId,
     pub name: String,
+    pub company: Option<String>,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: JsonValue,
@@ -37,6 +39,7 @@ pub struct UpdateContactCommand {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: Option<String>,
+    pub company: Option<Option<String>>,
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<JsonValue>,
@@ -50,6 +53,7 @@ pub struct ContactCreated {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: String,
+    pub company: Option<String>,
     pub email: Email,
     pub phone: Option<PhoneNumber>,
     pub custom_fields: JsonValue,
@@ -63,6 +67,7 @@ pub struct ContactUpdated {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub name: Option<String>,
+    pub company: Option<Option<String>>,
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<JsonValue>,
@@ -70,10 +75,10 @@ pub struct ContactUpdated {
     pub version: i32,
 }
 
-// Fix: Add a helper method to easily apply updates to a Contact
 impl Contact {
     pub fn apply_update(&mut self, event: &ContactUpdated) {
         if let Some(name) = &event.name { self.name = name.clone(); }
+        if let Some(company) = &event.company { self.company = company.clone(); }
         if let Some(email) = &event.email { self.email = email.clone(); }
         if let Some(phone) = &event.phone { self.phone = phone.clone(); }
         if let Some(custom_fields) = &event.custom_fields { self.custom_fields = custom_fields.clone(); }
@@ -98,6 +103,7 @@ pub fn create_contact(
         id,
         tenant_id: cmd.tenant_id,
         name: cmd.name,
+        company: cmd.company,
         email: cmd.email,
         phone: cmd.phone,
         custom_fields: cmd.custom_fields,
@@ -113,6 +119,7 @@ pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> ContactUp
         id: cmd.id,
         tenant_id: cmd.tenant_id,
         name: cmd.name,
+        company: cmd.company,
         email: cmd.email,
         phone: cmd.phone,
         custom_fields: cmd.custom_fields,
@@ -193,6 +200,7 @@ mod tests {
         let cmd = CreateContactCommand {
             tenant_id: TenantId::new(Uuid::new_v4()),
             name: "Alice".to_string(),
+            company: None,
             email: Email::new("alice@example.com".to_string()),
             phone: None,
             custom_fields: serde_json::Value::Null,
@@ -221,6 +229,7 @@ mod tests {
             id: Uuid::new_v4(),
             tenant_id: TenantId::new(Uuid::new_v4()),
             name: Some("Bob".to_string()),
+            company: None,
             email: None,
             phone: Some(Some(PhoneNumber::new("+1234567890".to_string()))),
             custom_fields: None,

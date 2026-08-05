@@ -215,6 +215,45 @@ pub async fn get_variant(
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UpdateVariantRequest {
+    pub price: Option<i64>,
+    pub sku: Option<String>,
+}
+
+pub async fn update_variant(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateVariantRequest>,
+) -> ApiResult<Json<VariantResponse>> {
+    let cmd = ataqu_application::vault_service::UpdateVariantCommand {
+        tenant_id: auth.tenant_id,
+        id,
+        price: payload.price,
+        sku: payload.sku,
+    };
+    let variant = state
+        .vault_service
+        .update_variant(cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(variant.into()))
+}
+
+pub async fn delete_variant(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state
+        .vault_service
+        .delete_variant(auth.tenant_id, id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UpdateStockRequest {
     pub delta: i64,
     pub reason: String,
@@ -311,7 +350,7 @@ pub fn routes() -> Router<AppState> {
             "/variants",
             axum::routing::post(create_variant).get(list_variants),
         )
-        .route("/variants/:id", axum::routing::get(get_variant))
+        .route("/variants/:id", axum::routing::get(get_variant).put(update_variant).delete(delete_variant))
         .route("/variants/:id/stock", axum::routing::put(update_stock))
         .route(
             "/variants/:id/movements",

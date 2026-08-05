@@ -21,6 +21,7 @@ pub trait VaultRepository: Send + Sync {
     async fn save_variant(&self, variant: &Variant) -> Result<(), String>;
     async fn get_variant(&self, tenant_id: &TenantId, id: &Uuid)
     -> Result<Option<Variant>, String>;
+    async fn delete_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), String>;
     async fn list_variants(
         &self,
         tenant_id: &TenantId,

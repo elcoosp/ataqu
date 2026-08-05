@@ -138,12 +138,9 @@ pub async fn create_employee(
 
     let employee = state
         .pause_service
-        .list_employees(&auth.tenant_id, 1, 0)
+        .find_employee(&auth.tenant_id, employee_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?
-        .into_iter()
-        .find(|e| e.id == employee_id)
-        .unwrap();
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
     Ok((StatusCode::CREATED, Json(employee.into())))
 }
@@ -186,20 +183,13 @@ pub async fn request_leave(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    Ok((
-        StatusCode::CREATED,
-        Json(LeaveRequestResponse {
-            id: request_id,
-            employee_id: req.employee_id,
-            leave_type: req.leave_type,
-            start_date: req.start_date,
-            end_date: req.end_date,
-            reason: req.reason,
-            status: "pending".to_string(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        }),
-    ))
+    let request = state
+        .pause_service
+        .find_leave_request(&auth.tenant_id, request_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    Ok((StatusCode::CREATED, Json(request.into())))
 }
 
 pub async fn list_employees(
@@ -217,6 +207,24 @@ pub async fn list_employees(
     Ok(Json(
         employees.into_iter().map(EmployeeResponse::from).collect(),
     ))
+}
+
+pub async fn deactivate_employee(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
+    }
+    state
+        .pause_service
+        .deactivate_employee(&auth.tenant_id, id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Deserialize)]
@@ -301,6 +309,24 @@ pub async fn reject_leave(
     Ok(Json(request.into()))
 }
 
+pub async fn cancel_leave(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<LeaveRequestResponse>> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
+    }
+    let request = state
+        .pause_service
+        .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(request.into()))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct UploadDocumentRequest {
     pub file_name: String,
@@ -367,12 +393,14 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/employees", post(create_employee).get(list_employees))
         .route("/employees/search", get(search_employees))
+        .route("/employees/:id/deactivate", post(deactivate_employee))
         .route(
             "/leave-requests",
             post(request_leave).get(list_leave_requests),
         )
         .route("/leave-requests/:id/approve", patch(approve_leave))
         .route("/leave-requests/:id/reject", patch(reject_leave))
+        .route("/leave-requests/:id/cancel", patch(cancel_leave))
         .route(
             "/employees/:id/documents",
             post(upload_document).get(list_documents),

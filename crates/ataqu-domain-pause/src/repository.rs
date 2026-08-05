@@ -35,6 +35,11 @@ pub trait EmployeeRepositoryPort: Send + Sync {
         employee_id: Uuid,
     ) -> Result<(), PauseDomainError>;
     async fn count(&self, tenant_id: &TenantId) -> Result<u64, PauseDomainError>;
+    async fn update(
+        &self,
+        tenant_id: &TenantId,
+        employee: &crate::Employee,
+    ) -> Result<(), PauseDomainError>;
 }
 
 #[async_trait]

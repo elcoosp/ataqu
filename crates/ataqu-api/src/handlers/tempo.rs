@@ -117,6 +117,25 @@ pub async fn cancel_booking(
     Ok(Json(booking.into()))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RescheduleBookingRequest {
+    pub starts_at: DateTime<Utc>,
+}
+
+pub async fn reschedule_booking(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<RescheduleBookingRequest>,
+) -> ApiResult<Json<BookingResponse>> {
+    let booking = state
+        .tempo_service
+        .reschedule_booking(auth.tenant_id, id, payload.starts_at)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(booking.into()))
+}
+
 pub async fn confirm_booking(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -338,6 +357,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/bookings/:id/confirm",
             axum::routing::post(confirm_booking),
+        )
+        .route(
+            "/bookings/:id/reschedule",
+            axum::routing::post(reschedule_booking),
         )
         .route(
             "/event-types",

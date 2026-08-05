@@ -237,6 +237,7 @@ async fn main() -> anyhow::Result<()> {
                         .create_contact(CreateContactCommand {
                             tenant_id: *tenant_id,
                             name: name.clone(),
+                            company: None,
                             email: Email::new(email.clone()),
                             phone: phone.clone().map(PhoneNumber::new),
                             custom_fields: serde_json::Value::Null,
@@ -304,6 +305,7 @@ async fn main() -> anyhow::Result<()> {
                         .create_contact(CreateContactCommand {
                             tenant_id: *tenant_id,
                             name: name.clone(),
+                            company: None,
                             email: Email::new(email.clone()),
                             phone: None,
                             custom_fields: serde_json::json!({ "source": source }),
@@ -311,6 +313,21 @@ async fn main() -> anyhow::Result<()> {
                         })
                         .await
                         .map_err(|e| e.to_string())?;
+                }
+                Action::Webhook { url, method, body, headers } => {
+                    let client = reqwest::Client::new();
+                    let mut req = match method.to_uppercase().as_str() {
+                        "POST" => client.post(url),
+                        "PUT" => client.put(url),
+                        "PATCH" => client.patch(url),
+                        "DELETE" => client.delete(url),
+                        _ => client.get(url),
+                    };
+                    for (k, v) in headers {
+                        req = req.header(k, v);
+                    }
+                    req = req.json(&body);
+                    req.send().await.map_err(|e| e.to_string())?;
                 }
                 _ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
@@ -360,6 +377,7 @@ async fn main() -> anyhow::Result<()> {
         pause_leave_repo,
         pause_doc_repo,
         pause_outbox,
+        clock.clone(),
     ));
 
     // Email tracking writer

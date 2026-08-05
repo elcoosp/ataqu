@@ -73,6 +73,7 @@ pub struct PauseService {
     document_repo:
         Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
     outbox: Arc<dyn Outbox + Send + Sync>,
+    clock: Arc<dyn Clock>,
 }
 
 impl PauseService {
@@ -84,6 +85,7 @@ impl PauseService {
             dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync,
         >,
         outbox: Arc<dyn Outbox + Send + Sync>,
+        clock: Arc<dyn Clock>,
     ) -> Self {
         Self {
             idempotency,
@@ -91,6 +93,7 @@ impl PauseService {
             leave_request_repo,
             document_repo,
             outbox,
+            clock,
         }
     }
 
@@ -167,6 +170,22 @@ impl PauseService {
             )
             .await?;
         Ok(event.leave_request_id)
+    }
+
+    pub async fn find_employee(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<ataqu_domain_pause::Employee, PauseServiceError> {
+        self.employee_repo
+            .find_by_id(tenant_id, employee_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?
+            .ok_or(PauseServiceError::NotFound)
+    }
+
+    pub async fn find_leave_request(&self, tenant_id: &TenantId, leave_id: Uuid) -> Result<ataqu_domain_pause::LeaveRequest, PauseServiceError> {
+        self.leave_request_repo
+            .find_by_id(tenant_id, leave_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?
+            .ok_or(PauseServiceError::NotFound)
     }
 
     pub async fn list_employees(
@@ -265,6 +284,66 @@ impl PauseService {
                 tenant_id,
                 leave_id,
                 LeaveStatus::Rejected,
+                reviewer_id,
+                clock.now(),
+            )
+            .await?;
+        let payload =
+            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        self.outbox
+            .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
+            .await
+            .map_err(|e| PauseServiceError::Outbox(e))?;
+        Ok(request)
+    }
+
+    pub async fn deactivate_employee(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<(), PauseServiceError> {
+        let mut employee = self
+            .employee_repo
+            .find_by_id(tenant_id, employee_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?
+            .ok_or(PauseServiceError::NotFound)?;
+
+        ataqu_domain_pause::employee::deactivate_employee(&mut employee, self.clock.as_ref());
+
+        self.employee_repo.update(tenant_id, &employee).await?;
+
+        let payload = serde_json::json!({
+            "employee_id": employee.id,
+            "tenant_id": employee.tenant_id.as_uuid(),
+            "is_active": employee.is_active,
+        });
+        self.outbox
+            .append(PAUSE_SCHEMA, "EmployeeDeactivated", employee.id, &payload)
+            .await
+            .map_err(|e| PauseServiceError::Outbox(e))?;
+        Ok(())
+    }
+
+    pub async fn cancel_leave(
+        &self,
+        tenant_id: &TenantId,
+        leave_id: Uuid,
+        reviewer_id: Uuid,
+        clock: &dyn Clock,
+    ) -> Result<LeaveRequest, PauseServiceError> {
+        let mut request = self
+            .leave_request_repo
+            .find_by_id(tenant_id, leave_id)
+            .await?
+            .ok_or(PauseServiceError::NotFound)?;
+        if request.status != LeaveStatus::Pending {
+            return Err(PauseServiceError::Validation(
+                "Leave request is not pending".to_string(),
+            ));
+        }
+        let event = ataqu_domain_pause::leave::cancel_leave(&mut request, reviewer_id, clock);
+        self.leave_request_repo
+            .update_status(
+                tenant_id,
+                leave_id,
+                LeaveStatus::Cancelled,
                 reviewer_id,
                 clock.now(),
             )

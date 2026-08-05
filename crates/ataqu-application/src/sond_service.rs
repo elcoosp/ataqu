@@ -91,6 +91,7 @@ impl SondService {
             questions,
             created_at: event.created_at,
             updated_at: event.created_at,
+            version: 0,
         };
         self.repo
             .save_form(&form)
@@ -106,12 +107,25 @@ impl SondService {
             .ok_or(SondServiceError::FormNotFound)
     }
 
+    pub async fn get_form_public(&self, form_id: Uuid) -> SondResult<Form> {
+        self.repo
+            .get_form_by_id(form_id)
+            .await?
+            .ok_or(SondServiceError::FormNotFound)
+    }
+
     pub async fn update_form(
         &self,
         tenant_id: TenantId,
         cmd: ataqu_domain_sond::form::UpdateFormCommand,
     ) -> SondResult<Form> {
         let current_form = self.get_form(tenant_id, cmd.form_id).await?;
+        if current_form.version != cmd.expected_version {
+            return Err(SondServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, current_form.version
+            )));
+        }
         let questions_clone = cmd.questions.clone();
         let event = ataqu_domain_sond::form::update_form(
             cmd,
@@ -134,6 +148,7 @@ impl SondService {
                 .collect();
         }
         form.updated_at = event.updated_at;
+        form.version += 1;
 
         self.repo
             .save_form(&form)

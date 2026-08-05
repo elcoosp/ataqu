@@ -116,20 +116,36 @@ pub async fn update_form(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateFormRequest>,
 ) -> ApiResult<Json<FormResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let cmd = ataqu_domain_sond::form::UpdateFormCommand {
         form_id: id,
         title: payload.title,
         description: payload.description,
         questions: payload.questions,
+        expected_version: if_match,
     };
 
     let updated_form = state
         .sond_service
         .update_form(auth.tenant_id, cmd)
         .await
-        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::sond_service::SondServiceError::FormNotFound => ApiResponseError::not_found("Form not found"),
+            ataqu_application::sond_service::SondServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+                ApiResponseError::conflict(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(updated_form.into()))
 }
 
@@ -154,12 +170,16 @@ pub struct SubmitRequest {
 
 pub async fn submit_form(
     State(state): State<AppState>,
-    auth: AuthContext,
     Path(form_id): Path<Uuid>,
     Json(payload): Json<SubmitRequest>,
 ) -> ApiResult<StatusCode> {
+    let form = state
+        .sond_service
+        .get_form_public(form_id)
+        .await
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     let cmd = SubmitResponseCommand {
-        tenant_id: auth.tenant_id,
+        tenant_id: form.tenant_id,
         form_id,
         answers: payload.answers,
         respondent_id: payload.respondent_id,

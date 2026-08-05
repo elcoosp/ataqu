@@ -101,6 +101,8 @@ fn model_to_contact(model: contact_entity::Model) -> Contact {
     let email = Email::new(model.email.unwrap_or_default());
     let phone = model.phone.map(PhoneNumber::new);
     Contact {
+            company: None,
+
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
         name: model.name,
@@ -324,6 +326,10 @@ fn model_to_deal(model: deal_entity::Model) -> Deal {
         pipeline_stage_id: model.pipeline_stage_id,
         amount,
         status,
+        owner_id: None,
+        probability: None,
+        variant_id: None,
+        quantity: None,
         created_at: model.created_at,
         updated_at: model.updated_at,
         version: 0,

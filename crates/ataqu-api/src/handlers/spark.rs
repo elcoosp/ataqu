@@ -28,11 +28,18 @@ pub struct CreateWorkflowRequest {
     pub trigger: ataqu_domain_spark::Trigger,
     pub conditions: Vec<ataqu_domain_spark::Condition>,
     pub actions: Vec<ataqu_domain_spark::Action>,
+    pub webhook_secret: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct TriggerWorkflowRequest {
     pub payload: serde_json::Value,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateWorkflowRequest {
+    pub name: Option<String>,
+    pub is_active: Option<bool>,
 }
 
 pub async fn list_workflows(
@@ -68,6 +75,7 @@ pub async fn create_workflow(
         trigger: payload.trigger,
         conditions: payload.conditions,
         actions: payload.actions,
+        webhook_secret: payload.webhook_secret,
     };
     let workflow = state
         .spark_service
@@ -104,6 +112,46 @@ pub async fn get_workflow(
     Ok(Json(resp))
 }
 
+pub async fn update_workflow(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateWorkflowRequest>,
+) -> ApiResult<Json<WorkflowResponse>> {
+    let cmd = ataqu_application::spark_service::UpdateWorkflowCommand {
+        tenant_id: auth.tenant_id,
+        id,
+        name: payload.name,
+        is_active: payload.is_active,
+    };
+    let workflow = state
+        .spark_service
+        .update_workflow(cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let resp = WorkflowResponse {
+        id: workflow.id,
+        name: workflow.name,
+        is_active: workflow.is_active,
+        created_at: workflow.created_at.into(),
+        updated_at: workflow.updated_at.into(),
+    };
+    Ok(Json(resp))
+}
+
+pub async fn delete_workflow(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state
+        .spark_service
+        .delete_workflow(auth.tenant_id, id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub async fn execute_workflow(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -126,13 +174,21 @@ pub async fn execute_workflow(
 pub async fn webhook_trigger(
     State(state): State<AppState>,
     Path((tenant_id, workflow_id)): Path<(Uuid, Uuid)>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResult<StatusCode> {
+    let webhook_secret = headers
+        .get("X-Webhook-Secret")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
     state
         .spark_service
-        .trigger_workflow_public(ataqu_kernel::TenantId::new(tenant_id), workflow_id, payload)
+        .trigger_workflow_public(ataqu_kernel::TenantId::new(tenant_id), workflow_id, payload, webhook_secret)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::spark_service::SparkServiceError::Validation(msg) => ApiResponseError::validation(&msg),
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -145,6 +201,6 @@ pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post};
     Router::new()
         .route("/workflows", get(list_workflows).post(create_workflow))
-        .route("/workflows/:id", get(get_workflow))
+        .route("/workflows/:id", get(get_workflow).put(update_workflow).delete(delete_workflow))
         .route("/workflows/:id/execute", post(execute_workflow))
 }

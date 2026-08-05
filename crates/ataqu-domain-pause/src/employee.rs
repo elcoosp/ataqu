@@ -62,3 +62,8 @@ pub fn create_employee(
         created_at: now,
     }
 }
+
+pub fn deactivate_employee(employee: &mut Employee, clock: &dyn Clock) {
+    employee.is_active = false;
+    employee.updated_at = clock.now();
+}

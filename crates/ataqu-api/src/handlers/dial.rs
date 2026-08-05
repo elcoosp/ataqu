@@ -42,6 +42,9 @@ pub struct MessageResponse {
     pub author_id: Uuid,
     pub content: String,
     pub sent_at: DateTime<Utc>,
+    pub thread_id: Option<Uuid>,
+    pub edited_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 impl From<ataqu_application::dial_service::Message> for MessageResponse {
@@ -52,6 +55,9 @@ impl From<ataqu_application::dial_service::Message> for MessageResponse {
             author_id: m.author_id.as_uuid(),
             content: m.content,
             sent_at: DateTime::<Utc>::from(m.created_at),
+            thread_id: m.thread_id.map(|t| t.as_uuid()),
+            edited_at: m.edited_at.map(DateTime::<Utc>::from),
+            deleted_at: m.deleted_at.map(DateTime::<Utc>::from),
         }
     }
 }
@@ -120,7 +126,7 @@ pub async fn get_channel(
 ) -> ApiResult<Json<ChannelResponse>> {
     let channel = state
         .dial_service
-        .get_channel(auth.tenant_id, id)
+        .get_channel(auth.tenant_id, id, auth.user_id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(channel.into()))
@@ -217,9 +223,7 @@ pub async fn send_message(
     }).to_string();
     if let Some(subscribers) = state.ws_registry.get(&key) {
         for entry in subscribers.iter() {
-            if entry.key() != &auth.user_id {
-                let _ = entry.value().send(broadcast.clone());
-            }
+            let _ = entry.value().send(broadcast.clone());
         }
     }
 
@@ -233,7 +237,7 @@ pub async fn list_messages(
 ) -> ApiResult<Json<Vec<MessageResponse>>> {
     let msgs = state
         .dial_service
-        .list_messages(auth.tenant_id, channel_id, 100, 0)
+        .list_messages(auth.tenant_id, channel_id, auth.user_id, 100, 0)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
@@ -430,30 +434,15 @@ pub async fn search_messages(
 }
 
 pub async fn upload_file(
-    State(state): State<AppState>,
-    auth: AuthContext,
+    State(_state): State<AppState>,
+    _auth: AuthContext,
     mut multipart: axum::extract::Multipart,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let _ = state;
-    let _ = auth;
-    while let Ok(Some(field)) = multipart.next_field().await {
-        let raw_name = field.file_name().unwrap_or("upload.bin").to_string();
-        let safe_name = std::path::Path::new(&raw_name)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("upload.bin")
-            .to_string();
-
-        // Fix: In production, upload to S3 via presigned URLs.
-        // For now, we consume the data and return a mock URL to prevent local disk access.
-        let _ = field.bytes().await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-        return Ok(Json(serde_json::json!({
-            "url": format!("https://s3.ataqu.com/uploads/{}_{}", auth.user_id, safe_name),
-            "name": safe_name,
-        })));
+    // File upload to S3 via presigned URLs is not yet implemented.
+    while let Ok(Some(_field)) = multipart.next_field().await {
+        // Consume the field to avoid connection errors
     }
-    Err(ApiResponseError::validation("No file uploaded"))
+    Err(ApiResponseError::Internal("File upload not fully implemented".to_string()))
 }
 
 #[derive(Debug, Deserialize)]

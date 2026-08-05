@@ -63,6 +63,9 @@ pub async fn auth_middleware(
             &DecodingKey::from_secret(&app_state.jwt_secret),
             &Validation::default(),
         ) {
+            if token_data.claims.token_type != "access" {
+                return Err(ApiResponseError::unauthorized("Invalid token type"));
+            }
             let user_id = Uuid::parse_str(&token_data.claims.sub)
                 .map_err(|_| ApiResponseError::unauthorized("Invalid user ID in token"))?;
             let auth_ctx = AuthContext {

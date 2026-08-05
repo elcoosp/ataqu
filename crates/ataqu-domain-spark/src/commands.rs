@@ -8,6 +8,7 @@ pub struct CreateWorkflowCommand {
     pub trigger: Trigger,
     pub conditions: Vec<Condition>,
     pub actions: Vec<Action>,
+    pub webhook_secret: Option<String>,
 }
 
 #[derive(Debug, Clone)]

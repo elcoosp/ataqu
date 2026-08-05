@@ -114,6 +114,26 @@ pub async fn delete_dashboard(
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
+pub async fn update_dashboard(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CreateDashboardRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let dashboard = state
+        .vista_service
+        .update_dashboard(auth.tenant_id, id, Some(payload.name), Some(payload.config))
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(serde_json::json!({
+        "id": dashboard.id,
+        "name": dashboard.name,
+        "config": dashboard.config,
+        "created_at": dashboard.created_at,
+        "updated_at": dashboard.updated_at,
+    })))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct RawSqlRequest {
     pub sql: String,
@@ -170,7 +190,7 @@ pub fn routes() -> Router<AppState> {
             "/dashboards",
             axum::routing::post(create_dashboard).get(list_dashboards),
         )
-        .route("/dashboards/:id", axum::routing::delete(delete_dashboard))
+        .route("/dashboards/:id", axum::routing::delete(delete_dashboard).put(update_dashboard))
         .route("/raw-sql", axum::routing::post(execute_raw_sql))
         .route("/data-points/:metric", axum::routing::get(get_data_points_handler))
 }

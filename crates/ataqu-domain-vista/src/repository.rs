@@ -20,6 +20,11 @@ pub trait VistaRepository: Send + Sync {
         &self,
         tenant_id: &TenantId,
     ) -> Result<Vec<crate::dashboard::Dashboard>, String>;
+    async fn get_dashboard_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: uuid::Uuid,
+    ) -> Result<Option<crate::dashboard::Dashboard>, String>;
     async fn delete_dashboard(&self, tenant_id: &TenantId, id: uuid::Uuid) -> Result<(), String>;
 
     async fn execute_raw_sql(

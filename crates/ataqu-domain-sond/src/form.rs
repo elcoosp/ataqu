@@ -14,6 +14,7 @@ pub struct Form {
     pub questions: Vec<Question>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 // Command contains TenantId -> no Deserialize (application layer builds it)
@@ -43,6 +44,7 @@ pub struct UpdateFormCommand {
     pub title: Option<String>,
     pub description: Option<String>,
     pub questions: Option<Vec<QuestionInput>>,
+    pub expected_version: i32,
 }
 
 // Event contains TenantId -> no Serialize/Deserialize
@@ -221,12 +223,14 @@ mod tests {
             questions: vec![],
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            version: 0,
         };
         let cmd = UpdateFormCommand {
             form_id: form.id,
             title: Some("New Title".to_string()),
             description: Some("New desc".to_string()),
             questions: None,
+            expected_version: 0,
         };
         let result = update_form(cmd, &form, &id_gen, &clock);
         assert!(result.is_ok());

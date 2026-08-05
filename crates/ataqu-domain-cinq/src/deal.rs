@@ -21,6 +21,10 @@ pub struct Deal {
     pub pipeline_stage_id: Uuid,
     pub amount: Decimal,
     pub status: DealStatus,
+    pub owner_id: Option<Uuid>,
+    pub probability: Option<i32>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
@@ -34,6 +38,10 @@ pub struct CreateDealCommand {
     pub pipeline_stage_id: Uuid,
     pub amount: Decimal,
     pub status: DealStatus,
+    pub owner_id: Option<Uuid>,
+    pub probability: Option<i32>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
 }
 
 #[derive(Debug, Clone)]
@@ -45,6 +53,10 @@ pub struct UpdateDealCommand {
     pub pipeline_stage_id: Option<Uuid>,
     pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
+    pub owner_id: Option<Option<Uuid>>,
+    pub probability: Option<Option<i32>>,
+    pub variant_id: Option<Option<Uuid>>,
+    pub quantity: Option<Option<i64>>,
     pub expected_version: i32,
 }
 
@@ -57,6 +69,10 @@ pub struct DealCreated {
     pub pipeline_stage_id: Uuid,
     pub amount: Decimal,
     pub status: DealStatus,
+    pub owner_id: Option<Uuid>,
+    pub probability: Option<i32>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -69,6 +85,10 @@ pub struct DealUpdated {
     pub pipeline_stage_id: Option<Uuid>,
     pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
+    pub owner_id: Option<Option<Uuid>>,
+    pub probability: Option<Option<i32>>,
+    pub variant_id: Option<Option<Uuid>>,
+    pub quantity: Option<Option<i64>>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
 }
@@ -96,6 +116,10 @@ pub fn create_deal(
         pipeline_stage_id: cmd.pipeline_stage_id,
         amount: cmd.amount,
         status: cmd.status,
+        owner_id: cmd.owner_id,
+        probability: cmd.probability,
+        variant_id: cmd.variant_id,
+        quantity: cmd.quantity,
         created_at: now,
     })
 }
@@ -122,6 +146,10 @@ pub fn update_deal(cmd: UpdateDealCommand, clock: &dyn Clock) -> CinqResult<Deal
         pipeline_stage_id: cmd.pipeline_stage_id,
         amount: cmd.amount,
         status: cmd.status,
+        owner_id: cmd.owner_id,
+        probability: cmd.probability,
+        variant_id: cmd.variant_id,
+        quantity: cmd.quantity,
         updated_at: now,
         version: cmd.expected_version + 1,
     })
@@ -173,6 +201,10 @@ mod tests {
             pipeline_stage_id: Uuid::new_v4(),
             amount: Decimal::new(100, 0),
             status: DealStatus::Open,
+            owner_id: None,
+            probability: None,
+            variant_id: None,
+            quantity: None,
         };
         let id_gen = MockIdGenerator::new();
         let clock = MockClock::new(Utc::now());
@@ -189,6 +221,10 @@ mod tests {
             pipeline_stage_id: Uuid::new_v4(),
             amount: Decimal::new(-10, 0),
             status: DealStatus::Open,
+            owner_id: None,
+            probability: None,
+            variant_id: None,
+            quantity: None,
         };
         let id_gen = MockIdGenerator::new();
         let clock = MockClock::new(Utc::now());

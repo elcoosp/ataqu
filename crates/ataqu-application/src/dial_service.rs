@@ -170,11 +170,24 @@ impl DialService {
         Ok(channel)
     }
 
-    pub async fn get_channel(&self, tenant_id: TenantId, channel_id: Uuid) -> DialResult<Channel> {
-        self.repo
+    pub async fn get_channel(
+        &self,
+        tenant_id: TenantId,
+        channel_id: Uuid,
+        requester_id: Uuid,
+    ) -> DialResult<Channel> {
+        let channel = self
+            .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
-            .await
-            .map_err(DialServiceError::Domain)
+            .await?;
+        if (channel.channel_type == ChannelType::Private || channel.channel_type == ChannelType::DirectMessage)
+            && !channel.participants.contains(&UserId::new(requester_id))
+        {
+            return Err(DialServiceError::Validation(
+                "User is not a participant in this channel".to_string(),
+            ));
+        }
+        Ok(channel)
     }
 
     pub async fn list_channels(
@@ -331,10 +344,19 @@ impl DialService {
         &self,
         tenant_id: TenantId,
         channel_id: Uuid,
+        requester_id: Uuid,
         limit: u64,
         offset: u64,
     ) -> DialResult<Vec<Message>> {
         let channel_id_obj = ChannelId::new(channel_id);
+        let channel = self.repo.get_channel(&tenant_id, &channel_id_obj).await?;
+        if (channel.channel_type == ChannelType::Private || channel.channel_type == ChannelType::DirectMessage)
+            && !channel.participants.contains(&UserId::new(requester_id))
+        {
+            return Err(DialServiceError::Validation(
+                "User is not a participant in this channel".to_string(),
+            ));
+        }
         self.repo
             .list_messages(&tenant_id, &channel_id_obj, limit, offset)
             .await

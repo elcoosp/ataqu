@@ -1,5 +1,5 @@
-use std::os::unix::net::UnixListener;
-use std::io::Read;
+use tokio::net::UnixListener;
+use tokio::io::AsyncReadExt;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -10,18 +10,25 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Admin server listening on UDS: {}", socket_path);
 
     loop {
-        match listener.accept() {
+        match listener.accept().await {
             Ok((mut stream, _)) => {
-                let mut buffer = [0; 1024];
-                let bytes_read = stream.read(&mut buffer)?;
-                let command = String::from_utf8_lossy(&buffer[..bytes_read]);
-                tracing::info!("Received admin command: {}", command);
+                tokio::spawn(async move {
+                    let mut buffer = [0; 1024];
+                    match stream.read(&mut buffer).await {
+                        Ok(bytes_read) => {
+                            let command = String::from_utf8_lossy(&buffer[..bytes_read]);
+                            tracing::info!("Received admin command: {}", command);
 
-                // Basic response. Real implementation would parse command,
-                // authenticate, write to audit_logs, and execute.
-                let response = format!("Command '{}' received and logged.\n", command);
-                use std::io::Write;
-                stream.write_all(response.as_bytes())?;
+                            // TODO: Parse command, authenticate, write to audit_logs, and execute.
+                            let response = format!("Command '{}' received and logged.\n", command);
+                            use tokio::io::AsyncWriteExt;
+                            let _ = stream.write_all(response.as_bytes()).await;
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to read from admin stream: {}", e);
+                        }
+                    }
+                });
             }
             Err(e) => {
                 tracing::error!("Admin accept error: {}", e);

@@ -56,7 +56,7 @@ pub enum AegisServiceError {
     Internal(String),
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct CreateUserResponse {
     pub user_id: Uuid,
     pub email: Email,

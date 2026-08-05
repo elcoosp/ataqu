@@ -349,4 +349,10 @@ impl VaultRepository for VaultRepositoryImpl {
         self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
         Ok(())
     }
+
+    async fn delete_variant(&self, _tenant_id: &TenantId, _id: &Uuid) -> Result<(), String> {
+        // TODO: Implement actual DB delete
+        Ok(())
+    }
+
 }

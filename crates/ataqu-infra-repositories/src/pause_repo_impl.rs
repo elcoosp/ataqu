@@ -254,6 +254,16 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             .map_err(|e| PauseDomainError::Persistence(e.to_string()))?;
         Ok(count)
     }
+
+    async fn update(
+        &self,
+        _tenant_id: &TenantId,
+        _employee: &ataqu_domain_pause::Employee,
+    ) -> Result<(), ataqu_domain_pause::PauseDomainError> {
+        // TODO: Implement actual DB update
+        Ok(())
+    }
+
 }
 
 #[async_trait]

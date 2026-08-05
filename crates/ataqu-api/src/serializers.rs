@@ -41,31 +41,3 @@ impl serde::Serialize for ApiPhone {
         serializer.serialize_str(self.0.reveal(&key))
     }
 }
-
-/// Helper to serialize Option<Email>
-pub fn serialize_email_opt<S>(email: &Option<Email>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match email {
-        Some(e) => {
-            let key = PiiAccessKey::new();
-            serializer.serialize_some(e.reveal(&key))
-        }
-        None => serializer.serialize_none(),
-    }
-}
-
-/// Helper to serialize Option<PhoneNumber>
-pub fn serialize_phone_opt<S>(phone: &Option<PhoneNumber>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match phone {
-        Some(p) => {
-            let key = PiiAccessKey::new();
-            serializer.serialize_some(p.reveal(&key))
-        }
-        None => serializer.serialize_none(),
-    }
-}

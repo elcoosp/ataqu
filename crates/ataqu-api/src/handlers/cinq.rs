@@ -43,6 +43,7 @@ pub struct PaginationParams {
 pub struct ContactResponse {
     pub id: Uuid,
     pub name: String,
+    pub company: Option<String>,
     pub email: ApiEmail,
     pub phone: Option<ApiPhone>,
     pub created_at: DateTime<Utc>,
@@ -54,6 +55,7 @@ impl From<Contact> for ContactResponse {
         Self {
             id: c.id,
             name: c.name,
+            company: c.company,
             email: ApiEmail::new(c.email),
             phone: c.phone.map(ApiPhone::new),
             created_at: c.created_at,
@@ -71,6 +73,10 @@ pub struct DealResponse {
     pub status: DealStatus,
     pub contact_id: Uuid,
     pub pipeline_stage_id: Uuid,
+    pub owner_id: Option<Uuid>,
+    pub probability: Option<i32>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -84,6 +90,10 @@ impl From<Deal> for DealResponse {
             status: d.status,
             contact_id: d.contact_id,
             pipeline_stage_id: d.pipeline_stage_id,
+            owner_id: d.owner_id,
+            probability: d.probability,
+            variant_id: d.variant_id,
+            quantity: d.quantity,
             created_at: d.created_at,
             updated_at: d.updated_at,
         }
@@ -99,6 +109,7 @@ pub async fn create_contact(
     let cmd = CreateContactCommand {
         tenant_id: auth.tenant_id,
         name: payload.name,
+        company: payload.company,
         email: Email::new(payload.email),
         phone: payload.phone.map(PhoneNumber::new),
         custom_fields: payload.custom_fields,
@@ -167,6 +178,7 @@ pub async fn update_contact(
         id,
         tenant_id: auth.tenant_id,
         name: payload.name,
+        company: payload.company,
         email: payload.email.map(Email::new),
         phone: payload.phone.map(|p| p.map(PhoneNumber::new)),
         custom_fields: payload.custom_fields,
@@ -180,6 +192,9 @@ pub async fn update_contact(
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
                 ApiResponseError::not_found("Contact not found")
+            }
+            ataqu_application::cinq_service::CinqServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+                ApiResponseError::conflict(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
@@ -223,6 +238,10 @@ pub async fn create_deal(
         pipeline_stage_id: payload.pipeline_stage_id,
         amount: payload.amount,
         status: DealStatus::Open,
+        owner_id: payload.owner_id,
+        probability: payload.probability,
+        variant_id: payload.variant_id,
+        quantity: payload.quantity,
     };
     let deal = state
         .cinq_service
@@ -293,6 +312,8 @@ pub async fn update_deal(
         pipeline_stage_id: payload.pipeline_stage_id,
         amount: payload.amount,
         status,
+        owner_id: payload.owner_id,
+        probability: payload.probability,
         variant_id: payload.variant_id,
         quantity: payload.quantity,
         expected_version: if_match,
@@ -304,6 +325,9 @@ pub async fn update_deal(
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
                 ApiResponseError::not_found("Deal not found")
+            }
+            ataqu_application::cinq_service::CinqServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+                ApiResponseError::conflict(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
@@ -437,7 +461,12 @@ pub async fn create_activity(
         StatusCode::CREATED,
         Json(ActivityResponse {
             id: activity.id,
+            activity_type: format!("{:?}", activity.activity_type).to_lowercase(),
             description: activity.description,
+            scheduled_at: activity.scheduled_at,
+            contact_id: activity.contact_id,
+            deal_id: activity.deal_id,
+            created_at: activity.created_at,
         }),
     ))
 }
@@ -460,7 +489,12 @@ pub async fn list_activities(
             .into_iter()
             .map(|a| ActivityResponse {
                 id: a.id,
+                activity_type: format!("{:?}", a.activity_type).to_lowercase(),
                 description: a.description,
+                scheduled_at: a.scheduled_at,
+                contact_id: a.contact_id,
+                deal_id: a.deal_id,
+                created_at: a.created_at,
             })
             .collect(),
     ))
@@ -478,7 +512,12 @@ pub async fn get_activity(
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(ActivityResponse {
         id: activity.id,
+        activity_type: format!("{:?}", activity.activity_type).to_lowercase(),
         description: activity.description,
+        scheduled_at: activity.scheduled_at,
+        contact_id: activity.contact_id,
+        deal_id: activity.deal_id,
+        created_at: activity.created_at,
     }))
 }
 
@@ -574,33 +613,11 @@ pub async fn export_csv(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<impl axum::response::IntoResponse> {
-    let contacts = state
+    let data = state
         .cinq_service
-        .list_contacts(auth.tenant_id, 10000, 0)
+        .export_contacts(auth.tenant_id)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-    let mut wtr = csv::Writer::from_writer(vec![]);
-    wtr.write_record(["id", "name", "email", "phone", "created_at"])
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-    for c in contacts {
-        let pii_key = ataqu_security::PiiAccessKey::new();
-        wtr.write_record(&[
-            c.id.to_string(),
-            c.name,
-            c.email.reveal(&pii_key).to_string(),
-            c.phone.as_ref().map(|p| p.reveal(&pii_key).to_string()).unwrap_or_default(),
-            c.created_at.to_rfc3339(),
-        ])
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    }
-
-    let data = String::from_utf8(
-        wtr.into_inner()
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?,
-    )
-    .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
     Ok((
         StatusCode::OK,
@@ -752,6 +769,9 @@ pub async fn update_task(
         .await
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => ApiResponseError::not_found("Task not found"),
+            ataqu_application::cinq_service::CinqServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+                ApiResponseError::conflict(&msg)
+            }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
     Ok(Json(task.into()))

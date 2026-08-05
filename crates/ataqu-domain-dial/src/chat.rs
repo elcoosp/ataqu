@@ -491,7 +491,7 @@ fn extract_mentions(content: &str) -> Vec<String> {
                     break;
                 }
             }
-            if !name.is_empty() && !mentions.contains(&name) {
+            if !name.is_empty() && Uuid::parse_str(&name).is_ok() && !mentions.contains(&name) {
                 mentions.push(name);
             }
         }
@@ -684,7 +684,7 @@ mod tests {
             version: 0,
         };
 
-        let mentioned = "user123";
+        let mentioned = Uuid::new_v4();
         let cmd = SendMessageCommand {
             tenant_id: tenant_id(),
             channel_id: channel.id,

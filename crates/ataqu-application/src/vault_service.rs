@@ -48,6 +48,14 @@ pub struct UpdateStockCommand {
     pub alert_channel_id: Option<Uuid>,
 }
 
+#[derive(Debug, Clone)]
+pub struct UpdateVariantCommand {
+    pub tenant_id: TenantId,
+    pub id: Uuid,
+    pub price: Option<i64>,
+    pub sku: Option<String>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum VaultServiceError {
     #[error("Product not found")]
@@ -107,6 +115,18 @@ impl VaultService {
             .save_product(&product)
             .await
             .map_err(VaultServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "product_id": product.id,
+            "tenant_id": product.tenant_id.as_uuid(),
+            "name": product.name,
+            "sku": product.sku,
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "ProductCreated", product.id, &payload)
+            .await
+            .map_err(|e| VaultServiceError::Repository(e))?;
+
         Ok(product)
     }
 
@@ -125,6 +145,18 @@ impl VaultService {
             .save_product(&product)
             .await
             .map_err(VaultServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "product_id": product.id,
+            "tenant_id": product.tenant_id.as_uuid(),
+            "name": product.name,
+            "sku": product.sku,
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "ProductCreated", product.id, &payload)
+            .await
+            .map_err(|e| VaultServiceError::Repository(e))?;
+
         Ok(product)
     }
 
@@ -195,6 +227,23 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?
             .ok_or(VaultServiceError::VariantNotFound)
+    }
+
+    pub async fn update_variant(&self, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
+        let variant = self.get_variant(cmd.tenant_id, cmd.id).await?;
+        let new_variant = variant.update_variant(cmd.price, cmd.sku, self.clock.as_ref());
+        self.repo
+            .save_variant(&new_variant)
+            .await
+            .map_err(VaultServiceError::Repository)?;
+        Ok(new_variant)
+    }
+
+    pub async fn delete_variant(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+        self.repo
+            .delete_variant(&tenant_id, &id)
+            .await
+            .map_err(VaultServiceError::Repository)
     }
 
     pub async fn list_variants(

@@ -5,12 +5,12 @@ use axum::{
     response::Response,
 };
 use moka::sync::Cache;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
 pub struct RateLimiter {
-    requests: Arc<Cache<String, Vec<Instant>>>,
+    requests: Arc<Mutex<Cache<String, Vec<Instant>>>>,
     max_requests: usize,
     window: Duration,
 }
@@ -21,7 +21,7 @@ impl RateLimiter {
             .time_to_live(window)
             .build();
         Self {
-            requests: Arc::new(requests),
+            requests: Arc::new(Mutex::new(requests)),
             max_requests,
             window,
         }
@@ -29,13 +29,14 @@ impl RateLimiter {
 
     pub fn check(&self, key: &str) -> bool {
         let now = Instant::now();
-        let mut entry = self.requests.get(key).unwrap_or_default();
+        let cache = self.requests.lock().unwrap();
+        let mut entry = cache.get(key).unwrap_or_default();
         entry.retain(|t| now.duration_since(*t) < self.window);
         if entry.len() >= self.max_requests {
             false
         } else {
             entry.push(now);
-            self.requests.insert(key.to_string(), entry);
+            cache.insert(key.to_string(), entry);
             true
         }
     }

@@ -335,6 +335,7 @@ mod tests {
             questions: vec![sample_question(q1, "Name", QuestionType::Text, true)],
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            version: 0,
         };
         let cmd = SubmitResponseCommand {
             tenant_id: tenant,

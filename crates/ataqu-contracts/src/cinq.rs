@@ -26,12 +26,18 @@ pub struct PipelineStageResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActivityResponse {
     pub id: Uuid,
+    pub activity_type: String,
     pub description: String,
+    pub scheduled_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub contact_id: Uuid,
+    pub deal_id: Option<Uuid>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateContactRequest {
     pub name: String,
+    pub company: Option<String>,
     pub email: String,
     pub phone: Option<String>,
     #[serde(default)]
@@ -41,6 +47,7 @@ pub struct CreateContactRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateContactRequest {
     pub name: Option<String>,
+    pub company: Option<Option<String>>,
     pub email: Option<String>,
     pub phone: Option<Option<String>>,
     pub custom_fields: Option<serde_json::Value>,
@@ -53,6 +60,10 @@ pub struct CreateDealRequest {
     pub amount: Decimal,
     pub contact_id: Uuid,
     pub pipeline_stage_id: Uuid,
+    pub owner_id: Option<Uuid>,
+    pub probability: Option<i32>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -62,8 +73,10 @@ pub struct UpdateDealRequest {
     pub contact_id: Option<Uuid>,
     pub pipeline_stage_id: Option<Uuid>,
     pub status: Option<String>,
-    pub variant_id: Option<Uuid>,
-    pub quantity: Option<i64>,
+    pub owner_id: Option<Option<Uuid>>,
+    pub probability: Option<Option<i32>>,
+    pub variant_id: Option<Option<Uuid>>,
+    pub quantity: Option<Option<i64>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

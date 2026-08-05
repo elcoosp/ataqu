@@ -19,6 +19,7 @@ pub struct Workflow {
     pub conditions: Vec<Condition>,
     pub actions: Vec<Action>,
     pub is_active: bool,
+    pub webhook_secret: Option<String>,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
 }
@@ -43,6 +44,7 @@ pub fn create_workflow(
         conditions: cmd.conditions,
         actions: cmd.actions,
         is_active: true,
+        webhook_secret: None,
         created_at,
         updated_at: created_at,
     };

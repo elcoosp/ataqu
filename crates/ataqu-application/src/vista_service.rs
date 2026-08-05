@@ -63,7 +63,7 @@ impl VistaService {
                     event
                         .payload
                         .get("amount")
-                        .and_then(|v| v.as_f64())
+                        .and_then(|v| v.as_f64().or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok())))
                         .unwrap_or(0.0),
                 )],
                 ("collab_crm", "DealWon") => vec![(
@@ -71,7 +71,7 @@ impl VistaService {
                     event
                         .payload
                         .get("amount")
-                        .and_then(|v| v.as_f64())
+                        .and_then(|v| v.as_f64().or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok())))
                         .unwrap_or(0.0),
                 )],
                 ("collab_crm", "ContactCreated") => vec![("contacts_created", 1.0)],
@@ -143,6 +143,32 @@ impl VistaService {
             .delete_dashboard(&tenant_id, id)
             .await
             .map_err(VistaServiceError::Repository)
+    }
+
+    pub async fn update_dashboard(
+        &self,
+        tenant_id: TenantId,
+        id: Uuid,
+        name: Option<String>,
+        config: Option<serde_json::Value>,
+    ) -> VistaResult<ataqu_domain_vista::Dashboard> {
+        let mut dashboard = self
+            .repo
+            .get_dashboard_by_id(&tenant_id, id)
+            .await
+            .map_err(VistaServiceError::Repository)?
+            .ok_or(VistaServiceError::Validation("Dashboard not found".to_string()))?;
+
+        if let Some(n) = name { dashboard.name = n; }
+        if let Some(c) = config { dashboard.config = c; }
+        dashboard.updated_at = chrono::DateTime::<chrono::Utc>::from(self.clock.now());
+
+        self.repo
+            .save_dashboard(&dashboard)
+            .await
+            .map_err(VistaServiceError::Repository)?;
+
+        Ok(dashboard)
     }
 
     pub async fn execute_raw_sql(

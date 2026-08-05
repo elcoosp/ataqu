@@ -289,4 +289,14 @@ impl VistaRepository for VistaRepositoryImpl {
             None => Ok(Vec::new()),
         }
     }
+
+    async fn get_dashboard_by_id(
+        &self,
+        _tenant_id: &TenantId,
+        _id: uuid::Uuid,
+    ) -> Result<Option<ataqu_domain_vista::Dashboard>, String> {
+        // TODO: Implement actual DB query
+        Ok(None)
+    }
+
 }

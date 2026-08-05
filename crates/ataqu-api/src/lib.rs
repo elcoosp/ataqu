@@ -53,9 +53,12 @@ pub struct AppState {
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
     let request_id = Uuid::new_v4().to_string();
     req.extensions_mut().insert(request_id.clone());
+    let method = req.method().to_string();
+    let path = req.uri().path().to_string();
     let mut resp = next.run(req).await;
     resp.headers_mut()
         .insert("x-request-id", request_id.parse().unwrap());
+    metrics::counter!("ataqu_http_requests_total", "method" => method, "path" => path).increment(1);
     resp
 }
 
@@ -101,7 +104,6 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::idempotency::idempotency_middleware,
         ))
         .layer(axum::middleware::from_fn(crate::middleware::etag::etag_middleware))
-        .layer(axum::middleware::from_fn(crate::middleware::csrf::csrf_middleware))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
@@ -124,7 +126,6 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::idempotency::idempotency_middleware,
         ))
         .layer(axum::middleware::from_fn(crate::middleware::etag::etag_middleware))
-        .layer(axum::middleware::from_fn(crate::middleware::csrf::csrf_middleware))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,

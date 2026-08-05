@@ -96,6 +96,10 @@ pub fn create_booking(
     }
 }
 
+pub fn reschedule_booking(booking: &mut Booking, new_starts_at: SystemTime) {
+    booking.starts_at = new_starts_at;
+}
+
 // TEMPO Calendar Sync (ADR-025)
 // This is a stub. Real implementation would use google-calendar3 and outlook crates.
 pub struct CalendarSyncEvent {
@@ -104,8 +108,8 @@ pub struct CalendarSyncEvent {
 }
 
 pub async fn sync_booking_to_calendar(_booking: &Booking) -> Result<CalendarSyncEvent, String> {
-    // TODO: Implement OAuth token refresh saga and API calls
-    Err("Calendar sync not yet implemented".to_string())
+    // Calendar sync is not implemented in the current version.
+    Err("Calendar sync not implemented".to_string())
 }
 
 #[cfg(test)]

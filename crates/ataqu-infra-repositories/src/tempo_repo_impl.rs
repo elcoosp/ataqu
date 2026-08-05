@@ -410,4 +410,15 @@ use sea_orm::PaginatorTrait;
         Ok(count > 0)
     }
 
+
+    async fn reschedule_booking(
+        &self,
+        _tenant_id: &TenantId,
+        _booking_id: &BookingId,
+        _new_starts_at: std::time::SystemTime,
+    ) -> Result<(), String> {
+        // TODO: Implement actual DB update
+        Ok(())
+    }
+
 }
