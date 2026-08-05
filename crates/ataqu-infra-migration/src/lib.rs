@@ -12,6 +12,7 @@ pub mod m_cinq_add_contact_unique;
 pub mod m_dial;
 pub mod m_dial_add_message_columns;
 pub mod m_dial_add_participants;
+pub mod m_dial_add_reactions;
 pub mod m_dial_add_presence;
 pub mod m_dial_add_threads_mentions;
 pub mod m_pause;
@@ -21,6 +22,7 @@ pub mod m_pause_rename_to_full_name;
 pub mod m_pivot;
 pub mod m_pivot_add_document_versions;
 pub mod m_pivot_add_blocks_relations;
+pub mod m_pivot_add_templates;
 pub mod m_sond;
 pub mod m_sond_add_schema;
 pub mod m_spark;
@@ -35,6 +37,7 @@ pub mod m_vault_add_price_column;
 pub mod m_vault_add_products_variants;
 pub mod m_vault_add_stock_movements;
 pub mod m_vault_add_reservations;
+pub mod m_vault_add_warehouses;
 pub mod m_vista_tables;
 pub mod m_vista_add_dashboards;
 
@@ -58,6 +61,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_dial_add_message_columns::Migration),
             Box::new(m_dial_add_presence::Migration),
             Box::new(m_dial_add_participants::Migration),
+            Box::new(m_dial_add_reactions::Migration),
             Box::new(m_pause::Migration),
             Box::new(m_pause_add_columns::Migration),
             Box::new(m_pause_rename_to_full_name::Migration),
@@ -65,6 +69,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_pivot::Migration),
             Box::new(m_pivot_add_document_versions::Migration),
             Box::new(m_pivot_add_blocks_relations::Migration),
+            Box::new(m_pivot_add_templates::Migration),
             Box::new(m_sond::Migration),
             Box::new(m_sond_add_schema::Migration),
             Box::new(m_spark::Migration),
@@ -79,6 +84,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_vault_add_price_column::Migration),
             Box::new(m_vault_add_stock_movements::Migration),
             Box::new(m_vault_add_reservations::Migration),
+            Box::new(m_vault_add_warehouses::Migration),
             Box::new(m_vista_tables::Migration),
             Box::new(m_vista_add_dashboards::Migration),
         ]

@@ -916,3 +916,14 @@ mod tests {
         assert!(mentions.is_empty());
     }
 }
+
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Reaction {
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub message_id: MessageId,
+    pub user_id: UserId,
+    pub emoji: String,
+    pub created_at: SystemTime,
+}

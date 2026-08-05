@@ -1,3 +1,4 @@
+use crate::chat::Reaction;
 use crate::chat::{Channel, ChannelId, Mention, Message, MessageId, Thread, ThreadId, UserId};
 use crate::error::DialError;
 use async_trait::async_trait;
@@ -82,4 +83,8 @@ pub trait DialRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Message>, DialError>;
+
+    async fn insert_reaction(&self, reaction: &Reaction) -> Result<(), DialError>;
+    async fn list_reactions_for_message(&self, tenant_id: &TenantId, message_id: &MessageId) -> Result<Vec<Reaction>, DialError>;
+    async fn delete_reaction(&self, tenant_id: &TenantId, reaction_id: &Uuid) -> Result<(), DialError>;
 }

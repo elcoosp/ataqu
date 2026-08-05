@@ -13,6 +13,7 @@ use thiserror::Error;
 use tracing::{info, instrument};
 use uuid::Uuid;
 
+use ataqu_security::Email;
 use ataqu_domain_aegis::mfa::{generate_otpauth_url, generate_secret, verify_totp};
 use ataqu_domain_aegis::{
     AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
@@ -477,6 +478,22 @@ impl AegisService {
             return Err(AegisServiceError::AuthenticationFailed);
         }
         Ok(user)
+    }
+
+    pub async fn sso_exchange(&self, email: Email) -> Result<AuthenticateResponse, AegisServiceError> {
+        let user = self.repo.find_by_email(&email).await?
+            .ok_or(AegisServiceError::NotFound("SSO User not found".to_string()))?;
+
+        if !user.is_active {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+
+        let (access, refresh) = generate_token_pair(&user, &self.config)?;
+        Ok(AuthenticateResponse {
+            access_token: access,
+            refresh_token: refresh,
+            user_id: user.id,
+        })
     }
 }
 

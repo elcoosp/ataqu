@@ -1,3 +1,4 @@
+use crate::inventory::Warehouse;
 use crate::inventory::{Product, Variant};
 use crate::stock::StockMovement;
 use async_trait::async_trait;
@@ -48,4 +49,7 @@ pub trait VaultRepository: Send + Sync {
     ) -> Result<Vec<Variant>, String>;
 
     async fn save_reservation(&self, reservation: &crate::stock::Reservation) -> Result<(), String>;
+
+    async fn list_warehouses(&self, tenant_id: &TenantId) -> Result<Vec<Warehouse>, String>;
+    async fn save_warehouse(&self, warehouse: &Warehouse) -> Result<(), String>;
 }

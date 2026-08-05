@@ -116,3 +116,13 @@ pub enum StockError {
         requested: i64,
     },
 }
+
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Warehouse {
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub name: String,
+    pub location: Option<String>,
+    pub created_at: SystemTime,
+}

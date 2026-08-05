@@ -1,4 +1,5 @@
 //! SeaORM-based repository implementation for DIAL domain.
+use sea_orm::ConnectionTrait;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sea_orm::QuerySelect;
@@ -419,6 +420,56 @@ impl DialRepository for DialRepositoryImpl {
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
         Ok(models.into_iter().map(message_model_to_domain).collect())
+    }
+
+    async fn insert_reaction(&self, reaction: &ataqu_domain_dial::chat::Reaction) -> Result<(), ataqu_domain_dial::error::DialError> {
+        let created_at: chrono::DateTime<chrono::Utc> = reaction.created_at.into();
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "INSERT INTO dial.reactions (id, tenant_id, message_id, user_id, emoji, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+            vec![
+                reaction.id.into(),
+                reaction.tenant_id.as_uuid().into(),
+                reaction.message_id.as_uuid().into(),
+                reaction.user_id.as_uuid().into(),
+                reaction.emoji.clone().into(),
+                created_at.into(),
+            ],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn list_reactions_for_message(&self, tenant_id: &ataqu_kernel::TenantId, message_id: &ataqu_domain_dial::chat::MessageId) -> Result<Vec<ataqu_domain_dial::chat::Reaction>, ataqu_domain_dial::error::DialError> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "SELECT id, tenant_id, message_id, user_id, emoji, created_at FROM dial.reactions WHERE tenant_id = $1 AND message_id = $2",
+            vec![tenant_id.as_uuid().into(), message_id.as_uuid().into()],
+        );
+        let rows = self.db.query_all_raw(stmt).await.map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?;
+        let mut reactions = Vec::new();
+        for row in rows {
+            let created_at: chrono::DateTime<chrono::Utc> = row.try_get("", "created_at").map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?;
+            reactions.push(ataqu_domain_dial::chat::Reaction {
+                id: row.try_get("", "id").map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?,
+                tenant_id: ataqu_kernel::TenantId::new(row.try_get("", "tenant_id").map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?),
+                message_id: ataqu_domain_dial::chat::MessageId::new(row.try_get("", "message_id").map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?),
+                user_id: ataqu_domain_dial::chat::UserId::new(row.try_get("", "user_id").map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?),
+                emoji: row.try_get("", "emoji").map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?,
+                created_at: created_at.into(),
+            });
+        }
+        Ok(reactions)
+    }
+
+    async fn delete_reaction(&self, tenant_id: &ataqu_kernel::TenantId, reaction_id: &uuid::Uuid) -> Result<(), ataqu_domain_dial::error::DialError> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "DELETE FROM dial.reactions WHERE tenant_id = $1 AND id = $2",
+            vec![tenant_id.as_uuid().into(), (*reaction_id).into()],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?;
+        Ok(())
     }
 }
 

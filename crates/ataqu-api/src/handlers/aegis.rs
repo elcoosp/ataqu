@@ -202,15 +202,23 @@ pub struct SsoCallbackRequest {
 }
 
 pub async fn sso_callback(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<SsoCallbackRequest>,
-) -> ApiResult<Json<serde_json::Value>> {
-    // TODO: Implement token exchange and user info fetch
-    tracing::info!(code = %req.code, state = %req.state, "SSO callback received");
-    Ok(Json(serde_json::json!({
-        "status": "ok",
-        "message": "SSO callback received. Token exchange not yet implemented."
-    })))
+) -> ApiResult<Json<LoginResponse>> {
+    // MOCK IMPLEMENTATION: In a real system, we would exchange `req.code` for an access token
+    // with Google/Microsoft, fetch the user profile, and then find/create the user.
+    // Here we mock the email extraction to allow testing the flow.
+    let mock_email_str = format!("sso_user_{}@example.com", &req.code[..6.min(req.code.len())]);
+    let email = Email::new(mock_email_str);
+
+    let resp = state.aegis_service.sso_exchange(email).await
+        .map_err(map_aegis_error)?;
+
+    Ok(Json(LoginResponse {
+        access_token: resp.access_token,
+        refresh_token: resp.refresh_token,
+        user_id: resp.user_id,
+    }))
 }
 
 #[derive(Debug, Deserialize)]

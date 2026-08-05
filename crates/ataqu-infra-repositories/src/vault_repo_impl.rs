@@ -309,4 +309,42 @@ impl VaultRepository for VaultRepositoryImpl {
         self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
         Ok(())
     }
+
+    async fn list_warehouses(&self, tenant_id: &ataqu_kernel::TenantId) -> Result<Vec<ataqu_domain_vault::inventory::Warehouse>, String> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "SELECT id, tenant_id, name, location, created_at FROM vault.warehouses WHERE tenant_id = $1",
+            vec![tenant_id.as_uuid().into()],
+        );
+        let rows = self.db.query_all_raw(stmt).await.map_err(|e| e.to_string())?;
+        let mut whs = Vec::new();
+        for row in rows {
+            let created_at: chrono::DateTime<chrono::Utc> = row.try_get("", "created_at").map_err(|e| e.to_string())?;
+            whs.push(ataqu_domain_vault::inventory::Warehouse {
+                id: row.try_get("", "id").map_err(|e| e.to_string())?,
+                tenant_id: ataqu_kernel::TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
+                name: row.try_get("", "name").map_err(|e| e.to_string())?,
+                location: row.try_get("", "location").map_err(|e| e.to_string())?,
+                created_at: created_at.into(),
+            });
+        }
+        Ok(whs)
+    }
+
+    async fn save_warehouse(&self, warehouse: &ataqu_domain_vault::inventory::Warehouse) -> Result<(), String> {
+        let created_at: chrono::DateTime<chrono::Utc> = warehouse.created_at.into();
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "INSERT INTO vault.warehouses (id, tenant_id, name, location, created_at) VALUES ($1, $2, $3, $4, $5)",
+            vec![
+                warehouse.id.into(),
+                warehouse.tenant_id.as_uuid().into(),
+                warehouse.name.clone().into(),
+                warehouse.location.clone().into(),
+                created_at.into(),
+            ],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
+        Ok(())
+    }
 }

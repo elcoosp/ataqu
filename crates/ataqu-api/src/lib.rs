@@ -96,6 +96,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
         .layer(axum::middleware::from_fn(request_id_middleware))
+        .layer(axum::middleware::from_fn(crate::middleware::idempotency::idempotency_middleware))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,

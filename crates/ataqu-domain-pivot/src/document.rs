@@ -77,3 +77,13 @@ pub struct DocumentVersion {
     pub content: String,
     pub created_at: std::time::SystemTime,
 }
+
+
+#[derive(Debug, Clone)]
+pub struct Template {
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub name: String,
+    pub content: String,
+    pub created_at: SystemTime,
+}

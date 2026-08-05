@@ -182,6 +182,44 @@ impl DocumentRepository for PivotDocumentRepository {
         }
         Ok(versions)
     }
+
+    async fn list_templates(&self, tenant_id: &ataqu_kernel::TenantId) -> Result<Vec<ataqu_domain_pivot::document::Template>, ataqu_kernel::RepositoryError> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "SELECT id, tenant_id, name, content, created_at FROM collab_ops.templates WHERE tenant_id = $1",
+            vec![tenant_id.as_uuid().into()],
+        );
+        let rows = self.db.query_all_raw(stmt).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+        let mut tpls = Vec::new();
+        for row in rows {
+            let created_at: chrono::DateTime<chrono::Utc> = row.try_get("", "created_at").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            tpls.push(ataqu_domain_pivot::document::Template {
+                id: row.try_get("", "id").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?,
+                tenant_id: ataqu_kernel::TenantId::new(row.try_get("", "tenant_id").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?),
+                name: row.try_get("", "name").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?,
+                content: row.try_get("", "content").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?,
+                created_at: created_at.into(),
+            });
+        }
+        Ok(tpls)
+    }
+
+    async fn save_template(&self, template: &ataqu_domain_pivot::document::Template) -> Result<(), ataqu_kernel::RepositoryError> {
+        let created_at: chrono::DateTime<chrono::Utc> = template.created_at.into();
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "INSERT INTO collab_ops.templates (id, tenant_id, name, content, created_at) VALUES ($1, $2, $3, $4, $5)",
+            vec![
+                template.id.into(),
+                template.tenant_id.as_uuid().into(),
+                template.name.clone().into(),
+                template.content.clone().into(),
+                created_at.into(),
+            ],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
 }
 
 #[async_trait]
