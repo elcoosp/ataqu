@@ -6,16 +6,18 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_contracts::cinq::TrackEmailRequest;
+use base64::{engine::general_purpose, Engine as _};
 
 #[derive(Debug, serde::Serialize)]
 pub struct TrackEmailResponse {
     pub status: String,
 }
 
+// GET endpoint for pixel tracking. Returns a 1x1 transparent GIF.
 pub async fn track_email_public(
     State(state): State<AppState>,
-    Json(req): Json<TrackEmailRequest>,
-) -> ApiResult<Json<TrackEmailResponse>> {
+    axum::extract::Query(req): axum::extract::Query<TrackEmailRequest>,
+) -> ApiResult<impl axum::response::IntoResponse> {
     match req.event_type.as_str() {
         "open" | "click" | "bounce" | "send" | "deliver" => {}
         _ => return Err(ApiResponseError::validation("Invalid event_type")),
@@ -37,13 +39,16 @@ pub async fn track_email_public(
     };
 
     match state.email_tracking_tx.try_send(tracking_event) {
-        Ok(()) => Ok(Json(TrackEmailResponse {
-            status: "accepted".to_string(),
-        })),
-        Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => Err(ApiResponseError::RateLimited),
-        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(ApiResponseError::internal(
-            "Email tracking service unavailable",
-        )),
+        Ok(()) => {
+            // 1x1 transparent GIF
+            let pixel = general_purpose::STANDARD.decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7").unwrap();
+            Ok((
+                axum::http::StatusCode::OK,
+                [(axum::http::header::CONTENT_TYPE, "image/gif")],
+                pixel,
+            ))
+        }
+        Err(_) => Err(ApiResponseError::internal("Email tracking service unavailable")),
     }
 }
 

@@ -798,7 +798,7 @@ pub async fn track_email(
 // ---------- Router ----------
 pub fn public_routes() -> Router<AppState> {
     Router::new()
-        .route("/email/track/public", axum::routing::post(super::email_tracking::track_email_public))
+        .route("/email/track/public", axum::routing::get(super::email_tracking::track_email_public))
 }
 
 pub fn routes() -> Router<AppState> {

@@ -356,6 +356,7 @@ dependencies = [
  "ataqu-kernel",
  "ataqu-security",
  "axum",
+ "base64",
  "chrono",
  "csv",
  "dashmap",

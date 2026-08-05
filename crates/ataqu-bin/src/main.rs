@@ -437,6 +437,13 @@ async fn main() -> anyhow::Result<()> {
             if let Err(e) = spark.evaluate_trigger(&event).await {
                 tracing::error!(error = %e, "SPARK trigger evaluation failed");
             }
+
+            // Handle internal system events that don't fit SPARK's trigger/action model
+            if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
+                let booking_id = event.payload.get("booking_id").and_then(|v| v.as_str()).unwrap_or("unknown");
+                tracing::info!(booking_id = %booking_id, "TEMPO SendBookingReminder event received. Email sending not yet implemented.");
+            }
+
             Ok(())
         }
     };
