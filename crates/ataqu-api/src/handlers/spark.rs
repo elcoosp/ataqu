@@ -125,10 +125,10 @@ pub async fn execute_workflow(
 
 pub async fn webhook_trigger(
     State(state): State<AppState>,
-    Path((tenant_id, workflow_id)): Path<(Uuid, Uuid)>,
+    Path(workflow_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResult<StatusCode> {
-    state.spark_service.trigger_workflow_public(ataqu_kernel::TenantId::new(tenant_id), workflow_id, payload).await
+    state.spark_service.trigger_workflow_public(workflow_id, payload).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
@@ -139,5 +139,5 @@ pub fn routes() -> Router<AppState> {
         .route("/workflows", get(list_workflows).post(create_workflow))
         .route("/workflows/:id", get(get_workflow))
         .route("/workflows/:id/execute", post(execute_workflow))
-        .route("/webhooks/:tenant_id/:workflow_id", post(webhook_trigger))
+        .route("/webhooks/:workflow_id", post(webhook_trigger))
 }

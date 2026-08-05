@@ -188,6 +188,18 @@ impl PauseService {
             .map_err(|e| PauseServiceError::Persistence(e.to_string()))
     }
 
+    pub async fn search_employees(
+        &self,
+        tenant_id: &TenantId,
+        query: &str,
+        limit: u64,
+    ) -> Result<Vec<Employee>, PauseServiceError> {
+        self.employee_repo
+            .search(tenant_id, query, limit)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))
+    }
+
     pub async fn list_leave_requests(
         &self,
         tenant_id: &TenantId,

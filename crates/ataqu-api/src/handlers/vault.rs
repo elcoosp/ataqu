@@ -1,6 +1,6 @@
 use axum::{
     Router,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
 };
@@ -268,13 +268,24 @@ pub async fn list_movements(
     Ok(Json(list))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct LowStockParams {
+    #[serde(default = "default_threshold")]
+    pub threshold: i64,
+}
+
+fn default_threshold() -> i64 {
+    5
+}
+
 pub async fn get_low_stock(
     State(state): State<AppState>,
     auth: AuthContext,
+    Query(params): Query<LowStockParams>,
 ) -> ApiResult<Json<Vec<VariantResponse>>> {
     let variants = state
         .vault_service
-        .find_low_stock_variants(auth.tenant_id, 5)
+        .find_low_stock_variants(auth.tenant_id, params.threshold)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(variants.into_iter().map(VariantResponse::from).collect()))

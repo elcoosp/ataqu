@@ -129,6 +129,18 @@ impl DialService {
         Ok(())
     }
 
+    pub async fn update_channel(&self, tenant_id: TenantId, channel_id: Uuid, name: Option<String>) -> DialResult<Channel> {
+        let mut channel = self.repo.get_channel(&tenant_id, &ChannelId::new(channel_id)).await?;
+        if let Some(n) = name {
+            if n.trim().is_empty() {
+                return Err(DialServiceError::Validation("Channel name cannot be empty".to_string()));
+            }
+            channel.name = n;
+        }
+        self.repo.insert_channel(&channel).await?;
+        Ok(channel)
+    }
+
     pub async fn get_channel(&self, tenant_id: TenantId, channel_id: Uuid) -> DialResult<Channel> {
         self.repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))

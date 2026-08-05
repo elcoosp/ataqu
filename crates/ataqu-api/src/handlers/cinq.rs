@@ -607,7 +607,10 @@ pub async fn get_task(
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<TaskResponse>> {
     let task = state.cinq_service.get_task(auth.tenant_id, id).await
-        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => ApiResponseError::not_found("Task not found"),
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(task.into()))
 }
 

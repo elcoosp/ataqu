@@ -217,6 +217,32 @@ pub async fn list_employees(
     ))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct SearchParams {
+    pub q: String,
+    #[serde(default = "default_search_limit")]
+    pub limit: u64,
+}
+
+fn default_search_limit() -> u64 {
+    20
+}
+
+pub async fn search_employees(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<SearchParams>,
+) -> ApiResult<Json<Vec<EmployeeResponse>>> {
+    let employees = state
+        .pause_service
+        .search_employees(&auth.tenant_id, &params.q, params.limit)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(
+        employees.into_iter().map(EmployeeResponse::from).collect(),
+    ))
+}
+
 pub async fn list_leave_requests(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -315,9 +341,10 @@ pub async fn list_documents(
 }
 
 pub fn routes() -> Router<AppState> {
-    use axum::routing::{patch, post};
+    use axum::routing::{get, patch, post};
     Router::new()
         .route("/employees", post(create_employee).get(list_employees))
+        .route("/employees/search", get(search_employees))
         .route(
             "/leave-requests",
             post(request_leave).get(list_leave_requests),

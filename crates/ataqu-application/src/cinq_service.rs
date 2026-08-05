@@ -95,6 +95,8 @@ pub enum CinqServiceError {
     DealNotFound,
     #[error("Activity not found")]
     ActivityNotFound,
+    #[error("Task not found")]
+    TaskNotFound,
     #[error("Pipeline stage not found")]
     PipelineStageNotFound,
     #[error("Validation error: {0}")]
@@ -621,7 +623,7 @@ impl CinqService {
 
     pub async fn create_task(&self, cmd: ataqu_domain_cinq::task::CreateTaskCommand) -> CinqResult<ataqu_domain_cinq::task::Task> {
         let event = ataqu_domain_cinq::task::create_task(cmd, self.id_gen.as_ref(), self.clock.as_ref())
-            .map_err(CinqServiceError::Validation)?;
+            .map_err(CinqServiceError::Domain)?;
         let task = ataqu_domain_cinq::task::Task {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -641,7 +643,7 @@ impl CinqService {
 
     pub async fn get_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<ataqu_domain_cinq::task::Task> {
         self.task_repo.find_task_by_id(&tenant_id, id).await?
-            .ok_or(CinqServiceError::Validation("Task not found".to_string()))
+            .ok_or(CinqServiceError::TaskNotFound)
     }
 
     pub async fn list_tasks(&self, tenant_id: TenantId, limit: u64, offset: u64) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {

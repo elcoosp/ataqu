@@ -114,6 +114,24 @@ pub async fn cancel_booking(
     Ok(Json(booking.into()))
 }
 
+pub async fn confirm_booking(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<BookingResponse>> {
+    let cmd = UpdateBookingStatusCommand {
+        tenant_id: auth.tenant_id,
+        booking_id: id,
+        status: BookingStatus::Confirmed,
+    };
+    let booking = state
+        .tempo_service
+        .update_booking_status(cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(booking.into()))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateEventTypeRequest {
     pub name: String,
@@ -268,6 +286,7 @@ pub fn routes() -> Router<AppState> {
         .route("/bookings", axum::routing::get(list_bookings))
         .route("/bookings/:id", axum::routing::get(get_booking))
         .route("/bookings/:id/cancel", axum::routing::post(cancel_booking))
+        .route("/bookings/:id/confirm", axum::routing::post(confirm_booking))
         .route("/event-types", axum::routing::post(create_event_type).get(list_event_types))
         .route("/availability-slots", axum::routing::post(create_availability_slot))
         .route("/availability-slots/:event_type_id", axum::routing::get(list_availability_slots))

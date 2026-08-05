@@ -95,8 +95,9 @@ impl SparkService {
         Ok(())
     }
 
-    pub async fn trigger_workflow_public(&self, tenant_id: TenantId, workflow_id: Uuid, payload: serde_json::Value) -> SparkResult<()> {
-        let workflow = self.repo.get_workflow(&tenant_id, &workflow_id).await?
+    pub async fn trigger_workflow_public(&self, workflow_id: Uuid, payload: serde_json::Value) -> SparkResult<()> {
+        let workflows = self.repo.list_workflows(&ataqu_kernel::TenantId::new(Uuid::nil()), 10000, 0).await?;
+        let workflow = workflows.into_iter().find(|w| w.id == workflow_id)
             .ok_or(SparkServiceError::WorkflowNotFound)?;
 
         if !evaluate_conditions(&workflow.conditions, &payload) {

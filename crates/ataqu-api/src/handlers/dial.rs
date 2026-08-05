@@ -135,6 +135,22 @@ pub async fn archive_channel(
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UpdateChannelRequest {
+    pub name: Option<String>,
+}
+
+pub async fn update_channel(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateChannelRequest>,
+) -> ApiResult<Json<ChannelResponse>> {
+    let channel = state.dial_service.update_channel(auth.tenant_id, id, payload.name).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(channel.into()))
+}
+
+#[derive(Debug, Deserialize)]
 pub struct SendMessageRequest {
     pub content: String,
 }
@@ -367,7 +383,7 @@ pub async fn upload_file(
         tokio::fs::write(&file_path, &data).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
         return Ok(Json(serde_json::json!({
-            "url": file_path.to_string_lossy(),
+            "url": format!("/uploads/{}_{}", auth.user_id, safe_name),
             "name": safe_name,
         })));
     }
@@ -378,7 +394,7 @@ pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
         .route("/channels", post(create_channel).get(list_channels))
-        .route("/channels/:id", get(get_channel).delete(archive_channel))
+        .route("/channels/:id", get(get_channel).delete(archive_channel).put(update_channel))
         .route(
             "/channels/:id/messages",
             post(send_message).get(list_messages),

@@ -196,6 +196,24 @@ pub async fn sso_login(
 }
 
 #[derive(Debug, Deserialize)]
+pub struct SsoCallbackRequest {
+    pub code: String,
+    pub state: String,
+}
+
+pub async fn sso_callback(
+    State(_state): State<AppState>,
+    Json(req): Json<SsoCallbackRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    // TODO: Implement token exchange and user info fetch
+    tracing::info!(code = %req.code, state = %req.state, "SSO callback received");
+    Ok(Json(serde_json::json!({
+        "status": "ok",
+        "message": "SSO callback received. Token exchange not yet implemented."
+    })))
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UpdateRoleRequest {
     pub role: String,
 }
@@ -289,6 +307,7 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/users/:id/role", patch(update_user_role))
         .route("/login", post(login))
         .route("/sso/login", post(sso_login))
+        .route("/sso/callback", post(sso_callback))
         .route("/refresh", post(refresh_token))
         .route("/mfa/setup", post(mfa_setup))
         .route("/mfa/verify", post(mfa_verify))

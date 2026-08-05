@@ -59,13 +59,15 @@ pub struct TaskCreated {
     pub created_at: DateTime<Utc>,
 }
 
+use crate::error::{CinqDomainError, CinqResult};
+
 pub fn create_task(
     cmd: CreateTaskCommand,
     id_gen: &dyn IdGenerator,
     clock: &dyn Clock,
-) -> Result<TaskCreated, String> {
+) -> CinqResult<TaskCreated> {
     if cmd.title.trim().is_empty() {
-        return Err("Title cannot be empty".to_string());
+        return Err(CinqDomainError::Validation("Task title cannot be empty".to_string()));
     }
     let id = id_gen.new_uuid_v7();
     let now = clock.now().into();

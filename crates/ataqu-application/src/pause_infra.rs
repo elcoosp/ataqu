@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::pause_service::{
     IdempotencyGuardHandle, IdempotencyPort, OutboxPort, PauseServiceError,
 };
-use ataqu_infra_idempotency::{CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore};
+use ataqu_infra_idempotency::{CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore, guard::split_uuid_to_int4_pair};
 
 /// Real Idempotency using the idempotency infrastructure crate (without advisory locks for simplicity)
 pub struct RealIdempotency {
@@ -33,6 +33,16 @@ impl IdempotencyPort for RealIdempotency {
             .begin()
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+
+        // Acquire advisory lock
+        let (key1, key2) = split_uuid_to_int4_pair(command_id);
+        let lock_stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT pg_advisory_xact_lock($1::int4, $2::int4)",
+            vec![key1.into(), key2.into()],
+        );
+        txn.execute_raw(lock_stmt).await.map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+
         // Try to get existing record
         let record = store
             .get(&mut txn, command_id)

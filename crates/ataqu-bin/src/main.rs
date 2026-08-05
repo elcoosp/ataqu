@@ -293,6 +293,7 @@ async fn main() -> anyhow::Result<()> {
     let aegis_service_for_noshow = aegis_service.clone();
     let aegis_service_for_reminder = aegis_service.clone();
     let spark_service_for_cron = spark_service.clone();
+    // let _spark_service_for_outbox = spark_service.clone();
 
     // Build AppState
     use dashmap::DashMap;
@@ -303,7 +304,6 @@ async fn main() -> anyhow::Result<()> {
     let cinq_service_for_outbox = cinq_service.clone();
     let vault_service_for_outbox = vault_service.clone();
     let dial_service_for_outbox = dial_service.clone();
-    let spark_service_for_outbox = spark_service.clone();
     let state = AppState {
         cinq_service,
         dial_service,
@@ -333,10 +333,9 @@ async fn main() -> anyhow::Result<()> {
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
-    let spark_service_for_outbox = spark_service.clone();
     let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
         let vista = vista_service_for_outbox.clone();
-        let spark = spark_service_for_outbox.clone();
+        let spark = spark_service.clone();
         let cinq = cinq_service_for_outbox.clone();
         let dial = dial_service_for_outbox.clone();
         let vault = vault_service_for_outbox.clone();
