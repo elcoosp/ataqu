@@ -284,6 +284,8 @@ pub async fn update_deal(
         pipeline_stage_id: payload.pipeline_stage_id,
         amount: payload.amount,
         status,
+        variant_id: payload.variant_id,
+        quantity: payload.quantity,
     };
     let deal = state
         .cinq_service
@@ -567,7 +569,14 @@ pub async fn export_csv(
         .export_contacts(auth.tenant_id)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::OK, csv_data))
+    Ok((
+        StatusCode::OK,
+        [
+            (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
+            (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"contacts.csv\"".to_string()),
+        ],
+        csv_data
+    ))
 }
 
 // ---------- Tasks ----------
@@ -698,7 +707,10 @@ pub async fn update_task(
         .cinq_service
         .update_task(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => ApiResponseError::not_found("Task not found"),
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(task.into()))
 }
 
@@ -711,7 +723,10 @@ pub async fn delete_task(
         .cinq_service
         .delete_task(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => ApiResponseError::not_found("Task not found"),
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(StatusCode::NO_CONTENT)
 }
 

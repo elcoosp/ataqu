@@ -279,6 +279,7 @@ impl PivotService {
             document_id: block.document_id,
             block_type,
             created_at: block.created_at,
+            updated_at: self.clock.now(),
         };
         self.block_repo
             .save_block(&updated_block)

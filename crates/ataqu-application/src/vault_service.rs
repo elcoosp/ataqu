@@ -45,6 +45,7 @@ pub struct UpdateStockCommand {
     pub delta: i64,
     pub reason: String,
     pub reference: Option<String>,
+    pub alert_channel_id: Option<Uuid>,
 }
 
 #[derive(Debug, thiserror::Error)]

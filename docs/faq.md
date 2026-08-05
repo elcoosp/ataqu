@@ -2,12 +2,16 @@
 
 > *Answers to the most common questions from SMB leaders, CTOs, and ops teams.*
 
+
+**Q31: What is an "element"?**
+**A:** An element is a business object: a contact, a deal, a product, a document, an employee, a form, a workflow, a channel, or a booking. Messages, form responses, and logs do not count toward your limit.
+
 ---
 
 ## 1. Pricing & Billing
 
 **Q1: How much does Ataqu cost?**
-**A:** $15/mo for 1 app, $39/mo for 5 apps, or $79/mo for all 10 apps. No per‑user fees, no hidden charges.
+**A:** Free tier available (100 elements, all apps). Starter: $15/mo (1,000 elements). Pro: $39/mo (10,000 elements). Suite: $79/mo (unlimited). No per‑user fees, no hidden charges.
 
 **Q2: Can I change plans at any time?**
 **A:** Yes. You can upgrade or downgrade in 1 click from your dashboard. Billing is prorated.
@@ -16,7 +20,7 @@
 **A:** No. All plans are month‑to‑month. You can cancel anytime with no penalty.
 
 **Q4: What happens if I exceed my plan limits?**
-**A:** There are no usage limits. The price is fixed regardless of volume.
+**A:** On the free tier, you can't create new elements beyond 100. On paid plans, you can upgrade to the next tier. No data is ever deleted.
 
 **Q5: Do you offer discounts for non‑profits or startups?**
 **A:** Yes. Contact us at `hello@ataqu.com` with your organization details.

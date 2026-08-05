@@ -14,6 +14,8 @@ pub enum VistaServiceError {
     Repository(String),
     #[error("Domain error: {0}")]
     Domain(String),
+    #[error("Validation error: {0}")]
+    Validation(String),
 }
 
 pub type VistaResult<T> = Result<T, VistaServiceError>;
@@ -148,6 +150,10 @@ impl VistaService {
         tenant_id: TenantId,
         sql: &str,
     ) -> VistaResult<Vec<serde_json::Value>> {
+        let upper_sql = sql.to_uppercase();
+        if upper_sql.contains("DROP") || upper_sql.contains("DELETE") || upper_sql.contains("UPDATE") || upper_sql.contains("INSERT") || upper_sql.contains("ALTER") || upper_sql.contains("TRUNCATE") {
+            return Err(VistaServiceError::Validation("Only read-only SQL is permitted".to_string()));
+        }
         self.repo
             .execute_raw_sql(&tenant_id, sql)
             .await

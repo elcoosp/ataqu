@@ -2,7 +2,6 @@
 use async_trait::async_trait;
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement, TransactionTrait};
 use serde_json::Value;
-use tracing::info;
 use uuid::Uuid;
 
 use crate::pause_service::{IdempotencyGuardHandle, IdempotencyPort, PauseServiceError};
@@ -133,52 +132,3 @@ impl IdempotencyPort for RealIdempotency {
     }
 }
 
-/// Real Outbox using core.outbox table
-pub struct RealOutbox {
-    db: DatabaseConnection,
-}
-
-impl RealOutbox {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
-    }
-}
-
-#[async_trait]
-impl crate::outbox::Outbox for RealOutbox {
-    async fn append(
-        &self,
-        schema: &str,
-        event_type: &str,
-        aggregate_id: Uuid,
-        payload: &Value,
-    ) -> Result<(), String> {
-        let sql = r#"
-            INSERT INTO core.outbox (schema, event_type, aggregate_id, payload, status, priority)
-            VALUES ($1::app_schema, $2, $3, $4, 'pending', 'normal')
-        "#;
-        let stmt = Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            sql,
-            vec![
-                schema.into(),
-                event_type.into(),
-                aggregate_id.into(),
-                payload.clone().into(),
-            ],
-        );
-        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
-        // Notify the dispatcher
-        let notify = Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "SELECT pg_notify('outbox_event', '')",
-            vec![],
-        );
-        self.db
-            .execute_raw(notify)
-            .await
-            .map_err(|e| e.to_string())?;
-        info!("Outbox event appended: {} {}", event_type, aggregate_id);
-        Ok(())
-    }
-}

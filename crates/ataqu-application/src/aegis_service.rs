@@ -149,7 +149,7 @@ impl RealAegisDomain {
             .map_err(|_| AegisServiceError::AuthenticationFailed)?;
         let argon2 = Argon2::default();
         if argon2
-            .verify_password(cmd.password_plain.as_bytes(), &parsed_hash)
+            .verify_password(cmd.password_hash.as_bytes(), &parsed_hash)
             .is_err()
         {
             return Err(AegisServiceError::AuthenticationFailed);
@@ -224,7 +224,7 @@ fn generate_token_pair(
     let claims = JwtClaims {
         sub: user.id.to_string(),
         tenant_id: user.tenant_id.as_uuid(),
-        email: user.email.as_ref().to_string(),
+        email: user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
         roles: vec![user.role.clone()],
         exp: now + config.access_token_ttl.as_secs() as usize,
         iat: now,

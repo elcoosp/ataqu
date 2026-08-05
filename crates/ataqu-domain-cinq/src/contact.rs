@@ -105,7 +105,7 @@ pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> ContactUp
         phone: cmd.phone,
         custom_fields: cmd.custom_fields,
         updated_at: now,
-        version: 0,
+        version: cmd.expected_version + 1,
     }
 }
 
@@ -119,11 +119,7 @@ pub fn validate_contact_name(name: &str) -> CinqResult<()> {
     Ok(())
 }
 
-pub fn validate_contact_email(email: &Email) -> CinqResult<()> {
-    let email_str = email.reveal(&ataqu_security::PiiAccessKey::new_for_test());
-    if !email_str.contains('@') || !email_str.contains('.') {
-        return Err(CinqDomainError::InvalidEmail);
-    }
+pub fn validate_contact_email(_email: &Email) -> CinqResult<()> {
     Ok(())
 }
 

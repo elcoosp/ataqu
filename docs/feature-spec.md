@@ -13,6 +13,22 @@
 
   > **"We don't clone everything. We clone the 80% that delivers 95% of daily value, make it 10x faster, and connect it natively."**
 
+  ### Free Tier (The Entry Point)
+  Ataqu offers a free tier to remove adoption friction:
+  - **100 elements** (contacts, deals, products, documents, employees, forms, workflows, channels, bookings)
+  - **All 10 apps** accessible
+  - **Unlimited users** per tenant
+  - **Native integrations** enabled via pre-installed SPARK templates
+  - **No time limit** — forever free
+
+  ### Pricing Plans
+  | Plan | Price | Elements | Users | Apps |
+  |------|-------|----------|-------|------|
+  | **Free** | $0 | 100 | Unlimited | All 10 |
+  | **Starter** | $15/mo | 1,000 | Unlimited | All 10 |
+  | **Pro** | $39/mo | 10,000 | Unlimited | All 10 |
+  | **Suite** | $79/mo | Unlimited | Unlimited | All 10 |
+
   | Feature Type | Ataqu Strategy |
   |--------------|----------------|
   | **P0 (Must Have)** | Faithful clone — the 80% of features used daily |
@@ -135,6 +151,16 @@
   3. `VAULT: Stock < Threshold → DIAL: Alert #logistics`
 
   **Ataqu Advantage:** SPARK is "Zapier without the task limits, without the webhooks, without the 5-15 minute polling delays, and with native integration to our 10 apps." Execution is <1s. No per-task pricing. No brittle APIs.
+
+  **SPARK Templates (Pre-installed Integrations):**
+  - CINQ → DIAL: Create a channel when a deal is won
+  - SOND → CINQ: Create a lead when a form is submitted
+  - PAUSE → AEGIS: Deactivate account on offboarding
+  - TEMPO → CINQ: Create an activity for a booked meeting
+  - CINQ → VAULT: Reserve stock when a deal is won
+  - VAULT → DIAL: Alert when stock is low (disabled by default)
+
+  Users can enable/disable/duplicate these templates directly in SPARK.
 
   ---
 

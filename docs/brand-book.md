@@ -53,9 +53,20 @@ The total cost for a 20-person SMB using these 4 tools + others easily exceeds $
 - **Calm:** The calm of a predator. No surprises. No stress. No lock-in. Zero race conditions. Zero data loss. You sleep well at night because the infrastructure is mathematically sound — powered by PostgreSQL MVCC, native `LISTEN/NOTIFY`, SeaORM 2.0, raw SQL escape hatch, and compile‑time PII redaction via redacting newtypes.
 
 ### 1.5 Brand Promise
-> **"Ataqu — 10 apps, tiered pricing ($15/$39/$79), zero lock-in."**
+> **"Ataqu — 10 apps, free tier available, tiered pricing ($15/$39/$79), zero lock-in."**
 
-Stop paying for 10 tools that don't talk to each other. Ataqu gives you a complete, native suite starting at $15/month for one app, $39/month for 5 apps, or $79/month for all 10. And if you want to leave, one click is all it takes.
+Stop paying for 10 tools that don't talk to each other. Ataqu gives you a complete, native suite with a free tier (100 elements, all apps, unlimited users), starting at $15/month for Starter, $39/month for Pro, or $79/month for Suite. No per-user fees. And if you want to leave, one click is all it takes.
+
+
+### 1.7 Free Tier (The Entry Point)
+Ataqu offers a **generous free tier** to remove adoption friction:
+- **100 elements** (contacts, deals, products, documents, employees, forms, workflows, channels, bookings)
+- **All 10 apps** accessible
+- **Unlimited users** per tenant
+- **Native integrations** enabled via pre-installed SPARK templates
+- **No time limit** — forever free
+
+When you hit 100 elements, you're prompted to upgrade. No data loss. No lock-in.
 
 ### 1.6 Data Sovereignty & The Trust Narrative
 "Zero lock-in" is our strongest pillar. In a cynical SaaS market, we define exactly what Data Sovereignty means at Ataqu:
@@ -144,7 +155,7 @@ Stop paying for 10 tools that don't talk to each other. Ataqu gives you a comple
 
 ### 3.6 Pricing Narrative (Land & Expand)
 Do not just sell the Suite. Lower the barrier to entry.
-> "Start with one app for $15. Upgrade to 5 for $39. Get the whole suite for $79. No per‑user fees. Ever."
+> "Start with the free tier (100 elements, all apps). Upgrade to Starter ($15/mo) for 1,000 elements, Pro ($39/mo) for 10,000 elements, or Suite ($79/mo) for unlimited elements. No per‑user fees. Ever."
 
 ---
 

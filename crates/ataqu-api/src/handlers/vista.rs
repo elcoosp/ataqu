@@ -17,8 +17,8 @@ pub struct KpiSummary {
     pub total_contacts: u64,
     pub total_deals: u64,
     pub total_deals_won: u64,
-    pub total_pipeline_value: f64,
-    pub total_revenue: f64,
+    pub total_pipeline_value: rust_decimal::Decimal,
+    pub total_revenue: rust_decimal::Decimal,
     pub total_products: u64,
     pub low_stock_variants: u64,
     pub total_bookings: u64,
@@ -40,8 +40,8 @@ pub async fn get_kpis(
         total_contacts: view.total_contacts,
         total_deals: view.total_deals,
         total_deals_won: view.total_deals_won,
-        total_pipeline_value: view.total_pipeline_value.to_string().parse().unwrap_or(0.0),
-        total_revenue: view.total_revenue.to_string().parse().unwrap_or(0.0),
+        total_pipeline_value: view.total_pipeline_value,
+        total_revenue: view.total_revenue,
         total_products: view.total_products,
         low_stock_variants: view.low_stock_variants,
         total_bookings: view.total_bookings,
@@ -133,7 +133,10 @@ pub async fn execute_raw_sql(
         .vista_service
         .execute_raw_sql(auth.tenant_id, &payload.sql)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::vista_service::VistaServiceError::Validation(msg) => ApiResponseError::validation(&msg),
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(results))
 }
 

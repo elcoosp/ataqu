@@ -80,6 +80,19 @@ We do not use multi-step "product tours" that block the UI and read like a manua
 - **Interaction:** Tours are strictly opt-in. A "Skip Tour" button is always visible. Tours advance when the user completes the action (e.g., clicking the button), not just by clicking "Next".
 - **Accessibility:** Tooltips must trap focus and return it to the triggering element upon dismissal.
 
+
+### 4.5 Free Tier UI (The Conversion Engine)
+
+The free tier is not hidden — it's a feature.
+
+- **Element counter:** A glassmorphic pill in the header: `100/100 elements used`
+- **Upgrade prompt:** When you hit 90%, a subtle toast appears: "You're approaching your free tier limit. Upgrade to Starter ($15/mo) for 1,000 elements."
+- **Blocking behavior:** At 100 elements, creation is blocked, but reads and existing integrations continue working. No data loss.
+- **Upgrade flow:** 1-click from the counter. No support ticket. No sales call.
+
+**Empty State Copy:**
+- *"You've used 100/100 elements on the Free tier. Upgrade to Starter to keep building."
+
 ### 4.4 Global Interaction Rules
 - **The 150ms Rule & Zero Spinners:** All interactions must feel instantaneous. Optimistic UI is mandatory. Skeleton loaders for initial loads.
 - **Stale-While-Revalidate:** TanStack Query serves cached data instantly while fetching updates.
@@ -301,6 +314,19 @@ Ataqu is a high-density data OS. We do not force complex grids onto mobile scree
 ---
 
 ### 8.6 SPARK (Automation)
+
+### 8.6 SPARK (Automation) — Templates Section
+
+SPARK's homepage shows two sections:
+1. **Templates essentials** (pre-installed): The 6 native integrations as ready-to-use workflows
+2. **My workflows**: User-created workflows
+
+Each template has:
+- A toggle: active/inactive
+- A "Duplicate" button: copies the template to "My workflows" for customization
+- A "View" button: opens the workflow in the canvas
+
+**This is the only interface for native integrations.** No separate "toggles" in CINQ/DIAL/VAULT. Everything lives in SPARK.
 **Purpose:** Native event-driven automation replacing Zapier.
 
 **Routes:**

@@ -15,6 +15,7 @@ pub struct DocumentCreatedEvent {
     pub title: String,
     pub content: String,
     pub created_at: SystemTime,
+    pub updated_at: SystemTime,
 }
 
 pub fn create_document(
@@ -28,6 +29,7 @@ pub fn create_document(
         title: cmd.title,
         content: cmd.content,
         created_at: clock.now(),
+        updated_at: clock.now(),
     }
 }
 

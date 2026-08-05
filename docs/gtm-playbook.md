@@ -61,9 +61,9 @@ We do not force users to buy the $49/mo bundle on day one. We lower the barrier 
 
 ### 3.1 The Wedge (Land)
 
-- **The Free Tier:** Unlimited time, strict usage limits. Used for single-users testing PIVOT or SOND.
-- **The Starter Plan ($15/mo):** A team adopts one app (e.g., CINQ CRM) for $15/mo because it's cheaper than HubSpot and doesn't require a credit card. They get the full app with no per‑user fees.
-- **The Hook:** The UI is fast. The data is clean. The 1-click cancel button gives them psychological safety.
+- **The Free Tier:** 100 elements, all 10 apps accessible, unlimited users, native integrations enabled via SPARK templates. No time limit.
+- **The Starter Plan ($15/mo):** 1,000 elements, all apps, unlimited users. No credit card required to start the free tier.
+- **The Hook:** The UI is fast. The data is clean. The 1-click cancel button gives them psychological safety. The free tier removes the "I don't want to pay to test" barrier.
 
 **2026 PLG Insight:** Hybrid go-to-market models that blend PLG with sales-assisted expansion deliver outcomes like **36% free-to-paid conversion** and **3:1 LTV:CAC ratios**.
 
@@ -165,7 +165,7 @@ Ataqu actively removes friction from the buying process. We weaponize ease of us
 
 ### 6.1 No "Contact Us" Walls
 
-Pricing is public. **Starter: $15/mo for one app. Pro: $39/mo for 5 apps. Suite: $79/mo for all 10 apps.** If a user wants to upgrade, they enter a credit card. If they want to downgrade, they click a button. No human intervention is required or allowed.
+Pricing is public. **Free: $0 (100 elements, all apps). Starter: $15/mo (1,000 elements). Pro: $39/mo (10,000 elements). Suite: $79/mo (unlimited). No per-user fees.** If a user wants to upgrade, they enter a credit card. If they want to downgrade, they click a button. No human intervention is required or allowed.
 
 **2026 Pricing Context:** Seat-based revenue was predictable and easy to forecast—but consumption and API-based models require entirely different customer success motions. Ataqu's flat-rate pricing is a direct attack on the per-user tax model.
 

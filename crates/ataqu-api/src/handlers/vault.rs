@@ -219,6 +219,7 @@ pub struct UpdateStockRequest {
     pub delta: i64,
     pub reason: String,
     pub reference: Option<String>,
+    pub alert_channel_id: Option<Uuid>,
 }
 
 pub async fn update_stock(
@@ -233,6 +234,7 @@ pub async fn update_stock(
         delta: payload.delta,
         reason: payload.reason,
         reference: payload.reference,
+        alert_channel_id: payload.alert_channel_id,
     };
     let variant = state
         .vault_service

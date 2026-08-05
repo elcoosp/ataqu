@@ -21,6 +21,7 @@ pub struct CreateBookingCommand {
     pub starts_at: DateTime<Utc>,
     pub duration_minutes: i32,
     pub timezone: String,
+    pub contact_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone)]
@@ -90,6 +91,10 @@ impl TempoService {
             ));
         }
 
+        let event_types = self.repo.list_event_types(&cmd.tenant_id).await.map_err(TempoServiceError::Repository)?;
+        let _event_type = event_types.iter().find(|et| et.id.0 == cmd.event_type_id).cloned()
+            .ok_or(TempoServiceError::Validation("Event type not found".to_string()))?;
+
         let starts_at: std::time::SystemTime = cmd.starts_at.into();
         let existing_bookings = self
             .repo
@@ -126,6 +131,7 @@ impl TempoService {
             "event_type_id": booking.event_type_id.0,
             "starts_at": booking.starts_at,
             "timezone": booking.timezone,
+            "contact_id": cmd.contact_id,
         });
         self.outbox
             .append("tempo", "BookingCreated", booking.id.0, &payload)
@@ -323,6 +329,7 @@ impl TempoService {
             starts_at,
             duration_minutes: event_type.duration_minutes,
             timezone,
+            contact_id: None,
         };
         self.create_booking(cmd).await
     }

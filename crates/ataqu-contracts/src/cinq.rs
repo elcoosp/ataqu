@@ -62,6 +62,8 @@ pub struct UpdateDealRequest {
     pub contact_id: Option<Uuid>,
     pub pipeline_stage_id: Option<Uuid>,
     pub status: Option<String>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

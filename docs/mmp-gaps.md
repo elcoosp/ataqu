@@ -16,7 +16,7 @@ This document defines the **missing features** that transform your functional ML
 | # | Feature | App(s) | Priority | Status |
 |---|---------|--------|----------|--------|
 | 1 | Actionable Empty States | All | P0 | Missing |
-| 2 | Native Integration Toggles | CINQ, DIAL, SPARK, VAULT | P0 | Missing |
+| 2 | Native Integrations (SPARK Templates) | SPARK | P0 | Missing |
 | 3 | Stack Decommission Dashboard | Global (`/audit`) | P0 | Missing |
 | 4 | Onboardjs Micro‑Tours | All (first visit) | P1 | Missing |
 | 5 | Command Palette Actions | Global | P1 | Partial |
@@ -58,28 +58,36 @@ This document defines the **missing features** that transform your functional ML
 
 ---
 
-## 2. Native Integration Toggles
+## 2. Native Integrations (SPARK Templates)
 
 **The Problem:** Users don't see that apps are connected. The "Zapier killer" feature is invisible.
 
-**What's Required:** In each app, add a **visible toggle** to enable/disable native integrations with other Ataqu apps.
+**What's Required:** All native integrations are delivered as **pre-installed SPARK templates**.
 
-**Examples:**
+**Pre-installed templates:**
+1. CINQ → DIAL: Create a channel when a deal is won
+2. SOND → CINQ: Create a lead when a form is submitted
+3. PAUSE → AEGIS: Deactivate account on offboarding
+4. TEMPO → CINQ: Create an activity for a booked meeting
+5. CINQ → VAULT: Reserve stock when a deal is won
+6. VAULT → DIAL: Alert when stock is low (disabled by default)
 
-- **CINQ (deal detail page):** Toggle "When this deal is won, create a DIAL channel." If enabled, the toggle should show a green pulse and a badge "Connected to DIAL".
-- **SPARK (workflow editor):** Toggle "Send notification to DIAL when workflow completes."
-- **VAULT (product page):** Toggle "Reserve stock automatically when CINQ deal is won."
+**In SPARK, users can:**
+- Toggle a template on/off
+- Duplicate a template to customize it
+- View the template in the canvas
+
+**No separate toggles in CINQ/DIAL/VAULT.** Everything lives in SPARK.
 
 **Technical Requirements:**
-- Each toggle calls a backend endpoint (e.g., `PATCH /api/integrations/toggle`) that updates the `core.integrations` table (to be created).
-- On success, show a toast: "CINQ connected to DIAL."
-- The toggle state should be persisted and reflected in other apps (e.g., in DIAL, show a badge "Connected to CINQ").
+- Each template is a `spark.workflows` record with `is_system_template = true`.
+- Toggling updates `workflows.status = 'active'|'inactive'`.
+- Duplicating copies the workflow with `is_system_template = false`.
 
 **Files to modify:**
-- `apps/cinq/src/routes/_auth.deals.$id.tsx`
-- `apps/spark/src/routes/_auth.workflows.$id.tsx`
-- `apps/vault/src/routes/_auth.products.$id.tsx`
-- Create new API endpoints in `ataqu-api/src/handlers/integrations.rs` (if not already present).
+- `apps/spark/src/routes/_auth.index.tsx` (template list UI)
+- `apps/spark/src/routes/_auth.workflows.$id.tsx` (template view + duplicate)
+- `crates/ataqu-api/src/handlers/spark.rs` (toggle + duplicate endpoints)
 
 ---
 

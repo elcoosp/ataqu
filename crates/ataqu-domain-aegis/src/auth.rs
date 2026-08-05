@@ -20,7 +20,7 @@ pub struct CreateUserCommand {
 #[derive(Debug, Clone)]
 pub struct AuthenticateCommand {
     pub email: Email,
-    pub password_plain: String,
+    pub password_hash: String,
     pub totp_code: Option<String>,
     pub tenant_id: Option<TenantId>,
 }

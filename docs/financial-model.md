@@ -38,6 +38,7 @@ We do not scale infrastructure until pain is felt.
 
 | Component | Provider / Tool | Monthly Cost | Notes |
 |-----------|-----------------|--------------|-------|
+|-----------|-----------------|--------------|-------|
 | **Core VPS (8 vCores, 8 GB RAM, 160 GB SSD)** | Hetzner CX42 | ~$10 (first year) | Runs the single Rust binary, PostgreSQL 16.14, SeaORM, Caddy. |
 | **CDN & DDoS Protection** | Cloudflare | $0 | Free tier. |
 | **Email Deliverability** | SendGrid / Postmark | $15 | Transactional emails (AEGIS, Support). |
@@ -46,9 +47,9 @@ We do not scale infrastructure until pain is felt.
 | **Monitoring** | Axiom (Free Tier) + `tracing` logs | $0 | OTLP HTTP, local JSON log rotation. |
 | **Backup** | `wal-g` 3.0.8 | $0 | WAL archiving to Hetzner Storage Box (included in VPS cost). |
 | **Storage** | Hetzner Storage Box (S3-compatible) | $0 | Included with VPS. |
-| **Total Fixed Burn** | | **~$25 / mo** | |
+| **Total Fixed Burn** | | **~$31 / mo** | |
 
-**The Break‑Even Point:** At an average ARPU of $43/mo, exactly **1 paying tenant** covers all fixed infrastructure costs (actually $25 / $43 ≈ 0.58 tenants). Everything after tenant #1 is pure profit.
+**The Break‑Even Point:** At an average ARPU of $43/mo, exactly **1 paying tenant** covers all fixed infrastructure costs (actually $31 / $43 ≈ 0.72 tenants). Everything after tenant #1 is pure profit.
 
 ---
 

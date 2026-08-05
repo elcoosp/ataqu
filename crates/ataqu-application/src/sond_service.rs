@@ -193,12 +193,26 @@ impl SondService {
             .await
             .map_err(|e| SondServiceError::Repository(e.to_string()))?;
 
+        let email = response.answers.iter().find_map(|a| {
+            if let ataqu_domain_sond::response::AnswerValue::Email(e) = &a.value {
+                Some(e.clone())
+            } else {
+                None
+            }
+        });
+        let name = response.answers.iter().find_map(|a| {
+            if let ataqu_domain_sond::response::AnswerValue::Text(t) = &a.value {
+                Some(t.clone())
+            } else {
+                None
+            }
+        });
         let payload = serde_json::json!({
             "response_id": response.id,
             "tenant_id": response.tenant_id.as_uuid(),
             "form_id": response.form_id,
-            "email": "[REDACTED]",
-            "name": "[REDACTED]",
+            "email": email.unwrap_or_default(),
+            "name": name.unwrap_or_else(|| "Form Lead".to_string())
         });
         self.outbox
             .append("sond", "ResponseSubmitted", response.id, &payload)

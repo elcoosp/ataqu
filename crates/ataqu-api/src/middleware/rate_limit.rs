@@ -4,21 +4,24 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use dashmap::DashMap;
+use moka::sync::Cache;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
 pub struct RateLimiter {
-    requests: Arc<DashMap<String, Vec<Instant>>>,
+    requests: Arc<Cache<String, Vec<Instant>>>,
     max_requests: usize,
     window: Duration,
 }
 
 impl RateLimiter {
     pub fn new(max_requests: usize, window: Duration) -> Self {
+        let requests = Cache::builder()
+            .time_to_live(window)
+            .build();
         Self {
-            requests: Arc::new(DashMap::new()),
+            requests: Arc::new(requests),
             max_requests,
             window,
         }
@@ -26,15 +29,13 @@ impl RateLimiter {
 
     pub fn check(&self, key: &str) -> bool {
         let now = Instant::now();
-        let mut entry = self
-            .requests
-            .entry(key.to_string())
-            .or_insert_with(Vec::new);
+        let mut entry = self.requests.get(key).unwrap_or_default();
         entry.retain(|t| now.duration_since(*t) < self.window);
         if entry.len() >= self.max_requests {
             false
         } else {
             entry.push(now);
+            self.requests.insert(key.to_string(), entry);
             true
         }
     }
@@ -45,8 +46,6 @@ pub async fn rate_limit_middleware(
     req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    // Try to extract tenant_id from extension (set by auth middleware)
-    // If not present, fall back to IP.
     let key = req
         .extensions()
         .get::<crate::middleware::AuthContext>()

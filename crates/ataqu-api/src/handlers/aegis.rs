@@ -71,7 +71,7 @@ pub async fn login(
     info!("Login attempt");
     let cmd = AuthenticateCommand {
         email: Email::new(req.email),
-        password_plain: req.password,
+        password_hash: req.password,
         totp_code: req.totp_code,
         tenant_id: None,
     };
@@ -212,10 +212,8 @@ pub async fn sso_callback(
     // MOCK IMPLEMENTATION: In a real system, we would exchange `req.code` for an access token
     // with Google/Microsoft, fetch the user profile, and then find/create the user.
     // Here we mock the email extraction to allow testing the flow.
-    let mock_email_str = format!(
-        "sso_user_{}@example.com",
-        &req.code[..6.min(req.code.len())]
-    );
+    let safe_prefix: String = req.code.chars().take(6).collect();
+    let mock_email_str = format!("sso_user_{}@example.com", safe_prefix);
     let email = Email::new(mock_email_str);
 
     let resp = state

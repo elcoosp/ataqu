@@ -281,6 +281,7 @@ async fn main() -> anyhow::Result<()> {
                             delta: *delta,
                             reason: reason.clone(),
                             reference: None,
+                            alert_channel_id: None,
                         })
                         .await
                         .map_err(|e| e.to_string())?;
@@ -346,13 +347,13 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // PAUSE
-    use ataqu_application::pause_infra::{RealIdempotency, RealOutbox};
+    use ataqu_application::pause_infra::RealIdempotency;
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
     let pause_idempotency = Arc::new(RealIdempotency::new(pools.core.clone()));
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_doc_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
-    let pause_outbox = Arc::new(RealOutbox::new(pools.core.clone()));
+    let pause_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
     let pause_service = Arc::new(PauseService::new(
         pause_idempotency,
         pause_employee_repo,

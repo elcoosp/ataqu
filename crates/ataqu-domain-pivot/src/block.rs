@@ -34,6 +34,7 @@ pub struct BlockCreatedEvent {
     pub document_id: Uuid,
     pub block_type: BlockType,
     pub created_at: SystemTime,
+    pub updated_at: SystemTime,
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +62,7 @@ pub fn create_block(
         document_id: cmd.document_id,
         block_type: cmd.block_type,
         created_at: clock.now(),
+        updated_at: clock.now(),
     }
 }
 

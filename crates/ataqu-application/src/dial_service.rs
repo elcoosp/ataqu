@@ -183,11 +183,11 @@ impl DialService {
         let channel_id = ChannelId::new(cmd.channel_id);
         let channel = self.repo.get_channel(&cmd.tenant_id, &channel_id).await?;
 
-        if channel.channel_type == ChannelType::Private
+        if (channel.channel_type == ChannelType::Private || channel.channel_type == ChannelType::DirectMessage)
             && !channel.participants.contains(&UserId::new(cmd.author_id))
         {
             return Err(DialServiceError::Validation(
-                "User is not a participant in this private channel".to_string(),
+                "User is not a participant in this channel".to_string(),
             ));
         }
 

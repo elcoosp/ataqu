@@ -23,6 +23,7 @@ pub struct CreateBookingRequest {
     pub duration_minutes: i32,
     #[serde(default = "default_timezone")]
     pub timezone: String,
+    pub contact_id: Option<Uuid>,
 }
 
 fn default_timezone() -> String {
@@ -63,6 +64,7 @@ pub async fn create_booking(
         starts_at: payload.starts_at,
         duration_minutes: payload.duration_minutes,
         timezone: payload.timezone,
+        contact_id: payload.contact_id,
     };
     let booking = state
         .tempo_service

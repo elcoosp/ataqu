@@ -69,6 +69,8 @@ pub struct UpdateDealCommand {
     pub pipeline_stage_id: Option<Uuid>,
     pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
+    pub variant_id: Option<Uuid>,
+    pub quantity: Option<i64>,
 }
 
 #[derive(Debug, Clone)]
@@ -525,6 +527,8 @@ impl CinqService {
                 "contact_id": deal.contact_id,
                 "amount": deal.amount,
                 "title": deal.title,
+                "variant_id": cmd.variant_id,
+                "quantity": cmd.quantity
             });
             self.outbox
                 .append(CINQ_SCHEMA, "DealWon", deal.id, &payload)
