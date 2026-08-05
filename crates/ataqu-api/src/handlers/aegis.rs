@@ -25,8 +25,12 @@ pub struct CreateUserRequest {
 
 pub async fn create_user(
     State(state): State<AppState>,
+    auth: AuthContext,
     Json(req): Json<CreateUserRequest>,
 ) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+    }
     info!("Create user request");
     let cmd = CreateUserCommand {
         tenant_id: ataqu_kernel::TenantId::new(req.tenant_id),

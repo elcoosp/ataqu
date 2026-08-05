@@ -154,6 +154,16 @@ impl DialRepositoryImpl {
 
 #[async_trait]
 impl DialRepository for DialRepositoryImpl {
+
+    async fn get_reaction(
+        &self,
+        _tenant_id: &TenantId,
+        _reaction_id: &Uuid,
+    ) -> Result<Option<ataqu_domain_dial::chat::Reaction>, DialError> {
+        // TODO: Implement proper DB fetch once reaction entity is generated in SeaORM
+        Ok(None)
+    }
+
     async fn insert_channel(&self, channel: &Channel) -> Result<(), DialError> {
         let active = channel_domain_to_active(channel);
         channel_entity::Entity::insert(active)

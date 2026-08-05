@@ -487,13 +487,16 @@ pub async fn list_reactions(
 pub async fn delete_reaction(
     State(state): State<AppState>,
     auth: AuthContext,
-    Path((_message_id, reaction_id)): Path<(Uuid, Uuid)>,
+    Path((message_id, reaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
     state
         .dial_service
-        .delete_reaction(auth.tenant_id, reaction_id)
+        .delete_reaction(auth.tenant_id, message_id, reaction_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::dial_service::DialServiceError::Validation(msg) => ApiResponseError::validation(&msg),
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(StatusCode::NO_CONTENT)
 }
 

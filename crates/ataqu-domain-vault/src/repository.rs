@@ -27,13 +27,6 @@ pub trait VaultRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Variant>, String>;
-    async fn update_variant_stock(
-        &self,
-        tenant_id: &TenantId,
-        id: &Uuid,
-        delta: i64,
-    ) -> Result<Variant, String>;
-
     async fn save_movement(&self, movement: &StockMovement) -> Result<(), String>;
     async fn list_movements(
         &self,

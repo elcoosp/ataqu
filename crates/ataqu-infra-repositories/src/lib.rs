@@ -1,5 +1,5 @@
-pub mod batch;
 pub mod batch_helper;
+pub mod batch;
 pub mod cinq_contact_repo;
 pub mod cinq_csv_import;
 pub mod cinq_deal_repo;

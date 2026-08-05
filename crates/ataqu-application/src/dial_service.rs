@@ -475,7 +475,17 @@ impl DialService {
             .map_err(DialServiceError::Domain)
     }
 
-    pub async fn delete_reaction(&self, tenant_id: TenantId, reaction_id: Uuid) -> DialResult<()> {
+    pub async fn delete_reaction(&self, tenant_id: TenantId, message_id: Uuid, reaction_id: Uuid) -> DialResult<()> {
+        let reaction = self.repo
+            .get_reaction(&tenant_id, &reaction_id)
+            .await
+            .map_err(DialServiceError::Domain)?
+            .ok_or(DialServiceError::Validation("Reaction not found".to_string()))?;
+
+        if reaction.message_id.as_uuid() != message_id {
+            return Err(DialServiceError::Validation("Reaction does not belong to the specified message".to_string()));
+        }
+
         self.repo
             .delete_reaction(&tenant_id, &reaction_id)
             .await

@@ -210,34 +210,6 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(models.into_iter().map(variant_model_to_domain).collect())
     }
 
-    async fn update_variant_stock(
-        &self,
-        tenant_id: &TenantId,
-        id: &Uuid,
-        delta: i64,
-    ) -> Result<Variant, String> {
-        let mut variant = self
-            .get_variant(tenant_id, id)
-            .await?
-            .ok_or_else(|| "Variant not found".to_string())?;
-
-        let new_stock = variant.stock_quantity + delta;
-        if new_stock < 0 {
-            return Err(format!(
-                "Insufficient stock for variant {}: available {}, requested {}",
-                id, variant.stock_quantity, -delta
-            ));
-        }
-        variant.stock_quantity = new_stock;
-
-        let active = variant_domain_to_active(&variant);
-        variant_entity::Entity::update(active)
-            .exec(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
-
-        Ok(variant)
-    }
 
     async fn save_movement(&self, movement: &StockMovement) -> Result<(), String> {
         let active = stock_movement_entity::ActiveModel {

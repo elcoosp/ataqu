@@ -788,4 +788,5 @@ pub fn routes() -> Router<AppState> {
         .route("/csv/import", post(import_csv))
         .route("/csv/export", get(export_csv))
         .route("/email/track", post(track_email))
+        .route("/email/track/public", post(super::email_tracking::track_email_public))
 }
