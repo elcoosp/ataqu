@@ -73,10 +73,14 @@ pub fn create_contact(
     cmd: CreateContactCommand,
     id_gen: &dyn IdGenerator,
     clock: &dyn Clock,
-) -> ContactCreated {
+) -> Result<ContactCreated, CinqDomainError> {
+    validate_contact_name(&cmd.name)?;
+    validate_contact_email(&cmd.email)?;
+    validate_contact_phone(&cmd.phone)?;
+
     let id = id_gen.new_uuid_v7();
-    let now = clock.now().into(); // Convert SystemTime to DateTime<Utc>
-    ContactCreated {
+    let now = clock.now().into();
+    Ok(ContactCreated {
         id,
         tenant_id: cmd.tenant_id,
         name: cmd.name,
@@ -85,7 +89,7 @@ pub fn create_contact(
         custom_fields: cmd.custom_fields,
         lead_score: cmd.lead_score.unwrap_or(0),
         created_at: now,
-    }
+    })
 }
 
 pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> ContactUpdated {
@@ -111,14 +115,21 @@ pub fn validate_contact_name(name: &str) -> CinqResult<()> {
     Ok(())
 }
 
-pub fn validate_contact_email(_email: &Email) -> CinqResult<()> {
-    // Email newtype already validates on construction? We assume it's valid.
-    // Additional domain-specific rules can go here.
+pub fn validate_contact_email(email: &Email) -> CinqResult<()> {
+    let email_str = email.reveal(&ataqu_security::PiiAccessKey::new_for_test());
+    if !email_str.contains('@') || !email_str.contains('.') {
+        return Err(CinqDomainError::InvalidEmail);
+    }
     Ok(())
 }
 
-pub fn validate_contact_phone(_phone: &Option<PhoneNumber>) -> CinqResult<()> {
-    // Assume Phone newtype is valid.
+pub fn validate_contact_phone(phone: &Option<PhoneNumber>) -> CinqResult<()> {
+    if let Some(p) = phone {
+        let phone_str = p.reveal(&ataqu_security::PiiAccessKey::new_for_test());
+        if phone_str.len() < 7 {
+            return Err(CinqDomainError::InvalidPhone);
+        }
+    }
     Ok(())
 }
 
@@ -178,7 +189,7 @@ mod tests {
         id_gen.set_next_uuid(fixed_id);
         let clock = MockClock::new(Utc.with_ymd_and_hms(2026, 8, 1, 12, 0, 0).unwrap());
 
-        let event = create_contact(cmd.clone(), &id_gen, &clock);
+        let event = create_contact(cmd.clone(), &id_gen, &clock).unwrap();
 
         assert_eq!(event.id, fixed_id);
         assert_eq!(event.tenant_id, cmd.tenant_id);

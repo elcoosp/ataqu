@@ -131,6 +131,19 @@ pub async fn archive_channel(
 ) -> ApiResult<StatusCode> {
     state.dial_service.archive_channel(auth.tenant_id, id).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    // Broadcast archive event to WebSocket subscribers
+    let key = (auth.tenant_id.as_uuid(), id);
+    let broadcast = serde_json::json!({
+        "type": "channel_archived",
+        "channel_id": id,
+    }).to_string();
+    if let Some(subscribers) = state.ws_registry.get(&key) {
+        for entry in subscribers.iter() {
+            let _ = entry.value().send(broadcast.clone());
+        }
+    }
+
     Ok(StatusCode::NO_CONTENT)
 }
 

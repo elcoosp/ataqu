@@ -155,7 +155,7 @@ impl CinqService {
             custom_fields: cmd.custom_fields.clone(),
             lead_score: cmd.lead_score,
         };
-        let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        let event = contact_domain::create_contact(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
         let contact = Contact {
             id: event.id,
             tenant_id: event.tenant_id,
@@ -328,11 +328,14 @@ impl CinqService {
                 custom_fields: serde_json::Value::Object(custom),
                 lead_score: None,
             };
-            let event = contact_domain::create_contact(
+            let event = match contact_domain::create_contact(
                 domain_cmd,
                 self.id_gen.as_ref(),
                 self.clock.as_ref(),
-            );
+            ) {
+                Ok(e) => e,
+                Err(_) => { failed += 1; continue; }
+            };
             let contact = Contact {
                 id: event.id,
                 tenant_id: event.tenant_id,
