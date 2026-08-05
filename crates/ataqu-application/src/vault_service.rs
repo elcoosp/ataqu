@@ -27,6 +27,7 @@ pub struct UpdateProductCommand {
     pub name: Option<String>,
     pub description: Option<String>,
     pub sku: Option<String>,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +47,7 @@ pub struct UpdateStockCommand {
     pub reason: String,
     pub reference: Option<String>,
     pub alert_channel_id: Option<Uuid>,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -54,6 +56,14 @@ pub struct UpdateVariantCommand {
     pub id: Uuid,
     pub price: Option<i64>,
     pub sku: Option<String>,
+    pub expected_version: i32,
+}
+
+#[derive(Debug, Clone)]
+pub struct BulkStockAdjustCommand {
+    pub tenant_id: TenantId,
+    pub adjustments: Vec<(Uuid, i64)>,
+    pub reason: String,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -132,6 +142,14 @@ impl VaultService {
 
     pub async fn update_product(&self, cmd: UpdateProductCommand) -> VaultResult<Product> {
         let mut product = self.get_product(cmd.tenant_id, cmd.id).await?;
+
+        if product.version != cmd.expected_version {
+            return Err(VaultServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, product.version
+            )));
+        }
+
         if let Some(name) = cmd.name {
             product.name = name;
         }
@@ -141,6 +159,9 @@ impl VaultService {
         if let Some(sku) = cmd.sku {
             product.sku = sku;
         }
+        product.updated_at = self.clock.now();
+        product.version += 1;
+
         self.repo
             .save_product(&product)
             .await
@@ -153,7 +174,7 @@ impl VaultService {
             "sku": product.sku,
         });
         self.outbox
-            .append(VAULT_SCHEMA, "ProductCreated", product.id, &payload)
+            .append(VAULT_SCHEMA, "ProductUpdated", product.id, &payload)
             .await
             .map_err(|e| VaultServiceError::Repository(e))?;
 
@@ -231,6 +252,14 @@ impl VaultService {
 
     pub async fn update_variant(&self, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.id).await?;
+
+        if variant.version != cmd.expected_version {
+            return Err(VaultServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, variant.version
+            )));
+        }
+
         let new_variant = variant.update_variant(cmd.price, cmd.sku, self.clock.as_ref());
         self.repo
             .save_variant(&new_variant)
@@ -260,6 +289,14 @@ impl VaultService {
 
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
+
+        if variant.version != cmd.expected_version {
+            return Err(VaultServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, variant.version
+            )));
+        }
+
         let new_variant = variant.adjust_stock(cmd.delta, self.clock.as_ref())?;
         self.repo
             .save_variant(&new_variant)
@@ -297,6 +334,37 @@ impl VaultService {
         }
 
         Ok(new_variant)
+    }
+
+    pub async fn bulk_adjust_stock(&self, cmd: BulkStockAdjustCommand) -> VaultResult<Vec<Variant>> {
+        let mut updated_variants = Vec::new();
+        for (variant_id, delta) in cmd.adjustments {
+            let variant = self.get_variant(cmd.tenant_id, variant_id).await?;
+            let new_variant = variant.adjust_stock(delta, self.clock.as_ref())?;
+            self.repo
+                .save_variant(&new_variant)
+                .await
+                .map_err(VaultServiceError::Repository)?;
+
+            let movement = ataqu_domain_vault::stock::create_movement(
+                ataqu_domain_vault::stock::CreateMovementCommand {
+                    tenant_id: cmd.tenant_id,
+                    variant_id,
+                    quantity: delta,
+                    reason: cmd.reason.clone(),
+                    reference: None,
+                },
+                self.id_gen.as_ref(),
+                self.clock.as_ref(),
+            );
+            self.repo
+                .save_movement(&movement)
+                .await
+                .map_err(VaultServiceError::Repository)?;
+
+            updated_variants.push(new_variant);
+        }
+        Ok(updated_variants)
     }
 
     pub async fn list_movements(

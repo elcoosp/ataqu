@@ -14,6 +14,7 @@ pub struct Product {
     pub sku: String,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
+    pub version: i32,
 }
 
 impl Product {
@@ -34,6 +35,7 @@ impl Product {
             sku,
             created_at: now,
             updated_at: now,
+            version: 0,
         }
     }
 }
@@ -51,6 +53,7 @@ pub struct Variant {
     pub low_stock_threshold: i64,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
+    pub version: i32,
 }
 
 impl Variant {
@@ -74,6 +77,7 @@ impl Variant {
             low_stock_threshold: 5,
             created_at: now,
             updated_at: now,
+            version: 0,
         }
     }
 
@@ -93,6 +97,7 @@ impl Variant {
         let mut new = self.clone();
         new.stock_quantity = new_stock;
         new.updated_at = clock.now();
+        new.version += 1;
         Ok(new)
     }
 
@@ -110,6 +115,7 @@ impl Variant {
             new.sku = s;
         }
         new.updated_at = clock.now();
+        new.version += 1;
         new
     }
 }

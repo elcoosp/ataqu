@@ -12,7 +12,8 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_application::vault_service::{
-    CreateProductCommand, CreateVariantCommand, UpdateProductCommand, UpdateStockCommand,
+    BulkStockAdjustCommand, CreateProductCommand, CreateVariantCommand, UpdateProductCommand,
+    UpdateStockCommand, UpdateVariantCommand,
 };
 
 #[derive(Debug, Deserialize)]
@@ -37,6 +38,7 @@ pub struct ProductResponse {
     pub sku: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 impl From<ataqu_application::vault_service::Product> for ProductResponse {
@@ -48,6 +50,7 @@ impl From<ataqu_application::vault_service::Product> for ProductResponse {
             sku: p.sku,
             created_at: p.created_at.into(),
             updated_at: p.updated_at.into(),
+            version: p.version,
         }
     }
 }
@@ -102,21 +105,35 @@ pub async fn update_product(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateProductRequest>,
 ) -> ApiResult<Json<ProductResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let cmd = UpdateProductCommand {
         tenant_id: auth.tenant_id,
         id,
         name: payload.name,
         description: payload.description,
         sku: payload.sku,
+        expected_version: if_match,
     };
-    let _ = payload; // payload fully consumed
     let product = state
         .vault_service
         .update_product(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
+                ApiResponseError::conflict(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(product.into()))
 }
 
@@ -151,6 +168,7 @@ pub struct VariantResponse {
     pub reserved_quantity: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 impl From<ataqu_application::vault_service::Variant> for VariantResponse {
@@ -164,6 +182,7 @@ impl From<ataqu_application::vault_service::Variant> for VariantResponse {
             reserved_quantity: v.reserved_quantity,
             created_at: v.created_at.into(),
             updated_at: v.updated_at.into(),
+            version: v.version,
         }
     }
 }
@@ -225,19 +244,34 @@ pub async fn update_variant(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateVariantRequest>,
 ) -> ApiResult<Json<VariantResponse>> {
-    let cmd = ataqu_application::vault_service::UpdateVariantCommand {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
+    let cmd = UpdateVariantCommand {
         tenant_id: auth.tenant_id,
         id,
         price: payload.price,
         sku: payload.sku,
+        expected_version: if_match,
     };
     let variant = state
         .vault_service
         .update_variant(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
+                ApiResponseError::conflict(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(variant.into()))
 }
 
@@ -266,8 +300,17 @@ pub async fn update_stock(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(variant_id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateStockRequest>,
 ) -> ApiResult<Json<VariantResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let cmd = UpdateStockCommand {
         tenant_id: auth.tenant_id,
         variant_id,
@@ -275,13 +318,45 @@ pub async fn update_stock(
         reason: payload.reason,
         reference: payload.reference,
         alert_channel_id: payload.alert_channel_id,
+        expected_version: if_match,
     };
     let variant = state
         .vault_service
         .update_stock(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
+                ApiResponseError::conflict(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(variant.into()))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BulkStockAdjustRequest {
+    pub adjustments: Vec<(Uuid, i64)>,
+    pub reason: String,
+}
+
+pub async fn bulk_adjust_stock(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkStockAdjustRequest>,
+) -> ApiResult<Json<Vec<VariantResponse>>> {
+    let cmd = BulkStockAdjustCommand {
+        tenant_id: auth.tenant_id,
+        adjustments: payload.adjustments,
+        reason: payload.reason,
+    };
+    let variants = state
+        .vault_service
+        .bulk_adjust_stock(cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(
+        variants.into_iter().map(VariantResponse::from).collect(),
+    ))
 }
 
 pub async fn list_movements(
@@ -358,6 +433,7 @@ pub fn routes() -> Router<AppState> {
                 .delete(delete_variant),
         )
         .route("/variants/:id/stock", axum::routing::put(update_stock))
+        .route("/variants/bulk-stock-adjust", axum::routing::post(bulk_adjust_stock))
         .route(
             "/variants/:id/movements",
             axum::routing::get(list_movements),

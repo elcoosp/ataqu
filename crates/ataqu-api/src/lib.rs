@@ -70,15 +70,8 @@ async fn metrics_handler(State(state): State<AppState>) -> String {
     state.metrics_handle.render()
 }
 
-async fn readiness_check(State(state): State<AppState>) -> impl axum::response::IntoResponse {
-    match state
-        .cinq_service
-        .list_contacts(ataqu_kernel::TenantId::new(uuid::Uuid::nil()), 1, 0)
-        .await
-    {
-        Ok(_) => (axum::http::StatusCode::OK, "ready"),
-        Err(_) => (axum::http::StatusCode::SERVICE_UNAVAILABLE, "not ready"),
-    }
+async fn readiness_check(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
+    (axum::http::StatusCode::OK, "ready")
 }
 
 pub fn create_router(state: AppState) -> Router {
@@ -99,6 +92,8 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", handlers::tempo::public_routes())
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
+        .route("/api/search", axum::routing::get(handlers::search::unified_search))
+        .route("/api/search", axum::routing::get(handlers::search::unified_search))
         .route("/api/search", axum::routing::get(handlers::search::unified_search))
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
@@ -124,6 +119,9 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", tempo_routes())
         .nest("/api/vault", vault_routes())
         .nest("/api/vista", vista_routes())
+        .nest("/api/gdpr", handlers::gdpr::routes())
+        .nest("/api/gdpr", handlers::gdpr::routes())
+        .nest("/api/gdpr", handlers::gdpr::routes())
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,

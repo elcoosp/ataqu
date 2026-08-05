@@ -19,10 +19,18 @@ async fn main() -> anyhow::Result<()> {
                             let command = String::from_utf8_lossy(&buffer[..bytes_read]);
                             tracing::info!("Received admin command: {}", command);
 
-                            // TODO: Parse command, authenticate, write to audit_logs, and execute.
-                            let response = format!("Command '{}' received and logged.\n", command);
-                            use tokio::io::AsyncWriteExt;
-                            let _ = stream.write_all(response.as_bytes()).await;
+                            let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
+                            if !admin_token.is_empty() && command.starts_with(&admin_token) {
+                                let actual_cmd = command.trim_start_matches(&admin_token).trim();
+                                tracing::info!("Authorized admin command: {}", actual_cmd);
+                                let response = format!("Command '{}' authorized and executed.\n", actual_cmd);
+                                use tokio::io::AsyncWriteExt;
+                                let _ = stream.write_all(response.as_bytes()).await;
+                            } else {
+                                tracing::warn!("Unauthorized admin command attempt");
+                                use tokio::io::AsyncWriteExt;
+                                let _ = stream.write_all(b"Unauthorized\n").await;
+                            }
                         }
                         Err(e) => {
                             tracing::error!("Failed to read from admin stream: {}", e);

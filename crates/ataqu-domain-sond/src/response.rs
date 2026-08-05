@@ -147,7 +147,13 @@ fn validate_answer_value(value: &AnswerValue, question: &Question) -> Result<(),
                 Err(SondError::InvalidRatingValue(*v))
             }
         }
-        (crate::question::QuestionType::Email, AnswerValue::Email(_)) => Ok(()),
+        (crate::question::QuestionType::Email, AnswerValue::Email(e)) => {
+            if e.contains('@') && e.contains('.') {
+                Ok(())
+            } else {
+                Err(SondError::InvalidChoiceValue("Invalid email format".to_string()))
+            }
+        },
         (crate::question::QuestionType::Phone, AnswerValue::Phone(_)) => Ok(()),
         _ => Err(SondError::TypeMismatch),
     }

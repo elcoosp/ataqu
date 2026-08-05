@@ -196,14 +196,14 @@ impl SparkService {
 
         for workflow in workflows {
             if let Trigger::Schedule { cron } = &workflow.trigger {
-                // Reverted to simple placeholder to avoid croner API mismatch.
-                // In production, use a real cron parser like `croner` with correct API calls.
-                if cron.contains("* * *") {
-                    tracing::info!("Triggering scheduled workflow {}", workflow.id);
-                    let payload = serde_json::json!({ "time": now.to_rfc3339() });
-                    if evaluate_conditions(&workflow.conditions, &payload) {
-                        if let Err(e) = self.execute_workflow(&workflow).await {
-                            tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
+                if let Ok(cron_job) = croner::Cron::new(cron).parse() {
+                    if cron_job.find_next_occurrence(&now, false).is_ok() {
+                        tracing::info!("Triggering scheduled workflow {}", workflow.id);
+                        let payload = serde_json::json!({ "time": now.to_rfc3339() });
+                        if evaluate_conditions(&workflow.conditions, &payload) {
+                            if let Err(e) = self.execute_workflow(&workflow).await {
+                                tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
+                            }
                         }
                     }
                 }

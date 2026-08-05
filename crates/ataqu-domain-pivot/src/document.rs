@@ -16,6 +16,7 @@ pub struct DocumentCreatedEvent {
     pub content: String,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
+    pub version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -49,6 +50,7 @@ pub fn create_document(
         content: cmd.content,
         created_at: clock.now(),
         updated_at: clock.now(),
+        version: 0,
     }
 }
 
@@ -86,5 +88,7 @@ mod tests {
             event.created_at,
             SystemTime::UNIX_EPOCH + Duration::from_secs(1000)
         );
+        assert_eq!(event.version, 0);
+        assert_eq!(event.version, 0);
     }
 }

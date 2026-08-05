@@ -24,7 +24,7 @@ pub struct JwtClaims {
 pub struct AuthContext {
     pub user_id: Uuid,
     pub tenant_id: TenantId,
-    pub email: String,
+    pub email: ataqu_security::Email,
     pub roles: Vec<String>,
 }
 
@@ -75,7 +75,7 @@ pub async fn auth_middleware(
             let auth_ctx = AuthContext {
                 user_id,
                 tenant_id: TenantId::new(token_data.claims.tenant_id),
-                email: token_data.claims.email,
+                email: ataqu_security::Email::new(token_data.claims.email),
                 roles: token_data.claims.roles,
             };
             req.extensions_mut().insert(auth_ctx);
@@ -97,7 +97,7 @@ pub async fn auth_middleware(
             let auth_ctx = AuthContext {
                 user_id: api_key_data.user_id,
                 tenant_id: api_key_data.tenant_id,
-                email: api_key_data.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+                email: api_key_data.email,
                 roles: vec![api_key_data.role],
             };
             req.extensions_mut().insert(auth_ctx);

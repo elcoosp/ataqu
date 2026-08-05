@@ -3,6 +3,7 @@ pub mod cinq;
 pub mod dial;
 pub mod dial_ws;
 pub mod email_tracking;
+pub mod gdpr;
 pub mod pause;
 pub mod pivot;
 pub mod search;

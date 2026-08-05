@@ -109,6 +109,7 @@ impl DocumentRepository for PivotDocumentRepository {
                 .map_err(|e| RepositoryError::Database(e.to_string()))?,
             created_at: created_at.into(),
             updated_at: std::time::SystemTime::now(),
+            version: 0,
         })
     }
 
@@ -154,6 +155,7 @@ impl DocumentRepository for PivotDocumentRepository {
                     .map_err(|e| RepositoryError::Database(e.to_string()))?,
                 created_at: created_at.into(),
                 updated_at: std::time::SystemTime::now(),
+                version: 0,
             });
         }
         Ok(docs)
@@ -220,6 +222,7 @@ impl DocumentRepository for PivotDocumentRepository {
                     .map_err(|e| RepositoryError::Database(e.to_string()))?,
                 created_at: created_at.into(),
                 updated_at: std::time::SystemTime::now(),
+                version: 0,
             });
         }
         Ok(docs)
@@ -570,6 +573,7 @@ impl BlockRepository for PivotBlockRepository {
                 block_type,
                 created_at: created_at.into(),
                 updated_at: std::time::SystemTime::now(),
+                version: 0,
             });
         }
         Ok(blocks)
@@ -682,6 +686,7 @@ impl BlockRepository for PivotBlockRepository {
             block_type,
             created_at: created_at.into(),
             updated_at: std::time::SystemTime::now(),
+            version: 0,
         })
     }
 }

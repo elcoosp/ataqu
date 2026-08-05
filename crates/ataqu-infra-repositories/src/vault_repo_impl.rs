@@ -7,8 +7,57 @@ use sea_orm::ConnectionTrait;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
 
-use crate::entities::vault::product as product_entity;
-use crate::entities::vault::variant as variant_entity;
+mod product_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "products", schema_name = "vault")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub name: String,
+        pub description: String,
+        pub sku: String,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+        pub version: i32,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
+mod variant_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "variants", schema_name = "vault")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub product_id: Uuid,
+        pub sku: String,
+        pub price: i64,
+        pub stock_quantity: i64,
+        pub reserved_quantity: i64,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+        pub version: i32,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
 
 mod stock_movement_entity {
     use chrono::{DateTime, Utc};
@@ -53,6 +102,7 @@ fn product_domain_to_active(product: &Product) -> product_entity::ActiveModel {
         sku: Set(product.sku.clone()),
         created_at: Set(product.created_at.into()),
         updated_at: Set(product.updated_at.into()),
+        version: Set(product.version),
     }
 }
 
@@ -65,6 +115,7 @@ fn product_model_to_domain(model: product_entity::Model) -> Product {
         sku: model.sku,
         created_at: model.created_at.into(),
         updated_at: model.updated_at.into(),
+        version: model.version,
     }
 }
 
@@ -79,6 +130,7 @@ fn variant_domain_to_active(variant: &Variant) -> variant_entity::ActiveModel {
         reserved_quantity: Set(variant.reserved_quantity),
         created_at: Set(variant.created_at.into()),
         updated_at: Set(variant.updated_at.into()),
+        version: Set(variant.version),
     }
 }
 
@@ -94,6 +146,7 @@ fn variant_model_to_domain(model: variant_entity::Model) -> Variant {
         low_stock_threshold: 5,
         created_at: model.created_at.into(),
         updated_at: model.updated_at.into(),
+        version: model.version,
     }
 }
 
@@ -209,6 +262,16 @@ impl VaultRepository for VaultRepositoryImpl {
             .await
             .map_err(|e| e.to_string())?;
         Ok(models.into_iter().map(variant_model_to_domain).collect())
+    }
+
+    async fn delete_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), String> {
+        variant_entity::Entity::delete_many()
+            .filter(variant_entity::Column::Id.eq(*id))
+            .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
     }
 
     async fn save_movement(&self, movement: &StockMovement) -> Result<(), String> {
@@ -346,11 +409,6 @@ impl VaultRepository for VaultRepositoryImpl {
             ],
         );
         self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
-        Ok(())
-    }
-
-    async fn delete_variant(&self, _tenant_id: &TenantId, _id: &Uuid) -> Result<(), String> {
-        // TODO: Implement actual DB delete
         Ok(())
     }
 }

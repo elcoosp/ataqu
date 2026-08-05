@@ -7,13 +7,14 @@ use axum::{
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use std::collections::HashMap;
 
 use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use crate::serializers::{ApiEmail, ApiPhone};
 use ataqu_application::pause_service::{
-    CreateEmployeeCommand, Employee, LeaveRequest, LeaveType, RequestLeaveCommand,
+    CreateEmployeeCommand, Employee, LeaveType, RequestLeaveCommand,
 };
 use ataqu_domain_pause;
 use ataqu_security::{Email, PhoneNumber};
@@ -80,31 +81,6 @@ pub struct LeaveRequestResponse {
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-}
-
-impl LeaveRequestResponse {
-    pub async fn from_with_name(
-        l: LeaveRequest,
-        service: &ataqu_application::pause_service::PauseService,
-        tenant_id: &ataqu_kernel::TenantId,
-    ) -> Self {
-        let employee_name = match service.find_employee(tenant_id, l.employee_id).await {
-            Ok(emp) => emp.full_name,
-            Err(_) => "Unknown".to_string(),
-        };
-        Self {
-            id: l.id,
-            employee_id: l.employee_id,
-            employee_name,
-            leave_type: format!("{:?}", l.leave_type).to_lowercase(),
-            start_date: l.start_date,
-            end_date: l.end_date,
-            reason: l.reason,
-            status: format!("{:?}", l.status).to_lowercase(),
-            created_at: l.created_at.into(),
-            updated_at: l.updated_at.into(),
-        }
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -199,13 +175,26 @@ pub async fn request_leave(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    Ok((
-        StatusCode::CREATED,
-        Json(
-            LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id)
-                .await,
-        ),
-    ))
+    let employee = state
+        .pause_service
+        .find_employee(&auth.tenant_id, request.employee_id)
+        .await
+        .ok();
+
+    let resp = LeaveRequestResponse {
+        id: request.id,
+        employee_id: request.employee_id,
+        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        start_date: request.start_date,
+        end_date: request.end_date,
+        reason: request.reason,
+        status: format!("{:?}", request.status).to_lowercase(),
+        created_at: request.created_at.into(),
+        updated_at: request.updated_at.into(),
+    };
+
+    Ok((StatusCode::CREATED, Json(resp)))
 }
 
 pub async fn list_employees(
@@ -281,12 +270,38 @@ pub async fn list_leave_requests(
         .list_leave_requests(&auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let mut responses = Vec::new();
-    for req in requests {
-        responses.push(
-            LeaveRequestResponse::from_with_name(req, &state.pause_service, &auth.tenant_id).await,
-        );
-    }
+
+    // Fix N+1: Fetch all employees in one go
+    let employees = state
+        .pause_service
+        .list_employees(&auth.tenant_id, 10000, 0)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    let emp_map: HashMap<Uuid, String> = employees
+        .into_iter()
+        .map(|e| (e.id, e.full_name))
+        .collect();
+
+    let responses = requests
+        .into_iter()
+        .map(|r| {
+            let employee_name = emp_map.get(&r.employee_id).cloned().unwrap_or_else(|| "Unknown".to_string());
+            LeaveRequestResponse {
+                id: r.id,
+                employee_id: r.employee_id,
+                employee_name,
+                leave_type: format!("{:?}", r.leave_type).to_lowercase(),
+                start_date: r.start_date,
+                end_date: r.end_date,
+                reason: r.reason,
+                status: format!("{:?}", r.status).to_lowercase(),
+                created_at: r.created_at.into(),
+                updated_at: r.updated_at.into(),
+            }
+        })
+        .collect();
+
     Ok(Json(responses))
 }
 
@@ -305,9 +320,26 @@ pub async fn approve_leave(
         .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id).await,
-    ))
+
+    let employee = state
+        .pause_service
+        .find_employee(&auth.tenant_id, request.employee_id)
+        .await
+        .ok();
+
+    let resp = LeaveRequestResponse {
+        id: request.id,
+        employee_id: request.employee_id,
+        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        start_date: request.start_date,
+        end_date: request.end_date,
+        reason: request.reason,
+        status: format!("{:?}", request.status).to_lowercase(),
+        created_at: request.created_at.into(),
+        updated_at: request.updated_at.into(),
+    };
+    Ok(Json(resp))
 }
 
 pub async fn reject_leave(
@@ -325,9 +357,26 @@ pub async fn reject_leave(
         .reject_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id).await,
-    ))
+
+    let employee = state
+        .pause_service
+        .find_employee(&auth.tenant_id, request.employee_id)
+        .await
+        .ok();
+
+    let resp = LeaveRequestResponse {
+        id: request.id,
+        employee_id: request.employee_id,
+        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        start_date: request.start_date,
+        end_date: request.end_date,
+        reason: request.reason,
+        status: format!("{:?}", request.status).to_lowercase(),
+        created_at: request.created_at.into(),
+        updated_at: request.updated_at.into(),
+    };
+    Ok(Json(resp))
 }
 
 pub async fn cancel_leave(
@@ -345,9 +394,26 @@ pub async fn cancel_leave(
         .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id).await,
-    ))
+
+    let employee = state
+        .pause_service
+        .find_employee(&auth.tenant_id, request.employee_id)
+        .await
+        .ok();
+
+    let resp = LeaveRequestResponse {
+        id: request.id,
+        employee_id: request.employee_id,
+        employee_name: employee.map(|e| e.full_name).unwrap_or_else(|| "Unknown".to_string()),
+        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        start_date: request.start_date,
+        end_date: request.end_date,
+        reason: request.reason,
+        status: format!("{:?}", request.status).to_lowercase(),
+        created_at: request.created_at.into(),
+        updated_at: request.updated_at.into(),
+    };
+    Ok(Json(resp))
 }
 
 #[derive(Debug, Deserialize)]

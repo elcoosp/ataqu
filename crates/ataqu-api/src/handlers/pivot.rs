@@ -101,6 +101,7 @@ pub struct DocumentResponse {
     pub title: String,
     pub content: String,
     pub created_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 impl From<ataqu_application::pivot_service::Document> for DocumentResponse {
@@ -110,6 +111,7 @@ impl From<ataqu_application::pivot_service::Document> for DocumentResponse {
             title: doc.title,
             content: doc.content,
             created_at: doc.created_at.into(),
+            version: doc.version,
         }
     }
 }
@@ -174,13 +176,27 @@ pub async fn update_doc(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateDocRequest>,
 ) -> ApiResult<Json<DocumentResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let doc = state
         .pivot_service
-        .update_document(auth.tenant_id, id, payload.title, payload.content)
+        .update_document(auth.tenant_id, id, payload.title, payload.content, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
+                ApiResponseError::conflict(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(doc.into()))
 }
 
@@ -211,6 +227,7 @@ pub struct BlockResponse {
     pub block_type: String,
     pub content: JsonValue,
     pub created_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 impl From<ataqu_application::pivot_service::Block> for BlockResponse {
@@ -235,6 +252,7 @@ impl From<ataqu_application::pivot_service::Block> for BlockResponse {
             block_type: block_type_str,
             content,
             created_at: block.created_at.into(),
+            version: block.version,
         }
     }
 }
@@ -292,8 +310,17 @@ pub async fn update_block(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateBlockRequest>,
 ) -> ApiResult<Json<BlockResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let block_type = if let Some(bt_str) = payload.block_type {
         let content = payload.content.unwrap_or(JsonValue::Null);
         match bt_str.as_str() {
@@ -356,9 +383,14 @@ pub async fn update_block(
 
     let block = state
         .pivot_service
-        .update_block(auth.tenant_id, id, block_type)
+        .update_block(auth.tenant_id, id, block_type, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
+                ApiResponseError::conflict(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(block.into()))
 }
 

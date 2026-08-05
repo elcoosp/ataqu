@@ -110,6 +110,9 @@ impl RealAegisDomain {
         id_gen: &dyn IdGenerator,
         clock: &dyn Clock,
     ) -> Result<(UserCreated, User), AuthError> {
+        if !cmd.email.reveal(&ataqu_security::PiiAccessKey::new()).contains('@') {
+            return Err(AuthError::InvalidCredentials);
+        }
         let salt = SaltString::generate(&mut rand::thread_rng());
         let argon2 = Argon2::default();
         let password_hash = argon2
@@ -652,5 +655,17 @@ impl AegisService {
             refresh_token: refresh,
             user_id: user.id,
         })
+    }
+
+    pub async fn request_gdpr_deletion(&self, tenant_id: Uuid) -> Result<(), AegisServiceError> {
+        let payload = serde_json::json!({
+            "tenant_id": tenant_id,
+            "requested_at": self.clock.now(),
+        });
+        self.outbox
+            .append("core", "GdprDeletionRequested", tenant_id, &payload)
+            .await
+            .map_err(AegisServiceError::Outbox)?;
+        Ok(())
     }
 }

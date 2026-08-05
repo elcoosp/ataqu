@@ -244,6 +244,30 @@ pub async fn list_messages(
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
 }
 
+pub async fn export_channel(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(channel_id): Path<Uuid>,
+) -> ApiResult<impl axum::response::IntoResponse> {
+    let data = state
+        .dial_service
+        .export_channel_messages(auth.tenant_id, channel_id, auth.user_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    Ok((
+        StatusCode::OK,
+        [
+            (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                format!("attachment; filename=\"channel_{}.csv\"", channel_id),
+            ),
+        ],
+        data,
+    ))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct EditMessageRequest {
     pub content: String,
@@ -526,6 +550,8 @@ pub fn routes() -> Router<AppState> {
             "/channels/:id/messages",
             post(send_message).get(list_messages),
         )
+        .route("/channels/:id/export", axum::routing::get(export_channel))
+        .route("/channels/:id/export", axum::routing::get(export_channel))
         .route("/messages/:id", put(edit_message).delete(delete_message))
         .route(
             "/messages/:id/reactions",

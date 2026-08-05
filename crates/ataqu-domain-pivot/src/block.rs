@@ -45,6 +45,7 @@ pub struct BlockCreatedEvent {
     pub block_type: BlockType,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
+    pub version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -73,6 +74,7 @@ pub fn create_block(
         block_type: cmd.block_type,
         created_at: clock.now(),
         updated_at: clock.now(),
+        version: 0,
     }
 }
 

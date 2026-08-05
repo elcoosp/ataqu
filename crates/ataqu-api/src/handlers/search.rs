@@ -25,7 +25,6 @@ pub async fn unified_search(
     let limit = params.limit.unwrap_or(20);
     let mut results = Vec::new();
 
-    // CINQ
     let contacts = state.cinq_service.search_contacts(auth.tenant_id, &params.q, limit).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for c in contacts {
@@ -38,7 +37,6 @@ pub async fn unified_search(
         });
     }
 
-    // DIAL
     let messages = state.dial_service.search_messages(auth.tenant_id, &params.q, limit, 0).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for m in messages {
@@ -51,7 +49,6 @@ pub async fn unified_search(
         });
     }
 
-    // PIVOT
     let docs = state.pivot_service.search_documents(auth.tenant_id, params.q.clone(), limit, 0).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for d in docs {
@@ -64,7 +61,6 @@ pub async fn unified_search(
         });
     }
 
-    // VAULT
     let products = state.vault_service.list_products(auth.tenant_id, limit, 0).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for p in products {
@@ -79,7 +75,6 @@ pub async fn unified_search(
         }
     }
 
-    // PAUSE
     let employees = state.pause_service.search_employees(&auth.tenant_id, &params.q, limit).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for e in employees {

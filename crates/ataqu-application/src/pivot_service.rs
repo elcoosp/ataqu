@@ -60,6 +60,8 @@ pub enum PivotServiceError {
     Repository(String),
     #[error("Domain error: {0}")]
     Domain(String),
+    #[error("Validation error: {0}")]
+    Validation(String),
 }
 
 pub type PivotResult<T> = Result<T, PivotServiceError>;
@@ -183,14 +185,25 @@ impl PivotService {
         doc_id: Uuid,
         title: Option<String>,
         content: Option<String>,
+        expected_version: i32,
     ) -> PivotResult<Document> {
         let mut doc = self.get_document(tenant_id, doc_id).await?;
+
+        if doc.version != expected_version {
+            return Err(PivotServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, doc.version
+            )));
+        }
+
         if let Some(t) = title {
             doc.title = t;
         }
         if let Some(c) = content {
             doc.content = c;
         }
+        doc.version += 1;
+
         self.doc_repo
             .save_document(&doc)
             .await
@@ -263,6 +276,7 @@ impl PivotService {
         tenant_id: TenantId,
         block_id: Uuid,
         block_type: BlockType,
+        expected_version: i32,
     ) -> PivotResult<Block> {
         let block = self
             .block_repo
@@ -273,13 +287,22 @@ impl PivotService {
                 _ => PivotServiceError::Repository(e.to_string()),
             })?;
 
+        // ADR-005: Optimistic Concurrency Control
+        if block.version != expected_version {
+            return Err(PivotServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, block.version
+            )));
+        }
+
         let updated_block = Block {
             id: block.id,
             tenant_id: block.tenant_id,
             document_id: block.document_id,
             block_type,
             created_at: block.created_at,
-            updated_at: self.clock.now(),
+            updated_at: block.updated_at,
+            version: block.version + 1,
         };
         self.block_repo
             .save_block(&updated_block)

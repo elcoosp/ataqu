@@ -226,6 +226,24 @@ pub async fn delete_contact(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, serde::Deserialize)]
+pub struct BulkDeleteContactsRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub async fn bulk_delete_contacts(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteContactsRequest>,
+) -> ApiResult<StatusCode> {
+    state
+        .cinq_service
+        .bulk_delete_contacts(auth.tenant_id, payload.ids)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 // ---------- Deal Endpoints ----------
 pub async fn create_deal(
     State(state): State<AppState>,
@@ -869,6 +887,8 @@ pub fn routes() -> Router<AppState> {
             "/contacts/:id",
             get(get_contact).put(update_contact).delete(delete_contact),
         )
+        .route("/contacts/bulk-delete", post(bulk_delete_contacts))
+        .route("/contacts/bulk-delete", post(bulk_delete_contacts))
         .route("/deals", post(create_deal).get(list_deals))
         .route(
             "/deals/:id",

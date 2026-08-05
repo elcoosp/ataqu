@@ -45,7 +45,7 @@ pub async fn ws_handler(
     let auth = crate::middleware::AuthContext {
         user_id,
         tenant_id: ataqu_kernel::TenantId::new(token_data.claims.tenant_id),
-        email: token_data.claims.email,
+        email: ataqu_security::Email::new(token_data.claims.email),
         roles: token_data.claims.roles,
     };
 

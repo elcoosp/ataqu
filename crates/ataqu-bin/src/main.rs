@@ -276,6 +276,10 @@ async fn main() -> anyhow::Result<()> {
                     delta,
                     reason,
                 } => {
+                    let variant = self.vault_service
+                        .get_variant(*tenant_id, *variant_id)
+                        .await
+                        .map_err(|e| e.to_string())?;
                     self.vault_service
                         .update_stock(UpdateStockCommand {
                             tenant_id: *tenant_id,
@@ -284,6 +288,7 @@ async fn main() -> anyhow::Result<()> {
                             reason: reason.clone(),
                             reference: None,
                             alert_channel_id: None,
+                            expected_version: variant.version,
                         })
                         .await
                         .map_err(|e| e.to_string())?;
