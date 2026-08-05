@@ -28,20 +28,6 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_kernel::{Clock, IdGenerator};
 
-pub struct SystemIdGenerator;
-impl IdGenerator for SystemIdGenerator {
-    fn new_uuid_v7(&self) -> Uuid {
-        Uuid::now_v7()
-    }
-}
-
-pub struct SystemClock;
-impl Clock for SystemClock {
-    fn now(&self) -> std::time::SystemTime {
-        std::time::SystemTime::now()
-    }
-}
-
 #[derive(Clone)]
 pub struct AppState {
     pub cinq_service: Arc<CinqService>,
