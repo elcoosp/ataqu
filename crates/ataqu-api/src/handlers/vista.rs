@@ -140,6 +140,29 @@ pub async fn execute_raw_sql(
     Ok(Json(results))
 }
 
+pub async fn get_data_points_handler(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(metric): Path<String>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let points = state
+        .vista_service
+        .get_data_points(auth.tenant_id, &metric, 1000)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let resp = points
+        .into_iter()
+        .map(|p| {
+            serde_json::json!({
+                "timestamp": p.timestamp,
+                "metric_name": p.metric_name,
+                "value": p.value,
+            })
+        })
+        .collect();
+    Ok(Json(resp))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/kpis", axum::routing::get(get_kpis))
@@ -149,4 +172,5 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/dashboards/:id", axum::routing::delete(delete_dashboard))
         .route("/raw-sql", axum::routing::post(execute_raw_sql))
+        .route("/data-points/:metric", axum::routing::get(get_data_points_handler))
 }

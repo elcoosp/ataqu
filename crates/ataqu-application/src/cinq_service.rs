@@ -704,6 +704,7 @@ impl CinqService {
             status: event.status,
             created_at: event.created_at,
             updated_at: event.created_at,
+            version: 0,
         };
         self.task_repo.save_task(&task).await?;
         Ok(task)

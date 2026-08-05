@@ -718,6 +718,7 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
             },
             created_at: m.created_at,
             updated_at: m.updated_at,
+            version: 0,
         }))
     }
 
@@ -752,6 +753,7 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
                 },
                 created_at: m.created_at,
                 updated_at: m.updated_at,
+                version: 0,
             })
             .collect())
     }
@@ -789,6 +791,7 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
                 },
                 created_at: m.created_at,
                 updated_at: m.updated_at,
+                version: 0,
             })
             .collect())
     }

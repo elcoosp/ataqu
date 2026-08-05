@@ -22,6 +22,7 @@ pub struct Task {
     pub status: TaskStatus,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +44,7 @@ pub struct UpdateTaskCommand {
     pub description: Option<String>,
     pub due_date: Option<DateTime<Utc>>,
     pub status: Option<TaskStatus>,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, Clone)]

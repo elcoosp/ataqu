@@ -107,6 +107,7 @@ impl DialService {
             participants: event.participants,
             created_at: event.created_at,
             archived_at: None,
+            version: 0,
         };
         self.repo.insert_channel(&channel).await?;
 

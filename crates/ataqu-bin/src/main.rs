@@ -379,7 +379,6 @@ async fn main() -> anyhow::Result<()> {
     let aegis_service_for_noshow = aegis_service.clone();
     let aegis_service_for_reminder = aegis_service.clone();
     let spark_service_for_cron = spark_service.clone();
-    // let _spark_service_for_outbox = spark_service.clone();
 
     let metrics_handle = metrics_exporter_prometheus::PrometheusBuilder::new()
         .install_recorder()
@@ -392,9 +391,6 @@ async fn main() -> anyhow::Result<()> {
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
-    let cinq_service_for_outbox = cinq_service.clone();
-    let vault_service_for_outbox = vault_service.clone();
-    let dial_service_for_outbox = dial_service.clone();
     let state = AppState {
         cinq_service,
         dial_service,

@@ -123,6 +123,7 @@ pub struct Channel {
     pub participants: Vec<UserId>,
     pub created_at: SystemTime,
     pub archived_at: Option<SystemTime>,
+    pub version: i32,
 }
 
 impl Channel {
@@ -640,6 +641,7 @@ mod tests {
             participants: vec![],
             created_at: UNIX_EPOCH,
             archived_at: None,
+            version: 0,
         };
 
         let event = archive_channel(&channel, &clock).unwrap();
@@ -658,6 +660,7 @@ mod tests {
             participants: vec![],
             created_at: UNIX_EPOCH,
             archived_at: Some(UNIX_EPOCH),
+            version: 0,
         };
 
         let result = archive_channel(&channel, &clock);
@@ -678,6 +681,7 @@ mod tests {
             participants: vec![],
             created_at: UNIX_EPOCH,
             archived_at: None,
+            version: 0,
         };
 
         let mentioned = "user123";
@@ -708,6 +712,7 @@ mod tests {
             participants: vec![],
             created_at: UNIX_EPOCH,
             archived_at: Some(UNIX_EPOCH),
+            version: 0,
         };
 
         let cmd = SendMessageCommand {
@@ -736,6 +741,7 @@ mod tests {
             participants: vec![],
             created_at: UNIX_EPOCH,
             archived_at: None,
+            version: 0,
         };
 
         let cmd = SendMessageCommand {

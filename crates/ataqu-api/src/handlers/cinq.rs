@@ -721,8 +721,17 @@ pub async fn update_task(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateTaskRequest>,
 ) -> ApiResult<Json<TaskResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let status = payload.status.map(|s| match s.to_lowercase().as_str() {
         "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
         "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
@@ -735,6 +744,7 @@ pub async fn update_task(
         description: payload.description,
         due_date: payload.due_date,
         status,
+        expected_version: if_match,
     };
     let task = state
         .cinq_service
