@@ -135,7 +135,7 @@ impl TempoService {
             "contact_id": cmd.contact_id,
         });
         self.outbox
-            .append("tempo", "BookingCreated", booking.id.0, &payload)
+            .append("collab_ops", "BookingCreated", booking.id.0, &payload)
             .await
             .map_err(|e| TempoServiceError::Repository(e))?;
 
@@ -216,7 +216,7 @@ impl TempoService {
                 "timezone": booking.timezone,
             });
             self.outbox
-                .append("tempo", "SendBookingReminder", booking.id.0, &payload)
+                .append("collab_ops", "SendBookingReminder", booking.id.0, &payload)
                 .await
                 .map_err(|e| TempoServiceError::Repository(e))?;
 

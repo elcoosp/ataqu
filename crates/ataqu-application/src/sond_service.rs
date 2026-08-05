@@ -215,7 +215,7 @@ impl SondService {
             "name": name.unwrap_or_else(|| "Form Lead".to_string())
         });
         self.outbox
-            .append("sond", "ResponseSubmitted", response.id, &payload)
+            .append("collab_ops", "ResponseSubmitted", response.id, &payload)
             .await
             .map_err(|e| SondServiceError::Repository(e))?;
 

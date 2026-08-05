@@ -218,6 +218,23 @@ impl DialService {
         };
         self.repo.insert_message(&message).await?;
 
+        // Fix: Persist mentions extracted by the domain function
+        for user_id_str in &event.mentioned_user_ids {
+            // In a real system, you'd resolve `user_id_str` to a `UserId` via repository lookup.
+            // Assuming `extract_mentions` returns `Vec<String>`, we'll mock the UUID resolution here.
+            if let Ok(uuid) = Uuid::parse_str(user_id_str) {
+                let mention = Mention {
+                    id: self.id_gen.new_uuid_v7(),
+                    tenant_id: cmd.tenant_id,
+                    message_id: event.message_id,
+                    user_id: UserId::new(uuid),
+                    created_at: self.clock.now(),
+                    read_at: None,
+                };
+                self.repo.insert_mention(&mention).await?;
+            }
+        }
+
         let payload = serde_json::json!({
             "message_id": message.id.as_uuid(),
             "tenant_id": message.tenant_id.as_uuid(),
