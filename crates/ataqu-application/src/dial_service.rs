@@ -152,6 +152,11 @@ impl DialService {
     pub async fn send_message(&self, cmd: SendMessageCommand) -> DialResult<Message> {
         let channel_id = ChannelId::new(cmd.channel_id);
         let channel = self.repo.get_channel(&cmd.tenant_id, &channel_id).await?;
+
+        if channel.channel_type == ChannelType::Private && !channel.participants.contains(&UserId::new(cmd.author_id)) {
+            return Err(DialServiceError::Validation("User is not a participant in this private channel".to_string()));
+        }
+
         let domain_cmd = DomainSendMessage {
             tenant_id: cmd.tenant_id,
             channel_id,
@@ -199,9 +204,9 @@ impl DialService {
         self.get_message(tenant_id, message_id).await
     }
 
-    pub async fn delete_message(&self, tenant_id: TenantId, message_id: Uuid, deleter_id: Uuid) -> DialResult<()> {
+    pub async fn delete_message(&self, tenant_id: TenantId, message_id: Uuid, deleter_id: Uuid, is_moderator: bool) -> DialResult<()> {
         let message = self.repo.get_message(&tenant_id, &MessageId::new(message_id)).await?;
-        let event = dial_domain::delete_message(&message, UserId::new(deleter_id), false, self.clock.as_ref())
+        let event = dial_domain::delete_message(&message, UserId::new(deleter_id), is_moderator, self.clock.as_ref())
             .map_err(DialServiceError::Domain)?;
         self.repo.soft_delete_message(&tenant_id, &message_id, event.deleted_at).await?;
         Ok(())

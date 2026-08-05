@@ -502,14 +502,14 @@ pub async fn import_csv(
             result.map_err(|e| ApiResponseError::validation(&e.to_string()))?;
         rows.push(record);
     }
-    let inserted = state
+    let (imported, failed) = state
         .cinq_service
         .import_contacts(auth.tenant_id, rows)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(ImportCsvResult {
-        imported: inserted.len(),
-        failed: 0,
+        imported,
+        failed,
     }))
 }
 

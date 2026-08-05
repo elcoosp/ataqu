@@ -291,14 +291,16 @@ impl CinqService {
         &self,
         tenant_id: TenantId,
         rows: Vec<HashMap<String, String>>,
-    ) -> CinqResult<Vec<Uuid>> {
-        let mut inserted = Vec::new();
+    ) -> CinqResult<(usize, usize)> {
+        let mut inserted = 0;
+        let mut failed = 0;
         for row in rows {
             let name = row.get("name").or_else(|| row.get("Name")).or_else(|| row.get("NAME")).cloned().unwrap_or_default();
             let email_str = row.get("email").or_else(|| row.get("Email")).or_else(|| row.get("EMAIL")).cloned().unwrap_or_default();
             let phone_str = row.get("phone").or_else(|| row.get("Phone")).or_else(|| row.get("PHONE")).cloned().unwrap_or_default();
 
             if name.trim().is_empty() || email_str.trim().is_empty() || !email_str.contains('@') {
+                failed += 1;
                 continue;
             }
 
@@ -338,10 +340,12 @@ impl CinqService {
                 updated_at: event.created_at,
             };
             if self.contact_repo.save_contact(&contact).await.is_ok() {
-                inserted.push(contact.id);
+                inserted += 1;
+            } else {
+                failed += 1;
             }
         }
-        Ok(inserted)
+        Ok((inserted, failed))
     }
 
     pub async fn export_contacts(&self, tenant_id: TenantId) -> CinqResult<String> {

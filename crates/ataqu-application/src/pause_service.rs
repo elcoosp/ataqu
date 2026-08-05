@@ -212,6 +212,9 @@ impl PauseService {
             .find_by_id(tenant_id, leave_id)
             .await?
             .ok_or(PauseServiceError::NotFound)?;
+        if request.status != LeaveStatus::Pending {
+            return Err(PauseServiceError::Validation("Leave request is not pending".to_string()));
+        }
         let event = ataqu_domain_pause::leave::approve_leave(&mut request, reviewer_id, clock);
         self.leave_request_repo
             .update_status(
@@ -243,6 +246,9 @@ impl PauseService {
             .find_by_id(tenant_id, leave_id)
             .await?
             .ok_or(PauseServiceError::NotFound)?;
+        if request.status != LeaveStatus::Pending {
+            return Err(PauseServiceError::Validation("Leave request is not pending".to_string()));
+        }
         let event = ataqu_domain_pause::leave::reject_leave(&mut request, reviewer_id, clock);
         self.leave_request_repo
             .update_status(

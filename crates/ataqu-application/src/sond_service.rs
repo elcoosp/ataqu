@@ -99,9 +99,9 @@ impl SondService {
         Ok(form)
     }
 
-    pub async fn get_form(&self, form_id: Uuid) -> SondResult<Form> {
+    pub async fn get_form(&self, tenant_id: TenantId, form_id: Uuid) -> SondResult<Form> {
         self.repo
-            .get_form(form_id)
+            .get_form(tenant_id, form_id)
             .await?
             .ok_or(SondServiceError::FormNotFound)
     }
@@ -121,7 +121,7 @@ impl SondService {
     pub async fn submit_response(&self, cmd: SubmitResponseCommand) -> SondResult<Response> {
         let form = self
             .repo
-            .get_form(cmd.form_id)
+            .get_form(cmd.tenant_id, cmd.form_id)
             .await?
             .ok_or(SondServiceError::FormNotFound)?;
         let domain_cmd = response_domain::SubmitResponseCommand {

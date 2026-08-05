@@ -89,12 +89,12 @@ pub async fn list_forms(
 
 pub async fn get_form(
     State(state): State<AppState>,
-    _auth: AuthContext,
+    auth: AuthContext,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<FormResponse>> {
     let form = state
         .sond_service
-        .get_form(id)
+        .get_form(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(form.into()))

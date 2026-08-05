@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 #[async_trait]
 pub trait SondRepository: Send + Sync {
-    async fn get_form(&self, form_id: Uuid) -> Result<Option<Form>, SondError>;
+    async fn get_form(&self, tenant_id: TenantId, form_id: Uuid) -> Result<Option<Form>, SondError>;
     async fn save_form(&self, form: &Form) -> Result<(), SondError>;
     async fn get_response(&self, response_id: Uuid) -> Result<Option<Response>, SondError>;
     async fn save_response(&self, response: &Response) -> Result<(), SondError>;

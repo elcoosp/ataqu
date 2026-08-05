@@ -89,6 +89,19 @@ impl TempoService {
                 "Duration must be positive".to_string(),
             ));
         }
+
+        let starts_at: std::time::SystemTime = cmd.starts_at.into();
+        let ends_at: std::time::SystemTime = starts_at + std::time::Duration::from_secs((cmd.duration_minutes * 60) as u64);
+        let existing_bookings = self.repo.list_bookings(&cmd.tenant_id, 1000, 0).await.map_err(TempoServiceError::Repository)?;
+        for b in existing_bookings {
+            if b.status != BookingStatus::Cancelled && b.status != BookingStatus::Completed {
+                let b_ends_at = b.ends_at();
+                if starts_at < b_ends_at && ends_at > b.starts_at {
+                    return Err(TempoServiceError::Validation("Booking overlaps with existing booking".to_string()));
+                }
+            }
+        }
+
         let event_type_id = EventTypeId(cmd.event_type_id);
         let booking = tempo_domain::create_booking(
             cmd.tenant_id,
@@ -216,7 +229,7 @@ impl TempoService {
     pub async fn get_event_type_by_slug(&self, tenant_id: TenantId, slug: String) -> TempoResult<EventType> {
         self.repo.find_event_type_by_slug(&tenant_id, &slug).await
             .map_err(TempoServiceError::Repository)?
-            .ok_or(TempoServiceError::BookingNotFound)
+            .ok_or(TempoServiceError::Validation("Event type not found".to_string()))
     }
 
     pub async fn create_availability_slot(&self, cmd: CreateAvailabilitySlotCommand) -> TempoResult<AvailabilitySlot> {
@@ -241,6 +254,9 @@ impl TempoService {
 
     pub async fn public_create_booking(&self, tenant_id: TenantId, slug: String, starts_at: DateTime<Utc>, timezone: String) -> TempoResult<Booking> {
         let event_type = self.get_event_type_by_slug(tenant_id, slug).await?;
+        if !event_type.is_active {
+            return Err(TempoServiceError::Validation("Event type is not active".to_string()));
+        }
         let cmd = CreateBookingCommand {
             tenant_id,
             event_type_id: event_type.id.0,

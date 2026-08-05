@@ -217,7 +217,7 @@ pub async fn get_variant(
 #[derive(Debug, Deserialize)]
 pub struct UpdateStockRequest {
     pub delta: i64,
-    pub reason: Option<String>,
+    pub reason: String,
     pub reference: Option<String>,
 }
 

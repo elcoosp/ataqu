@@ -194,7 +194,8 @@ pub async fn delete_message(
     auth: AuthContext,
     Path(message_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
-    state.dial_service.delete_message(auth.tenant_id, message_id, auth.user_id).await
+    let is_moderator = auth.has_role("admin");
+    state.dial_service.delete_message(auth.tenant_id, message_id, auth.user_id, is_moderator).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }

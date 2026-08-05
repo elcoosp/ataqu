@@ -49,7 +49,7 @@ impl SondRepositoryImpl {
 
 #[async_trait]
 impl SondRepository for SondRepositoryImpl {
-    async fn get_form(&self, form_id: Uuid) -> Result<Option<Form>, SondError> {
+    async fn get_form(&self, tenant_id: TenantId, form_id: Uuid) -> Result<Option<Form>, SondError> {
         let model = form_entity::Entity::find()
             .filter(form_entity::Column::Id.eq(form_id))
             .one(&self.db)

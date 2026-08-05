@@ -43,7 +43,7 @@ pub struct UpdateStockCommand {
     pub tenant_id: TenantId,
     pub variant_id: Uuid,
     pub delta: i64,
-    pub reason: Option<String>,
+    pub reason: String,
     pub reference: Option<String>,
 }
 
@@ -213,7 +213,7 @@ impl VaultService {
                 tenant_id: cmd.tenant_id,
                 variant_id: cmd.variant_id,
                 quantity: cmd.delta,
-                reason: cmd.reason.unwrap_or_else(|| "Manual adjustment".to_string()),
+                reason: cmd.reason,
                 reference: cmd.reference,
             },
             self.id_gen.as_ref(),

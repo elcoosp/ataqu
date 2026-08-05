@@ -95,11 +95,8 @@ impl SparkService {
         Ok(())
     }
 
-    pub async fn trigger_workflow_public(&self, workflow_id: Uuid, payload: serde_json::Value) -> SparkResult<()> {
-        // In a real system, we would have a repo method to find by ID across tenants or validate a webhook secret
-        // For now, we assume the workflow_id is enough to find it, and we extract the tenant_id from it.
-        let workflows = self.repo.list_workflows(&ataqu_kernel::TenantId::new(Uuid::nil()), 10000, 0).await?;
-        let workflow = workflows.into_iter().find(|w| w.id == workflow_id)
+    pub async fn trigger_workflow_public(&self, tenant_id: TenantId, workflow_id: Uuid, payload: serde_json::Value) -> SparkResult<()> {
+        let workflow = self.repo.get_workflow(&tenant_id, &workflow_id).await?
             .ok_or(SparkServiceError::WorkflowNotFound)?;
 
         if !evaluate_conditions(&workflow.conditions, &payload) {
@@ -111,7 +108,11 @@ impl SparkService {
 
     pub async fn evaluate_trigger(&self, event: &OutboxEvent) -> SparkResult<()> {
         let workflows = self.repo.list_active_workflows_by_event_type(&event.schema, &event.event_type).await?;
+        let event_tenant_id = event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
         for workflow in workflows {
+            if workflow.tenant_id != event_tenant_id {
+                continue;
+            }
             if evaluate_conditions(&workflow.conditions, &event.payload) {
                 if let Err(e) = self.execute_workflow(&workflow).await {
                     tracing::error!(error = %e, "Failed to execute workflow {}", workflow.id);

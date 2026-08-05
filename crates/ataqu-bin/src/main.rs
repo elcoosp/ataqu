@@ -235,7 +235,7 @@ async fn main() -> anyhow::Result<()> {
                         tenant_id: *tenant_id,
                         variant_id: *variant_id,
                         delta: *delta,
-                        reason: Some(reason.clone()),
+                        reason: reason.clone(),
                         reference: None,
                     }).await.map_err(|e| e.to_string())?;
                 }
