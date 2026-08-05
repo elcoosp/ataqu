@@ -10,6 +10,8 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
+use tracing_appender::non_blocking;
+use tracing_appender::rolling;
 use uuid::Uuid;
 
 use ataqu_api::{AppState, create_router};
@@ -34,9 +36,13 @@ use ataqu_infra_pools::Pools;
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
+    let file_appender = rolling::daily("./logs", "ataqu.log");
+    let (non_blocking_file, _guard) = non_blocking(file_appender);
+
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .with_target(true)
+        .with_writer(non_blocking_file)
         .init();
 
     info!("Starting Ataqu unified server...");

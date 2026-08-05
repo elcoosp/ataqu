@@ -442,7 +442,7 @@ pub async fn list_reactions(
 pub async fn delete_reaction(
     State(state): State<AppState>,
     auth: AuthContext,
-    Path((message_id, reaction_id)): Path<(Uuid, Uuid)>,
+    Path((_message_id, reaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
     state.dial_service.delete_reaction(auth.tenant_id, reaction_id).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;

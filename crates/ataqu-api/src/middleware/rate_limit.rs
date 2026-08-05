@@ -1,5 +1,6 @@
 use axum::{
     extract::{Request, State},
+    http::StatusCode,
     middleware::Next,
     response::Response,
 };
@@ -40,15 +41,17 @@ pub async fn rate_limit_middleware(
     State(limiter): State<RateLimiter>,
     req: Request,
     next: Next,
-) -> Result<Response, axum::http::StatusCode> {
-    use axum::http::StatusCode;
-    // Basic IP-based rate limiting. In a real app, you'd extract IP from headers.
-    let key = req
-        .headers()
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("unknown")
-        .to_string();
+) -> Result<Response, StatusCode> {
+    // Try to extract tenant_id from extension (set by auth middleware)
+    // If not present, fall back to IP.
+    let key = req.extensions().get::<crate::middleware::AuthContext>()
+        .map(|auth| format!("tenant:{}", auth.tenant_id.as_uuid()))
+        .or_else(|| {
+            req.headers().get("x-forwarded-for")
+                .and_then(|v| v.to_str().ok())
+                .map(|s| format!("ip:{}", s))
+        })
+        .unwrap_or_else(|| "unknown".to_string());
 
     if limiter.check(&key) {
         Ok(next.run(req).await)
