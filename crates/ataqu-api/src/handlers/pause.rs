@@ -72,6 +72,7 @@ pub struct CreateLeaveRequest {
 pub struct LeaveRequestResponse {
     pub id: Uuid,
     pub employee_id: Uuid,
+    pub employee_name: String,
     pub leave_type: String,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
@@ -81,11 +82,16 @@ pub struct LeaveRequestResponse {
     pub updated_at: DateTime<Utc>,
 }
 
-impl From<LeaveRequest> for LeaveRequestResponse {
-    fn from(l: LeaveRequest) -> Self {
+impl LeaveRequestResponse {
+    pub async fn from_with_name(l: LeaveRequest, service: &ataqu_application::pause_service::PauseService, tenant_id: &ataqu_kernel::TenantId) -> Self {
+        let employee_name = match service.find_employee(tenant_id, l.employee_id).await {
+            Ok(emp) => emp.full_name,
+            Err(_) => "Unknown".to_string(),
+        };
         Self {
             id: l.id,
             employee_id: l.employee_id,
+            employee_name,
             leave_type: format!("{:?}", l.leave_type).to_lowercase(),
             start_date: l.start_date,
             end_date: l.end_date,
@@ -189,7 +195,7 @@ pub async fn request_leave(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    Ok((StatusCode::CREATED, Json(request.into())))
+    Ok((StatusCode::CREATED, Json(LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id).await)))
 }
 
 pub async fn list_employees(
@@ -265,12 +271,11 @@ pub async fn list_leave_requests(
         .list_leave_requests(&auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        requests
-            .into_iter()
-            .map(LeaveRequestResponse::from)
-            .collect(),
-    ))
+    let mut responses = Vec::new();
+    for req in requests {
+        responses.push(LeaveRequestResponse::from_with_name(req, &state.pause_service, &auth.tenant_id).await);
+    }
+    Ok(Json(responses))
 }
 
 pub async fn approve_leave(
@@ -288,7 +293,7 @@ pub async fn approve_leave(
         .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(request.into()))
+    Ok(Json(LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id).await))
 }
 
 pub async fn reject_leave(
@@ -306,7 +311,7 @@ pub async fn reject_leave(
         .reject_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(request.into()))
+    Ok(Json(LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id).await))
 }
 
 pub async fn cancel_leave(
@@ -324,7 +329,7 @@ pub async fn cancel_leave(
         .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(request.into()))
+    Ok(Json(LeaveRequestResponse::from_with_name(request, &state.pause_service, &auth.tenant_id).await))
 }
 
 #[derive(Debug, Deserialize)]

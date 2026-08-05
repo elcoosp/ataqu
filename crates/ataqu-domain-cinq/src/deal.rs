@@ -98,7 +98,7 @@ pub fn create_deal(
     id_gen: &dyn IdGenerator,
     clock: &dyn Clock,
 ) -> CinqResult<DealCreated> {
-    if cmd.amount <= Decimal::ZERO {
+    if cmd.amount < Decimal::ZERO {
         return Err(CinqDomainError::InvalidAmount);
     }
     if cmd.title.trim().is_empty() {
@@ -126,7 +126,7 @@ pub fn create_deal(
 
 pub fn update_deal(cmd: UpdateDealCommand, clock: &dyn Clock) -> CinqResult<DealUpdated> {
     if let Some(amount) = cmd.amount
-        && amount <= Decimal::ZERO
+        && amount < Decimal::ZERO
     {
         return Err(CinqDomainError::InvalidAmount);
     }

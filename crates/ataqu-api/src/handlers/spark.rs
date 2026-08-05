@@ -197,10 +197,67 @@ pub fn public_routes() -> Router<AppState> {
         .route("/webhooks/:tenant_id/:workflow_id", axum::routing::post(webhook_trigger))
 }
 
+pub async fn list_templates(
+    State(_state): State<AppState>,
+    _auth: AuthContext,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let templates = vec![
+        serde_json::json!({
+            "id": "cinq_to_dial_on_deal_won",
+            "name": "CINQ: Deal Won -> DIAL: Create channel #onboarding-{deal}",
+            "trigger": {
+                "type": "Event",
+                "event_type": "DealWon"
+            },
+            "actions": [
+                {
+                    "type": "create_dial_channel",
+                    "name": "onboarding-{deal_id}",
+                    "channel_type": "public",
+                    "participants": []
+                }
+            ]
+        }),
+        serde_json::json!({
+            "id": "sond_to_cinq_on_form_submitted",
+            "name": "SOND: Form Submitted -> CINQ: Create Lead",
+            "trigger": {
+                "type": "Event",
+                "event_type": "ResponseSubmitted"
+            },
+            "actions": [
+                {
+                    "type": "create_cinq_lead",
+                    "name": "{name}",
+                    "email": "{email}",
+                    "source": "sond"
+                }
+            ]
+        }),
+        serde_json::json!({
+            "id": "vault_to_dial_low_stock",
+            "name": "VAULT: Stock < Threshold -> DIAL: Alert #logistics",
+            "trigger": {
+                "type": "Event",
+                "event_type": "LowStockAlert"
+            },
+            "actions": [
+                {
+                    "type": "send_dial_message",
+                    "channel_id": "00000000-0000-0000-0000-000000000000",
+                    "content": "Low stock alert for variant {variant_id}"
+                }
+            ]
+        })
+    ];
+    Ok(Json(templates))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post};
     Router::new()
         .route("/workflows", get(list_workflows).post(create_workflow))
         .route("/workflows/:id", get(get_workflow).put(update_workflow).delete(delete_workflow))
         .route("/workflows/:id/execute", post(execute_workflow))
+        .route("/templates", get(list_templates))
 }
