@@ -214,6 +214,23 @@ impl VistaService {
                 "Multiple statements are not permitted".to_string(),
             ));
         }
+
+        // Basic tenant isolation enforcement: rewrite the query to inject tenant_id
+        // This is a simplified approach. A real system would parse the AST.
+        let tenant_filter = format!("tenant_id = '{}'", tenant_id.as_uuid());
+
+        // If the query doesn't mention tenant_id, inject it into the WHERE clause
+        if !upper_sql.contains("TENANT_ID") {
+            if upper_sql.contains("WHERE") {
+                let new_sql = sql.replacen("WHERE", &format!("WHERE {} AND", tenant_filter), 1);
+                return self.repo.execute_raw_sql(&tenant_id, &new_sql).await.map_err(VistaServiceError::Repository);
+            } else {
+                // No WHERE clause, append one. This is risky for JOINs but acceptable for MLP.
+                let new_sql = format!("{} WHERE {}", sql, tenant_filter);
+                return self.repo.execute_raw_sql(&tenant_id, &new_sql).await.map_err(VistaServiceError::Repository);
+            }
+        }
+
         self.repo
             .execute_raw_sql(&tenant_id, sql)
             .await

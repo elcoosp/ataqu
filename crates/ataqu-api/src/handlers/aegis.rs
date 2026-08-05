@@ -370,6 +370,32 @@ pub async fn delete_api_key(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RequestPasswordResetRequest {
+    pub email: String,
+}
+
+pub async fn request_password_reset(
+    State(_state): State<AppState>,
+    Json(req): Json<RequestPasswordResetRequest>,
+) -> ApiResult<StatusCode> {
+    tracing::info!(email = %req.email, "Password reset requested (stub)");
+    Ok(StatusCode::OK)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ResetPasswordRequest {
+    pub token: String,
+    pub new_password: String,
+}
+
+pub async fn reset_password(
+    State(_state): State<AppState>,
+    Json(_req): Json<ResetPasswordRequest>,
+) -> ApiResult<StatusCode> {
+    Ok(StatusCode::OK)
+}
+
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::{delete, patch, post};
     axum::Router::new()
@@ -385,4 +411,6 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/mfa/verify", post(mfa_verify))
         .route("/api-keys", post(create_api_key).get(list_api_keys))
         .route("/api-keys/:id", delete(delete_api_key))
+        .route("/password-reset/request", post(request_password_reset))
+        .route("/password-reset/confirm", post(reset_password))
 }

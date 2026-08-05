@@ -230,7 +230,8 @@ impl SondService {
             "tenant_id": response.tenant_id.as_uuid(),
             "form_id": response.form_id,
             "email": email.unwrap_or_default(),
-            "name": name.unwrap_or_else(|| "Form Lead".to_string())
+            "name": name.unwrap_or_else(|| "Form Lead".to_string()),
+            "answers": response.answers
         });
         self.outbox
             .append("collab_ops", "ResponseSubmitted", response.id, &payload)

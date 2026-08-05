@@ -45,3 +45,4 @@ async-trait = "0.1"
 sea-orm-migration = "2.0.0-rc.41"
 dashmap = "6.0.1"
 reqwest = { version = "0.12", features = ["json"] }
+lettre = "0.11"

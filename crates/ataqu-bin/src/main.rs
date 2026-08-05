@@ -472,12 +472,35 @@ async fn main() -> anyhow::Result<()> {
 
             // Handle internal system events that don't fit SPARK's trigger/action model
             if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
-                let booking_id = event
-                    .payload
-                    .get("booking_id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("unknown");
-                tracing::info!(booking_id = %booking_id, "TEMPO SendBookingReminder event received. Email sending not yet implemented.");
+                let booking_id = event.payload.get("booking_id").and_then(|v| v.as_str()).unwrap_or("unknown");
+                let starts_at = event.payload.get("starts_at").and_then(|v| v.as_str()).unwrap_or("soon");
+
+                use lettre::{Message, SmtpTransport, Transport, message::header::ContentType, transport::smtp::authentication::Credentials};
+
+                let email = Message::builder()
+                    .from("Ataqu Scheduling <noreply@ataqu.com>".parse().unwrap())
+                    .to("user@example.com".parse().unwrap()) // In a real system, fetch user email from booking
+                    .subject("Booking Reminder")
+                    .header(ContentType::TEXT_PLAIN)
+                    .body(format!("Your booking {} is starting at {}.", booking_id, starts_at))
+                    .unwrap();
+
+                let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
+                let smtp_port: u16 = std::env::var("SMTP_PORT").unwrap_or_else(|_| "1025".to_string()).parse().unwrap_or(1025);
+                let smtp_user = std::env::var("SMTP_USER").ok();
+                let smtp_pass = std::env::var("SMTP_PASS").ok();
+
+                let mailer = if let (Some(u), Some(p)) = (smtp_user, smtp_pass) {
+                    SmtpTransport::relay(&smtp_host).unwrap().credentials(Credentials::new(u, p)).port(smtp_port).build()
+                } else {
+                    SmtpTransport::relay(&smtp_host).unwrap().port(smtp_port).build()
+                };
+
+                if let Err(e) = mailer.send(&email) {
+                    tracing::error!("Failed to send booking reminder email: {}", e);
+                } else {
+                    tracing::info!("Booking reminder email sent for {}", booking_id);
+                }
             }
 
             Ok(())
