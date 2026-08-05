@@ -20,6 +20,8 @@ pub struct CreateFormRequest {
     pub title: String,
     pub description: Option<String>,
     pub questions: Vec<QuestionInput>,
+    #[serde(default)]
+    pub branding: serde_json::Value,
 }
 
 #[derive(Debug, Serialize)]
@@ -66,6 +68,7 @@ pub async fn create_form(
         title: payload.title,
         description: payload.description,
         questions: payload.questions,
+        branding: payload.branding,
     };
     let form = state
         .sond_service

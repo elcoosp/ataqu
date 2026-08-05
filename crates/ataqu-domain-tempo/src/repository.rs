@@ -35,6 +35,7 @@ pub trait TempoRepository: Send + Sync {
     async fn find_bookings_for_no_show_check(
         &self,
         tenant_id: &TenantId,
+        lower_bound: std::time::SystemTime,
         upper_bound: std::time::SystemTime,
     ) -> Result<Vec<Booking>, String>;
 

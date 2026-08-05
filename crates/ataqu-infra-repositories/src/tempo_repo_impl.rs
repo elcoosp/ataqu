@@ -212,6 +212,7 @@ impl TempoRepository for TempoRepositoryImpl {
     async fn find_bookings_for_no_show_check(
         &self,
         tenant_id: &TenantId,
+        _lower_bound: std::time::SystemTime,
         upper_bound: std::time::SystemTime,
     ) -> Result<Vec<Booking>, String> {
         let upper_bound_dt = chrono::DateTime::<chrono::Utc>::from(upper_bound);

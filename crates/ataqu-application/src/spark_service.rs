@@ -75,6 +75,7 @@ impl SparkService {
     }
 
     pub async fn create_workflow(&self, cmd: CreateWorkflowCommand) -> SparkResult<Workflow> {
+
         let domain_cmd = ataqu_domain_spark::CreateWorkflowCommand {
             tenant_id: cmd.tenant_id.as_uuid(),
             name: cmd.name,
@@ -184,7 +185,7 @@ impl SparkService {
 
     pub async fn poll_scheduled_triggers(&self) -> SparkResult<()> {
         let workflows = self.repo.list_active_scheduled_workflows().await?;
-        let now = chrono::Utc::now();
+        let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
 
         for workflow in workflows {
             if let Trigger::Schedule { cron } = &workflow.trigger {

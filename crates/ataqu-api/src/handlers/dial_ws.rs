@@ -1,6 +1,7 @@
 use axum::{
     Router,
     extract::{
+        Query,
         State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
@@ -22,8 +23,32 @@ pub type ConnectionRegistry =
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
-    auth: AuthContext,
+    Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Result<Response, ApiResponseError> {
+    let token = params.get("token").ok_or_else(|| {
+        ApiResponseError::unauthorized("Missing token query parameter")
+    })?;
+
+    let token_data = jsonwebtoken::decode::<crate::middleware::auth::JwtClaims>(
+        token,
+        &jsonwebtoken::DecodingKey::from_secret(&state.jwt_secret),
+        &jsonwebtoken::Validation::default(),
+    ).map_err(|_| ApiResponseError::unauthorized("Invalid token"))?;
+
+    if token_data.claims.token_type != "access" {
+        return Err(ApiResponseError::unauthorized("Invalid token type"));
+    }
+
+    let user_id = uuid::Uuid::parse_str(&token_data.claims.sub)
+        .map_err(|_| ApiResponseError::unauthorized("Invalid user ID in token"))?;
+
+    let auth = crate::middleware::AuthContext {
+        user_id,
+        tenant_id: ataqu_kernel::TenantId::new(token_data.claims.tenant_id),
+        email: token_data.claims.email,
+        roles: token_data.claims.roles,
+    };
+
     Ok(ws.on_upgrade(move |socket| handle_websocket(socket, state, auth)))
 }
 
@@ -40,6 +65,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
 
     let (mut ws_sender, mut ws_receiver) = socket.split();
     let (tx, mut rx) = mpsc::unbounded_channel::<String>();
+    let connection_id = uuid::Uuid::new_v4();
     let connection_id = uuid::Uuid::new_v4();
 
     let send_task = tokio::spawn(async move {

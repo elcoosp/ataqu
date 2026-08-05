@@ -63,6 +63,26 @@ pub fn create_employee(
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct UpdateEmployeeCommand {
+    pub tenant_id: TenantId,
+    pub employee_id: Uuid,
+    pub full_name: Option<String>,
+    pub job_title: Option<String>,
+    pub department: Option<Option<String>>,
+}
+
+pub fn update_employee(
+    employee: &mut Employee,
+    cmd: UpdateEmployeeCommand,
+    clock: &dyn Clock,
+) {
+    if let Some(name) = cmd.full_name { employee.full_name = name; }
+    if let Some(title) = cmd.job_title { employee.job_title = title; }
+    if let Some(dept) = cmd.department { employee.department = dept; }
+    employee.updated_at = clock.now();
+}
+
 pub fn deactivate_employee(employee: &mut Employee, clock: &dyn Clock) {
     employee.is_active = false;
     employee.updated_at = clock.now();

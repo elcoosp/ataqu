@@ -48,7 +48,16 @@ pub async fn track_email_public(
                 pixel,
             ))
         }
-        Err(_) => Err(ApiResponseError::internal("Email tracking service unavailable")),
+        Err(_) => {
+            // ADR-031: Spill to JSONL is handled by the writer on DB failure.
+            // If the channel is full, we still return 200 to the email client to prevent broken images.
+            let pixel = general_purpose::STANDARD.decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7").unwrap();
+            Ok((
+                axum::http::StatusCode::OK,
+                [(axum::http::header::CONTENT_TYPE, "image/gif")],
+                pixel,
+            ))
+        }
     }
 }
 

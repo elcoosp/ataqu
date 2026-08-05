@@ -176,9 +176,13 @@ impl VistaService {
         tenant_id: TenantId,
         sql: &str,
     ) -> VistaResult<Vec<serde_json::Value>> {
-        let upper_sql = sql.to_uppercase();
-        if upper_sql.contains("DROP") || upper_sql.contains("DELETE") || upper_sql.contains("UPDATE") || upper_sql.contains("INSERT") || upper_sql.contains("ALTER") || upper_sql.contains("TRUNCATE") {
-            return Err(VistaServiceError::Validation("Only read-only SQL is permitted".to_string()));
+        let trimmed_sql = sql.trim_start();
+        let upper_sql = trimmed_sql.to_uppercase();
+        if !upper_sql.starts_with("SELECT") && !upper_sql.starts_with("WITH") {
+            return Err(VistaServiceError::Validation("Only read-only SQL (SELECT or WITH) is permitted".to_string()));
+        }
+        if sql.contains(';') {
+            return Err(VistaServiceError::Validation("Multiple statements are not permitted".to_string()));
         }
         self.repo
             .execute_raw_sql(&tenant_id, sql)

@@ -22,10 +22,11 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
     if req.method() == axum::http::Method::POST
         || req.method() == axum::http::Method::PUT
         || req.method() == axum::http::Method::PATCH
+        || req.method() == axum::http::Method::DELETE
     {
         if let Some(key) = req.headers().get(IDEMPOTENCY_KEY_HEADER).and_then(|v| v.to_str().ok()).map(|s| s.to_string()) {
             let (parts, body) = req.into_parts();
-            let bytes = to_bytes(body, usize::MAX).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            let bytes = to_bytes(body, 1024 * 1024).await.map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
 
             // Fix: Hash key + body to prevent different payloads with same key
             let mut hasher = Sha256::new();
@@ -48,7 +49,7 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
 
             if resp.status().is_success() {
                 let (parts, body) = resp.into_parts();
-                let bytes = to_bytes(body, usize::MAX).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+                let bytes = to_bytes(body, 1024 * 1024).await.map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
                 IDEMPOTENCY_CACHE.insert(command_id, (parts.status, bytes.to_vec()));
                 return Ok(Response::from_parts(parts, Body::from(bytes)));
             }

@@ -17,15 +17,15 @@ use crate::entities::sond::submission as submission_entity;
 fn form_model_to_domain(model: form_entity::Model) -> Form {
     // In a real implementation, we would deserialize questions from schema_json
     Form {
-            version: 0,
-
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
         title: model.title,
         description: model.description,
         questions: Vec::new(), // TODO: deserialize from schema_json
+        branding: serde_json::Value::Null,
         created_at: model.created_at,
         updated_at: model.updated_at,
+        version: 0,
     }
 }
 

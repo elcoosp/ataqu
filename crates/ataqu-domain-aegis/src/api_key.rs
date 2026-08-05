@@ -11,6 +11,7 @@ pub struct ApiKey {
     pub name: String,
     pub key_hash: String,
     pub prefix: String,
+    pub scopes: Vec<String>,
     pub last_used_at: Option<SystemTime>,
     pub expires_at: Option<SystemTime>,
     pub created_at: SystemTime,
@@ -22,6 +23,7 @@ pub struct CreateApiKeyCommand {
     pub user_id: Uuid,
     pub name: String,
     pub expires_at: Option<SystemTime>,
+    pub scopes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -30,6 +32,7 @@ pub struct ApiKeyCreated {
     pub name: String,
     pub key: String,
     pub prefix: String,
+    pub scopes: Vec<String>,
     pub created_at: SystemTime,
 }
 
@@ -64,6 +67,7 @@ pub fn generate_api_key(
         name: cmd.name,
         key: raw_key,
         prefix,
+        scopes: cmd.scopes,
         created_at: now,
     })
 }

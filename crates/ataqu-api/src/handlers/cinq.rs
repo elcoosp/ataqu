@@ -127,17 +127,22 @@ pub async fn list_contacts(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<ContactResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ContactResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let contacts = state
+    let (contacts, total) = state
         .cinq_service
         .list_contacts(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        contacts.into_iter().map(ContactResponse::from).collect(),
-    ))
+
+    let items = contacts.into_iter().map(ContactResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_contact(
@@ -588,25 +593,45 @@ pub async fn search_custom_fields_cross(
 }
 
 // ---------- CSV ----------
+#[derive(Debug, serde::Serialize)]
+pub struct ImportCsvResultDetailed {
+    pub imported: usize,
+    pub failed: usize,
+    pub failed_rows: Vec<(usize, String)>,
+}
+
 pub async fn import_csv(
     State(state): State<AppState>,
     auth: AuthContext,
     body: String,
-) -> ApiResult<Json<ImportCsvResult>> {
+) -> ApiResult<Json<ImportCsvResultDetailed>> {
     use csv::ReaderBuilder;
     let mut rdr = ReaderBuilder::new().from_reader(body.as_bytes());
     let mut rows = Vec::new();
+    let mut failed_rows = Vec::new();
+    let mut row_index = 0;
+
     for result in rdr.deserialize() {
-        let record: std::collections::HashMap<String, String> =
-            result.map_err(|e| ApiResponseError::validation(&e.to_string()))?;
-        rows.push(record);
+        match result {
+            Ok(record) => rows.push(record),
+            Err(e) => {
+                failed_rows.push((row_index, format!("Parse error: {}", e)));
+            }
+        }
+        row_index += 1;
     }
+
     let (imported, failed) = state
         .cinq_service
         .import_contacts(auth.tenant_id, rows)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(ImportCsvResult { imported, failed }))
+
+    Ok(Json(ImportCsvResultDetailed {
+        imported,
+        failed: failed + failed_rows.len(),
+        failed_rows,
+    }))
 }
 
 pub async fn export_csv(

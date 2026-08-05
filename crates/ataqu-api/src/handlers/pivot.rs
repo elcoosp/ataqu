@@ -219,6 +219,7 @@ impl From<ataqu_application::pivot_service::Block> for BlockResponse {
             BlockType::Markdown(_) => "markdown".to_string(),
             BlockType::Table { .. } => "table".to_string(),
             BlockType::View { .. } => "view".to_string(),
+            BlockType::Checklist { .. } => "checklist".to_string(),
         };
         let content = match &block.block_type {
             BlockType::Markdown(text) => serde_json::json!({ "text": text }),
@@ -226,6 +227,7 @@ impl From<ataqu_application::pivot_service::Block> for BlockResponse {
                 serde_json::json!({ "columns": columns, "rows": rows })
             }
             BlockType::View { filter } => serde_json::json!({ "filter": filter }),
+            BlockType::Checklist { items } => serde_json::json!({ "items": items }),
         };
         Self {
             id: block.id,
@@ -250,6 +252,9 @@ pub async fn create_block(
         },
         "view" => BlockType::View {
             filter: "".to_string(),
+        },
+        "checklist" => BlockType::Checklist {
+            items: vec![],
         },
         _ => return Err(ApiResponseError::validation("Invalid block_type")),
     };
@@ -333,6 +338,17 @@ pub async fn update_block(
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string(),
+            },
+            "checklist" => BlockType::Checklist {
+                items: content
+                    .get("items")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| serde_json::from_value(v.clone()).ok())
+                            .collect()
+                    })
+                    .unwrap_or_default(),
             },
             _ => return Err(ApiResponseError::validation("Invalid block_type")),
         }

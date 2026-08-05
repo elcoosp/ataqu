@@ -122,7 +122,7 @@ pub async fn create_employee(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::new_v4);
+        .unwrap_or_else(|| Uuid::new_v5(&Uuid::NAMESPACE_URL, b"pause_employee"));
 
     let employee_id = state
         .pause_service
@@ -170,7 +170,7 @@ pub async fn request_leave(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::new_v4);
+        .unwrap_or_else(|| Uuid::new_v5(&Uuid::NAMESPACE_URL, b"pause_leave"));
     let request_id = state
         .pause_service
         .request_leave(
@@ -328,6 +328,39 @@ pub async fn cancel_leave(
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UpdateEmployeeRequest {
+    pub full_name: Option<String>,
+    pub job_title: Option<String>,
+    pub department: Option<Option<String>>,
+}
+
+pub async fn update_employee(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateEmployeeRequest>,
+) -> ApiResult<Json<EmployeeResponse>> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
+    }
+    let cmd = ataqu_domain_pause::employee::UpdateEmployeeCommand {
+        tenant_id: auth.tenant_id,
+        employee_id: id,
+        full_name: payload.full_name,
+        job_title: payload.job_title,
+        department: payload.department,
+    };
+    let employee = state
+        .pause_service
+        .update_employee(&auth.tenant_id, cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(employee.into()))
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UploadDocumentRequest {
     pub file_name: String,
     pub file_url: String,
@@ -389,10 +422,11 @@ pub async fn list_documents(
 }
 
 pub fn routes() -> Router<AppState> {
-    use axum::routing::{get, patch, post};
+    use axum::routing::{get, patch, post, put};
     Router::new()
         .route("/employees", post(create_employee).get(list_employees))
         .route("/employees/search", get(search_employees))
+        .route("/employees/:id", put(update_employee))
         .route("/employees/:id/deactivate", post(deactivate_employee))
         .route(
             "/leave-requests",

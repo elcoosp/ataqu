@@ -43,6 +43,7 @@ pub struct Question {
     pub question_type: QuestionType,
     pub required: bool,
     pub conditions: Vec<Condition>,
+    pub page: i32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -51,6 +52,8 @@ pub struct QuestionInput {
     pub question_type: QuestionType,
     pub required: bool,
     pub conditions: Vec<Condition>,
+    #[serde(default)]
+    pub page: i32,
 }
 
 impl QuestionInput {
@@ -91,6 +94,7 @@ impl QuestionInput {
             question_type: self.question_type,
             required: self.required,
             conditions: self.conditions,
+            page: self.page,
         }
     }
 }
@@ -254,6 +258,7 @@ mod tests {
             question_type: QuestionType::Text,
             required: false,
             conditions: vec![],
+            page: 1,
         };
         assert!(matches!(
             input.validate(),
@@ -268,6 +273,7 @@ mod tests {
             question_type: QuestionType::Choice { options: vec![] },
             required: false,
             conditions: vec![],
+            page: 1,
         };
         assert!(matches!(
             input.validate(),
@@ -282,6 +288,7 @@ mod tests {
             question_type: QuestionType::Rating { min: 0, max: 10 },
             required: false,
             conditions: vec![],
+            page: 1,
         };
         assert!(matches!(
             input.validate(),
@@ -303,6 +310,7 @@ mod tests {
             question_type: QuestionType::Text,
             required: false,
             conditions: vec![cond],
+            page: 1,
         };
         let answers = vec![crate::response::Answer {
             question_id: q_id,
@@ -325,6 +333,7 @@ mod tests {
             question_type: QuestionType::Text,
             required: false,
             conditions: vec![cond],
+            page: 1,
         };
         let answers = vec![crate::response::Answer {
             question_id: q_id,

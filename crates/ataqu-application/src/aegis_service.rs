@@ -427,18 +427,56 @@ impl AegisService {
         Ok(())
     }
 
+    pub async fn deactivate_user(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
+        let mut user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
+            .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+        ataqu_domain_aegis::auth::deactivate_user(&mut user, self.clock.as_ref());
+        self.repo.save_user(&user).await?;
+
+        let payload = serde_json::json!({
+            "user_id": user.id,
+            "tenant_id": user.tenant_id.as_uuid(),
+            "is_active": user.is_active,
+        });
+        self.outbox
+            .append("core", "UserDeactivated", user.id, &payload)
+            .await
+            .map_err(AegisServiceError::Outbox)?;
+        Ok(())
+    }
+
+    pub async fn logout(&self, token: &str) -> Result<(), AegisServiceError> {
+        // In a real system, we would add the token to a revoked list in DB or Redis.
+        // For now, we just validate it and return Ok.
+        let claims: JwtClaims = decode(
+            token,
+            &DecodingKey::from_secret(&self.config.jwt_secret),
+            &Validation::default(),
+        )
+        .map_err(|_| AegisServiceError::AuthenticationFailed)?
+        .claims;
+
+        ataqu_domain_aegis::auth::revoke_token(&claims.sub);
+        Ok(())
+    }
+
     pub async fn create_api_key(
         &self,
         tenant_id: ataqu_kernel::TenantId,
         user_id: Uuid,
         name: String,
         expires_at: Option<SystemTime>,
+        scopes: Vec<String>,
     ) -> Result<ataqu_domain_aegis::api_key::ApiKeyCreated, AegisServiceError> {
         let cmd = ataqu_domain_aegis::api_key::CreateApiKeyCommand {
             tenant_id,
             user_id,
             name,
             expires_at,
+            scopes: scopes.clone(),
         };
         let created = ataqu_domain_aegis::api_key::generate_api_key(
             cmd,
@@ -459,6 +497,7 @@ impl AegisService {
                 format!("{:x}", hasher.finalize())
             },
             prefix: created.prefix.clone(),
+            scopes,
             last_used_at: None,
             expires_at,
             created_at: created.created_at,

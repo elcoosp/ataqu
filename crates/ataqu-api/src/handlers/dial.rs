@@ -514,8 +514,9 @@ pub fn routes() -> Router<AppState> {
         .route("/channels", post(create_channel).get(list_channels))
         .route(
             "/channels/:id",
-            get(get_channel).delete(archive_channel).put(update_channel),
+            get(get_channel).put(update_channel),
         )
+        .route("/channels/:id/archive", axum::routing::post(archive_channel))
         .route(
             "/channels/:id/messages",
             post(send_message).get(list_messages),

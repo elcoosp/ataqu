@@ -48,6 +48,7 @@ pub trait ContactRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> CinqRepositoryResult<Vec<Contact>>;
+    async fn count_contacts(&self, tenant_id: &TenantId) -> CinqRepositoryResult<u64>;
     async fn delete_contact(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<()>;
 }
 

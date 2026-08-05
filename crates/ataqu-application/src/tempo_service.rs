@@ -97,6 +97,12 @@ impl TempoService {
             ));
         }
 
+        if cmd.timezone.parse::<chrono_tz::Tz>().is_err() {
+            return Err(TempoServiceError::Validation(
+                "Invalid timezone".to_string(),
+            ));
+        }
+
         let event_types = self.repo.list_event_types(&cmd.tenant_id).await.map_err(TempoServiceError::Repository)?;
         let _event_type = event_types.iter().find(|et| et.id.0 == cmd.event_type_id).cloned()
             .ok_or(TempoServiceError::Validation("Event type not found".to_string()))?;
@@ -188,9 +194,10 @@ impl TempoService {
     pub async fn no_show_worker(&self, tenant_id: TenantId) -> TempoResult<Vec<Uuid>> {
         let now = self.clock.now();
         let upper_bound = now + std::time::Duration::from_secs(24 * 60 * 60);
+        let lower_bound = now - std::time::Duration::from_secs(24 * 60 * 60);
         let bookings = self
             .repo
-            .find_bookings_for_no_show_check(&tenant_id, upper_bound)
+            .find_bookings_for_no_show_check(&tenant_id, lower_bound, upper_bound)
             .await
             .map_err(TempoServiceError::Repository)?;
         let mut updated = Vec::new();
@@ -201,6 +208,16 @@ impl TempoService {
                     .await
                     .map_err(TempoServiceError::Repository)?;
                 updated.push(booking.id.0);
+
+                let payload = serde_json::json!({
+                    "booking_id": booking.id.0,
+                    "tenant_id": booking.tenant_id.as_uuid(),
+                    "event_type": "NoShowDetected"
+                });
+                self.outbox
+                    .append("collab_ops", "NoShowDetected", booking.id.0, &payload)
+                    .await
+                    .map_err(|e| TempoServiceError::Repository(e))?;
             }
         }
         Ok(updated)

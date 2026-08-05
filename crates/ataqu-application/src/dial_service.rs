@@ -513,6 +513,14 @@ impl DialService {
         user_id: Uuid,
         emoji: String,
     ) -> DialResult<Reaction> {
+        let reactions = self.repo
+            .list_reactions_for_message(&tenant_id, &MessageId::new(message_id))
+            .await?;
+
+        if reactions.iter().any(|r| r.user_id == UserId::new(user_id) && r.emoji == emoji) {
+            return Err(DialServiceError::Validation("Reaction already exists".to_string()));
+        }
+
         let reaction = Reaction {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,

@@ -242,7 +242,7 @@ impl CinqService {
         if let Some(custom_fields) = event.custom_fields {
             contact.custom_fields = custom_fields;
         }
-        if let Some(lead_score) = cmd.lead_score {
+        if let Some(lead_score) = event.lead_score {
             contact.lead_score = lead_score;
         }
         contact.updated_at = event.updated_at;
@@ -268,11 +268,13 @@ impl CinqService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> CinqResult<Vec<Contact>> {
-        Ok(self
+    ) -> CinqResult<(Vec<Contact>, u64)> {
+        let total = self.contact_repo.count_contacts(&tenant_id).await?;
+        let contacts = self
             .contact_repo
             .list_contacts(&tenant_id, limit, offset)
-            .await?)
+            .await?;
+        Ok((contacts, total))
     }
 
     pub async fn search_contacts(

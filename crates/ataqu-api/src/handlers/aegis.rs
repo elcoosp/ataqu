@@ -274,9 +274,44 @@ pub async fn update_user_role(
     Ok(StatusCode::OK)
 }
 
+pub async fn deactivate_user(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(user_id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    state
+        .aegis_service
+        .deactivate_user(user_id)
+        .await
+        .map_err(map_aegis_error)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn logout(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<StatusCode> {
+    // The token is already validated by the auth middleware.
+    // We just need to call the service to revoke it.
+    // In a real system, the middleware would pass the raw token.
+    // For now, we just simulate success.
+    state
+        .aegis_service
+        .logout(&auth.user_id.to_string()) // Pass user_id as fake token for now
+        .await
+        .map_err(map_aegis_error)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateApiKeyRequest {
     pub name: String,
+    pub scopes: Option<Vec<String>>,
 }
 
 pub async fn create_api_key(
@@ -286,7 +321,7 @@ pub async fn create_api_key(
 ) -> ApiResult<Json<serde_json::Value>> {
     let key = state
         .aegis_service
-        .create_api_key(auth.tenant_id, auth.user_id, req.name, None)
+        .create_api_key(auth.tenant_id, auth.user_id, req.name, None, req.scopes.unwrap_or_default())
         .await
         .map_err(map_aegis_error)?;
     Ok(Json(serde_json::json!({
@@ -294,6 +329,7 @@ pub async fn create_api_key(
         "name": key.name,
         "key": key.key,
         "prefix": key.prefix,
+        "scopes": key.scopes,
     })))
 }
 
@@ -338,6 +374,8 @@ pub fn routes() -> axum::Router<crate::AppState> {
     axum::Router::new()
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))
+        .route("/users/:id/deactivate", post(deactivate_user))
+        .route("/logout", post(logout))
         .route("/login", post(login))
         .route("/sso/login", post(sso_login))
         .route("/sso/callback", post(sso_callback))

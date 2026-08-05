@@ -11,6 +11,16 @@ pub enum BlockType {
     View {
         filter: String,
     },
+    Checklist {
+        items: Vec<ChecklistItem>,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ChecklistItem {
+    pub id: String,
+    pub text: String,
+    pub checked: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

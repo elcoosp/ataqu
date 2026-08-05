@@ -31,7 +31,7 @@ pub struct UpdateProductRequest {
 
 #[derive(Debug, Serialize)]
 pub struct ProductResponse {
-    pub id: String,
+    pub id: Uuid,
     pub name: String,
     pub description: String,
     pub sku: String,
@@ -42,7 +42,7 @@ pub struct ProductResponse {
 impl From<ataqu_application::vault_service::Product> for ProductResponse {
     fn from(p: ataqu_application::vault_service::Product) -> Self {
         Self {
-            id: p.id.to_string(),
+            id: p.id,
             name: p.name,
             description: p.description,
             sku: p.sku,
@@ -142,8 +142,8 @@ pub struct CreateVariantRequest {
 
 #[derive(Debug, Serialize)]
 pub struct VariantResponse {
-    pub id: String,
-    pub product_id: String,
+    pub id: Uuid,
+    pub product_id: Uuid,
     pub sku: String,
     pub price: i64,
     pub stock_quantity: i64,
@@ -155,8 +155,8 @@ pub struct VariantResponse {
 impl From<ataqu_application::vault_service::Variant> for VariantResponse {
     fn from(v: ataqu_application::vault_service::Variant) -> Self {
         Self {
-            id: v.id.to_string(),
-            product_id: v.product_id.to_string(),
+            id: v.id,
+            product_id: v.product_id,
             sku: v.sku,
             price: v.price,
             stock_quantity: v.stock_quantity,

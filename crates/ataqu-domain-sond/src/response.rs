@@ -211,6 +211,7 @@ mod tests {
             question_type: qtype,
             required,
             conditions: vec![],
+            page: 1,
         }
     }
 
@@ -227,6 +228,7 @@ mod tests {
             question_type: qtype,
             required,
             conditions: vec![cond],
+            page: 1,
         }
     }
 
@@ -333,6 +335,7 @@ mod tests {
             title: "Form".to_string(),
             description: None,
             questions: vec![sample_question(q1, "Name", QuestionType::Text, true)],
+            branding: serde_json::json!({}),
             created_at: Utc::now(),
             updated_at: Utc::now(),
             version: 0,

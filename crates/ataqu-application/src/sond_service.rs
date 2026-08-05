@@ -21,6 +21,7 @@ pub struct CreateFormCommand {
     pub title: String,
     pub description: Option<String>,
     pub questions: Vec<ataqu_domain_sond::question::QuestionInput>,
+    pub branding: serde_json::Value,
 }
 
 #[derive(Debug, Clone)]
@@ -75,6 +76,7 @@ impl SondService {
             title: cmd.title,
             description: cmd.description,
             questions: cmd.questions.clone(),
+            branding: cmd.branding.clone(),
         };
         let event =
             form_domain::create_form(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
@@ -89,6 +91,7 @@ impl SondService {
             title: event.title,
             description: event.description,
             questions,
+            branding: event.branding,
             created_at: event.created_at,
             updated_at: event.created_at,
             version: 0,

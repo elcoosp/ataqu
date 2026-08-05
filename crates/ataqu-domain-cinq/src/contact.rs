@@ -71,6 +71,7 @@ pub struct ContactUpdated {
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<JsonValue>,
+    pub lead_score: Option<i32>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
 }
@@ -123,6 +124,7 @@ pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> ContactUp
         email: cmd.email,
         phone: cmd.phone,
         custom_fields: cmd.custom_fields,
+        lead_score: cmd.lead_score,
         updated_at: now,
         version: cmd.expected_version + 1,
     }

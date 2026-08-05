@@ -453,6 +453,7 @@ impl BlockRepository for PivotBlockRepository {
             BlockType::Markdown(_) => "markdown",
             BlockType::Table { .. } => "table",
             BlockType::View { .. } => "view",
+            BlockType::Checklist { .. } => "checklist",
         };
         let content = match &event.block_type {
             BlockType::Markdown(text) => serde_json::json!({ "text": text }),
@@ -460,6 +461,7 @@ impl BlockRepository for PivotBlockRepository {
                 serde_json::json!({ "columns": columns, "rows": rows })
             }
             BlockType::View { filter } => serde_json::json!({ "filter": filter }),
+            BlockType::Checklist { items } => serde_json::json!({ "items": items }),
         };
 
         let stmt = Statement::from_sql_and_values(

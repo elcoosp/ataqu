@@ -12,6 +12,7 @@ pub struct Form {
     pub title: String,
     pub description: Option<String>,
     pub questions: Vec<Question>,
+    pub branding: serde_json::Value,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
@@ -24,6 +25,7 @@ pub struct CreateFormCommand {
     pub title: String,
     pub description: Option<String>,
     pub questions: Vec<QuestionInput>,
+    pub branding: serde_json::Value,
 }
 
 // Event contains TenantId -> no Serialize/Deserialize
@@ -34,6 +36,7 @@ pub struct FormCreated {
     pub title: String,
     pub description: Option<String>,
     pub question_count: usize,
+    pub branding: serde_json::Value,
     pub created_at: DateTime<Utc>,
 }
 
@@ -91,6 +94,7 @@ pub fn create_form(
         title: cmd.title,
         description: cmd.description,
         question_count: questions.len(),
+        branding: cmd.branding,
         created_at,
     };
     Ok(event)
@@ -168,7 +172,9 @@ mod tests {
                 question_type: QuestionType::Text,
                 required: true,
                 conditions: vec![],
+                page: 1,
             }],
+            branding: serde_json::json!({}),
         };
         let result = create_form(cmd, &id_gen, &clock);
         assert!(result.is_ok());
@@ -190,7 +196,9 @@ mod tests {
                 question_type: QuestionType::Text,
                 required: true,
                 conditions: vec![],
+                page: 1,
             }],
+            branding: serde_json::json!({}),
         };
         let result = create_form(cmd, &id_gen, &clock);
         assert!(matches!(result, Err(SondError::InvalidTitle(_))));
@@ -205,6 +213,7 @@ mod tests {
             title: "Form".to_string(),
             description: None,
             questions: vec![],
+            branding: serde_json::json!({}),
         };
         let result = create_form(cmd, &id_gen, &clock);
         assert!(matches!(result, Err(SondError::InvalidQuestionCount(_))));
@@ -221,6 +230,7 @@ mod tests {
             title: "Old".to_string(),
             description: None,
             questions: vec![],
+            branding: serde_json::json!({}),
             created_at: Utc::now(),
             updated_at: Utc::now(),
             version: 0,

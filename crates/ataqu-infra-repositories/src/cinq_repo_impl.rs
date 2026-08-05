@@ -2,8 +2,8 @@
 use async_trait::async_trait;
 use sea_orm::sea_query::Expr;
 use sea_orm::{
-    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect,
-    Set,
+    ColumnTrait, Condition, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
+    QueryOrder, QuerySelect, Set,
 };
 use uuid::Uuid;
 
@@ -278,6 +278,16 @@ impl DomainContactRepo for CinqContactRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_contact).collect())
     }
+
+    async fn count_contacts(&self, tenant_id: &TenantId) -> Result<u64, CinqDomainError> {
+        let count = contact_entity::Entity::find()
+            .filter(contact_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .count(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(count)
+    }
+
 }
 
 // ---------- Deal Repository ----------

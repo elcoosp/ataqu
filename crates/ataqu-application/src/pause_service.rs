@@ -297,6 +297,24 @@ impl PauseService {
         Ok(request)
     }
 
+    pub async fn update_employee(&self, tenant_id: &TenantId, cmd: ataqu_domain_pause::employee::UpdateEmployeeCommand) -> Result<ataqu_domain_pause::Employee, PauseServiceError> {
+        let mut employee = self.find_employee(tenant_id, cmd.employee_id).await?;
+        ataqu_domain_pause::employee::update_employee(&mut employee, cmd, self.clock.as_ref());
+        self.employee_repo.update(tenant_id, &employee).await?;
+
+        let payload = serde_json::json!({
+            "employee_id": employee.id,
+            "tenant_id": employee.tenant_id.as_uuid(),
+            "full_name": employee.full_name,
+        });
+        self.outbox
+            .append(PAUSE_SCHEMA, "EmployeeUpdated", employee.id, &payload)
+            .await
+            .map_err(|e| PauseServiceError::Outbox(e))?;
+
+        Ok(employee)
+    }
+
     pub async fn deactivate_employee(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<(), PauseServiceError> {
         let mut employee = self
             .employee_repo

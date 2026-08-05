@@ -329,6 +329,21 @@ async fn main() -> anyhow::Result<()> {
                     req = req.json(&body);
                     req.send().await.map_err(|e| e.to_string())?;
                 }
+                Action::Webhook { url, method, body, headers } => {
+                    let client = reqwest::Client::new();
+                    let mut req = match method.to_uppercase().as_str() {
+                        "POST" => client.post(url),
+                        "PUT" => client.put(url),
+                        "PATCH" => client.patch(url),
+                        "DELETE" => client.delete(url),
+                        _ => client.get(url),
+                    };
+                    for (k, v) in headers {
+                        req = req.header(k, v);
+                    }
+                    req = req.json(&body);
+                    req.send().await.map_err(|e| e.to_string())?;
+                }
                 _ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
                 }
@@ -385,7 +400,7 @@ async fn main() -> anyhow::Result<()> {
         ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
             pools.core.clone(),
             std::path::PathBuf::from("/tmp/ataqu_email_spill"),
-            100 * 1024 * 1024,
+            10 * 1024 * 1024,
         );
     tokio::spawn(async move {
         if let Err(e) = email_writer.run().await {
