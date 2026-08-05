@@ -27,6 +27,10 @@ use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use crate::serializers::{ApiEmail, ApiPhone};
 
+fn default_search_limit() -> u64 {
+    20
+}
+
 // ---------- Pagination ----------
 #[derive(Debug, Deserialize, Default)]
 pub struct PaginationParams {
@@ -482,6 +486,31 @@ pub async fn search_by_custom_field(
     ))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CrossFieldSearchParams {
+    pub q: String,
+    #[serde(default = "default_search_limit")]
+    pub limit: u64,
+}
+
+pub async fn search_custom_fields_cross(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<CrossFieldSearchParams>,
+) -> ApiResult<Json<Vec<ContactResponse>>> {
+    // ADR-030: Tier 3 cross-field search is rate-limited and result-capped.
+    // The global rate limiter applies, and we enforce a hard cap of 50 results.
+    let limit = std::cmp::min(params.limit, 50);
+    let contacts = state
+        .cinq_service
+        .search_custom_fields_cross(auth.tenant_id, &params.q, limit)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(
+        contacts.into_iter().map(ContactResponse::from).collect(),
+    ))
+}
+
 // ---------- CSV ----------
 pub async fn import_csv(
     State(state): State<AppState>,
@@ -695,6 +724,7 @@ pub fn routes() -> Router<AppState> {
         .route("/contacts/:id/tasks", get(list_contact_tasks))
         .route("/search", get(search_contacts))
         .route("/search/custom", get(search_by_custom_field))
+        .route("/search/custom/cross", get(search_custom_fields_cross))
         .route("/csv/import", post(import_csv))
         .route("/csv/export", get(export_csv))
         .route("/email/track", post(track_email))

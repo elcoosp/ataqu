@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
+use ataqu_kernel::Clock;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lease {
@@ -14,8 +15,8 @@ pub struct Lease {
 }
 
 impl Lease {
-    pub fn new(tenant_id: Uuid, workflow_id: Uuid) -> Self {
-        let now = Utc::now();
+    pub fn new(tenant_id: Uuid, workflow_id: Uuid, clock: &dyn Clock) -> Self {
+        let now: DateTime<Utc> = clock.now().into();
         Self {
             id: Uuid::new_v4(),
             tenant_id,
