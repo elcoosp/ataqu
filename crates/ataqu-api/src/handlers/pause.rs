@@ -283,7 +283,7 @@ pub async fn upload_document(
         file_url: payload.file_url,
         doc_type: payload.doc_type,
     };
-    let doc = state.pause_service.upload_document(cmd).await
+    let doc = state.pause_service.upload_document(cmd, &*state.id_gen, &*state.clock).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({
         "id": doc.id,

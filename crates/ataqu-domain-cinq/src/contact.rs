@@ -41,6 +41,7 @@ pub struct UpdateContactCommand {
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>, // None = no change, Some(None) = clear
     pub custom_fields: Option<JsonValue>,
+    pub lead_score: Option<i32>,
 }
 
 // ---------- Events ----------
@@ -197,6 +198,7 @@ mod tests {
             email: None,
             phone: Some(Some(PhoneNumber::new("+1234567890".to_string()))),
             custom_fields: None,
+            lead_score: None,
         };
         let clock = MockClock::new(Utc.with_ymd_and_hms(2026, 8, 1, 13, 0, 0).unwrap());
 

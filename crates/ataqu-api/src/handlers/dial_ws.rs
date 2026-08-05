@@ -95,7 +95,9 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
 
                                             if let Some(subscribers) = state.ws_registry.get(&key) {
                                                 for entry in subscribers.iter() {
-                                                    let _ = entry.value().send(broadcast.clone());
+                                                    if entry.key() != &auth.user_id {
+                                                        let _ = entry.value().send(broadcast.clone());
+                                                    }
                                                 }
                                             }
                                         }

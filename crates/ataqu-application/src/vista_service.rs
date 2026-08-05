@@ -91,4 +91,24 @@ impl VistaService {
             .await
             .map_err(VistaServiceError::Repository)
     }
+
+    pub async fn get_data_points(&self, tenant_id: TenantId, metric: &str, limit: u64) -> VistaResult<Vec<ataqu_domain_vista::AnalyticsDataPoint>> {
+        self.repo.get_data_points(&tenant_id, metric, limit).await.map_err(VistaServiceError::Repository)
+    }
+
+    pub async fn save_dashboard(&self, dashboard: &ataqu_domain_vista::Dashboard) -> VistaResult<()> {
+        self.repo.save_dashboard(dashboard).await.map_err(VistaServiceError::Repository)
+    }
+
+    pub async fn list_dashboards(&self, tenant_id: TenantId) -> VistaResult<Vec<ataqu_domain_vista::Dashboard>> {
+        self.repo.list_dashboards(&tenant_id).await.map_err(VistaServiceError::Repository)
+    }
+
+    pub async fn delete_dashboard(&self, tenant_id: TenantId, id: Uuid) -> VistaResult<()> {
+        self.repo.delete_dashboard(&tenant_id, id).await.map_err(VistaServiceError::Repository)
+    }
+
+    pub async fn execute_raw_sql(&self, tenant_id: TenantId, sql: &str) -> VistaResult<Vec<serde_json::Value>> {
+        self.repo.execute_raw_sql(&tenant_id, sql).await.map_err(VistaServiceError::Repository)
+    }
 }

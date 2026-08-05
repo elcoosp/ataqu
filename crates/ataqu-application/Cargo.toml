@@ -35,6 +35,7 @@ ataqu-domain-gdpr = { version = "0.1.0", path = "../ataqu-domain-gdpr" }
 ataqu-infra-outbox = { path = "../ataqu-infra-outbox" }
 csv = "1.3"
 rand = "0.8.5"
+croner = "2.0"
 rust_decimal = "1.0"
 argon2 = "0.5.3"
 jsonwebtoken = "9.3.0"

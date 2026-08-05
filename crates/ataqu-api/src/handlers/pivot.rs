@@ -353,6 +353,7 @@ pub async fn list_doc_versions(
     let list = versions.iter().map(|v| serde_json::json!({
         "id": v.id,
         "title": v.title,
+        "content": v.content,
         "created_at": v.created_at,
     })).collect();
     Ok(Json(list))
@@ -368,10 +369,10 @@ pub fn routes() -> Router<AppState> {
             "/docs/:id",
             axum::routing::get(get_doc).put(update_doc).delete(delete_doc),
         )
-        .route("/documents/:id/blocks", axum::routing::get(list_blocks))
+        .route("/docs/:id/blocks", axum::routing::get(list_blocks))
         .route("/blocks", axum::routing::post(create_block))
         .route("/relations", axum::routing::post(create_relation))
-        .route("/documents/:id/relations", axum::routing::get(list_relations))
+        .route("/docs/:id/relations", axum::routing::get(list_relations))
         .route("/search", axum::routing::get(search_docs))
 }
 

@@ -267,15 +267,15 @@ impl PauseService {
         Ok(request)
     }
 
-    pub async fn upload_document(&self, cmd: ataqu_domain_pause::CreateDocumentCommand) -> Result<ataqu_domain_pause::EmployeeDocument, PauseServiceError> {
+    pub async fn upload_document(&self, cmd: ataqu_domain_pause::CreateDocumentCommand, id_gen: &dyn IdGenerator, clock: &dyn Clock) -> Result<ataqu_domain_pause::EmployeeDocument, PauseServiceError> {
         let doc = ataqu_domain_pause::EmployeeDocument {
-            id: Uuid::new_v4(),
+            id: id_gen.new_uuid_v7(),
             tenant_id: cmd.tenant_id,
             employee_id: cmd.employee_id,
             file_name: cmd.file_name,
             file_url: cmd.file_url,
             doc_type: cmd.doc_type,
-            created_at: chrono::Utc::now(),
+            created_at: clock.now().into(),
         };
         self.document_repo.save_document(&doc).await?;
         Ok(doc)

@@ -46,6 +46,7 @@ pub struct UpdateContactCommand {
     pub email: Option<Email>,
     pub phone: Option<Option<PhoneNumber>>,
     pub custom_fields: Option<serde_json::Value>,
+    pub lead_score: Option<i32>,
 }
 
 #[derive(Debug, Clone)]
@@ -194,8 +195,8 @@ impl CinqService {
             email: cmd.email,
             phone: cmd.phone,
             custom_fields: cmd.custom_fields,
+            lead_score: cmd.lead_score,
         };
-        // Lead score is not updated via UpdateContactCommand in this version
         let event = contact_domain::update_contact(domain_cmd, self.clock.as_ref());
         if let Some(name) = event.name {
             contact.name = name;
@@ -209,7 +210,9 @@ impl CinqService {
         if let Some(custom_fields) = event.custom_fields {
             contact.custom_fields = custom_fields;
         }
-        // Lead score is updated separately or via rules engine
+        if let Some(lead_score) = cmd.lead_score {
+            contact.lead_score = lead_score;
+        }
         contact.updated_at = event.updated_at;
         self.contact_repo.save_contact(&contact).await?;
         Ok(contact)

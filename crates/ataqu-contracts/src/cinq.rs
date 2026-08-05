@@ -44,6 +44,7 @@ pub struct UpdateContactRequest {
     pub email: Option<String>,
     pub phone: Option<Option<String>>,
     pub custom_fields: Option<serde_json::Value>,
+    pub lead_score: Option<i32>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -93,6 +94,7 @@ pub struct ListActivitiesParams {
 #[derive(Debug, Clone, Deserialize)]
 pub struct SearchParams {
     pub q: String,
+    pub limit: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

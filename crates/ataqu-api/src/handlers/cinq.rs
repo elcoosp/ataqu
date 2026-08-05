@@ -151,6 +151,7 @@ pub async fn update_contact(
         email: payload.email.map(Email::new),
         phone: payload.phone.map(|p| p.map(PhoneNumber::new)),
         custom_fields: payload.custom_fields,
+        lead_score: payload.lead_score,
     };
     let contact = state
         .cinq_service
@@ -251,12 +252,14 @@ pub async fn update_deal(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDealRequest>,
 ) -> ApiResult<Json<DealResponse>> {
-    let status = payload.status.map(|s| match s.to_lowercase().as_str() {
-        "open" => DealStatus::Open,
-        "won" => DealStatus::Won,
-        "lost" => DealStatus::Lost,
-        _ => DealStatus::Open,
-    });
+    let status = if let Some(s) = payload.status {
+        match s.to_lowercase().as_str() {
+            "open" => Some(DealStatus::Open),
+            "won" => Some(DealStatus::Won),
+            "lost" => Some(DealStatus::Lost),
+            _ => return Err(ApiResponseError::validation("Invalid deal status")),
+        }
+    } else { None };
     let cmd = UpdateDealCommand {
         id,
         tenant_id: auth.tenant_id,
@@ -459,7 +462,7 @@ pub async fn search_contacts(
 ) -> ApiResult<Json<Vec<ContactResponse>>> {
     let contacts = state
         .cinq_service
-        .search_contacts(auth.tenant_id, &params.q, 20)
+        .search_contacts(auth.tenant_id, &params.q, params.limit.unwrap_or(20))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(

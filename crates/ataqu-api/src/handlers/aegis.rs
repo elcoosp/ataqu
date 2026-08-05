@@ -229,6 +229,9 @@ pub async fn update_user_role(
     if !auth.has_role("admin") {
         return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
     }
+    if !["admin", "member", "viewer"].contains(&req.role.as_str()) {
+        return Err(ApiResponseError::validation("Invalid role"));
+    }
     state.aegis_service.update_user_role(user_id, req.role).await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::OK)
