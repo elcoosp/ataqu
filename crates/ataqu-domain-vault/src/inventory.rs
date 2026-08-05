@@ -48,6 +48,7 @@ pub struct Variant {
     pub price: i64, // in cents
     pub stock_quantity: i64,
     pub reserved_quantity: i64,
+    pub low_stock_threshold: i64,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
 }
@@ -70,6 +71,7 @@ impl Variant {
             price,
             stock_quantity: 0,
             reserved_quantity: 0,
+            low_stock_threshold: 5,
             created_at: now,
             updated_at: now,
         }

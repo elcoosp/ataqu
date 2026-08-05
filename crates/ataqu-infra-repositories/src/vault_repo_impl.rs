@@ -91,6 +91,7 @@ fn variant_model_to_domain(model: variant_entity::Model) -> Variant {
         price: model.price,
         stock_quantity: model.stock_quantity,
         reserved_quantity: model.reserved_quantity,
+        low_stock_threshold: 5,
         created_at: model.created_at.into(),
         updated_at: model.updated_at.into(),
     }

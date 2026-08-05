@@ -143,11 +143,20 @@ impl DialService {
         tenant_id: TenantId,
         channel_id: Uuid,
         name: Option<String>,
+        expected_version: i32,
     ) -> DialResult<Channel> {
         let mut channel = self
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
             .await?;
+
+        if channel.version != expected_version {
+            return Err(DialServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, channel.version
+            )));
+        }
+
         if let Some(n) = name {
             if n.trim().is_empty() {
                 return Err(DialServiceError::Validation(
@@ -156,6 +165,7 @@ impl DialService {
             }
             channel.name = n;
         }
+        channel.version += 1;
         self.repo.insert_channel(&channel).await?;
         Ok(channel)
     }
@@ -221,9 +231,20 @@ impl DialService {
 
         // Fix: Persist mentions extracted by the domain function
         for user_id_str in &event.mentioned_user_ids {
-            // In a real system, you'd resolve `user_id_str` to a `UserId` via repository lookup.
-            // Assuming `extract_mentions` returns `Vec<String>`, we'll mock the UUID resolution here.
-            if let Ok(uuid) = Uuid::parse_str(user_id_str) {
+            if user_id_str == "channel" {
+                // Mention all participants
+                for participant in &channel.participants {
+                    let mention = Mention {
+                        id: self.id_gen.new_uuid_v7(),
+                        tenant_id: cmd.tenant_id,
+                        message_id: event.message_id,
+                        user_id: *participant,
+                        created_at: self.clock.now(),
+                        read_at: None,
+                    };
+                    self.repo.insert_mention(&mention).await?;
+                }
+            } else if let Ok(uuid) = Uuid::parse_str(user_id_str) {
                 let mention = Mention {
                     id: self.id_gen.new_uuid_v7(),
                     tenant_id: cmd.tenant_id,
