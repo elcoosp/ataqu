@@ -409,18 +409,44 @@ pub struct AddReactionRequest {
 }
 
 pub async fn add_reaction(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     auth: AuthContext,
     Path(message_id): Path<Uuid>,
     Json(payload): Json<AddReactionRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    // Reactions are not fully implemented in domain, stub for now
+    let reaction = state.dial_service.add_reaction(auth.tenant_id, message_id, auth.user_id, payload.emoji).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({
-        "message_id": message_id,
-        "user_id": auth.user_id,
-        "emoji": payload.emoji,
-        "status": "reacted"
+        "id": reaction.id,
+        "message_id": reaction.message_id.as_uuid(),
+        "user_id": reaction.user_id.as_uuid(),
+        "emoji": reaction.emoji
     })))
+}
+
+pub async fn list_reactions(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(message_id): Path<Uuid>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let reactions = state.dial_service.list_reactions(auth.tenant_id, message_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let list = reactions.into_iter().map(|r| serde_json::json!({
+        "id": r.id,
+        "user_id": r.user_id.as_uuid(),
+        "emoji": r.emoji
+    })).collect();
+    Ok(Json(list))
+}
+
+pub async fn delete_reaction(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path((message_id, reaction_id)): Path<(Uuid, Uuid)>,
+) -> ApiResult<StatusCode> {
+    state.dial_service.delete_reaction(auth.tenant_id, reaction_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub fn routes() -> Router<AppState> {
@@ -433,7 +459,8 @@ pub fn routes() -> Router<AppState> {
             post(send_message).get(list_messages),
         )
         .route("/messages/:id", put(edit_message).delete(delete_message))
-        .route("/messages/:id/reactions", post(add_reaction))
+        .route("/messages/:id/reactions", post(add_reaction).get(list_reactions))
+        .route("/messages/:id/reactions/:reaction_id", axum::routing::delete(delete_reaction))
         .route("/threads", post(start_thread))
         .route("/threads/:id", get(get_thread))
         .route("/threads/:id/messages", get(list_thread_messages))

@@ -332,4 +332,20 @@ impl PivotService {
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
+
+    pub async fn create_template(&self, tenant_id: TenantId, name: String, content: String) -> PivotResult<ataqu_domain_pivot::document::Template> {
+        let template = ataqu_domain_pivot::document::Template {
+            id: self.id_gen.new_uuid_v7(),
+            tenant_id,
+            name,
+            content,
+            created_at: self.clock.now(),
+        };
+        self.doc_repo.save_template(&template).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        Ok(template)
+    }
+
+    pub async fn list_templates(&self, tenant_id: TenantId) -> PivotResult<Vec<ataqu_domain_pivot::document::Template>> {
+        self.doc_repo.list_templates(&tenant_id).await.map_err(|e| PivotServiceError::Repository(e.to_string()))
+    }
 }

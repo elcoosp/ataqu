@@ -417,10 +417,43 @@ pub fn routes() -> Router<AppState> {
         .route("/relations", axum::routing::post(create_relation))
         .route("/docs/:id/relations", axum::routing::get(list_relations))
         .route("/search", axum::routing::get(search_docs))
+        .route("/templates", axum::routing::post(create_template).get(list_templates))
 }
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
     pub limit: Option<u64>,
     pub offset: Option<u64>,
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTemplateRequest {
+    pub name: String,
+    pub content: String,
+}
+
+pub async fn create_template(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<CreateTemplateRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let template = state.pivot_service.create_template(auth.tenant_id, payload.name, payload.content).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(serde_json::json!({ "id": template.id })))
+}
+
+pub async fn list_templates(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let templates = state.pivot_service.list_templates(auth.tenant_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let list = templates.iter().map(|t| serde_json::json!({
+        "id": t.id,
+        "name": t.name,
+        "content": t.content,
+        "created_at": t.created_at,
+    })).collect();
+    Ok(Json(list))
 }

@@ -14,7 +14,7 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use crate::outbox::Outbox;
 
 // Re-export domain types for API layer
-pub use ataqu_domain_dial::chat::{Channel, Message};
+pub use ataqu_domain_dial::chat::{Channel, Message, Reaction};
 
 // Application commands (using domain types)
 #[derive(Debug, Clone)]
@@ -367,5 +367,26 @@ impl DialService {
             .search_messages(&tenant_id, query, limit, offset)
             .await
             .map_err(DialServiceError::Domain)
+    }
+
+    pub async fn add_reaction(&self, tenant_id: TenantId, message_id: Uuid, user_id: Uuid, emoji: String) -> DialResult<Reaction> {
+        let reaction = Reaction {
+            id: self.id_gen.new_uuid_v7(),
+            tenant_id,
+            message_id: MessageId::new(message_id),
+            user_id: UserId::new(user_id),
+            emoji,
+            created_at: self.clock.now(),
+        };
+        self.repo.insert_reaction(&reaction).await?;
+        Ok(reaction)
+    }
+
+    pub async fn list_reactions(&self, tenant_id: TenantId, message_id: Uuid) -> DialResult<Vec<Reaction>> {
+        self.repo.list_reactions_for_message(&tenant_id, &MessageId::new(message_id)).await.map_err(DialServiceError::Domain)
+    }
+
+    pub async fn delete_reaction(&self, tenant_id: TenantId, reaction_id: Uuid) -> DialResult<()> {
+        self.repo.delete_reaction(&tenant_id, &reaction_id).await.map_err(DialServiceError::Domain)
     }
 }

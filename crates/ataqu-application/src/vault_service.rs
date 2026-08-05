@@ -258,6 +258,22 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)
     }
 
+    pub async fn create_warehouse(&self, tenant_id: TenantId, name: String, location: Option<String>) -> VaultResult<ataqu_domain_vault::inventory::Warehouse> {
+        let warehouse = ataqu_domain_vault::inventory::Warehouse {
+            id: self.id_gen.new_uuid_v7(),
+            tenant_id,
+            name,
+            location,
+            created_at: self.clock.now(),
+        };
+        self.repo.save_warehouse(&warehouse).await.map_err(VaultServiceError::Repository)?;
+        Ok(warehouse)
+    }
+
+    pub async fn list_warehouses(&self, tenant_id: TenantId) -> VaultResult<Vec<ataqu_domain_vault::inventory::Warehouse>> {
+        self.repo.list_warehouses(&tenant_id).await.map_err(VaultServiceError::Repository)
+    }
+
     pub async fn reserve_stock(&self, tenant_id: TenantId, variant_id: Uuid, quantity: i64) -> VaultResult<Variant> {
         let variant = self.get_variant(tenant_id, variant_id).await?;
         if variant.available() < quantity {
