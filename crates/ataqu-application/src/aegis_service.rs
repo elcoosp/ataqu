@@ -18,7 +18,7 @@ use ataqu_domain_aegis::{
     AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
     CreateUserCommand as DomainCreateUserCommand, User, UserCreated,
 };
-use ataqu_kernel::{Clock, IdGenerator};
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 pub use ataqu_domain_aegis::AuthenticateCommand;
 pub use ataqu_domain_aegis::CreateUserCommand;
@@ -468,6 +468,14 @@ impl AegisService {
 
         let _ = self.repo.update_api_key_last_used(api_key.id, self.clock.now()).await;
 
+        Ok(user)
+    }
+
+    pub async fn validate_api_key_for_tenant(&self, key: &str, tenant_id: TenantId) -> Result<User, AegisServiceError> {
+        let user = self.validate_api_key(key).await?;
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
         Ok(user)
     }
 }

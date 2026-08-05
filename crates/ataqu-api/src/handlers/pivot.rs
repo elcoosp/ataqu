@@ -266,6 +266,48 @@ pub async fn list_blocks(
     Ok(Json(blocks.into_iter().map(|b| b.into()).collect()))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateBlockRequest {
+    pub block_type: Option<String>,
+    pub content: Option<JsonValue>,
+}
+
+pub async fn update_block(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateBlockRequest>,
+) -> ApiResult<Json<BlockResponse>> {
+    let block_type = if let Some(bt_str) = payload.block_type {
+        let content = payload.content.unwrap_or(JsonValue::Null);
+        match bt_str.as_str() {
+            "markdown" => BlockType::Markdown(content.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string()),
+            "table" => BlockType::Table {
+                columns: content.get("columns").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default(),
+                rows: content.get("rows").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|row| row.as_array().map(|r| r.iter().filter_map(|v| v.as_str().map(String::from)).collect())).collect()).unwrap_or_default(),
+            },
+            "view" => BlockType::View { filter: content.get("filter").and_then(|v| v.as_str()).unwrap_or("").to_string() },
+            _ => return Err(ApiResponseError::validation("Invalid block_type")),
+        }
+    } else {
+        return Err(ApiResponseError::validation("block_type required"));
+    };
+
+    let block = state.pivot_service.update_block(auth.tenant_id, id, block_type).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(block.into()))
+}
+
+pub async fn delete_block(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state.pivot_service.delete_block(auth.tenant_id, id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 // ---------- Relations ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateRelationRequest {
@@ -371,6 +413,7 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/docs/:id/blocks", axum::routing::get(list_blocks))
         .route("/blocks", axum::routing::post(create_block))
+        .route("/blocks/:id", axum::routing::put(update_block).delete(delete_block))
         .route("/relations", axum::routing::post(create_relation))
         .route("/docs/:id/relations", axum::routing::get(list_relations))
         .route("/search", axum::routing::get(search_docs))

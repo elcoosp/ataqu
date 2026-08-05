@@ -390,6 +390,26 @@ pub async fn upload_file(
     Err(ApiResponseError::validation("No file uploaded"))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct AddReactionRequest {
+    pub emoji: String,
+}
+
+pub async fn add_reaction(
+    State(_state): State<AppState>,
+    auth: AuthContext,
+    Path(message_id): Path<Uuid>,
+    Json(payload): Json<AddReactionRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    // Reactions are not fully implemented in domain, stub for now
+    Ok(Json(serde_json::json!({
+        "message_id": message_id,
+        "user_id": auth.user_id,
+        "emoji": payload.emoji,
+        "status": "reacted"
+    })))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
@@ -400,6 +420,7 @@ pub fn routes() -> Router<AppState> {
             post(send_message).get(list_messages),
         )
         .route("/messages/:id", put(edit_message).delete(delete_message))
+        .route("/messages/:id/reactions", post(add_reaction))
         .route("/threads", post(start_thread))
         .route("/threads/:id", get(get_thread))
         .route("/threads/:id/messages", get(list_thread_messages))

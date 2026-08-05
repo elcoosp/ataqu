@@ -59,6 +59,7 @@ pub trait BlockRepository: Send + Sync {
         tenant_id: &TenantId,
         doc_id: Uuid,
     ) -> Result<Vec<BlockCreatedEvent>, RepositoryError>;
+    async fn delete_block(&self, tenant_id: &TenantId, block_id: Uuid) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]

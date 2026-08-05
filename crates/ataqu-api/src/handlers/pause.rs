@@ -308,6 +308,9 @@ pub async fn upload_document(
     Path(employee_id): Path<Uuid>,
     Json(payload): Json<UploadDocumentRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+    }
     let cmd = ataqu_domain_pause::CreateDocumentCommand {
         tenant_id: auth.tenant_id,
         employee_id,

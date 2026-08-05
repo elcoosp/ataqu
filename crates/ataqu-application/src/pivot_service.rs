@@ -245,6 +245,27 @@ impl PivotService {
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
+    pub async fn update_block(&self, tenant_id: TenantId, block_id: Uuid, block_type: BlockType) -> PivotResult<Block> {
+        let blocks = self.block_repo.get_blocks_for_document(&tenant_id, Uuid::nil()).await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        let block = blocks.into_iter().find(|b| b.id == block_id)
+            .ok_or(PivotServiceError::BlockNotFound)?;
+
+        let updated_block = Block {
+            id: block.id,
+            tenant_id: block.tenant_id,
+            document_id: block.document_id,
+            block_type,
+            created_at: block.created_at,
+        };
+        self.block_repo.save_block(&updated_block).await.map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        Ok(updated_block)
+    }
+
+    pub async fn delete_block(&self, tenant_id: TenantId, block_id: Uuid) -> PivotResult<()> {
+        self.block_repo.delete_block(&tenant_id, block_id).await.map_err(|e| PivotServiceError::Repository(e.to_string()))
+    }
+
     // -- Relations --
     pub async fn create_relation(&self, cmd: CreateRelationCommand) -> PivotResult<Relation> {
         let rel = Relation {

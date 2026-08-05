@@ -261,14 +261,25 @@ pub struct PublicBookingRequest {
     pub timezone: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct PublicBookingResponse {
+    pub id: Uuid,
+    pub starts_at: DateTime<Utc>,
+    pub status: String,
+}
+
 pub async fn public_create_booking(
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<PublicBookingRequest>,
-) -> ApiResult<(StatusCode, Json<BookingResponse>)> {
+) -> ApiResult<(StatusCode, Json<PublicBookingResponse>)> {
     let booking = state.tempo_service.public_create_booking(ataqu_kernel::TenantId::new(tenant_id), payload.slug, payload.starts_at, payload.timezone).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(booking.into())))
+    Ok((StatusCode::CREATED, Json(PublicBookingResponse {
+        id: booking.id.0,
+        starts_at: booking.starts_at.into(),
+        status: format!("{:?}", booking.status).to_lowercase(),
+    })))
 }
 
 pub async fn get_public_event_type(

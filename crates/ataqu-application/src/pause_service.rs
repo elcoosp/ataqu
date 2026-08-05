@@ -1,6 +1,5 @@
 //! PAUSE application service — HR orchestration.
 //! Uses domain types and repository traits from domain crate.
-use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -12,6 +11,7 @@ pub use ataqu_domain_pause::{
 };
 
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::outbox::Outbox;
 
 // Application-specific error type.
 #[derive(Debug, thiserror::Error)]
@@ -33,7 +33,7 @@ pub enum PauseServiceError {
 pub const PAUSE_SCHEMA: &str = "collab_ops";
 
 // Idempotency port (still application-specific)
-#[async_trait]
+#[async_trait::async_trait]
 pub trait IdempotencyPort: Send + Sync {
     async fn acquire(&self, command_id: &Uuid)
     -> Result<IdempotencyGuardHandle, PauseServiceError>;
@@ -65,25 +65,13 @@ impl IdempotencyGuardHandle {
     }
 }
 
-// Outbox port (application-specific)
-#[async_trait]
-pub trait OutboxPort: Send + Sync {
-    async fn append(
-        &self,
-        schema: &str,
-        event_type: &str,
-        aggregate_id: Uuid,
-        payload: &Value,
-    ) -> Result<(), PauseServiceError>;
-}
-
 // The service itself, using domain repository traits and application ports.
 pub struct PauseService {
     idempotency: Arc<dyn IdempotencyPort>,
     employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
     leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
     document_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
-    outbox: Arc<dyn OutboxPort>,
+    outbox: Arc<dyn Outbox + Send + Sync>,
 }
 
 impl PauseService {
@@ -92,7 +80,7 @@ impl PauseService {
         employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
         leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
         document_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeDocumentRepository + Send + Sync>,
-        outbox: Arc<dyn OutboxPort>,
+        outbox: Arc<dyn Outbox + Send + Sync>,
     ) -> Self {
         Self {
             idempotency,
@@ -133,7 +121,8 @@ impl PauseService {
                 event.employee_id,
                 &payload,
             )
-            .await?;
+            .await
+            .map_err(|e| PauseServiceError::Outbox(e))?;
         self.idempotency
             .commit(
                 &command_id,
@@ -166,7 +155,8 @@ impl PauseService {
                 event.leave_request_id,
                 &payload,
             )
-            .await?;
+            .await
+            .map_err(|e| PauseServiceError::Outbox(e))?;
         self.idempotency
             .commit(
                 &command_id,
@@ -242,7 +232,8 @@ impl PauseService {
             serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
-            .await?;
+            .await
+            .map_err(|e| PauseServiceError::Outbox(e))?;
         Ok(request)
     }
 
@@ -275,7 +266,8 @@ impl PauseService {
             serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
-            .await?;
+            .await
+            .map_err(|e| PauseServiceError::Outbox(e))?;
         Ok(request)
     }
 

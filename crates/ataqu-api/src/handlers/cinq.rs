@@ -190,23 +190,14 @@ pub async fn create_deal(
     auth: AuthContext,
     Json(payload): Json<CreateDealRequest>,
 ) -> ApiResult<(StatusCode, Json<DealResponse>)> {
-    let pipeline_stage_id = if let Some(id) = payload.pipeline_stage_id {
-        state.cinq_service.get_pipeline_stage(auth.tenant_id, id).await
-            .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
-        id
-    } else {
-        let stages = state.cinq_service.list_pipeline_stages(auth.tenant_id).await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-        stages.first()
-            .ok_or_else(|| ApiResponseError::validation("No pipeline stages exist for this tenant"))?
-            .id
-    };
+    state.cinq_service.get_pipeline_stage(auth.tenant_id, payload.pipeline_stage_id).await
+        .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
 
     let cmd = CreateDealCommand {
         tenant_id: auth.tenant_id,
         contact_id: payload.contact_id,
         title: payload.title,
-        pipeline_stage_id,
+        pipeline_stage_id: payload.pipeline_stage_id,
         amount: payload.amount,
         status: DealStatus::Open,
     };
@@ -671,8 +662,8 @@ pub async fn track_email(
     state: State<AppState>,
     auth: AuthContext,
     Json(payload): Json<TrackEmailRequest>,
-) -> ApiResult<StatusCode> {
-    super::email_tracking::track_email(state, auth, Json(payload)).await.map(|_| StatusCode::ACCEPTED)
+) -> ApiResult<Json<super::email_tracking::TrackEmailResponse>> {
+    super::email_tracking::track_email(state, auth, Json(payload)).await
 }
 
 // ---------- Router ----------

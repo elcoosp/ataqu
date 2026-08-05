@@ -1,3 +1,4 @@
+use sea_orm::ConnectionTrait;
 use async_trait::async_trait;
 use ataqu_domain_pivot::block::{BlockCreatedEvent, BlockType, RelationCreatedEvent, Relation};
 use ataqu_domain_pivot::database::DatabaseCreatedEvent;
@@ -385,6 +386,16 @@ impl BlockRepository for PivotBlockRepository {
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(models.into_iter().map(block_model_to_event).collect())
+    }
+
+    async fn delete_block(&self, tenant_id: &ataqu_kernel::TenantId, block_id: uuid::Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "DELETE FROM collab_ops.blocks WHERE tenant_id = $1 AND id = $2",
+            vec![tenant_id.as_uuid().into(), block_id.into()],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+        Ok(())
     }
 }
 

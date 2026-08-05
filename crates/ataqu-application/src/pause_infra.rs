@@ -6,7 +6,7 @@ use tracing::info;
 use uuid::Uuid;
 
 use crate::pause_service::{
-    IdempotencyGuardHandle, IdempotencyPort, OutboxPort, PauseServiceError,
+    IdempotencyGuardHandle, IdempotencyPort, PauseServiceError,
 };
 use ataqu_infra_idempotency::{CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore, guard::split_uuid_to_int4_pair};
 
@@ -143,14 +143,14 @@ impl RealOutbox {
 }
 
 #[async_trait]
-impl OutboxPort for RealOutbox {
+impl crate::outbox::Outbox for RealOutbox {
     async fn append(
         &self,
         schema: &str,
         event_type: &str,
         aggregate_id: Uuid,
         payload: &Value,
-    ) -> Result<(), PauseServiceError> {
+    ) -> Result<(), String> {
         let sql = r#"
             INSERT INTO core.outbox (schema, event_type, aggregate_id, payload, status, priority)
             VALUES ($1::app_schema, $2, $3, $4, 'pending', 'normal')
@@ -168,7 +168,7 @@ impl OutboxPort for RealOutbox {
         self.db
             .execute_raw(stmt)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            .map_err(|e| e.to_string())?;
         // Notify the dispatcher
         let notify = Statement::from_sql_and_values(
             DbBackend::Postgres,
@@ -178,7 +178,7 @@ impl OutboxPort for RealOutbox {
         self.db
             .execute_raw(notify)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            .map_err(|e| e.to_string())?;
         info!("Outbox event appended: {} {}", event_type, aggregate_id);
         Ok(())
     }

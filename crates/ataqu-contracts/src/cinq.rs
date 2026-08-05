@@ -52,7 +52,7 @@ pub struct CreateDealRequest {
     pub title: String,
     pub amount: Decimal,
     pub contact_id: Uuid,
-    pub pipeline_stage_id: Option<Uuid>,
+    pub pipeline_stage_id: Uuid,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -239,6 +239,19 @@ async fn main() -> anyhow::Result<()> {
                         reference: None,
                     }).await.map_err(|e| e.to_string())?;
                 }
+                Action::ReserveVaultStock { variant_id, quantity } => {
+                    self.vault_service.reserve_stock(*tenant_id, *variant_id, *quantity).await.map_err(|e| e.to_string())?;
+                }
+                Action::CreateCinqLead { name, email, source } => {
+                    self.cinq_service.create_contact(CreateContactCommand {
+                        tenant_id: *tenant_id,
+                        name: name.clone(),
+                        email: Email::new(email.clone()),
+                        phone: None,
+                        custom_fields: serde_json::json!({ "source": source }),
+                        lead_score: None,
+                    }).await.map_err(|e| e.to_string())?;
+                }
                 _ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
                 }
