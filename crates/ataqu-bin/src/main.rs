@@ -3,7 +3,6 @@
 //! and sets up idempotency middleware.
 
 use dotenvy::dotenv;
-use metrics_exporter_prometheus::PrometheusBuilder;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
