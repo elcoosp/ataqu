@@ -63,7 +63,10 @@ impl VistaService {
                     event
                         .payload
                         .get("amount")
-                        .and_then(|v| v.as_f64().or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok())))
+                        .and_then(|v| {
+                            v.as_f64()
+                                .or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok()))
+                        })
                         .unwrap_or(0.0),
                 )],
                 ("collab_crm", "DealWon") => vec![(
@@ -71,7 +74,10 @@ impl VistaService {
                     event
                         .payload
                         .get("amount")
-                        .and_then(|v| v.as_f64().or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok())))
+                        .and_then(|v| {
+                            v.as_f64()
+                                .or_else(|| v.as_str().and_then(|s| s.parse::<f64>().ok()))
+                        })
                         .unwrap_or(0.0),
                 )],
                 ("collab_crm", "ContactCreated") => vec![("contacts_created", 1.0)],
@@ -157,10 +163,16 @@ impl VistaService {
             .get_dashboard_by_id(&tenant_id, id)
             .await
             .map_err(VistaServiceError::Repository)?
-            .ok_or(VistaServiceError::Validation("Dashboard not found".to_string()))?;
+            .ok_or(VistaServiceError::Validation(
+                "Dashboard not found".to_string(),
+            ))?;
 
-        if let Some(n) = name { dashboard.name = n; }
-        if let Some(c) = config { dashboard.config = c; }
+        if let Some(n) = name {
+            dashboard.name = n;
+        }
+        if let Some(c) = config {
+            dashboard.config = c;
+        }
         dashboard.updated_at = chrono::DateTime::<chrono::Utc>::from(self.clock.now());
 
         self.repo
@@ -179,10 +191,14 @@ impl VistaService {
         let trimmed_sql = sql.trim_start();
         let upper_sql = trimmed_sql.to_uppercase();
         if !upper_sql.starts_with("SELECT") && !upper_sql.starts_with("WITH") {
-            return Err(VistaServiceError::Validation("Only read-only SQL (SELECT or WITH) is permitted".to_string()));
+            return Err(VistaServiceError::Validation(
+                "Only read-only SQL (SELECT or WITH) is permitted".to_string(),
+            ));
         }
         if sql.contains(';') {
-            return Err(VistaServiceError::Validation("Multiple statements are not permitted".to_string()));
+            return Err(VistaServiceError::Validation(
+                "Multiple statements are not permitted".to_string(),
+            ));
         }
         self.repo
             .execute_raw_sql(&tenant_id, sql)

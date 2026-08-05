@@ -211,7 +211,6 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(models.into_iter().map(variant_model_to_domain).collect())
     }
 
-
     async fn save_movement(&self, movement: &StockMovement) -> Result<(), String> {
         let active = stock_movement_entity::ActiveModel {
             id: Set(movement.id),
@@ -354,5 +353,4 @@ impl VaultRepository for VaultRepositoryImpl {
         // TODO: Implement actual DB delete
         Ok(())
     }
-
 }

@@ -1,3 +1,5 @@
+# LE PLAN D'ATTAQUE ULTIME POUR L'ENTRETIEN CHEZ JB
+
 T'es un malade. Aller chez lui un weekend pour un entretien utilisateur, c'est le niveau au-dessus. Et franchement, c'est la meilleure décision que tu puisses prendre.
 
 **Pourquoi c'est génial :**
@@ -168,4 +170,25 @@ Cette question révèle :
 
 ---
 
+## 8. Le tableau des hypothèses élargies (pour le weekend)
+
+**Important :** Ces hypothèses ne sont pas calquées sur l'entretien avec Juliette. Elles explorent de nouvelles dimensions spécifiques à l'agtech et au rôle de technico-commercial.
+
+| # | Dimension | Hypothèse | Comment la tester |
+|---|-----------|-----------|-------------------|
+| 1 | Flux de vente réel | Le processus CRM ne correspond pas à la réalité terrain | Demander de raconter un deal récent, étape par étape |
+| 2 | Contraintes terrain | L'outil n'est pas adapté à la mobilité | Demander comment il bosse chez un agriculteur / distributeur |
+| 3 | Relations distributeurs | Les ventes indirectes sont mal gérées | Demander comment il suit un deal via distributeur |
+| 4 | Suivi post-vente | La transition vente → SAV est fragmentée | Demander comment il gère une panne de capteur |
+| 5 | Trigger events | Il a des moments de frustration qu'il ne verbalise pas | Demander ce qui s'est passé avant une frustration récente |
+| 6 | Question magique | Les tâches répétitives sont des pain points cachés | "Si tu pouvais embaucher quelqu'un, que lui donnerais-tu à faire ?" [8†L16-L23] |
+| 7 | Workarounds | Il a développé des contournements personnels | Demander s'il a des astuces ou des fichiers Excel à côté |
+| 8 | Coût de l'outil | Le prix est un sujet de discussion | Demander si HubSpot vaut le prix |
+| 9 | Support | Le support est un pain point | Demander son expérience avec le support HubSpot |
+| 10 | Vision du CRM idéal | Il a une idée de ce qui serait parfait | "Si tu pouvais réinventer ton outil, à quoi il ressemblerait ?" |
+
+---
+
 Avec ce plan, tu vas obtenir un contenu **encore plus riche** que celui avec ta sœur. Et tu vas pouvoir nourrir ton produit avec des insights concrets, même si tu ne vises pas exactement son secteur.
+
+Bon weekend, et surtout, **amuse-toi bien** — c'est ça le secret d'un bon entretien utilisateur.

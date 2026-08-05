@@ -101,7 +101,7 @@ fn model_to_contact(model: contact_entity::Model) -> Contact {
     let email = Email::new(model.email.unwrap_or_default());
     let phone = model.phone.map(PhoneNumber::new);
     Contact {
-            company: None,
+        company: None,
 
         id: model.id,
         tenant_id: TenantId::new(model.tenant_id),
@@ -287,7 +287,6 @@ impl DomainContactRepo for CinqContactRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(count)
     }
-
 }
 
 // ---------- Deal Repository ----------

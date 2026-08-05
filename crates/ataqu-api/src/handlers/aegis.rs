@@ -28,7 +28,9 @@ pub async fn create_user(
     Json(req): Json<CreateUserRequest>,
 ) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
     info!("Create user request");
     let email = Email::new(req.email);
@@ -214,7 +216,9 @@ pub async fn sso_callback(
     Json(_req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
     // SSO token exchange and user profile fetch are not yet implemented.
-    Err(ApiResponseError::Internal("SSO callback not fully implemented".to_string()))
+    Err(ApiResponseError::Internal(
+        "SSO callback not fully implemented".to_string(),
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -292,10 +296,7 @@ pub async fn deactivate_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-pub async fn logout(
-    State(state): State<AppState>,
-    auth: AuthContext,
-) -> ApiResult<StatusCode> {
+pub async fn logout(State(state): State<AppState>, auth: AuthContext) -> ApiResult<StatusCode> {
     // The token is already validated by the auth middleware.
     // We just need to call the service to revoke it.
     // In a real system, the middleware would pass the raw token.
@@ -321,7 +322,13 @@ pub async fn create_api_key(
 ) -> ApiResult<Json<serde_json::Value>> {
     let key = state
         .aegis_service
-        .create_api_key(auth.tenant_id, auth.user_id, req.name, None, req.scopes.unwrap_or_default())
+        .create_api_key(
+            auth.tenant_id,
+            auth.user_id,
+            req.name,
+            None,
+            req.scopes.unwrap_or_default(),
+        )
         .await
         .map_err(map_aegis_error)?;
     Ok(Json(serde_json::json!({

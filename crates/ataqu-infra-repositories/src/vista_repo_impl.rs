@@ -298,5 +298,4 @@ impl VistaRepository for VistaRepositoryImpl {
         // TODO: Implement actual DB query
         Ok(None)
     }
-
 }

@@ -39,7 +39,8 @@ impl From<ataqu_application::sond_service::Form> for FormResponse {
             .questions
             .iter()
             .map(|q| {
-                let mut val = serde_json::to_value(&q.question_type).unwrap_or(serde_json::Value::Null);
+                let mut val =
+                    serde_json::to_value(&q.question_type).unwrap_or(serde_json::Value::Null);
                 if let Some(obj) = val.as_object_mut() {
                     obj.insert("id".into(), q.id.to_string().into());
                     obj.insert("label".into(), q.label.clone().into());
@@ -143,8 +144,12 @@ pub async fn update_form(
         .update_form(auth.tenant_id, cmd)
         .await
         .map_err(|e| match e {
-            ataqu_application::sond_service::SondServiceError::FormNotFound => ApiResponseError::not_found("Form not found"),
-            ataqu_application::sond_service::SondServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+            ataqu_application::sond_service::SondServiceError::FormNotFound => {
+                ApiResponseError::not_found("Form not found")
+            }
+            ataqu_application::sond_service::SondServiceError::Validation(msg)
+                if msg.contains("Version mismatch") =>
+            {
                 ApiResponseError::conflict(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
@@ -230,8 +235,7 @@ pub struct PaginationParams {
 }
 
 pub fn public_routes() -> Router<AppState> {
-    Router::new()
-        .route("/forms/:id/submit", axum::routing::post(submit_form))
+    Router::new().route("/forms/:id/submit", axum::routing::post(submit_form))
 }
 
 pub fn routes() -> Router<AppState> {

@@ -42,7 +42,7 @@ fn workflow_model_to_domain(model: workflow_entity::Model) -> Workflow {
             .unwrap_or_default();
 
     Workflow {
-            webhook_secret: None,
+        webhook_secret: None,
 
         id: model.id,
         tenant_id: model.tenant_id,
@@ -225,9 +225,12 @@ impl SparkRepository for SparkRepositoryImpl {
         Ok(())
     }
 
-    async fn delete_workflow(&self, _tenant_id: &TenantId, _workflow_id: &Uuid) -> Result<(), SparkError> {
+    async fn delete_workflow(
+        &self,
+        _tenant_id: &TenantId,
+        _workflow_id: &Uuid,
+    ) -> Result<(), SparkError> {
         // TODO: Implement actual DB delete
         Ok(())
     }
-
 }

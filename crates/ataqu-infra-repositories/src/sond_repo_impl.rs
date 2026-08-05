@@ -52,7 +52,6 @@ impl SondRepositoryImpl {
 
 #[async_trait]
 impl SondRepository for SondRepositoryImpl {
-
     async fn get_form_by_id(&self, _form_id: Uuid) -> Result<Option<Form>, SondError> {
         // TODO: implement actual query
         Ok(None)

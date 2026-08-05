@@ -17,9 +17,7 @@ pub struct RateLimiter {
 
 impl RateLimiter {
     pub fn new(max_requests: usize, window: Duration) -> Self {
-        let requests = Cache::builder()
-            .time_to_live(window)
-            .build();
+        let requests = Cache::builder().time_to_live(window).build();
         Self {
             requests: Arc::new(Mutex::new(requests)),
             max_requests,

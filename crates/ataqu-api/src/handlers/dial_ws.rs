@@ -1,8 +1,7 @@
 use axum::{
     Router,
     extract::{
-        Query,
-        State,
+        Query, State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
     response::Response,
@@ -25,15 +24,16 @@ pub async fn ws_handler(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Result<Response, ApiResponseError> {
-    let token = params.get("token").ok_or_else(|| {
-        ApiResponseError::unauthorized("Missing token query parameter")
-    })?;
+    let token = params
+        .get("token")
+        .ok_or_else(|| ApiResponseError::unauthorized("Missing token query parameter"))?;
 
     let token_data = jsonwebtoken::decode::<crate::middleware::auth::JwtClaims>(
         token,
         &jsonwebtoken::DecodingKey::from_secret(&state.jwt_secret),
         &jsonwebtoken::Validation::default(),
-    ).map_err(|_| ApiResponseError::unauthorized("Invalid token"))?;
+    )
+    .map_err(|_| ApiResponseError::unauthorized("Invalid token"))?;
 
     if token_data.claims.token_type != "access" {
         return Err(ApiResponseError::unauthorized("Invalid token type"));

@@ -224,7 +224,10 @@ fn generate_token_pair(
     let claims = JwtClaims {
         sub: user.id.to_string(),
         tenant_id: user.tenant_id.as_uuid(),
-        email: user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+        email: user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string(),
         roles: vec![user.role.clone()],
         exp: now + config.access_token_ttl.as_secs() as usize,
         iat: now,

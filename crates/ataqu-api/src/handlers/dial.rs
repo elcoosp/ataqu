@@ -220,7 +220,8 @@ pub async fn send_message(
         "author_id": msg.author_id.as_uuid(),
         "content": msg.content,
         "created_at": msg.created_at,
-    }).to_string();
+    })
+    .to_string();
     if let Some(subscribers) = state.ws_registry.get(&key) {
         for entry in subscribers.iter() {
             let _ = entry.value().send(broadcast.clone());
@@ -442,7 +443,9 @@ pub async fn upload_file(
     while let Ok(Some(_field)) = multipart.next_field().await {
         // Consume the field to avoid connection errors
     }
-    Err(ApiResponseError::Internal("File upload not fully implemented".to_string()))
+    Err(ApiResponseError::Internal(
+        "File upload not fully implemented".to_string(),
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -502,7 +505,9 @@ pub async fn delete_reaction(
         .delete_reaction(auth.tenant_id, message_id, reaction_id)
         .await
         .map_err(|e| match e {
-            ataqu_application::dial_service::DialServiceError::Validation(msg) => ApiResponseError::validation(&msg),
+            ataqu_application::dial_service::DialServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
     Ok(StatusCode::NO_CONTENT)
@@ -512,11 +517,11 @@ pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
         .route("/channels", post(create_channel).get(list_channels))
+        .route("/channels/:id", get(get_channel).put(update_channel))
         .route(
-            "/channels/:id",
-            get(get_channel).put(update_channel),
+            "/channels/:id/archive",
+            axum::routing::post(archive_channel),
         )
-        .route("/channels/:id/archive", axum::routing::post(archive_channel))
         .route(
             "/channels/:id/messages",
             post(send_message).get(list_messages),

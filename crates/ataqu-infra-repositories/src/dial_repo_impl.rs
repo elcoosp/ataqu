@@ -155,7 +155,6 @@ impl DialRepositoryImpl {
 
 #[async_trait]
 impl DialRepository for DialRepositoryImpl {
-
     async fn get_reaction(
         &self,
         _tenant_id: &TenantId,

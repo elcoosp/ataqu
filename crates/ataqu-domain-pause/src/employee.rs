@@ -72,14 +72,16 @@ pub struct UpdateEmployeeCommand {
     pub department: Option<Option<String>>,
 }
 
-pub fn update_employee(
-    employee: &mut Employee,
-    cmd: UpdateEmployeeCommand,
-    clock: &dyn Clock,
-) {
-    if let Some(name) = cmd.full_name { employee.full_name = name; }
-    if let Some(title) = cmd.job_title { employee.job_title = title; }
-    if let Some(dept) = cmd.department { employee.department = dept; }
+pub fn update_employee(employee: &mut Employee, cmd: UpdateEmployeeCommand, clock: &dyn Clock) {
+    if let Some(name) = cmd.full_name {
+        employee.full_name = name;
+    }
+    if let Some(title) = cmd.job_title {
+        employee.job_title = title;
+    }
+    if let Some(dept) = cmd.department {
+        employee.department = dept;
+    }
     employee.updated_at = clock.now();
 }
 

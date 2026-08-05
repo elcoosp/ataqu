@@ -103,24 +103,43 @@ impl TempoService {
             ));
         }
 
-        let event_types = self.repo.list_event_types(&cmd.tenant_id).await.map_err(TempoServiceError::Repository)?;
-        let _event_type = event_types.iter().find(|et| et.id.0 == cmd.event_type_id).cloned()
-            .ok_or(TempoServiceError::Validation("Event type not found".to_string()))?;
+        let event_types = self
+            .repo
+            .list_event_types(&cmd.tenant_id)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        let _event_type = event_types
+            .iter()
+            .find(|et| et.id.0 == cmd.event_type_id)
+            .cloned()
+            .ok_or(TempoServiceError::Validation(
+                "Event type not found".to_string(),
+            ))?;
 
         let starts_at: std::time::SystemTime = cmd.starts_at.into();
-        let ends_at = starts_at + std::time::Duration::from_secs((cmd.duration_minutes * 60) as u64);
+        let ends_at =
+            starts_at + std::time::Duration::from_secs((cmd.duration_minutes * 60) as u64);
 
-        if self.repo.check_overlap(&cmd.tenant_id, cmd.event_type_id, starts_at, ends_at).await.map_err(TempoServiceError::Repository)? {
+        if self
+            .repo
+            .check_overlap(&cmd.tenant_id, cmd.event_type_id, starts_at, ends_at)
+            .await
+            .map_err(TempoServiceError::Repository)?
+        {
             return Err(TempoServiceError::Validation(
                 "Booking overlaps with existing booking".to_string(),
             ));
         }
 
         // ADR-032: Check availability slots
-        let slots = self.repo.list_availability_slots(&cmd.tenant_id, &cmd.event_type_id).await.map_err(TempoServiceError::Repository)?;
-        let is_available = slots.iter().any(|slot| {
-            slot.start_time <= cmd.starts_at && slot.end_time >= cmd.starts_at
-        });
+        let slots = self
+            .repo
+            .list_availability_slots(&cmd.tenant_id, &cmd.event_type_id)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        let is_available = slots
+            .iter()
+            .any(|slot| slot.start_time <= cmd.starts_at && slot.end_time >= cmd.starts_at);
         if !is_available {
             return Err(TempoServiceError::Validation(
                 "Booking time is outside of available slots".to_string(),

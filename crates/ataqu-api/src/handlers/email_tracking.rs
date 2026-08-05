@@ -6,7 +6,7 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_contracts::cinq::TrackEmailRequest;
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 
 #[derive(Debug, serde::Serialize)]
 pub struct TrackEmailResponse {
@@ -41,7 +41,9 @@ pub async fn track_email_public(
     match state.email_tracking_tx.try_send(tracking_event) {
         Ok(()) => {
             // 1x1 transparent GIF
-            let pixel = general_purpose::STANDARD.decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7").unwrap();
+            let pixel = general_purpose::STANDARD
+                .decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
+                .unwrap();
             Ok((
                 axum::http::StatusCode::OK,
                 [(axum::http::header::CONTENT_TYPE, "image/gif")],
@@ -51,7 +53,9 @@ pub async fn track_email_public(
         Err(_) => {
             // ADR-031: Spill to JSONL is handled by the writer on DB failure.
             // If the channel is full, we still return 200 to the email client to prevent broken images.
-            let pixel = general_purpose::STANDARD.decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7").unwrap();
+            let pixel = general_purpose::STANDARD
+                .decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
+                .unwrap();
             Ok((
                 axum::http::StatusCode::OK,
                 [(axum::http::header::CONTENT_TYPE, "image/gif")],

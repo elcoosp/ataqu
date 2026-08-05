@@ -180,7 +180,8 @@ impl DialService {
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
             .await?;
-        if (channel.channel_type == ChannelType::Private || channel.channel_type == ChannelType::DirectMessage)
+        if (channel.channel_type == ChannelType::Private
+            || channel.channel_type == ChannelType::DirectMessage)
             && !channel.participants.contains(&UserId::new(requester_id))
         {
             return Err(DialServiceError::Validation(
@@ -207,7 +208,8 @@ impl DialService {
         let channel_id = ChannelId::new(cmd.channel_id);
         let channel = self.repo.get_channel(&cmd.tenant_id, &channel_id).await?;
 
-        if (channel.channel_type == ChannelType::Private || channel.channel_type == ChannelType::DirectMessage)
+        if (channel.channel_type == ChannelType::Private
+            || channel.channel_type == ChannelType::DirectMessage)
             && !channel.participants.contains(&UserId::new(cmd.author_id))
         {
             return Err(DialServiceError::Validation(
@@ -350,7 +352,8 @@ impl DialService {
     ) -> DialResult<Vec<Message>> {
         let channel_id_obj = ChannelId::new(channel_id);
         let channel = self.repo.get_channel(&tenant_id, &channel_id_obj).await?;
-        if (channel.channel_type == ChannelType::Private || channel.channel_type == ChannelType::DirectMessage)
+        if (channel.channel_type == ChannelType::Private
+            || channel.channel_type == ChannelType::DirectMessage)
             && !channel.participants.contains(&UserId::new(requester_id))
         {
             return Err(DialServiceError::Validation(
@@ -513,12 +516,18 @@ impl DialService {
         user_id: Uuid,
         emoji: String,
     ) -> DialResult<Reaction> {
-        let reactions = self.repo
+        let reactions = self
+            .repo
             .list_reactions_for_message(&tenant_id, &MessageId::new(message_id))
             .await?;
 
-        if reactions.iter().any(|r| r.user_id == UserId::new(user_id) && r.emoji == emoji) {
-            return Err(DialServiceError::Validation("Reaction already exists".to_string()));
+        if reactions
+            .iter()
+            .any(|r| r.user_id == UserId::new(user_id) && r.emoji == emoji)
+        {
+            return Err(DialServiceError::Validation(
+                "Reaction already exists".to_string(),
+            ));
         }
 
         let reaction = Reaction {
@@ -544,15 +553,25 @@ impl DialService {
             .map_err(DialServiceError::Domain)
     }
 
-    pub async fn delete_reaction(&self, tenant_id: TenantId, message_id: Uuid, reaction_id: Uuid) -> DialResult<()> {
-        let reaction = self.repo
+    pub async fn delete_reaction(
+        &self,
+        tenant_id: TenantId,
+        message_id: Uuid,
+        reaction_id: Uuid,
+    ) -> DialResult<()> {
+        let reaction = self
+            .repo
             .get_reaction(&tenant_id, &reaction_id)
             .await
             .map_err(DialServiceError::Domain)?
-            .ok_or(DialServiceError::Validation("Reaction not found".to_string()))?;
+            .ok_or(DialServiceError::Validation(
+                "Reaction not found".to_string(),
+            ))?;
 
         if reaction.message_id.as_uuid() != message_id {
-            return Err(DialServiceError::Validation("Reaction does not belong to the specified message".to_string()));
+            return Err(DialServiceError::Validation(
+                "Reaction does not belong to the specified message".to_string(),
+            ));
         }
 
         self.repo

@@ -1,5 +1,5 @@
-use tracing::info;
 use std::time::Duration;
+use tracing::info;
 
 pub async fn run_cron_worker() {
     info!("Starting cron worker...");

@@ -198,7 +198,9 @@ pub async fn update_contact(
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
                 ApiResponseError::not_found("Contact not found")
             }
-            ataqu_application::cinq_service::CinqServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+            ataqu_application::cinq_service::CinqServiceError::Validation(msg)
+                if msg.contains("Version mismatch") =>
+            {
                 ApiResponseError::conflict(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
@@ -331,7 +333,9 @@ pub async fn update_deal(
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
                 ApiResponseError::not_found("Deal not found")
             }
-            ataqu_application::cinq_service::CinqServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+            ataqu_application::cinq_service::CinqServiceError::Validation(msg)
+                if msg.contains("Version mismatch") =>
+            {
                 ApiResponseError::conflict(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
@@ -648,9 +652,12 @@ pub async fn export_csv(
         StatusCode::OK,
         [
             (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
-            (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"contacts.csv\"".to_string()),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                "attachment; filename=\"contacts.csv\"".to_string(),
+            ),
         ],
-        data
+        data,
     ))
 }
 
@@ -793,8 +800,12 @@ pub async fn update_task(
         .update_task(cmd)
         .await
         .map_err(|e| match e {
-            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => ApiResponseError::not_found("Task not found"),
-            ataqu_application::cinq_service::CinqServiceError::Validation(msg) if msg.contains("Version mismatch") => {
+            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
+                ApiResponseError::not_found("Task not found")
+            }
+            ataqu_application::cinq_service::CinqServiceError::Validation(msg)
+                if msg.contains("Version mismatch") =>
+            {
                 ApiResponseError::conflict(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
@@ -812,7 +823,9 @@ pub async fn delete_task(
         .delete_task(auth.tenant_id, id)
         .await
         .map_err(|e| match e {
-            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => ApiResponseError::not_found("Task not found"),
+            ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
+                ApiResponseError::not_found("Task not found")
+            }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
     Ok(StatusCode::NO_CONTENT)
@@ -842,8 +855,10 @@ pub async fn track_email(
 
 // ---------- Router ----------
 pub fn public_routes() -> Router<AppState> {
-    Router::new()
-        .route("/email/track/public", axum::routing::get(super::email_tracking::track_email_public))
+    Router::new().route(
+        "/email/track/public",
+        axum::routing::get(super::email_tracking::track_email_public),
+    )
 }
 
 pub fn routes() -> Router<AppState> {

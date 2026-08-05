@@ -1,8 +1,8 @@
+use ataqu_kernel::Identifiable;
 use sea_orm::{
     ConnectionTrait, DatabaseBackend, DatabaseTransaction, DbErr, RuntimeErr, Statement,
 };
 use std::future::Future;
-use ataqu_kernel::Identifiable;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -25,7 +25,10 @@ pub struct BatchResult<T: Clone> {
 
 impl<T: Clone> BatchResult<T> {
     pub fn partial(successes: Vec<Uuid>, failures: Vec<DLQEntry<T>>) -> Self {
-        Self { successes, failures }
+        Self {
+            successes,
+            failures,
+        }
     }
 }
 
@@ -45,25 +48,36 @@ where
 
     for chunk in items.chunks(chunk_size) {
         txn.execute_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres, "SAVEPOINT chunk_sp", [],
-        )).await?;
+            DatabaseBackend::Postgres,
+            "SAVEPOINT chunk_sp",
+            [],
+        ))
+        .await?;
 
         match insert_fn(&mut *txn, chunk).await {
             Ok(_) => {
                 txn.execute_raw(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres, "RELEASE SAVEPOINT chunk_sp", [],
-                )).await?;
+                    DatabaseBackend::Postgres,
+                    "RELEASE SAVEPOINT chunk_sp",
+                    [],
+                ))
+                .await?;
                 successes.extend(chunk.iter().map(|i| i.id()));
             }
             Err(e) => {
                 txn.execute_raw(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres, "ROLLBACK TO SAVEPOINT chunk_sp", [],
-                )).await?;
+                    DatabaseBackend::Postgres,
+                    "ROLLBACK TO SAVEPOINT chunk_sp",
+                    [],
+                ))
+                .await?;
 
                 let is_data_violation = match &e {
                     DbErr::Query(RuntimeErr::SqlxError(arc)) => {
                         if let sqlx::Error::Database(db_err) = arc.as_ref() {
-                            db_err.is_unique_violation() || db_err.is_foreign_key_violation() || db_err.is_check_violation()
+                            db_err.is_unique_violation()
+                                || db_err.is_foreign_key_violation()
+                                || db_err.is_check_violation()
                         } else {
                             false
                         }
@@ -77,19 +91,28 @@ where
 
                 for item in chunk {
                     txn.execute_raw(Statement::from_sql_and_values(
-                        DatabaseBackend::Postgres, "SAVEPOINT item_sp", [],
-                    )).await?;
+                        DatabaseBackend::Postgres,
+                        "SAVEPOINT item_sp",
+                        [],
+                    ))
+                    .await?;
                     match insert_fn(&mut *txn, std::slice::from_ref(item)).await {
                         Ok(_) => {
                             txn.execute_raw(Statement::from_sql_and_values(
-                                DatabaseBackend::Postgres, "RELEASE SAVEPOINT item_sp", [],
-                            )).await?;
+                                DatabaseBackend::Postgres,
+                                "RELEASE SAVEPOINT item_sp",
+                                [],
+                            ))
+                            .await?;
                             successes.push(item.id());
                         }
                         Err(e) => {
                             txn.execute_raw(Statement::from_sql_and_values(
-                                DatabaseBackend::Postgres, "ROLLBACK TO SAVEPOINT item_sp", [],
-                            )).await?;
+                                DatabaseBackend::Postgres,
+                                "ROLLBACK TO SAVEPOINT item_sp",
+                                [],
+                            ))
+                            .await?;
                             failures.push(DLQEntry::new(item.clone(), e.to_string()));
                         }
                     }

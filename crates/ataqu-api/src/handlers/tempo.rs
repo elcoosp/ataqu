@@ -344,8 +344,14 @@ pub async fn get_public_event_type(
 
 pub fn public_routes() -> Router<AppState> {
     Router::new()
-        .route("/public/:tenant_id/event-types/:slug", axum::routing::get(get_public_event_type))
-        .route("/public/:tenant_id/bookings", axum::routing::post(public_create_booking))
+        .route(
+            "/public/:tenant_id/event-types/:slug",
+            axum::routing::get(get_public_event_type),
+        )
+        .route(
+            "/public/:tenant_id/bookings",
+            axum::routing::post(public_create_booking),
+        )
 }
 
 pub fn routes() -> Router<AppState> {

@@ -253,9 +253,7 @@ pub async fn create_block(
         "view" => BlockType::View {
             filter: "".to_string(),
         },
-        "checklist" => BlockType::Checklist {
-            items: vec![],
-        },
+        "checklist" => BlockType::Checklist { items: vec![] },
         _ => return Err(ApiResponseError::validation("Invalid block_type")),
     };
     let cmd = CreateBlockCommand {

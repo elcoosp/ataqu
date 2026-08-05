@@ -75,7 +75,6 @@ impl SparkService {
     }
 
     pub async fn create_workflow(&self, cmd: CreateWorkflowCommand) -> SparkResult<Workflow> {
-
         let domain_cmd = ataqu_domain_spark::CreateWorkflowCommand {
             tenant_id: cmd.tenant_id.as_uuid(),
             name: cmd.name,
@@ -102,8 +101,12 @@ impl SparkService {
 
     pub async fn update_workflow(&self, cmd: UpdateWorkflowCommand) -> SparkResult<Workflow> {
         let mut workflow = self.get_workflow(cmd.tenant_id, cmd.id).await?;
-        if let Some(name) = cmd.name { workflow.name = name; }
-        if let Some(is_active) = cmd.is_active { workflow.is_active = is_active; }
+        if let Some(name) = cmd.name {
+            workflow.name = name;
+        }
+        if let Some(is_active) = cmd.is_active {
+            workflow.is_active = is_active;
+        }
         workflow.updated_at = self.clock.now();
         self.repo.update_workflow(&workflow).await?;
         Ok(workflow)
@@ -148,7 +151,11 @@ impl SparkService {
         if let Some(expected_secret) = &workflow.webhook_secret {
             match webhook_secret {
                 Some(provided) if provided == *expected_secret => {}
-                _ => return Err(SparkServiceError::Validation("Invalid or missing webhook secret".to_string())),
+                _ => {
+                    return Err(SparkServiceError::Validation(
+                        "Invalid or missing webhook secret".to_string(),
+                    ));
+                }
             }
         }
 

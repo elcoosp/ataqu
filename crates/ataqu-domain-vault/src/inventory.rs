@@ -96,10 +96,19 @@ impl Variant {
         Ok(new)
     }
 
-    pub fn update_variant(&self, price: Option<i64>, sku: Option<String>, clock: &dyn Clock) -> Self {
+    pub fn update_variant(
+        &self,
+        price: Option<i64>,
+        sku: Option<String>,
+        clock: &dyn Clock,
+    ) -> Self {
         let mut new = self.clone();
-        if let Some(p) = price { new.price = p; }
-        if let Some(s) = sku { new.sku = s; }
+        if let Some(p) = price {
+            new.price = p;
+        }
+        if let Some(s) = sku {
+            new.sku = s;
+        }
         new.updated_at = clock.now();
         new
     }

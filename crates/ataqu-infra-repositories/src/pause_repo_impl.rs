@@ -263,7 +263,6 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
         // TODO: Implement actual DB update
         Ok(())
     }
-
 }
 
 #[async_trait]

@@ -155,7 +155,9 @@ pub async fn execute_raw_sql(
         .execute_raw_sql(auth.tenant_id, &payload.sql)
         .await
         .map_err(|e| match e {
-            ataqu_application::vista_service::VistaServiceError::Validation(msg) => ApiResponseError::validation(&msg),
+            ataqu_application::vista_service::VistaServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
     Ok(Json(results))
@@ -191,7 +193,13 @@ pub fn routes() -> Router<AppState> {
             "/dashboards",
             axum::routing::post(create_dashboard).get(list_dashboards),
         )
-        .route("/dashboards/:id", axum::routing::delete(delete_dashboard).put(update_dashboard))
+        .route(
+            "/dashboards/:id",
+            axum::routing::delete(delete_dashboard).put(update_dashboard),
+        )
         .route("/raw-sql", axum::routing::post(execute_raw_sql))
-        .route("/data-points/:metric", axum::routing::get(get_data_points_handler))
+        .route(
+            "/data-points/:metric",
+            axum::routing::get(get_data_points_handler),
+        )
 }

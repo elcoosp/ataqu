@@ -41,9 +41,13 @@ where
     type Rejection = ApiResponseError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        parts.extensions.get::<AuthContext>().cloned().ok_or_else(|| {
-            ApiResponseError::unauthorized("Missing or invalid Authorization header or API Key")
-        })
+        parts
+            .extensions
+            .get::<AuthContext>()
+            .cloned()
+            .ok_or_else(|| {
+                ApiResponseError::unauthorized("Missing or invalid Authorization header or API Key")
+            })
     }
 }
 

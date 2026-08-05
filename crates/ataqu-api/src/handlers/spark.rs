@@ -183,18 +183,27 @@ pub async fn webhook_trigger(
         .map(|s| s.to_string());
     state
         .spark_service
-        .trigger_workflow_public(ataqu_kernel::TenantId::new(tenant_id), workflow_id, payload, webhook_secret)
+        .trigger_workflow_public(
+            ataqu_kernel::TenantId::new(tenant_id),
+            workflow_id,
+            payload,
+            webhook_secret,
+        )
         .await
         .map_err(|e| match e {
-            ataqu_application::spark_service::SparkServiceError::Validation(msg) => ApiResponseError::validation(&msg),
+            ataqu_application::spark_service::SparkServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
     Ok(StatusCode::ACCEPTED)
 }
 
 pub fn public_routes() -> Router<AppState> {
-    Router::new()
-        .route("/webhooks/:tenant_id/:workflow_id", axum::routing::post(webhook_trigger))
+    Router::new().route(
+        "/webhooks/:tenant_id/:workflow_id",
+        axum::routing::post(webhook_trigger),
+    )
 }
 
 pub async fn list_templates(
@@ -248,7 +257,7 @@ pub async fn list_templates(
                     "content": "Low stock alert for variant {variant_id}"
                 }
             ]
-        })
+        }),
     ];
     Ok(Json(templates))
 }
@@ -257,7 +266,12 @@ pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post};
     Router::new()
         .route("/workflows", get(list_workflows).post(create_workflow))
-        .route("/workflows/:id", get(get_workflow).put(update_workflow).delete(delete_workflow))
+        .route(
+            "/workflows/:id",
+            get(get_workflow)
+                .put(update_workflow)
+                .delete(delete_workflow),
+        )
         .route("/workflows/:id/execute", post(execute_workflow))
         .route("/templates", get(list_templates))
 }

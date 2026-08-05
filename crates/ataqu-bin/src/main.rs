@@ -314,7 +314,12 @@ async fn main() -> anyhow::Result<()> {
                         .await
                         .map_err(|e| e.to_string())?;
                 }
-                Action::Webhook { url, method, body, headers } => {
+                Action::Webhook {
+                    url,
+                    method,
+                    body,
+                    headers,
+                } => {
                     let client = reqwest::Client::new();
                     let mut req = match method.to_uppercase().as_str() {
                         "POST" => client.post(url),
@@ -329,7 +334,12 @@ async fn main() -> anyhow::Result<()> {
                     req = req.json(&body);
                     req.send().await.map_err(|e| e.to_string())?;
                 }
-                Action::Webhook { url, method, body, headers } => {
+                Action::Webhook {
+                    url,
+                    method,
+                    body,
+                    headers,
+                } => {
                     let client = reqwest::Client::new();
                     let mut req = match method.to_uppercase().as_str() {
                         "POST" => client.post(url),
@@ -385,7 +395,9 @@ async fn main() -> anyhow::Result<()> {
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
     let pause_doc_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
-    let pause_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let pause_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
     let pause_service = Arc::new(PauseService::new(
         pause_idempotency,
         pause_employee_repo,
@@ -473,7 +485,11 @@ async fn main() -> anyhow::Result<()> {
 
             // Handle internal system events that don't fit SPARK's trigger/action model
             if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
-                let booking_id = event.payload.get("booking_id").and_then(|v| v.as_str()).unwrap_or("unknown");
+                let booking_id = event
+                    .payload
+                    .get("booking_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown");
                 tracing::info!(booking_id = %booking_id, "TEMPO SendBookingReminder event received. Email sending not yet implemented.");
             }
 

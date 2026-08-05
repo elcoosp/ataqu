@@ -172,7 +172,11 @@ impl PauseService {
         Ok(event.leave_request_id)
     }
 
-    pub async fn find_employee(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<ataqu_domain_pause::Employee, PauseServiceError> {
+    pub async fn find_employee(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+    ) -> Result<ataqu_domain_pause::Employee, PauseServiceError> {
         self.employee_repo
             .find_by_id(tenant_id, employee_id)
             .await
@@ -180,7 +184,11 @@ impl PauseService {
             .ok_or(PauseServiceError::NotFound)
     }
 
-    pub async fn find_leave_request(&self, tenant_id: &TenantId, leave_id: Uuid) -> Result<ataqu_domain_pause::LeaveRequest, PauseServiceError> {
+    pub async fn find_leave_request(
+        &self,
+        tenant_id: &TenantId,
+        leave_id: Uuid,
+    ) -> Result<ataqu_domain_pause::LeaveRequest, PauseServiceError> {
         self.leave_request_repo
             .find_by_id(tenant_id, leave_id)
             .await
@@ -297,7 +305,11 @@ impl PauseService {
         Ok(request)
     }
 
-    pub async fn update_employee(&self, tenant_id: &TenantId, cmd: ataqu_domain_pause::employee::UpdateEmployeeCommand) -> Result<ataqu_domain_pause::Employee, PauseServiceError> {
+    pub async fn update_employee(
+        &self,
+        tenant_id: &TenantId,
+        cmd: ataqu_domain_pause::employee::UpdateEmployeeCommand,
+    ) -> Result<ataqu_domain_pause::Employee, PauseServiceError> {
         let mut employee = self.find_employee(tenant_id, cmd.employee_id).await?;
         ataqu_domain_pause::employee::update_employee(&mut employee, cmd, self.clock.as_ref());
         self.employee_repo.update(tenant_id, &employee).await?;
@@ -315,7 +327,11 @@ impl PauseService {
         Ok(employee)
     }
 
-    pub async fn deactivate_employee(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<(), PauseServiceError> {
+    pub async fn deactivate_employee(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+    ) -> Result<(), PauseServiceError> {
         let mut employee = self
             .employee_repo
             .find_by_id(tenant_id, employee_id)

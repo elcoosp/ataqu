@@ -394,7 +394,7 @@ impl TempoRepository for TempoRepositoryImpl {
         ends_at: std::time::SystemTime,
     ) -> Result<bool, String> {
         use sea_orm::EntityTrait;
-use sea_orm::PaginatorTrait;
+        use sea_orm::PaginatorTrait;
         let starts_at_dt: chrono::DateTime<chrono::Utc> = starts_at.into();
         let ends_at_dt: chrono::DateTime<chrono::Utc> = ends_at.into();
 
@@ -411,7 +411,6 @@ use sea_orm::PaginatorTrait;
         Ok(count > 0)
     }
 
-
     async fn reschedule_booking(
         &self,
         _tenant_id: &TenantId,
@@ -421,5 +420,4 @@ use sea_orm::PaginatorTrait;
         // TODO: Implement actual DB update
         Ok(())
     }
-
 }
