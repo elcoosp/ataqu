@@ -129,8 +129,7 @@ pub fn validate_contact_email(email: &Email) -> CinqResult<()> {
 
 pub fn validate_contact_phone(phone: &Option<PhoneNumber>) -> CinqResult<()> {
     if let Some(p) = phone {
-        let phone_str = p.reveal(&ataqu_security::PiiAccessKey::new_for_test());
-        if phone_str.len() < 7 {
+        if p.as_ref().len() < 7 {
             return Err(CinqDomainError::InvalidPhone);
         }
     }

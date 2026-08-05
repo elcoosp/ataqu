@@ -103,7 +103,7 @@ impl RealAegisDomain {
     ) -> Result<(UserCreated, User), AuthError> {
         if !cmd
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+            .reveal(&ataqu_security::PiiAccessKey::new())
             .contains('@')
         {
             return Err(AuthError::InvalidCredentials);

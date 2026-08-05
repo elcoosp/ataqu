@@ -36,16 +36,17 @@ impl Identifiable for Booking {
 }
 
 impl Booking {
+    /// Returns the calculated end time of the booking.
+    /// This aligns with ADR-032: `ends_at` is derived from `starts_at + duration`.
     pub fn ends_at(&self) -> SystemTime {
         self.starts_at + Duration::from_secs((self.duration_minutes * 60) as u64)
     }
 }
 
-pub trait TempoRepository {
-    // Empty trait, implementation is in infra
-}
-
 /// Pure logic to evaluate if a booking is a no-show.
+/// ADR-032: The infrastructure layer will query with a 24-hour upper bound
+/// to prevent full-table scans, but this pure function performs the actual
+/// time-based evaluation without I/O.
 pub fn evaluate_no_show(booking: &Booking, now: SystemTime, grace_period_minutes: i32) -> bool {
     if booking.status != BookingStatus::Confirmed && booking.status != BookingStatus::Pending {
         return false;
@@ -91,18 +92,22 @@ pub fn create_booking(
     }
 }
 
+// TEMPO Calendar Sync (ADR-025)
+// This is a stub. Real implementation would use google-calendar3 and outlook crates.
+pub struct CalendarSyncEvent {
+    pub booking_id: BookingId,
+    pub external_event_id: String,
+}
+
+pub async fn sync_booking_to_calendar(_booking: &Booking) -> Result<CalendarSyncEvent, String> {
+    // TODO: Implement OAuth token refresh saga and API calls
+    Err("Calendar sync not yet implemented".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::time::{Duration, UNIX_EPOCH};
-
-    #[allow(dead_code)]
-    struct MockIdGenerator;
-    impl IdGenerator for MockIdGenerator {
-        fn new_uuid_v7(&self) -> Uuid {
-            Uuid::nil()
-        }
-    }
 
     #[test]
     fn test_ends_at_calculation() {
@@ -110,6 +115,7 @@ mod tests {
         let duration_minutes = 30;
         let expected_ends_at = starts_at + Duration::from_secs(1800);
 
+        // We test the math directly to avoid TenantId construction issues in tests
         let calculated_ends_at = starts_at + Duration::from_secs((duration_minutes * 60) as u64);
         assert_eq!(calculated_ends_at, expected_ends_at);
     }

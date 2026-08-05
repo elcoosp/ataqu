@@ -18,7 +18,7 @@ impl serde::Serialize for ApiEmail {
     where
         S: Serializer,
     {
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         serializer.serialize_str(self.0.reveal(&key))
     }
 }
@@ -37,7 +37,7 @@ impl serde::Serialize for ApiPhone {
     where
         S: Serializer,
     {
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         serializer.serialize_str(self.0.reveal(&key))
     }
 }
@@ -49,7 +49,7 @@ where
 {
     match email {
         Some(e) => {
-            let key = PiiAccessKey::new_for_test();
+            let key = PiiAccessKey::new();
             serializer.serialize_some(e.reveal(&key))
         }
         None => serializer.serialize_none(),
@@ -63,7 +63,7 @@ where
 {
     match phone {
         Some(p) => {
-            let key = PiiAccessKey::new_for_test();
+            let key = PiiAccessKey::new();
             serializer.serialize_some(p.reveal(&key))
         }
         None => serializer.serialize_none(),

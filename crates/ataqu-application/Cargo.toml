@@ -22,7 +22,7 @@ ataqu-domain-pivot = { version = "0.1.0", path = "../ataqu-domain-pivot" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 ataqu-contracts = { path = "../ataqu-contracts" }
-ataqu-security = { version = "0.1.0", path = "../ataqu-security" }
+ataqu-security = { version = "0.1.0", path = "../ataqu-security", features = ["infra-pii-access"] }
 ataqu-domain-aegis = { version = "0.1.0", path = "../ataqu-domain-aegis" }
 ataqu-domain-pause = { version = "0.1.0", path = "../ataqu-domain-pause" }
 ataqu-domain-dial = { version = "0.1.0", path = "../ataqu-domain-dial" }
