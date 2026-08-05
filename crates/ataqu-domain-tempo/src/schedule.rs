@@ -36,26 +36,16 @@ impl Identifiable for Booking {
 }
 
 impl Booking {
-    /// Returns the calculated end time of the booking.
-    /// This aligns with ADR-032: `ends_at` is derived from `starts_at + duration`.
     pub fn ends_at(&self) -> SystemTime {
         self.starts_at + Duration::from_secs((self.duration_minutes * 60) as u64)
     }
 }
 
-/// Repository trait for TEMPO domain.
-/// Implemented by `ataqu-infra-repositories`.
-/// No I/O or async logic resides in the domain layer.
 pub trait TempoRepository {
-    // Infrastructure will implement methods like:
-    // fn get_bookings_for_no_show_check(&self, tenant_id: &TenantId, upper_bound: SystemTime) -> Result<Vec<Booking>, RepositoryError>;
-    // fn update_booking_status(&self, tenant_id: &TenantId, booking_id: &BookingId, status: BookingStatus) -> Result<(), RepositoryError>;
+    // Empty trait, implementation is in infra
 }
 
 /// Pure logic to evaluate if a booking is a no-show.
-/// ADR-032: The infrastructure layer will query with a 24-hour upper bound
-/// to prevent full-table scans, but this pure function performs the actual
-/// time-based evaluation without I/O.
 pub fn evaluate_no_show(booking: &Booking, now: SystemTime, grace_period_minutes: i32) -> bool {
     if booking.status != BookingStatus::Confirmed && booking.status != BookingStatus::Pending {
         return false;
@@ -63,6 +53,20 @@ pub fn evaluate_no_show(booking: &Booking, now: SystemTime, grace_period_minutes
     let ends_at = booking.ends_at();
     let no_show_threshold = ends_at + Duration::from_secs((grace_period_minutes * 60) as u64);
     now >= no_show_threshold
+}
+
+/// Pure logic to check if a new booking overlaps with any existing active bookings.
+pub fn check_overlap(starts_at: SystemTime, duration_minutes: i32, existing: &[Booking]) -> bool {
+    let ends_at = starts_at + Duration::from_secs((duration_minutes * 60) as u64);
+    for b in existing {
+        if b.status != BookingStatus::Cancelled && b.status != BookingStatus::Completed {
+            let b_ends_at = b.ends_at();
+            if starts_at < b_ends_at && ends_at > b.starts_at {
+                return true; // Overlap found
+            }
+        }
+    }
+    false
 }
 
 /// Pure function to create a new booking.
@@ -89,7 +93,15 @@ pub fn create_booking(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use std::time::{Duration, UNIX_EPOCH};
+
+    struct MockIdGenerator;
+    impl IdGenerator for MockIdGenerator {
+        fn new_uuid_v7(&self) -> Uuid {
+            Uuid::nil()
+        }
+    }
 
     #[test]
     fn test_ends_at_calculation() {
@@ -97,7 +109,6 @@ mod tests {
         let duration_minutes = 30;
         let expected_ends_at = starts_at + Duration::from_secs(1800);
 
-        // We test the math directly to avoid TenantId construction issues in tests
         let calculated_ends_at = starts_at + Duration::from_secs((duration_minutes * 60) as u64);
         assert_eq!(calculated_ends_at, expected_ends_at);
     }
@@ -120,5 +131,42 @@ mod tests {
             !(not_yet_no_show >= no_show_threshold),
             "Should not be a no-show yet"
         );
+    }
+
+    #[test]
+    fn test_check_overlap() {
+        let existing_booking = Booking {
+            id: BookingId(Uuid::nil()),
+            tenant_id: TenantId::new(Uuid::nil()),
+            event_type_id: EventTypeId(Uuid::nil()),
+            starts_at: UNIX_EPOCH + Duration::from_secs(1000),
+            duration_minutes: 60, // ends at 4600
+            status: BookingStatus::Confirmed,
+            timezone: "UTC".to_string(),
+            reminder_sent_at: None,
+        };
+        let existing = vec![existing_booking];
+
+        // Overlapping booking (starts during existing)
+        let starts_at = UNIX_EPOCH + Duration::from_secs(2000);
+        assert!(check_overlap(starts_at, 30, &existing));
+
+        // Overlapping booking (ends during existing)
+        let starts_at = UNIX_EPOCH + Duration::from_secs(500);
+        assert!(check_overlap(starts_at, 60, &existing)); // ends at 4100
+
+        // Non-overlapping booking (before)
+        let starts_at = UNIX_EPOCH + Duration::from_secs(0);
+        assert!(!check_overlap(starts_at, 10, &existing)); // ends at 600
+
+        // Non-overlapping booking (after)
+        let starts_at = UNIX_EPOCH + Duration::from_secs(5000);
+        assert!(!check_overlap(starts_at, 10, &existing));
+
+        // Cancelled booking doesn't count
+        let mut cancelled_existing = existing.clone();
+        cancelled_existing[0].status = BookingStatus::Cancelled;
+        let starts_at = UNIX_EPOCH + Duration::from_secs(2000);
+        assert!(!check_overlap(starts_at, 30, &cancelled_existing));
     }
 }

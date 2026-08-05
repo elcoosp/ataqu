@@ -91,15 +91,9 @@ impl TempoService {
         }
 
         let starts_at: std::time::SystemTime = cmd.starts_at.into();
-        let ends_at: std::time::SystemTime = starts_at + std::time::Duration::from_secs((cmd.duration_minutes * 60) as u64);
         let existing_bookings = self.repo.list_bookings(&cmd.tenant_id, 1000, 0).await.map_err(TempoServiceError::Repository)?;
-        for b in existing_bookings {
-            if b.status != BookingStatus::Cancelled && b.status != BookingStatus::Completed {
-                let b_ends_at = b.ends_at();
-                if starts_at < b_ends_at && ends_at > b.starts_at {
-                    return Err(TempoServiceError::Validation("Booking overlaps with existing booking".to_string()));
-                }
-            }
+        if ataqu_domain_tempo::schedule::check_overlap(starts_at, cmd.duration_minutes, &existing_bookings) {
+            return Err(TempoServiceError::Validation("Booking overlaps with existing booking".to_string()));
         }
 
         let event_type_id = EventTypeId(cmd.event_type_id);

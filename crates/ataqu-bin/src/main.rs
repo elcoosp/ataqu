@@ -23,7 +23,7 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
-use ataqu_kernel::{Clock, IdGenerator, TenantId, SystemIdGenerator, SystemClock};
+use ataqu_kernel::{TenantId, SystemIdGenerator, SystemClock};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
