@@ -758,6 +758,15 @@ impl CinqService {
         cmd: ataqu_domain_cinq::task::UpdateTaskCommand,
     ) -> CinqResult<ataqu_domain_cinq::task::Task> {
         let mut task = self.get_task(cmd.tenant_id, cmd.id).await?;
+
+        // Enforce OCC
+        if task.version != cmd.expected_version {
+            return Err(CinqServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, task.version
+            )));
+        }
+
         if let Some(title) = cmd.title {
             task.title = title;
         }
@@ -771,6 +780,7 @@ impl CinqService {
             task.status = status;
         }
         task.updated_at = self.clock.now().into();
+        task.version += 1; // Increment version
         self.task_repo.save_task(&task).await?;
         Ok(task)
     }
