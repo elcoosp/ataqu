@@ -5,6 +5,7 @@ use axum::http::header;
 use axum::middleware::Next;
 use axum::response::Response;
 use moka::sync::Cache;
+use sha2::{Digest, Sha256};
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -22,8 +23,16 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
         || req.method() == axum::http::Method::PUT
         || req.method() == axum::http::Method::PATCH
     {
-        if let Some(key) = req.headers().get(IDEMPOTENCY_KEY_HEADER).and_then(|v| v.to_str().ok()) {
-            let command_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, key.as_bytes());
+        if let Some(key) = req.headers().get(IDEMPOTENCY_KEY_HEADER).and_then(|v| v.to_str().ok()).map(|s| s.to_string()) {
+            let (parts, body) = req.into_parts();
+            let bytes = to_bytes(body, usize::MAX).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            // Fix: Hash key + body to prevent different payloads with same key
+            let mut hasher = Sha256::new();
+            hasher.update(key.as_bytes());
+            hasher.update(&bytes);
+            let hash = hasher.finalize();
+            let command_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, &hash);
 
             if let Some((status, body)) = IDEMPOTENCY_CACHE.get(&command_id) {
                 let mut resp = Response::new(Body::from(body));
@@ -32,15 +41,16 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
                 return Ok(resp);
             }
 
+            req = Request::from_parts(parts, Body::from(bytes));
             req.extensions_mut().insert(command_id);
+
             let resp = next.run(req).await;
 
             if resp.status().is_success() {
                 let (parts, body) = resp.into_parts();
                 let bytes = to_bytes(body, usize::MAX).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
                 IDEMPOTENCY_CACHE.insert(command_id, (parts.status, bytes.to_vec()));
-                let resp = Response::from_parts(parts, Body::from(bytes));
-                return Ok(resp);
+                return Ok(Response::from_parts(parts, Body::from(bytes)));
             }
             return Ok(resp);
         }

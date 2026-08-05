@@ -1,4 +1,4 @@
-use ataqu_kernel::{IdGenerator, Identifiable, TenantId};
+use ataqu_kernel::{Clock, IdGenerator, Identifiable, TenantId};
 use std::time::{Duration, SystemTime};
 use uuid::Uuid;
 
@@ -27,6 +27,7 @@ pub struct Booking {
     pub status: BookingStatus,
     pub timezone: String,
     pub reminder_sent_at: Option<SystemTime>,
+    pub created_at: SystemTime,
 }
 
 impl Identifiable for Booking {
@@ -78,8 +79,10 @@ pub fn create_booking(
     duration_minutes: i32,
     timezone: String,
     id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
 ) -> Booking {
     let id = BookingId(id_gen.new_uuid_v7());
+    let now = clock.now();
     Booking {
         id,
         tenant_id,
@@ -89,6 +92,7 @@ pub fn create_booking(
         status: BookingStatus::Pending,
         timezone,
         reminder_sent_at: None,
+        created_at: now,
     }
 }
 
@@ -151,6 +155,7 @@ mod tests {
             status: BookingStatus::Confirmed,
             timezone: "UTC".to_string(),
             reminder_sent_at: None,
+            created_at: UNIX_EPOCH,
         };
         let existing = vec![existing_booking];
 

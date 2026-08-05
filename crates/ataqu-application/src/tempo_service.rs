@@ -119,6 +119,7 @@ impl TempoService {
             cmd.duration_minutes,
             cmd.timezone,
             self.id_gen.as_ref(),
+            self.clock.as_ref(),
         );
         self.repo
             .create_booking(&booking)

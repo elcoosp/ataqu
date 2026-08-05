@@ -106,7 +106,7 @@ pub struct PaginationParams {
 pub async fn create_employee(
     State(state): State<AppState>,
     auth: AuthContext,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateEmployeeRequest>,
 ) -> ApiResult<(StatusCode, Json<EmployeeResponse>)> {
     let cmd = CreateEmployeeCommand {
@@ -118,6 +118,12 @@ pub async fn create_employee(
         department: req.department.clone(),
         hire_date: req.hire_date,
     };
+    let command_id = headers
+        .get("Idempotency-Key")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::new_v4);
+
     let employee_id = state
         .pause_service
         .create_employee(
@@ -125,26 +131,21 @@ pub async fn create_employee(
             cmd,
             &*state.id_gen,
             &*state.clock,
-            Uuid::new_v4(),
+            command_id,
         )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    Ok((
-        StatusCode::CREATED,
-        Json(EmployeeResponse {
-            id: employee_id,
-            full_name: req.full_name,
-            email: ApiEmail::new(Email::new(req.email)),
-            phone: req.phone.map(|p| ApiPhone::new(PhoneNumber::new(p))),
-            job_title: req.job_title,
-            department: req.department,
-            hire_date: req.hire_date,
-            is_active: true,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        }),
-    ))
+    let employee = state
+        .pause_service
+        .list_employees(&auth.tenant_id, 1, 0)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?
+        .into_iter()
+        .find(|e| e.id == employee_id)
+        .unwrap();
+
+    Ok((StatusCode::CREATED, Json(employee.into())))
 }
 
 pub async fn request_leave(

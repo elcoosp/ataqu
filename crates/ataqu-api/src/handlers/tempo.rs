@@ -48,7 +48,7 @@ impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
             starts_at: b.starts_at.into(),
             duration_minutes: b.duration_minutes,
             status: format!("{:?}", b.status).to_lowercase(),
-            created_at: Utc::now(),
+            created_at: b.created_at.into(), // Fix: Use actual created_at
         }
     }
 }
@@ -323,6 +323,12 @@ pub async fn get_public_event_type(
     Ok(Json(event_type.into()))
 }
 
+pub fn public_routes() -> Router<AppState> {
+    Router::new()
+        .route("/public/:tenant_id/event-types/:slug", axum::routing::get(get_public_event_type))
+        .route("/public/:tenant_id/bookings", axum::routing::post(public_create_booking))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/bookings", axum::routing::post(create_booking))
@@ -348,13 +354,5 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/availability-slots/:id",
             axum::routing::delete(delete_availability_slot),
-        )
-        .route(
-            "/public/:tenant_id/event-types/:slug",
-            axum::routing::get(get_public_event_type),
-        )
-        .route(
-            "/public/:tenant_id/bookings",
-            axum::routing::post(public_create_booking),
         )
 }

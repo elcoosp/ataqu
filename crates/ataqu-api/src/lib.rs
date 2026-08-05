@@ -94,8 +94,6 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 
 pub fn create_router(state: AppState) -> Router {
     use handlers::aegis::routes as aegis_routes;
-
-    let _api_state = state.clone();
     use handlers::cinq::routes as cinq_routes;
     use handlers::dial::routes as dial_routes;
     use handlers::pause::routes as pause_routes;
@@ -106,11 +104,12 @@ pub fn create_router(state: AppState) -> Router {
     use handlers::vault::routes as vault_routes;
     use handlers::vista::routes as vista_routes;
 
-    Router::new()
-        .route("/health", axum::routing::get(health_check))
-        .route("/metrics", axum::routing::get(metrics_handler))
-        .route("/ready", axum::routing::get(readiness_check))
-        .nest_service("/uploads", tower_http::services::ServeDir::new("./uploads"))
+    // Public routes (no auth required)
+    let public_routes = Router::new()
+        .nest("/api/sond", handlers::sond::public_routes())
+        .nest("/api/tempo", handlers::tempo::public_routes())
+        .nest("/api/cinq", handlers::cinq::public_routes())
+        .nest("/api/spark", handlers::spark::public_routes())
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
@@ -118,13 +117,12 @@ pub fn create_router(state: AppState) -> Router {
         .layer(axum::middleware::from_fn(crate::middleware::etag::etag_middleware))
         .layer(axum::middleware::from_fn(crate::middleware::csrf::csrf_middleware))
         .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            crate::middleware::auth::auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
-        ))
+        ));
+
+    // Private routes (auth required)
+    let private_routes = Router::new()
         .nest("/api/aegis", aegis_routes())
         .nest("/api/cinq", cinq_routes())
         .nest("/api/dial", dial_routes())
@@ -135,5 +133,27 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", tempo_routes())
         .nest("/api/vault", vault_routes())
         .nest("/api/vista", vista_routes())
+        .layer(axum::middleware::from_fn(request_id_middleware))
+        .layer(axum::middleware::from_fn(
+            crate::middleware::idempotency::idempotency_middleware,
+        ))
+        .layer(axum::middleware::from_fn(crate::middleware::etag::etag_middleware))
+        .layer(axum::middleware::from_fn(crate::middleware::csrf::csrf_middleware))
+        .layer(axum::middleware::from_fn_with_state(
+            state.rate_limiter.clone(),
+            crate::middleware::rate_limit::rate_limit_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            crate::middleware::auth::auth_middleware,
+        ));
+
+    Router::new()
+        .route("/health", axum::routing::get(health_check))
+        .route("/metrics", axum::routing::get(metrics_handler))
+        .route("/ready", axum::routing::get(readiness_check))
+        .nest_service("/uploads", tower_http::services::ServeDir::new("./uploads"))
+        .merge(public_routes)
+        .merge(private_routes)
         .with_state(state)
 }

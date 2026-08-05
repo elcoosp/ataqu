@@ -115,6 +115,7 @@ fn booking_model_to_domain(model: booking_entity::Model) -> Booking {
         status,
         timezone: model.timezone.unwrap_or_else(|| "UTC".to_string()),
         reminder_sent_at: model.reminder_sent_at.map(|dt| dt.into()),
+        created_at: model.created_at.into(),
     }
 }
 

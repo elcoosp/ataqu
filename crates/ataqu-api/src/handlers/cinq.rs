@@ -564,18 +564,41 @@ pub async fn export_csv(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<impl axum::response::IntoResponse> {
-    let csv_data = state
+    let contacts = state
         .cinq_service
-        .export_contacts(auth.tenant_id)
+        .list_contacts(auth.tenant_id, 10000, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    let mut wtr = csv::Writer::from_writer(vec![]);
+    wtr.write_record(["id", "name", "email", "phone", "created_at"])
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    for c in contacts {
+        let pii_key = ataqu_security::PiiAccessKey::new();
+        wtr.write_record(&[
+            c.id.to_string(),
+            c.name,
+            c.email.reveal(&pii_key).to_string(),
+            c.phone.as_ref().map(|p| p.reveal(&pii_key).to_string()).unwrap_or_default(),
+            c.created_at.to_rfc3339(),
+        ])
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    }
+
+    let data = String::from_utf8(
+        wtr.into_inner()
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?,
+    )
+    .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
     Ok((
         StatusCode::OK,
         [
             (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
             (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"contacts.csv\"".to_string()),
         ],
-        csv_data
+        data
     ))
 }
 
@@ -753,6 +776,11 @@ pub async fn track_email(
 }
 
 // ---------- Router ----------
+pub fn public_routes() -> Router<AppState> {
+    Router::new()
+        .route("/email/track/public", axum::routing::post(super::email_tracking::track_email_public))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
@@ -788,5 +816,4 @@ pub fn routes() -> Router<AppState> {
         .route("/csv/import", post(import_csv))
         .route("/csv/export", get(export_csv))
         .route("/email/track", post(track_email))
-        .route("/email/track/public", post(super::email_tracking::track_email_public))
 }

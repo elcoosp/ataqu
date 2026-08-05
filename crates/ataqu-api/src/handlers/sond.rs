@@ -37,12 +37,13 @@ impl From<ataqu_application::sond_service::Form> for FormResponse {
             .questions
             .iter()
             .map(|q| {
-                serde_json::json!({
-                    "id": q.id,
-                    "label": q.label,
-                    "type": q.question_type,
-                    "required": q.required,
-                })
+                let mut val = serde_json::to_value(&q.question_type).unwrap_or(serde_json::Value::Null);
+                if let Some(obj) = val.as_object_mut() {
+                    obj.insert("id".into(), q.id.to_string().into());
+                    obj.insert("label".into(), q.label.clone().into());
+                    obj.insert("required".into(), q.required.into());
+                }
+                val
             })
             .collect();
         Self {
@@ -205,6 +206,11 @@ pub struct PaginationParams {
     pub offset: Option<u64>,
 }
 
+pub fn public_routes() -> Router<AppState> {
+    Router::new()
+        .route("/forms/:id/submit", axum::routing::post(submit_form))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form).get(list_forms))
@@ -214,6 +220,5 @@ pub fn routes() -> Router<AppState> {
                 .put(update_form)
                 .delete(delete_form),
         )
-        .route("/forms/:id/submit", axum::routing::post(submit_form))
         .route("/forms/:id/export", axum::routing::get(export_responses))
 }

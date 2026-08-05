@@ -136,11 +136,15 @@ pub async fn webhook_trigger(
     Ok(StatusCode::ACCEPTED)
 }
 
+pub fn public_routes() -> Router<AppState> {
+    Router::new()
+        .route("/webhooks/:tenant_id/:workflow_id", axum::routing::post(webhook_trigger))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post};
     Router::new()
         .route("/workflows", get(list_workflows).post(create_workflow))
         .route("/workflows/:id", get(get_workflow))
         .route("/workflows/:id/execute", post(execute_workflow))
-        .route("/webhooks/:tenant_id/:workflow_id", post(webhook_trigger))
 }

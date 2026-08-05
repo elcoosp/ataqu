@@ -17,7 +17,6 @@ use ataqu_security::Email;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateUserRequest {
-    pub tenant_id: uuid::Uuid,
     pub email: String,
     pub password: String,
     pub name: Option<String>,
@@ -32,9 +31,10 @@ pub async fn create_user(
         return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
     }
     info!("Create user request");
+    let email = Email::new(req.email);
     let cmd = CreateUserCommand {
-        tenant_id: ataqu_kernel::TenantId::new(req.tenant_id),
-        email: Email::new(req.email),
+        tenant_id: auth.tenant_id, // Fix: use auth context
+        email: email.clone(),
         password_hash: req.password,
         name: req.name,
     };
@@ -43,7 +43,7 @@ pub async fn create_user(
             StatusCode::CREATED,
             Json(serde_json::json!({
                 "user_id": resp.user_id,
-                "email": resp.email,
+                "email": crate::serializers::ApiEmail::new(Email::new(resp.email)), // Fix: use ApiEmail wrapper
             })),
         )),
         Err(err) => {
