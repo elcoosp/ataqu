@@ -30,7 +30,10 @@ impl VistaService {
 
     pub async fn process_event(&self, event: &OutboxEvent) -> VistaResult<()> {
         let tenant_id = event
-            .aggregate_id
+            .payload
+            .get("tenant_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
             .map(TenantId::new)
             .unwrap_or_else(|| TenantId::new(Uuid::nil()));
         let current_view = self

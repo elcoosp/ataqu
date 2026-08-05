@@ -5,7 +5,6 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 };
-use async_trait::async_trait;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -81,11 +80,6 @@ pub struct TokenPair {
     pub refresh_token: String,
 }
 
-#[async_trait]
-pub trait OutboxAppender: Send + Sync {
-    async fn append_event(&self, event: &serde_json::Value) -> Result<(), String>;
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct JwtClaims {
     sub: String,
@@ -106,7 +100,7 @@ impl RealAegisDomain {
         id_gen: &dyn IdGenerator,
         clock: &dyn Clock,
     ) -> Result<(UserCreated, User), AuthError> {
-        if !cmd.email.as_ref().contains('@') {
+        if !cmd.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).contains('@') {
             return Err(AuthError::InvalidCredentials);
         }
         let salt = SaltString::generate(&mut rand::thread_rng());
@@ -251,22 +245,19 @@ fn generate_token_pair(
     Ok((access, refresh))
 }
 
-pub struct AegisService<O> {
+pub struct AegisService {
     repo: Arc<dyn AuthRepository + Send + Sync>,
-    outbox: Arc<O>,
+    outbox: Arc<dyn crate::outbox::Outbox + Send + Sync>,
     domain: Arc<RealAegisDomain>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
     config: AegisConfig,
 }
 
-impl<O> AegisService<O>
-where
-    O: OutboxAppender + 'static,
-{
+impl AegisService {
     pub fn new(
         repo: Arc<dyn AuthRepository + Send + Sync>,
-        outbox: Arc<O>,
+        outbox: Arc<dyn crate::outbox::Outbox + Send + Sync>,
         domain: Arc<RealAegisDomain>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
@@ -295,9 +286,10 @@ where
         self.repo.save_user(&user).await?;
         let payload = serde_json::json!({
             "user_id": event.user_id,
+            "tenant_id": user.tenant_id.as_uuid(),
             "created_at": event.created_at,
         });
-        self.outbox.append_event(&payload).await.map_err(AegisServiceError::Outbox)?;
+        self.outbox.append("core", "UserCreated", user.id, &payload).await.map_err(AegisServiceError::Outbox)?;
         Ok(CreateUserResponse {
             user_id: user.id,
             email: user.email.to_string(),
@@ -468,10 +460,3 @@ where
     }
 }
 
-pub struct NoopOutbox;
-#[async_trait]
-impl OutboxAppender for NoopOutbox {
-    async fn append_event(&self, _event: &serde_json::Value) -> Result<(), String> {
-        Ok(())
-    }
-}

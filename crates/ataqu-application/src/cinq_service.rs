@@ -357,10 +357,10 @@ impl CinqService {
             wtr.write_record(&[
                 c.id.to_string(),
                 c.name.clone(),
-                c.email.as_ref().to_string(),
+                c.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string(),
                 c.phone
                     .as_ref()
-                    .map(|p| p.as_ref().to_string())
+                    .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string())
                     .unwrap_or_default(),
                 c.created_at.to_rfc3339(),
             ])

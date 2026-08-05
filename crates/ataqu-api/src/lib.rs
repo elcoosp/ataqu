@@ -15,7 +15,7 @@ use crate::middleware::rate_limit::RateLimiter;
 use uuid::Uuid;
 use std::sync::Arc;
 
-use ataqu_application::aegis_service::{AegisService, OutboxAppender};
+use ataqu_application::aegis_service::AegisService;
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
 use ataqu_application::pause_service::PauseService;
@@ -42,18 +42,6 @@ impl Clock for SystemClock {
 }
 
 #[derive(Clone)]
-pub struct OutboxPlaceholder;
-#[async_trait::async_trait]
-impl OutboxAppender for OutboxPlaceholder {
-    async fn append_event(
-        &self,
-        _event: &serde_json::Value,
-    ) -> Result<(), String> {
-        Ok(())
-    }
-}
-
-#[derive(Clone)]
 pub struct AppState {
     pub cinq_service: Arc<CinqService>,
     pub dial_service: Arc<DialService>,
@@ -63,7 +51,7 @@ pub struct AppState {
     pub tempo_service: Arc<TempoService>,
     pub vault_service: Arc<VaultService>,
     pub vista_service: Arc<VistaService>,
-    pub aegis_service: Arc<AegisService<OutboxPlaceholder>>,
+    pub aegis_service: Arc<AegisService>,
     pub pause_service: Arc<PauseService>,
     pub jwt_secret: Arc<Vec<u8>>,
     pub id_gen: Arc<dyn IdGenerator>,

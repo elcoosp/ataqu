@@ -211,7 +211,7 @@ pub async fn list_users(
         .map_err(map_aegis_error)?;
     let resp = users.into_iter().map(|u| serde_json::json!({
         "id": u.id,
-        "email": u.email.to_string(),
+        "email": crate::serializers::ApiEmail::new(u.email),
         "name": u.name,
         "role": u.role,
         "is_active": u.is_active,

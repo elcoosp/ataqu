@@ -74,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
     // AEGIS
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
-    let aegis_outbox = Arc::new(ataqu_api::OutboxPlaceholder);
+    let aegis_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
     let aegis_domain = Arc::new(RealAegisDomain);
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
@@ -358,7 +358,7 @@ async fn main() -> anyhow::Result<()> {
                             let contact_id = event.payload.get("contact_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
                             if let Some(cid) = contact_id {
                                 let cmd = ataqu_application::cinq_service::CreateActivityCommand {
-                                    tenant_id: ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()),
+                                    tenant_id: ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()),
                                     contact_id: cid,
                                     deal_id: None,
                                     activity_type: ataqu_domain_cinq::activity::ActivityType::Meeting,
@@ -375,7 +375,7 @@ async fn main() -> anyhow::Result<()> {
                             let name = event.payload.get("name").and_then(|v| v.as_str()).map(String::from).unwrap_or_else(|| "Form Lead".to_string());
                             if let Some(em) = email {
                                 let cmd = ataqu_application::cinq_service::CreateContactCommand {
-                                    tenant_id: ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()),
+                                    tenant_id: ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()),
                                     name,
                                     email: ataqu_security::Email::new(em),
                                     phone: None,
@@ -394,7 +394,7 @@ async fn main() -> anyhow::Result<()> {
 
                             if let (Some(v_id), Some(s), Some(c_id)) = (variant_id, sku, channel_id) {
                                 let cmd = ataqu_application::dial_service::SendMessageCommand {
-                                    tenant_id: ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()),
+                                    tenant_id: ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()),
                                     channel_id: c_id,
                                     thread_id: None,
                                     author_id: Uuid::nil(),
@@ -409,7 +409,7 @@ async fn main() -> anyhow::Result<()> {
                             let variant_id = event.payload.get("variant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
                             let quantity = event.payload.get("quantity").and_then(|v| v.as_i64());
                             if let (Some(v_id), Some(q)) = (variant_id, quantity) {
-                                if let Err(e) = vault.reserve_stock(ataqu_kernel::TenantId::new(event.aggregate_id.unwrap_or_default()), v_id, q).await {
+                                if let Err(e) = vault.reserve_stock(ataqu_kernel::TenantId::new(event.payload.get("tenant_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()).unwrap_or_default()), v_id, q).await {
                                     tracing::error!(error = %e, "CRM DealWon -> VAULT reserve stock failed");
                                 }
                             }
