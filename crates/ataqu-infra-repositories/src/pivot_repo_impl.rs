@@ -311,6 +311,39 @@ impl BlockRepository for PivotBlockRepository {
         self.db.execute_raw(stmt).await.map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
+
+    async fn get_block_by_id(&self, tenant_id: &TenantId, block_id: Uuid) -> Result<BlockCreatedEvent, RepositoryError> {
+        let stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            r#"SELECT id, tenant_id, document_id, block_type, content, created_at FROM collab_ops.blocks
+               WHERE tenant_id = $1 AND id = $2"#,
+            vec![tenant_id.as_uuid().into(), block_id.into()],
+        );
+        let row = self.db.query_one_raw(stmt).await.map_err(|e| RepositoryError::Database(e.to_string()))?
+            .ok_or(RepositoryError::NotFound)?;
+
+        let created_at: chrono::DateTime<chrono::Utc> = row.try_get("", "created_at").map_err(|e| RepositoryError::Database(e.to_string()))?;
+        let block_type_str: String = row.try_get("", "block_type").map_err(|e| RepositoryError::Database(e.to_string()))?;
+        let content: serde_json::Value = row.try_get("", "content").map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+        let block_type = match block_type_str.as_str() {
+            "markdown" => BlockType::Markdown(content.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string()),
+            "table" => BlockType::Table {
+                columns: content.get("columns").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default(),
+                rows: content.get("rows").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|row| row.as_array().map(|r| r.iter().filter_map(|v| v.as_str().map(String::from)).collect())).collect()).unwrap_or_default(),
+            },
+            "view" => BlockType::View { filter: content.get("filter").and_then(|v| v.as_str()).unwrap_or("").to_string() },
+            _ => return Err(RepositoryError::Database("Invalid block_type in DB".to_string())),
+        };
+
+        Ok(BlockCreatedEvent {
+            id: row.try_get("", "id").map_err(|e| RepositoryError::Database(e.to_string()))?,
+            tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| RepositoryError::Database(e.to_string()))?),
+            document_id: row.try_get("", "document_id").map_err(|e| RepositoryError::Database(e.to_string()))?,
+            block_type,
+            created_at: created_at.into(),
+        })
+    }
 }
 
 #[async_trait]

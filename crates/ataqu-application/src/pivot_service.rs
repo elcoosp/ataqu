@@ -246,10 +246,11 @@ impl PivotService {
     }
 
     pub async fn update_block(&self, tenant_id: TenantId, block_id: Uuid, block_type: BlockType) -> PivotResult<Block> {
-        let blocks = self.block_repo.get_blocks_for_document(&tenant_id, Uuid::nil()).await
-            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
-        let block = blocks.into_iter().find(|b| b.id == block_id)
-            .ok_or(PivotServiceError::BlockNotFound)?;
+        let block = self.block_repo.get_block_by_id(&tenant_id, block_id).await
+            .map_err(|e| match e {
+                ataqu_kernel::RepositoryError::NotFound => PivotServiceError::BlockNotFound,
+                _ => PivotServiceError::Repository(e.to_string()),
+            })?;
 
         let updated_block = Block {
             id: block.id,

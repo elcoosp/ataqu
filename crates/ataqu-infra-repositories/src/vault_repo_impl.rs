@@ -1,3 +1,4 @@
+use sea_orm::ConnectionTrait;
 use async_trait::async_trait;
 use ataqu_domain_vault::inventory::{Product, Variant};
 use ataqu_domain_vault::repository::VaultRepository;
@@ -286,5 +287,26 @@ impl VaultRepository for VaultRepositoryImpl {
             .map_err(|e| e.to_string())?;
 
         Ok(models.into_iter().map(variant_model_to_domain).collect())
+    }
+
+    async fn save_reservation(&self, reservation: &ataqu_domain_vault::stock::Reservation) -> Result<(), String> {
+        let created_at: chrono::DateTime<chrono::Utc> = reservation.created_at.into();
+        let expires_at: Option<chrono::DateTime<chrono::Utc>> = reservation.expires_at.map(|t| t.into());
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            r#"INSERT INTO vault.reservations (id, tenant_id, variant_id, quantity, status, expires_at, created_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
+            vec![
+                reservation.id.into(),
+                reservation.tenant_id.as_uuid().into(),
+                reservation.variant_id.into(),
+                reservation.quantity.into(),
+                format!("{:?}", reservation.status).to_lowercase().into(),
+                expires_at.into(),
+                created_at.into(),
+            ],
+        );
+        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
+        Ok(())
     }
 }

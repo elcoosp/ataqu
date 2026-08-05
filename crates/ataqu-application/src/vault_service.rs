@@ -267,6 +267,19 @@ impl VaultService {
                 requested: quantity,
             }));
         }
+
+        let reservation = ataqu_domain_vault::stock::create_reservation(
+            ataqu_domain_vault::stock::CreateReservationCommand {
+                tenant_id,
+                variant_id,
+                quantity,
+                expires_at: None,
+            },
+            self.id_gen.as_ref(),
+            self.clock.as_ref(),
+        );
+        self.repo.save_reservation(&reservation).await.map_err(VaultServiceError::Repository)?;
+
         let mut new_variant = variant.clone();
         new_variant.reserved_quantity += quantity;
         new_variant.updated_at = self.clock.now();

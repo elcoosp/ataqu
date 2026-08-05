@@ -46,4 +46,6 @@ pub trait VaultRepository: Send + Sync {
         tenant_id: &TenantId,
         threshold: i64,
     ) -> Result<Vec<Variant>, String>;
+
+    async fn save_reservation(&self, reservation: &crate::stock::Reservation) -> Result<(), String>;
 }

@@ -34,6 +34,7 @@ pub mod m_vault;
 pub mod m_vault_add_price_column;
 pub mod m_vault_add_products_variants;
 pub mod m_vault_add_stock_movements;
+pub mod m_vault_add_reservations;
 pub mod m_vista_tables;
 pub mod m_vista_add_dashboards;
 
@@ -77,6 +78,7 @@ impl MigratorTrait for Migrator {
             Box::new(m_vault_add_products_variants::Migration),
             Box::new(m_vault_add_price_column::Migration),
             Box::new(m_vault_add_stock_movements::Migration),
+            Box::new(m_vault_add_reservations::Migration),
             Box::new(m_vista_tables::Migration),
             Box::new(m_vista_add_dashboards::Migration),
         ]
