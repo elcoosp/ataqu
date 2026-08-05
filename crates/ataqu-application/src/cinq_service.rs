@@ -219,7 +219,7 @@ impl CinqService {
             id: cmd.id,
             tenant_id: cmd.tenant_id,
             name: cmd.name,
-            company: cmd.company.clone(),
+            company: cmd.company,
             email: cmd.email,
             phone: cmd.phone,
             custom_fields: cmd.custom_fields,

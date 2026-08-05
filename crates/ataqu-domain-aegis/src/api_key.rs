@@ -48,20 +48,14 @@ pub fn generate_api_key(
     let id = id_gen.new_uuid_v7();
     let now = clock.now();
 
-    // Generate a random key. In production, use a more secure RNG.
+    // Generate a random key using injected IdGenerator for deterministic testability
     let raw_key = format!(
         "ataqu_{}",
-        uuid::Uuid::new_v4().to_string().replace("-", "")
+        id_gen.new_uuid_v7().to_string().replace("-", "")
     );
     let prefix = raw_key[..12].to_string();
 
-    // Hash the key. In production, use Argon2 or bcrypt.
-    // For simplicity here, we'll just use a SHA256 hash or similar.
-    use sha2::{Digest, Sha256};
-    let mut hasher = Sha256::new();
-    hasher.update(raw_key.as_bytes());
-    let _key_hash = format!("{:x}", hasher.finalize());
-
+    // Hashing is handled by the application layer to avoid domain layer dependencies on crypto details.
     Ok(ApiKeyCreated {
         id,
         name: cmd.name,

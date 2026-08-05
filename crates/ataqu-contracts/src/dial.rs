@@ -26,7 +26,7 @@ pub struct CreateChannel {
 pub struct SendMessage {
     pub tenant_id: Uuid,
     pub channel_id: Uuid,
-    pub sender_id: Uuid,
+    pub author_id: Uuid,
     pub content: String,
 }
 
@@ -38,7 +38,7 @@ pub struct MessageSent {
     pub tenant_id: Uuid,
     pub message_id: Uuid,
     pub channel_id: Uuid,
-    pub sender_id: Uuid,
+    pub author_id: Uuid,
     pub content: String,
     pub sent_at: DateTime<Utc>,
 }
@@ -71,14 +71,14 @@ mod tests {
         let cmd = SendMessage {
             tenant_id: uuid_from_byte(1),
             channel_id: uuid_from_byte(2),
-            sender_id: uuid_from_byte(3),
+            author_id: uuid_from_byte(3),
             content: "Hello, world!".to_string(),
         };
         let json = serde_json::to_string(&cmd).expect("serialize");
         let back: SendMessage = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(cmd.tenant_id, back.tenant_id);
         assert_eq!(cmd.channel_id, back.channel_id);
-        assert_eq!(cmd.sender_id, back.sender_id);
+        assert_eq!(cmd.author_id, back.author_id);
         assert_eq!(cmd.content, back.content);
     }
 
@@ -88,7 +88,7 @@ mod tests {
             tenant_id: uuid_from_byte(1),
             message_id: uuid_from_byte(4),
             channel_id: uuid_from_byte(2),
-            sender_id: uuid_from_byte(3),
+            author_id: uuid_from_byte(3),
             content: "Hello, world!".to_string(),
             sent_at: DateTime::parse_from_rfc3339("2026-08-01T12:00:00Z")
                 .unwrap()
@@ -106,7 +106,7 @@ mod tests {
             tenant_id: uuid_from_byte(1),
             message_id: uuid_from_byte(2),
             channel_id: uuid_from_byte(3),
-            sender_id: uuid_from_byte(4),
+            author_id: uuid_from_byte(4),
             content: "hi".to_string(),
             sent_at: DateTime::parse_from_rfc3339("2026-08-01T12:00:00Z")
                 .unwrap()
@@ -126,7 +126,7 @@ mod tests {
         let cmd = SendMessage {
             tenant_id: uuid_from_byte(1),
             channel_id: uuid_from_byte(2),
-            sender_id: uuid_from_byte(3),
+            author_id: uuid_from_byte(3),
             content: String::new(),
         };
         let json = serde_json::to_string(&cmd).expect("serialize");

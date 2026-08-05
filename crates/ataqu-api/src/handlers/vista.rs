@@ -61,18 +61,9 @@ pub async fn create_dashboard(
     auth: AuthContext,
     Json(payload): Json<CreateDashboardRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let now = std::time::SystemTime::now();
-    let dashboard = ataqu_domain_vista::Dashboard {
-        id: Uuid::now_v7(),
-        tenant_id: auth.tenant_id,
-        name: payload.name,
-        config: payload.config,
-        created_at: chrono::DateTime::<chrono::Utc>::from(now),
-        updated_at: chrono::DateTime::<chrono::Utc>::from(now),
-    };
-    state
+    let dashboard = state
         .vista_service
-        .save_dashboard(&dashboard)
+        .create_dashboard(auth.tenant_id, payload.name, payload.config)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({ "id": dashboard.id })))

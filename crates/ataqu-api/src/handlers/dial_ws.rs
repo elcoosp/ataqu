@@ -66,7 +66,6 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     let (mut ws_sender, mut ws_receiver) = socket.split();
     let (tx, mut rx) = mpsc::unbounded_channel::<String>();
     let connection_id = uuid::Uuid::new_v4();
-    let connection_id = uuid::Uuid::new_v4();
 
     let send_task = tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
@@ -169,7 +168,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     .to_string();
                                     if let Some(subscribers) = state.ws_registry.get(&key) {
                                         for entry in subscribers.iter() {
-                                            if entry.key() != &auth.user_id {
+                                            if entry.key() != &connection_id {
                                                 let _ = entry.value().send(broadcast.clone());
                                             }
                                         }

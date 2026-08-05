@@ -296,16 +296,10 @@ pub async fn deactivate_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-pub async fn logout(State(state): State<AppState>, auth: AuthContext) -> ApiResult<StatusCode> {
-    // The token is already validated by the auth middleware.
-    // We just need to call the service to revoke it.
-    // In a real system, the middleware would pass the raw token.
-    // For now, we just simulate success.
-    state
-        .aegis_service
-        .logout(&auth.user_id.to_string()) // Pass user_id as fake token for now
-        .await
-        .map_err(map_aegis_error)?;
+pub async fn logout(State(_state): State<AppState>, _auth: AuthContext) -> ApiResult<StatusCode> {
+    // ADR-003: Stateless JWT. Token revocation requires a blocklist.
+    // For MLP, we rely on short-lived access tokens (15 min).
+    // Client should just discard the token.
     Ok(StatusCode::NO_CONTENT)
 }
 

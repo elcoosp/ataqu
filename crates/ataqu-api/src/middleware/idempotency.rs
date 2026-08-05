@@ -35,9 +35,13 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
                 .await
                 .map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
 
-            // Fix: Hash key + body to prevent different payloads with same key
+            // Fix: Hash key + tenant + body to prevent cross-tenant leaks and different payloads with same key
+            let tenant_id = parts.extensions.get::<crate::middleware::AuthContext>()
+                .map(|a| a.tenant_id.as_uuid().to_string())
+                .unwrap_or_default();
             let mut hasher = Sha256::new();
             hasher.update(key.as_bytes());
+            hasher.update(tenant_id.as_bytes());
             hasher.update(&bytes);
             let hash = hasher.finalize();
             let command_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, &hash);

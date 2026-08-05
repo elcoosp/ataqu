@@ -1,5 +1,5 @@
 pub mod invoice;
 pub mod subscription;
 
-/// Placeholder for billing domain logic.
-pub struct Placeholder;
+pub use invoice::Invoice;
+pub use subscription::Subscription;

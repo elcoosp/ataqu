@@ -9,7 +9,7 @@ use ataqu_infra_idempotency::{
     CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore, guard::split_uuid_to_int4_pair,
 };
 
-/// Real Idempotency using the idempotency infrastructure crate (without advisory locks for simplicity)
+/// Real Idempotency using the idempotency infrastructure crate
 pub struct RealIdempotency {
     db: DatabaseConnection,
 }
@@ -27,20 +27,22 @@ impl IdempotencyPort for RealIdempotency {
         command_id: &Uuid,
     ) -> Result<IdempotencyGuardHandle, PauseServiceError> {
         let store = SeaOrmIdempotencyStore::new();
-        let mut txn = self
-            .db
-            .begin()
+        let (key1, key2) = split_uuid_to_int4_pair(command_id);
+
+        // Acquire session-level advisory lock to span the entire business transaction
+        let lock_stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT pg_advisory_lock($1::int4, $2::int4)",
+            vec![key1.into(), key2.into()],
+        );
+        self.db
+            .execute_raw(lock_stmt)
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
 
-        // Acquire advisory lock
-        let (key1, key2) = split_uuid_to_int4_pair(command_id);
-        let lock_stmt = Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            "SELECT pg_advisory_xact_lock($1::int4, $2::int4)",
-            vec![key1.into(), key2.into()],
-        );
-        txn.execute_raw(lock_stmt)
+        let mut txn = self
+            .db
+            .begin()
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
 
@@ -52,18 +54,34 @@ impl IdempotencyPort for RealIdempotency {
         if let Some(rec) = record {
             if rec.status == ataqu_infra_idempotency::IdempotencyStatus::Completed {
                 if let Some(resp) = rec.response {
-                    // Commit transaction and return cached response
                     txn.commit()
                         .await
                         .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
                     let cached_value = serde_json::to_value(resp)
                         .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+
+                    // Release session lock before returning
+                    let unlock_stmt = Statement::from_sql_and_values(
+                        DbBackend::Postgres,
+                        "SELECT pg_advisory_unlock($1::int4, $2::int4)",
+                        vec![key1.into(), key2.into()],
+                    );
+                    let _ = self.db.execute_raw(unlock_stmt).await;
+
                     return Ok(IdempotencyGuardHandle::new(Some(cached_value)));
                 }
             } else if rec.status == ataqu_infra_idempotency::IdempotencyStatus::Failed {
                 txn.rollback()
                     .await
                     .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+
+                let unlock_stmt = Statement::from_sql_and_values(
+                    DbBackend::Postgres,
+                    "SELECT pg_advisory_unlock($1::int4, $2::int4)",
+                    vec![key1.into(), key2.into()],
+                );
+                let _ = self.db.execute_raw(unlock_stmt).await;
+
                 return Err(PauseServiceError::Idempotency(
                     "Previous attempt failed".to_string(),
                 ));
@@ -83,7 +101,7 @@ impl IdempotencyPort for RealIdempotency {
         txn.commit()
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
-        // Return a handle with no cached response
+        // Return a handle with no cached response. Lock is still held.
         Ok(IdempotencyGuardHandle::new(None))
     }
 
@@ -98,7 +116,6 @@ impl IdempotencyPort for RealIdempotency {
             .begin()
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
-        // Convert Value to CachedResponse (we'll store status and body; headers can be empty)
         let response = CachedResponse {
             status: 200, // OK
             headers: std::collections::HashMap::new(),
@@ -111,6 +128,16 @@ impl IdempotencyPort for RealIdempotency {
         txn.commit()
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+
+        // Release session lock
+        let (key1, key2) = split_uuid_to_int4_pair(command_id);
+        let unlock_stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT pg_advisory_unlock($1::int4, $2::int4)",
+            vec![key1.into(), key2.into()],
+        );
+        let _ = self.db.execute_raw(unlock_stmt).await;
+
         Ok(())
     }
 
@@ -128,6 +155,16 @@ impl IdempotencyPort for RealIdempotency {
         txn.commit()
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+
+        // Release session lock
+        let (key1, key2) = split_uuid_to_int4_pair(command_id);
+        let unlock_stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT pg_advisory_unlock($1::int4, $2::int4)",
+            vec![key1.into(), key2.into()],
+        );
+        let _ = self.db.execute_raw(unlock_stmt).await;
+
         Ok(())
     }
 }

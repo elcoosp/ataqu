@@ -150,7 +150,11 @@ pub fn validate_contact_name(name: &str) -> CinqResult<()> {
     Ok(())
 }
 
-pub fn validate_contact_email(_email: &Email) -> CinqResult<()> {
+pub fn validate_contact_email(email: &Email) -> CinqResult<()> {
+    let email_str = email.reveal(&ataqu_security::PiiAccessKey::new());
+    if !email_str.contains('@') || !email_str.contains('.') {
+        return Err(CinqDomainError::InvalidEmail);
+    }
     Ok(())
 }
 

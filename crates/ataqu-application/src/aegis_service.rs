@@ -76,6 +76,15 @@ pub struct MfaSetupResponse {
 }
 
 #[derive(Debug, Clone)]
+pub struct ApiKeyAuthData {
+    pub user_id: Uuid,
+    pub tenant_id: ataqu_kernel::TenantId,
+    pub email: ataqu_security::Email,
+    pub role: String,
+    pub scopes: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct TokenPair {
     pub access_token: String,
     pub refresh_token: String,
@@ -101,13 +110,6 @@ impl RealAegisDomain {
         id_gen: &dyn IdGenerator,
         clock: &dyn Clock,
     ) -> Result<(UserCreated, User), AuthError> {
-        if !cmd
-            .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
-            .contains('@')
-        {
-            return Err(AuthError::InvalidCredentials);
-        }
         let salt = SaltString::generate(&mut rand::thread_rng());
         let argon2 = Argon2::default();
         let password_hash = argon2
@@ -291,7 +293,14 @@ impl AegisService {
             .domain
             .create_user(cmd, self.id_gen.as_ref(), self.clock.as_ref())
             .map_err(AegisServiceError::Domain)?;
-        self.repo.save_user(&user).await?;
+
+        match self.repo.save_user(&user).await {
+            Ok(_) => (),
+            Err(AuthError::Database(msg)) if msg.contains("duplicate key") => {
+                return Err(AegisServiceError::Conflict("Email already exists".to_string()));
+            }
+            Err(e) => return Err(AegisServiceError::Domain(e)),
+        }
         let payload = serde_json::json!({
             "user_id": event.user_id,
             "tenant_id": user.tenant_id.as_uuid(),
@@ -565,6 +574,48 @@ impl AegisService {
             .await;
 
         Ok(user)
+    }
+
+    pub async fn validate_api_key_data(&self, key: &str) -> Result<ApiKeyAuthData, AegisServiceError> {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(key.as_bytes());
+        let hash = format!("{:x}", hasher.finalize());
+
+        let api_key = self
+            .repo
+            .find_api_key_by_hash(&hash)
+            .await?
+            .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+        if let Some(expires_at) = api_key.expires_at {
+            if expires_at < self.clock.now() {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+        }
+
+        let user = self
+            .repo
+            .find_by_id(api_key.user_id)
+            .await?
+            .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+        if !user.is_active {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+
+        let _ = self
+            .repo
+            .update_api_key_last_used(api_key.id, self.clock.now())
+            .await;
+
+        Ok(ApiKeyAuthData {
+            user_id: user.id,
+            tenant_id: user.tenant_id,
+            email: user.email,
+            role: user.role,
+            scopes: api_key.scopes,
+        })
     }
 
     pub async fn validate_api_key_for_tenant(

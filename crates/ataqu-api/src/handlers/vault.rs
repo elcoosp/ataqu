@@ -111,6 +111,7 @@ pub async fn update_product(
         description: payload.description,
         sku: payload.sku,
     };
+    let _ = payload; // payload fully consumed
     let product = state
         .vault_service
         .update_product(cmd)

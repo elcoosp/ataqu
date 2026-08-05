@@ -6,7 +6,7 @@ use ataqu_domain_vista::aggregation::{AggregatedView, process_aggregation_event}
 use ataqu_domain_vista::analytics::prepare_data_point;
 use ataqu_domain_vista::repository::VistaRepository;
 use ataqu_infra_outbox::OutboxEvent;
-use ataqu_kernel::{Clock, TenantId};
+use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum VistaServiceError {
@@ -23,11 +23,25 @@ pub type VistaResult<T> = Result<T, VistaServiceError>;
 pub struct VistaService {
     repo: Arc<dyn VistaRepository + Send + Sync>,
     clock: Arc<dyn Clock>,
+    id_gen: Arc<dyn IdGenerator>,
 }
 
 impl VistaService {
-    pub fn new(repo: Arc<dyn VistaRepository + Send + Sync>, clock: Arc<dyn Clock>) -> Self {
-        Self { repo, clock }
+    pub fn new(repo: Arc<dyn VistaRepository + Send + Sync>, clock: Arc<dyn Clock>, id_gen: Arc<dyn IdGenerator>) -> Self {
+        Self { repo, clock, id_gen }
+    }
+
+    pub async fn create_dashboard(&self, tenant_id: TenantId, name: String, config: serde_json::Value) -> VistaResult<ataqu_domain_vista::Dashboard> {
+        let dashboard = ataqu_domain_vista::Dashboard {
+            id: self.id_gen.new_uuid_v7(),
+            tenant_id,
+            name,
+            config,
+            created_at: chrono::DateTime::<chrono::Utc>::from(self.clock.now()),
+            updated_at: chrono::DateTime::<chrono::Utc>::from(self.clock.now()),
+        };
+        self.repo.save_dashboard(&dashboard).await.map_err(VistaServiceError::Repository)?;
+        Ok(dashboard)
     }
 
     pub async fn process_event(&self, event: &OutboxEvent) -> VistaResult<()> {

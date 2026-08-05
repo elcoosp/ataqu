@@ -114,6 +114,16 @@ pub enum ChannelType {
 // ============================================================================
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Reaction {
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub message_id: MessageId,
+    pub user_id: UserId,
+    pub emoji: String,
+    pub created_at: SystemTime,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Channel {
     pub id: ChannelId,
     pub tenant_id: TenantId,
@@ -491,7 +501,7 @@ fn extract_mentions(content: &str) -> Vec<String> {
                     break;
                 }
             }
-            if !name.is_empty() && Uuid::parse_str(&name).is_ok() && !mentions.contains(&name) {
+            if !name.is_empty() && (name == "channel" || Uuid::parse_str(&name).is_ok()) && !mentions.contains(&name) {
                 mentions.push(name);
             }
         }
@@ -696,6 +706,35 @@ mod tests {
         let event = send_message(cmd, &channel, &id_gen, &clock).unwrap();
         assert_eq!(event.content, format!("Hello @{}", mentioned));
         assert_eq!(event.mentioned_user_ids, vec![mentioned.to_string()]);
+    }
+
+    #[test]
+    fn send_message_channel_mention() {
+        let id_gen = MockIdGenerator;
+        let clock = MockClock;
+
+        let channel = Channel {
+            id: ChannelId::new(Uuid::nil()),
+            tenant_id: tenant_id(),
+            name: "General".to_string(),
+            channel_type: ChannelType::Public,
+            created_by: UserId::new(Uuid::nil()),
+            participants: vec![],
+            created_at: UNIX_EPOCH,
+            archived_at: None,
+            version: 0,
+        };
+
+        let cmd = SendMessageCommand {
+            tenant_id: tenant_id(),
+            channel_id: channel.id,
+            thread_id: None,
+            author_id: UserId::new(Uuid::nil()),
+            content: "Hello @channel".to_string(),
+        };
+
+        let event = send_message(cmd, &channel, &id_gen, &clock).unwrap();
+        assert_eq!(event.mentioned_user_ids, vec!["channel".to_string()]);
     }
 
     #[test]
@@ -920,14 +959,4 @@ mod tests {
         let mentions = extract_mentions(content_invalid);
         assert!(mentions.is_empty());
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Reaction {
-    pub id: Uuid,
-    pub tenant_id: TenantId,
-    pub message_id: MessageId,
-    pub user_id: UserId,
-    pub emoji: String,
-    pub created_at: SystemTime,
 }

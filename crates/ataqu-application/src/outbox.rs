@@ -1,11 +1,20 @@
 use async_trait::async_trait;
-use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
+use sea_orm::{DatabaseConnection, DbBackend, Statement, ConnectionTrait};
 use uuid::Uuid;
 
 #[async_trait]
 pub trait Outbox: Send + Sync {
     async fn append(
         &self,
+        schema: &str,
+        event_type: &str,
+        aggregate_id: Uuid,
+        payload: &serde_json::Value,
+    ) -> Result<(), String>;
+
+    async fn append_with_txn(
+        &self,
+        txn: &mut sea_orm::DatabaseTransaction,
         schema: &str,
         event_type: &str,
         aggregate_id: Uuid,
@@ -56,6 +65,41 @@ impl Outbox for SeaOrmOutbox {
             ))
             .await
             .map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
+    async fn append_with_txn(
+        &self,
+        txn: &mut sea_orm::DatabaseTransaction,
+        schema: &str,
+        event_type: &str,
+        aggregate_id: Uuid,
+        payload: &serde_json::Value,
+    ) -> Result<(), String> {
+        let sql = r#"
+            INSERT INTO core.outbox (schema, event_type, aggregate_id, payload, status, priority)
+            VALUES ($1::app_schema, $2, $3, $4, 'pending', 'normal')
+        "#;
+        let stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            sql,
+            vec![
+                schema.into(),
+                event_type.into(),
+                aggregate_id.into(),
+                payload.clone().into(),
+            ],
+        );
+        txn.execute_raw(stmt).await.map_err(|e| e.to_string())?;
+
+        txn.execute_raw(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT pg_notify('outbox_event', '')",
+            vec![],
+        ))
+        .await
+        .map_err(|e| e.to_string())?;
 
         Ok(())
     }

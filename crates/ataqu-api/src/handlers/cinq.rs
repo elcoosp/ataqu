@@ -28,7 +28,7 @@ use crate::middleware::AuthContext;
 use crate::serializers::{ApiEmail, ApiPhone};
 
 fn default_search_limit() -> u64 {
-    20
+    100
 }
 
 // ---------- Pagination ----------

@@ -5,6 +5,7 @@ pub mod dial_ws;
 pub mod email_tracking;
 pub mod pause;
 pub mod pivot;
+pub mod search;
 pub mod sond;
 pub mod spark;
 pub mod tempo;

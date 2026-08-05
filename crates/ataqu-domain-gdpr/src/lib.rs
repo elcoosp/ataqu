@@ -56,6 +56,91 @@ impl GdprRegistry {
                     tenant_id_column: "tenant_id".into(),
                 },
                 GdprTable {
+                    schema: "dial".into(),
+                    table: "threads".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "dial".into(),
+                    table: "mentions".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "dial".into(),
+                    table: "reactions".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_crm".into(),
+                    table: "activities".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_crm".into(),
+                    table: "tasks".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_crm".into(),
+                    table: "pipeline_stages".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "documents".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "databases".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "blocks".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "forms".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "responses".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "bookings".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "event_types".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_ops".into(),
+                    table: "availability_slots".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "vault".into(),
+                    table: "movements".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "vault".into(),
+                    table: "reservations".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "vault".into(),
+                    table: "warehouses".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
                     schema: "core".into(),
                     table: "users".into(),
                     tenant_id_column: "tenant_id".into(),

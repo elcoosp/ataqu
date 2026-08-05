@@ -97,12 +97,6 @@ impl TempoService {
             ));
         }
 
-        if cmd.timezone.parse::<chrono_tz::Tz>().is_err() {
-            return Err(TempoServiceError::Validation(
-                "Invalid timezone".to_string(),
-            ));
-        }
-
         let event_types = self
             .repo
             .list_event_types(&cmd.tenant_id)
@@ -139,7 +133,11 @@ impl TempoService {
             .map_err(TempoServiceError::Repository)?;
         let is_available = slots
             .iter()
-            .any(|slot| slot.start_time <= cmd.starts_at && slot.end_time >= cmd.starts_at);
+            .any(|slot| {
+                let slot_start: std::time::SystemTime = slot.start_time.into();
+                let slot_end: std::time::SystemTime = slot.end_time.into();
+                slot_start <= starts_at && slot_end >= ends_at
+            });
         if !is_available {
             return Err(TempoServiceError::Validation(
                 "Booking time is outside of available slots".to_string(),

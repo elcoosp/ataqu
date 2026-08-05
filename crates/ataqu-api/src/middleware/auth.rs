@@ -84,12 +84,21 @@ pub async fn auth_middleware(
     }
 
     if let Some(api_key) = req.headers().get("X-API-Key").and_then(|v| v.to_str().ok()) {
-        if let Ok(user) = app_state.aegis_service.validate_api_key(api_key).await {
+        if let Ok(api_key_data) = app_state.aegis_service.validate_api_key_data(api_key).await {
+            // Basic scope enforcement: require "read" for GET, "write" for others
+            let needs_write = req.method() != axum::http::Method::GET;
+            if needs_write && !api_key_data.scopes.iter().any(|s| s == "write" || s == "admin") {
+                return Err(ApiResponseError::Forbidden("API key lacks write scope".to_string()));
+            }
+            if !needs_write && !api_key_data.scopes.iter().any(|s| s == "read" || s == "write" || s == "admin") {
+                return Err(ApiResponseError::Forbidden("API key lacks read scope".to_string()));
+            }
+
             let auth_ctx = AuthContext {
-                user_id: user.id,
-                tenant_id: user.tenant_id,
-                email: user.email.as_ref().to_string(),
-                roles: vec![user.role],
+                user_id: api_key_data.user_id,
+                tenant_id: api_key_data.tenant_id,
+                email: api_key_data.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+                roles: vec![api_key_data.role],
             };
             req.extensions_mut().insert(auth_ctx);
             return Ok(next.run(req).await);

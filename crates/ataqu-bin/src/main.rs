@@ -169,7 +169,7 @@ async fn main() -> anyhow::Result<()> {
     // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.core.clone()));
-    let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone()));
+    let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone(), id_gen.clone()));
 
     // SPARK
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
@@ -189,6 +189,7 @@ async fn main() -> anyhow::Result<()> {
         dial_service: Arc<DialService>,
         cinq_service: Arc<CinqService>,
         vault_service: Arc<VaultService>,
+        http_client: reqwest::Client,
     }
 
     #[async_trait::async_trait]
@@ -320,33 +321,12 @@ async fn main() -> anyhow::Result<()> {
                     body,
                     headers,
                 } => {
-                    let client = reqwest::Client::new();
                     let mut req = match method.to_uppercase().as_str() {
-                        "POST" => client.post(url),
-                        "PUT" => client.put(url),
-                        "PATCH" => client.patch(url),
-                        "DELETE" => client.delete(url),
-                        _ => client.get(url),
-                    };
-                    for (k, v) in headers {
-                        req = req.header(k, v);
-                    }
-                    req = req.json(&body);
-                    req.send().await.map_err(|e| e.to_string())?;
-                }
-                Action::Webhook {
-                    url,
-                    method,
-                    body,
-                    headers,
-                } => {
-                    let client = reqwest::Client::new();
-                    let mut req = match method.to_uppercase().as_str() {
-                        "POST" => client.post(url),
-                        "PUT" => client.put(url),
-                        "PATCH" => client.patch(url),
-                        "DELETE" => client.delete(url),
-                        _ => client.get(url),
+                        "POST" => self.http_client.post(url),
+                        "PUT" => self.http_client.put(url),
+                        "PATCH" => self.http_client.patch(url),
+                        "DELETE" => self.http_client.delete(url),
+                        _ => self.http_client.get(url),
                     };
                     for (k, v) in headers {
                         req = req.header(k, v);
@@ -366,6 +346,7 @@ async fn main() -> anyhow::Result<()> {
         dial_service: dial_service.clone(),
         cinq_service: cinq_service.clone(),
         vault_service: vault_service.clone(),
+        http_client: reqwest::Client::new(),
     });
 
     let spark_service = Arc::new(SparkService::new(
@@ -457,7 +438,8 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
+        .allow_origin("http://localhost:3000".parse::<axum::http::HeaderValue>().unwrap())
+        .allow_origin("https://ataqu.com".parse::<axum::http::HeaderValue>().unwrap())
         .allow_methods([
             axum::http::Method::GET,
             axum::http::Method::POST,
