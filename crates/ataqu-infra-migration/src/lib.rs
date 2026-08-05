@@ -3,7 +3,6 @@ use sea_orm_migration::prelude::*;
 pub mod m20250101_000001_core;
 pub mod m_aegis;
 pub mod m_aegis_add_api_keys;
-pub mod m_aegis_add_tenant_index;
 pub mod m_cinq;
 pub mod m_cinq_add_activity_stage;
 pub mod m_cinq_add_deal_pipeline_stage;
@@ -44,7 +43,6 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20250101_000001_core::Migration),
             Box::new(m_aegis::Migration),
-            Box::new(m_aegis_add_tenant_index::Migration),
             Box::new(m_aegis_add_api_keys::Migration),
             Box::new(m_cinq::Migration),
             Box::new(m_cinq_add_activity_stage::Migration),

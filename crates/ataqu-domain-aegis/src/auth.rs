@@ -3,7 +3,7 @@
 use crate::types::Email;
 use async_trait::async_trait;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use serde::Serialize;
+
 use std::time::SystemTime;
 use uuid::Uuid;
 
@@ -50,7 +50,7 @@ pub struct User {
 }
 
 /// Event emitted when a user is created.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct UserCreated {
     pub user_id: Uuid,
     pub email: Email,

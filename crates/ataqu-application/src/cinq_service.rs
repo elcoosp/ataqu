@@ -170,7 +170,7 @@ impl CinqService {
             "contact_id": contact.id,
             "tenant_id": contact.tenant_id.as_uuid(),
             "name": contact.name,
-            "email": contact.email.as_ref(),
+            "email": "[REDACTED]",
             "created_at": contact.created_at,
         });
         self.outbox

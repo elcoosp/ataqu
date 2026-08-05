@@ -16,7 +16,7 @@ impl MigrationTrait for Migration {
             CREATE TABLE IF NOT EXISTS core.users (
                 id UUID PRIMARY KEY,
                 tenant_id UUID NOT NULL,
-                email TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
                 mfa_secret TEXT,
                 name TEXT,
@@ -28,6 +28,10 @@ impl MigrationTrait for Migration {
             "#,
         )
         .await?;
+
+        db.execute_unprepared(
+            "ALTER TABLE core.users ADD CONSTRAINT users_tenant_email_unique UNIQUE (tenant_id, email);"
+        ).await?;
 
         // Indexes
         db.execute_unprepared(

@@ -30,13 +30,13 @@ pub struct CreateEmployeeCommand {
     pub hire_date: NaiveDate,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EmployeeCreatedEvent {
     pub employee_id: Uuid,
     pub tenant_id: Uuid,
     pub full_name: String,
-    pub email: String,
-    pub phone: Option<String>,
+    pub email: ataqu_security::Email,
+    pub phone: Option<ataqu_security::PhoneNumber>,
     pub job_title: String,
     pub department: Option<String>,
     pub hire_date: NaiveDate,
@@ -54,8 +54,8 @@ pub fn create_employee(
         employee_id: id,
         tenant_id: cmd.tenant_id.as_uuid(),
         full_name: cmd.full_name,
-        email: cmd.email.as_ref().to_string(),
-        phone: cmd.phone.as_ref().map(|p| p.as_ref().to_string()),
+        email: cmd.email,
+        phone: cmd.phone,
         job_title: cmd.job_title,
         department: cmd.department,
         hire_date: cmd.hire_date,

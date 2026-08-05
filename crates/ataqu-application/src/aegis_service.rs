@@ -293,7 +293,10 @@ where
             .create_user(cmd, self.id_gen.as_ref(), self.clock.as_ref())
             .map_err(AegisServiceError::Domain)?;
         self.repo.save_user(&user).await?;
-        let payload = serde_json::to_value(&event).map_err(|e| AegisServiceError::Internal(e.to_string()))?;
+        let payload = serde_json::json!({
+            "user_id": event.user_id,
+            "created_at": event.created_at,
+        });
         self.outbox.append_event(&payload).await.map_err(AegisServiceError::Outbox)?;
         Ok(CreateUserResponse {
             user_id: user.id,

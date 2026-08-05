@@ -154,8 +154,8 @@ impl SondService {
             "response_id": response.id,
             "tenant_id": response.tenant_id.as_uuid(),
             "form_id": response.form_id,
-            "email": response.answers.iter().find_map(|a| if let ataqu_domain_sond::response::AnswerValue::Email(e) = &a.value { Some(e.clone()) } else { None }),
-            "name": response.answers.iter().find_map(|a| if let ataqu_domain_sond::response::AnswerValue::Text(t) = &a.value { Some(t.clone()) } else { None }),
+            "email": "[REDACTED]",
+            "name": "[REDACTED]",
         });
         self.outbox.append("sond", "ResponseSubmitted", response.id, &payload).await.map_err(|e| SondServiceError::Repository(e))?;
 

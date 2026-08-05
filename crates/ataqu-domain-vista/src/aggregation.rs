@@ -55,12 +55,10 @@ pub fn process_aggregation_event(
                 state.total_pipeline_value += Decimal::from_f64(amount).unwrap_or_default();
             }
         }
-        ("collab_crm", "DealStatusChanged") => {
-            if payload.get("new_status").and_then(|v| v.as_str()) == Some("won") {
-                state.total_deals_won += 1;
-                if let Some(amount) = payload.get("amount").and_then(|v| v.as_f64()) {
-                    state.total_revenue += Decimal::from_f64(amount).unwrap_or_default();
-                }
+        ("collab_crm", "DealWon") => {
+            state.total_deals_won += 1;
+            if let Some(amount) = payload.get("amount").and_then(|v| v.as_f64()) {
+                state.total_revenue += Decimal::from_f64(amount).unwrap_or_default();
             }
         }
         ("vault", "ProductCreated") => state.total_products += 1,

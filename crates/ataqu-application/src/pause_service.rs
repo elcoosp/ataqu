@@ -117,8 +117,15 @@ impl PauseService {
         }
         let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock);
         self.employee_repo.insert(tenant_id, &event).await?;
-        let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+        let payload = serde_json::json!({
+            "employee_id": event.employee_id,
+            "tenant_id": event.tenant_id,
+            "full_name": event.full_name,
+            "job_title": event.job_title,
+            "department": event.department,
+            "hire_date": event.hire_date,
+            "created_at": event.created_at,
+        });
         self.outbox
             .append(
                 PAUSE_SCHEMA,
