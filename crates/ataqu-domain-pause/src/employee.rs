@@ -33,7 +33,7 @@ pub struct CreateEmployeeCommand {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EmployeeCreatedEvent {
     pub employee_id: Uuid,
-    pub tenant_id: Uuid,
+    pub tenant_id: TenantId,
     pub full_name: String,
     pub email: ataqu_security::Email,
     pub phone: Option<ataqu_security::PhoneNumber>,
@@ -52,7 +52,7 @@ pub fn create_employee(
     let now = clock.now();
     EmployeeCreatedEvent {
         employee_id: id,
-        tenant_id: cmd.tenant_id.as_uuid(),
+        tenant_id: cmd.tenant_id,
         full_name: cmd.full_name,
         email: cmd.email,
         phone: cmd.phone,

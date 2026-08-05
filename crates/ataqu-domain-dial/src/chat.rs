@@ -261,7 +261,7 @@ pub struct MessageSentEvent {
     pub thread_id: Option<ThreadId>,
     pub author_id: UserId,
     pub content: String,
-    pub mentioned_user_ids: Vec<UserId>,
+    pub mentioned_user_ids: Vec<String>,
     pub created_at: SystemTime,
 }
 
@@ -271,7 +271,7 @@ pub struct MessageEditedEvent {
     pub tenant_id: TenantId,
     pub channel_id: ChannelId,
     pub new_content: String,
-    pub new_mentioned_user_ids: Vec<UserId>,
+    pub new_mentioned_user_ids: Vec<String>,
     pub edited_at: SystemTime,
 }
 
@@ -474,31 +474,28 @@ fn validate_channel_type(
     Ok(())
 }
 
-fn extract_mentions(content: &str) -> Vec<UserId> {
+fn extract_mentions(content: &str) -> Vec<String> {
     let mut mentions = Vec::new();
     let mut chars = content.chars().peekable();
+    let mut prev_char = ' ';
 
     while let Some(c) = chars.next() {
-        if c == '@' {
-            let mut id_str = String::new();
+        if c == '@' && !prev_char.is_alphanumeric() {
+            let mut name = String::new();
             while let Some(&next_c) = chars.peek() {
-                if next_c.is_alphanumeric() || next_c == '-' {
-                    id_str.push(next_c);
+                if next_c.is_alphanumeric() || next_c == '-' || next_c == '_' {
+                    name.push(next_c);
                     chars.next();
                 } else {
                     break;
                 }
             }
-
-            if let Ok(uuid) = Uuid::parse_str(&id_str) {
-                let user_id = UserId::new(uuid);
-                if !mentions.contains(&user_id) {
-                    mentions.push(user_id);
-                }
+            if !name.is_empty() && !mentions.contains(&name) {
+                mentions.push(name);
             }
         }
+        prev_char = c;
     }
-
     mentions
 }
 
@@ -683,7 +680,7 @@ mod tests {
             archived_at: None,
         };
 
-        let mentioned = Uuid::from_u128(123);
+        let mentioned = "user123";
         let cmd = SendMessageCommand {
             tenant_id: tenant_id(),
             channel_id: channel.id,
@@ -694,7 +691,7 @@ mod tests {
 
         let event = send_message(cmd, &channel, &id_gen, &clock).unwrap();
         assert_eq!(event.content, format!("Hello @{}", mentioned));
-        assert_eq!(event.mentioned_user_ids, vec![UserId::new(mentioned)]);
+        assert_eq!(event.mentioned_user_ids, vec![mentioned.to_string()]);
     }
 
     #[test]
@@ -904,12 +901,14 @@ mod tests {
         let content = format!("Hey @{} look at this! Also ping @{}.", u1, u2);
         let mentions = extract_mentions(&content);
         assert_eq!(mentions.len(), 2);
-        assert!(mentions.contains(&UserId::new(u1)));
-        assert!(mentions.contains(&UserId::new(u2)));
+        assert!(mentions.contains(&u1.to_string()));
+        assert!(mentions.contains(&u2.to_string()));
 
         let content_dup = format!("@{} @{} @{}", u1, u1, u2);
         let mentions = extract_mentions(&content_dup);
         assert_eq!(mentions.len(), 2); // Duplicates removed
+        assert!(mentions.contains(&u1.to_string()));
+        assert!(mentions.contains(&u2.to_string()));
 
         let content_invalid = "Email me at test@test.com";
         let mentions = extract_mentions(content_invalid);

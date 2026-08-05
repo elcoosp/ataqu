@@ -12,7 +12,7 @@ use uuid::Uuid;
 pub struct CreateUserCommand {
     pub tenant_id: TenantId,
     pub email: Email,
-    pub password_hash: String,
+    pub password: String,
     pub name: Option<String>,
 }
 
@@ -20,7 +20,7 @@ pub struct CreateUserCommand {
 #[derive(Debug, Clone)]
 pub struct AuthenticateCommand {
     pub email: Email,
-    pub password_hash: String,
+    pub password: String,
     pub totp_code: Option<String>,
     pub tenant_id: Option<TenantId>,
 }

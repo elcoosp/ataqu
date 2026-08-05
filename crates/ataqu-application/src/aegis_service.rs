@@ -111,7 +111,7 @@ impl RealAegisDomain {
         let salt = SaltString::generate(&mut rand::thread_rng());
         let argon2 = Argon2::default();
         let password_hash = argon2
-            .hash_password(cmd.password_hash.as_bytes(), &salt)
+            .hash_password(cmd.password.as_bytes(), &salt)
             .map_err(|_| AuthError::InvalidCredentials)?
             .to_string();
         let user_id = id_gen.new_uuid_v7();
@@ -149,7 +149,7 @@ impl RealAegisDomain {
             .map_err(|_| AegisServiceError::AuthenticationFailed)?;
         let argon2 = Argon2::default();
         if argon2
-            .verify_password(cmd.password_hash.as_bytes(), &parsed_hash)
+            .verify_password(cmd.password.as_bytes(), &parsed_hash)
             .is_err()
         {
             return Err(AegisServiceError::AuthenticationFailed);

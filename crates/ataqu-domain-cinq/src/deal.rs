@@ -23,6 +23,7 @@ pub struct Deal {
     pub status: DealStatus,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -44,6 +45,7 @@ pub struct UpdateDealCommand {
     pub pipeline_stage_id: Option<Uuid>,
     pub amount: Option<Decimal>,
     pub status: Option<DealStatus>,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, Clone)]

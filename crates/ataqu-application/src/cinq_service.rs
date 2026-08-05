@@ -71,6 +71,7 @@ pub struct UpdateDealCommand {
     pub status: Option<DealStatus>,
     pub variant_id: Option<Uuid>,
     pub quantity: Option<i64>,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -465,6 +466,7 @@ impl CinqService {
             status: event.status,
             created_at: event.created_at,
             updated_at: event.created_at,
+            version: 0,
         };
         self.deal_repo.save_deal(&deal).await?;
 
@@ -500,6 +502,7 @@ impl CinqService {
             pipeline_stage_id: cmd.pipeline_stage_id,
             amount: cmd.amount,
             status: cmd.status,
+            expected_version: cmd.expected_version,
         };
         let event = deal_domain::update_deal(domain_cmd, self.clock.as_ref())?;
         if let Some(contact_id) = event.contact_id {

@@ -35,7 +35,7 @@ pub async fn create_user(
     let cmd = CreateUserCommand {
         tenant_id: auth.tenant_id, // Fix: use auth context
         email: email.clone(),
-        password_hash: req.password,
+        password: req.password,
         name: req.name,
     };
     match state.aegis_service.create_user(cmd).await {
@@ -75,7 +75,7 @@ pub async fn login(
     info!("Login attempt");
     let cmd = AuthenticateCommand {
         email: Email::new(req.email),
-        password_hash: req.password,
+        password: req.password,
         totp_code: req.totp_code,
         tenant_id: None,
     };

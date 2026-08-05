@@ -53,7 +53,7 @@ pub struct RequestLeaveCommand {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct LeaveRequestedEvent {
     pub leave_request_id: Uuid,
-    pub tenant_id: Uuid,
+    pub tenant_id: TenantId,
     pub employee_id: Uuid,
     pub leave_type: LeaveType,
     pub start_date: NaiveDate,
@@ -80,7 +80,7 @@ pub fn request_leave(
     let now = clock.now();
     LeaveRequestedEvent {
         leave_request_id: id,
-        tenant_id: cmd.tenant_id.as_uuid(),
+        tenant_id: cmd.tenant_id,
         employee_id: cmd.employee_id,
         leave_type: cmd.leave_type,
         start_date: cmd.start_date,

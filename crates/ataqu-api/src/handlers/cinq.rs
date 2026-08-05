@@ -264,8 +264,17 @@ pub async fn update_deal(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateDealRequest>,
 ) -> ApiResult<Json<DealResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     let status = if let Some(s) = payload.status {
         match s.to_lowercase().as_str() {
             "open" => Some(DealStatus::Open),
@@ -286,6 +295,7 @@ pub async fn update_deal(
         status,
         variant_id: payload.variant_id,
         quantity: payload.quantity,
+        expected_version: if_match,
     };
     let deal = state
         .cinq_service

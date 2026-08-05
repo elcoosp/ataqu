@@ -326,6 +326,7 @@ fn model_to_deal(model: deal_entity::Model) -> Deal {
         status,
         created_at: model.created_at,
         updated_at: model.updated_at,
+        version: 0,
     }
 }
 
