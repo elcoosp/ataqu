@@ -1,11 +1,21 @@
-use std::net::SocketAddr;
+use std::os::unix::net::UnixListener;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().init();
-    let app = axum::Router::new().route("/health", axum::routing::get(|| async { "ok" }));
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8081));
-    tracing::info!("Admin server listening on {}", addr);
-    axum::serve(tokio::net::TcpListener::bind(addr).await?, app).await?;
-    Ok(())
+    let socket_path = "/tmp/ataqu-admin.sock";
+    let _ = std::fs::remove_file(socket_path);
+    let listener = UnixListener::bind(socket_path)?;
+    tracing::info!("Admin server listening on UDS: {}", socket_path);
+
+    loop {
+        match listener.accept() {
+            Ok((_stream, _addr)) => {
+                tracing::info!("Admin connection received. CLI logic not yet implemented.");
+            }
+            Err(e) => {
+                tracing::error!("Admin accept error: {}", e);
+            }
+        }
+    }
 }

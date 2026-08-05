@@ -258,10 +258,10 @@ pub async fn list_movements(
             serde_json::json!({
                 "id": m.id,
                 "variant_id": m.variant_id,
-                "delta": m.quantity,
+                "quantity": m.quantity,
                 "reason": m.reason,
                 "reference": m.reference,
-                "created_at": m.timestamp,
+                "timestamp": m.timestamp,
             })
         })
         .collect();

@@ -41,7 +41,8 @@ pub async fn rate_limit_middleware(
     State(limiter): State<RateLimiter>,
     req: Request,
     next: Next,
-) -> Result<Response, StatusCode> {
+) -> Result<Response, axum::http::StatusCode> {
+    use axum::http::StatusCode;
     // Basic IP-based rate limiting. In a real app, you'd extract IP from headers.
     let key = req
         .headers()

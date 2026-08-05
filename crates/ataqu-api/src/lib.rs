@@ -96,6 +96,10 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
         .layer(axum::middleware::from_fn(request_id_middleware))
+        .layer(axum::middleware::from_fn_with_state(
+            state.rate_limiter.clone(),
+            crate::middleware::rate_limit::rate_limit_middleware,
+        ))
         .nest("/api/aegis", aegis_routes())
         .nest("/api/cinq", cinq_routes())
         .nest("/api/dial", dial_routes())

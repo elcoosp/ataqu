@@ -292,6 +292,7 @@ async fn main() -> anyhow::Result<()> {
     let tempo_service_for_reminder = tempo_service.clone();
     let aegis_service_for_noshow = aegis_service.clone();
     let aegis_service_for_reminder = aegis_service.clone();
+    let spark_service_for_cron = spark_service.clone();
 
     // Build AppState
     use dashmap::DashMap;
@@ -429,6 +430,16 @@ async fn main() -> anyhow::Result<()> {
     let dispatcher = OutboxDispatcher::new(dispatcher_pool, handler);
     tokio::spawn(async move {
         dispatcher.run().await;
+    });
+
+    // Start cron worker
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            if let Err(e) = spark_service_for_cron.poll_scheduled_triggers().await {
+                tracing::error!("Cron worker error: {}", e);
+            }
+        }
     });
 
     // Start no-show worker
