@@ -258,9 +258,23 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
     async fn update(
         &self,
         _tenant_id: &TenantId,
-        _employee: &ataqu_domain_pause::Employee,
+        employee: &ataqu_domain_pause::Employee,
     ) -> Result<(), ataqu_domain_pause::PauseDomainError> {
-        // TODO: Implement actual DB update
+        let model = employee::Model {
+            id: employee.id,
+            tenant_id: employee.tenant_id.as_uuid(),
+            full_name: employee.full_name.clone(),
+            email: employee.email.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string(),
+            phone: employee.phone.clone().map(|p| p.reveal(&ataqu_security::PiiAccessKey::new_for_test()).to_string()),
+            job_title: employee.job_title.clone(),
+            department: employee.department.clone(),
+            hire_date: Some(employee.hire_date),
+            is_active: employee.is_active,
+            created_at: employee.created_at.into(),
+            updated_at: employee.updated_at.into(),
+        };
+        let active: employee::ActiveModel = model.into();
+        active.update(&self.db).await.map_err(|e| PauseDomainError::Persistence(e.to_string()))?;
         Ok(())
     }
 }

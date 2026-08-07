@@ -1,91 +1,9 @@
 use async_trait::async_trait;
 use ataqu_domain_vista::aggregation::AggregatedView;
-use ataqu_domain_vista::analytics::AnalyticsDataPoint;
 use ataqu_domain_vista::repository::VistaRepository;
 use ataqu_kernel::TenantId;
-use chrono::Utc;
-use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
-    Statement,
-};
-
-// We define a local entity for the aggregated_views table
-mod dashboard_entity {
-    use chrono::{DateTime, Utc};
-    use sea_orm::entity::prelude::*;
-    use serde_json::Value;
-    use uuid::Uuid;
-
-    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-    #[sea_orm(table_name = "dashboards", schema_name = "core")]
-    pub struct Model {
-        #[sea_orm(primary_key)]
-        pub id: Uuid,
-        pub tenant_id: Uuid,
-        pub name: String,
-        pub config: Value,
-        pub created_at: DateTime<Utc>,
-        pub updated_at: DateTime<Utc>,
-    }
-
-    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-    pub enum Relation {}
-
-    impl ActiveModelBehavior for ActiveModel {}
-}
-
-mod aggregated_view_entity {
-    use chrono::{DateTime, Utc};
-    use rust_decimal::Decimal;
-    use sea_orm::entity::prelude::*;
-    use uuid::Uuid;
-
-    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-    #[sea_orm(table_name = "aggregated_views", schema_name = "core")]
-    pub struct Model {
-        #[sea_orm(primary_key)]
-        pub tenant_id: Uuid,
-        pub total_events: i64,
-        pub total_contacts: i64,
-        pub total_deals: i64,
-        pub total_deals_won: i64,
-        pub total_pipeline_value: Decimal,
-        pub total_revenue: Decimal,
-        pub total_products: i64,
-        pub low_stock_variants: i64,
-        pub total_bookings: i64,
-        pub pending_leave_requests: i64,
-        pub last_updated_at: DateTime<Utc>,
-    }
-
-    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-    pub enum Relation {}
-
-    impl ActiveModelBehavior for ActiveModel {}
-}
-
-// Local entity for analytics_data_points
-mod data_point_entity {
-    use chrono::{DateTime, Utc};
-    use sea_orm::entity::prelude::*;
-    use uuid::Uuid;
-
-    #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-    #[sea_orm(table_name = "analytics_data_points", schema_name = "core")]
-    pub struct Model {
-        #[sea_orm(primary_key)]
-        pub id: Uuid,
-        pub tenant_id: Uuid,
-        pub metric_name: String,
-        pub value: f64,
-        pub timestamp: DateTime<Utc>,
-    }
-
-    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-    pub enum Relation {}
-
-    impl ActiveModelBehavior for ActiveModel {}
-}
+use sea_orm::{ConnectionTrait, DatabaseConnection};
+use uuid::Uuid;
 
 pub struct VistaRepositoryImpl {
     db: DatabaseConnection,
@@ -100,202 +18,248 @@ impl VistaRepositoryImpl {
 #[async_trait]
 impl VistaRepository for VistaRepositoryImpl {
     async fn get_aggregated_view(&self, tenant_id: &TenantId) -> Result<AggregatedView, String> {
-        let model = aggregated_view_entity::Entity::find_by_id(tenant_id.as_uuid())
-            .one(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
+        let sql = r#"
+            SELECT tenant_id, total_events, total_contacts, total_deals, total_deals_won,
+                   total_pipeline_value, total_revenue, total_products, low_stock_variants,
+                   total_bookings, pending_leave_requests, last_updated_at
+            FROM vista.aggregated_views
+            WHERE tenant_id = $1
+        "#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [tenant_id.as_uuid().into()],
+        );
 
-        Ok(model
-            .map(|m| AggregatedView {
-                tenant_id: TenantId::new(m.tenant_id),
-                total_events: m.total_events as u64,
-                total_contacts: m.total_contacts as u64,
-                total_deals: m.total_deals as u64,
-                total_deals_won: m.total_deals_won as u64,
-                total_pipeline_value: m.total_pipeline_value,
-                total_revenue: m.total_revenue,
-                total_products: m.total_products as u64,
-                low_stock_variants: m.low_stock_variants as u64,
-                total_bookings: m.total_bookings as u64,
-                pending_leave_requests: m.pending_leave_requests as u64,
-                last_updated_at: m.last_updated_at.into(),
-            })
-            .unwrap_or_else(|| AggregatedView::new(*tenant_id)))
+        let row = self.db.query_one_raw(stmt).await
+            .map_err(|e| e.to_string())?
+            .ok_or("Aggregated view not found".to_string())?;
+
+        let last_updated_dt: chrono::DateTime<chrono::Utc> = row.try_get("", "last_updated_at").map_err(|e| e.to_string())?;
+
+        let view = AggregatedView {
+            tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
+            total_events: row.try_get::<i64>("", "total_events").map_err(|e| e.to_string())? as u64,
+            total_contacts: row.try_get::<i64>("", "total_contacts").map_err(|e| e.to_string())? as u64,
+            total_deals: row.try_get::<i64>("", "total_deals").map_err(|e| e.to_string())? as u64,
+            total_deals_won: row.try_get::<i64>("", "total_deals_won").map_err(|e| e.to_string())? as u64,
+            total_pipeline_value: row.try_get("", "total_pipeline_value").map_err(|e| e.to_string())?,
+            total_revenue: row.try_get("", "total_revenue").map_err(|e| e.to_string())?,
+            total_products: row.try_get::<i64>("", "total_products").map_err(|e| e.to_string())? as u64,
+            low_stock_variants: row.try_get::<i64>("", "low_stock_variants").map_err(|e| e.to_string())? as u64,
+            total_bookings: row.try_get::<i64>("", "total_bookings").map_err(|e| e.to_string())? as u64,
+            pending_leave_requests: row.try_get::<i64>("", "pending_leave_requests").map_err(|e| e.to_string())? as u64,
+            last_updated_at: last_updated_dt.into(),
+        };
+        Ok(view)
     }
 
     async fn save_aggregated_view(&self, view: &AggregatedView) -> Result<(), String> {
-        let active = aggregated_view_entity::ActiveModel {
-            tenant_id: sea_orm::Set(view.tenant_id.as_uuid()),
-            total_events: sea_orm::Set(view.total_events as i64),
-            total_contacts: sea_orm::Set(view.total_contacts as i64),
-            total_deals: sea_orm::Set(view.total_deals as i64),
-            total_deals_won: sea_orm::Set(view.total_deals_won as i64),
-            total_pipeline_value: sea_orm::Set(view.total_pipeline_value),
-            total_revenue: sea_orm::Set(view.total_revenue),
-            total_products: sea_orm::Set(view.total_products as i64),
-            low_stock_variants: sea_orm::Set(view.low_stock_variants as i64),
-            total_bookings: sea_orm::Set(view.total_bookings as i64),
-            pending_leave_requests: sea_orm::Set(view.pending_leave_requests as i64),
-            last_updated_at: sea_orm::Set(Utc::now()),
-        };
-
-        let exists = aggregated_view_entity::Entity::find_by_id(view.tenant_id.as_uuid())
-            .one(&self.db)
-            .await
-            .map_err(|e| e.to_string())?
-            .is_some();
-
-        if exists {
-            aggregated_view_entity::Entity::update(active)
-                .exec(&self.db)
-                .await
-                .map_err(|e| e.to_string())?;
-        } else {
-            aggregated_view_entity::Entity::insert(active)
-                .exec(&self.db)
-                .await
-                .map_err(|e| e.to_string())?;
-        }
-        Ok(())
-    }
-
-    async fn save_data_point(&self, point: &AnalyticsDataPoint) -> Result<(), String> {
-        let active = data_point_entity::ActiveModel {
-            id: sea_orm::Set(uuid::Uuid::new_v4()),
-            tenant_id: sea_orm::Set(point.tenant_id.as_uuid()),
-            metric_name: sea_orm::Set(point.metric_name.clone()),
-            value: sea_orm::Set(point.value),
-            timestamp: sea_orm::Set(point.timestamp.into()),
-        };
-        data_point_entity::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
-        Ok(())
-    }
-
-    async fn get_data_points(
-        &self,
-        tenant_id: &TenantId,
-        metric: &str,
-        limit: u64,
-    ) -> Result<Vec<AnalyticsDataPoint>, String> {
-        let models = data_point_entity::Entity::find()
-            .filter(data_point_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .filter(data_point_entity::Column::MetricName.eq(metric))
-            .limit(limit)
-            .all(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
-
-        Ok(models
-            .into_iter()
-            .map(|m| AnalyticsDataPoint {
-                tenant_id: TenantId::new(m.tenant_id),
-                timestamp: m.timestamp.into(),
-                metric_name: m.metric_name,
-                value: m.value,
-            })
-            .collect())
-    }
-
-    async fn save_dashboard(
-        &self,
-        dashboard: &ataqu_domain_vista::dashboard::Dashboard,
-    ) -> Result<(), String> {
-        let active = dashboard_entity::ActiveModel {
-            id: sea_orm::Set(dashboard.id),
-            tenant_id: sea_orm::Set(dashboard.tenant_id.as_uuid()),
-            name: sea_orm::Set(dashboard.name.clone()),
-            config: sea_orm::Set(dashboard.config.clone()),
-            created_at: sea_orm::Set(dashboard.created_at),
-            updated_at: sea_orm::Set(dashboard.updated_at),
-        };
-        let exists = dashboard_entity::Entity::find_by_id(dashboard.id)
-            .one(&self.db)
-            .await
-            .map_err(|e| e.to_string())?
-            .is_some();
-        if exists {
-            dashboard_entity::Entity::update(active)
-                .exec(&self.db)
-                .await
-                .map_err(|e| e.to_string())?;
-        } else {
-            dashboard_entity::Entity::insert(active)
-                .exec(&self.db)
-                .await
-                .map_err(|e| e.to_string())?;
-        }
-        Ok(())
-    }
-
-    async fn list_dashboards(
-        &self,
-        tenant_id: &TenantId,
-    ) -> Result<Vec<ataqu_domain_vista::dashboard::Dashboard>, String> {
-        let models = dashboard_entity::Entity::find()
-            .filter(dashboard_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .all(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
-        Ok(models
-            .into_iter()
-            .map(|m| ataqu_domain_vista::dashboard::Dashboard {
-                id: m.id,
-                tenant_id: TenantId::new(m.tenant_id),
-                name: m.name,
-                config: m.config,
-                created_at: m.created_at,
-                updated_at: m.updated_at,
-            })
-            .collect())
-    }
-
-    async fn delete_dashboard(&self, tenant_id: &TenantId, id: uuid::Uuid) -> Result<(), String> {
-        dashboard_entity::Entity::delete_many()
-            .filter(dashboard_entity::Column::Id.eq(id))
-            .filter(dashboard_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .exec(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
-        Ok(())
-    }
-
-    async fn execute_raw_sql(
-        &self,
-        tenant_id: &TenantId,
-        sql: &str,
-    ) -> Result<Vec<serde_json::Value>, String> {
-        #[derive(Debug, FromQueryResult)]
-        struct GenericRow {
-            data: serde_json::Value,
-        }
-
-        let wrapped_sql = format!("SELECT jsonb_agg(row_to_json(t)) as data FROM ({}) t", sql);
-        let stmt = Statement::from_sql_and_values(
-            sea_orm::DatabaseBackend::Postgres,
-            wrapped_sql,
-            vec![tenant_id.as_uuid().into()],
+        let sql = r#"
+            INSERT INTO vista.aggregated_views (
+                tenant_id, total_events, total_contacts, total_deals, total_deals_won,
+                total_pipeline_value, total_revenue, total_products, low_stock_variants,
+                total_bookings, pending_leave_requests, last_updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            ON CONFLICT (tenant_id) DO UPDATE SET
+                total_events = EXCLUDED.total_events,
+                total_contacts = EXCLUDED.total_contacts,
+                total_deals = EXCLUDED.total_deals,
+                total_deals_won = EXCLUDED.total_deals_won,
+                total_pipeline_value = EXCLUDED.total_pipeline_value,
+                total_revenue = EXCLUDED.total_revenue,
+                total_products = EXCLUDED.total_products,
+                low_stock_variants = EXCLUDED.low_stock_variants,
+                total_bookings = EXCLUDED.total_bookings,
+                pending_leave_requests = EXCLUDED.pending_leave_requests,
+                last_updated_at = EXCLUDED.last_updated_at
+        "#;
+        let last_updated_dt: chrono::DateTime<chrono::Utc> = view.last_updated_at.into();
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [
+                view.tenant_id.as_uuid().into(),
+                (view.total_events as i64).into(),
+                (view.total_contacts as i64).into(),
+                (view.total_deals as i64).into(),
+                (view.total_deals_won as i64).into(),
+                view.total_pipeline_value.into(),
+                view.total_revenue.into(),
+                (view.total_products as i64).into(),
+                (view.low_stock_variants as i64).into(),
+                (view.total_bookings as i64).into(),
+                (view.pending_leave_requests as i64).into(),
+                last_updated_dt.into(),
+            ],
         );
+        self.db.execute_raw(stmt).await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
 
-        let result = GenericRow::find_by_statement(stmt)
-            .one(&self.db)
-            .await
+    async fn get_data_points(&self, tenant_id: &TenantId, metric: &str, limit: u64) -> Result<Vec<ataqu_domain_vista::AnalyticsDataPoint>, String> {
+        let sql = r#"
+            SELECT tenant_id, metric_name, value, timestamp
+            FROM vista.data_points
+            WHERE tenant_id = $1 AND metric_name = $2
+            ORDER BY timestamp DESC
+            LIMIT $3
+        "#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [tenant_id.as_uuid().into(), metric.into(), (limit as i64).into()],
+        );
+        let rows = self.db.query_all_raw(stmt).await
             .map_err(|e| e.to_string())?;
 
-        match result {
-            Some(row) => Ok(row.data.as_array().cloned().unwrap_or_default()),
-            None => Ok(Vec::new()),
+        let mut points = Vec::new();
+        for row in rows {
+            let ts: chrono::DateTime<chrono::Utc> = row.try_get("", "timestamp").map_err(|e| e.to_string())?;
+            points.push(ataqu_domain_vista::AnalyticsDataPoint {
+                tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
+                metric_name: row.try_get("", "metric_name").map_err(|e| e.to_string())?,
+                value: row.try_get("", "value").map_err(|e| e.to_string())?,
+                timestamp: ts.into(),
+            });
+        }
+        Ok(points)
+    }
+
+    async fn save_data_point(&self, point: &ataqu_domain_vista::AnalyticsDataPoint) -> Result<(), String> {
+        let sql = r#"
+            INSERT INTO vista.data_points (tenant_id, metric_name, value, timestamp)
+            VALUES ($1, $2, $3, $4)
+        "#;
+        let timestamp_dt: chrono::DateTime<chrono::Utc> = point.timestamp.into();
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [
+                point.tenant_id.as_uuid().into(),
+                point.metric_name.clone().into(),
+                point.value.into(),
+                timestamp_dt.into(),
+            ],
+        );
+        self.db.execute_raw(stmt).await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    async fn save_dashboard(&self, dashboard: &ataqu_domain_vista::Dashboard) -> Result<(), String> {
+        let sql = r#"
+            INSERT INTO vista.dashboards (id, tenant_id, name, config, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                config = EXCLUDED.config,
+                updated_at = EXCLUDED.updated_at
+        "#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [
+                dashboard.id.into(),
+                dashboard.tenant_id.as_uuid().into(),
+                dashboard.name.clone().into(),
+                dashboard.config.clone().into(),
+                dashboard.created_at.into(),
+                dashboard.updated_at.into(),
+            ],
+        );
+        self.db.execute_raw(stmt).await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    async fn get_dashboard_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<ataqu_domain_vista::Dashboard>, String> {
+        let sql = r#"
+            SELECT id, tenant_id, name, config, created_at, updated_at
+            FROM vista.dashboards
+            WHERE tenant_id = $1 AND id = $2
+        "#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [tenant_id.as_uuid().into(), id.into()],
+        );
+        let row = self.db.query_one_raw(stmt).await
+            .map_err(|e| e.to_string())?;
+
+        if let Some(row) = row {
+            Ok(Some(ataqu_domain_vista::Dashboard {
+                id: row.try_get("", "id").map_err(|e| e.to_string())?,
+                tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
+                name: row.try_get("", "name").map_err(|e| e.to_string())?,
+                config: row.try_get("", "config").map_err(|e| e.to_string())?,
+                created_at: row.try_get("", "created_at").map_err(|e| e.to_string())?,
+                updated_at: row.try_get("", "updated_at").map_err(|e| e.to_string())?,
+            }))
+        } else {
+            Ok(None)
         }
     }
 
-    async fn get_dashboard_by_id(
-        &self,
-        _tenant_id: &TenantId,
-        _id: uuid::Uuid,
-    ) -> Result<Option<ataqu_domain_vista::Dashboard>, String> {
-        // TODO: Implement actual DB query
-        Ok(None)
+    async fn list_dashboards(&self, tenant_id: &TenantId) -> Result<Vec<ataqu_domain_vista::Dashboard>, String> {
+        let sql = r#"
+            SELECT id, tenant_id, name, config, created_at, updated_at
+            FROM vista.dashboards
+            WHERE tenant_id = $1
+        "#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [tenant_id.as_uuid().into()],
+        );
+        let rows = self.db.query_all_raw(stmt).await
+            .map_err(|e| e.to_string())?;
+
+        let mut dashboards = Vec::new();
+        for row in rows {
+            dashboards.push(ataqu_domain_vista::Dashboard {
+                id: row.try_get("", "id").map_err(|e| e.to_string())?,
+                tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
+                name: row.try_get("", "name").map_err(|e| e.to_string())?,
+                config: row.try_get("", "config").map_err(|e| e.to_string())?,
+                created_at: row.try_get("", "created_at").map_err(|e| e.to_string())?,
+                updated_at: row.try_get("", "updated_at").map_err(|e| e.to_string())?,
+            });
+        }
+        Ok(dashboards)
+    }
+
+    async fn delete_dashboard(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), String> {
+        let sql = r#"DELETE FROM vista.dashboards WHERE tenant_id = $1 AND id = $2"#;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [tenant_id.as_uuid().into(), id.into()],
+        );
+        self.db.execute_raw(stmt).await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    async fn execute_raw_sql(&self, tenant_id: &TenantId, sql: &str) -> Result<Vec<serde_json::Value>, String> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            sql,
+            [tenant_id.as_uuid().into()],
+        );
+        let rows = self.db.query_all_raw(stmt).await
+            .map_err(|e| e.to_string())?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            let mut obj = serde_json::Map::new();
+            for col_name in row.column_names() {
+                let val: Option<String> = row.try_get("", &col_name).ok();
+                obj.insert(col_name, serde_json::json!(val));
+            }
+            results.push(serde_json::Value::Object(obj));
+        }
+        Ok(results)
     }
 }

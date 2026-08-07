@@ -413,20 +413,52 @@ impl TempoRepository for TempoRepositoryImpl {
 
     async fn reschedule_booking(
         &self,
-        _tenant_id: &TenantId,
-        _booking_id: &BookingId,
-        _starts_at: chrono::DateTime<chrono::Utc>,
+        tenant_id: &TenantId,
+        booking_id: &BookingId,
+        starts_at: chrono::DateTime<chrono::Utc>,
     ) -> Result<(), ataqu_kernel::RepositoryError> {
-        // TODO: Implement actual DB update
+        let mut model = booking_entity::Entity::find()
+            .filter(booking_entity::Column::Id.eq(booking_id.0))
+            .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?
+            .ok_or(ataqu_kernel::RepositoryError::NotFound)?;
+
+        let duration_minutes = model.duration_seconds / 60;
+        let ends_at = starts_at + chrono::Duration::minutes(duration_minutes as i64);
+
+        model.starts_at = starts_at;
+        model.ends_at = ends_at;
+
+        let active: booking_entity::ActiveModel = model.into();
+        active.update(&self.db).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
-    async fn update_event_type(&self, _event_type: &EventType) -> Result<(), ataqu_kernel::RepositoryError> {
-        // TODO: Implement actual DB update
+    async fn update_event_type(&self, event_type: &EventType) -> Result<(), ataqu_kernel::RepositoryError> {
+        let model = event_type_entity::Model {
+            id: event_type.id.0,
+            tenant_id: event_type.tenant_id.as_uuid(),
+            name: event_type.name.clone(),
+            slug: event_type.slug.clone(),
+            description: event_type.description.clone(),
+            duration_minutes: event_type.duration_minutes,
+            is_active: event_type.is_active,
+            created_at: event_type.created_at,
+            updated_at: event_type.updated_at,
+        };
+        let active: event_type_entity::ActiveModel = model.into();
+        active.update(&self.db).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
-    async fn delete_event_type(&self, _tenant_id: &TenantId, _id: Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
-        // TODO: Implement actual DB delete
+    async fn delete_event_type(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
+        event_type_entity::Entity::delete_many()
+            .filter(event_type_entity::Column::Id.eq(id))
+            .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 

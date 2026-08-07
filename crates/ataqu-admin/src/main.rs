@@ -1,64 +1,40 @@
-use tokio::io::AsyncReadExt;
-use tokio::net::UnixListener;
+use std::io::{Read, Write};
+use std::os::unix::net::UnixStream;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().init();
+fn main() {
     let socket_path = "/tmp/ataqu-admin.sock";
-    let _ = std::fs::remove_file(socket_path);
-    let listener = UnixListener::bind(socket_path)?;
-    tracing::info!("Admin server listening on UDS: {}", socket_path);
+    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
 
-    loop {
-        match listener.accept().await {
-            Ok((mut stream, _)) => {
-                tokio::spawn(async move {
-                    let mut buffer = [0; 1024];
-                    match stream.read(&mut buffer).await {
-                        Ok(bytes_read) => {
-                            let command = String::from_utf8_lossy(&buffer[..bytes_read]);
-                            tracing::info!("Received admin command: {}", command);
+    let mut args = std::env::args().skip(1);
+    let command = args.next().unwrap_or_else(|| {
+        eprintln!("Usage: ataqu-admin <command>");
+        std::process::exit(1);
+    });
 
-                            let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-                            let is_authorized = !admin_token.is_empty() && {
-                                let cmd_bytes = command.as_bytes();
-                                let token_bytes = admin_token.as_bytes();
-                                if cmd_bytes.len() < token_bytes.len() {
-                                    false
-                                } else {
-                                    use std::time::Instant;
-                                    let start = Instant::now();
-                                    let mut diff = 0u8;
-                                    for i in 0..token_bytes.len() {
-                                        diff |= cmd_bytes[i] ^ token_bytes[i];
-                                    }
-                                    let _ = start.elapsed(); // prevent optimization
-                                    diff == 0
-                                }
-                            };
-
-                            if is_authorized {
-                                let actual_cmd = command[admin_token.len()..].trim();
-                                tracing::info!(command = actual_cmd, "Authorized admin command executed");
-                                let response =
-                                    format!("Command '{}' authorized and executed.\n", actual_cmd);
-                                use tokio::io::AsyncWriteExt;
-                                let _ = stream.write_all(response.as_bytes()).await;
-                            } else {
-                                tracing::warn!("Unauthorized admin command attempt");
-                                use tokio::io::AsyncWriteExt;
-                                let _ = stream.write_all(b"Unauthorized\n").await;
-                            }
-                        }
-                        Err(e) => {
-                            tracing::error!("Failed to read from admin stream: {}", e);
-                        }
-                    }
-                });
-            }
-            Err(e) => {
-                tracing::error!("Admin accept error: {}", e);
-            }
-        }
+    if admin_token.is_empty() {
+        eprintln!("ADMIN_TOKEN environment variable not set");
+        std::process::exit(1);
     }
+
+    let mut stream = match UnixStream::connect(socket_path) {
+        Ok(stream) => stream,
+        Err(e) => {
+            eprintln!("Failed to connect to UDS: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let full_command = format!("{} {}", admin_token, command);
+    if let Err(e) = stream.write_all(full_command.as_bytes()) {
+        eprintln!("Failed to write to UDS: {}", e);
+        std::process::exit(1);
+    }
+
+    let mut response = String::new();
+    if let Err(e) = stream.read_to_string(&mut response) {
+        eprintln!("Failed to read from UDS: {}", e);
+        std::process::exit(1);
+    }
+
+    print!("{}", response);
 }

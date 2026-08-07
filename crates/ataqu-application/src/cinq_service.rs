@@ -675,6 +675,18 @@ impl CinqService {
             .await?)
     }
 
+    pub async fn list_all_activities(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<Activity>> {
+        Ok(self
+            .activity_repo
+            .list_all_activities(&tenant_id, limit, offset)
+            .await?)
+    }
+
     // ---------- Pipeline Stages ----------
     pub async fn create_pipeline_stage(
         &self,

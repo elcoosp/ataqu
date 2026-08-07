@@ -524,6 +524,22 @@ impl DomainActivityRepo for CinqActivityRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_activity).collect())
     }
+
+    async fn list_all_activities(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Activity>, CinqDomainError> {
+        let models = activity_entity::Entity::find()
+            .filter(activity_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(models.into_iter().map(model_to_activity).collect())
+    }
 }
 
 // ---------- Pipeline Stage Repository ----------
@@ -820,4 +836,5 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(())
     }
+
 }

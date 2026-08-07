@@ -536,28 +536,48 @@ pub async fn list_activities(
     auth: AuthContext,
     Query(params): Query<ListActivitiesParams>,
 ) -> ApiResult<Json<Vec<ActivityResponse>>> {
-    let contact_id = params
-        .contact_id
-        .ok_or_else(|| ApiResponseError::validation("contact_id required"))?;
-    let activities = state
-        .cinq_service
-        .list_activities_for_contact(auth.tenant_id, contact_id, params.limit.unwrap_or(100), 0)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        activities
-            .into_iter()
-            .map(|a| ActivityResponse {
-                id: a.id,
-                activity_type: format!("{:?}", a.activity_type).to_lowercase(),
-                description: a.description,
-                scheduled_at: a.scheduled_at,
-                contact_id: a.contact_id,
-                deal_id: a.deal_id,
-                created_at: a.created_at,
-            })
-            .collect(),
-    ))
+    if let Some(contact_id) = params.contact_id {
+        let activities = state
+            .cinq_service
+            .list_activities_for_contact(auth.tenant_id, contact_id, params.limit.unwrap_or(100), 0)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        Ok(Json(
+            activities
+                .into_iter()
+                .map(|a| ActivityResponse {
+                    id: a.id,
+                    activity_type: format!("{:?}", a.activity_type).to_lowercase(),
+                    description: a.description,
+                    scheduled_at: a.scheduled_at,
+                    contact_id: a.contact_id,
+                    deal_id: a.deal_id,
+                    created_at: a.created_at,
+                })
+                .collect(),
+        ))
+    } else {
+        // If no contact_id, return all activities for the tenant
+        let activities = state
+            .cinq_service
+            .list_all_activities(auth.tenant_id, params.limit.unwrap_or(100), 0)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        Ok(Json(
+            activities
+                .into_iter()
+                .map(|a| ActivityResponse {
+                    id: a.id,
+                    activity_type: format!("{:?}", a.activity_type).to_lowercase(),
+                    description: a.description,
+                    scheduled_at: a.scheduled_at,
+                    contact_id: a.contact_id,
+                    deal_id: a.deal_id,
+                    created_at: a.created_at,
+                })
+                .collect(),
+        ))
+    }
 }
 
 pub async fn get_activity(

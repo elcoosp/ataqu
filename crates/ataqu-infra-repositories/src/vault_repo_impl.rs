@@ -5,7 +5,7 @@ use ataqu_domain_vault::inventory::Warehouse;
 use ataqu_domain_vault::stock::StockMovement;
 use ataqu_kernel::TenantId;
 use sea_orm::ConnectionTrait;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
 
 mod product_entity {
@@ -76,6 +76,28 @@ mod stock_movement_entity {
         pub reason: String,
         pub reference: Option<String>,
         pub timestamp: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
+mod warehouse_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "warehouses", schema_name = "vault")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub name: String,
+        pub location: Option<String>,
+        pub created_at: DateTime<Utc>,
     }
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -413,12 +435,25 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 
-    async fn update_warehouse(&self, _warehouse: &Warehouse) -> Result<(), ataqu_kernel::RepositoryError> {
-        // TODO: Implement actual DB update
+    async fn update_warehouse(&self, warehouse: &Warehouse) -> Result<(), ataqu_kernel::RepositoryError> {
+        let model = warehouse_entity::Model {
+            id: warehouse.id,
+            tenant_id: warehouse.tenant_id.as_uuid(),
+            name: warehouse.name.clone(),
+            location: warehouse.location.clone(),
+            created_at: warehouse.created_at.into(),
+        };
+        let active: warehouse_entity::ActiveModel = model.into();
+        active.update(&self.db).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
-    async fn delete_warehouse(&self, _tenant_id: &TenantId, _id: &Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
-        // TODO: Implement actual DB delete
+    async fn delete_warehouse(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
+        warehouse_entity::Entity::delete_many()
+            .filter(warehouse_entity::Column::Id.eq(*id))
+            .filter(warehouse_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 

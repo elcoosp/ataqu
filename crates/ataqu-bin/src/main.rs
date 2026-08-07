@@ -434,6 +434,7 @@ async fn main() -> anyhow::Result<()> {
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
+    let aegis_service_for_admin = aegis_service.clone();
     let state = AppState {
         cinq_service,
         dial_service,
@@ -636,6 +637,64 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
             tokio::time::sleep(Duration::from_secs(60)).await;
+        }
+    });
+
+    // Start UDS admin server
+
+    let admin_socket_path = "/tmp/ataqu-admin.sock";
+    let _ = std::fs::remove_file(admin_socket_path);
+    let admin_listener = tokio::net::UnixListener::bind(admin_socket_path)?;
+    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
+    let id_gen_for_admin = id_gen.clone();
+    let clock_for_admin = clock.clone();
+    let jwt_blocklist_for_admin = jwt_blocklist.clone();
+
+    tokio::spawn(async move {
+        tracing::info!("Admin server listening on UDS: {}", admin_socket_path);
+        loop {
+            if let Ok((mut stream, _)) = admin_listener.accept().await {
+                let admin_token = admin_token.clone();
+                let _id_gen = id_gen_for_admin.clone();
+                let _clock = clock_for_admin.clone();
+                let aegis = aegis_service_for_admin.clone();
+                let _jwt_blocklist = jwt_blocklist_for_admin.clone();
+
+                tokio::spawn(async move {
+                    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+                    let mut buffer = [0; 1024];
+                    if let Ok(bytes_read) = stream.read(&mut buffer).await {
+                        let command = String::from_utf8_lossy(&buffer[..bytes_read]).to_string();
+                        tracing::info!("Received admin command: {}", command);
+
+                        if admin_token.is_empty() || !command.starts_with(&admin_token) {
+                            tracing::warn!("Unauthorized admin command attempt");
+                            let _ = stream.write_all(b"Unauthorized\n").await;
+                            return;
+                        }
+
+                        let actual_cmd = command[admin_token.len()..].trim();
+                        tracing::info!(command = actual_cmd, "Authorized admin command");
+
+                        let response = match actual_cmd {
+                            "ping" => "pong\n".to_string(),
+                            "flush_cache" => "OK\n".to_string(),
+                            "list_tenants" => {
+                                match aegis.list_tenants().await {
+                                    Ok(tenants) => {
+                                        let tenants: Vec<String> = tenants.iter().map(|u| u.to_string()).collect();
+                                        format!("{}\n", tenants.join("\n"))
+                                    }
+                                    Err(e) => format!("Error: {}\n", e),
+                                }
+                            }
+                            _ => "Unknown command\n".to_string(),
+                        };
+
+                        let _ = stream.write_all(response.as_bytes()).await;
+                    }
+                });
+            }
         }
     });
 

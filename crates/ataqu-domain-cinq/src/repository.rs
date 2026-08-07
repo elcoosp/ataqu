@@ -127,4 +127,11 @@ pub trait ActivityRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> CinqRepositoryResult<Vec<Activity>>;
+
+    async fn list_all_activities(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqRepositoryResult<Vec<Activity>>;
 }
