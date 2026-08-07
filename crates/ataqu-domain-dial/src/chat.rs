@@ -132,6 +132,7 @@ pub struct Channel {
     pub created_by: UserId,
     pub participants: Vec<UserId>,
     pub created_at: SystemTime,
+    pub updated_at: SystemTime,
     pub archived_at: Option<SystemTime>,
     pub version: i32,
 }
@@ -255,6 +256,7 @@ pub struct ChannelCreatedEvent {
     pub created_by: UserId,
     pub participants: Vec<UserId>,
     pub created_at: SystemTime,
+    pub updated_at: SystemTime,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -335,6 +337,7 @@ pub fn create_channel(
         created_by: cmd.created_by,
         participants: cmd.participants,
         created_at,
+        updated_at: created_at,
     })
 }
 
@@ -653,6 +656,7 @@ mod tests {
             created_by: UserId::new(Uuid::nil()),
             participants: vec![],
             created_at: UNIX_EPOCH,
+            updated_at: UNIX_EPOCH,
             archived_at: None,
             version: 0,
         };
@@ -672,7 +676,8 @@ mod tests {
             created_by: UserId::new(Uuid::nil()),
             participants: vec![],
             created_at: UNIX_EPOCH,
-            archived_at: Some(UNIX_EPOCH),
+            updated_at: UNIX_EPOCH,
+archived_at: Some(UNIX_EPOCH),
             version: 0,
         };
 
@@ -693,6 +698,7 @@ mod tests {
             created_by: UserId::new(Uuid::nil()),
             participants: vec![],
             created_at: UNIX_EPOCH,
+            updated_at: UNIX_EPOCH,
             archived_at: None,
             version: 0,
         };
@@ -724,6 +730,7 @@ mod tests {
             created_by: UserId::new(Uuid::nil()),
             participants: vec![],
             created_at: UNIX_EPOCH,
+            updated_at: UNIX_EPOCH,
             archived_at: None,
             version: 0,
         };
@@ -753,7 +760,8 @@ mod tests {
             created_by: UserId::new(Uuid::nil()),
             participants: vec![],
             created_at: UNIX_EPOCH,
-            archived_at: Some(UNIX_EPOCH),
+            updated_at: UNIX_EPOCH,
+archived_at: Some(UNIX_EPOCH),
             version: 0,
         };
 
@@ -782,6 +790,7 @@ mod tests {
             created_by: UserId::new(Uuid::nil()),
             participants: vec![],
             created_at: UNIX_EPOCH,
+            updated_at: UNIX_EPOCH,
             archived_at: None,
             version: 0,
         };

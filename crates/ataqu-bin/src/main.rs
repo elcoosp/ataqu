@@ -29,6 +29,7 @@ use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
+use sea_orm::ConnectionTrait;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -190,6 +191,7 @@ async fn main() -> anyhow::Result<()> {
         cinq_service: Arc<CinqService>,
         vault_service: Arc<VaultService>,
         http_client: reqwest::Client,
+        system_user_id: Uuid,
     }
 
     #[async_trait::async_trait]
@@ -212,7 +214,7 @@ async fn main() -> anyhow::Result<()> {
                             tenant_id: *tenant_id,
                             name: name.clone(),
                             channel_type: ct,
-                            created_by: Uuid::nil(),
+                            created_by: self.system_user_id,
                             participants: participants.clone(),
                         })
                         .await
@@ -227,7 +229,7 @@ async fn main() -> anyhow::Result<()> {
                             tenant_id: *tenant_id,
                             channel_id: *channel_id,
                             thread_id: None,
-                            author_id: Uuid::nil(),
+                            author_id: self.system_user_id,
                             content: content.clone(),
                         })
                         .await
@@ -348,11 +350,15 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
+    // A fixed UUID for system-generated actions (SPARK dispatcher)
+    let system_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+
     let action_dispatcher = Arc::new(AtaquActionDispatcher {
         dial_service: dial_service.clone(),
         cinq_service: cinq_service.clone(),
         vault_service: vault_service.clone(),
         http_client: reqwest::Client::new(),
+        system_user_id,
     });
 
     let spark_service = Arc::new(SparkService::new(
@@ -419,6 +425,11 @@ async fn main() -> anyhow::Result<()> {
     // Build AppState
     use dashmap::DashMap;
     let ws_registry = Arc::new(DashMap::new());
+    let conn_index = Arc::new(DashMap::new());
+    let sso_states = Arc::new(DashMap::new());
+    let presence_counts = Arc::new(DashMap::new());
+    let jwt_blocklist = Arc::new(dashmap::DashSet::new());
+    // sso_states type is inferred from AppState
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
@@ -438,22 +449,17 @@ async fn main() -> anyhow::Result<()> {
         id_gen: id_gen.clone(),
         clock: clock.clone(),
         ws_registry,
+        conn_index,
+        presence_counts,
         email_tracking_tx,
         rate_limiter,
         metrics_handle,
+        sso_states: sso_states.clone(),
+        jwt_blocklist: jwt_blocklist.clone(),
     };
 
     let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(
-            "http://localhost:3000"
-                .parse::<axum::http::HeaderValue>()
-                .unwrap(),
-        )
-        .allow_origin(
-            "https://ataqu.com"
-                .parse::<axum::http::HeaderValue>()
-                .unwrap(),
-        )
+        .allow_origin(tower_http::cors::Any)
         .allow_methods([
             axum::http::Method::GET,
             axum::http::Method::POST,
@@ -468,124 +474,168 @@ async fn main() -> anyhow::Result<()> {
 
     // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
-    let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
-        let vista = vista_service_for_outbox.clone();
-        let spark = spark_service.clone();
-        async move {
-            if let Err(e) = vista.process_event(&event).await {
-                tracing::error!(error = %e, "VISTA event processing failed");
-            }
-            if let Err(e) = spark.evaluate_trigger(&event).await {
-                tracing::error!(error = %e, "SPARK trigger evaluation failed");
-            }
+    let gdpr_registry = Arc::new(ataqu_domain_gdpr::GdprRegistry::new());
+    let gdpr_db_pool = pools.core.clone();
+    tokio::spawn(async move {
+        loop {
+            let vista = vista_service_for_outbox.clone();
+            let spark = spark_service.clone();
+            let gdpr_registry = gdpr_registry.clone();
+            let gdpr_db_pool = gdpr_db_pool.clone();
+            let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
+                let vista = vista.clone();
+                let spark = spark.clone();
+                let gdpr_registry = gdpr_registry.clone();
+                let gdpr_db_pool = gdpr_db_pool.clone();
+                async move {
+                    if let Err(e) = vista.process_event(&event).await {
+                        tracing::error!(error = %e, "VISTA event processing failed");
+                    }
+                    if let Err(e) = spark.evaluate_trigger(&event).await {
+                        tracing::error!(error = %e, "SPARK trigger evaluation failed");
+                    }
 
-            // Handle internal system events that don't fit SPARK's trigger/action model
-            if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
-                let booking_id = event
-                    .payload
-                    .get("booking_id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("unknown");
-                let starts_at = event
-                    .payload
-                    .get("starts_at")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("soon");
+                    // Handle GDPR deletion requests
+                    if event.schema == "core" && event.event_type == "GdprDeletionRequested" {
+                        if let Some(tenant_id_str) = event.payload.get("tenant_id").and_then(|v| v.as_str()) {
+                            if let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str) {
+                                tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
+                                for table in gdpr_registry.tables.iter() {
+                                    let sql = format!("DELETE FROM {}.{} WHERE {} = $1", table.schema, table.table, table.tenant_id_column);
+                                    let stmt = sea_orm::Statement::from_sql_and_values(
+                                        sea_orm::DbBackend::Postgres,
+                                        &sql,
+                                        [tenant_uuid.into()],
+                                    );
+                                    if let Err(e) = gdpr_db_pool.execute_raw(stmt).await {
+                                        tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-                use lettre::{
-                    Message, SmtpTransport, Transport, message::header::ContentType,
-                    transport::smtp::authentication::Credentials,
-                };
+                    // Handle internal system events that don't fit SPARK's trigger/action model
+                    if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
+                        let booking_id = event
+                            .payload
+                            .get("booking_id")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown");
+                        let starts_at = event
+                            .payload
+                            .get("starts_at")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("soon");
+                        let recipient = event
+                            .payload
+                            .get("email")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("user@example.com");
 
-                let email = Message::builder()
-                    .from("Ataqu Scheduling <noreply@ataqu.com>".parse().unwrap())
-                    .to("user@example.com".parse().unwrap()) // In a real system, fetch user email from booking
-                    .subject("Booking Reminder")
-                    .header(ContentType::TEXT_PLAIN)
-                    .body(format!(
-                        "Your booking {} is starting at {}.",
-                        booking_id, starts_at
-                    ))
-                    .unwrap();
+                        use lettre::{
+                            Message, SmtpTransport, Transport, message::header::ContentType,
+                            transport::smtp::authentication::Credentials,
+                        };
 
-                let smtp_host =
-                    std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
-                let smtp_port: u16 = std::env::var("SMTP_PORT")
-                    .unwrap_or_else(|_| "1025".to_string())
-                    .parse()
-                    .unwrap_or(1025);
-                let smtp_user = std::env::var("SMTP_USER").ok();
-                let smtp_pass = std::env::var("SMTP_PASS").ok();
+                        let email = Message::builder()
+                            .from("Ataqu Scheduling <noreply@ataqu.com>".parse().unwrap())
+                            .to(recipient.parse().unwrap_or("user@example.com".parse().unwrap()))
+                            .subject("Booking Reminder")
+                            .header(ContentType::TEXT_PLAIN)
+                            .body(format!(
+                                "Your booking {} is starting at {}.",
+                                booking_id, starts_at
+                            ))
+                            .unwrap();
 
-                let mailer = if let (Some(u), Some(p)) = (smtp_user, smtp_pass) {
-                    SmtpTransport::relay(&smtp_host)
-                        .unwrap()
-                        .credentials(Credentials::new(u, p))
-                        .port(smtp_port)
-                        .build()
-                } else {
-                    SmtpTransport::relay(&smtp_host)
-                        .unwrap()
-                        .port(smtp_port)
-                        .build()
-                };
+                        let smtp_host =
+                            std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
+                        let smtp_port: u16 = std::env::var("SMTP_PORT")
+                            .unwrap_or_else(|_| "1025".to_string())
+                            .parse()
+                            .unwrap_or(1025);
+                        let smtp_user = std::env::var("SMTP_USER").ok();
+                        let smtp_pass = std::env::var("SMTP_PASS").ok();
 
-                if let Err(e) = mailer.send(&email) {
-                    tracing::error!("Failed to send booking reminder email: {}", e);
-                } else {
-                    tracing::info!("Booking reminder email sent for {}", booking_id);
+                        let mailer = SmtpTransport::relay(&smtp_host)
+                            .map(|builder| {
+                                let builder = builder.port(smtp_port);
+                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref()) {
+                                    builder.credentials(Credentials::new(u.clone(), p.clone())).build()
+                                } else {
+                                    builder.build()
+                                }
+                            })
+                            .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
+
+                        if let Err(e) = mailer.send(&email) {
+                            tracing::error!("Failed to send booking reminder email: {}", e);
+                        } else {
+                            tracing::info!("Booking reminder email sent for {}", booking_id);
+                        }
+                    }
+
+                    Ok(())
                 }
+            };
+            let dispatcher = OutboxDispatcher::new(dispatcher_pool.clone(), handler);
+            #[allow(unreachable_code)]
+            {
+                dispatcher.run().await;
+                tracing::error!("Outbox dispatcher stopped. Restarting in 5s...");
+                tokio::time::sleep(Duration::from_secs(5)).await;
             }
-
-            Ok(())
         }
-    };
-    let dispatcher = OutboxDispatcher::new(dispatcher_pool, handler);
-    tokio::spawn(async move {
-        dispatcher.run().await;
     });
 
-    // Start cron worker
+    // Start cron worker (with restart on crash)
     tokio::spawn(async move {
         loop {
-            tokio::time::sleep(Duration::from_secs(60)).await;
             if let Err(e) = spark_service_for_cron.poll_scheduled_triggers().await {
-                tracing::error!("Cron worker error: {}", e);
+                tracing::error!("Cron worker crashed: {}. Restarting in 5s...", e);
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                continue;
             }
+            tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 
-    // Start no-show worker
+    // Start no-show worker (with restart on crash)
     tokio::spawn(async move {
         loop {
-            tokio::time::sleep(Duration::from_secs(300)).await;
             let tenants = aegis_service_for_noshow
                 .list_tenants()
                 .await
                 .unwrap_or_default();
-            for tid in tenants {
-                let tenant_id = TenantId::new(tid);
+            for tid in &tenants {
+                let tenant_id = TenantId::new(*tid);
                 if let Err(e) = tempo_service_for_noshow.no_show_worker(tenant_id).await {
-                    tracing::error!("No-show worker error for tenant {}: {}", tid, e);
+                    tracing::error!("No-show worker crashed for tenant {}: {}. Restarting in 5s...", tid, e);
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    break;
                 }
             }
+            tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
 
-    // Start reminder worker
+    // Start reminder worker (with restart on crash)
     tokio::spawn(async move {
         loop {
-            tokio::time::sleep(Duration::from_secs(60)).await;
             let tenants = aegis_service_for_reminder
                 .list_tenants()
                 .await
                 .unwrap_or_default();
-            for tid in tenants {
-                let tenant_id = TenantId::new(tid);
+            for tid in &tenants {
+                let tenant_id = TenantId::new(*tid);
                 if let Err(e) = tempo_service_for_reminder.reminder_worker(tenant_id).await {
-                    tracing::error!("Reminder worker error for tenant {}: {}", tid, e);
+                    tracing::error!("Reminder worker crashed for tenant {}: {}. Restarting in 5s...", tid, e);
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    break;
                 }
             }
+            tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 

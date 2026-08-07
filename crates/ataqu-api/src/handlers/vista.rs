@@ -110,8 +110,15 @@ pub async fn update_dashboard(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<CreateDashboardRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let dashboard = state
         .vista_service
         .update_dashboard(auth.tenant_id, id, Some(payload.name), Some(payload.config))

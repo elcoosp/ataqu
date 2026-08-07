@@ -19,11 +19,18 @@ lazy_static::lazy_static! {
 }
 
 pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Response, StatusCode> {
-    if req.method() == axum::http::Method::POST
+    // Skip idempotency for multipart uploads
+    let is_multipart = req.headers().get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(|v| v.starts_with("multipart/form-data"))
+        .unwrap_or(false);
+
+    if !is_multipart && (
+        req.method() == axum::http::Method::POST
         || req.method() == axum::http::Method::PUT
         || req.method() == axum::http::Method::PATCH
         || req.method() == axum::http::Method::DELETE
-    {
+    ) {
         if let Some(key) = req
             .headers()
             .get(IDEMPOTENCY_KEY_HEADER)
@@ -61,7 +68,12 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
 
             let resp = next.run(req).await;
 
-            if resp.status().is_success() {
+            // Cache successful responses and client errors (4xx) except 401, 403, 429
+            let status = resp.status();
+            let should_cache = status.is_success() ||
+                (status.is_client_error() && status != StatusCode::UNAUTHORIZED && status != StatusCode::FORBIDDEN && status != StatusCode::TOO_MANY_REQUESTS);
+
+            if should_cache {
                 let (parts, body) = resp.into_parts();
                 let bytes = to_bytes(body, 1024 * 1024)
                     .await

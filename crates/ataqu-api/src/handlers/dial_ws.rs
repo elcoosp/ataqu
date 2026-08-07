@@ -19,6 +19,8 @@ use crate::middleware::AuthContext;
 pub type ConnectionRegistry =
     Arc<DashMap<(uuid::Uuid, uuid::Uuid), DashMap<uuid::Uuid, mpsc::UnboundedSender<String>>>>;
 
+pub type ConnectionIndex = Arc<DashMap<uuid::Uuid, Vec<(uuid::Uuid, uuid::Uuid)>>>;
+
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
@@ -55,12 +57,15 @@ pub async fn ws_handler(
 async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext) {
     info!(user_id = %auth.user_id, "WebSocket connected");
 
-    if let Err(e) = state
-        .dial_service
-        .set_online(auth.tenant_id, auth.user_id)
-        .await
-    {
-        tracing::error!("Failed to set presence: {}", e);
+    // Presence tracking: increment count
+    let count = state.presence_counts
+        .entry(auth.user_id)
+        .or_insert_with(|| std::sync::atomic::AtomicUsize::new(0));
+    let prev_count = count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    if prev_count == 0 {
+        if let Err(e) = state.dial_service.set_online(auth.tenant_id, auth.user_id).await {
+            tracing::error!("Failed to set presence: {}", e);
+        }
     }
 
     let (mut ws_sender, mut ws_receiver) = socket.split();
@@ -91,10 +96,33 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     let entry =
                                         state.ws_registry.entry(key).or_insert_with(DashMap::new);
                                     entry.insert(connection_id, tx.clone());
+                                    state.conn_index.entry(connection_id).or_insert_with(Vec::new).push(key);
 
                                     let _ = tx.send(
                                         serde_json::json!({
                                             "type": "subscribed",
+                                            "channel_id": channel_id
+                                        })
+                                        .to_string(),
+                                    );
+                                }
+                            }
+                            "unsubscribe" => {
+                                if let Some(channel_id) = parsed
+                                    .get("channel_id")
+                                    .and_then(|v| v.as_str())
+                                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                                {
+                                    let key = (auth.tenant_id.as_uuid(), channel_id);
+                                    if let Some(subscribers) = state.ws_registry.get(&key) {
+                                        subscribers.remove(&connection_id);
+                                    }
+                                    if let Some(mut channels) = state.conn_index.get_mut(&connection_id) {
+                                        channels.retain(|&k| k != key);
+                                    }
+                                    let _ = tx.send(
+                                        serde_json::json!({
+                                            "type": "unsubscribed",
                                             "channel_id": channel_id
                                         })
                                         .to_string(),
@@ -134,10 +162,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
 
                                             if let Some(subscribers) = state.ws_registry.get(&key) {
                                                 for entry in subscribers.iter() {
-                                                    if entry.key() != &connection_id {
-                                                        let _ =
-                                                            entry.value().send(broadcast.clone());
-                                                    }
+                                                    let _ = entry.value().send(broadcast.clone());
                                                 }
                                             }
                                         }
@@ -185,20 +210,23 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
         }
     }
 
-    // Note: In a production system, we would maintain a reverse index
-    // (user_id -> set of channel_ids) for O(1) cleanup.
-    // For now, we iterate all channels but only remove the user.
-    // With bounded channels per tenant, this is acceptable.
-    state.ws_registry.iter().for_each(|entry| {
-        entry.value().remove(&connection_id);
-    });
+    if let Some(channels) = state.conn_index.get(&connection_id) {
+        for key in channels.iter() {
+            if let Some(subscribers) = state.ws_registry.get(key) {
+                subscribers.remove(&connection_id);
+            }
+        }
+    }
+    state.conn_index.remove(&connection_id);
 
-    if let Err(e) = state
-        .dial_service
-        .set_offline(auth.tenant_id, auth.user_id)
-        .await
-    {
-        tracing::error!("Failed to remove presence: {}", e);
+    // Presence tracking: decrement count
+    if let Some(count) = state.presence_counts.get(&auth.user_id) {
+        let new_count = count.fetch_sub(1, std::sync::atomic::Ordering::SeqCst) - 1;
+        if new_count == 0 {
+            if let Err(e) = state.dial_service.set_offline(auth.tenant_id, auth.user_id).await {
+                tracing::error!("Failed to remove presence: {}", e);
+            }
+        }
     }
 
     send_task.abort();

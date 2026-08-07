@@ -2,7 +2,7 @@ use axum::{
     Router,
     extract::{Path, Query, State},
     http::StatusCode,
-    response::Json,
+    response::{IntoResponse, Json},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -17,7 +17,6 @@ use ataqu_application::pivot_service::{
 };
 use ataqu_domain_pivot::block::BlockType;
 
-// ---------- Databases ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateDbRequest {
     pub name: String,
@@ -82,7 +81,6 @@ pub async fn delete_db(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// ---------- Documents ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateDocRequest {
     pub title: String,
@@ -120,7 +118,7 @@ pub async fn create_doc(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateDocRequest>,
-) -> ApiResult<(StatusCode, Json<DocumentResponse>)> {
+) -> ApiResult<impl IntoResponse> {
     if payload.title.trim().is_empty() {
         return Err(ApiResponseError::validation("Title cannot be empty"));
     }
@@ -134,7 +132,12 @@ pub async fn create_doc(
         .create_document(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(doc.into())))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", doc.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(DocumentResponse::from(doc))))
 }
 
 pub async fn list_docs(
@@ -158,7 +161,8 @@ pub async fn get_doc(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<DocumentResponse>> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<axum::response::Response> {
     let doc = state
         .pivot_service
         .get_document(auth.tenant_id, id)
@@ -169,7 +173,16 @@ pub async fn get_doc(
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
-    Ok(Json(doc.into()))
+    let etag = format!("\"{}\"", doc.version);
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
+        }
+    }
+    Ok((StatusCode::OK, resp_headers, Json(DocumentResponse::from(doc))).into_response())
 }
 
 pub async fn update_doc(
@@ -192,8 +205,13 @@ pub async fn update_doc(
         .update_document(auth.tenant_id, id, payload.title, payload.content, if_match)
         .await
         .map_err(|e| match e {
-            ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
+            ataqu_application::pivot_service::PivotServiceError::Validation(msg)
+                if msg.contains("Version mismatch") =>
+            {
                 ApiResponseError::conflict(&msg)
+            }
+            ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
@@ -213,7 +231,6 @@ pub async fn delete_doc(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// ---------- Blocks ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateBlockRequest {
     pub document_id: Uuid,
@@ -386,8 +403,13 @@ pub async fn update_block(
         .update_block(auth.tenant_id, id, block_type, if_match)
         .await
         .map_err(|e| match e {
-            ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
+            ataqu_application::pivot_service::PivotServiceError::Validation(msg)
+                if msg.contains("Version mismatch") =>
+            {
                 ApiResponseError::conflict(&msg)
+            }
+            ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
@@ -407,7 +429,6 @@ pub async fn delete_block(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// ---------- Relations ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateRelationRequest {
     pub from_block_id: Uuid,
@@ -464,7 +485,6 @@ pub async fn list_relations(
     Ok(Json(rels.into_iter().map(|r| r.into()).collect()))
 }
 
-// ---------- Search ----------
 #[derive(Debug, Deserialize)]
 pub struct SearchParams {
     pub q: String,
@@ -483,7 +503,6 @@ pub async fn search_docs(
     Ok(Json(docs.into_iter().map(|d| d.into()).collect()))
 }
 
-// ---------- Router ----------
 pub async fn list_doc_versions(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -506,33 +525,6 @@ pub async fn list_doc_versions(
         })
         .collect();
     Ok(Json(list))
-}
-
-pub fn routes() -> Router<AppState> {
-    Router::new()
-        .route("/databases", axum::routing::post(create_db).get(list_dbs))
-        .route("/databases/:id", axum::routing::delete(delete_db))
-        .route("/docs", axum::routing::post(create_doc).get(list_docs))
-        .route("/docs/:id/versions", axum::routing::get(list_doc_versions))
-        .route(
-            "/docs/:id",
-            axum::routing::get(get_doc)
-                .put(update_doc)
-                .delete(delete_doc),
-        )
-        .route("/docs/:id/blocks", axum::routing::get(list_blocks))
-        .route("/blocks", axum::routing::post(create_block))
-        .route(
-            "/blocks/:id",
-            axum::routing::put(update_block).delete(delete_block),
-        )
-        .route("/relations", axum::routing::post(create_relation))
-        .route("/docs/:id/relations", axum::routing::get(list_relations))
-        .route("/search", axum::routing::get(search_docs))
-        .route(
-            "/templates",
-            axum::routing::post(create_template).get(list_templates),
-        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -581,4 +573,31 @@ pub async fn list_templates(
         })
         .collect();
     Ok(Json(list))
+}
+
+pub fn routes() -> Router<AppState> {
+    Router::new()
+        .route("/databases", axum::routing::post(create_db).get(list_dbs))
+        .route("/databases/:id", axum::routing::delete(delete_db))
+        .route("/docs", axum::routing::post(create_doc).get(list_docs))
+        .route("/docs/:id/versions", axum::routing::get(list_doc_versions))
+        .route(
+            "/docs/:id",
+            axum::routing::get(get_doc)
+                .put(update_doc)
+                .delete(delete_doc),
+        )
+        .route("/docs/:id/blocks", axum::routing::get(list_blocks))
+        .route("/blocks", axum::routing::post(create_block))
+        .route(
+            "/blocks/:id",
+            axum::routing::put(update_block).delete(delete_block),
+        )
+        .route("/relations", axum::routing::post(create_relation))
+        .route("/docs/:id/relations", axum::routing::get(list_relations))
+        .route("/search", axum::routing::get(search_docs))
+        .route(
+            "/templates",
+            axum::routing::post(create_template).get(list_templates),
+        )
 }

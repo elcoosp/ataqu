@@ -20,9 +20,26 @@ async fn main() -> anyhow::Result<()> {
                             tracing::info!("Received admin command: {}", command);
 
                             let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-                            if !admin_token.is_empty() && command.starts_with(&admin_token) {
-                                let actual_cmd = command.trim_start_matches(&admin_token).trim();
-                                tracing::info!("Authorized admin command: {}", actual_cmd);
+                            let is_authorized = !admin_token.is_empty() && {
+                                let cmd_bytes = command.as_bytes();
+                                let token_bytes = admin_token.as_bytes();
+                                if cmd_bytes.len() < token_bytes.len() {
+                                    false
+                                } else {
+                                    use std::time::Instant;
+                                    let start = Instant::now();
+                                    let mut diff = 0u8;
+                                    for i in 0..token_bytes.len() {
+                                        diff |= cmd_bytes[i] ^ token_bytes[i];
+                                    }
+                                    let _ = start.elapsed(); // prevent optimization
+                                    diff == 0
+                                }
+                            };
+
+                            if is_authorized {
+                                let actual_cmd = command[admin_token.len()..].trim();
+                                tracing::info!(command = actual_cmd, "Authorized admin command executed");
                                 let response =
                                     format!("Command '{}' authorized and executed.\n", actual_cmd);
                                 use tokio::io::AsyncWriteExt;

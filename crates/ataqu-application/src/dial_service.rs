@@ -106,6 +106,7 @@ impl DialService {
             created_by: event.created_by,
             participants: event.participants,
             created_at: event.created_at,
+            updated_at: event.created_at,
             archived_at: None,
             version: 0,
         };
@@ -472,6 +473,15 @@ impl DialService {
         message_id: Uuid,
         user_id: Uuid,
     ) -> DialResult<Mention> {
+        let message = self.repo.get_message(&tenant_id, &MessageId::new(message_id)).await?;
+        let channel = self.repo.get_channel(&tenant_id, &message.channel_id).await?;
+
+        if !channel.participants.contains(&UserId::new(user_id)) {
+            return Err(DialServiceError::Validation(
+                "Mentioned user is not a participant in this channel".to_string(),
+            ));
+        }
+
         let mention = Mention {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,

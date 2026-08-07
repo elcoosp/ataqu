@@ -6,7 +6,6 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -120,7 +119,12 @@ pub async fn create_employee(
             command_id,
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::pause_service::PauseServiceError::Idempotency(msg) if msg.contains("already in progress") => {
+                ApiResponseError::Conflict(msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
 
     let employee = state
         .pause_service
@@ -167,7 +171,12 @@ pub async fn request_leave(
             command_id,
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::pause_service::PauseServiceError::Idempotency(msg) if msg.contains("already in progress") => {
+                ApiResponseError::Conflict(msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
 
     let request = state
         .pause_service
@@ -273,37 +282,29 @@ pub async fn list_leave_requests(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    // Fix N+1: Fetch all employees in one go
-    let employees = state
-        .pause_service
-        .list_employees(&auth.tenant_id, 10000, 0)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-    let emp_map: HashMap<Uuid, String> =
-        employees.into_iter().map(|e| (e.id, e.full_name)).collect();
-
-    let responses = requests
-        .into_iter()
-        .map(|r| {
-            let employee_name = emp_map
-                .get(&r.employee_id)
-                .cloned()
-                .unwrap_or_else(|| "Unknown".to_string());
-            LeaveRequestResponse {
-                id: r.id,
-                employee_id: r.employee_id,
-                employee_name,
-                leave_type: format!("{:?}", r.leave_type).to_lowercase(),
-                start_date: r.start_date,
-                end_date: r.end_date,
-                reason: r.reason,
-                status: format!("{:?}", r.status).to_lowercase(),
-                created_at: r.created_at.into(),
-                updated_at: r.updated_at.into(),
-            }
-        })
-        .collect();
+    let mut responses = Vec::new();
+    for r in requests {
+        let employee = state
+            .pause_service
+            .find_employee(&auth.tenant_id, r.employee_id)
+            .await
+            .ok();
+        let employee_name = employee
+            .map(|e| e.full_name)
+            .unwrap_or_else(|| "Unknown".to_string());
+        responses.push(LeaveRequestResponse {
+            id: r.id,
+            employee_id: r.employee_id,
+            employee_name,
+            leave_type: format!("{:?}", r.leave_type).to_lowercase(),
+            start_date: r.start_date,
+            end_date: r.end_date,
+            reason: r.reason,
+            status: format!("{:?}", r.status).to_lowercase(),
+            created_at: r.created_at.into(),
+            updated_at: r.updated_at.into(),
+        });
+    }
 
     Ok(Json(responses))
 }
@@ -312,7 +313,14 @@ pub async fn approve_leave(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     if !auth.has_role("admin") && !auth.has_role("manager") {
         return Err(ApiResponseError::Forbidden(
             "Manager or Admin access required".to_string(),
@@ -351,7 +359,14 @@ pub async fn reject_leave(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     if !auth.has_role("admin") && !auth.has_role("manager") {
         return Err(ApiResponseError::Forbidden(
             "Manager or Admin access required".to_string(),
@@ -390,7 +405,14 @@ pub async fn cancel_leave(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     if !auth.has_role("admin") && !auth.has_role("manager") {
         return Err(ApiResponseError::Forbidden(
             "Manager or Admin access required".to_string(),
@@ -436,8 +458,15 @@ pub async fn update_employee(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateEmployeeRequest>,
 ) -> ApiResult<Json<EmployeeResponse>> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     if !auth.has_role("admin") && !auth.has_role("manager") {
         return Err(ApiResponseError::Forbidden(
             "Manager or Admin access required".to_string(),
@@ -499,10 +528,11 @@ pub async fn list_documents(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(employee_id): Path<Uuid>,
+    Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
     let docs = state
         .pause_service
-        .list_documents(auth.tenant_id, employee_id)
+        .list_documents(auth.tenant_id, employee_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let list = docs
@@ -525,6 +555,7 @@ pub fn routes() -> Router<AppState> {
         .route("/employees", post(create_employee).get(list_employees))
         .route("/employees/search", get(search_employees))
         .route("/employees/:id", put(update_employee))
+        // Note: update_employee now requires If-Match header
         .route("/employees/:id/deactivate", post(deactivate_employee))
         .route(
             "/leave-requests",

@@ -121,6 +121,7 @@ pub trait AuthRepository: Send + Sync {
 }
 
 /// Pure function to create a user. Returns a UserCreated event.
+#[allow(dead_code)]
 pub fn create_user(
     cmd: CreateUserCommand,
     id_gen: &dyn IdGenerator,
@@ -180,11 +181,6 @@ pub fn deactivate_user(user: &mut User, clock: &dyn Clock) {
     user.updated_at = clock.now();
 }
 
-/// Pure function to revoke a token (just a placeholder for future logic).
-pub fn revoke_token(_token_id: &str) -> bool {
-    // In a real system, this would add the token_id to a revoked list.
-    true
-}
 
 #[cfg(test)]
 mod tests {

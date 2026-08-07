@@ -61,6 +61,17 @@ pub struct TaskCreated {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone)]
+pub struct TaskUpdated {
+    pub id: Uuid,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub due_date: Option<DateTime<Utc>>,
+    pub status: Option<TaskStatus>,
+    pub updated_at: DateTime<Utc>,
+    pub version: i32,
+}
+
 use crate::error::{CinqDomainError, CinqResult};
 
 pub fn create_task(
@@ -87,4 +98,21 @@ pub fn create_task(
         status: TaskStatus::Pending,
         created_at: now,
     })
+}
+
+pub fn update_task(
+    cmd: UpdateTaskCommand,
+    _task: &Task,
+    clock: &dyn Clock,
+) -> TaskUpdated {
+    let now = clock.now().into();
+    TaskUpdated {
+        id: cmd.id,
+        title: cmd.title,
+        description: cmd.description,
+        due_date: cmd.due_date,
+        status: cmd.status,
+        updated_at: now,
+        version: cmd.expected_version + 1,
+    }
 }

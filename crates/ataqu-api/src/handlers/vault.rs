@@ -2,7 +2,7 @@ use axum::{
     Router,
     extract::{Path, Query, State},
     http::StatusCode,
-    response::Json,
+    response::{IntoResponse, Json},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -15,6 +15,12 @@ use ataqu_application::vault_service::{
     BulkStockAdjustCommand, CreateProductCommand, CreateVariantCommand, UpdateProductCommand,
     UpdateStockCommand, UpdateVariantCommand,
 };
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct CreateProductRequest {
@@ -59,7 +65,7 @@ pub async fn create_product(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateProductRequest>,
-) -> ApiResult<(StatusCode, Json<ProductResponse>)> {
+) -> ApiResult<impl IntoResponse> {
     let cmd = CreateProductCommand {
         tenant_id: auth.tenant_id,
         name: payload.name,
@@ -71,16 +77,22 @@ pub async fn create_product(
         .create_product(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(product.into())))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", product.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(ProductResponse::from(product))))
 }
 
 pub async fn list_products(
     State(state): State<AppState>,
     auth: AuthContext,
+    Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<Vec<ProductResponse>>> {
     let products = state
         .vault_service
-        .list_products(auth.tenant_id, 100, 0)
+        .list_products(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(
@@ -92,13 +104,23 @@ pub async fn get_product(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<ProductResponse>> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<axum::response::Response> {
     let product = state
         .vault_service
         .get_product(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
-    Ok(Json(product.into()))
+    let etag = format!("\"{}\"", product.version);
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
+        }
+    }
+    Ok((StatusCode::OK, resp_headers, Json(ProductResponse::from(product))).into_response())
 }
 
 pub async fn update_product(
@@ -191,7 +213,7 @@ pub async fn create_variant(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateVariantRequest>,
-) -> ApiResult<(StatusCode, Json<VariantResponse>)> {
+) -> ApiResult<impl IntoResponse> {
     let cmd = CreateVariantCommand {
         tenant_id: auth.tenant_id,
         product_id: payload.product_id,
@@ -204,16 +226,22 @@ pub async fn create_variant(
         .create_variant(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(variant.into())))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", variant.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(VariantResponse::from(variant))))
 }
 
 pub async fn list_variants(
     State(state): State<AppState>,
     auth: AuthContext,
+    Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<Vec<VariantResponse>>> {
     let variants = state
         .vault_service
-        .list_variants(auth.tenant_id, 100, 0)
+        .list_variants(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(
@@ -225,13 +253,23 @@ pub async fn get_variant(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<VariantResponse>> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<axum::response::Response> {
     let variant = state
         .vault_service
         .get_variant(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
-    Ok(Json(variant.into()))
+    let etag = format!("\"{}\"", variant.version);
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
+        }
+    }
+    Ok((StatusCode::OK, resp_headers, Json(VariantResponse::from(variant))).into_response())
 }
 
 #[derive(Debug, Deserialize)]
@@ -363,10 +401,11 @@ pub async fn list_movements(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(variant_id): Path<Uuid>,
+    Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
     let movements = state
         .vault_service
-        .list_movements(auth.tenant_id, variant_id, 100, 0)
+        .list_movements(auth.tenant_id, variant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let list: Vec<_> = movements
@@ -410,42 +449,33 @@ pub async fn get_low_stock(
     ))
 }
 
-pub fn routes() -> Router<AppState> {
-    Router::new()
-        .route(
-            "/products",
-            axum::routing::post(create_product).get(list_products),
-        )
-        .route(
-            "/products/:id",
-            axum::routing::get(get_product)
-                .put(update_product)
-                .delete(delete_product),
-        )
-        .route(
-            "/variants",
-            axum::routing::post(create_variant).get(list_variants),
-        )
-        .route(
-            "/variants/:id",
-            axum::routing::get(get_variant)
-                .put(update_variant)
-                .delete(delete_variant),
-        )
-        .route("/variants/:id/stock", axum::routing::put(update_stock))
-        .route(
-            "/variants/bulk-stock-adjust",
-            axum::routing::post(bulk_adjust_stock),
-        )
-        .route(
-            "/variants/:id/movements",
-            axum::routing::get(list_movements),
-        )
-        .route("/alerts/low-stock", axum::routing::get(get_low_stock))
-        .route(
-            "/warehouses",
-            axum::routing::post(create_warehouse).get(list_warehouses),
-        )
+#[derive(Debug, Deserialize)]
+pub struct ReserveStockRequest {
+    pub quantity: i64,
+}
+
+pub async fn reserve_stock(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<ReserveStockRequest>,
+) -> ApiResult<impl IntoResponse> {
+    let variant = state
+        .vault_service
+        .reserve_stock(auth.tenant_id, id, payload.quantity)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", variant.version).parse().unwrap(),
+    );
+    Ok((StatusCode::OK, headers, Json(VariantResponse::from(variant))))
 }
 
 #[derive(Debug, Deserialize)]
@@ -487,4 +517,43 @@ pub async fn list_warehouses(
         })
         .collect();
     Ok(Json(list))
+}
+
+pub fn routes() -> Router<AppState> {
+    Router::new()
+        .route(
+            "/products",
+            axum::routing::post(create_product).get(list_products),
+        )
+        .route(
+            "/products/:id",
+            axum::routing::get(get_product)
+                .put(update_product)
+                .delete(delete_product),
+        )
+        .route(
+            "/variants",
+            axum::routing::post(create_variant).get(list_variants),
+        )
+        .route(
+            "/variants/:id",
+            axum::routing::get(get_variant)
+                .put(update_variant)
+                .delete(delete_variant),
+        )
+        .route("/variants/:id/stock", axum::routing::put(update_stock))
+        .route("/variants/:id/reserve", axum::routing::post(reserve_stock))
+        .route(
+            "/variants/bulk-stock-adjust",
+            axum::routing::post(bulk_adjust_stock),
+        )
+        .route(
+            "/variants/:id/movements",
+            axum::routing::get(list_movements),
+        )
+        .route("/alerts/low-stock", axum::routing::get(get_low_stock))
+        .route(
+            "/warehouses",
+            axum::routing::post(create_warehouse).get(list_warehouses),
+        )
 }

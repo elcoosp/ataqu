@@ -62,6 +62,10 @@ pub async fn auth_middleware(
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.strip_prefix("Bearer "))
     {
+        if app_state.jwt_blocklist.contains(auth_header) {
+            return Err(ApiResponseError::unauthorized("Token has been revoked"));
+        }
+
         if let Ok(token_data) = decode::<JwtClaims>(
             auth_header,
             &DecodingKey::from_secret(&app_state.jwt_secret),

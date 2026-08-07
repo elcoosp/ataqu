@@ -426,6 +426,13 @@ impl AegisService {
             .map_err(AegisServiceError::Domain)
     }
 
+    pub async fn find_user_by_email(&self, email: &Email) -> Result<Option<User>, AegisServiceError> {
+        self.repo
+            .find_by_email(email)
+            .await
+            .map_err(AegisServiceError::Domain)
+    }
+
     pub async fn list_tenants(&self) -> Result<Vec<Uuid>, AegisServiceError> {
         self.repo
             .list_tenants()
@@ -469,18 +476,9 @@ impl AegisService {
         Ok(())
     }
 
-    pub async fn logout(&self, token: &str) -> Result<(), AegisServiceError> {
-        // In a real system, we would add the token to a revoked list in DB or Redis.
-        // For now, we just validate it and return Ok.
-        let claims: JwtClaims = decode(
-            token,
-            &DecodingKey::from_secret(&self.config.jwt_secret),
-            &Validation::default(),
-        )
-        .map_err(|_| AegisServiceError::AuthenticationFailed)?
-        .claims;
-
-        ataqu_domain_aegis::auth::revoke_token(&claims.sub);
+    pub async fn logout(&self, _user_id: &str) -> Result<(), AegisServiceError> {
+        // Token blocklist is handled in the API layer (in-memory).
+        // This method is a placeholder for future DB-backed blocklists if needed.
         Ok(())
     }
 

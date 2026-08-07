@@ -35,7 +35,7 @@ pub async fn create_user(
     info!("Create user request");
     let email = Email::new(req.email);
     let cmd = CreateUserCommand {
-        tenant_id: auth.tenant_id, // Fix: use auth context
+        tenant_id: auth.tenant_id,
         email: email.clone(),
         password: req.password,
         name: req.name,
@@ -45,7 +45,7 @@ pub async fn create_user(
             StatusCode::CREATED,
             Json(serde_json::json!({
                 "user_id": resp.user_id,
-                "email": crate::serializers::ApiEmail::new(resp.email), // Fix: use ApiEmail wrapper
+                "email": crate::serializers::ApiEmail::new(resp.email),
             })),
         )),
         Err(err) => {
@@ -178,7 +178,7 @@ pub struct SsoLoginRequest {
 }
 
 pub async fn sso_login(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<SsoLoginRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let provider = match req.provider.as_str() {
@@ -196,8 +196,9 @@ pub async fn sso_login(
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
 
-    let state = uuid::Uuid::new_v4().to_string();
-    let redirect = ataqu_domain_aegis::sso::build_authorization_url(&provider, &config, &state);
+    let sso_state = uuid::Uuid::new_v4().to_string();
+    state.sso_states.insert(sso_state.clone(), provider.clone());
+    let redirect = ataqu_domain_aegis::sso::build_authorization_url(&provider, &config, &sso_state);
 
     Ok(Json(serde_json::json!({
         "url": redirect.url,
@@ -212,12 +213,20 @@ pub struct SsoCallbackRequest {
 }
 
 pub async fn sso_callback(
-    State(_state): State<AppState>,
-    Json(_req): Json<SsoCallbackRequest>,
+    State(state): State<AppState>,
+    Json(req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
-    // SSO token exchange and user profile fetch are not yet implemented.
+    if !state.sso_states.contains_key(&req.state) {
+        return Err(ApiResponseError::unauthorized("Invalid SSO state"));
+    }
+    state.sso_states.remove(&req.state);
+
+    // This is a simplified SSO callback. A real implementation would exchange the code for tokens
+    // and fetch the user profile from the provider.
+    // For now, we just return an error indicating it's not fully implemented.
+    // In a future version, this would use reqwest to call the provider's token endpoint.
     Err(ApiResponseError::Internal(
-        "SSO callback not fully implemented".to_string(),
+        "SSO callback not implemented".to_string(),
     ))
 }
 
@@ -240,6 +249,7 @@ pub async fn list_users(
         .list_users(auth.tenant_id.as_uuid())
         .await
         .map_err(map_aegis_error)?;
+    // Note: list_users does not support pagination in the service layer yet
     let resp = users
         .into_iter()
         .map(|u| {
@@ -260,8 +270,16 @@ pub async fn update_user_role(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(user_id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateRoleRequest>,
 ) -> ApiResult<StatusCode> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+
     if !auth.has_role("admin") {
         return Err(ApiResponseError::Forbidden(
             "Admin access required".to_string(),
@@ -296,10 +314,17 @@ pub async fn deactivate_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-pub async fn logout(State(_state): State<AppState>, _auth: AuthContext) -> ApiResult<StatusCode> {
+pub async fn logout(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    headers: axum::http::HeaderMap,
+) -> ApiResult<StatusCode> {
     // ADR-003: Stateless JWT. Token revocation requires a blocklist.
-    // For MLP, we rely on short-lived access tokens (15 min).
-    // Client should just discard the token.
+    // We add the token to an in-memory blocklist.
+    if let Some(auth_header) = headers.get("Authorization").and_then(|v| v.to_str().ok()).and_then(|s| s.strip_prefix("Bearer ")) {
+        state.jwt_blocklist.insert(auth_header.to_string());
+    }
+    let _ = state.aegis_service.logout(&auth.user_id.to_string()).await;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -314,6 +339,13 @@ pub async fn create_api_key(
     auth: AuthContext,
     Json(req): Json<CreateApiKeyRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let scopes = req.scopes.unwrap_or_default();
+    for scope in &scopes {
+        if !["read", "write", "admin"].contains(&scope.as_str()) {
+            return Err(ApiResponseError::validation("Invalid scope"));
+        }
+    }
+
     let key = state
         .aegis_service
         .create_api_key(
@@ -321,7 +353,7 @@ pub async fn create_api_key(
             auth.user_id,
             req.name,
             None,
-            req.scopes.unwrap_or_default(),
+            scopes,
         )
         .await
         .map_err(map_aegis_error)?;
@@ -376,10 +408,17 @@ pub struct RequestPasswordResetRequest {
 }
 
 pub async fn request_password_reset(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RequestPasswordResetRequest>,
 ) -> ApiResult<StatusCode> {
-    tracing::info!(email = %req.email, "Password reset requested (stub)");
+    // In a real system, we would generate a token, save it, and send an email.
+    // For now, we just log it and return OK.
+    let email = Email::new(req.email);
+    if let Ok(Some(user)) = state.aegis_service.find_user_by_email(&email).await {
+        let token = Uuid::new_v4().to_string();
+        tracing::info!(user_id = %user.id, reset_token = %token, "Password reset token generated");
+        // TODO: Save token to DB and send email
+    }
     Ok(StatusCode::OK)
 }
 
@@ -393,7 +432,10 @@ pub async fn reset_password(
     State(_state): State<AppState>,
     Json(_req): Json<ResetPasswordRequest>,
 ) -> ApiResult<StatusCode> {
-    Ok(StatusCode::OK)
+    // In a real system, we would validate the token and update the password.
+    Err(ApiResponseError::Internal(
+        "Password reset not implemented".to_string(),
+    ))
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {

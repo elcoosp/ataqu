@@ -1,4 +1,5 @@
 use axum::{
+    extract::Query,
     Router,
     extract::{Path, State},
     http::StatusCode,
@@ -42,13 +43,20 @@ pub struct UpdateWorkflowRequest {
     pub is_active: Option<bool>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ListWorkflowsParams {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
+}
+
 pub async fn list_workflows(
     State(state): State<AppState>,
     auth: AuthContext,
+    Query(params): Query<ListWorkflowsParams>,
 ) -> ApiResult<Json<Vec<WorkflowResponse>>> {
     let workflows = state
         .spark_service
-        .list_workflows(auth.tenant_id, 100, 0)
+        .list_workflows(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let resp = workflows
@@ -116,8 +124,15 @@ pub async fn update_workflow(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateWorkflowRequest>,
 ) -> ApiResult<Json<WorkflowResponse>> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let cmd = ataqu_application::spark_service::UpdateWorkflowCommand {
         tenant_id: auth.tenant_id,
         id,
@@ -210,56 +225,8 @@ pub async fn list_templates(
     State(_state): State<AppState>,
     _auth: AuthContext,
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    let templates = vec![
-        serde_json::json!({
-            "id": "cinq_to_dial_on_deal_won",
-            "name": "CINQ: Deal Won -> DIAL: Create channel #onboarding-{deal}",
-            "trigger": {
-                "type": "Event",
-                "event_type": "DealWon"
-            },
-            "actions": [
-                {
-                    "type": "create_dial_channel",
-                    "name": "onboarding-{deal_id}",
-                    "channel_type": "public",
-                    "participants": []
-                }
-            ]
-        }),
-        serde_json::json!({
-            "id": "sond_to_cinq_on_form_submitted",
-            "name": "SOND: Form Submitted -> CINQ: Create Lead",
-            "trigger": {
-                "type": "Event",
-                "event_type": "ResponseSubmitted"
-            },
-            "actions": [
-                {
-                    "type": "create_cinq_lead",
-                    "name": "{name}",
-                    "email": "{email}",
-                    "source": "sond"
-                }
-            ]
-        }),
-        serde_json::json!({
-            "id": "vault_to_dial_low_stock",
-            "name": "VAULT: Stock < Threshold -> DIAL: Alert #logistics",
-            "trigger": {
-                "type": "Event",
-                "event_type": "LowStockAlert"
-            },
-            "actions": [
-                {
-                    "type": "send_dial_message",
-                    "channel_id": "00000000-0000-0000-0000-000000000000",
-                    "content": "Low stock alert for variant {variant_id}"
-                }
-            ]
-        }),
-    ];
-    Ok(Json(templates))
+    // Templates are now persisted via PIVOT. This endpoint is deprecated.
+    Ok(Json(vec![]))
 }
 
 pub fn routes() -> Router<AppState> {

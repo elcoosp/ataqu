@@ -68,7 +68,7 @@ pub async fn create_form(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateFormRequest>,
-) -> ApiResult<(StatusCode, Json<FormResponse>)> {
+) -> ApiResult<(StatusCode, axum::http::HeaderMap, Json<FormResponse>)> {
     let cmd = CreateFormCommand {
         tenant_id: auth.tenant_id,
         title: payload.title,
@@ -81,7 +81,12 @@ pub async fn create_form(
         .create_form(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(form.into())))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", form.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(form.into())))
 }
 
 pub async fn list_forms(
@@ -105,13 +110,24 @@ pub async fn get_form(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<FormResponse>> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<impl axum::response::IntoResponse> {
     let form = state
         .sond_service
         .get_form(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
-    Ok(Json(form.into()))
+    let etag = format!("\"{}\"", form.version);
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            let mut h = axum::http::HeaderMap::new();
+            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+            return Ok((StatusCode::NOT_MODIFIED, h, Json(FormResponse::from(form))));
+        }
+    }
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+    Ok((StatusCode::OK, resp_headers, Json(FormResponse::from(form))))
 }
 
 #[derive(Debug, Deserialize)]
@@ -230,7 +246,17 @@ pub async fn export_responses(
             .map_err(|e| ApiResponseError::internal(&e.to_string()))?,
     )
     .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::OK, data))
+    Ok((
+        StatusCode::OK,
+        [
+            (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                "attachment; filename=\"responses.csv\"".to_string(),
+            ),
+        ],
+        data,
+    ))
 }
 
 #[derive(Debug, Deserialize)]

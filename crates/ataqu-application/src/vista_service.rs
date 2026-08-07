@@ -61,6 +61,7 @@ impl VistaService {
     }
 
     pub async fn process_event(&self, event: &OutboxEvent) -> VistaResult<()> {
+        metrics::counter!("ataqu_vista_events_processed_total", "schema" => event.schema.clone(), "event_type" => event.event_type.clone()).increment(1);
         let tenant_id = event
             .payload
             .get("tenant_id")
@@ -68,6 +69,9 @@ impl VistaService {
             .and_then(|s| Uuid::parse_str(s).ok())
             .map(TenantId::new)
             .unwrap_or_else(|| TenantId::new(Uuid::nil()));
+        if tenant_id.as_uuid() == Uuid::nil() {
+            tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload");
+        }
         let current_view = self
             .repo
             .get_aggregated_view(&tenant_id)
@@ -231,28 +235,12 @@ impl VistaService {
             ));
         }
 
-        // Basic tenant isolation enforcement: rewrite the query to inject tenant_id
-        // This is a simplified approach. A real system would parse the AST.
-        let tenant_filter = format!("tenant_id = '{}'", tenant_id.as_uuid());
-
-        // If the query doesn't mention tenant_id, inject it into the WHERE clause
+        // Tenant isolation enforcement: require the query to explicitly filter by tenant_id.
+        // String manipulation of SQL is unsafe and bypassable. We force the user to include it.
         if !upper_sql.contains("TENANT_ID") {
-            if upper_sql.contains("WHERE") {
-                let new_sql = sql.replacen("WHERE", &format!("WHERE {} AND", tenant_filter), 1);
-                return self
-                    .repo
-                    .execute_raw_sql(&tenant_id, &new_sql)
-                    .await
-                    .map_err(VistaServiceError::Repository);
-            } else {
-                // No WHERE clause, append one. This is risky for JOINs but acceptable for MLP.
-                let new_sql = format!("{} WHERE {}", sql, tenant_filter);
-                return self
-                    .repo
-                    .execute_raw_sql(&tenant_id, &new_sql)
-                    .await
-                    .map_err(VistaServiceError::Repository);
-            }
+            return Err(VistaServiceError::Validation(
+                "Query must include a tenant_id filter in the WHERE clause".to_string(),
+            ));
         }
 
         self.repo

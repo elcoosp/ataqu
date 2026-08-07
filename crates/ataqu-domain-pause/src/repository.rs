@@ -49,6 +49,8 @@ pub trait EmployeeDocumentRepository: Send + Sync {
         &self,
         tenant_id: &TenantId,
         employee_id: Uuid,
+        limit: u64,
+        offset: u64,
     ) -> Result<Vec<crate::EmployeeDocument>, PauseDomainError>;
 }
 

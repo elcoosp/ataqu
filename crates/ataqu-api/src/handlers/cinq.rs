@@ -105,7 +105,7 @@ pub async fn create_contact(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateContactRequest>,
-) -> ApiResult<(StatusCode, Json<ContactResponse>)> {
+) -> ApiResult<(StatusCode, axum::http::HeaderMap, Json<ContactResponse>)> {
     let cmd = CreateContactCommand {
         tenant_id: auth.tenant_id,
         name: payload.name,
@@ -120,7 +120,12 @@ pub async fn create_contact(
         .create_contact(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(ContactResponse::from(contact))))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", contact.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(ContactResponse::from(contact))))
 }
 
 pub async fn list_contacts(
@@ -149,19 +154,26 @@ pub async fn get_contact(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<(axum::http::HeaderMap, Json<ContactResponse>)> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<impl axum::response::IntoResponse> {
     let contact = state
         .cinq_service
         .get_contact(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
 
-    let mut headers = axum::http::HeaderMap::new();
-    headers.insert(
-        axum::http::header::ETAG,
-        format!("\"{}\"", contact.version).parse().unwrap(),
-    );
-    Ok((headers, Json(ContactResponse::from(contact))))
+    let etag = format!("\"{}\"", contact.version);
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            let mut h = axum::http::HeaderMap::new();
+            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+            return Ok((StatusCode::NOT_MODIFIED, h, Json(ContactResponse::from(contact))));
+        }
+    }
+
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+    Ok((StatusCode::OK, resp_headers, Json(ContactResponse::from(contact))))
 }
 
 pub async fn update_contact(
@@ -249,12 +261,17 @@ pub async fn create_deal(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateDealRequest>,
-) -> ApiResult<(StatusCode, Json<DealResponse>)> {
+) -> ApiResult<(StatusCode, axum::http::HeaderMap, Json<DealResponse>)> {
     state
         .cinq_service
         .get_pipeline_stage(auth.tenant_id, payload.pipeline_stage_id)
         .await
-        .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::PipelineStageNotFound => {
+                ApiResponseError::validation("Invalid pipeline_stage_id")
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
 
     let cmd = CreateDealCommand {
         tenant_id: auth.tenant_id,
@@ -273,7 +290,12 @@ pub async fn create_deal(
         .create_deal(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(DealResponse::from(deal))))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", deal.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(DealResponse::from(deal))))
 }
 
 pub async fn list_deals(
@@ -295,13 +317,24 @@ pub async fn get_deal(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<DealResponse>> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<impl axum::response::IntoResponse> {
     let deal = state
         .cinq_service
         .get_deal(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
-    Ok(Json(DealResponse::from(deal)))
+    let etag = format!("\"{}\"", deal.version);
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            let mut h = axum::http::HeaderMap::new();
+            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+            return Ok((StatusCode::NOT_MODIFIED, h, Json(DealResponse::from(deal))));
+        }
+    }
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+    Ok((StatusCode::OK, resp_headers, Json(DealResponse::from(deal))))
 }
 
 pub async fn update_deal(
@@ -508,7 +541,7 @@ pub async fn list_activities(
         .ok_or_else(|| ApiResponseError::validation("contact_id required"))?;
     let activities = state
         .cinq_service
-        .list_activities_for_contact(auth.tenant_id, contact_id, 100, 0)
+        .list_activities_for_contact(auth.tenant_id, contact_id, params.limit.unwrap_or(100), 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(
@@ -631,7 +664,7 @@ pub async fn import_csv(
     let mut rdr = ReaderBuilder::new().from_reader(body.as_bytes());
     let mut rows = Vec::new();
     let mut failed_rows = Vec::new();
-    let mut row_index = 0;
+    let mut row_index = 1;
 
     for result in rdr.deserialize() {
         match result {
@@ -643,7 +676,7 @@ pub async fn import_csv(
         row_index += 1;
     }
 
-    let (imported, failed) = state
+    let (imported, service_failed) = state
         .cinq_service
         .import_contacts(auth.tenant_id, rows)
         .await
@@ -651,7 +684,7 @@ pub async fn import_csv(
 
     Ok(Json(ImportCsvResultDetailed {
         imported,
-        failed: failed + failed_rows.len(),
+        failed: service_failed + failed_rows.len(),
         failed_rows,
     }))
 }
@@ -725,7 +758,7 @@ pub async fn create_task(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateTaskRequest>,
-) -> ApiResult<(StatusCode, Json<TaskResponse>)> {
+) -> ApiResult<(StatusCode, axum::http::HeaderMap, Json<TaskResponse>)> {
     let cmd = ataqu_domain_cinq::task::CreateTaskCommand {
         tenant_id: auth.tenant_id,
         contact_id: payload.contact_id,
@@ -740,7 +773,12 @@ pub async fn create_task(
         .create_task(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(task.into())))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", task.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(task.into())))
 }
 
 pub async fn list_tasks(
@@ -762,7 +800,8 @@ pub async fn get_task(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<TaskResponse>> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<impl axum::response::IntoResponse> {
     let task = state
         .cinq_service
         .get_task(auth.tenant_id, id)
@@ -773,7 +812,17 @@ pub async fn get_task(
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
-    Ok(Json(task.into()))
+    let etag = format!("\"{}\"", task.version);
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            let mut h = axum::http::HeaderMap::new();
+            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+            return Ok((StatusCode::NOT_MODIFIED, h, Json(TaskResponse::from(task))));
+        }
+    }
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+    Ok((StatusCode::OK, resp_headers, Json(TaskResponse::from(task))))
 }
 
 #[derive(Debug, Deserialize)]
@@ -799,11 +848,16 @@ pub async fn update_task(
             ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
         })?;
 
-    let status = payload.status.map(|s| match s.to_lowercase().as_str() {
-        "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
-        "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
-        _ => ataqu_domain_cinq::task::TaskStatus::Pending,
-    });
+    let status = if let Some(s) = payload.status {
+        Some(match s.to_lowercase().as_str() {
+            "pending" => ataqu_domain_cinq::task::TaskStatus::Pending,
+            "completed" => ataqu_domain_cinq::task::TaskStatus::Completed,
+            "cancelled" => ataqu_domain_cinq::task::TaskStatus::Cancelled,
+            _ => return Err(ApiResponseError::validation("Invalid task status")),
+        })
+    } else {
+        None
+    };
     let cmd = ataqu_domain_cinq::task::UpdateTaskCommand {
         id,
         tenant_id: auth.tenant_id,
@@ -853,10 +907,11 @@ pub async fn list_contact_tasks(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<Vec<TaskResponse>>> {
     let tasks = state
         .cinq_service
-        .list_tasks_for_contact(auth.tenant_id, id, 100, 0)
+        .list_tasks_for_contact(auth.tenant_id, id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
@@ -887,7 +942,6 @@ pub fn routes() -> Router<AppState> {
             "/contacts/:id",
             get(get_contact).put(update_contact).delete(delete_contact),
         )
-        .route("/contacts/bulk-delete", post(bulk_delete_contacts))
         .route("/contacts/bulk-delete", post(bulk_delete_contacts))
         .route("/deals", post(create_deal).get(list_deals))
         .route(

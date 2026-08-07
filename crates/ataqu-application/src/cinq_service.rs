@@ -200,6 +200,7 @@ impl CinqService {
         Ok(contact)
     }
 
+
     pub async fn update_contact(&self, cmd: UpdateContactCommand) -> CinqResult<Contact> {
         let mut contact = self
             .contact_repo
@@ -593,8 +594,8 @@ impl CinqService {
                 "contact_id": deal.contact_id,
                 "amount": deal.amount,
                 "title": deal.title,
-                "variant_id": cmd.variant_id,
-                "quantity": cmd.quantity
+                "variant_id": deal.variant_id,
+                "quantity": deal.quantity
             });
             self.outbox
                 .append(CINQ_SCHEMA, "DealWon", deal.id, &payload)

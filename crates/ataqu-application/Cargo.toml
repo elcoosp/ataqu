@@ -14,6 +14,7 @@ async-trait = "0.1"
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 sqlx = { version = "0.9.0", features = ["postgres", "runtime-tokio", "tls-rustls", "chrono", "uuid", "json"] }
 tracing = "0.1"
+metrics = "0.23"
 tokio = { version = "1.52", features = ["sync", "rt", "time", "macros"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 ataqu-kernel = { path = "../ataqu-kernel" }

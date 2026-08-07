@@ -44,21 +44,27 @@ pub struct AppState {
     pub id_gen: Arc<dyn IdGenerator>,
     pub clock: Arc<dyn Clock>,
     pub ws_registry: handlers::dial_ws::ConnectionRegistry,
+    pub conn_index: handlers::dial_ws::ConnectionIndex,
+    pub presence_counts: Arc<dashmap::DashMap<uuid::Uuid, std::sync::atomic::AtomicUsize>>,
     pub email_tracking_tx:
         tokio::sync::mpsc::Sender<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
     pub rate_limiter: RateLimiter,
     pub metrics_handle: PrometheusHandle,
+    pub sso_states: Arc<dashmap::DashMap<String, ataqu_domain_aegis::sso::SsoProvider>>,
+    pub jwt_blocklist: Arc<dashmap::DashSet<String>>,
 }
 
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
-    let request_id = Uuid::new_v4().to_string();
+    let request_id = Uuid::now_v7().to_string();
     req.extensions_mut().insert(request_id.clone());
     let method = req.method().to_string();
-    let path = req.uri().path().to_string();
+    let matched_path = req.extensions().get::<axum::extract::MatchedPath>()
+        .map(|p| p.as_str().split('/').take(3).collect::<Vec<_>>().join("/"))
+        .unwrap_or_else(|| "unknown".to_string());
     let mut resp = next.run(req).await;
     resp.headers_mut()
         .insert("x-request-id", request_id.parse().unwrap());
-    metrics::counter!("ataqu_http_requests_total", "method" => method, "path" => path).increment(1);
+    metrics::counter!("ataqu_http_requests_total", "method" => method, "path" => matched_path).increment(1);
     resp
 }
 
@@ -70,7 +76,10 @@ async fn metrics_handler(State(state): State<AppState>) -> String {
     state.metrics_handle.render()
 }
 
-async fn readiness_check(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
+async fn readiness_check(State(state): State<AppState>) -> impl axum::response::IntoResponse {
+    if state.email_tracking_tx.is_closed() {
+        return (axum::http::StatusCode::SERVICE_UNAVAILABLE, "email tracking down");
+    }
     (axum::http::StatusCode::OK, "ready")
 }
 
@@ -92,24 +101,12 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", handlers::tempo::public_routes())
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
-        .route(
-            "/api/search",
-            axum::routing::get(handlers::search::unified_search),
-        )
-        .route(
-            "/api/search",
-            axum::routing::get(handlers::search::unified_search),
-        )
-        .route(
-            "/api/search",
-            axum::routing::get(handlers::search::unified_search),
-        )
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
         ))
         .layer(axum::middleware::from_fn(
-            crate::middleware::etag::etag_middleware,
+            crate::middleware::csrf::csrf_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
@@ -129,14 +126,13 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/vault", vault_routes())
         .nest("/api/vista", vista_routes())
         .nest("/api/gdpr", handlers::gdpr::routes())
-        .nest("/api/gdpr", handlers::gdpr::routes())
-        .nest("/api/gdpr", handlers::gdpr::routes())
+        .route("/api/search", axum::routing::get(handlers::search::unified_search))
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
         ))
         .layer(axum::middleware::from_fn(
-            crate::middleware::etag::etag_middleware,
+            crate::middleware::csrf::csrf_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
@@ -147,10 +143,13 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::auth::auth_middleware,
         ));
 
+    let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "/tmp/ataqu_uploads".to_string());
+
     Router::new()
         .route("/health", axum::routing::get(health_check))
         .route("/metrics", axum::routing::get(metrics_handler))
         .route("/ready", axum::routing::get(readiness_check))
+        .nest_service("/uploads", tower_http::services::ServeDir::new(upload_dir))
         .merge(public_routes)
         .merge(private_routes)
         .with_state(state)

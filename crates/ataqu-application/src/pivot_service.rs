@@ -301,7 +301,7 @@ impl PivotService {
             document_id: block.document_id,
             block_type,
             created_at: block.created_at,
-            updated_at: block.updated_at,
+            updated_at: self.clock.now().into(),
             version: block.version + 1,
         };
         self.block_repo

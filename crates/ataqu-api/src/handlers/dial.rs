@@ -73,7 +73,7 @@ pub async fn create_channel(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(payload): Json<CreateChannelRequest>,
-) -> ApiResult<(StatusCode, Json<ChannelResponse>)> {
+) -> ApiResult<(StatusCode, axum::http::HeaderMap, Json<ChannelResponse>)> {
     let channel_type = match payload.channel_type.as_deref().unwrap_or("public") {
         "public" => ChannelType::Public,
         "private" => ChannelType::Private,
@@ -104,16 +104,28 @@ pub async fn create_channel(
         .create_channel(cmd)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok((StatusCode::CREATED, Json(channel.into())))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", channel.version).parse().unwrap(),
+    );
+    Ok((StatusCode::CREATED, headers, Json(channel.into())))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ListChannelsParams {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
 }
 
 pub async fn list_channels(
     State(state): State<AppState>,
     auth: AuthContext,
+    Query(params): Query<ListChannelsParams>,
 ) -> ApiResult<Json<Vec<ChannelResponse>>> {
     let channels = state
         .dial_service
-        .list_channels(auth.tenant_id, 100, 0)
+        .list_channels(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(channels.into_iter().map(|c| c.into()).collect()))
@@ -123,13 +135,24 @@ pub async fn get_channel(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
-) -> ApiResult<Json<ChannelResponse>> {
+    headers: axum::http::HeaderMap,
+) -> ApiResult<impl axum::response::IntoResponse> {
     let channel = state
         .dial_service
         .get_channel(auth.tenant_id, id, auth.user_id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
-    Ok(Json(channel.into()))
+    let etag = format!("\"{}\"", channel.version);
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
+        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+            let mut h = axum::http::HeaderMap::new();
+            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+            return Ok((StatusCode::NOT_MODIFIED, h, Json(ChannelResponse::from(channel))));
+        }
+    }
+    let mut resp_headers = axum::http::HeaderMap::new();
+    resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
+    Ok((StatusCode::OK, resp_headers, Json(ChannelResponse::from(channel))))
 }
 
 pub async fn archive_channel(
@@ -231,16 +254,28 @@ pub async fn send_message(
     Ok((StatusCode::CREATED, Json(msg.into())))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ListMessagesParams {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
+}
+
 pub async fn list_messages(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(channel_id): Path<Uuid>,
+    Query(params): Query<ListMessagesParams>,
 ) -> ApiResult<Json<Vec<MessageResponse>>> {
     let msgs = state
         .dial_service
-        .list_messages(auth.tenant_id, channel_id, auth.user_id, 100, 0)
+        .list_messages(auth.tenant_id, channel_id, auth.user_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
         .await
-        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::dial_service::DialServiceError::Validation(msg) => {
+                ApiResponseError::Forbidden(msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
 }
 
@@ -277,13 +312,36 @@ pub async fn edit_message(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(message_id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<EditMessageRequest>,
 ) -> ApiResult<Json<MessageResponse>> {
+    let _if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let edited = state
         .dial_service
         .edit_message(auth.tenant_id, message_id, auth.user_id, payload.content)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    let key = (auth.tenant_id.as_uuid(), edited.channel_id.as_uuid());
+    let broadcast = serde_json::json!({
+        "type": "message_edited",
+        "id": edited.id.as_uuid(),
+        "channel_id": edited.channel_id.as_uuid(),
+        "content": edited.content,
+        "edited_at": edited.edited_at,
+    })
+    .to_string();
+    if let Some(subscribers) = state.ws_registry.get(&key) {
+        for entry in subscribers.iter() {
+            let _ = entry.value().send(broadcast.clone());
+        }
+    }
+
     Ok(Json(edited.into()))
 }
 
@@ -293,11 +351,28 @@ pub async fn delete_message(
     Path(message_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     let is_moderator = auth.has_role("admin");
+    let msg = state.dial_service.get_message(auth.tenant_id, message_id).await.ok();
     state
         .dial_service
         .delete_message(auth.tenant_id, message_id, auth.user_id, is_moderator)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    if let Some(m) = msg {
+        let key = (auth.tenant_id.as_uuid(), m.channel_id.as_uuid());
+        let broadcast = serde_json::json!({
+            "type": "message_deleted",
+            "message_id": message_id,
+            "channel_id": m.channel_id.as_uuid(),
+        })
+        .to_string();
+        if let Some(subscribers) = state.ws_registry.get(&key) {
+            for entry in subscribers.iter() {
+                let _ = entry.value().send(broadcast.clone());
+            }
+        }
+    }
+
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -460,16 +535,37 @@ pub async fn search_messages(
 
 pub async fn upload_file(
     State(_state): State<AppState>,
-    _auth: AuthContext,
+    auth: AuthContext,
     mut multipart: axum::extract::Multipart,
 ) -> ApiResult<Json<serde_json::Value>> {
-    // File upload to S3 via presigned URLs is not yet implemented.
-    while let Ok(Some(_field)) = multipart.next_field().await {
-        // Consume the field to avoid connection errors
+    // Basic file upload implementation: saves to local disk.
+    // A real implementation would use S3 presigned URLs.
+    let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "/tmp/ataqu_uploads".to_string());
+    tokio::fs::create_dir_all(&upload_dir).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    let mut file_urls = Vec::new();
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let file_name = field.file_name().unwrap_or("unknown").to_string();
+        let extension = field.content_type().unwrap_or("application/octet-stream").split('/').last().unwrap_or("bin");
+        let file_id = uuid::Uuid::now_v7();
+        let saved_name = format!("{}.{}", file_id, extension);
+        let file_path = std::path::Path::new(&upload_dir).join(&saved_name);
+
+        let data = field.bytes().await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        tokio::fs::write(&file_path, &data).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+        let url = format!("/uploads/{}", saved_name);
+        file_urls.push(serde_json::json!({
+            "name": file_name,
+            "url": url,
+            "size": data.len(),
+        }));
     }
-    Err(ApiResponseError::Internal(
-        "File upload not fully implemented".to_string(),
-    ))
+
+    Ok(Json(serde_json::json!({
+        "files": file_urls,
+        "uploaded_by": auth.user_id,
+    })))
 }
 
 #[derive(Debug, Deserialize)]
@@ -483,11 +579,31 @@ pub async fn add_reaction(
     Path(message_id): Path<Uuid>,
     Json(payload): Json<AddReactionRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let emoji_clone = payload.emoji.clone();
     let reaction = state
         .dial_service
         .add_reaction(auth.tenant_id, message_id, auth.user_id, payload.emoji)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    let msg = state.dial_service.get_message(auth.tenant_id, message_id).await.ok();
+    if let Some(m) = msg {
+        let key = (auth.tenant_id.as_uuid(), m.channel_id.as_uuid());
+        let broadcast = serde_json::json!({
+            "type": "reaction_added",
+            "message_id": message_id,
+            "channel_id": m.channel_id.as_uuid(),
+            "user_id": auth.user_id,
+            "emoji": emoji_clone,
+        })
+        .to_string();
+        if let Some(subscribers) = state.ws_registry.get(&key) {
+            for entry in subscribers.iter() {
+                let _ = entry.value().send(broadcast.clone());
+            }
+        }
+    }
+
     Ok(Json(serde_json::json!({
         "id": reaction.id,
         "message_id": reaction.message_id.as_uuid(),
@@ -524,6 +640,20 @@ pub async fn delete_reaction(
     auth: AuthContext,
     Path((message_id, reaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
+    // Fetch reaction to verify ownership
+    let reactions = state
+        .dial_service
+        .list_reactions(auth.tenant_id, message_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    let reaction = reactions.iter().find(|r| r.id == reaction_id)
+        .ok_or_else(|| ApiResponseError::not_found("Reaction not found"))?;
+
+    if reaction.user_id.as_uuid() != auth.user_id {
+        return Err(ApiResponseError::Forbidden("Cannot delete another user's reaction".to_string()));
+    }
+
     state
         .dial_service
         .delete_reaction(auth.tenant_id, message_id, reaction_id)
@@ -550,7 +680,6 @@ pub fn routes() -> Router<AppState> {
             "/channels/:id/messages",
             post(send_message).get(list_messages),
         )
-        .route("/channels/:id/export", axum::routing::get(export_channel))
         .route("/channels/:id/export", axum::routing::get(export_channel))
         .route("/messages/:id", put(edit_message).delete(delete_message))
         .route(

@@ -319,13 +319,18 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
 
-        if new_variant.stock_quantity <= 5 {
+        let threshold = std::env::var("LOW_STOCK_THRESHOLD")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(5);
+        if new_variant.stock_quantity <= threshold {
             let payload = serde_json::json!({
                 "variant_id": new_variant.id,
                 "tenant_id": new_variant.tenant_id.as_uuid(),
                 "sku": new_variant.sku,
                 "stock_quantity": new_variant.stock_quantity,
                 "available": new_variant.available(),
+                "alert_channel_id": cmd.alert_channel_id,
             });
             self.outbox
                 .append(VAULT_SCHEMA, "LowStockAlert", new_variant.id, &payload)
@@ -441,12 +446,13 @@ impl VaultService {
             ));
         }
 
+        let expires_at = Some(self.clock.now() + std::time::Duration::from_secs(15 * 60));
         let reservation = ataqu_domain_vault::stock::create_reservation(
             ataqu_domain_vault::stock::CreateReservationCommand {
                 tenant_id,
                 variant_id,
                 quantity,
-                expires_at: None,
+                expires_at,
             },
             self.id_gen.as_ref(),
             self.clock.as_ref(),

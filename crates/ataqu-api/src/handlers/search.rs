@@ -30,6 +30,7 @@ pub async fn unified_search(
     Query(params): Query<SearchParams>,
 ) -> ApiResult<Json<Vec<UnifiedSearchResult>>> {
     let limit = params.limit.unwrap_or(20);
+    let overall_limit = std::cmp::min(limit, 50);
     let mut results = Vec::new();
 
     let contacts = state
@@ -109,5 +110,92 @@ pub async fn unified_search(
         });
     }
 
+    let workflows = state
+        .spark_service
+        .list_workflows(auth.tenant_id, limit, 0)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for w in workflows {
+        if w.name.contains(&params.q) {
+            results.push(UnifiedSearchResult {
+                app: "spark".to_string(),
+                entity_type: "workflow".to_string(),
+                id: w.id,
+                title: w.name,
+                subtitle: None,
+            });
+        }
+    }
+
+    let dashboards = state
+        .vista_service
+        .list_dashboards(auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for d in dashboards {
+        if d.name.contains(&params.q) {
+            results.push(UnifiedSearchResult {
+                app: "vista".to_string(),
+                entity_type: "dashboard".to_string(),
+                id: d.id,
+                title: d.name,
+                subtitle: None,
+            });
+        }
+    }
+
+    let event_types = state
+        .tempo_service
+        .list_event_types(auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for et in event_types {
+        if et.name.contains(&params.q) || et.slug.contains(&params.q) {
+            results.push(UnifiedSearchResult {
+                app: "tempo".to_string(),
+                entity_type: "event_type".to_string(),
+                id: et.id.0,
+                title: et.name,
+                subtitle: Some(et.slug),
+            });
+        }
+    }
+
+    let forms = state
+        .sond_service
+        .list_forms(auth.tenant_id, limit, 0)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for f in forms {
+        if f.title.contains(&params.q) {
+            results.push(UnifiedSearchResult {
+                app: "sond".to_string(),
+                entity_type: "form".to_string(),
+                id: f.id,
+                title: f.title,
+                subtitle: f.description,
+            });
+        }
+    }
+
+    let users = state
+        .aegis_service
+        .list_users(auth.tenant_id.as_uuid())
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for u in users {
+        let email_str = u.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        if email_str.contains(&params.q) || u.name.as_deref().map(|n| n.contains(&params.q)).unwrap_or(false) {
+            results.push(UnifiedSearchResult {
+                app: "aegis".to_string(),
+                entity_type: "user".to_string(),
+                id: u.id,
+                title: u.name.unwrap_or_else(|| email_str.clone()),
+                subtitle: Some(email_str),
+            });
+        }
+    }
+
+    results.truncate(overall_limit as usize);
     Ok(Json(results))
 }

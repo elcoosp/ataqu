@@ -109,33 +109,40 @@ impl PauseService {
         if guard.is_cached() {
             return guard.get_cached::<Uuid>();
         }
-        let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock);
-        self.employee_repo.insert(tenant_id, &event).await?;
-        let payload = serde_json::json!({
-            "employee_id": event.employee_id,
-            "tenant_id": event.tenant_id,
-            "full_name": event.full_name,
-            "job_title": event.job_title,
-            "department": event.department,
-            "hire_date": event.hire_date,
-            "created_at": event.created_at,
-        });
-        self.outbox
-            .append(
-                PAUSE_SCHEMA,
-                "EmployeeCreatedEvent",
-                event.employee_id,
-                &payload,
-            )
-            .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
-        self.idempotency
-            .commit(
-                &command_id,
-                serde_json::to_value(event.employee_id).unwrap(),
-            )
-            .await?;
-        Ok(event.employee_id)
+        let result = async {
+            let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock);
+            self.employee_repo.insert(tenant_id, &event).await?;
+            let payload = serde_json::json!({
+                "employee_id": event.employee_id,
+                "tenant_id": event.tenant_id,
+                "full_name": event.full_name,
+                "job_title": event.job_title,
+                "department": event.department,
+                "hire_date": event.hire_date,
+                "created_at": event.created_at,
+            });
+            self.outbox
+                .append(
+                    PAUSE_SCHEMA,
+                    "EmployeeCreatedEvent",
+                    event.employee_id,
+                    &payload,
+                )
+                .await
+                .map_err(|e| PauseServiceError::Outbox(e))?;
+            Ok(event.employee_id)
+        }.await;
+
+        match result {
+            Ok(id) => {
+                self.idempotency.commit(&command_id, serde_json::to_value(id).unwrap()).await?;
+                Ok(id)
+            }
+            Err(e) => {
+                let _ = self.idempotency.rollback(&command_id).await;
+                Err(e)
+            }
+        }
     }
 
     pub async fn request_leave(
@@ -150,26 +157,33 @@ impl PauseService {
         if guard.is_cached() {
             return guard.get_cached::<Uuid>();
         }
-        let event = ataqu_domain_pause::leave::request_leave(command, id_gen, clock);
-        self.leave_request_repo.insert(tenant_id, &event).await?;
-        let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
-        self.outbox
-            .append(
-                PAUSE_SCHEMA,
-                "LeaveRequestedEvent",
-                event.leave_request_id,
-                &payload,
-            )
-            .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
-        self.idempotency
-            .commit(
-                &command_id,
-                serde_json::to_value(event.leave_request_id).unwrap(),
-            )
-            .await?;
-        Ok(event.leave_request_id)
+        let result = async {
+            let event = ataqu_domain_pause::leave::request_leave(command, id_gen, clock);
+            self.leave_request_repo.insert(tenant_id, &event).await?;
+            let payload =
+                serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            self.outbox
+                .append(
+                    PAUSE_SCHEMA,
+                    "LeaveRequestedEvent",
+                    event.leave_request_id,
+                    &payload,
+                )
+                .await
+                .map_err(|e| PauseServiceError::Outbox(e))?;
+            Ok(event.leave_request_id)
+        }.await;
+
+        match result {
+            Ok(id) => {
+                self.idempotency.commit(&command_id, serde_json::to_value(id).unwrap()).await?;
+                Ok(id)
+            }
+            Err(e) => {
+                let _ = self.idempotency.rollback(&command_id).await;
+                Err(e)
+            }
+        }
     }
 
     pub async fn find_employee(
@@ -414,9 +428,11 @@ impl PauseService {
         &self,
         tenant_id: TenantId,
         employee_id: Uuid,
+        limit: u64,
+        offset: u64,
     ) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, PauseServiceError> {
         self.document_repo
-            .list_documents_for_employee(&tenant_id, employee_id)
+            .list_documents_for_employee(&tenant_id, employee_id, limit, offset)
             .await
             .map_err(PauseServiceError::Domain)
     }

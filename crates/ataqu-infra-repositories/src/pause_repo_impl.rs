@@ -447,26 +447,31 @@ impl ataqu_domain_pause::repository::EmployeeDocumentRepository for PauseReposit
         &self,
         tenant_id: &ataqu_kernel::TenantId,
         employee_id: uuid::Uuid,
-    ) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, ataqu_domain_pause::PauseDomainError>
-    {
-        let models = employee_document_entity::Entity::find()
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<ataqu_domain_pause::EmployeeDocument>, PauseDomainError> {
+        use employee_document_entity::Entity as DocEntity;
+        let models = DocEntity::find()
             .filter(employee_document_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(employee_document_entity::Column::EmployeeId.eq(employee_id))
+            .order_by_desc(employee_document_entity::Column::CreatedAt)
+            .limit(limit)
+            .offset(offset)
             .all(&self.db)
             .await
-            .map_err(|e| ataqu_domain_pause::PauseDomainError::Persistence(e.to_string()))?;
+            .map_err(|e| PauseDomainError::Persistence(e.to_string()))?;
 
-        Ok(models
-            .into_iter()
-            .map(|m| ataqu_domain_pause::EmployeeDocument {
-                id: m.id,
-                tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
-                employee_id: m.employee_id,
-                file_name: m.file_name,
-                file_url: m.file_url,
-                doc_type: m.doc_type,
-                created_at: m.created_at,
-            })
-            .collect())
+        let documents = models.into_iter().map(|m| ataqu_domain_pause::EmployeeDocument {
+            id: m.id,
+            tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
+            employee_id: m.employee_id,
+            file_name: m.file_name,
+            file_url: m.file_url,
+            doc_type: m.doc_type,
+            created_at: m.created_at,
+        }).collect();
+
+        Ok(documents)
     }
 }
+

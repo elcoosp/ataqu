@@ -177,6 +177,9 @@ impl SparkService {
             .and_then(|v| v.as_str())
             .and_then(|s| Uuid::parse_str(s).ok())
             .unwrap_or(Uuid::nil());
+        if event_tenant_id == Uuid::nil() {
+            tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload");
+        }
         for workflow in workflows {
             if workflow.tenant_id != event_tenant_id {
                 continue;
@@ -197,12 +200,15 @@ impl SparkService {
         for workflow in workflows {
             if let Trigger::Schedule { cron } = &workflow.trigger {
                 if let Ok(cron_job) = croner::Cron::new(cron).parse() {
-                    if cron_job.find_next_occurrence(&now, false).is_ok() {
-                        tracing::info!("Triggering scheduled workflow {}", workflow.id);
-                        let payload = serde_json::json!({ "time": now.to_rfc3339() });
-                        if evaluate_conditions(&workflow.conditions, &payload) {
-                            if let Err(e) = self.execute_workflow(&workflow).await {
-                                tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
+                    if let Ok(next_run) = cron_job.find_next_occurrence(&now, false) {
+                        // Trigger only if the next occurrence is within the next 60 seconds (polling interval)
+                        if next_run <= now + chrono::Duration::seconds(60) {
+                            tracing::info!("Triggering scheduled workflow {}", workflow.id);
+                            let payload = serde_json::json!({ "time": now.to_rfc3339() });
+                            if evaluate_conditions(&workflow.conditions, &payload) {
+                                if let Err(e) = self.execute_workflow(&workflow).await {
+                                    tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
+                                }
                             }
                         }
                     }

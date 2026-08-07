@@ -11,7 +11,9 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, Statu
     let host = headers.get("host").and_then(|v| v.to_str().ok());
 
     if let (Some(origin), Some(host)) = (origin, host) {
-        if origin.contains(host) {
+        // Fix: robust suffix check to prevent bypasses like "evil.com?ataqu.com"
+        let origin_host = origin.split("://").nth(1).unwrap_or(origin);
+        if origin_host == host || origin_host.ends_with(&format!(".{}", host)) {
             return Ok(next.run(req).await);
         }
     }
