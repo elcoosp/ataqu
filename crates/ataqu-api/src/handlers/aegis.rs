@@ -212,22 +212,125 @@ pub struct SsoCallbackRequest {
     pub state: String,
 }
 
+#[derive(Debug, serde::Deserialize)]
+struct OAuthTokenResponse {
+    access_token: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct GoogleUserInfo {
+    email: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct MicrosoftUserInfo {
+    mail: Option<String>,
+    user_principal_name: Option<String>,
+}
+
 pub async fn sso_callback(
     State(state): State<AppState>,
     Json(req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
-    if !state.sso_states.contains_key(&req.state) {
-        return Err(ApiResponseError::unauthorized("Invalid SSO state"));
-    }
+    let provider = state.sso_states.get(&req.state).map(|p| p.clone()).ok_or_else(|| {
+        ApiResponseError::unauthorized("Invalid or expired SSO state")
+    })?;
     state.sso_states.remove(&req.state);
 
-    // This is a simplified SSO callback. A real implementation would exchange the code for tokens
-    // and fetch the user profile from the provider.
-    // For now, we just return an error indicating it's not fully implemented.
-    // In a future version, this would use reqwest to call the provider's token endpoint.
-    Err(ApiResponseError::Internal(
-        "SSO callback not implemented".to_string(),
-    ))
+    let config = ataqu_domain_aegis::sso::SsoConfig {
+        google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
+        google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
+        google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
+        microsoft_client_id: std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default(),
+        microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
+        microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
+    };
+
+    let client = reqwest::Client::new();
+    let email_str = match provider {
+        ataqu_domain_aegis::sso::SsoProvider::Google => {
+            let token_url = "https://oauth2.googleapis.com/token";
+            let params = [
+                ("code", req.code.as_str()),
+                ("client_id", config.google_client_id.as_str()),
+                ("client_secret", config.google_client_secret.as_str()),
+                ("redirect_uri", config.google_redirect_uri.as_str()),
+                ("grant_type", "authorization_code"),
+            ];
+
+            let token_resp = client.post(token_url).form(&params).send().await
+                .map_err(|e| ApiResponseError::internal(&format!("Google token exchange failed: {}", e)))?;
+
+            if !token_resp.status().is_success() {
+                return Err(ApiResponseError::unauthorized("Google token exchange failed"));
+            }
+
+            let token_data: OAuthTokenResponse = token_resp.json().await
+                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Google token: {}", e)))?;
+
+            let userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo";
+            let userinfo_resp = client.get(userinfo_url)
+                .bearer_auth(&token_data.access_token)
+                .send().await
+                .map_err(|e| ApiResponseError::internal(&format!("Failed to fetch Google user info: {}", e)))?;
+
+            if !userinfo_resp.status().is_success() {
+                return Err(ApiResponseError::unauthorized("Failed to fetch Google user info"));
+            }
+
+            let user_info: GoogleUserInfo = userinfo_resp.json().await
+                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Google user info: {}", e)))?;
+
+            user_info.email
+        }
+        ataqu_domain_aegis::sso::SsoProvider::Microsoft => {
+            let token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+            let params = [
+                ("code", req.code.as_str()),
+                ("client_id", config.microsoft_client_id.as_str()),
+                ("client_secret", config.microsoft_client_secret.as_str()),
+                ("redirect_uri", config.microsoft_redirect_uri.as_str()),
+                ("grant_type", "authorization_code"),
+                ("scope", "https://graph.microsoft.com/User.Read"),
+            ];
+
+            let token_resp = client.post(token_url).form(&params).send().await
+                .map_err(|e| ApiResponseError::internal(&format!("Microsoft token exchange failed: {}", e)))?;
+
+            if !token_resp.status().is_success() {
+                return Err(ApiResponseError::unauthorized("Microsoft token exchange failed"));
+            }
+
+            let token_data: OAuthTokenResponse = token_resp.json().await
+                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Microsoft token: {}", e)))?;
+
+            let userinfo_url = "https://graph.microsoft.com/v1.0/me";
+            let userinfo_resp = client.get(userinfo_url)
+                .bearer_auth(&token_data.access_token)
+                .send().await
+                .map_err(|e| ApiResponseError::internal(&format!("Failed to fetch Microsoft user info: {}", e)))?;
+
+            if !userinfo_resp.status().is_success() {
+                return Err(ApiResponseError::unauthorized("Failed to fetch Microsoft user info"));
+            }
+
+            let user_info: MicrosoftUserInfo = userinfo_resp.json().await
+                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Microsoft user info: {}", e)))?;
+
+            user_info.mail.or(user_info.user_principal_name).ok_or_else(|| {
+                ApiResponseError::internal("Microsoft user info did not contain an email")
+            })?
+        }
+    };
+
+    let email = Email::new(email_str);
+    let resp = state.aegis_service.sso_exchange(email).await.map_err(map_aegis_error)?;
+
+    Ok(Json(LoginResponse {
+        access_token: resp.access_token,
+        refresh_token: resp.refresh_token,
+        user_id: resp.user_id,
+    }))
 }
 
 #[derive(Debug, Deserialize)]
@@ -249,7 +352,6 @@ pub async fn list_users(
         .list_users(auth.tenant_id.as_uuid())
         .await
         .map_err(map_aegis_error)?;
-    // Note: list_users does not support pagination in the service layer yet
     let resp = users
         .into_iter()
         .map(|u| {
@@ -319,8 +421,6 @@ pub async fn logout(
     auth: AuthContext,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<StatusCode> {
-    // ADR-003: Stateless JWT. Token revocation requires a blocklist.
-    // We add the token to an in-memory blocklist.
     if let Some(auth_header) = headers.get("Authorization").and_then(|v| v.to_str().ok()).and_then(|s| s.strip_prefix("Bearer ")) {
         state.jwt_blocklist.insert(auth_header.to_string());
     }
@@ -411,13 +511,9 @@ pub async fn request_password_reset(
     State(state): State<AppState>,
     Json(req): Json<RequestPasswordResetRequest>,
 ) -> ApiResult<StatusCode> {
-    // In a real system, we would generate a token, save it, and send an email.
-    // For now, we just log it and return OK.
     let email = Email::new(req.email);
-    if let Ok(Some(user)) = state.aegis_service.find_user_by_email(&email).await {
-        let token = Uuid::new_v4().to_string();
-        tracing::info!(user_id = %user.id, reset_token = %token, "Password reset token generated");
-        // TODO: Save token to DB and send email
+    if let Ok(token) = state.aegis_service.request_password_reset(email).await {
+        tracing::info!(reset_token = %token, "Password reset token generated (dev mode: returns token in logs)");
     }
     Ok(StatusCode::OK)
 }
@@ -429,13 +525,15 @@ pub struct ResetPasswordRequest {
 }
 
 pub async fn reset_password(
-    State(_state): State<AppState>,
-    Json(_req): Json<ResetPasswordRequest>,
+    State(state): State<AppState>,
+    Json(req): Json<ResetPasswordRequest>,
 ) -> ApiResult<StatusCode> {
-    // In a real system, we would validate the token and update the password.
-    Err(ApiResponseError::Internal(
-        "Password reset not implemented".to_string(),
-    ))
+    state
+        .aegis_service
+        .reset_password(&req.token, req.new_password)
+        .await
+        .map_err(map_aegis_error)?;
+    Ok(StatusCode::OK)
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {

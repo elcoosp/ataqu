@@ -41,6 +41,17 @@ pub struct CreateEventTypeCommand {
 }
 
 #[derive(Debug, Clone)]
+pub struct UpdateEventTypeCommand {
+    pub tenant_id: TenantId,
+    pub id: Uuid,
+    pub name: Option<String>,
+    pub slug: Option<String>,
+    pub description: Option<Option<String>>,
+    pub duration_minutes: Option<i32>,
+    pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Clone)]
 pub struct CreateAvailabilitySlotCommand {
     pub tenant_id: TenantId,
     pub event_type_id: Uuid,
@@ -52,8 +63,10 @@ pub struct CreateAvailabilitySlotCommand {
 pub enum TempoServiceError {
     #[error("Booking not found")]
     BookingNotFound,
+    #[error("Event type not found")]
+    EventTypeNotFound,
     #[error("Repository error: {0}")]
-    Repository(String),
+    Repository(ataqu_kernel::RepositoryError),
     #[error("Domain error: {0}")]
     Domain(String),
     #[error("Validation error: {0}")]
@@ -128,7 +141,7 @@ impl TempoService {
         // ADR-032: Check availability slots
         let slots = self
             .repo
-            .list_availability_slots(&cmd.tenant_id, &cmd.event_type_id)
+            .list_availability_slots(&cmd.tenant_id, &EventTypeId(cmd.event_type_id))
             .await
             .map_err(TempoServiceError::Repository)?;
         let is_available = slots.iter().any(|slot| {
@@ -168,7 +181,7 @@ impl TempoService {
         self.outbox
             .append("collab_ops", "BookingCreated", booking.id.0, &payload)
             .await
-            .map_err(|e| TempoServiceError::Repository(e))?;
+            .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
 
         Ok(booking)
     }
@@ -232,7 +245,7 @@ impl TempoService {
                 self.outbox
                     .append("collab_ops", "NoShowDetected", booking.id.0, &payload)
                     .await
-                    .map_err(|e| TempoServiceError::Repository(e))?;
+                    .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
             }
         }
         Ok(updated)
@@ -260,7 +273,7 @@ impl TempoService {
             self.outbox
                 .append("collab_ops", "SendBookingReminder", booking.id.0, &payload)
                 .await
-                .map_err(|e| TempoServiceError::Repository(e))?;
+                .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
 
             self.repo
                 .mark_reminder_sent(&tenant_id, &booking.id, now)
@@ -313,6 +326,46 @@ impl TempoService {
             ))
     }
 
+    pub async fn update_event_type(&self, cmd: UpdateEventTypeCommand) -> TempoResult<EventType> {
+        let mut event_type = self
+            .repo
+            .list_event_types(&cmd.tenant_id)
+            .await
+            .map_err(TempoServiceError::Repository)?
+            .into_iter()
+            .find(|et| et.id.0 == cmd.id)
+            .ok_or(TempoServiceError::EventTypeNotFound)?;
+
+        if let Some(name) = cmd.name {
+            event_type.name = name;
+        }
+        if let Some(slug) = cmd.slug {
+            event_type.slug = slug;
+        }
+        if let Some(desc) = cmd.description {
+            event_type.description = desc;
+        }
+        if let Some(duration) = cmd.duration_minutes {
+            event_type.duration_minutes = duration;
+        }
+        if let Some(is_active) = cmd.is_active {
+            event_type.is_active = is_active;
+        }
+
+        self.repo
+            .update_event_type(&event_type)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        Ok(event_type)
+    }
+
+    pub async fn delete_event_type(&self, tenant_id: TenantId, id: Uuid) -> TempoResult<()> {
+        self.repo
+            .delete_event_type(&tenant_id, id)
+            .await
+            .map_err(TempoServiceError::Repository)
+    }
+
     pub async fn create_availability_slot(
         &self,
         cmd: CreateAvailabilitySlotCommand,
@@ -337,7 +390,7 @@ impl TempoService {
         event_type_id: Uuid,
     ) -> TempoResult<Vec<AvailabilitySlot>> {
         self.repo
-            .list_availability_slots(&tenant_id, &event_type_id)
+            .list_availability_slots(&tenant_id, &EventTypeId(event_type_id))
             .await
             .map_err(TempoServiceError::Repository)
     }
@@ -348,7 +401,7 @@ impl TempoService {
         slot_id: Uuid,
     ) -> TempoResult<()> {
         self.repo
-            .delete_availability_slot(&tenant_id, &slot_id)
+            .delete_availability_slot(&tenant_id, slot_id)
             .await
             .map_err(TempoServiceError::Repository)
     }
@@ -370,7 +423,7 @@ impl TempoService {
         tempo_domain::reschedule_booking(&mut booking, new_starts_at.into());
 
         self.repo
-            .reschedule_booking(&tenant_id, &booking_id_obj, booking.starts_at)
+            .reschedule_booking(&tenant_id, &booking_id_obj, booking.starts_at.into())
             .await
             .map_err(TempoServiceError::Repository)?;
 

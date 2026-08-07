@@ -426,16 +426,16 @@ impl AegisService {
             .map_err(AegisServiceError::Domain)
     }
 
-    pub async fn find_user_by_email(&self, email: &Email) -> Result<Option<User>, AegisServiceError> {
+    pub async fn list_tenants(&self) -> Result<Vec<Uuid>, AegisServiceError> {
         self.repo
-            .find_by_email(email)
+            .list_tenants()
             .await
             .map_err(AegisServiceError::Domain)
     }
 
-    pub async fn list_tenants(&self) -> Result<Vec<Uuid>, AegisServiceError> {
+    pub async fn find_user_by_email(&self, email: &Email) -> Result<Option<User>, AegisServiceError> {
         self.repo
-            .list_tenants()
+            .find_by_email(email)
             .await
             .map_err(AegisServiceError::Domain)
     }
@@ -673,6 +673,81 @@ impl AegisService {
             .append("core", "GdprDeletionRequested", tenant_id, &payload)
             .await
             .map_err(AegisServiceError::Outbox)?;
+        Ok(())
+    }
+
+    pub async fn request_password_reset(
+        &self,
+        email: Email,
+    ) -> Result<String, AegisServiceError> {
+        let user = self
+            .repo
+            .find_by_email(&email)
+            .await?
+            .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+
+        if !user.is_active {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as usize;
+        let claims = JwtClaims {
+            sub: user.id.to_string(),
+            tenant_id: user.tenant_id.as_uuid(),
+            email: user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+            roles: vec!["reset_password".to_string()],
+            exp: now + 900, // 15 minutes
+            iat: now,
+            token_type: "reset_password".to_string(),
+        };
+        let token = encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(&self.config.jwt_secret),
+        )
+        .map_err(|e| AegisServiceError::Internal(e.to_string()))?;
+
+        Ok(token)
+    }
+
+    pub async fn reset_password(
+        &self,
+        token: &str,
+        new_password: String,
+    ) -> Result<(), AegisServiceError> {
+        let claims: JwtClaims = decode(
+            token,
+            &DecodingKey::from_secret(&self.config.jwt_secret),
+            &Validation::default(),
+        )
+        .map_err(|_| AegisServiceError::AuthenticationFailed)?
+        .claims;
+
+        if claims.token_type != "reset_password" {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+
+        let user_id =
+            Uuid::parse_str(&claims.sub).map_err(|_| AegisServiceError::AuthenticationFailed)?;
+        let mut user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
+            .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+        let salt = SaltString::generate(&mut rand::thread_rng());
+        let argon2 = Argon2::default();
+        let password_hash = argon2
+            .hash_password(new_password.as_bytes(), &salt)
+            .map_err(|_| AegisServiceError::Internal("Hashing failed".to_string()))?
+            .to_string();
+
+        user.password_hash = password_hash;
+        user.updated_at = self.clock.now();
+        self.repo.save_user(&user).await?;
         Ok(())
     }
 }

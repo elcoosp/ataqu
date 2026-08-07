@@ -13,7 +13,7 @@ use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_application::vault_service::{
     BulkStockAdjustCommand, CreateProductCommand, CreateVariantCommand, UpdateProductCommand,
-    UpdateStockCommand, UpdateVariantCommand,
+    UpdateStockCommand, UpdateVariantCommand, UpdateWarehouseCommand,
 };
 
 #[derive(Debug, Deserialize)]
@@ -484,6 +484,12 @@ pub struct CreateWarehouseRequest {
     pub location: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateWarehouseRequest {
+    pub name: Option<String>,
+    pub location: Option<Option<String>>,
+}
+
 pub async fn create_warehouse(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -517,6 +523,43 @@ pub async fn list_warehouses(
         })
         .collect();
     Ok(Json(list))
+}
+
+pub async fn update_warehouse(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateWarehouseRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let cmd = UpdateWarehouseCommand {
+        tenant_id: auth.tenant_id,
+        id,
+        name: payload.name,
+        location: payload.location,
+    };
+    let warehouse = state
+        .vault_service
+        .update_warehouse(cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(serde_json::json!({
+        "id": warehouse.id,
+        "name": warehouse.name,
+        "location": warehouse.location,
+    })))
+}
+
+pub async fn delete_warehouse(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state
+        .vault_service
+        .delete_warehouse(auth.tenant_id, id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub fn routes() -> Router<AppState> {
@@ -555,5 +598,9 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/warehouses",
             axum::routing::post(create_warehouse).get(list_warehouses),
+        )
+        .route(
+            "/warehouses/:id",
+            axum::routing::put(update_warehouse).delete(delete_warehouse),
         )
 }

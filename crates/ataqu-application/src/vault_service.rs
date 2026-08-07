@@ -10,6 +10,7 @@ use crate::outbox::Outbox;
 // Re-export domain types for API layer
 pub use ataqu_domain_vault::inventory::Product;
 pub use ataqu_domain_vault::inventory::Variant;
+pub use ataqu_domain_vault::inventory::Warehouse;
 pub use ataqu_domain_vault::stock::StockMovement;
 
 #[derive(Debug, Clone)]
@@ -66,14 +67,24 @@ pub struct BulkStockAdjustCommand {
     pub reason: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct UpdateWarehouseCommand {
+    pub tenant_id: TenantId,
+    pub id: Uuid,
+    pub name: Option<String>,
+    pub location: Option<Option<String>>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum VaultServiceError {
     #[error("Product not found")]
     ProductNotFound,
     #[error("Variant not found")]
     VariantNotFound,
+    #[error("Warehouse not found")]
+    WarehouseNotFound,
     #[error("Repository error: {0}")]
-    Repository(String),
+    Repository(ataqu_kernel::RepositoryError),
     #[error("Stock error: {0}")]
     Stock(#[from] ataqu_domain_vault::inventory::StockError),
     #[error("Validation error: {0}")]
@@ -135,7 +146,7 @@ impl VaultService {
         self.outbox
             .append(VAULT_SCHEMA, "ProductCreated", product.id, &payload)
             .await
-            .map_err(|e| VaultServiceError::Repository(e))?;
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
 
         Ok(product)
     }
@@ -176,7 +187,7 @@ impl VaultService {
         self.outbox
             .append(VAULT_SCHEMA, "ProductUpdated", product.id, &payload)
             .await
-            .map_err(|e| VaultServiceError::Repository(e))?;
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
 
         Ok(product)
     }
@@ -335,7 +346,7 @@ impl VaultService {
             self.outbox
                 .append(VAULT_SCHEMA, "LowStockAlert", new_variant.id, &payload)
                 .await
-                .map_err(|e| VaultServiceError::Repository(e))?;
+                .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
         }
 
         Ok(new_variant)
@@ -404,8 +415,8 @@ impl VaultService {
         tenant_id: TenantId,
         name: String,
         location: Option<String>,
-    ) -> VaultResult<ataqu_domain_vault::inventory::Warehouse> {
-        let warehouse = ataqu_domain_vault::inventory::Warehouse {
+    ) -> VaultResult<Warehouse> {
+        let warehouse = Warehouse {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,
             name,
@@ -419,12 +430,37 @@ impl VaultService {
         Ok(warehouse)
     }
 
-    pub async fn list_warehouses(
-        &self,
-        tenant_id: TenantId,
-    ) -> VaultResult<Vec<ataqu_domain_vault::inventory::Warehouse>> {
+    pub async fn list_warehouses(&self, tenant_id: TenantId) -> VaultResult<Vec<Warehouse>> {
         self.repo
             .list_warehouses(&tenant_id)
+            .await
+            .map_err(VaultServiceError::Repository)
+    }
+
+    pub async fn update_warehouse(&self, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
+        let warehouses = self.list_warehouses(cmd.tenant_id).await?;
+        let mut warehouse = warehouses
+            .into_iter()
+            .find(|w| w.id == cmd.id)
+            .ok_or(VaultServiceError::WarehouseNotFound)?;
+
+        if let Some(name) = cmd.name {
+            warehouse.name = name;
+        }
+        if let Some(loc) = cmd.location {
+            warehouse.location = loc;
+        }
+
+        self.repo
+            .update_warehouse(&warehouse)
+            .await
+            .map_err(VaultServiceError::Repository)?;
+        Ok(warehouse)
+    }
+
+    pub async fn delete_warehouse(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+        self.repo
+            .delete_warehouse(&tenant_id, &id)
             .await
             .map_err(VaultServiceError::Repository)
     }
@@ -465,6 +501,7 @@ impl VaultService {
         let mut new_variant = variant.clone();
         new_variant.reserved_quantity += quantity;
         new_variant.updated_at = self.clock.now();
+        new_variant.version += 1; // Increment version for OCC
         self.repo
             .save_variant(&new_variant)
             .await

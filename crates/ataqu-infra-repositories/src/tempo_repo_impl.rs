@@ -121,7 +121,7 @@ fn booking_model_to_domain(model: booking_entity::Model) -> Booking {
 
 #[async_trait]
 impl TempoRepository for TempoRepositoryImpl {
-    async fn create_booking(&self, booking: &Booking) -> Result<(), String> {
+    async fn create_booking(&self, booking: &Booking) -> Result<(), ataqu_kernel::RepositoryError> {
         let status_str = match booking.status {
             BookingStatus::Pending => "pending",
             BookingStatus::Confirmed => "confirmed",
@@ -149,7 +149,7 @@ impl TempoRepository for TempoRepositoryImpl {
         booking_entity::Entity::insert(active)
             .exec(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -157,13 +157,13 @@ impl TempoRepository for TempoRepositoryImpl {
         &self,
         tenant_id: &TenantId,
         id: &BookingId,
-    ) -> Result<Option<Booking>, String> {
+    ) -> Result<Option<Booking>, ataqu_kernel::RepositoryError> {
         let model = booking_entity::Entity::find()
             .filter(booking_entity::Column::Id.eq(id.0))
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(model.map(booking_model_to_domain))
     }
 
@@ -172,14 +172,14 @@ impl TempoRepository for TempoRepositoryImpl {
         tenant_id: &TenantId,
         limit: u64,
         offset: u64,
-    ) -> Result<Vec<Booking>, String> {
+    ) -> Result<Vec<Booking>, ataqu_kernel::RepositoryError> {
         let models = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
             .offset(offset)
             .all(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(models.into_iter().map(booking_model_to_domain).collect())
     }
 
@@ -188,7 +188,7 @@ impl TempoRepository for TempoRepositoryImpl {
         tenant_id: &TenantId,
         id: &BookingId,
         status: BookingStatus,
-    ) -> Result<(), String> {
+    ) -> Result<(), ataqu_kernel::RepositoryError> {
         let status_str = match status {
             BookingStatus::Pending => "pending",
             BookingStatus::Confirmed => "confirmed",
@@ -201,11 +201,11 @@ impl TempoRepository for TempoRepositoryImpl {
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Booking not found".to_string())?
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?
+            .ok_or(ataqu_kernel::RepositoryError::NotFound)?
             .into();
         active.status = Set(status_str.to_string());
-        active.update(&self.db).await.map_err(|e| e.to_string())?;
+        active.update(&self.db).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -214,7 +214,7 @@ impl TempoRepository for TempoRepositoryImpl {
         tenant_id: &TenantId,
         _lower_bound: std::time::SystemTime,
         upper_bound: std::time::SystemTime,
-    ) -> Result<Vec<Booking>, String> {
+    ) -> Result<Vec<Booking>, ataqu_kernel::RepositoryError> {
         let upper_bound_dt = chrono::DateTime::<chrono::Utc>::from(upper_bound);
         let models = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -222,11 +222,11 @@ impl TempoRepository for TempoRepositoryImpl {
             .filter(booking_entity::Column::Status.is_in(vec!["pending", "confirmed"]))
             .all(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(models.into_iter().map(booking_model_to_domain).collect())
     }
 
-    async fn save_event_type(&self, event_type: &EventType) -> Result<(), String> {
+    async fn save_event_type(&self, event_type: &EventType) -> Result<(), ataqu_kernel::RepositoryError> {
         let active = event_type_entity::ActiveModel {
             id: Set(event_type.id.0),
             tenant_id: Set(event_type.tenant_id.as_uuid()),
@@ -241,16 +241,16 @@ impl TempoRepository for TempoRepositoryImpl {
         event_type_entity::Entity::insert(active)
             .exec(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
-    async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, String> {
+    async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, ataqu_kernel::RepositoryError> {
         let models = event_type_entity::Entity::find()
             .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .all(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
 
         Ok(models
             .into_iter()
@@ -272,13 +272,13 @@ impl TempoRepository for TempoRepositoryImpl {
         &self,
         tenant_id: &TenantId,
         slug: &str,
-    ) -> Result<Option<EventType>, String> {
+    ) -> Result<Option<EventType>, ataqu_kernel::RepositoryError> {
         let model = event_type_entity::Entity::find()
             .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(event_type_entity::Column::Slug.eq(slug))
             .one(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(model.map(|m| EventType {
             id: EventTypeId(m.id),
             tenant_id: TenantId::new(m.tenant_id),
@@ -292,7 +292,7 @@ impl TempoRepository for TempoRepositoryImpl {
         }))
     }
 
-    async fn save_availability_slot(&self, slot: &AvailabilitySlot) -> Result<(), String> {
+    async fn save_availability_slot(&self, slot: &AvailabilitySlot) -> Result<(), ataqu_kernel::RepositoryError> {
         let active = availability_slot_entity::ActiveModel {
             id: Set(slot.id),
             tenant_id: Set(slot.tenant_id.as_uuid()),
@@ -305,21 +305,21 @@ impl TempoRepository for TempoRepositoryImpl {
         availability_slot_entity::Entity::insert(active)
             .exec(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
     async fn list_availability_slots(
         &self,
         tenant_id: &TenantId,
-        event_type_id: &Uuid,
-    ) -> Result<Vec<AvailabilitySlot>, String> {
+        event_type_id: &EventTypeId,
+    ) -> Result<Vec<AvailabilitySlot>, ataqu_kernel::RepositoryError> {
         let models = availability_slot_entity::Entity::find()
             .filter(availability_slot_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .filter(availability_slot_entity::Column::EventTypeId.eq(*event_type_id))
+            .filter(availability_slot_entity::Column::EventTypeId.eq(event_type_id.0))
             .all(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(models
             .into_iter()
             .map(|m| AvailabilitySlot {
@@ -336,14 +336,14 @@ impl TempoRepository for TempoRepositoryImpl {
     async fn delete_availability_slot(
         &self,
         tenant_id: &TenantId,
-        slot_id: &Uuid,
-    ) -> Result<(), String> {
+        slot_id: Uuid,
+    ) -> Result<(), ataqu_kernel::RepositoryError> {
         availability_slot_entity::Entity::delete_many()
-            .filter(availability_slot_entity::Column::Id.eq(*slot_id))
+            .filter(availability_slot_entity::Column::Id.eq(slot_id))
             .filter(availability_slot_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .exec(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -352,7 +352,7 @@ impl TempoRepository for TempoRepositoryImpl {
         tenant_id: &TenantId,
         start_bound: std::time::SystemTime,
         end_bound: std::time::SystemTime,
-    ) -> Result<Vec<Booking>, String> {
+    ) -> Result<Vec<Booking>, ataqu_kernel::RepositoryError> {
         let start_dt = chrono::DateTime::<chrono::Utc>::from(start_bound);
         let end_dt = chrono::DateTime::<chrono::Utc>::from(end_bound);
         let models = booking_entity::Entity::find()
@@ -362,7 +362,7 @@ impl TempoRepository for TempoRepositoryImpl {
             .filter(booking_entity::Column::Status.is_in(vec!["pending", "confirmed"]))
             .all(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(models.into_iter().map(booking_model_to_domain).collect())
     }
 
@@ -371,18 +371,18 @@ impl TempoRepository for TempoRepositoryImpl {
         tenant_id: &TenantId,
         booking_id: &BookingId,
         sent_at: std::time::SystemTime,
-    ) -> Result<(), String> {
+    ) -> Result<(), ataqu_kernel::RepositoryError> {
         let sent_dt = chrono::DateTime::<chrono::Utc>::from(sent_at);
         let mut active: booking_entity::ActiveModel = booking_entity::Entity::find()
             .filter(booking_entity::Column::Id.eq(booking_id.0))
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Booking not found".to_string())?
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?
+            .ok_or(ataqu_kernel::RepositoryError::NotFound)?
             .into();
         active.reminder_sent_at = Set(Some(sent_dt));
-        active.update(&self.db).await.map_err(|e| e.to_string())?;
+        active.update(&self.db).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -392,7 +392,7 @@ impl TempoRepository for TempoRepositoryImpl {
         event_type_id: Uuid,
         starts_at: std::time::SystemTime,
         ends_at: std::time::SystemTime,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, ataqu_kernel::RepositoryError> {
         use sea_orm::EntityTrait;
         use sea_orm::PaginatorTrait;
         let starts_at_dt: chrono::DateTime<chrono::Utc> = starts_at.into();
@@ -406,7 +406,7 @@ impl TempoRepository for TempoRepositoryImpl {
             .filter(booking_entity::Column::StartsAt.gt(starts_at_dt))
             .count(&self.db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
 
         Ok(count > 0)
     }
@@ -415,9 +415,19 @@ impl TempoRepository for TempoRepositoryImpl {
         &self,
         _tenant_id: &TenantId,
         _booking_id: &BookingId,
-        _new_starts_at: std::time::SystemTime,
-    ) -> Result<(), String> {
+        _starts_at: chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), ataqu_kernel::RepositoryError> {
         // TODO: Implement actual DB update
         Ok(())
     }
+
+    async fn update_event_type(&self, _event_type: &EventType) -> Result<(), ataqu_kernel::RepositoryError> {
+        // TODO: Implement actual DB update
+        Ok(())
+    }
+    async fn delete_event_type(&self, _tenant_id: &TenantId, _id: Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
+        // TODO: Implement actual DB delete
+        Ok(())
+    }
+
 }
