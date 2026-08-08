@@ -474,7 +474,7 @@ async fn main() -> anyhow::Result<()> {
         if let Err(e) = email_writer.run().await {
             tracing::error!("Email tracking writer crashed: {}", e);
         }
-    });
+    ));
 
     let tempo_service_for_reminder = tempo_service.clone();
     let aegis_service_for_noshow = aegis_service.clone();
@@ -633,7 +633,7 @@ async fn main() -> anyhow::Result<()> {
                                         sea_orm::DbBackend::Postgres,
                                         &sql,
                                         [tenant_uuid.into()],
-                                    });
+                                    ));
                                     if let Err(e) = txn.execute_raw(stmt).await {
                                         tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
                                         let _ = txn.rollback().await;
