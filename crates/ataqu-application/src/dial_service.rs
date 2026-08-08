@@ -617,7 +617,7 @@ impl DialService {
             // Entry for object 0: free
             pdf_parts.push(b"0000000000 65535 f \n".to_vec());
             // For each object, we need its offset.
-            let mut offsets = Vec::new();
+            let mut offsets: Vec<usize> = Vec::new();
             let mut current_offset = startxref; // actually we need to compute offsets from beginning.
             // We'll recompute offsets by scanning the built PDF so far? Simpler: we can compute offsets as we build.
             // Rebuild from scratch with known offsets.
