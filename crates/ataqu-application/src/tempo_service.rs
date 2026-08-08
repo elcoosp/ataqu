@@ -512,6 +512,8 @@ impl TempoService {
         slug: String,
         starts_at: DateTime<Utc>,
         timezone: String,
+        invitee_name: String,
+        invitee_email: String,
     ) -> TempoResult<Booking> {
         let event_type = self.get_event_type_by_slug(tenant_id, slug).await?;
         if !event_type.is_active {
@@ -519,13 +521,27 @@ impl TempoService {
                 "Event type is not active".to_string(),
             ));
         }
+
+        // Emit an outbox event to create a CINQ contact for the invitee
+        let contact_payload = serde_json::json!({
+            "tenant_id": tenant_id.as_uuid(),
+            "name": invitee_name,
+            "email": invitee_email,
+            "source": "tempo_booking"
+        });
+
+        self.outbox
+            .append("collab_crm", "TempoInviteeCreated", tenant_id.as_uuid(), &contact_payload)
+            .await
+            .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+
         let cmd = CreateBookingCommand {
             tenant_id,
             event_type_id: event_type.id.0,
             starts_at,
             duration_minutes: event_type.duration_minutes,
             timezone,
-            contact_id: None,
+            contact_id: None, // Contact will be linked by the consumer
         };
         self.create_booking(cmd).await
     }

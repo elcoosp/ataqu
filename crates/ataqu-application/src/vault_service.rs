@@ -7,7 +7,6 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 use crate::outbox::Outbox;
 
-// Re-export domain types for API layer
 pub use ataqu_domain_vault::inventory::Product;
 pub use ataqu_domain_vault::inventory::Variant;
 pub use ataqu_domain_vault::inventory::Warehouse;
@@ -37,7 +36,7 @@ pub struct CreateVariantCommand {
     pub product_id: Uuid,
     pub sku: String,
     pub initial_stock: i64,
-    pub price: i64, // in cents
+    pub price: i64,
 }
 
 #[derive(Debug, Clone)]
@@ -255,6 +254,24 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
 
+        if cmd.initial_stock > 0 {
+            let movement = ataqu_domain_vault::stock::create_movement(
+                ataqu_domain_vault::stock::CreateMovementCommand {
+                    tenant_id: cmd.tenant_id,
+                    variant_id: variant.id,
+                    quantity: cmd.initial_stock,
+                    reason: "initial_stock".to_string(),
+                    reference: None,
+                },
+                self.id_gen.as_ref(),
+                self.clock.as_ref(),
+            );
+            self.repo
+                .save_movement(&movement)
+                .await
+                .map_err(VaultServiceError::Repository)?;
+        }
+
         let payload = serde_json::json!({
             "variant_id": variant.id,
             "tenant_id": variant.tenant_id.as_uuid(),
@@ -384,44 +401,6 @@ impl VaultService {
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
             })?;
 
-        let stock_payload = serde_json::json!({
-            "variant_id": new_variant.id,
-            "tenant_id": new_variant.tenant_id.as_uuid(),
-            "delta": cmd.delta,
-            "new_quantity": new_variant.stock_quantity,
-            "reason": movement.reason.clone(),
-        });
-        self.outbox
-            .append(
-                VAULT_SCHEMA,
-                "StockAdjusted",
-                new_variant.id,
-                &stock_payload,
-            )
-            .await
-            .map_err(|e| {
-                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
-            })?;
-
-        let stock_payload = serde_json::json!({
-            "variant_id": new_variant.id,
-            "tenant_id": new_variant.tenant_id.as_uuid(),
-            "delta": cmd.delta,
-            "new_quantity": new_variant.stock_quantity,
-            "reason": movement.reason.clone(),
-        });
-        self.outbox
-            .append(
-                VAULT_SCHEMA,
-                "StockAdjusted",
-                new_variant.id,
-                &stock_payload,
-            )
-            .await
-            .map_err(|e| {
-                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
-            })?;
-
         let threshold = std::env::var("LOW_STOCK_THRESHOLD")
             .ok()
             .and_then(|s| s.parse().ok())
@@ -474,6 +453,25 @@ impl VaultService {
                 .save_movement(&movement)
                 .await
                 .map_err(VaultServiceError::Repository)?;
+
+            let stock_payload = serde_json::json!({
+                "variant_id": new_variant.id,
+                "tenant_id": new_variant.tenant_id.as_uuid(),
+                "delta": delta,
+                "new_quantity": new_variant.stock_quantity,
+                "reason": cmd.reason.clone(),
+            });
+            self.outbox
+                .append(
+                    VAULT_SCHEMA,
+                    "StockAdjusted",
+                    new_variant.id,
+                    &stock_payload,
+                )
+                .await
+                .map_err(|e| {
+                    VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+                })?;
 
             updated_variants.push(new_variant);
         }
@@ -565,7 +563,7 @@ impl VaultService {
         variant_id: Uuid,
         quantity: i64,
         expected_version: i32,
-    ) -> VaultResult<Variant> {
+    ) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {
         let variant = self.get_variant(tenant_id, variant_id).await?;
         if variant.version != expected_version {
             return Err(VaultServiceError::Validation(format!(
@@ -607,7 +605,7 @@ impl VaultService {
             .save_variant(&new_variant)
             .await
             .map_err(VaultServiceError::Repository)?;
-        Ok(new_variant)
+        Ok((new_variant, reservation))
     }
 
     pub async fn reap_expired_reservations(&self) -> VaultResult<()> {
@@ -624,13 +622,13 @@ impl VaultService {
                 .await
             {
                 Ok(v) => v,
-                Err(_) => continue, // Variant might be deleted, skip
+                Err(_) => continue,
             };
 
             let mut new_variant = variant.clone();
             new_variant.reserved_quantity -= reservation.quantity;
             if new_variant.reserved_quantity < 0 {
-                new_variant.reserved_quantity = 0; // Sanity check
+                new_variant.reserved_quantity = 0;
             }
             new_variant.updated_at = now;
             new_variant.version += 1;

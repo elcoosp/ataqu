@@ -92,7 +92,6 @@ impl VistaService {
             .await
             .map_err(VistaServiceError::Repository)?;
 
-        // Save specific data points for time-series charts
         let metrics_to_log: Vec<(&str, f64)> =
             match (event.schema.as_str(), event.event_type.as_str()) {
                 ("collab_crm", "DealCreated") => vec![(
@@ -247,15 +246,11 @@ impl VistaService {
             ));
         }
 
-        // Tenant isolation enforcement: require the query to explicitly filter by tenant_id.
-        // We check for common patterns to ensure it's likely in a WHERE clause.
-        let has_tenant_filter = upper_sql.contains("TENANT_ID =")
-            || upper_sql.contains("TENANT_ID=")
-            || upper_sql.contains("TENANT_ID IN")
-            || upper_sql.contains("TENANT_ID IN");
+        let tenant_id_str = tenant_id.as_uuid().to_string();
+        let has_tenant_filter = upper_sql.contains(&tenant_id_str.to_uppercase());
         if !has_tenant_filter {
             return Err(VistaServiceError::Validation(
-                "Query must include a tenant_id filter (e.g., tenant_id = '...') in the WHERE clause".to_string(),
+                "Query must include the current tenant_id filter in the WHERE clause".to_string(),
             ));
         }
 

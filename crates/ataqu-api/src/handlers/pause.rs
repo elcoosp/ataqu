@@ -496,7 +496,14 @@ pub async fn update_employee(
         .pause_service
         .update_employee(&auth.tenant_id, cmd, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::pause_service::PauseServiceError::Validation(msg)
+                if msg.contains("Version mismatch") =>
+            {
+                ApiResponseError::conflict(&msg)
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(employee.into()))
 }
 

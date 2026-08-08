@@ -345,7 +345,7 @@ pub async fn edit_message(
     headers: axum::http::HeaderMap,
     Json(payload): Json<EditMessageRequest>,
 ) -> ApiResult<Json<MessageResponse>> {
-    let _if_match = headers
+    let if_match = headers
         .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
@@ -354,7 +354,7 @@ pub async fn edit_message(
         })?;
     let edited = state
         .dial_service
-        .edit_message(auth.tenant_id, message_id, auth.user_id, payload.content)
+        .edit_message(auth.tenant_id, message_id, auth.user_id, payload.content, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 

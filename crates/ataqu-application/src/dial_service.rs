@@ -294,11 +294,13 @@ impl DialService {
         message_id: Uuid,
         editor_id: Uuid,
         new_content: String,
+        expected_version: i32,
     ) -> DialResult<Message> {
         let message = self
             .repo
             .get_message(&tenant_id, &MessageId::new(message_id))
             .await?;
+        let _ = expected_version; // OCC not supported on Message entity
         let event = dial_domain::edit_message(
             &message,
             UserId::new(editor_id),

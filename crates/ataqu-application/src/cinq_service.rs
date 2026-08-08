@@ -27,7 +27,6 @@ use rust_decimal::Decimal;
 
 use crate::outbox::Outbox;
 
-// Application commands
 #[derive(Debug, Clone)]
 pub struct CreateContactCommand {
     pub tenant_id: TenantId,
@@ -157,7 +156,6 @@ impl CinqService {
         }
     }
 
-    // ---------- Contacts ----------
     pub async fn create_contact(&self, cmd: CreateContactCommand) -> CinqResult<Contact> {
         let domain_cmd = DomainCreateContact {
             tenant_id: cmd.tenant_id,
@@ -207,7 +205,6 @@ impl CinqService {
             .await?
             .ok_or(CinqServiceError::ContactNotFound)?;
 
-        // ADR-005: Optimistic Concurrency Control
         if contact.version != cmd.expected_version {
             return Err(CinqServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",
@@ -450,9 +447,7 @@ impl CinqService {
                 wtr.write_record(&[
                     c.id.to_string(),
                     c.name.clone(),
-                    c.email
-                        .reveal(&ataqu_security::PiiAccessKey::new())
-                        .to_string(),
+                    c.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
                     c.phone
                         .as_ref()
                         .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
@@ -472,7 +467,6 @@ impl CinqService {
         Ok(data)
     }
 
-    // ---------- Deals ----------
     pub async fn create_deal(&self, cmd: CreateDealCommand) -> CinqResult<Deal> {
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
         let domain_cmd = DomainCreateDeal {
@@ -532,7 +526,6 @@ impl CinqService {
             .await?
             .ok_or(CinqServiceError::DealNotFound)?;
 
-        // Enforce OCC
         if deal.version != cmd.expected_version {
             return Err(CinqServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",
@@ -626,7 +619,6 @@ impl CinqService {
         Ok(self.deal_repo.list_deals(&tenant_id, limit, offset).await?)
     }
 
-    // ---------- Activities ----------
     pub async fn create_activity(&self, cmd: CreateActivityCommand) -> CinqResult<Activity> {
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
         let domain_cmd = DomainCreateActivity {
@@ -686,7 +678,6 @@ impl CinqService {
             .await?)
     }
 
-    // ---------- Pipeline Stages ----------
     pub async fn create_pipeline_stage(
         &self,
         cmd: CreatePipelineStageCommand,
@@ -737,6 +728,7 @@ impl CinqService {
         id: Uuid,
         name: Option<String>,
         order: Option<i32>,
+        _expected_version: i32,
     ) -> CinqResult<PipelineStage> {
         let mut stage = self
             .stage_repo
@@ -824,7 +816,6 @@ impl CinqService {
     ) -> CinqResult<ataqu_domain_cinq::task::Task> {
         let mut task = self.get_task(cmd.tenant_id, cmd.id).await?;
 
-        // Enforce OCC
         if task.version != cmd.expected_version {
             return Err(CinqServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",

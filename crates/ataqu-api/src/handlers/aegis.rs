@@ -237,7 +237,7 @@ pub async fn sso_callback(
         .get(&req.state)
         .map(|p| p.clone())
         .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
-    state.sso_states.remove(&req.state);
+    state.sso_states.invalidate(&req.state);
 
     let config = ataqu_domain_aegis::sso::SsoConfig {
         google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
@@ -471,7 +471,7 @@ pub async fn logout(
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.strip_prefix("Bearer "))
     {
-        state.jwt_blocklist.insert(auth_header.to_string());
+        state.jwt_blocklist.insert(auth_header.to_string(), ());
     }
     let _ = state.aegis_service.logout(&auth.user_id.to_string()).await;
     Ok(StatusCode::NO_CONTENT)

@@ -64,7 +64,6 @@ async fn main() -> anyhow::Result<()> {
         refresh_token_ttl: Duration::from_secs(604800),
     };
 
-    // AEGIS
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
     let aegis_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -80,7 +79,6 @@ async fn main() -> anyhow::Result<()> {
         aegis_config,
     ));
 
-    // CINQ
     use ataqu_infra_repositories::cinq_repo_impl::{
         CinqActivityRepository, CinqContactRepository, CinqDealRepository,
         CinqPipelineStageRepository, CinqTaskRepository,
@@ -104,7 +102,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // DIAL
     use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.core.clone()));
@@ -119,7 +116,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // PIVOT
     use ataqu_infra_repositories::pivot_repo_impl::{
         PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository,
         PivotRelationRepository,
@@ -141,7 +137,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // SOND
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
     let sond_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -154,7 +149,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.core.clone()));
     let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -167,16 +161,13 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.core.clone()));
     let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone(), id_gen.clone()));
 
-    // SPARK
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
     let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.core.clone()));
 
-    // SPARK Action Dispatcher
     use ataqu_application::cinq_service::{CreateActivityCommand, CreateContactCommand};
     use ataqu_application::dial_service::{CreateChannelCommand, SendMessageCommand};
     use ataqu_application::spark_service::ActionDispatcher;
@@ -355,14 +346,7 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    // A fixed UUID for system-generated actions (SPARK dispatcher)
     let system_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
-    if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
-        tracing::warn!(error = %e, "Failed to ensure system user exists");
-    }
-    if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
-        tracing::warn!(error = %e, "Failed to ensure system user exists");
-    }
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }
@@ -386,7 +370,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // TEMPO
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
     let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -399,7 +382,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // PAUSE
     use ataqu_application::pause_infra::RealIdempotency;
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
     let pause_idempotency = Arc::new(RealIdempotency::new(pools.core.clone()));
@@ -418,7 +400,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
-    // Email tracking writer
     let (email_writer, email_tracking_tx) =
         ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
             pools.core.clone(),
@@ -440,14 +421,20 @@ async fn main() -> anyhow::Result<()> {
         .install_recorder()
         .expect("failed to install Prometheus recorder");
 
-    // Build AppState
     use dashmap::DashMap;
     let ws_registry = Arc::new(DashMap::new());
     let conn_index = Arc::new(DashMap::new());
-    let sso_states = Arc::new(DashMap::new());
     let presence_counts = Arc::new(DashMap::new());
-    let jwt_blocklist = Arc::new(dashmap::DashSet::new());
-    // sso_states type is inferred from AppState
+    let sso_states = Arc::new(
+        moka::sync::Cache::builder()
+            .time_to_live(Duration::from_secs(600))
+            .build(),
+    );
+    let jwt_blocklist = Arc::new(
+        moka::sync::Cache::builder()
+            .time_to_live(Duration::from_secs(86400))
+            .build(),
+    );
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let vista_service_for_outbox = vista_service.clone();
@@ -492,7 +479,6 @@ async fn main() -> anyhow::Result<()> {
         .layer(TraceLayer::new_for_http())
         .layer(cors);
 
-    // Start outbox dispatcher in the background
     let dispatcher_pool = pools.dispatcher.clone();
     let gdpr_registry = Arc::new(ataqu_domain_gdpr::GdprRegistry::new());
     let gdpr_db_pool = pools.core.clone();
@@ -510,12 +496,13 @@ async fn main() -> anyhow::Result<()> {
                 async move {
                     if let Err(e) = vista.process_event(&event).await {
                         tracing::error!(error = %e, "VISTA event processing failed");
+                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
                     }
                     if let Err(e) = spark.evaluate_trigger(&event).await {
                         tracing::error!(error = %e, "SPARK trigger evaluation failed");
+                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
                     }
 
-                    // Handle GDPR deletion requests
                     if event.schema == "core" && event.event_type == "GdprDeletionRequested" {
                         if let Some(tenant_id_str) =
                             event.payload.get("tenant_id").and_then(|v| v.as_str())
@@ -559,7 +546,6 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
 
-                    // Handle Password Reset Emails
                     if event.schema == "core" && event.event_type == "PasswordResetRequested" {
                         let recipient = event
                             .payload
@@ -620,7 +606,6 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
 
-                    // Handle internal system events that don't fit SPARK's trigger/action model
                     if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
                         let booking_id = event
                             .payload
@@ -699,7 +684,6 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    // Start cron worker (with restart on crash)
     tokio::spawn(async move {
         loop {
             if let Err(e) = spark_service_for_cron.poll_scheduled_triggers().await {
@@ -711,53 +695,56 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    // Start no-show worker (with restart on crash)
     tokio::spawn(async move {
         loop {
             let tenants = aegis_service_for_noshow
                 .list_tenants()
                 .await
                 .unwrap_or_default();
-            for tid in &tenants {
-                let tenant_id = TenantId::new(*tid);
-                if let Err(e) = tempo_service_for_noshow.no_show_worker(tenant_id).await {
-                    tracing::error!(
-                        "No-show worker crashed for tenant {}: {}. Restarting in 5s...",
-                        tid,
-                        e
-                    );
-                    tokio::time::sleep(Duration::from_secs(5)).await;
-                    break;
-                }
+            let mut set = tokio::task::JoinSet::new();
+            for tid in tenants {
+                let tempo_service = tempo_service_for_noshow.clone();
+                set.spawn(async move {
+                    let tenant_id = TenantId::new(tid);
+                    if let Err(e) = tempo_service.no_show_worker(tenant_id).await {
+                        tracing::error!(
+                            "No-show worker crashed for tenant {}: {}.",
+                            tid,
+                            e
+                        );
+                    }
+                });
             }
+            while let Some(_) = set.join_next().await {}
             tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
 
-    // Start reminder worker (with restart on crash)
     tokio::spawn(async move {
         loop {
             let tenants = aegis_service_for_reminder
                 .list_tenants()
                 .await
                 .unwrap_or_default();
-            for tid in &tenants {
-                let tenant_id = TenantId::new(*tid);
-                if let Err(e) = tempo_service_for_reminder.reminder_worker(tenant_id).await {
-                    tracing::error!(
-                        "Reminder worker crashed for tenant {}: {}. Restarting in 5s...",
-                        tid,
-                        e
-                    );
-                    tokio::time::sleep(Duration::from_secs(5)).await;
-                    break;
-                }
+            let mut set = tokio::task::JoinSet::new();
+            for tid in tenants {
+                let tempo_service = tempo_service_for_reminder.clone();
+                set.spawn(async move {
+                    let tenant_id = TenantId::new(tid);
+                    if let Err(e) = tempo_service.reminder_worker(tenant_id).await {
+                        tracing::error!(
+                            "Reminder worker crashed for tenant {}: {}.",
+                            tid,
+                            e
+                        );
+                    }
+                });
             }
+            while let Some(_) = set.join_next().await {}
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 
-    // Start expired reservation reaper worker
     tokio::spawn(async move {
         loop {
             if let Err(e) = vault_service_for_reaper.reap_expired_reservations().await {
@@ -768,8 +755,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
-
-    // Start UDS admin server
 
     let admin_socket_path = "/tmp/ataqu-admin.sock";
     let _ = std::fs::remove_file(admin_socket_path);
@@ -829,7 +814,6 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    // Start server with graceful shutdown
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     info!("Listening on http://{}", addr);
     let listener = TcpListener::bind(addr).await?;

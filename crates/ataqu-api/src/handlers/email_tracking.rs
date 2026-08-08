@@ -13,7 +13,6 @@ pub struct TrackEmailResponse {
     pub status: String,
 }
 
-// GET endpoint for pixel tracking. Returns a 1x1 transparent GIF.
 pub async fn track_email_public(
     State(state): State<AppState>,
     axum::extract::Query(req): axum::extract::Query<TrackEmailRequest>,
@@ -38,25 +37,21 @@ pub async fn track_email_public(
         occurred_at: Utc::now(),
     };
 
+    let pixel = general_purpose::STANDARD
+        .decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
+        .unwrap();
+
     match state.email_tracking_tx.try_send(tracking_event) {
         Ok(()) => {
-            // 1x1 transparent GIF
-            let pixel = general_purpose::STANDARD
-                .decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
-                .unwrap();
             Ok((
                 axum::http::StatusCode::OK,
                 [(axum::http::header::CONTENT_TYPE, "image/gif")],
                 pixel,
             ))
         }
-        Err(_) => {
+        Err(e) => {
             metrics::counter!("ataqu_email_tracking_dropped_total").increment(1);
-            // ADR-031: Spill to JSONL is handled by the writer on DB failure.
-            // If the channel is full, we still return 200 to the email client to prevent broken images.
-            let pixel = general_purpose::STANDARD
-                .decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
-                .unwrap();
+            tracing::error!("Failed to enqueue tracking event: {}", e);
             Ok((
                 axum::http::StatusCode::OK,
                 [(axum::http::header::CONTENT_TYPE, "image/gif")],

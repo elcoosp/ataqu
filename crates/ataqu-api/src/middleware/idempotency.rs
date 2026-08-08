@@ -23,7 +23,6 @@ lazy_static::lazy_static! {
 }
 
 pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Response, StatusCode> {
-    // Skip idempotency for multipart uploads
     let is_multipart = req
         .headers()
         .get(axum::http::header::CONTENT_TYPE)
@@ -48,16 +47,20 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
                 .await
                 .map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
 
-            // Fix: Hash key + tenant + body to prevent cross-tenant leaks and different payloads with same key
             let tenant_id = parts
                 .extensions
                 .get::<crate::middleware::AuthContext>()
                 .map(|a| a.tenant_id.as_uuid().to_string())
                 .unwrap_or_default();
+
+            let method = parts.method.as_str();
+            let path = parts.uri.path();
+
             let mut hasher = Sha256::new();
             hasher.update(key.as_bytes());
             hasher.update(tenant_id.as_bytes());
-            hasher.update(&bytes);
+            hasher.update(method.as_bytes());
+            hasher.update(path.as_bytes());
             let hash = hasher.finalize();
             let command_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, &hash);
 
@@ -74,7 +77,6 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
 
             let resp = next.run(req).await;
 
-            // Cache successful responses and client errors (4xx) except 401, 403, 429
             let status = resp.status();
             let should_cache = status.is_success()
                 || (status.is_client_error()

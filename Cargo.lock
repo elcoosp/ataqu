@@ -455,6 +455,7 @@ dependencies = [
  "dotenvy",
  "lettre",
  "metrics-exporter-prometheus",
+ "moka",
  "reqwest",
  "sea-orm",
  "sea-orm-migration",

@@ -30,7 +30,7 @@ pub async fn unified_search(
     Query(params): Query<SearchParams>,
 ) -> ApiResult<Json<Vec<UnifiedSearchResult>>> {
     let limit = params.limit.unwrap_or(20);
-    let overall_limit = std::cmp::min(limit, 50);
+    let overall_limit = std::cmp::min(limit, 50) as usize;
     let mut results = Vec::new();
 
     let contacts = state
@@ -78,23 +78,6 @@ pub async fn unified_search(
         });
     }
 
-    let products = state
-        .vault_service
-        .list_products(auth.tenant_id, limit, 0)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    for p in products {
-        if p.name.contains(&params.q) || p.sku.contains(&params.q) {
-            results.push(UnifiedSearchResult {
-                app: "vault".to_string(),
-                entity_type: "product".to_string(),
-                id: p.id,
-                title: p.name,
-                subtitle: Some(p.sku),
-            });
-        }
-    }
-
     let employees = state
         .pause_service
         .search_employees(&auth.tenant_id, &params.q, limit)
@@ -110,9 +93,52 @@ pub async fn unified_search(
         });
     }
 
+    let users = state
+        .aegis_service
+        .list_users(auth.tenant_id.as_uuid())
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for u in users {
+        let email_str = u
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
+        if email_str.contains(&params.q)
+            || u.name
+                .as_deref()
+                .map(|n| n.contains(&params.q))
+                .unwrap_or(false)
+        {
+            results.push(UnifiedSearchResult {
+                app: "aegis".to_string(),
+                entity_type: "user".to_string(),
+                id: u.id,
+                title: u.name.unwrap_or_else(|| "Unknown".to_string()),
+                subtitle: None,
+            });
+        }
+    }
+
+    let products = state
+        .vault_service
+        .list_products(auth.tenant_id, 10000, 0)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for p in products {
+        if p.name.contains(&params.q) || p.sku.contains(&params.q) {
+            results.push(UnifiedSearchResult {
+                app: "vault".to_string(),
+                entity_type: "product".to_string(),
+                id: p.id,
+                title: p.name,
+                subtitle: Some(p.sku),
+            });
+        }
+    }
+
     let workflows = state
         .spark_service
-        .list_workflows(auth.tenant_id, limit, 0)
+        .list_workflows(auth.tenant_id, 10000, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for w in workflows {
@@ -163,7 +189,7 @@ pub async fn unified_search(
 
     let forms = state
         .sond_service
-        .list_forms(auth.tenant_id, limit, 0)
+        .list_forms(auth.tenant_id, 10000, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for f in forms {
@@ -178,32 +204,6 @@ pub async fn unified_search(
         }
     }
 
-    let users = state
-        .aegis_service
-        .list_users(auth.tenant_id.as_uuid())
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    for u in users {
-        let email_str = u
-            .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
-            .to_string();
-        if email_str.contains(&params.q)
-            || u.name
-                .as_deref()
-                .map(|n| n.contains(&params.q))
-                .unwrap_or(false)
-        {
-            results.push(UnifiedSearchResult {
-                app: "aegis".to_string(),
-                entity_type: "user".to_string(),
-                id: u.id,
-                title: u.name.unwrap_or_else(|| "Unknown".to_string()),
-                subtitle: None,
-            });
-        }
-    }
-
-    results.truncate(overall_limit as usize);
+    results.truncate(overall_limit);
     Ok(Json(results))
 }

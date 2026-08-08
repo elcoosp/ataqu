@@ -354,6 +354,8 @@ pub struct PublicBookingRequest {
     pub starts_at: chrono::DateTime<chrono::Utc>,
     #[serde(default = "default_timezone")]
     pub timezone: String,
+    pub invitee_name: String,
+    pub invitee_email: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -375,6 +377,8 @@ pub async fn public_create_booking(
             payload.slug,
             payload.starts_at,
             payload.timezone,
+            payload.invitee_name,
+            payload.invitee_email,
         )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;

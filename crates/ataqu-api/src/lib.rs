@@ -50,8 +50,8 @@ pub struct AppState {
         tokio::sync::mpsc::Sender<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
     pub rate_limiter: RateLimiter,
     pub metrics_handle: PrometheusHandle,
-    pub sso_states: Arc<dashmap::DashMap<String, ataqu_domain_aegis::sso::SsoProvider>>,
-    pub jwt_blocklist: Arc<dashmap::DashSet<String>>,
+    pub sso_states: Arc<moka::sync::Cache<String, ataqu_domain_aegis::sso::SsoProvider>>,
+    pub jwt_blocklist: Arc<moka::sync::Cache<String, ()>>,
 }
 
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
@@ -101,7 +101,6 @@ pub fn create_router(state: AppState) -> Router {
     use handlers::vault::routes as vault_routes;
     use handlers::vista::routes as vista_routes;
 
-    // Public routes (no auth required)
     let public_routes = Router::new()
         .nest("/api/sond", handlers::sond::public_routes())
         .nest("/api/tempo", handlers::tempo::public_routes())
@@ -122,7 +121,6 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::rate_limit::rate_limit_middleware,
         ));
 
-    // Private routes (auth required)
     let private_routes = Router::new()
         .nest("/api/aegis", aegis_routes())
         .nest("/api/cinq", cinq_routes())

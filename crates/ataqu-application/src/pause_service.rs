@@ -4,7 +4,6 @@ use serde_json::Value;
 use std::sync::Arc;
 use uuid::Uuid;
 
-// Re-export domain types for convenience
 pub use ataqu_domain_pause::{
     CreateEmployeeCommand, Employee, EmployeeCreatedEvent, LeaveRequest, LeaveRequestedEvent,
     LeaveStatus, LeaveType, PauseDomainError, RequestLeaveCommand,
@@ -13,7 +12,6 @@ pub use ataqu_domain_pause::{
 use crate::outbox::Outbox;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
-// Application-specific error type.
 #[derive(Debug, thiserror::Error)]
 pub enum PauseServiceError {
     #[error("Validation error: {0}")]
@@ -32,7 +30,6 @@ pub enum PauseServiceError {
 
 pub const PAUSE_SCHEMA: &str = "collab_ops";
 
-// Idempotency port (still application-specific)
 #[async_trait::async_trait]
 pub trait IdempotencyPort: Send + Sync {
     async fn acquire(&self, command_id: &Uuid)
@@ -65,7 +62,6 @@ impl IdempotencyGuardHandle {
     }
 }
 
-// The service itself, using domain repository traits and application ports.
 pub struct PauseService {
     idempotency: Arc<dyn IdempotencyPort>,
     employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
@@ -271,12 +267,6 @@ impl PauseService {
                 expected_version, request.version
             )));
         }
-        if request.version != expected_version {
-            return Err(PauseServiceError::Validation(format!(
-                "Version mismatch: expected {}, found {}",
-                expected_version, request.version
-            )));
-        }
         if request.status != LeaveStatus::Pending {
             return Err(PauseServiceError::Validation(
                 "Leave request is not pending".to_string(),
@@ -293,7 +283,6 @@ impl PauseService {
                 clock.now(),
             )
             .await?;
-        // Outbox event
         let payload =
             serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
@@ -316,12 +305,6 @@ impl PauseService {
             .find_by_id(tenant_id, leave_id)
             .await?
             .ok_or(PauseServiceError::NotFound)?;
-        if request.version != expected_version {
-            return Err(PauseServiceError::Validation(format!(
-                "Version mismatch: expected {}, found {}",
-                expected_version, request.version
-            )));
-        }
         if request.version != expected_version {
             return Err(PauseServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",
@@ -424,12 +407,6 @@ impl PauseService {
             .find_by_id(tenant_id, leave_id)
             .await?
             .ok_or(PauseServiceError::NotFound)?;
-        if request.version != expected_version {
-            return Err(PauseServiceError::Validation(format!(
-                "Version mismatch: expected {}, found {}",
-                expected_version, request.version
-            )));
-        }
         if request.version != expected_version {
             return Err(PauseServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",

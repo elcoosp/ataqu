@@ -204,10 +204,15 @@ pub struct SubmitRequest {
 pub async fn submit_form(
     State(state): State<AppState>,
     Path(form_id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<SubmitRequest>,
 ) -> ApiResult<StatusCode> {
-    // Rate limit public form submissions by form_id
-    let rate_key = format!("sond_submit:{}", form_id);
+    let ip = headers
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.split(',').next())
+        .unwrap_or("unknown");
+    let rate_key = format!("sond_submit:{}:{}", form_id, ip);
     if !state.rate_limiter.check(&rate_key) {
         return Err(ApiResponseError::RateLimited);
     }

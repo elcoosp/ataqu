@@ -31,14 +31,12 @@ fn default_search_limit() -> u64 {
     100
 }
 
-// ---------- Pagination ----------
 #[derive(Debug, Deserialize, Default)]
 pub struct PaginationParams {
     pub limit: Option<u64>,
     pub offset: Option<u64>,
 }
 
-// ---------- Contact Responses ----------
 #[derive(Debug, Serialize)]
 pub struct ContactResponse {
     pub id: Uuid,
@@ -64,7 +62,6 @@ impl From<Contact> for ContactResponse {
     }
 }
 
-// ---------- Deal Responses ----------
 #[derive(Debug, Serialize)]
 pub struct DealResponse {
     pub id: Uuid,
@@ -100,7 +97,6 @@ impl From<Deal> for DealResponse {
     }
 }
 
-// ---------- Contact Endpoints ----------
 pub async fn create_contact(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -272,7 +268,6 @@ pub async fn bulk_delete_contacts(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// ---------- Deal Endpoints ----------
 pub async fn create_deal(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -326,9 +321,7 @@ pub async fn list_deals(
         .list_deals(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    // Note: list_deals does not return total count in current service, using 0 as placeholder
-    // In a real scenario, the service should return (Vec<Deal>, u64)
-    let total = deals.len() as u64; // Temporary fix until service is updated
+    let total = deals.len() as u64;
     let items = deals.into_iter().map(DealResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -441,7 +434,6 @@ pub async fn delete_deal(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// ---------- Pipeline Stages ----------
 pub async fn list_pipeline_stages(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -492,11 +484,19 @@ pub async fn update_pipeline_stage(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdatePipelineStageRequest>,
 ) -> ApiResult<Json<PipelineStageResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let stage = state
         .cinq_service
-        .update_pipeline_stage(auth.tenant_id, id, payload.name, payload.order)
+        .update_pipeline_stage(auth.tenant_id, id, payload.name, payload.order, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(PipelineStageResponse {
@@ -519,7 +519,6 @@ pub async fn delete_pipeline_stage(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// ---------- Activities ----------
 pub async fn create_activity(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -621,7 +620,6 @@ pub async fn get_activity(
     }))
 }
 
-// ---------- Search ----------
 pub async fn search_contacts(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -674,8 +672,6 @@ pub async fn search_custom_fields_cross(
     auth: AuthContext,
     Query(params): Query<CrossFieldSearchParams>,
 ) -> ApiResult<Json<Vec<ContactResponse>>> {
-    // ADR-030: Tier 3 cross-field search is rate-limited and result-capped.
-    // We use a specific rate limit key for this expensive operation.
     let rate_key = format!("tier3_search:{}", auth.tenant_id.as_uuid());
     if !state.rate_limiter.check(&rate_key) {
         return Err(ApiResponseError::RateLimited);
@@ -691,7 +687,6 @@ pub async fn search_custom_fields_cross(
     ))
 }
 
-// ---------- CSV ----------
 #[derive(Debug, serde::Serialize)]
 pub struct ImportCsvResultDetailed {
     pub imported: usize,
@@ -704,6 +699,9 @@ pub async fn import_csv(
     auth: AuthContext,
     body: String,
 ) -> ApiResult<Json<ImportCsvResultDetailed>> {
+    if body.len() > 5 * 1024 * 1024 {
+        return Err(ApiResponseError::validation("CSV file too large (max 5MB)"));
+    }
     use csv::ReaderBuilder;
     let mut rdr = ReaderBuilder::new().from_reader(body.as_bytes());
     let mut rows = Vec::new();
@@ -756,7 +754,6 @@ pub async fn export_csv(
     ))
 }
 
-// ---------- Tasks ----------
 #[derive(Debug, Deserialize)]
 pub struct CreateTaskRequest {
     pub contact_id: Option<Uuid>,
@@ -970,7 +967,6 @@ pub async fn list_contact_tasks(
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
 
-// ---------- Email Tracking ----------
 pub async fn track_email(
     state: State<AppState>,
     auth: AuthContext,
@@ -979,7 +975,6 @@ pub async fn track_email(
     super::email_tracking::track_email(state, auth, Json(payload)).await
 }
 
-// ---------- Router ----------
 pub fn public_routes() -> Router<AppState> {
     Router::new().route(
         "/email/track/public",

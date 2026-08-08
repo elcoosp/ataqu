@@ -507,7 +507,7 @@ pub async fn reserve_stock(
         .ok_or_else(|| {
             ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
         })?;
-    let variant = state
+    let (variant, reservation) = state
         .vault_service
         .reserve_stock(auth.tenant_id, id, payload.quantity, if_match)
         .await
@@ -525,7 +525,10 @@ pub async fn reserve_stock(
     Ok((
         StatusCode::OK,
         headers,
-        Json(VariantResponse::from(variant)),
+        Json(serde_json::json!({
+            "variant": VariantResponse::from(variant),
+            "reservation_id": reservation.id
+        })),
     ))
 }
 

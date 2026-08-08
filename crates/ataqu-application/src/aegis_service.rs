@@ -153,8 +153,7 @@ impl RealAegisDomain {
         cmd: DomainAuthenticateCommand,
         user: User,
         clock: &dyn Clock,
-        config: &AegisConfig,
-    ) -> Result<(User, TokenPair), AegisServiceError> {
+    ) -> Result<User, AegisServiceError> {
         let parsed_hash = PasswordHash::new(&user.password_hash)
             .map_err(|_| AegisServiceError::AuthenticationFailed)?;
         let argon2 = Argon2::default();
@@ -176,16 +175,9 @@ impl RealAegisDomain {
                 return Err(AegisServiceError::AuthenticationFailed);
             }
         }
-        let (access, refresh) = generate_token_pair(&user, config)?;
         let mut updated_user = user;
         updated_user.last_login_at = Some(clock.now());
-        Ok((
-            updated_user,
-            TokenPair {
-                access_token: access,
-                refresh_token: refresh,
-            },
-        ))
+        Ok(updated_user)
     }
 
     pub fn setup_mfa(
@@ -225,6 +217,7 @@ impl RealAegisDomain {
 
 fn generate_token_pair(
     user: &User,
+    email_str: &str,
     config: &AegisConfig,
 ) -> Result<(String, String), AegisServiceError> {
     let now = SystemTime::now()
@@ -234,10 +227,7 @@ fn generate_token_pair(
     let claims = JwtClaims {
         sub: user.id.to_string(),
         tenant_id: user.tenant_id.as_uuid(),
-        email: user
-            .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
-            .to_string(),
+        email: email_str.to_string(),
         roles: vec![user.role.clone()],
         exp: now + config.access_token_ttl.as_secs() as usize,
         iat: now,
@@ -343,13 +333,13 @@ impl AegisService {
                 return Err(AegisServiceError::AuthenticationFailed);
             }
         }
-        let (updated_user, token_pair) =
-            self.domain
-                .authenticate(cmd, user, self.clock.as_ref(), &self.config)?;
+        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
+        let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config)?;
         self.repo.save_user(&updated_user).await?;
         Ok(AuthenticateResponse {
-            access_token: token_pair.access_token,
-            refresh_token: token_pair.refresh_token,
+            access_token: access,
+            refresh_token: refresh,
             user_id: updated_user.id,
         })
     }
@@ -412,7 +402,8 @@ impl AegisService {
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
-        let (access, refresh) = generate_token_pair(&user, &self.config)?;
+        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
             access_token: access,
             refresh_token: refresh,
@@ -489,8 +480,6 @@ impl AegisService {
     }
 
     pub async fn logout(&self, _user_id: &str) -> Result<(), AegisServiceError> {
-        // Token blocklist is handled in the API layer (in-memory).
-        // This method is a placeholder for future DB-backed blocklists if needed.
         Ok(())
     }
 
@@ -608,30 +597,17 @@ impl AegisService {
         &self,
         email: Email,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
-        let user = match self.repo.find_by_email(&email).await? {
-            Some(u) => u,
-            None => {
-                // Auto-provision new SSO user
-                let cmd = DomainCreateUserCommand {
-                    tenant_id: TenantId::new(Uuid::nil()), // SSO users start in nil tenant, must select tenant later
-                    email: email.clone(),
-                    password: Uuid::new_v4().to_string(), // Random password
-                    name: None,
-                };
-                let (_event, user) = self
-                    .domain
-                    .create_user(cmd, self.id_gen.as_ref(), self.clock.as_ref())
-                    .map_err(AegisServiceError::Domain)?;
-                self.repo.save_user(&user).await?;
-                user
-            }
-        };
+        let user = self.repo.find_by_email(&email).await?
+            .ok_or(AegisServiceError::NotFound(
+                "User not found. Please sign up first.".to_string(),
+            ))?;
 
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
 
-        let (access, refresh) = generate_token_pair(&user, &self.config)?;
+        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
             access_token: access,
             refresh_token: refresh,
@@ -675,16 +651,16 @@ impl AegisService {
     }
 
     pub async fn request_password_reset(&self, email: Email) -> Result<(), AegisServiceError> {
-        let user = self
-            .repo
-            .find_by_email(&email)
-            .await?
-            .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+        let user = match self.repo.find_by_email(&email).await? {
+            Some(u) => u,
+            None => return Ok(()),
+        };
 
         if !user.is_active {
-            return Err(AegisServiceError::AuthenticationFailed);
+            return Ok(());
         }
 
+        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -692,12 +668,9 @@ impl AegisService {
         let claims = JwtClaims {
             sub: user.id.to_string(),
             tenant_id: user.tenant_id.as_uuid(),
-            email: user
-                .email
-                .reveal(&ataqu_security::PiiAccessKey::new())
-                .to_string(),
+            email: email_str.clone(),
             roles: vec!["reset_password".to_string()],
-            exp: now + 900, // 15 minutes
+            exp: now + 900,
             iat: now,
             token_type: "reset_password".to_string(),
         };
@@ -711,7 +684,7 @@ impl AegisService {
         let payload = serde_json::json!({
             "user_id": user.id,
             "tenant_id": user.tenant_id.as_uuid(),
-            "email": user.email.reveal(&ataqu_security::PiiAccessKey::new()),
+            "email": email_str,
             "token": token,
         });
         self.outbox
