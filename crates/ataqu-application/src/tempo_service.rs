@@ -269,6 +269,7 @@ impl TempoService {
                 "tenant_id": booking.tenant_id.as_uuid(),
                 "starts_at": booking.starts_at,
                 "timezone": booking.timezone,
+                "email": "noreply@ataqu.com",
             });
             self.outbox
                 .append("collab_ops", "SendBookingReminder", booking.id.0, &payload)

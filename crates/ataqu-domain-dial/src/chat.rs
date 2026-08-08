@@ -504,10 +504,7 @@ fn extract_mentions(content: &str) -> Vec<String> {
                     break;
                 }
             }
-            if !name.is_empty()
-                && (name == "channel" || Uuid::parse_str(&name).is_ok())
-                && !mentions.contains(&name)
-            {
+            if !name.is_empty() && !mentions.contains(&name) {
                 mentions.push(name);
             }
         }

@@ -18,6 +18,6 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, Statu
         }
     }
 
-    // If no origin/host, fallback to allowing (since Bearer tokens are used, CSRF is mitigated)
-    Ok(next.run(req).await)
+    // If no origin/host, reject to prevent CSRF bypass
+    Err(StatusCode::FORBIDDEN)
 }

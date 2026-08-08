@@ -6,6 +6,8 @@ use ataqu_infra_outbox::OutboxEvent;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use uuid::Uuid;
 
+use crate::outbox::Outbox;
+
 #[async_trait::async_trait]
 pub trait ActionDispatcher: Send + Sync {
     async fn dispatch(&self, action: &Action, tenant_id: &TenantId) -> Result<(), String>;
@@ -55,6 +57,7 @@ pub type SparkResult<T> = Result<T, SparkServiceError>;
 pub struct SparkService {
     repo: Arc<dyn SparkRepository + Send + Sync>,
     dispatcher: Arc<dyn ActionDispatcher + Send + Sync>,
+    outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
@@ -63,12 +66,14 @@ impl SparkService {
     pub fn new(
         repo: Arc<dyn SparkRepository + Send + Sync>,
         dispatcher: Arc<dyn ActionDispatcher + Send + Sync>,
+        outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
     ) -> Self {
         Self {
             repo,
             dispatcher,
+            outbox,
             id_gen,
             clock,
         }
@@ -89,6 +94,17 @@ impl SparkService {
             self.clock.as_ref(),
         )?;
         self.repo.save_workflow(&workflow).await?;
+
+        let payload = serde_json::json!({
+            "workflow_id": workflow.id,
+            "tenant_id": workflow.tenant_id,
+            "name": workflow.name,
+        });
+        self.outbox
+            .append("collab_crm", "WorkflowCreated", workflow.id, &payload)
+            .await
+            .map_err(|e| SparkServiceError::Repository(e))?;
+
         Ok(workflow)
     }
 

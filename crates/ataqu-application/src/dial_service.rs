@@ -309,6 +309,37 @@ impl DialService {
         self.repo
             .update_message_content(&tenant_id, &message_id, &event.new_content, event.edited_at)
             .await?;
+
+        let channel = self.repo.get_channel(&tenant_id, &message.channel_id).await?;
+
+        // Persist new mentions extracted by the domain function
+        for user_id_str in &event.new_mentioned_user_ids {
+            if user_id_str == "channel" {
+                // Mention all participants
+                for participant in &channel.participants {
+                    let mention = Mention {
+                        id: self.id_gen.new_uuid_v7(),
+                        tenant_id,
+                        message_id: MessageId::new(message_id),
+                        user_id: *participant,
+                        created_at: self.clock.now(),
+                        read_at: None,
+                    };
+                    self.repo.insert_mention(&mention).await?;
+                }
+            } else if let Ok(uuid) = Uuid::parse_str(user_id_str) {
+                let mention = Mention {
+                    id: self.id_gen.new_uuid_v7(),
+                    tenant_id,
+                    message_id: MessageId::new(message_id),
+                    user_id: UserId::new(uuid),
+                    created_at: self.clock.now(),
+                    read_at: None,
+                };
+                self.repo.insert_mention(&mention).await?;
+            }
+        }
+
         self.get_message(tenant_id, message_id).await
     }
 

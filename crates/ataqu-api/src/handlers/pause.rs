@@ -107,7 +107,7 @@ pub async fn create_employee(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(|| Uuid::new_v5(&Uuid::NAMESPACE_URL, b"pause_employee"));
+        .unwrap_or_else(|| Uuid::new_v4());
 
     let employee_id = state
         .pause_service
@@ -160,7 +160,7 @@ pub async fn request_leave(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(|| Uuid::new_v5(&Uuid::NAMESPACE_URL, b"pause_leave"));
+        .unwrap_or_else(|| Uuid::new_v4());
     let request_id = state
         .pause_service
         .request_leave(

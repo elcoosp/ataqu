@@ -29,7 +29,7 @@ use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
-use sea_orm::ConnectionTrait;
+use sea_orm::{ConnectionTrait, TransactionTrait};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -352,6 +352,9 @@ async fn main() -> anyhow::Result<()> {
 
     // A fixed UUID for system-generated actions (SPARK dispatcher)
     let system_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+    if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
+        tracing::warn!(error = %e, "Failed to ensure system user exists");
+    }
 
     let action_dispatcher = Arc::new(AtaquActionDispatcher {
         dial_service: dial_service.clone(),
@@ -361,9 +364,13 @@ async fn main() -> anyhow::Result<()> {
         system_user_id,
     });
 
+    let spark_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
     let spark_service = Arc::new(SparkService::new(
         spark_repo.clone(),
         action_dispatcher,
+        spark_outbox,
         id_gen.clone(),
         clock.clone(),
     ));
@@ -501,6 +508,13 @@ async fn main() -> anyhow::Result<()> {
                         if let Some(tenant_id_str) = event.payload.get("tenant_id").and_then(|v| v.as_str()) {
                             if let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str) {
                                 tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
+                                let txn = match gdpr_db_pool.begin().await {
+                                    Ok(t) => t,
+                                    Err(e) => {
+                                        tracing::error!(error = %e, "Failed to begin GDPR transaction");
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
+                                    }
+                                };
                                 for table in gdpr_registry.tables.iter() {
                                     let sql = format!("DELETE FROM {}.{} WHERE {} = $1", table.schema, table.table, table.tenant_id_column);
                                     let stmt = sea_orm::Statement::from_sql_and_values(
@@ -508,9 +522,15 @@ async fn main() -> anyhow::Result<()> {
                                         &sql,
                                         [tenant_uuid.into()],
                                     );
-                                    if let Err(e) = gdpr_db_pool.execute_raw(stmt).await {
+                                    if let Err(e) = txn.execute_raw(stmt).await {
                                         tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
+                                        let _ = txn.rollback().await;
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
                                     }
+                                }
+                                if let Err(e) = txn.commit().await {
+                                    tracing::error!(error = %e, "Failed to commit GDPR transaction");
+                                    return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
                                 }
                             }
                         }
@@ -532,7 +552,7 @@ async fn main() -> anyhow::Result<()> {
                             .payload
                             .get("email")
                             .and_then(|v| v.as_str())
-                            .unwrap_or("user@example.com");
+                            .unwrap_or("noreply@ataqu.com");
 
                         use lettre::{
                             Message, SmtpTransport, Transport, message::header::ContentType,

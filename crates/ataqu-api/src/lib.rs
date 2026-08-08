@@ -108,6 +108,9 @@ pub fn create_router(state: AppState) -> Router {
         .layer(axum::middleware::from_fn(
             crate::middleware::csrf::csrf_middleware,
         ))
+        .layer(axum::middleware::from_fn(
+            crate::middleware::etag::etag_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,

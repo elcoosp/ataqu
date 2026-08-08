@@ -833,20 +833,21 @@ impl CinqService {
             )));
         }
 
-        if let Some(title) = cmd.title {
+        let event = ataqu_domain_cinq::task::update_task(cmd.clone(), &task, self.clock.as_ref());
+        if let Some(title) = event.title {
             task.title = title;
         }
-        if let Some(desc) = cmd.description {
+        if let Some(desc) = event.description {
             task.description = Some(desc);
         }
-        if let Some(due) = cmd.due_date {
+        if let Some(due) = event.due_date {
             task.due_date = Some(due);
         }
-        if let Some(status) = cmd.status {
+        if let Some(status) = event.status {
             task.status = status;
         }
-        task.updated_at = self.clock.now().into();
-        task.version += 1; // Increment version
+        task.updated_at = event.updated_at;
+        task.version = event.version;
         self.task_repo.save_task(&task).await?;
         Ok(task)
     }

@@ -432,6 +432,7 @@ pub async fn logout(
 pub struct CreateApiKeyRequest {
     pub name: String,
     pub scopes: Option<Vec<String>>,
+    pub expires_at: Option<std::time::SystemTime>,
 }
 
 pub async fn create_api_key(
@@ -452,7 +453,7 @@ pub async fn create_api_key(
             auth.tenant_id,
             auth.user_id,
             req.name,
-            None,
+            req.expires_at,
             scopes,
         )
         .await

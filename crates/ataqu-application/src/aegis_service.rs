@@ -676,6 +676,28 @@ impl AegisService {
         Ok(())
     }
 
+    pub async fn ensure_system_user(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
+        if self.repo.find_by_id(user_id).await?.is_none() {
+            let now = self.clock.now();
+            let user = User {
+                id: user_id,
+                tenant_id: TenantId::new(Uuid::nil()),
+                email: Email::new("system@ataqu.com".to_string()),
+                password_hash: String::new(),
+                name: Some("System".to_string()),
+                mfa_secret: None,
+                mfa_enabled: false,
+                is_active: true,
+                role: "admin".to_string(),
+                created_at: now,
+                updated_at: now,
+                last_login_at: None,
+            };
+            self.repo.save_user(&user).await?;
+        }
+        Ok(())
+    }
+
     pub async fn request_password_reset(
         &self,
         email: Email,

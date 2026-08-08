@@ -395,7 +395,7 @@ pub async fn update_block(
             _ => return Err(ApiResponseError::validation("Invalid block_type")),
         }
     } else {
-        return Err(ApiResponseError::validation("block_type required"));
+        return Err(ApiResponseError::validation("block_type required for update"));
     };
 
     let block = state

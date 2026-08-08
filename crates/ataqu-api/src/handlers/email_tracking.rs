@@ -84,12 +84,11 @@ pub async fn track_email(
         occurred_at: Utc::now(),
     };
 
-    match state.email_tracking_tx.try_send(tracking_event) {
+    match state.email_tracking_tx.send(tracking_event).await {
         Ok(()) => Ok(Json(TrackEmailResponse {
             status: "accepted".to_string(),
         })),
-        Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => Err(ApiResponseError::RateLimited),
-        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(ApiResponseError::internal(
+        Err(_) => Err(ApiResponseError::internal(
             "Email tracking service unavailable",
         )),
     }

@@ -330,6 +330,18 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
 
+        let stock_payload = serde_json::json!({
+            "variant_id": new_variant.id,
+            "tenant_id": new_variant.tenant_id.as_uuid(),
+            "delta": cmd.delta,
+            "new_quantity": new_variant.stock_quantity,
+            "reason": movement.reason.clone(),
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .await
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+
         let threshold = std::env::var("LOW_STOCK_THRESHOLD")
             .ok()
             .and_then(|s| s.parse().ok())

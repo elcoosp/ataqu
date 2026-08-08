@@ -257,6 +257,17 @@ impl PivotService {
             .save_block(&event)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+
+        let payload = serde_json::json!({
+            "block_id": event.id,
+            "tenant_id": event.tenant_id.as_uuid(),
+            "document_id": event.document_id,
+        });
+        self.outbox
+            .append("collab_ops", "BlockCreated", event.id, &payload)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e))?;
+
         Ok(event)
     }
 

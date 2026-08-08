@@ -190,8 +190,8 @@ pub async fn unified_search(
                 app: "aegis".to_string(),
                 entity_type: "user".to_string(),
                 id: u.id,
-                title: u.name.unwrap_or_else(|| email_str.clone()),
-                subtitle: Some(email_str),
+                title: u.name.unwrap_or_else(|| "Unknown".to_string()),
+                subtitle: None,
             });
         }
     }
