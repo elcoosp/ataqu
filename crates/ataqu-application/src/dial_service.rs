@@ -1,6 +1,8 @@
-use lopdf::{Document, Stream, Dictionary};
-use lopdf::content::Content;
 use std::io::Cursor;
+use printpdf::PdfDocument;
+use printpdf::Mm;
+use printpdf::BuiltinFont;
+use printpdf::text::Text;
 // DIAL application service – orchestrates chat operations using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
@@ -515,16 +517,19 @@ impl DialService {
                 .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
                 .await?;
     
-            let mut doc = Document::new();
+            let doc = PdfDocument::new("Channel Export", Mm(20.0), Mm(20.0), "layer1");
+            let (mut page, mut layer) = doc.add_page(Mm(210.0), Mm(297.0), "A4");
+            let mut y = Mm(280.0);
+            let font = doc.add_builtin_font(BuiltinFont::Helvetica)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            let font_bold = doc.add_builtin_font(BuiltinFont::HelveticaBold)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
     
-            // Build content stream
-            let mut content = Vec::new();
-            content.begin_text();
-            content.set_font("Helvetica", 12.0);
             let title = format!("Channel export: {}", channel_id);
-            content.set_position(50.0, 750.0);
-            content.show_text(&title);
-            let mut y = 720.0;
+            layer.use_text(&title, Mm(14.0), Mm(10.0), y, &font_bold)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            y = y - Mm(25.0);
+    
             for msg in messages {
                 let line = format!(
                     "[{}] {}: {}",
@@ -533,42 +538,21 @@ impl DialService {
                     msg.content
                 );
                 let line = if line.len() > 200 { &line[..200] } else { &line };
-                content.set_position(50.0, y);
-                content.show_text(&line);
-                y -= 15.0;
-                if y < 50.0 {
-                    break; // one page only for simplicity
+                if y < Mm(20.0) {
+                    let (new_page, new_layer) = doc.add_page(Mm(210.0), Mm(297.0), "A4");
+                    page = new_page;
+                    layer = new_layer;
+                    y = Mm(280.0);
                 }
+                layer.use_text(line, Mm(10.0), Mm(10.0), y, &font)
+                    .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+                y = y - Mm(15.0);
             }
-            content.end_text();
     
-            // Create a stream object with the content
-            let stream = Stream::new(content.into(), vec![]);
-            let stream_id = doc.add_object(stream);
-    
-            // Create a page dictionary
-            let mut page = Dictionary::new();
-            page.set("Type", "Page");
-            page.set("Contents", stream_id);
-            // MediaBox: [0, 0, 595, 842] is A4 in points
-            page.set("MediaBox", vec![0.0, 0.0, 595.0, 842.0].into());
-    
-            let page_id = doc.add_object(page.into());
-    
-            // Create a Pages dictionary
-            let mut pages = Dictionary::new();
-            pages.set("Type", "Pages");
-            pages.set("Kids", vec![page_id.into()].into());
-            pages.set("Count", 1);
-            let pages_id = doc.add_object(pages.into());
-    
-            // Set the Root of the trailer to the Pages object
-            doc.trailer.set("Root", pages_id);
-    
-            // Write to bytes
-            let mut bytes = Cursor::new(Vec::new());
-            doc.save_to(&mut bytes).map_err(|e| DialServiceError::Repository(e.to_string()))?;
-            Ok(bytes.into_inner())
+            let pdf_bytes = doc
+                .render_to_bytes()
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            Ok(pdf_bytes)
         }
 
     pub async fn list_thread_messages(

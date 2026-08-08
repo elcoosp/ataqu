@@ -17,7 +17,7 @@ tracing = "0.1"
 metrics = "0.23"
 tokio = { version = "1.52", features = ["sync", "rt", "time", "macros"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
-lopdf = "0.31"
+printpdf = "0.7"
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-domain-cinq = { version = "0.1.0", path = "../ataqu-domain-cinq" }
 ataqu-domain-pivot = { version = "0.1.0", path = "../ataqu-domain-pivot" }
