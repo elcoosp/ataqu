@@ -50,6 +50,7 @@ pub trait ContactRepository: Send + Sync {
     ) -> CinqRepositoryResult<Vec<Contact>>;
     async fn count_contacts(&self, tenant_id: &TenantId) -> CinqRepositoryResult<u64>;
     async fn delete_contact(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<()>;
+    async fn bulk_insert_contacts(&self, contacts: &[Contact]) -> CinqRepositoryResult<()>;
 }
 
 #[async_trait]

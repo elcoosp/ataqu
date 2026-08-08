@@ -287,6 +287,21 @@ impl DomainContactRepo for CinqContactRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(count)
     }
+
+    async fn bulk_insert_contacts(&self, contacts: &[Contact]) -> Result<(), CinqDomainError> {
+        if contacts.is_empty() {
+            return Ok(());
+        }
+        let active_models: Vec<contact_entity::ActiveModel> = contacts
+            .iter()
+            .map(contact_to_active)
+            .collect();
+        contact_entity::Entity::insert_many(active_models)
+            .exec(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(())
+    }
 }
 
 // ---------- Deal Repository ----------

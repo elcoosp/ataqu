@@ -107,7 +107,9 @@ pub async fn create_employee(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(|| Uuid::new_v4());
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Idempotency-Key header required".to_string())
+        })?;
 
     let employee_id = state
         .pause_service
@@ -162,7 +164,9 @@ pub async fn request_leave(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(|| Uuid::new_v4());
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Idempotency-Key header required".to_string())
+        })?;
     let request_id = state
         .pause_service
         .request_leave(
