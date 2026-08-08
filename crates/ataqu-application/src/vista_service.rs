@@ -66,8 +66,13 @@ impl VistaService {
         let tenant_id = match event
             .payload
             .get("tenant_id")
-            .and_then(|v| v.as_str())
-            .and_then(|s| Uuid::parse_str(s).ok())
+            .and_then(|v| {
+                if let serde_json::Value::String(s) = v {
+                    Uuid::parse_str(s).ok()
+                } else {
+                    None
+                }
+            })
         {
             Some(id) => TenantId::new(id),
             None => {
@@ -247,7 +252,9 @@ impl VistaService {
         }
 
         let tenant_id_str = tenant_id.as_uuid().to_string();
-        let has_tenant_filter = upper_sql.contains(&tenant_id_str.to_uppercase());
+        let lower_sql = sql.to_lowercase();
+        let has_tenant_filter = lower_sql.contains(&format!("tenant_id = '{}'", tenant_id_str))
+            || lower_sql.contains(&format!("tenant_id='{}'", tenant_id_str));
         if !has_tenant_filter {
             return Err(VistaServiceError::Validation(
                 "Query must include the current tenant_id filter in the WHERE clause".to_string(),

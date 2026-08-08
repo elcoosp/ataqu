@@ -61,6 +61,7 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
             hasher.update(tenant_id.as_bytes());
             hasher.update(method.as_bytes());
             hasher.update(path.as_bytes());
+            hasher.update(&bytes);
             let hash = hasher.finalize();
             let command_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, &hash);
 

@@ -2,7 +2,7 @@ use axum::{extract::Request, http::StatusCode, middleware::Next, response::Respo
 
 pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
     // ADR-011: CSRF protection for state-changing requests.
-    if req.method().is_safe() {
+    if req.method().is_safe() || req.uri().path().contains("/webhooks/") {
         return Ok(next.run(req).await);
     }
 

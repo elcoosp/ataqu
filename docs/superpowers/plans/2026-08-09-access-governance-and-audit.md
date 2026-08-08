@@ -13,8 +13,12 @@
 ## File Structure
 - **Create:** `crates/ataqu-infra-migration/src/m20250101_000011_create_audit_and_permissions.rs`
 - **Create:** `crates/ataqu-infra-repositories/src/audit_repo.rs`
+- **Modify:** `crates/ataqu-infra-repositories/src/lib.rs`
 - **Create:** `crates/ataqu-application/src/audit_service.rs`
-- **Modify:** `crates/ataqu-api/src/handlers/aegis.rs`
+- **Modify:** `crates/ataqu-application/src/lib.rs`
+- **Modify:** `crates/ataqu-domain-aegis/src/repository.rs` (Add audit/permission traits)
+- **Modify:** `crates/ataqu-application/src/aegis_service.rs` (Implement methods)
+- **Modify:** `crates/ataqu-api/src/handlers/aegis.rs` (Add endpoints)
 
 ---
 
@@ -41,7 +45,6 @@ impl MigrationName for Migration {
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Create core.permissions
         manager.get_connection().execute_unprepared(
             r#"
             CREATE TABLE core.permissions (
@@ -56,7 +59,6 @@ impl MigrationTrait for Migration {
             );
             CREATE INDEX idx_permissions_tenant_user ON core.permissions (tenant_id, user_id);
 
-            -- Create core.audit_logs (partitioned by month)
             CREATE TABLE core.audit_logs (
                 id BIGSERIAL,
                 tenant_id UUID NOT NULL,
@@ -72,7 +74,6 @@ impl MigrationTrait for Migration {
                 PRIMARY KEY (id, created_at)
             ) PARTITION BY RANGE (created_at);
 
-            -- Create initial partition
             CREATE TABLE core.audit_logs_2026_08 PARTITION OF core.audit_logs
             FOR VALUES FROM ('2026-08-01') TO ('2026-09-01');
             CREATE INDEX idx_audit_logs_tenant ON core.audit_logs (tenant_id, created_at DESC);
@@ -95,7 +96,7 @@ impl MigrationTrait for Migration {
 
 - [ ] **Step 2: Add to migrator lib.rs**
 
-Add `Box::new(Migration),` to the `vec![]` in `lib.rs`.
+Add `Box::new(Migration),` to the `vec![]` in `crates/ataqu-infra-migration/src/lib.rs`.
 
 - [ ] **Step 3: Run migration**
 
@@ -111,17 +112,17 @@ git commit -m "feat(db): add permissions and audit_logs tables"
 
 ---
 
-### Task 2: Audit Repository & Service
+### Task 2: Audit & Permission Repository
 
 **Files:**
 - Create: `crates/ataqu-infra-repositories/src/audit_repo.rs`
-- Create: `crates/ataqu-application/src/audit_service.rs`
+- Modify: `crates/ataqu-infra-repositories/src/lib.rs`
 
 - [ ] **Step 1: Write implementation for AuditRepository**
 
 ```rust
 // crates/ataqu-infra-repositories/src/audit_repo.rs
-use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
+use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement, Value};
 use uuid::Uuid;
 use serde_json::Value;
 
@@ -151,14 +152,14 @@ impl AuditRepository {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#;
         let stmt = Statement::from_sql_and_values(
-            DbBackend::Postgres,
+            DatabaseBackend::Postgres,
             sql,
             vec![
                 tenant_id.into(),
                 user_id.into(),
                 action.into(),
                 app.into(),
-                entity_type.into(),
+                entity_type.map(|s| s.to_string()).into(),
                 entity_id.into(),
                 old_value.into(),
                 new_value.into(),
@@ -167,43 +168,37 @@ impl AuditRepository {
         self.db.execute(stmt).await?;
         Ok(())
     }
+
+    pub async fn list_logs(&self, tenant_id: Uuid, limit: u64, offset: u64) -> Result<Vec<Value>, sea_orm::DbErr> {
+        let sql = r#"
+            SELECT * FROM core.audit_logs
+            WHERE tenant_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2 OFFSET $3
+        "#;
+        let stmt = Statement::from_sql_and_values(
+            DatabaseBackend::Postgres,
+            sql,
+            vec![tenant_id.into(), (limit as i64).into(), (offset as i64).into()],
+        );
+        let rows = self.db.query_all(stmt).await?;
+        Ok(rows.into_iter().map(|r| serde_json::to_value(r).unwrap_or_default()).collect())
+    }
 }
 ```
 
-- [ ] **Step 2: Write AuditService**
+- [ ] **Step 2: Export module**
 
 ```rust
-// crates/ataqu-application/src/audit_service.rs
-use std::sync::Arc;
-use uuid::Uuid;
-use serde_json::Value;
-
-#[async_trait::async_trait]
-pub trait AuditPort: Send + Sync {
-    async fn append(&self, tenant_id: Uuid, user_id: Uuid, action: &str, app: &str, entity_type: Option<&str>, entity_id: Option<Uuid>, old_value: Option<Value>, new_value: Option<Value>) -> Result<(), String>;
-}
-
-pub struct AuditService {
-    repo: Arc<dyn AuditPort>,
-}
-
-impl AuditService {
-    pub fn new(repo: Arc<dyn AuditPort>) -> Self {
-        Self { repo }
-    }
-
-    // Helper method used by other services
-    pub async fn log_action(&self, tenant_id: Uuid, user_id: Uuid, action: &str, app: &str, entity_id: Option<Uuid>, new_value: Option<Value>) -> Result<(), String> {
-        self.repo.append(tenant_id, user_id, action, app, Some("entity"), entity_id, None, new_value).await
-    }
-}
+// crates/ataqu-infra-repositories/src/lib.rs
+pub mod audit_repo;
 ```
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-infra-repositories/src/audit_repo.rs crates/ataqu-application/src/audit_service.rs
-git commit -m "feat(app): add audit repository and service"
+git add crates/ataqu-infra-repositories/src/audit_repo.rs crates/ataqu-infra-repositories/src/lib.rs
+git commit -m "feat(infra): add AuditRepository"
 ```
 
 ---
@@ -211,13 +206,48 @@ git commit -m "feat(app): add audit repository and service"
 ### Task 3: API Endpoints for Matrix & Logs
 
 **Files:**
+- Modify: `crates/ataqu-domain-aegis/src/repository.rs`
+- Modify: `crates/ataqu-application/src/aegis_service.rs`
 - Modify: `crates/ataqu-api/src/handlers/aegis.rs`
 
-- [ ] **Step 1: Write the failing test for audit log endpoint**
+- [ ] **Step 1: Add trait methods to AEGIS domain**
 
-*(Assume standard API integration test setup)*
+```rust
+// In crates/ataqu-domain-aegis/src/repository.rs
+#[async_trait]
+pub trait AuditRepositoryTrait: Send + Sync {
+    async fn append_log(&self, tenant_id: Uuid, user_id: Uuid, action: &str, app: &str, entity_type: Option<&str>, entity_id: Option<Uuid>, old_value: Option<serde_json::Value>, new_value: Option<serde_json::Value>) -> Result<(), String>;
+    async fn list_logs(&self, tenant_id: Uuid, limit: u64, offset: u64) -> Result<Vec<serde_json::Value>, String>;
+}
+```
 
-- [ ] **Step 2: Write minimal implementation**
+- [ ] **Step 2: Implement in AegisService**
+
+```rust
+// In crates/ataqu-application/src/aegis_service.rs
+pub struct AegisService {
+    // ... existing fields ...
+    audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+}
+
+impl AegisService {
+    // Update constructor to accept audit_repo
+
+    pub async fn get_audit_logs(&self, tenant_id: Uuid, limit: u64, offset: u64) -> Result<Vec<serde_json::Value>, AegisServiceError> {
+        self.audit_repo.list_logs(tenant_id, limit, offset).await
+            .map_err(|e| AegisServiceError::Internal(e))
+    }
+
+    pub async fn get_permission_matrix(&self, tenant_id: Uuid) -> Result<serde_json::Value, AegisServiceError> {
+        // For v1, we return a simple list of users with their roles.
+        // A full matrix would query the permissions table.
+        let users = self.repo.list_users(tenant_id).await?;
+        Ok(serde_json::to_value(users).unwrap_or_default())
+    }
+}
+```
+
+- [ ] **Step 3: Add API Handlers**
 
 ```rust
 // In crates/ataqu-api/src/handlers/aegis.rs
@@ -228,11 +258,8 @@ pub async fn get_audit_log(
     if !auth.has_role("admin") {
         return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
     }
-
-    let logs = state.aegis_service.get_audit_logs(auth.tenant_id.as_uuid(), 100, 0)
-        .await
+    let logs = state.aegis_service.get_audit_logs(auth.tenant_id.as_uuid(), 100, 0).await
         .map_err(map_aegis_error)?;
-
     Ok(Json(logs))
 }
 
@@ -243,11 +270,8 @@ pub async fn get_permission_matrix(
     if !auth.has_role("admin") {
         return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
     }
-
-    let matrix = state.aegis_service.get_permission_matrix(auth.tenant_id.as_uuid())
-        .await
+    let matrix = state.aegis_service.get_permission_matrix(auth.tenant_id.as_uuid()).await
         .map_err(map_aegis_error)?;
-
     Ok(Json(matrix))
 }
 ```
@@ -255,14 +279,35 @@ pub async fn get_permission_matrix(
 `.route("/audit-log", get(get_audit_log))`
 `.route("/permission-matrix", get(get_permission_matrix))`
 
-- [ ] **Step 3: Run test to verify it passes**
+- [ ] **Step 4: Wire up in main.rs**
 
-Run: `cargo nextest run -p ataqu-api`
+```rust
+// In crates/ataqu-bin/src/main.rs
+use ataqu_infra_repositories::audit_repo::AuditRepository;
+
+// Implement the trait adapter
+pub struct AuditRepoAdapter(AuditRepository);
+#[async_trait::async_trait]
+impl ataqu_domain_aegis::repository::AuditRepositoryTrait for AuditRepoAdapter {
+    async fn append_log(&self, tenant_id: Uuid, user_id: Uuid, action: &str, app: &str, entity_type: Option<&str>, entity_id: Option<Uuid>, old_value: Option<serde_json::Value>, new_value: Option<serde_json::Value>) -> Result<(), String> {
+        self.0.append_log(tenant_id, user_id, action, app, entity_type, entity_id, old_value, new_value).await.map_err(|e| e.to_string())
+    }
+    async fn list_logs(&self, tenant_id: Uuid, limit: u64, offset: u64) -> Result<Vec<serde_json::Value>, String> {
+        self.0.list_logs(tenant_id, limit, offset).await.map_err(|e| e.to_string())
+    }
+}
+
+// Inside main():
+let audit_repo = Arc::new(AuditRepoAdapter(AuditRepository::new(pools.core.clone())));
+// Pass `audit_repo` to `AegisService::new`
+```
+
+- [ ] **Step 5: Run check & Commit**
+
+Run: `cargo check --workspace`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
-
 ```bash
-git add crates/ataqu-api/src/handlers/aegis.rs
+git add crates/ataqu-domain-aegis/src/repository.rs crates/ataqu-application/src/aegis_service.rs crates/ataqu-api/src/handlers/aegis.rs crates/ataqu-bin/src/main.rs
 git commit -m "feat(api): add audit log and permission matrix endpoints"
 ```

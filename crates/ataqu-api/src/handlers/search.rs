@@ -121,7 +121,7 @@ pub async fn unified_search(
 
     let products = state
         .vault_service
-        .list_products(auth.tenant_id, 10000, 0)
+        .list_products(auth.tenant_id, 100, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for p in products {
@@ -138,7 +138,7 @@ pub async fn unified_search(
 
     let workflows = state
         .spark_service
-        .list_workflows(auth.tenant_id, 10000, 0)
+        .list_workflows(auth.tenant_id, 100, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for w in workflows {
@@ -189,7 +189,7 @@ pub async fn unified_search(
 
     let forms = state
         .sond_service
-        .list_forms(auth.tenant_id, 10000, 0)
+        .list_forms(auth.tenant_id, 100, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for f in forms {

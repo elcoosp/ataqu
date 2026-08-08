@@ -99,6 +99,7 @@ fn message_model_to_domain(model: message_entity::Model) -> Message {
         created_at: model.sent_at.into(),
         edited_at: model.edited_at.map(|dt| dt.into()),
         deleted_at: model.deleted_at.map(|dt| dt.into()),
+        version: 0,
     }
 }
 
@@ -165,7 +166,7 @@ impl DialRepository for DialRepositoryImpl {
         Ok(None)
     }
 
-    async fn insert_channel(&self, channel: &Channel) -> Result<(), DialError> {
+    async fn save_channel(&self, channel: &Channel) -> Result<(), DialError> {
         let active = channel_domain_to_active(channel);
         channel_entity::Entity::insert(active)
             .exec(&self.db)

@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 #[async_trait]
 pub trait DialRepository: Send + Sync {
-    async fn insert_channel(&self, channel: &Channel) -> Result<(), DialError>;
+    async fn save_channel(&self, channel: &Channel) -> Result<(), DialError>;
     async fn archive_channel(
         &self,
         tenant_id: &TenantId,

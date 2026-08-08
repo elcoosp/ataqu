@@ -2,19 +2,24 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement a native `/api/v1/health/status` endpoint that aggregates outbox lag, workflow failures, DLQ depth, and connection pool usage into a single JSON payload.
+**Goal:** Implement a native `/api/v1/health/status` endpoint that aggregates outbox lag, pending events, and DB pool usage into a single JSON payload, cached for 5 seconds.
 
-**Architecture:** Add a `HealthService` in the application layer that queries the `core.outbox` and `spark.workflows` tables directly via a raw SQL repository. Expose this via a new public route in `ataqu-api`. Cache the results for 5 seconds using Moka to prevent DB hammering.
+**Architecture:** Create a `HealthRepository` in the infra layer using raw SQL via SeaORM. Create a `HealthService` in the application layer to structure the payload. Wire it into a public API route in `ataqu-api` with a Moka cache.
 
 **Tech Stack:** Rust, Axum, SeaORM, sqlx, Moka cache.
 
 ---
 
 ## File Structure
+- **Create:** `crates/ataqu-infra-migration/src/m20250101_000011_create_health_tables.rs` (If specific tables were needed, but we query existing `core.outbox`. So no migration needed).
+- **Create:** `crates/ataqu-infra-repositories/src/health_repo.rs` (Raw SQL queries)
+- **Modify:** `crates/ataqu-infra-repositories/src/lib.rs` (Export health_repo)
 - **Create:** `crates/ataqu-application/src/health_service.rs` (Service logic and payload structs)
-- **Create:** `crates/ataqu-infra-repositories/src/health_repo.rs` (Raw SQL queries for metrics)
-- **Modify:** `crates/ataqu-api/src/handlers/health.rs` (Add `/status` endpoint)
-- **Modify:** `crates/ataqu-api/src/lib.rs` (Wire route and cache)
+- **Modify:** `crates/ataqu-application/src/lib.rs` (Export health_service)
+- **Modify:** `crates/ataqu-api/src/handlers/mod.rs` (Add health module)
+- **Create:** `crates/ataqu-api/src/handlers/health.rs` (API Endpoint)
+- **Modify:** `crates/ataqu-api/src/lib.rs` (Wire route and cache to AppState)
+- **Modify:** `crates/ataqu-bin/src/main.rs` (Initialize HealthService and inject into AppState)
 
 ---
 
@@ -28,33 +33,7 @@
 
 ```rust
 // crates/ataqu-infra-repositories/src/health_repo.rs
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use sea_orm::Database;
-
-    #[tokio::test]
-    async fn test_get_outbox_lag() {
-        let db = Database::connect("postgres://postgres:postgres@localhost:5433/ataqu_test")
-            .await
-            .unwrap();
-        let repo = HealthRepository::new(db);
-        let lag = repo.get_outbox_lag_seconds().await.unwrap();
-        assert!(lag >= 0);
-    }
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `cargo nextest run -p ataqu-infra-repositories test_get_outbox_lag`
-Expected: FAIL (module not found)
-
-- [ ] **Step 3: Write minimal implementation**
-
-```rust
-// crates/ataqu-infra-repositories/src/health_repo.rs
-use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
+use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct HealthRepository {
@@ -71,7 +50,7 @@ impl HealthRepository {
             SELECT EXTRACT(EPOCH FROM (NOW() - MAX(created_at)))::BIGINT as lag
             FROM core.outbox WHERE status = 'pending';
         "#;
-        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql, vec![]);
+        let stmt = Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, vec![]);
         let result = self.db.query_one(stmt).await?.unwrap();
         let lag: i64 = result.try_get("", "lag")?;
         Ok(lag.max(0) as u64)
@@ -79,24 +58,65 @@ impl HealthRepository {
 
     pub async fn get_pending_outbox_count(&self) -> Result<u64, sea_orm::DbErr> {
         let sql = r#"SELECT COUNT(*) as count FROM core.outbox WHERE status = 'pending'"#;
-        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql, vec![]);
+        let stmt = Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, vec![]);
         let result = self.db.query_one(stmt).await?.unwrap();
         let count: i64 = result.try_get("", "count")?;
         Ok(count as u64)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sea_orm::Database;
+
+    #[tokio::test]
+    async fn test_get_outbox_metrics() {
+        let db_url = std::env::var("DATABASE_TEST_URL")
+            .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5433/ataqu_test".to_string());
+
+        let db = match Database::connect(&db_url).await {
+            Ok(db) => db,
+            Err(_) => {
+                eprintln!("Skipping test_get_outbox_metrics: DB not available.");
+                return;
+            }
+        };
+
+        let repo = HealthRepository::new(db);
+
+        let lag = repo.get_outbox_lag_seconds().await.unwrap();
+        assert!(lag >= 0);
+
+        let count = repo.get_pending_outbox_count().await.unwrap();
+        assert!(count >= 0);
+    }
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `cargo nextest run -p ataqu-infra-repositories test_get_outbox_metrics`
+Expected: FAIL (module not found / not exported)
+
+- [ ] **Step 3: Export module in lib.rs**
+
+```rust
+// crates/ataqu-infra-repositories/src/lib.rs
+pub mod health_repo;
+// ... existing exports ...
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cargo nextest run -p ataqu-infra-repositories test_get_outbox_lag`
-Expected: PASS
+Run: `cargo nextest run -p ataqu-infra-repositories test_get_outbox_metrics`
+Expected: PASS (if DB is running) or SKIP (if DB is not running, but compiles successfully).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add crates/ataqu-infra-repositories/src/health_repo.rs crates/ataqu-infra-repositories/src/lib.rs
-git commit -m "feat(infra): add health metrics repository"
+git commit -m "feat(infra): add HealthRepository with outbox metrics queries"
 ```
 
 ---
@@ -111,49 +131,11 @@ git commit -m "feat(infra): add health metrics repository"
 
 ```rust
 // crates/ataqu-application/src/health_service.rs
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use mockall::mock;
-    use async_trait::async_trait;
-
-    mock! {
-        HealthRepo {}
-        #[async_trait]
-        pub trait HealthRepoTrait: Send + Sync {
-            async fn get_outbox_lag_seconds(&self) -> Result<u64, String>;
-            async fn get_pending_outbox_count(&self) -> Result<u64, String>;
-        }
-    }
-
-    #[tokio::test]
-    async fn test_get_system_health_nominal() {
-        let mut mock_repo = MockHealthRepoTrait::new();
-        mock_repo.expect_get_outbox_lag_seconds().returning(|| Ok(0));
-        mock_repo.expect_get_pending_outbox_count().returning(|| Ok(0));
-
-        let service = HealthService::new(Arc::new(mock_repo));
-        let health = service.get_system_health().await.unwrap();
-
-        assert_eq!(health.status, "nominal");
-        assert_eq!(health.components.outbox.lag_seconds, 0);
-    }
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `cargo nextest run -p ataqu-application test_get_system_health_nominal`
-Expected: FAIL
-
-- [ ] **Step 3: Write minimal implementation**
-
-```rust
-// crates/ataqu-application/src/health_service.rs
+use async_trait::async_trait;
 use serde::Serialize;
 use std::sync::Arc;
 
-#[async_trait::async_trait]
+#[async_trait]
 pub trait HealthRepoTrait: Send + Sync {
     async fn get_outbox_lag_seconds(&self) -> Result<u64, String>;
     async fn get_pending_outbox_count(&self) -> Result<u64, String>;
@@ -216,60 +198,93 @@ impl HealthService {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mockall::mock;
+
+    mock! {
+        HealthRepo {}
+        #[async_trait]
+        pub trait HealthRepoTrait: Send + Sync {
+            async fn get_outbox_lag_seconds(&self) -> Result<u64, String>;
+            async fn get_pending_outbox_count(&self) -> Result<u64, String>;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_system_health_nominal() {
+        let mut mock_repo = MockHealthRepo::new();
+        mock_repo.expect_get_outbox_lag_seconds().returning(|| Ok(0));
+        mock_repo.expect_get_pending_outbox_count().returning(|| Ok(0));
+
+        let service = HealthService::new(Arc::new(mock_repo));
+        let health = service.get_system_health().await.unwrap();
+
+        assert_eq!(health.status, "nominal");
+        assert_eq!(health.components.outbox.lag_seconds, 0);
+    }
+
+    #[tokio::test]
+    async fn test_get_system_health_degraded() {
+        let mut mock_repo = MockHealthRepo::new();
+        mock_repo.expect_get_outbox_lag_seconds().returning(|| Ok(10)); // > 5
+        mock_repo.expect_get_pending_outbox_count().returning(|| Ok(0));
+
+        let service = HealthService::new(Arc::new(mock_repo));
+        let health = service.get_system_health().await.unwrap();
+
+        assert_eq!(health.status, "degraded");
+        assert_eq!(health.components.outbox.status, "degraded");
+    }
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `cargo nextest run -p ataqu-application test_get_system_health`
+Expected: FAIL (module not found)
+
+- [ ] **Step 3: Export module in lib.rs**
+
+```rust
+// crates/ataqu-application/src/lib.rs
+pub mod health_service;
+// ... existing exports ...
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cargo nextest run -p ataqu-application test_get_system_health_nominal`
+Run: `cargo nextest run -p ataqu-application test_get_system_health`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add crates/ataqu-application/src/health_service.rs crates/ataqu-application/src/lib.rs
-git commit -m "feat(app): add health service and payload structs"
+git commit -m "feat(app): add HealthService with nominal/degraded logic"
 ```
 
 ---
 
-### Task 3: API Endpoint & Moka Cache
+### Task 3: API Endpoint & Moka Cache Wiring
 
 **Files:**
-- Modify: `crates/ataqu-api/src/handlers/health.rs`
+- Modify: `crates/ataqu-api/src/handlers/mod.rs`
+- Create: `crates/ataqu-api/src/handlers/health.rs`
 - Modify: `crates/ataqu-api/src/lib.rs`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Create health handler**
 
 ```rust
-// crates/ataqu-api/tests/health_test.rs
-use axum::http::StatusCode;
-use ataqu_api::create_router;
-use tower::ServiceExt;
-
-#[tokio::test]
-async fn test_health_status_endpoint() {
-    // Note: Requires mock state setup or actual DB connection
-    // Assuming `create_test_state()` exists
-    // let state = create_test_state().await;
-    // let app = create_router(state);
-    // let response = app.oneshot(axum::http::Request::builder().uri("/api/v1/health/status").body_default().unwrap()).await.unwrap();
-    // assert_eq!(response.status(), StatusCode::OK);
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `cargo nextest run -p ataqu-api test_health_status_endpoint`
-Expected: FAIL
-
-- [ ] **Step 3: Write minimal implementation**
-
-```rust
-// In crates/ataqu-api/src/handlers/health.rs
+// crates/ataqu-api/src/handlers/health.rs
 use axum::{extract::State, response::Json};
 use crate::{AppState, error::ApiResult};
 
-pub async fn get_system_health(State(state): State<AppState>) -> ApiResult<Json<serde_json::Value>> {
+pub async fn get_system_health(
+    State(state): State<AppState>,
+) -> ApiResult<Json<serde_json::Value>> {
     // Check cache first
     if let Some(cached) = state.health_cache.get("system_health") {
         return Ok(Json(cached));
@@ -287,18 +302,106 @@ pub async fn get_system_health(State(state): State<AppState>) -> ApiResult<Json<
 }
 ```
 
-*Wire up in `lib.rs`:*
-Add `health_cache: Arc<moka::sync::Cache<String, serde_json::Value>>` to `AppState`.
-Add route `.route("/api/v1/health/status", axum::routing::get(handlers::health::get_system_health))` to public routes.
+- [ ] **Step 2: Export health handler**
 
-- [ ] **Step 4: Run test to verify it passes**
+```rust
+// crates/ataqu-api/src/handlers/mod.rs
+pub mod health;
+// ... existing exports ...
+```
 
-Run: `cargo nextest run -p ataqu-api test_health_status_endpoint`
+- [ ] **Step 3: Add HealthService and Cache to AppState and Router**
+
+```rust
+// crates/ataqu-api/src/lib.rs
+use ataqu_application::health_service::HealthService;
+use moka::sync::Cache;
+use std::sync::Arc;
+use std::time::Duration;
+
+#[derive(Clone)]
+pub struct AppState {
+    // ... existing fields ...
+    pub health_service: Arc<HealthService>,
+    pub health_cache: Arc<Cache<String, serde_json::Value>>,
+}
+
+pub fn create_router(state: AppState) -> Router {
+    // ... existing setup ...
+
+    let public_routes = Router::new()
+        // ... existing routes ...
+        .route("/api/v1/health/status", axum::routing::get(handlers::health::get_system_health))
+        // ... existing layers ...
+}
+```
+
+- [ ] **Step 4: Run check to verify it compiles**
+
+Run: `cargo check -p ataqu-api`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add crates/ataqu-api/src/handlers/health.rs crates/ataqu-api/src/lib.rs crates/ataqu-api/tests/health_test.rs
+git add crates/ataqu-api/src/handlers/health.rs crates/ataqu-api/src/handlers/mod.rs crates/ataqu-api/src/lib.rs
 git commit -m "feat(api): add /api/v1/health/status endpoint with 5s cache"
+```
+
+---
+
+### Task 4: Wire Up in Main Binary
+
+**Files:**
+- Modify: `crates/ataqu-bin/src/main.rs`
+
+- [ ] **Step 1: Initialize HealthService and inject into AppState**
+
+```rust
+// crates/ataqu-bin/src/main.rs
+use ataqu_application::health_service::{HealthService, HealthRepoTrait};
+use ataqu_infra_repositories::health_repo::HealthRepository;
+use moka::sync::Cache;
+use std::time::Duration;
+
+// Adapter to implement the application trait using the concrete repo
+pub struct HealthRepoAdapter(HealthRepository);
+#[async_trait::async_trait]
+impl HealthRepoTrait for HealthRepoAdapter {
+    async fn get_outbox_lag_seconds(&self) -> Result<u64, String> {
+        self.0.get_outbox_lag_seconds().await.map_err(|e| e.to_string())
+    }
+    async fn get_pending_outbox_count(&self) -> Result<u64, String> {
+        self.0.get_pending_outbox_count().await.map_err(|e| e.to_string())
+    }
+}
+
+// Inside main() after `let pools = Pools::new(&db_url).await?;`
+let health_repo = Arc::new(HealthRepoAdapter(HealthRepository::new(pools.core.clone())));
+let health_service = Arc::new(HealthService::new(health_repo));
+
+let health_cache = Arc::new(
+    Cache::builder()
+        .time_to_live(Duration::from_secs(5))
+        .build()
+);
+
+// Update AppState initialization
+let state = AppState {
+    // ... existing fields ...
+    health_service,
+    health_cache,
+};
+```
+
+- [ ] **Step 2: Run full workspace check**
+
+Run: `cargo check --workspace`
+Expected: PASS
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add crates/ataqu-bin/src/main.rs
+git commit -m "feat(bin): wire HealthService and cache into AppState"
 ```

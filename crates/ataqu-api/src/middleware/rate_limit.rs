@@ -38,6 +38,25 @@ impl RateLimiter {
             true
         }
     }
+
+    pub fn cleanup(&self) {
+        let now = Instant::now();
+        let keys_to_remove: Vec<String> = self
+            .requests
+            .iter()
+            .filter_map(|entry| {
+                if entry.value().iter().all(|t| now.duration_since(*t) >= self.window) {
+                    Some(entry.key().clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        for key in keys_to_remove {
+            self.requests.remove(&key);
+        }
+    }
 }
 
 pub async fn rate_limit_middleware(

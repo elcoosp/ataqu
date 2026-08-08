@@ -571,7 +571,8 @@ fn model_to_stage(model: pipeline_stage_entity::Model) -> PipelineStage {
         order: model.order,
         created_at: model.created_at,
         updated_at: model.updated_at,
-    }
+        version: 0,
+}
 }
 
 #[async_trait]

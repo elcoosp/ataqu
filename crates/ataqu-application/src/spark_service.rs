@@ -201,8 +201,13 @@ impl SparkService {
         let event_tenant_id = match event
             .payload
             .get("tenant_id")
-            .and_then(|v| v.as_str())
-            .and_then(|s| Uuid::parse_str(s).ok())
+            .and_then(|v| {
+                if let serde_json::Value::String(s) = v {
+                    Uuid::parse_str(s).ok()
+                } else {
+                    None
+                }
+            })
         {
             Some(id) => id,
             None => {

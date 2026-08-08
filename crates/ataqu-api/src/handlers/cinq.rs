@@ -321,7 +321,7 @@ pub async fn list_deals(
         .list_deals(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = deals.len() as u64;
+    let total = deals.len() as u64 + offset;
     let items = deals.into_iter().map(DealResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -578,7 +578,7 @@ pub async fn list_activities(
             .await
             .map_err(|e| ApiResponseError::internal(&e.to_string()))?
     };
-    let total = activities.len() as u64;
+    let total = activities.len() as u64 + 0;
     let items = activities
         .into_iter()
         .map(|a| ActivityResponse {

@@ -130,7 +130,7 @@ pub async fn list_channels(
         .list_channels(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = channels.len() as u64;
+    let total = channels.len() as u64 + offset;
     let items = channels.into_iter().map(|c| c.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -299,7 +299,7 @@ pub async fn list_messages(
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
-    let total = msgs.len() as u64;
+    let total = msgs.len() as u64 + offset;
     let items = msgs.into_iter().map(|m| m.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -584,12 +584,11 @@ pub async fn upload_file(
     let mut file_urls = Vec::new();
     while let Ok(Some(field)) = multipart.next_field().await {
         let file_name = field.file_name().unwrap_or("unknown").to_string();
-        let extension = field
-            .content_type()
-            .unwrap_or("application/octet-stream")
-            .split('/')
-            .last()
-            .unwrap_or("bin");
+        let extension = std::path::Path::new(&file_name)
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("bin")
+            .to_string();
         let file_id = uuid::Uuid::now_v7();
         let saved_name = format!("{}.{}", file_id, extension);
         let file_path = std::path::Path::new(&upload_dir).join(&saved_name);

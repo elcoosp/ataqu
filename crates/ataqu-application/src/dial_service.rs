@@ -110,7 +110,7 @@ impl DialService {
             archived_at: None,
             version: 0,
         };
-        self.repo.insert_channel(&channel).await?;
+        self.repo.save_channel(&channel).await?;
 
         let payload = serde_json::json!({
             "channel_id": channel.id.as_uuid(),
@@ -167,7 +167,7 @@ impl DialService {
             channel.name = n;
         }
         channel.version += 1;
-        self.repo.insert_channel(&channel).await?;
+        self.repo.save_channel(&channel).await?;
         Ok(channel)
     }
 
@@ -242,6 +242,7 @@ impl DialService {
             created_at: event.created_at,
             edited_at: None,
             deleted_at: None,
+            version: 0,
         };
         self.repo.insert_message(&message).await?;
 
@@ -300,7 +301,12 @@ impl DialService {
             .repo
             .get_message(&tenant_id, &MessageId::new(message_id))
             .await?;
-        let _ = expected_version; // OCC not supported on Message entity
+        if message.version != expected_version {
+            return Err(DialServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, message.version
+            )));
+        }
         let event = dial_domain::edit_message(
             &message,
             UserId::new(editor_id),

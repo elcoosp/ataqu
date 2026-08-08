@@ -223,7 +223,7 @@ impl CinqService {
             lead_score: cmd.lead_score,
             expected_version: cmd.expected_version,
         };
-        let event = contact_domain::update_contact(domain_cmd, self.clock.as_ref());
+        let event = contact_domain::update_contact(domain_cmd, self.clock.as_ref())?;
         if let Some(name) = event.name {
             contact.name = name;
         }
@@ -699,6 +699,7 @@ impl CinqService {
             order: event.order,
             created_at: event.created_at,
             updated_at: event.created_at,
+            version: 0,
         };
         self.stage_repo.save_pipeline_stage(&stage).await?;
         Ok(stage)
@@ -728,19 +729,26 @@ impl CinqService {
         id: Uuid,
         name: Option<String>,
         order: Option<i32>,
-        _expected_version: i32,
+        expected_version: i32,
     ) -> CinqResult<PipelineStage> {
         let mut stage = self
             .stage_repo
             .find_pipeline_stage_by_id(&tenant_id, id)
             .await?
             .ok_or(CinqServiceError::PipelineStageNotFound)?;
+        if stage.version != expected_version {
+            return Err(CinqServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, stage.version
+            )));
+        }
         if let Some(name) = name {
             stage.name = name;
         }
         if let Some(order) = order {
             stage.order = order;
         }
+        stage.version += 1;
         self.stage_repo.save_pipeline_stage(&stage).await?;
         Ok(stage)
     }

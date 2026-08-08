@@ -245,5 +245,4 @@ pub fn routes() -> Router<AppState> {
                 .delete(delete_workflow),
         )
         .route("/workflows/:id/execute", post(execute_workflow))
-        .route("/templates", get(list_templates))
 }

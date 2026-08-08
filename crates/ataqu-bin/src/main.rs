@@ -509,16 +509,16 @@ async fn main() -> anyhow::Result<()> {
                         {
                             if let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str) {
                                 tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
-                                let txn = match gdpr_db_pool.begin().await {
-                                    Ok(t) => t,
-                                    Err(e) => {
-                                        tracing::error!(error = %e, "Failed to begin GDPR transaction");
-                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                            e.to_string(),
-                                        ));
-                                    }
-                                };
                                 for table in gdpr_registry.tables.iter() {
+                                    let txn = match gdpr_db_pool.begin().await {
+                                        Ok(t) => t,
+                                        Err(e) => {
+                                            tracing::error!(error = %e, "Failed to begin GDPR transaction");
+                                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                                e.to_string(),
+                                            ));
+                                        }
+                                    };
                                     let sql = format!(
                                         "DELETE FROM {}.{} WHERE {} = $1",
                                         table.schema, table.table, table.tenant_id_column
@@ -535,12 +535,12 @@ async fn main() -> anyhow::Result<()> {
                                             e.to_string(),
                                         ));
                                     }
-                                }
-                                if let Err(e) = txn.commit().await {
-                                    tracing::error!(error = %e, "Failed to commit GDPR transaction");
-                                    return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                        e.to_string(),
-                                    ));
+                                    if let Err(e) = txn.commit().await {
+                                        tracing::error!(error = %e, "Failed to commit GDPR transaction");
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                            e.to_string(),
+                                        ));
+                                    }
                                 }
                             }
                         }
@@ -599,11 +599,16 @@ async fn main() -> anyhow::Result<()> {
                             })
                             .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
 
-                        if let Err(e) = mailer.send(&email) {
-                            tracing::error!("Failed to send password reset email: {}", e);
-                        } else {
-                            tracing::info!("Password reset email sent for {}", recipient);
-                        }
+                        let mailer_clone = mailer.clone();
+                        let email_clone = email.clone();
+                        let recipient_clone = recipient.to_string();
+                        tokio::task::spawn_blocking(move || {
+                            if let Err(e) = mailer_clone.send(&email_clone) {
+                                tracing::error!("Failed to send password reset email: {}", e);
+                            } else {
+                                tracing::info!("Password reset email sent for {}", recipient_clone);
+                            }
+                        }).await.ok();
                     }
 
                     if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
@@ -664,11 +669,16 @@ async fn main() -> anyhow::Result<()> {
                             })
                             .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
 
-                        if let Err(e) = mailer.send(&email) {
-                            tracing::error!("Failed to send booking reminder email: {}", e);
-                        } else {
-                            tracing::info!("Booking reminder email sent for {}", booking_id);
-                        }
+                        let mailer_clone = mailer.clone();
+                        let email_clone = email.clone();
+                        let booking_id_clone = booking_id.to_string();
+                        tokio::task::spawn_blocking(move || {
+                            if let Err(e) = mailer_clone.send(&email_clone) {
+                                tracing::error!("Failed to send booking reminder email: {}", e);
+                            } else {
+                                tracing::info!("Booking reminder email sent for {}", booking_id_clone);
+                            }
+                        }).await.ok();
                     }
 
                     Ok(())

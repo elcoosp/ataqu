@@ -106,12 +106,18 @@ pub async fn delete_dashboard(
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateDashboardRequest {
+    pub name: Option<String>,
+    pub config: Option<serde_json::Value>,
+}
+
 pub async fn update_dashboard(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-    Json(payload): Json<CreateDashboardRequest>,
+    Json(payload): Json<UpdateDashboardRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let if_match = headers
         .get(axum::http::header::IF_MATCH)
@@ -125,8 +131,8 @@ pub async fn update_dashboard(
         .update_dashboard(
             auth.tenant_id,
             id,
-            Some(payload.name),
-            Some(payload.config),
+            payload.name.clone(),
+            payload.config.clone(),
             if_match,
         )
         .await

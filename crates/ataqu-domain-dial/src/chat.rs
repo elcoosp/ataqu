@@ -160,6 +160,7 @@ pub struct Message {
     pub created_at: SystemTime,
     pub edited_at: Option<SystemTime>,
     pub deleted_at: Option<SystemTime>,
+    pub version: i32,
 }
 
 impl Message {
@@ -818,6 +819,7 @@ mod tests {
             created_at: UNIX_EPOCH,
             edited_at: None,
             deleted_at: None,
+            version: 0,
         };
 
         let event = edit_message(&message, author, "New content".to_string(), &clock).unwrap();
@@ -839,6 +841,7 @@ mod tests {
             created_at: UNIX_EPOCH,
             edited_at: None,
             deleted_at: None,
+            version: 0,
         };
 
         let result = edit_message(&message, editor, "New content".to_string(), &clock);
@@ -859,6 +862,7 @@ mod tests {
             created_at: UNIX_EPOCH,
             edited_at: None,
             deleted_at: None,
+            version: 0,
         };
 
         // Author can delete
@@ -886,6 +890,7 @@ mod tests {
             created_at: UNIX_EPOCH,
             edited_at: None,
             deleted_at: None,
+            version: 0,
         };
 
         let result = delete_message(&message, other, false, &clock);
@@ -909,6 +914,7 @@ mod tests {
             created_at: UNIX_EPOCH,
             edited_at: None,
             deleted_at: None,
+            version: 0,
         };
 
         let cmd = StartThreadCommand {
@@ -936,6 +942,7 @@ mod tests {
             created_at: UNIX_EPOCH,
             edited_at: None,
             deleted_at: None,
+            version: 0,
         };
 
         let cmd = StartThreadCommand {

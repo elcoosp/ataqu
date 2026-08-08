@@ -71,8 +71,12 @@ async fn request_id_middleware(mut req: Request, next: Next) -> Response {
     resp
 }
 
-async fn health_check() -> &'static str {
-    "ok"
+async fn health_check() -> impl axum::response::IntoResponse {
+    axum::Json(serde_json::json!({
+        "status": "nominal",
+        "version": env!("CARGO_PKG_VERSION"),
+        "timestamp": chrono::Utc::now().to_rfc3339()
+    }))
 }
 
 async fn metrics_handler(State(state): State<AppState>) -> String {
@@ -153,14 +157,10 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::auth::auth_middleware,
         ));
 
-    let upload_dir =
-        std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "/tmp/ataqu_uploads".to_string());
-
     Router::new()
         .route("/health", axum::routing::get(health_check))
         .route("/metrics", axum::routing::get(metrics_handler))
         .route("/ready", axum::routing::get(readiness_check))
-        .nest_service("/uploads", tower_http::services::ServeDir::new(upload_dir))
         .merge(public_routes)
         .merge(private_routes)
         .with_state(state)

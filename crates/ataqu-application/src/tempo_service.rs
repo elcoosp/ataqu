@@ -531,7 +531,7 @@ impl TempoService {
         });
 
         self.outbox
-            .append("collab_crm", "TempoInviteeCreated", tenant_id.as_uuid(), &contact_payload)
+            .append("collab_crm", "TempoInviteeCreated", Uuid::new_v4(), &contact_payload)
             .await
             .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
 

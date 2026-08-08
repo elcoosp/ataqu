@@ -289,7 +289,7 @@ pub async fn list_leave_requests(
     // Fetch all employees in one go to avoid N+1 queries
     let employees = state
         .pause_service
-        .list_employees(&auth.tenant_id, 10000, 0)
+        .list_employees(&auth.tenant_id, 100, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let employee_map: std::collections::HashMap<Uuid, String> =
