@@ -30,6 +30,7 @@ use ataqu_kernel::{Clock, IdGenerator};
 
 #[derive(Clone)]
 pub struct AppState {
+    pub db: sea_orm::DatabaseConnection,
     pub cinq_service: Arc<CinqService>,
     pub dial_service: Arc<DialService>,
     pub pivot_service: Arc<PivotService>,
@@ -84,13 +85,26 @@ async fn metrics_handler(State(state): State<AppState>) -> String {
 }
 
 async fn readiness_check(State(state): State<AppState>) -> impl axum::response::IntoResponse {
+    // ADR-034: Check critical background tasks and DB connectivity
     if state.email_tracking_tx.is_closed() {
         return (
             axum::http::StatusCode::SERVICE_UNAVAILABLE,
-            "email tracking down",
+            "email tracking channel closed",
         );
     }
-    (axum::http::StatusCode::OK, "ready")
+
+    // Check DB connection by executing a simple query
+    use sea_orm::ConnectionTrait;
+    match state.db.execute_raw(sea_orm::Statement::from_string(
+        sea_orm::DbBackend::Postgres,
+        "SELECT 1",
+    )).await {
+        Ok(_) => (axum::http::StatusCode::OK, "ready"),
+        Err(e) => {
+            tracing::error!(error = %e, "Readiness check DB query failed");
+            (axum::http::StatusCode::SERVICE_UNAVAILABLE, "database unavailable")
+        }
+    }
 }
 
 pub fn create_router(state: AppState) -> Router {
@@ -157,11 +171,36 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::auth::auth_middleware,
         ));
 
-    Router::new()
+    let track_router = Router::new()
+        .route(
+            "/track",
+            axum::routing::get(handlers::email_tracking::track_email_public),
+        )
+        .layer(axum::middleware::from_fn(request_id_middleware))
+        .with_state(state.clone());
+
+    let default_router = Router::new()
         .route("/health", axum::routing::get(health_check))
         .route("/metrics", axum::routing::get(metrics_handler))
         .route("/ready", axum::routing::get(readiness_check))
         .merge(public_routes)
         .merge(private_routes)
-        .with_state(state)
+        .with_state(state);
+
+    Router::new()
+        .fallback(|headers: axum::http::HeaderMap, req: Request| async move {
+            use tower::ServiceExt;
+            let is_track = headers
+                .get(axum::http::header::HOST)
+                .and_then(|v| v.to_str().ok())
+                .map(|h| h.starts_with("track."))
+                .unwrap_or(false);
+
+            if is_track {
+                track_router.oneshot(req).await
+            } else {
+                default_router.oneshot(req).await
+            }
+        })
+        .with_state(())
 }

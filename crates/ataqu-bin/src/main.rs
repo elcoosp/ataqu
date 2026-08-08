@@ -458,6 +458,7 @@ async fn main() -> anyhow::Result<()> {
     let aegis_service_for_admin = aegis_service.clone();
     let vault_service_for_reaper = vault_service.clone();
     let state = AppState {
+        db: pools.core.clone(),
         cinq_service,
         dial_service,
         pivot_service,
