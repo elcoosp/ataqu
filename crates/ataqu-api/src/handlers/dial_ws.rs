@@ -110,6 +110,23 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     .and_then(|v| v.as_str())
                                     .and_then(|s| uuid::Uuid::parse_str(s).ok())
                                 {
+                                    // [VULN-001] Verify user is a participant before subscribing
+                                    if state
+                                        .dial_service
+                                        .get_channel(auth.tenant_id, channel_id, auth.user_id)
+                                        .await
+                                        .is_err()
+                                    {
+                                        let _ = tx.send(
+                                            serde_json::json!({
+                                                "type": "error",
+                                                "message": "Not authorized to subscribe to this channel"
+                                            })
+                                            .to_string(),
+                                        );
+                                        continue;
+                                    }
+
                                     let key = (auth.tenant_id.as_uuid(), channel_id);
                                     let entry =
                                         state.ws_registry.entry(key).or_insert_with(DashMap::new);

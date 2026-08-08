@@ -127,7 +127,7 @@ pub async fn list_channels(
     let offset = params.offset.unwrap_or(0);
     let (channels, total) = state
         .dial_service
-        .list_channels(auth.tenant_id, limit, offset)
+        .list_channels(auth.tenant_id, auth.user_id, limit, offset)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let items = channels.into_iter().map(|c| c.into()).collect();
@@ -182,7 +182,7 @@ pub async fn archive_channel(
 ) -> ApiResult<StatusCode> {
     state
         .dial_service
-        .archive_channel(auth.tenant_id, id)
+        .archive_channel(auth.tenant_id, auth.user_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
@@ -224,7 +224,7 @@ pub async fn update_channel(
 
     let channel = state
         .dial_service
-        .update_channel(auth.tenant_id, id, payload.name, if_match)
+        .update_channel(auth.tenant_id, auth.user_id, id, payload.name, if_match)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(channel.into()))
@@ -565,7 +565,7 @@ pub async fn search_messages(
         .unwrap_or(0);
     let messages = state
         .dial_service
-        .search_messages(auth.tenant_id, query, limit, offset)
+        .search_messages(auth.tenant_id, auth.user_id, query, limit, offset)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list: Vec<MessageResponse> = messages.into_iter().map(MessageResponse::from).collect();
@@ -651,7 +651,7 @@ pub async fn delete_reaction(
     // Ownership and existence are checked in the service layer
     state
         .dial_service
-        .delete_reaction(auth.tenant_id, message_id, reaction_id)
+        .delete_reaction(auth.tenant_id, auth.user_id, message_id, reaction_id)
         .await
         .map_err(|e| match e {
             ataqu_application::dial_service::DialServiceError::Validation(msg) => {

@@ -50,7 +50,7 @@ pub async fn unified_search(
 
     let messages = state
         .dial_service
-        .search_messages(auth.tenant_id, &params.q, limit, 0)
+        .search_messages(auth.tenant_id, auth.user_id, &params.q, limit, 0)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for m in messages {

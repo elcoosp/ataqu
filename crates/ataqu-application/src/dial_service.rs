@@ -126,11 +126,22 @@ impl DialService {
         Ok(channel)
     }
 
-    pub async fn archive_channel(&self, tenant_id: TenantId, channel_id: Uuid) -> DialResult<()> {
+    pub async fn archive_channel(
+        &self,
+        tenant_id: TenantId,
+        user_id: Uuid,
+        channel_id: Uuid,
+    ) -> DialResult<()> {
         let channel = self
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
             .await?;
+        // [VULN-004] Check authorization
+        if !channel.participants.contains(&UserId::new(user_id)) {
+            return Err(DialServiceError::Validation(
+                "User is not a participant in this channel".to_string(),
+            ));
+        }
         let event = dial_domain::archive_channel(&channel, self.clock.as_ref())
             .map_err(DialServiceError::Domain)?;
         self.repo
@@ -142,6 +153,7 @@ impl DialService {
     pub async fn update_channel(
         &self,
         tenant_id: TenantId,
+        user_id: Uuid,
         channel_id: Uuid,
         name: Option<String>,
         expected_version: i32,
@@ -150,6 +162,13 @@ impl DialService {
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
             .await?;
+
+        // [VULN-004] Check authorization
+        if !channel.participants.contains(&UserId::new(user_id)) {
+            return Err(DialServiceError::Validation(
+                "User is not a participant in this channel".to_string(),
+            ));
+        }
 
         if channel.version != expected_version {
             return Err(DialServiceError::Validation(format!(
@@ -200,12 +219,26 @@ impl DialService {
     pub async fn list_channels(
         &self,
         tenant_id: TenantId,
+        user_id: Uuid,
         limit: u64,
         offset: u64,
     ) -> DialResult<(Vec<Channel>, u64)> {
-        let total = self.repo.count_channels(&tenant_id).await?;
-        let channels = self.repo.list_channels(&tenant_id, limit, offset).await?;
-        Ok((channels, total))
+        // [VULN-003] Filter channels to only those the user can see (Public or participant)
+        let all_channels = self.repo.list_channels(&tenant_id, 10000, 0).await?;
+        let filtered: Vec<Channel> = all_channels
+            .into_iter()
+            .filter(|c| {
+                c.channel_type == ChannelType::Public
+                    || c.participants.contains(&UserId::new(user_id))
+            })
+            .collect();
+        let total = filtered.len() as u64;
+        let items = filtered
+            .into_iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .collect();
+        Ok((items, total))
     }
 
     // -- Message methods --
@@ -617,14 +650,32 @@ impl DialService {
     pub async fn search_messages(
         &self,
         tenant_id: TenantId,
+        user_id: Uuid,
         query: &str,
         limit: u64,
         offset: u64,
     ) -> DialResult<Vec<Message>> {
-        self.repo
-            .search_messages(&tenant_id, query, limit, offset)
-            .await
-            .map_err(DialServiceError::Domain)
+        // [VULN-002] Filter messages to only those in channels the user can access
+        let all_channels = self.repo.list_channels(&tenant_id, 10000, 0).await?;
+        let user_channels: std::collections::HashSet<ChannelId> = all_channels
+            .into_iter()
+            .filter(|c| {
+                c.channel_type == ChannelType::Public
+                    || c.participants.contains(&UserId::new(user_id))
+            })
+            .map(|c| c.id)
+            .collect();
+
+        let messages = self
+            .repo
+            .search_messages(&tenant_id, query, limit + offset, 0)
+            .await?;
+        Ok(messages
+            .into_iter()
+            .filter(|m| user_channels.contains(&m.channel_id))
+            .skip(offset as usize)
+            .take(limit as usize)
+            .collect())
     }
 
     pub async fn add_reaction(
@@ -634,6 +685,22 @@ impl DialService {
         user_id: Uuid,
         emoji: String,
     ) -> DialResult<Reaction> {
+        let message = self
+            .repo
+            .get_message(&tenant_id, &MessageId::new(message_id))
+            .await?;
+        let channel = self
+            .repo
+            .get_channel(&tenant_id, &message.channel_id)
+            .await?;
+
+        // [VULN-005] Check authorization
+        if !channel.participants.contains(&UserId::new(user_id)) {
+            return Err(DialServiceError::Validation(
+                "User is not a participant in this channel".to_string(),
+            ));
+        }
+
         let reactions = self
             .repo
             .list_reactions_for_message(&tenant_id, &MessageId::new(message_id))
@@ -674,6 +741,7 @@ impl DialService {
     pub async fn delete_reaction(
         &self,
         tenant_id: TenantId,
+        user_id: Uuid,
         message_id: Uuid,
         reaction_id: Uuid,
     ) -> DialResult<()> {
@@ -689,6 +757,13 @@ impl DialService {
         if reaction.message_id.as_uuid() != message_id {
             return Err(DialServiceError::Validation(
                 "Reaction does not belong to the specified message".to_string(),
+            ));
+        }
+
+        // [VULN-005] Check ownership
+        if reaction.user_id.as_uuid() != user_id {
+            return Err(DialServiceError::Validation(
+                "User does not own this reaction".to_string(),
             ));
         }
 
