@@ -1,14 +1,14 @@
-# 🎨 ATAQU UI/UX MASTER DOCUMENT — Version 11.0 (Phase 1)
+# 🎨 ATAQU UI/UX MASTER DOCUMENT — Version 12.0 (Phase 1)
 
-**Version:** 11.0  
-**Date:** 2026-08-08  
-**Status:** Updated with Grok Research Insights (Cross-Cutting Features 2.8–2.12)
+**Version:** 12.0
+**Date:** 2026-08-08
+**Status:** Updated with MLP Competitive Drivers (Conversational Mode, Shopify Sync, Chart Drill‑Down, Ultra‑Simple Booking UX)
 
 ---
 
 ## The Definitive Blueprint, Research Synthesis, & Complete Feature Map for the "Calm Predator" Interface
 
-> **Executive Note:** *Synthesized via the BMAD Creative Intelligence Suite, hardened with the UX Researcher skill, and integrated with `onboardjs`. Version 11.0 achieves 100% parity with the Phase 1 Feature Spec (v2.7) and incorporates real-time social listening insights from 200+ authentic founder/CTO/Ops posts. It introduces four new cross-cutting features: **System Health & Observability**, **Access Governance & Audit**, **Onboarding Activation & Churn Prevention**, and **Data Consolidation & Cross-App Dashboards**, plus a **Changelog & Stability Policy** for operational trust. Ataqu's UI is the physical manifestation of our "Calm Predator" ethos: dark, glassmorphic, ruthlessly fast, mathematically precise, and silently powerful. If a design decision, research insight, or user flow is not in this document, it is out of scope.*
+> **Executive Note:** *Synthesized via the BMAD Creative Intelligence Suite, hardened with the UX Researcher skill, and integrated with `onboardjs`. Version 12.0 achieves 100% parity with the Phase 1 Feature Spec (v2.9) and incorporates four high‑value MLP features based on competitor love‑driver analysis: **Conversational Form Mode** (SOND), **Chart Drill‑Down** (VISTA), **Shopify Sync** (VAULT), and **Ultra‑Simple Booking UX** (TEMPO). Ataqu's UI is the physical manifestation of our "Calm Predator" ethos: dark, glassmorphic, ruthlessly fast, mathematically precise, and silently powerful. If a design decision, research insight, or user flow is not in this document, it is out of scope.*
 
 ---
 
@@ -450,35 +450,72 @@ In the workflow list, each workflow has a status column showing:
 
 ---
 
-### 8.7 TEMPO (Scheduling)
-**Purpose:** Calendar sync, booking links, no-show detection.
+### 8.7 TEMPO (Scheduling) — UPDATED with Ultra‑Simple Booking UX
+
+**Purpose:** Calendar sync, booking links, no‑show detection.
 
 **Routes:**
 - `/` (Dashboard: Upcoming meetings)
 - `/event-types` (Configuration)
 - `/event-types/:id/customization` (Custom invitation/reminder email templates)
 - `/book/:slug` (Public booking page)
-- `/meetings/:id` (Meeting detail + no-show status)
+- `/meetings/:id` (Meeting detail + no‑show status)
 - `/settings/calendars` (OAuth integration for Google/Outlook)
 
 **Primary User Flows:**
-1. **Public Booking:** Prospect clicks 30-min slot → Form appears → clicks "Book" → Slot turns gray instantly (Optimistic UI).
-2. **No-Show Detection:** Meeting time passes → if no WebSocket `MeetingJoined` event, `no_show_worker` triggers → UI updates status to "No-Show" with red badge.
+1. **Public Booking:** Prospect clicks 30‑min slot → Form appears → clicks "Book" → Slot turns gray instantly (Optimistic UI).
+2. **No‑Show Detection:** Meeting time passes → if no WebSocket `MeetingJoined` event, `no_show_worker` triggers → UI updates status to "No‑Show" with red badge.
 3. **Calendar Sync Setup:** User navigates to `/settings/calendars` → Clicks "Connect Google" → OAuth flow → Calendars sync bidirectionally.
 
-**`onboardjs` Micro-Tour (Event Types):**
+**🆕 8.7.5 Ultra‑Simple Booking UX (P0)**
+
+**The Problem:** Calendly users love its *radical simplicity*. The booking page should be so simple that anyone can book in under 30 seconds without reading instructions.
+
+**The Solution:** Redesign the public booking page (`/book/:slug`) to be a 3‑screen maximum flow.
+
+**Screen 1: Event Type Selection (if multiple event types exist)**
+- Clean, card‑based layout showing each event type with:
+  - Event name (bold, large)
+  - Duration badge (e.g., "30 min")
+  - Brief description (1 line)
+  - Primary CTA: "Select"
+- If only one event type exists → skip this screen entirely.
+
+**Screen 2: Time Slot Picker**
+- Calendar grid showing the next 30 days.
+- Available slots highlighted in amber (`bg-primary/20` on hover, `bg-primary` when selected).
+- Timezone selector: auto‑detected via `Intl.DateTimeFormat`, but user can change via dropdown.
+- "Show more dates" button at the bottom.
+- Once a slot is selected → button appears: "Continue to details".
+
+**Screen 3: Guest Details + Confirmation**
+- Simple form: Name (required), Email (required).
+- Optional fields (company, phone) are **hidden** behind a "Show more" link.
+- "Book" button (primary CTA).
+- On success: confirmation screen with meeting details + "Add to Calendar" button.
+- On failure: inline error message (e.g., "This slot is no longer available. Please select another.")
+
+**Design Rules:**
+- **No configuration visible to the invitee.** Buffers, custom questions, and advanced settings are hidden.
+- **Mobile‑first:** All screens must be fully functional on a 375px screen.
+- **3‑clicks max:** Select event → Select time → Enter name/email → Book.
+- **Glassmorphic styling:** Use `.ataqu-glass` for the container.
+- **Loading:** Skeleton loader while slots load. **No spinners.**
+
+**`onboardjs` Micro‑Tour (Event Types):**
 - *Trigger:* First visit to `/event-types`.
 - *Step 1:* Highlight "New Event Type". Text: "Calendly charges per user. We include this. Create a link."
-- *Step 2:* Highlight the "No-Show Detection" toggle. Text: "If they don't show up, we'll trigger a follow-up automatically in 15 minutes."
+- *Step 2:* Highlight the "No‑Show Detection" toggle. Text: "If they don't show up, we'll trigger a follow‑up automatically in 15 minutes."
 
 ---
 
-### 8.8 SOND (Forms & Surveys)
+### 8.8 SOND (Forms & Surveys) — UPDATED with Conversational Mode
+
 **Purpose:** Data collection feeding natively into the OS.
 
 **Routes:**
 - `/` (Form list)
-- `/builder/:id` (Drag-and-drop editor)
+- `/builder/:id` (Drag‑and‑drop editor)
 - `/builder/:id/style` (Branding: colors, logos, fonts)
 - `/builder/:id/settings` (Notifications and outbound webhooks)
 - `/submissions/:id` (Data table view)
@@ -488,15 +525,51 @@ In the workflow list, each workflow has a status column showing:
 2. **Submission Processing:** User clicks "Export CSV" → File downloads instantly → Background outbox event fires `FormSubmittedV1` → SPARK creates CINQ lead.
 3. **Webhook Config:** User navigates to `/builder/:id/settings` → Adds outbound webhook URL to push submissions to an external Make.com scenario.
 
-**`onboardjs` Micro-Tour (Builder):**
+**🆕 8.8.4 Conversational Mode (P0)**
+
+**The Problem:** Typeform's conversational format (one question at a time) is beloved because it feels like a conversation, not a form. It increases completion rates by 30%+.
+
+**The Solution:** A toggle in the form builder that switches between "Standard" (all questions on one page) and "Conversational" (one question per slide).
+
+**Builder UI:**
+- A toggle in the form settings panel: `[Standard] [Conversational]`.
+- Label: *"Display mode"* with tooltip: *"Conversational mode shows one question at a time — higher completion rates."*
+- Default: Standard.
+
+**Conversational Mode Behavior:**
+- The form renders one question per slide.
+- Each slide contains: question text + input (or choices) + "Next" button.
+- Progress bar at the top: `Question 3 of 10`.
+- Smooth slide transitions: 150ms ease‑out (compositor‑friendly: `transform: translateX`).
+- Conditional logic: if a question is hidden by logic, skip it silently in the count.
+- Last question: "Next" button changes to "Submit".
+- On submit: standard POST to `/api/v1/sond/forms/:id/submissions`.
+
+**Validation:**
+- Each question is validated when the user clicks "Next" (inline error).
+- The user cannot proceed to the next question until the current one is valid.
+- On error: shake animation (subtle) + red border + error message below the input.
+
+**Confirmation Screen (after submission):**
+- Shows: "Thank you! Your response has been recorded."
+- Optional: redirect to a custom URL (if configured in the form settings).
+
+**Design Rules:**
+- **Mobile‑first:** Large touch targets, readable text, no side‑by‑side layout.
+- **Branding:** Uses the form's configured branding (colors, logo, font).
+- **Accessibility:** Focus is trapped inside the slide. Keyboard navigation works.
+- **No spinners:** Use skeleton loaders during submission.
+
+**`onboardjs` Micro‑Tour (Builder):**
 - *Trigger:* First visit to `/builder/new`.
 - *Step 1:* Highlight the left sidebar. Text: "Typeform taxes your success. We don't. Drag a question."
 - *Step 2:* Highlight the right sidebar (Logic). Text: "Add conditional logic. When they submit, it natively creates a lead in CINQ."
 
 ---
 
-### 8.9 VAULT (Inventory)
-**Purpose:** Real-time stock control, atomic updates, multi-warehouse.
+### 8.9 VAULT (Inventory) — UPDATED with Shopify Sync
+
+**Purpose:** Real‑time stock control, atomic updates, multi‑warehouse.
 
 **Routes:**
 - `/` (Dashboard: Low stock alerts)
@@ -511,9 +584,52 @@ In the workflow list, each workflow has a status column showing:
 1. **Stock Adjustment:** User clicks "Adjust Stock" → Glassmorphic Popover opens → selects "Remove", types "10" → clicks "Save" → Number instantly animates from 150 → 140 (Optimistic UI).
 2. **Stock Reservation:** User navigates to `/reservations` → UI displays a TanStack Table mapping CINQ Deal IDs to VAULT Product IDs, showing reserved quantities.
 
-**`onboardjs` Micro-Tour (Product Detail):**
+**🆕 8.9.5 Shopify Sync (P0)**
+
+**The Problem:** Cin7 users love the ability to sync inventory with their e‑commerce store automatically. Manual stock updates cause overselling and customer complaints.
+
+**The Solution:** A one‑click OAuth connection to Shopify that syncs products, inventory levels, and orders bi‑directionally.
+
+**UI: Shopify Connection Settings (in VAULT → Settings → Channels)**
+- **Before connection:**
+  - A card: "Connect Shopify"
+  - Description: "Sync your Shopify products and inventory with VAULT."
+  - CTA: "Connect Shopify" button → redirects to Shopify OAuth.
+- **During connection:**
+  - Shopify OAuth screen (user logs in, authorizes the Ataqu app).
+  - Redirects back to VAULT with `?shopify_sync=success`.
+- **After connection:**
+  - Status card showing:
+    - Shop name
+    - Connection status: `Connected` (green badge) or `Error` (red badge).
+    - Last sync timestamp: `Last sync: 2 minutes ago`.
+    - Product count: `1,234 products synced`.
+  - Actions: "Sync now" button (manual force sync) + "Disconnect" button (with confirmation modal).
+  - Error log: expandable section showing recent sync errors (max 20 entries) with "Retry" button per error.
+
+**Sync Status in the System Health Dashboard:**
+- The System Health Dashboard (2.8) shows a new component: "Shopify Sync" with status (green/yellow/red) and last sync timestamp.
+- If sync fails for more than 1 hour → amber alert. More than 6 hours → red alert.
+
+**Data Synced:**
+- **Products:** Name, SKU, description, price, images (URLs only).
+- **Variants:** Size, color, stock_quantity, price.
+- **Orders:** Order number, items, quantities, status.
+- **Inventory:** Stock levels are synchronized bi‑directionally.
+
+**Implementation Notes:**
+- OAuth flow: `GET /api/v1/vault/shopify/auth` → redirects to Shopify → callback to `GET /api/v1/vault/shopify/callback`.
+- Worker: runs every 5 minutes, polls Shopify API for changes.
+- Webhooks: optional webhook endpoint `/api/v1/vault/shopify/webhook` for real‑time updates.
+
+**Error Handling:**
+- If Shopify API returns an error → log to DLQ, show in error log.
+- If a product fails to sync → individual error entry with product name and reason.
+- If the connection is revoked → UI shows "Disconnected" with a "Reconnect" button.
+
+**`onboardjs` Micro‑Tour (Product Detail):**
 - *Trigger:* First visit to `/products/:id`.
-- *Step 1:* Highlight the current stock number. Text: "Real-time stock. Zero race conditions."
+- *Step 1:* Highlight the current stock number. Text: "Real‑time stock. Zero race conditions."
 - *Step 2:* Highlight "Adjust Stock". Text: "Adjust it. The math is protected at the database level. No overselling."
 
 ---
@@ -531,20 +647,20 @@ In the workflow list, each workflow has a status column showing:
 - `/timesheets` (Time tracking with overnight logic)
 
 **Primary User Flows:**
-1. **Leave Request:** Employee clicks "Request Leave" → Modal opens → Zod validation prevents end-date < start-date → clicks "Submit" → Request appears in "Pending" list instantly.
+1. **Leave Request:** Employee clicks "Request Leave" → Modal opens → Zod validation prevents end‑date < start‑date → clicks "Submit" → Request appears in "Pending" list instantly.
 2. **Manager Approval:** Manager clicks "Approve" → Row moves to "Approved" tab instantly → Outbox fires `LeaveApprovedV1` → AEGIS adjusts permissions.
 3. **Document Upload:** Manager navigates to `/employees/:id/documents` → Drags PDF contract into dropzone → File uploads directly to S3 via presigned URL → Appears in document list instantly.
 
-**`onboardjs` Micro-Tour (Leave View):**
+**`onboardjs` Micro‑Tour (Leave View):**
 - *Trigger:* First visit to `/leave`.
 - *Step 1:* Highlight "Request Leave". Text: "No payroll bloat. Just leave tracking."
 - *Step 2:* Highlight the pending list (if manager). Text: "Approve here, and their system access updates automatically via AEGIS."
 
 ---
 
-### 8.11 VISTA (Analytics) — UPDATED with System Health Dashboard & Cross-App Dashboards
+### 8.11 VISTA (Analytics) — UPDATED with System Health Dashboard, Cross‑App Dashboards, and Chart Drill‑Down
 
-**Purpose:** Real-time BI, zero ETL, native SQL, drag-and-drop dashboard, and operational observability.
+**Purpose:** Real‑time BI, zero ETL, native SQL, drag‑and‑drop dashboard, and operational observability.
 
 **Routes:**
 - `/` (Dashboard list)
@@ -555,31 +671,69 @@ In the workflow list, each workflow has a status column showing:
 
 **Primary User Flows:**
 
-1. **Real-time Dashboard:** Initial fetch via TanStack Query → SSE hook connects to backend → CINQ deal won triggers SSE event → KPI card updates with subtle 100ms fade-in.
+1. **Real‑time Dashboard:** Initial fetch via TanStack Query → SSE hook connects to backend → CINQ deal won triggers SSE event → KPI card updates with subtle 100ms fade‑in.
 2. **Custom SQL Query:** User writes SQL in Monaco editor → clicks "Run" → `SET LOCAL statement_timeout = '15s'` on backend → Results render in TanStack Table.
 3. **Dashboard Editing:** User navigates to `/dashboards/:id/edit` → Drags a new "Bar Chart" widget onto the grid → Configures data source via dropdown → Clicks "Save Layout".
 
 **🆕 4. System Health Dashboard Flow:**
 - User clicks the Health Widget in the Shell (or navigates to `/health`).
-- UI displays a high-density dashboard with four key sections:
+- UI displays a high‑density dashboard with four key sections:
   - **Workflow Status:** List of all SPARK workflows with last run, success/failure, and DLQ depth.
   - **Outbox Health:** Lag in seconds, pending events, last dispatched event timestamp.
   - **Integration Status:** Native connectors (CINQ→DIAL, SOND→CINQ, VAULT→CINQ) with green/yellow/red indicators.
   - **Connection Pools:** Current DB connection usage (X/35), pool wait times.
 - **DLQ Viewer:** Expandable section showing failed events with payload, error reason, and "Replay" / "Delete" buttons.
-- **Auto-refresh:** Polls every 10 seconds (or SSE for real-time updates).
+- **Auto‑refresh:** Polls every 10 seconds (or SSE for real‑time updates).
 - **Export:** Download health report as PDF/CSV.
 - **Empty State:** "No failed workflows in the last 7 days. All systems nominal."
 
-**🆕 5. Cross-App "Combine Data" Flow:**
+**🆕 5. Cross‑App "Combine Data" Flow:**
 - User is in any VISTA dashboard.
-- Clicks the "Combine Data" button (top-right).
+- Clicks the "Combine Data" button (top‑right).
 - UI opens a modal: select primary data source (e.g., "CINQ Deals") and secondary data source (e.g., "VAULT Stock").
 - Chart updates instantly to overlay both datasets.
-- No SQL required. Powered by pre-aggregated materialized views in PostgreSQL.
+- No SQL required. Powered by pre‑aggregated materialized views in PostgreSQL.
 - **Export:** Download the combined view as CSV/PNG.
 
-**`onboardjs` Micro-Tour (Dashboard):**
+**🆕 6. Chart Drill‑Down (P0)**
+
+**The Problem:** Tableau users love the interactivity of clicking on a chart to "drill down" into the underlying data. Static charts feel superficial.
+
+**The Solution:** Click on any chart element (bar, line, pie segment) → opens a side panel (sheet/drawer) showing the raw data behind that element.
+
+**Interaction Flow:**
+1. User hovers over a chart element → subtle highlight (amber border, 2px).
+2. User clicks the element → a side panel slides in from the right (350px width, `.ataqu-glass` styling).
+3. The side panel shows:
+   - **Title:** `"Deals in August 2026"` (or whatever dimension was clicked).
+   - **Data Table:** TanStack Table with all relevant columns (e.g., Deal Name, Amount, Stage, Contact).
+   - **Export:** "Export CSV" button.
+   - **Close:** "X" button or click outside to close.
+
+**Supported Chart Types:**
+- **Bar Chart:** Click on a bar → shows items in that category (e.g., all deals for that month).
+- **Line Chart:** Click on a data point → shows items at that timestamp.
+- **Pie Chart:** Click on a segment → shows items in that segment (e.g., all deals in "Won" stage).
+- **Area Chart:** Click on a data point → same as line chart.
+
+**Data Fetching:**
+- The frontend sends a `POST /api/v1/vista/drill-down` request with:
+  - `dashboardId: string`
+  - `widgetId: string`
+  - `dimension: string` (e.g., "month", "stage", "product")
+  - `value: string` (e.g., "2026-08", "Won", "Acme Corp")
+  - `filters: Record<string, any>` (same filters applied to the dashboard)
+- Backend returns an array of records (up to 1000 rows, paginated if more).
+- The table is virtualized (`TanStack Virtual`) for performance.
+
+**Design Rules:**
+- **No modal:** Use a side panel (drawer/sheet) to avoid breaking the dashboard context.
+- **Glassmorphic:** `.ataqu-glass` styling with `box-shadow: 0 4px 12px rgba(0,0,0,0.4)`.
+- **Smooth animation:** 200ms slide‑in (translateX), 200ms slide‑out.
+- **Loading:** Skeleton loader in the side panel while data fetches.
+- **Empty state:** "No data found for this selection."
+
+**`onboardjs` Micro‑Tour (Dashboard):**
 - *Trigger:* First visit to `/dashboards/:id`.
 - *Step 1:* Highlight a KPI card. Text: "No ETL pipelines. This data is live from CINQ, right now."
 - *Step 2:* Highlight the "SSE" indicator. Text: "When a deal closes, this updates in milliseconds. No refresh button needed."
@@ -649,5 +803,12 @@ The following moves are never allowed—they signal AI-generated slop or violate
 | **Shell (Global)** | System Health Widget, Setup Progress Tracker, Changelog Bell, Element Counter | P0 |
 | **AEGIS** | Permission Matrix (`/admin/access-matrix`), Unified Audit Log (`/admin/audit`) | P0 |
 | **SPARK** | Health Status Column in workflow list, Health Dashboard link | P0 |
-| **VISTA** | System Health Dashboard (`/health`), Cross-App "Combine Data" button | P0/P1 |
+| **VISTA** | System Health Dashboard (`/health`), Cross-App "Combine Data" button, Chart Drill‑Down side panel | P0/P1 |
+| **TEMPO** | Ultra‑Simple Booking UX (3‑screen public booking) | P0 |
+| **SOND** | Conversational Mode toggle in builder, one‑question‑per‑slide preview | P0 |
+| **VAULT** | Shopify Sync connection UI, status card, error log | P0 |
 | **All Apps** | Setup Progress tasks (5 per app), Inactivity Alerts | P1 |
+
+---
+
+**Document prepared for Ataqu Architecture Team. Version 12.0 is ready for AI agent implementation.**
