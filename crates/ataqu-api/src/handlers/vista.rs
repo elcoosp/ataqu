@@ -206,7 +206,6 @@ pub fn routes() -> Router<AppState> {
             "/dashboards/:id",
             axum::routing::delete(delete_dashboard).put(update_dashboard),
         )
-        .route("/raw-sql", axum::routing::post(execute_raw_sql))
         .route(
             "/data-points/:metric",
             axum::routing::get(get_data_points_handler),

@@ -325,6 +325,25 @@ async fn main() -> anyhow::Result<()> {
                     body,
                     headers,
                 } => {
+                    // [HIGH-001] SSRF Protection
+                    let parsed_url = reqwest::Url::parse(url).map_err(|e| e.to_string())?;
+                    let host = parsed_url.host_str().ok_or("Invalid URL")?;
+
+                    // Block internal IPs and localhost
+                    if host == "localhost" || host.starts_with("127.") || host.starts_with("10.") || host.starts_with("192.168.") || host.starts_with("169.254.") {
+                        return Err("SSRF attempt blocked: internal IP".to_string());
+                    }
+                    if host.starts_with("172.") {
+                        let parts: Vec<&str> = host.split('.').collect();
+                        if parts.len() == 4 {
+                            if let Ok(second_octet) = parts[1].parse::<u8>() {
+                                if second_octet >= 16 && second_octet <= 31 {
+                                    return Err("SSRF attempt blocked: internal IP".to_string());
+                                }
+                            }
+                        }
+                    }
+
                     let mut req = match method.to_uppercase().as_str() {
                         "POST" => self.http_client.post(url),
                         "PUT" => self.http_client.put(url),
@@ -476,8 +495,15 @@ async fn main() -> anyhow::Result<()> {
         http_client,
     };
 
+    // [MED-001] Restrict CORS origins
+    let allowed_origins = std::env::var("ALLOWED_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let origins: Vec<axum::http::HeaderValue> = allowed_origins
+        .split(',')
+        .filter_map(|s| s.trim().parse().ok())
+        .collect();
     let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
+        .allow_origin(origins)
         .allow_methods([
             axum::http::Method::GET,
             axum::http::Method::POST,
@@ -703,9 +729,12 @@ async fn main() -> anyhow::Result<()> {
                 }
             };
             let dispatcher = OutboxDispatcher::new(dispatcher_pool.clone(), handler);
-            dispatcher.run().await;
-            tracing::error!("Outbox dispatcher stopped. Restarting in 5s...");
-            tokio::time::sleep(Duration::from_secs(5)).await;
+            #[allow(unreachable_code)]
+            {
+                dispatcher.run().await;
+                tracing::error!("Outbox dispatcher stopped. Restarting in 5s...");
+                tokio::time::sleep(Duration::from_secs(5)).await;
+            }
         }
     });
 
@@ -776,6 +805,8 @@ async fn main() -> anyhow::Result<()> {
     let admin_socket_path = "/tmp/ataqu-admin.sock";
     let _ = std::fs::remove_file(admin_socket_path);
     let admin_listener = tokio::net::UnixListener::bind(admin_socket_path)?;
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(admin_socket_path, std::fs::Permissions::from_mode(0o600))?;
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
     let id_gen_for_admin = id_gen.clone();
     let clock_for_admin = clock.clone();

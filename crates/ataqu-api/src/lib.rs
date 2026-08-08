@@ -56,6 +56,16 @@ pub struct AppState {
     pub http_client: reqwest::Client,
 }
 
+async fn security_headers_middleware(req: Request, next: Next) -> Response {
+    let mut resp = next.run(req).await;
+    let headers = resp.headers_mut();
+    headers.insert("x-content-type-options", "nosniff".parse().unwrap());
+    headers.insert("x-frame-options", "DENY".parse().unwrap());
+    headers.insert("content-security-policy", "default-src 'self'".parse().unwrap());
+    headers.insert("referrer-policy", "strict-origin-when-cross-origin".parse().unwrap());
+    resp
+}
+
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
     let request_id = Uuid::now_v7().to_string();
     req.extensions_mut().insert(request_id.clone());
@@ -132,6 +142,7 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", handlers::tempo::public_routes())
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
+        .nest("/api/aegis", handlers::aegis::public_routes())
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
@@ -173,6 +184,7 @@ pub fn create_router(state: AppState) -> Router {
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
         ))
+        .layer(axum::middleware::from_fn(security_headers_middleware))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             crate::middleware::auth::auth_middleware,

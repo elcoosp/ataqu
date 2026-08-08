@@ -33,7 +33,11 @@ pub async fn ws_handler(
     let token_data = jsonwebtoken::decode::<crate::middleware::auth::JwtClaims>(
         token,
         &jsonwebtoken::DecodingKey::from_secret(&state.jwt_secret),
-        &jsonwebtoken::Validation::default(),
+        &{
+        let mut v = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
+        v.validate_exp = true;
+        v
+    },
     )
     .map_err(|_| ApiResponseError::unauthorized("Invalid token"))?;
 

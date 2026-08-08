@@ -608,13 +608,13 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/users/:id/deactivate", post(deactivate_user))
         .route("/logout", post(logout))
         .route("/login", post(login))
-        .route("/sso/login", post(sso_login))
-        .route("/sso/callback", post(sso_callback))
         .route("/refresh", post(refresh_token))
         .route("/mfa/setup", post(mfa_setup))
         .route("/mfa/verify", post(mfa_verify))
         .route("/api-keys", post(create_api_key).get(list_api_keys))
         .route("/api-keys/:id", delete(delete_api_key))
-        .route("/password-reset/request", post(request_password_reset))
-        .route("/password-reset/confirm", post(reset_password))
+}
+
+pub fn public_routes() -> axum::Router<crate::AppState> {
+    axum::Router::new()
 }

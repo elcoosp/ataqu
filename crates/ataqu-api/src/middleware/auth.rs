@@ -5,7 +5,7 @@ use axum::extract::{FromRequestParts, Request, State};
 use axum::http::request::Parts;
 use axum::middleware::Next;
 use axum::response::Response;
-use jsonwebtoken::{DecodingKey, Validation, decode};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -70,7 +70,11 @@ pub async fn auth_middleware(
         if let Ok(token_data) = decode::<JwtClaims>(
             auth_header,
             &DecodingKey::from_secret(&app_state.jwt_secret),
-            &Validation::default(),
+            &{
+            let mut v = Validation::new(Algorithm::HS256);
+            v.validate_exp = true;
+            v
+        },
         ) {
             if token_data.claims.token_type != "access" {
                 return Err(ApiResponseError::unauthorized("Invalid token type"));
