@@ -111,7 +111,7 @@ async fn main() -> anyhow::Result<()> {
     let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.cinq.clone()));
     let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.cinq.clone(),
-    });
+    ));
     let cinq_service = Arc::new(CinqService::new(
         contact_repo,
         deal_repo,
@@ -121,21 +121,21 @@ async fn main() -> anyhow::Result<()> {
         cinq_outbox,
         id_gen.clone(),
         clock.clone(),
-    });
+    ));
 
     use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.dial.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.dial.clone()));
     let dial_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.dial.clone(),
-    });
+    ));
     let dial_service = Arc::new(DialService::new(
         dial_repo,
         dial_presence,
         dial_outbox,
         id_gen.clone(),
         clock.clone(),
-    });
+    ));
 
     use ataqu_infra_repositories::pivot_repo_impl::{
         PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository,
@@ -147,7 +147,7 @@ async fn main() -> anyhow::Result<()> {
     let pivot_rel_repo = Arc::new(PivotRelationRepository::new(pools.ops.clone()));
     let pivot_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.ops.clone(),
-    });
+    ));
     let pivot_service = Arc::new(PivotService::new(
         pivot_doc_repo,
         pivot_db_repo,
@@ -156,31 +156,31 @@ async fn main() -> anyhow::Result<()> {
         pivot_outbox,
         id_gen.clone(),
         clock.clone(),
-    });
+    ));
 
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.ops.clone()));
     let sond_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.ops.clone(),
-    });
+    ));
     let sond_service = Arc::new(SondService::new(
         sond_repo,
         sond_outbox,
         id_gen.clone(),
         clock.clone(),
-    });
+    ));
 
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.vault.clone()));
     let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.vault.clone(),
-    });
+    ));
     let vault_service = Arc::new(VaultService::new(
         vault_repo,
         vault_outbox,
         id_gen.clone(),
         clock.clone(),
-    });
+    ));
 
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.vista.clone()));
@@ -421,30 +421,30 @@ async fn main() -> anyhow::Result<()> {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new()),
         system_user_id,
-    });
+    ));
 
     let spark_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.core.clone(),
-    });
+    ));
     let spark_service = Arc::new(SparkService::new(
         spark_repo.clone(),
         action_dispatcher,
         spark_outbox,
         id_gen.clone(),
         clock.clone(),
-    });
+    ));
 
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.ops.clone()));
     let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.ops.clone(),
-    });
+    ));
     let tempo_service = Arc::new(TempoService::new(
         tempo_repo,
         tempo_outbox,
         id_gen.clone(),
         clock.clone(),
-    });
+    ));
 
     use ataqu_application::pause_infra::RealIdempotency;
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
@@ -454,7 +454,7 @@ async fn main() -> anyhow::Result<()> {
     let pause_doc_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
     let pause_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.ops.clone(),
-    });
+    ));
     let pause_service = Arc::new(PauseService::new(
         pause_idempotency,
         pause_employee_repo,
@@ -462,7 +462,7 @@ async fn main() -> anyhow::Result<()> {
         pause_doc_repo,
         pause_outbox,
         clock.clone(),
-    });
+    ));
 
     let (email_writer, email_tracking_tx) =
         ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
@@ -493,7 +493,7 @@ async fn main() -> anyhow::Result<()> {
         moka::sync::Cache::builder()
             .time_to_live(Duration::from_secs(600))
             .build(),
-    });
+    ));
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let http_client = reqwest::Client::new();
@@ -621,7 +621,7 @@ async fn main() -> anyhow::Result<()> {
                                         tracing::error!(error = %e, "Failed to begin GDPR transaction");
                                         return Err(ataqu_infra_outbox::DispatcherError::Handler(
                                             e.to_string(),
-                                        });
+                                        ));
                                     }
                                 };
                                 for table in gdpr_registry.tables.iter() {
