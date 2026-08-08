@@ -119,6 +119,16 @@ pub async fn auth_middleware(
                 roles: vec![api_key_data.role],
             };
             req.extensions_mut().insert(auth_ctx);
+
+            // Enforce admin scope for sensitive methods
+            let path = req.uri().path();
+            let is_admin_endpoint = path.contains("/gdpr/") || path.contains("/raw-sql") || path.contains("/users/") || path.contains("/deactivate");
+            if is_admin_endpoint && !api_key_data.scopes.iter().any(|s| s == "admin") {
+                return Err(ApiResponseError::Forbidden(
+                    "API key lacks admin scope for this endpoint".to_string(),
+                ));
+            }
+
             return Ok(next.run(req).await);
         }
     }

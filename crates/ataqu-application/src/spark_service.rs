@@ -187,15 +187,18 @@ impl SparkService {
             .repo
             .list_active_workflows_by_event_type(&event.schema, &event.event_type)
             .await?;
-        let event_tenant_id = event
+        let event_tenant_id = match event
             .payload
             .get("tenant_id")
             .and_then(|v| v.as_str())
             .and_then(|s| Uuid::parse_str(s).ok())
-            .unwrap_or(Uuid::nil());
-        if event_tenant_id == Uuid::nil() {
-            tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload");
-        }
+        {
+            Some(id) => id,
+            None => {
+                tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload. Skipping.");
+                return Ok(());
+            }
+        };
         for workflow in workflows {
             if workflow.tenant_id != event_tenant_id {
                 continue;

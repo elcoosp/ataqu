@@ -655,7 +655,11 @@ pub async fn search_custom_fields_cross(
     Query(params): Query<CrossFieldSearchParams>,
 ) -> ApiResult<Json<Vec<ContactResponse>>> {
     // ADR-030: Tier 3 cross-field search is rate-limited and result-capped.
-    // The global rate limiter applies, and we enforce a hard cap of 50 results.
+    // We use a specific rate limit key for this expensive operation.
+    let rate_key = format!("tier3_search:{}", auth.tenant_id.as_uuid());
+    if !state.rate_limiter.check(&rate_key) {
+        return Err(ApiResponseError::RateLimited);
+    }
     let limit = std::cmp::min(params.limit, 50);
     let contacts = state
         .cinq_service

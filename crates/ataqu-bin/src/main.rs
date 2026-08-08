@@ -442,6 +442,7 @@ async fn main() -> anyhow::Result<()> {
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();
+    let vault_service_for_reaper = vault_service.clone();
     let state = AppState {
         cinq_service,
         dial_service,
@@ -711,6 +712,18 @@ async fn main() -> anyhow::Result<()> {
                     tokio::time::sleep(Duration::from_secs(5)).await;
                     break;
                 }
+            }
+            tokio::time::sleep(Duration::from_secs(60)).await;
+        }
+    });
+
+    // Start expired reservation reaper worker
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = vault_service_for_reaper.reap_expired_reservations().await {
+                tracing::error!("Reservation reaper crashed: {}. Restarting in 5s...", e);
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                continue;
             }
             tokio::time::sleep(Duration::from_secs(60)).await;
         }

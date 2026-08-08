@@ -1,11 +1,11 @@
-# 🏗️ ATAQU PROJECT — MASTER ARCHITECTURE & PROJECT SPECIFICATION (v144.0)
+# 🏗️ ATAQU PROJECT — MASTER ARCHITECTURE & PROJECT SPECIFICATION (v145.0)
 
-**Version:** 144.0 (Dependency Upgrade)
-**Date:** 2026-08-01
+**Version:** 145.0 (Post-Research Update — Cross-Cutting Features)
+**Date:** 2026-08-08
 **Author:** Ataqu Architecture Team
 **Brand Domain:** `ataqu.com`
 
-> **ENGINEERING NOTE:** v144.0 is a pure dependency upgrade. All versions have been updated to their latest stable majors as of August 2026. No architectural changes, ADRs, or code structure has been modified. This ensures the codebase remains secure, performant, and compatible with the modern ecosystem.
+> **ENGINEERING NOTE:** v145.0 incorporates findings from real-time social listening (Grok analysis of 200+ authentic founder/CTO/Ops posts). Four new cross-cutting features have been added to the MLP: **System Health & Observability** (P0), **Access Governance & Audit** (P0), **Onboarding Activation & Churn Prevention** (P1), and **Data Consolidation & Cross-App Dashboards** (P1). A **Changelog & Stability Policy** (P2) has also been added for operational trust. This version preserves all existing ADRs, database schemas, and architectural decisions while extending them to support these new operational features.
 
 ---
 
@@ -35,6 +35,7 @@ Build **Ataqu**: a single Rust backend codebase powering a suite of 10 SaaS appl
 - Deliver superior performance via natively compiled Rust and static SPA frontends.
 - Flat-rate pricing below competitors; no per-seat fees.
 - **Validate Early:** Deploy Minimal Viable AEGIS (OIDC SSO only) at Week 12, run strict `k6` load tests against the 8 GB VPS, and validate resource bounds before billing.
+- **Operational Trust:** Differentiate through native observability (System Health), governance (Permission Matrix + Audit Log), and proactive onboarding (Activation Tracker) — features that eliminate the "silent failures" and governance chaos that plague fragmented stacks.
 
 ### 1.3 The 10-App Portfolio
 
@@ -64,6 +65,8 @@ Build **Ataqu**: a single Rust backend codebase powering a suite of 10 SaaS appl
 | **Bounded Resources** | Every cache, pool, and channel has an explicit capacity. Memory budget is calculated and verified. |
 | **Hard Boundaries** | Bounded contexts are isolated natively by PostgreSQL Roles, Row Level Security (RLS), Column-Level Privileges, schema `ENUM`s, and sequence grants. |
 | **Compile-Time Security** | PII redaction is enforced via newtypes implementing `Debug`/`Display` as `[REDACTED]`. JSON serialization is strictly restricted to the API layer via wrapper structs, preventing log leaks across the unified binary. |
+| **🆕 Operational Observability** | Every critical background process (outbox, workflows, integrations) exposes health metrics via Prometheus. The System Health Dashboard provides a single pane of glass for operational status. |
+| **🆕 Governance by Default** | All cross-app permissions are centralized in AEGIS. All actions are logged to `core.audit_logs`. Admins have a single view of who has access to what. |
 
 ---
 
@@ -567,6 +570,29 @@ max_parallel_workers_per_gather = 2;
 
 **Status:** Accepted. Audit events in `core.audit_logs` inside the same `sea_orm::DatabaseTransaction`.
 
+**🆕 Extension for Unified Audit Log:** The `core.audit_logs` table now supports cross-app audit logging with the following schema:
+
+```sql
+CREATE TABLE core.audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    action TEXT NOT NULL,          -- e.g., 'login', 'create', 'update', 'delete', 'export', 'role_change'
+    app TEXT NOT NULL,             -- e.g., 'cinq', 'dial', 'aegis'
+    entity_type TEXT,              -- e.g., 'contact', 'deal', 'user'
+    entity_id UUID,
+    old_value JSONB,               -- For auditing changes (before)
+    new_value JSONB,               -- For auditing changes (after)
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_logs_tenant ON core.audit_logs (tenant_id, created_at DESC);
+CREATE INDEX idx_audit_logs_user ON core.audit_logs (user_id, created_at DESC);
+CREATE INDEX idx_audit_logs_app ON core.audit_logs (app, created_at DESC);
+```
+
 ---
 
 ### ADR-022: GDPR with Compiled Table Registry & CI Verification
@@ -750,6 +776,212 @@ impl EmailTrackingWriter {
 
 ---
 
+### 🆕 ADR-034: System Health & Observability API (P0)
+
+**Status:** Accepted.
+
+**Context:** Research shows that "silent failures" (Zapier drops, API changes, cache staleness) are a top operational pain point. Founders and CTOs lose nights debugging workflows they didn't know were broken. The system must expose health metrics natively, not through external monitoring tools.
+
+**Decision:** Expose a `/api/v1/health/status` endpoint that aggregates health metrics from all critical background processes. The endpoint returns a JSON payload with:
+
+```json
+{
+  "status": "degraded" | "nominal" | "critical",
+  "timestamp": "2026-08-08T10:00:00Z",
+  "components": {
+    "outbox": {
+      "status": "nominal",
+      "lag_seconds": 0.2,
+      "pending_events": 0,
+      "last_dispatched_at": "2026-08-08T09:59:58Z"
+    },
+    "spark_workflows": {
+      "status": "degraded",
+      "total": 12,
+      "failed_last_hour": 1,
+      "dlq_depth": 3
+    },
+    "integrations": {
+      "cinq_to_dial": "nominal",
+      "sond_to_cinq": "nominal",
+      "vault_to_cinq": "degraded"
+    },
+    "db_connection_pools": {
+      "used": 12,
+      "max": 35,
+      "waiting": 0
+    }
+  }
+}
+```
+
+**Implementation:**
+- `ataqu-api` exposes `GET /api/v1/health/status`.
+- Metrics are collected from:
+  - `core.outbox` (lag, pending count)
+  - `spark.workflows` (failure counts, DLQ depth)
+  - Connection pool stats from `ataqu-infra-pools`
+  - Integration status via outbox event counts
+- The endpoint caches results for 5 seconds (Moka) to avoid DB hammering.
+- Frontend polls every 10 seconds (or uses SSE for real-time updates).
+
+---
+
+### 🆕 ADR-035: Permission Matrix & Unified Audit Log (P0)
+
+**Status:** Accepted.
+
+**Context:** Research shows that "searching five tools to find one answer is the actual daily pain… how do you deal with permissions across sources?" As teams grow (20+ employees), managing who has access to what becomes a nightmare. No unified view of roles/permissions. Audit trails are scattered.
+
+**Decision:** Centralize all permission management in AEGIS with a cross-app permission matrix and a unified audit log.
+
+**Permission Matrix Schema:**
+```sql
+CREATE TABLE core.permissions (
+    id BIGSERIAL PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    user_id UUID NOT NULL REFERENCES core.users(id) ON DELETE CASCADE,
+    app TEXT NOT NULL,          -- e.g., 'cinq', 'dial', 'vista'
+    role TEXT NOT NULL,         -- e.g., 'admin', 'editor', 'viewer', 'none'
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (tenant_id, user_id, app)
+);
+
+CREATE INDEX idx_permissions_tenant_user ON core.permissions (tenant_id, user_id);
+CREATE INDEX idx_permissions_app ON core.permissions (app);
+```
+
+**API Endpoints:**
+- `GET /api/v1/aegis/permission-matrix` → Returns a matrix: `{ users: [{ id, name, email, roles: { app: role } }] }`
+- `PATCH /api/v1/aegis/permissions/:userId/:app` → Updates a user's role for a specific app.
+- `GET /api/v1/aegis/audit-log` → Returns paginated, filterable audit events.
+
+**Implementation:**
+- The permission matrix query joins `core.users` with `core.permissions` and `core.audit_logs` for last activity.
+- Frontend renders a virtualized table (TanStack Virtual) for performance.
+- Permission changes are audited themselves (who changed what role, when).
+
+---
+
+### 🆕 ADR-036: Onboarding Activation & Progress Tracking (P1)
+
+**Status:** Accepted.
+
+**Context:** Research shows that "great product, customers complete onboarding… but six months later too many quietly disappear." — the silent churn. Users sign up, complete the initial setup, but never reach the "aha" moment. No feedback loop, no intervention.
+
+**Decision:** Implement a persistent onboarding activation tracker with defined milestones, persistent state, and proactive interventions.
+
+**Activation Tasks (5 per tenant):**
+1. **Import Data:** Import at least 10 entities (contacts, deals, products, etc.)
+2. **Native Integration:** Enable at least one native integration (CINQ→DIAL, SOND→CINQ, etc.)
+3. **Create Workflow:** Create at least one SPARK workflow
+4. **Invite Team:** Invite at least 2 team members
+5. **Create Dashboard:** Create at least one VISTA dashboard
+
+**Schema:**
+```sql
+CREATE TABLE core.onboarding_progress (
+    tenant_id UUID PRIMARY KEY,
+    tasks_completed JSONB NOT NULL DEFAULT '[]'::jsonb,  -- Array of task IDs
+    last_active_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**API Endpoints:**
+- `GET /api/v1/onboarding/status` → Returns completed tasks and progress percentage.
+- `POST /api/v1/onboarding/task-complete` → Marks a task as completed.
+- `GET /api/v1/onboarding/team-status` → Returns activation status per team member (admin only).
+
+**Implementation:**
+- Frontend stores progress in Zustand (persisted) and syncs with backend.
+- The Setup Progress widget in the Shell polls the status every 60 seconds.
+- Inactivity detection: a background job marks tenants as "stale" after 7 days of inactivity. On next login, a toast appears: *"We noticed you've been away. Here's what changed in your workspace."*
+
+---
+
+### 🆕 ADR-037: Data Consolidation & Cross-App Dashboards (P1)
+
+**Status:** Accepted.
+
+**Context:** Research shows that "spend weeks manually consolidating data from multiple sources before they can begin meaningful analysis." — the real bottleneck is not insights, but setup time. Users copy-paste data from CRM to spreadsheets to presentation decks.
+
+**Decision:** Implement pre-aggregated cross-app materialized views in VISTA, exposed via a "Combine Data" UI.
+
+**Materialized Views:**
+```sql
+-- Revenue + Inventory: deals won vs stock levels
+CREATE MATERIALIZED VIEW vista.cross_app_revenue_inventory AS
+SELECT 
+    c.tenant_id,
+    date_trunc('day', c.won_at) AS day,
+    COUNT(c.id) AS deals_won,
+    SUM(c.amount) AS revenue,
+    AVG(v.stock_quantity) AS avg_stock,
+    COUNT(v.id) AS products_in_stock
+FROM collab_crm.deals c
+LEFT JOIN vault.variants v ON v.tenant_id = c.tenant_id
+WHERE c.status = 'won'
+GROUP BY c.tenant_id, date_trunc('day', c.won_at);
+
+-- Support + Sales: tickets vs deals pipeline
+CREATE MATERIALIZED VIEW vista.cross_app_support_sales AS
+SELECT 
+    d.tenant_id,
+    date_trunc('day', d.created_at) AS day,
+    COUNT(DISTINCT d.id) AS tickets_opened,
+    COUNT(DISTINCT c.id) AS deals_in_pipeline,
+    AVG(d.resolution_time_minutes) AS avg_resolution_time
+FROM dial.tickets d
+LEFT JOIN collab_crm.deals c ON c.tenant_id = d.tenant_id AND c.status IN ('qualified', 'negotiation')
+WHERE d.status != 'closed'
+GROUP BY d.tenant_id, date_trunc('day', d.created_at);
+```
+
+**API Endpoint:**
+- `POST /api/v1/vista/combine` → Accepts `{ primary: "revenue", secondary: "inventory", dateRange: {...} }` → Returns combined dataset.
+
+**Implementation:**
+- Materialized views are refreshed every 15 minutes via outbox consumers.
+- The "Combine Data" UI in VISTA shows a dropdown of available data sources, overlays the selected views, and displays a combined chart.
+- No SQL required for end users.
+
+---
+
+### 🆕 ADR-038: Changelog & Stability Policy (P2)
+
+**Status:** Accepted.
+
+**Context:** Research shows that tools that remove features, change UI without warning, or force migrations to worse versions erode trust. Users feel held hostage by the vendor's roadmap.
+
+**Decision:** Implement a transparent changelog with a documented stability policy, visible directly in the app.
+
+**Schema:**
+```sql
+CREATE TABLE core.changelog (
+    id BIGSERIAL PRIMARY KEY,
+    version TEXT NOT NULL,
+    date DATE NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('new', 'improved', 'fixed', 'deprecated')),
+    breaking_change BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**API Endpoint:**
+- `GET /api/v1/changelog` → Returns all entries, sorted by date DESC.
+- `GET /api/v1/changelog/unread` → Returns entries since the user's last visit (stored in `core.user_preferences`).
+
+**Implementation:**
+- Frontend displays a bell icon in the Shell with a red dot for unread entries.
+- Clicking opens a glassmorphic modal: *"What's new this week"* with the last 3-5 entries.
+- The stability policy is documented on a public `/changelog` page: no feature removal without 30 days' notice, no breaking UI changes without a legacy toggle for 30 days.
+
+---
+
 ## 3. SYSTEM ARCHITECTURE & DATABASE STRATEGY
 
 ### 3.1 Overview
@@ -760,6 +992,8 @@ impl EmailTrackingWriter {
 - **1 dispatcher `sqlx::PgPool`** (max 3 connections) for outbox polling and `PgListener`.
 - **1 admin `sea_orm::DatabaseConnection`** (max 2 connections) for CLI and migrations.
 - Background tasks: outbox dispatcher, VISTA aggregator, DIAL ingester, saga runners, FTS indexers, GDPR saga runner, `cron_worker`, `csv_importer_worker`, `s3_orphan_reaper_task`, `no_show_worker`, `email_tracking_writer_task`.
+- **🆕 Health metrics collector** (runs every 10 seconds, aggregates system status).
+- **🆕 Onboarding inactivity detector** (cron job, runs daily).
 - UDS admin socket with filesystem permissions (`0600`).
 - Bounded Moka cache for idempotency hot-path (max 10,000 entries).
 
@@ -769,12 +1003,12 @@ One PostgreSQL 18.4 instance in `/var/lib/postgresql/`. WAL archived to S3 via `
 
 | Schema | Role | Bounded Contexts | Notes |
 |--------|------|-----------------|-------|
-| `core` | `core_role` | AEGIS (Auth), Billing, Audit, Scheduled Tasks, Unified Outbox, Idempotency | `core.outbox` (Type-safe `schema` ENUM, RLS, Column-Level Security, Sequence Grants enabled) |
+| `core` | `core_role` | AEGIS (Auth), Billing, **Audit**, Scheduled Tasks, Unified Outbox, Idempotency, **Permissions**, **Onboarding Progress**, **Changelog** | `core.outbox` (Type-safe `schema` ENUM, RLS, Column-Level Security, Sequence Grants enabled). `core.audit_logs` supports cross-app auditing. |
 | `collab_crm` | `cinq_role` | CINQ (CRM), SPARK (Automation), Email Tracking | Domain roles have `INSERT` on `core.outbox` restricted by RLS |
 | `collab_ops` | `ops_role` | SOND (Forms), PIVOT (Docs), PAUSE (HR), TEMPO (Schedules) | |
 | `vault` | `vault_role` | VAULT (Inventory) | |
 | `dial` | `dial_role` | DIAL (Chat), DLQ, Presence | |
-| `vista` | `vista_role` | VISTA (Analytics), Aggregator DLQ | |
+| `vista` | `vista_role` | VISTA (Analytics), Aggregator DLQ, **Cross-App Materialized Views** | `vista.cross_app_*` views for data consolidation |
 
 The `dispatcher_role` has `SELECT` and column-level `UPDATE` on `core.outbox` tracking columns.
 
@@ -808,6 +1042,7 @@ The `dispatcher_role` has `SELECT` and column-level `UPDATE` on `core.outbox` tr
 - **Pii Lint:** CI fails if any crate outside the approved list enables the `infra-pii-access` feature on `ataqu-security`.
 - **Entity Boundary Lint:** CI fails if any `sea_orm::Model` or `sea_orm::ActiveModel` type appears in a `ataqu-domain-*` crate's public API.
 - **GDPR Registry CI Test:** Fails if any table with `tenant_id` is not in the compiled registry (ADR-022).
+- **🆕 Audit Log CI Test:** Fails if any mutation endpoint does not log to `core.audit_logs` (verified via integration tests).
 - Axum routes based on `Host` header (including `track.ataqu.com` for email tracking pixels).
 
 ---
@@ -823,6 +1058,8 @@ The `dispatcher_role` has `SELECT` and column-level `UPDATE` on `core.outbox` tr
 - Admin UDS requires token and writes audit logs (ADR-008).
 - File uploads via presigned S3 URLs. Orphan reaper prevents S3 waste (ADR-027).
 - Email tracking isolated via bounded channel with atomic, non-overwriting file rotation spill processed exactly once (ADR-031).
+- **🆕 Permission Matrix:** Centralized cross-app RBAC in `core.permissions` table. Admins have a single view of who has access to what.
+- **🆕 Unified Audit Log:** Every action across all apps is logged to `core.audit_logs` with user, timestamp, app, and before/after values.
 - **PII redaction is enforced via compile-time newtypes (`Email`, `Phone`) implementing `Debug`/`Display` as `[REDACTED]`. JSON serialization is strictly restricted to the API layer via wrapper structs, preventing log leaks across the unified binary (ADR-007).**
 
 ### 4.2 GDPR Compliance
@@ -833,6 +1070,7 @@ Sequential idempotent saga across 6 schemas using:
 - `trace_id` stored in `gdpr_saga_state` for end-to-end observability.
 - S3 files deleted idempotently using manifest stored in saga state.
 - Manual escalation path after 3 failed retries on any step.
+- **🆕 Audit logs are excluded from GDPR deletion for legal compliance** (retained for 7 years as required by law, but anonymized).
 
 ### 4.3 Implementation of PII Newtypes
 
@@ -862,7 +1100,7 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | 2 | `ataqu-kernel` | Shared | Core types (`TenantId` private field, `Identifiable` trait, `IdGenerator` trait, `Clock` trait), error types |
 | 3 | `ataqu-security` | Shared | PII Newtypes (`Email`, `Phone` - no `Serialize`), `PiiAccessKey`, crypto, JWT |
 | 4 | `ataqu-contracts` | Shared | Event definitions, commands, DTOs |
-| 5 | `ataqu-domain-aegis` | Domain | AEGIS pure logic (auth, SSO, MFA) |
+| 5 | `ataqu-domain-aegis` | Domain | AEGIS pure logic (auth, SSO, MFA, **permission matrix**, **audit log**) |
 | 6 | `ataqu-domain-billing` | Domain | Billing pure logic |
 | 7 | `ataqu-domain-vault` | Domain | VAULT pure logic (inventory) |
 | 8 | `ataqu-domain-dial` | Domain | DIAL pure logic + `PresenceStore` trait (no `ConnectionId`) |
@@ -872,18 +1110,18 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | 12 | `ataqu-domain-pivot` | Domain | PIVOT pure logic (docs) |
 | 13 | `ataqu-domain-pause` | Domain | PAUSE pure logic (HR) |
 | 14 | `ataqu-domain-tempo` | Domain | TEMPO pure logic (schedules) |
-| 15 | `ataqu-domain-vista` | Domain | VISTA pure logic (analytics + aggregation) |
+| 15 | `ataqu-domain-vista` | Domain | VISTA pure logic (analytics + aggregation, **cross-app views**) |
 | 16 | `ataqu-domain-gdpr` | Domain | GDPR saga state machine + compiled table registry |
 | 17 | `ataqu-infra-pools` | Infra | 6 SeaORM pools + 1 sqlx dispatcher pool + 1 SeaORM admin pool |
-| 18 | `ataqu-infra-repositories` | Infra | SeaORM entity impls, mappers, generic `transactional_batch_insert` helper, presence stores |
+| 18 | `ataqu-infra-repositories` | Infra | SeaORM entity impls, mappers, generic `transactional_batch_insert` helper, presence stores, **onboarding progress store** |
 | 19 | `ataqu-infra-outbox` | Infra | `OutboxDispatcher` (`sqlx::PgListener` + `SKIP LOCKED` polling on `core.outbox`) |
 | 20 | `ataqu-infra-idempotency` | Infra | `IdempotencyGuard` (2× int4 advisory locks, durable response cache, bounded Moka) |
 | 21 | `ataqu-infra-sagas` | Infra | Generic saga state machines, fenced leases |
-| 22 | `ataqu-infra-cron` | Infra | `cron_worker` (`SKIP LOCKED`, deterministic `command_id`) |
+| 22 | `ataqu-infra-cron` | Infra | `cron_worker` (`SKIP LOCKED`, deterministic `command_id`), **inactivity detector** |
 | 23 | `ataqu-infra-storage` | Infra | S3 presigned URLs, chunked orphan reaper, CSV streaming |
 | 24 | `ataqu-infra-migration` | Infra | `sea-orm-migration` migration crate (Rust-native migrations) |
 | 25 | `ataqu-application` | Application | Service orchestration (calls domain with injected `IdGenerator`/`Clock`, delegates to infra) |
-| 26 | `ataqu-api` | API | Axum handlers, middleware, Moka cache, `Idempotency-Key` parsing, API serialization wrappers (`ApiEmail`) |
+| 26 | `ataqu-api` | API | Axum handlers, middleware, Moka cache, `Idempotency-Key` parsing, API serialization wrappers (`ApiEmail`), **health endpoint** |
 | 27 | `ataqu-admin` | Admin | CLI binary, UDS client, audit logging |
 
 **Dependency direction:** `api → application → {domain, infra}`. Domain depends on nothing. Infra depends on domain traits. No circular dependencies. SeaORM `Model`/`ActiveModel` confined to `ataqu-infra-repositories` (ADR-033).
@@ -908,6 +1146,9 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | **Memory Safety** | Bounded Moka cache (10K entries, ~20 MB). `work_mem = 2MB`. 35 max app connections. Total PostgreSQL memory ~1.2 GB. Total system ~2 GB. 6 GB OS page cache headroom. |
 | **Domain IDs & Time** | `IdGenerator` (for UUIDs) and `Clock` (for high-precision `SystemTime`) injected from application layer. Domain functions never read system clock or RNG. `MockIdGenerator`/`MockClock` for deterministic tests. |
 | **Entity Boundary** | SeaORM `Model`/`ActiveModel` confined to `ataqu-infra-repositories`. Mapped to pure domain structs at repository boundary (ADR-033). CI lint enforces. |
+| **🆕 System Health** | Health endpoint aggregates outbox lag, workflow failure rates, DLQ depth, and pool status. Exposed via `/api/v1/health/status`. Frontend polls every 10s. |
+| **🆕 Audit Logging** | All mutations and permission changes write to `core.audit_logs` in the same transaction as the mutation. Audit log is searchable and exportable. |
+| **🆕 Onboarding Tracking** | Progress state stored in `core.onboarding_progress`. Inactivity detector runs daily and triggers in-app toasts on next login. |
 
 ---
 
@@ -915,16 +1156,18 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 
 | App | Domain Crate | DB Schema | Key Features & ADRs |
 |-----|-------------|-----------|---------------------|
-| AEGIS | `ataqu-domain-aegis` | `core` | OIDC SSO, MFA, JWT, Argon2 |
+| AEGIS | `ataqu-domain-aegis` | `core` | OIDC SSO, MFA, JWT, Argon2, **Permission Matrix (ADR-035)**, **Unified Audit Log (ADR-035)** |
 | TEMPO | `ataqu-domain-tempo` | `collab_ops` | Calendar, no-show workflows (ADR-032), OAuth refresh saga |
 | PIVOT | `ataqu-domain-pivot` | `collab_ops` | Docs, `tsvector` search (ADR-009), `JSONB` views |
 | SOND | `ataqu-domain-sond` | `collab_ops` | Forms, async CSV via generic `transactional_batch_insert` (ADR-029) |
 | VAULT | `ataqu-domain-vault` | `vault` | Inventory, overflow protection (ADR-023) |
 | PAUSE | `ataqu-domain-pause` | `collab_ops` | HR, `tsvector` directory. Emits projection events (ADR-004). |
 | DIAL | `ataqu-domain-dial` | `dial` | Chat, batch ingestion via generic helper (ADR-014), `PresenceStore` trait (ADR-028) |
-| SPARK | `ataqu-domain-spark` | `collab_crm` | Automation, fenced leases, `cron_worker` (ADR-026) |
+| SPARK | `ataqu-domain-spark` | `collab_crm` | Automation, fenced leases, `cron_worker` (ADR-026), **workflow health monitoring** |
 | CINQ | `ataqu-domain-cinq` | `collab_crm` | CRM, `JSONB` with graceful degradation (ADR-030), observable email tracking (ADR-031). Consumes PAUSE projections. |
-| VISTA | `ataqu-domain-vista` | `vista` | Aggregator with `LISTEN/NOTIFY` (ADR-010), DLQ inclusion, stateful cursor |
+| VISTA | `ataqu-domain-vista` | `vista` | Aggregator with `LISTEN/NOTIFY` (ADR-010), DLQ inclusion, stateful cursor, **System Health Dashboard**, **Cross-App Materialized Views (ADR-037)** |
+| **🆕 Health** | `ataqu-domain-health` | `core` | **Health metrics aggregation (ADR-034). Collects outbox lag, workflow failures, pool status.** |
+| **🆕 Onboarding** | `ataqu-domain-onboarding` | `core` | **Activation progress tracking, inactivity detection (ADR-036).** |
 
 ---
 
@@ -938,6 +1181,8 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | `core.outbox` | 30 days | `DELETE` cron. Moderate autovacuum (`scale_factor = 0.10`). |
 | `core.idempotency_records` | 7 days | Standard table. Daily `DELETE` cron. Moderate autovacuum. |
 | DLQ records | 30 days | `DELETE` cron per schema |
+| **🆕 `core.audit_logs`** | **7 years** | **Legal compliance. Partitioned by month.** |
+| **🆕 `core.changelog`** | **Indefinite** | **Small table, never deleted.** |
 | Critical logs | 30 days | JSON logs with `copytruncate` rotation |
 | Orphaned S3 files | 24 hours | Chunked reaper deletes unmatched objects |
 | Email tracking spill | Until recovered | Atomic, non-overwriting file rotation recovery every 60s. 10 MB hard cap. |
@@ -954,8 +1199,12 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 ### 7.3 Tracing & Health Checks
 
 - **Saga Tracing:** Per-step `tracing` span with `tenant_id`, `step`, `attempt_count`, `trace_id`.
-- **Health Checks:** `/health/ready` checks `JoinSet` + `watch::Sender<bool>` for critical background tasks. Returns 503 if any critical task is not running.
-- **CI Lints:** `EXPLAIN QUERY PLAN` fails on `Seq Scan` for tables > 10K rows. `PiiAccessKey` feature flag lint fails if non-approved crates enable it. Entity boundary lint fails if `sea_orm::Model` appears in domain crates. GDPR registry coverage test fails if any `tenant_id` table is missing.
+- **🆕 System Health Check:** `/health/ready` checks `JoinSet` + `watch::Sender<bool>` for critical background tasks. Additionally, it checks:
+  - Outbox lag > 5s → returns `503`
+  - DLQ depth > 10 → returns `503`
+  - Connection pool usage > 90% → returns `503`
+- **🆕 Detailed Health Endpoint:** `/api/v1/health/status` returns JSON with component-level health (ADR-034).
+- **CI Lints:** `EXPLAIN QUERY PLAN` fails on `Seq Scan` for tables > 10K rows. `PiiAccessKey` feature flag lint fails if non-approved crates enable it. Entity boundary lint fails if `sea_orm::Model` appears in domain crates. GDPR registry coverage test fails if any `tenant_id` table is missing. **🆕 Audit log CI test fails if any mutation endpoint does not write to `core.audit_logs`.**
 
 ### 7.4 Key Metrics
 
@@ -979,6 +1228,10 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | `ataqu_email_tracking_recovery_failed_total` | Counter | **P0 if > 0** |
 | `ataqu_presence_online_users` | Gauge (label: `tenant`) | — |
 | `no_show_detected_total` | Counter (label: `reason`) | P3 |
+| **🆕 `ataqu_health_status`** | **Gauge** | **P2 if > 1 (degraded)** |
+| **🆕 `ataqu_workflow_failures_total`** | **Counter (label: `workflow_id`)** | **P1 if rate > 10/hour** |
+| **🆕 `ataqu_audit_log_write_total`** | **Counter** | **P3 (informational)** |
+| **🆕 `ataqu_onboarding_completion_rate`** | **Gauge** | **P3 (informational)** |
 
 ---
 
@@ -994,7 +1247,7 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | SeaORM | **2.0.0-rc.41** | Migrations, entity definitions, standard CRUD, transaction management |
 | sqlx | **0.9.0** | `PgListener` for outbox dispatch (dedicated pool, size 3) |
 | PostgreSQL | **18.4** | Database |
-| moka | **0.12.5** | Bounded hot cache (idempotency responses) |
+| moka | **0.12.5** | Bounded hot cache (idempotency responses, health cache) |
 | tracing | **0.1.44** | Structured logging |
 | tracing-opentelemetry | **0.33.0** | Distributed tracing |
 | wal-g | **3.0.8** | WAL backup to S3 |
@@ -1003,6 +1256,7 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | jsonwebtoken | **10.4.0** | JWT |
 | totp-rs | **5.7.2** | MFA |
 | aws-sdk-s3 | **1.50.0** | S3 presigned URLs |
+| **🆕 prometheus** | **0.13.0** | **Metrics export** |
 
 **Transaction Object:** `sea_orm::DatabaseTransaction` is the only transaction type. Raw SQL (`Statement::from_sql_and_values`) is executed on it for Postgres primitives. `sqlx::PgPool` is used only for `PgListener` — never for transactions or CRUD.
 
@@ -1036,6 +1290,7 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | DB | PostgreSQL **18.4** native install |
 | Backup | `wal-g` 3.0.8 sidecar (1 s RPO to Hetzner Storage Box S3) |
 | Cache | Bounded Moka (in-process, 10K entries max) |
+| **🆕 Metrics** | **Prometheus endpoint at `/metrics`** |
 
 ---
 
@@ -1046,13 +1301,13 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 **Week 1–2 (Foundation & Auth):**
 - Build `ataqu-kernel` (`TenantId` private field, `Identifiable` trait, `IdGenerator` trait, `Clock` trait).
 - Build `ataqu-security` (PII newtypes `Email`/`Phone` with `Debug`/`Display` as `[REDACTED]`, **no `Serialize` impl**, `PiiAccessKey` capability).
-- Build `ataqu-infra-migration` (SeaORM migrations for `core` schema: `users`, `outbox` with RLS, column-level privileges, `schema` ENUM, and sequence grants, `idempotency_records`, `audit_logs`, `scheduled_tasks`).
+- Build `ataqu-infra-migration` (SeaORM migrations for `core` schema: `users`, `outbox` with RLS, column-level privileges, `schema` ENUM, and sequence grants, `idempotency_records`, **`audit_logs` (ADR-021)**, `scheduled_tasks`, **`permissions` (ADR-035)**, **`onboarding_progress` (ADR-036)**, **`changelog` (ADR-038)**).
 - Build `ataqu-infra-pools` (6 SeaORM + 1 sqlx dispatcher + 1 SeaORM admin).
 - Build `ataqu-infra-idempotency` (`IdempotencyGuard` with 2× int4 advisory locks with explicit `::int4` cast, durable response cache, bounded Moka, `503` on timeout).
-- Build `ataqu-domain-aegis` (pure auth logic, `IdGenerator` & `Clock` injected).
+- Build `ataqu-domain-aegis` (pure auth logic, `IdGenerator` & `Clock` injected, **permission matrix logic**, **audit log logic**).
 - Build `ataqu-infra-repositories` (AEGIS repository implementations with SeaORM entities + mappers + generic `transactional_batch_insert` helper).
 - Build `ataqu-application` (service orchestration for AEGIS, `SystemIdGenerator` & `SystemClock` impls).
-- Build `ataqu-api` (Axum handlers, `Host` routing, `Idempotency-Key` parsing, API serialization wrappers `ApiEmail`).
+- Build `ataqu-api` (Axum handlers, `Host` routing, `Idempotency-Key` parsing, API serialization wrappers `ApiEmail`, **health endpoint (ADR-034)**).
 
 **Week 3–4 (Revenue & Ops):**
 - Build `ataqu-domain-cinq` (pure CRM logic, `ContactRepository` trait, `IdGenerator` & `Clock` injected).
@@ -1067,6 +1322,9 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
   - Advisory lock SQL executes without type inference errors (`$1::int4`).
   - PII newtypes log as `[REDACTED]` in `tracing`. `serde_json::to_string(&email)` fails to compile in `ataqu-application`. `ApiEmail` serializes correctly in `ataqu-api`.
   - Batch ingestion fallback chunks correctly without timing out. Transient errors abort immediately with clean transaction state (verify idempotency layer can still update record to `failed`). DLQ entries contain full cloned payloads. Idiomatic error mapping compiles. Original chunk error is logged.
+  - **🆕 Health endpoint returns correct status with outbox lag and pool usage.**
+  - **🆕 Audit log entries are written for all mutation endpoints.**
+  - **🆕 Permission matrix query returns correct roles for all users.**
 
 ### Phase 2: Collaboration & Real-Time (Weeks 5–12)
 
@@ -1076,26 +1334,38 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 - Build `ataqu-infra-cron` (`SKIP LOCKED` polling, deterministic `command_id`).
 - Build `ataqu-domain-tempo` (no-show workflows, OAuth refresh saga).
 - Build `ataqu-domain-pause` (emits projection events).
-- Build `ataqu-domain-vista` (pure aggregation logic).
+- Build `ataqu-domain-vista` (pure aggregation logic, **cross-app view logic ADR-037**).
 - Build `ataqu-infra-repositories` VISTA polling + `PostgresPresenceStore` (for Phase 2 readiness).
 - Implement CINQ projection consumer (consumes PAUSE `EmployeeCreatedV1`).
 - Implement OpenTelemetry distributed tracing.
 - Implement `ataqu-domain-gdpr` (compiled table registry, saga state machine).
 - Implement `ataqu-infra-repositories` email tracking writer with atomic, non-overwriting file rotation spill (nanos + uuid filenames, process exactly once).
+- **🆕 Implement Health metrics collector:** Aggregates outbox lag, workflow failures, pool status.
+- **🆕 Implement Onboarding inactivity detector:** Daily cron job marking stale tenants.
+- **🆕 Implement Cross-App materialized view refresher:** Every 15 minutes.
 - **Week 12 Validation:**
   - End-to-end GDPR compliance test.
   - WebSocket presence under disconnect/reconnect.
   - Batch ingestion with mixed valid/invalid messages (SAVEPOINT correctness, chunked fallback, transient error abort with clean state, domain purity maintained).
   - Email tracking spill recovery (verify zero data loss, verify no double-processing).
   - JSONB Tier 3 search returns 429 when rate limit exceeded.
+  - **🆕 Health dashboard shows accurate outbox lag and workflow status.**
+  - **🆕 Permission matrix updates roles correctly and logs the change.**
+  - **🆕 Cross-app dashboards display combined data from CINQ and VAULT.**
 
 ### Phase 3: Polish & Launch (Weeks 13–26)
 
 - Build remaining P1 features per app.
-- Implement `EXPLAIN QUERY PLAN` CI lint, `PiiAccessKey` feature flag lint, entity boundary lint, GDPR registry CI test.
+- Implement `EXPLAIN QUERY PLAN` CI lint, `PiiAccessKey` feature flag lint, entity boundary lint, GDPR registry CI test. **🆕 Add audit log CI test.**
 - Configure `copytruncate` logrotate.
 - Build frontend SPAs with route-level code splitting (≤ 500 KB gzipped per app).
 - Implement S3 orphan reaper (ADR-027).
+- **🆕 Build System Health Dashboard UI (VISTA `/health`):** Displays outbox lag, workflow failures, DLQ depth, integration status.
+- **🆕 Build Permission Matrix UI (AEGIS `/admin/access-matrix`):** Virtualized table with inline role editing.
+- **🆕 Build Unified Audit Log UI (AEGIS `/admin/audit`):** Searchable, filterable, exportable log.
+- **🆕 Build Setup Progress Tracker (Shell):** Persistent widget showing onboarding progress.
+- **🆕 Build Changelog UI (Shell):** Bell icon with modal showing recent changes.
+- **🆕 Build Cross-App "Combine Data" UI (VISTA):** Dropdown selector for combined dashboards.
 - **Week 26:** Production launch.
 
 ---
@@ -1125,6 +1395,10 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | 19 | `extract_db_err` adapter | SeaORM wraps `sqlx::Error`. The `extract_db_err` helper drills down to the underlying database error. Necessary consequence of the SeaORM escape hatch. Heavily unit-tested against Postgres error mocks. |
 | 20 | `SAVEPOINT` logic in infra | All `SAVEPOINT` and raw SQL transaction logic resides exclusively in `ataqu-infra-repositories` via the generic `transactional_batch_insert` helper. Domain layer has zero knowledge of transactions. |
 | 21 | Chunked batch fallback with error classification | 1-by-1 fallback on large batches exceeds `statement_timeout`. The generic helper uses chunks of 100. **Transient errors abort immediately with clean transaction state (via immediate `ROLLBACK TO SAVEPOINT`) to prevent thread starvation, poisoned transactions, and DLQ pollution.** Only data-level violations trigger 1-by-1 fallback. Original chunk error is logged. `T: Clone` preserves full DLQ payloads. Idiomatic `Option::map`/`unwrap_or` error mapping ensures compilation. |
+| **🆕 22** | **Health endpoint caches for 5 seconds** | Caching reduces DB load. 5-second lag is acceptable for observability. |
+| **🆕 23** | **Audit logs retained 7 years** | Legal compliance requirement. Partitioned by month for efficient deletion. |
+| **🆕 24** | **Cross-App materialized views refresh every 15 minutes** | Near-real-time is sufficient for dashboards. Real-time views would require more complex incremental refresh. |
+| **🆕 25** | **Onboarding progress is per-tenant, not per-user** | Simplifies tracking. Progress is shared across all users in a tenant (team-level). |
 
 ---
 
@@ -1180,7 +1454,8 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | 46 | **Silent Data Loss in JSONL Spill (v134.0):** No metrics or alerts. | **ADR-031 (v135.0).** Full metrics, 10 MB cap, P0 alert, atomic non-overwriting rotation (nanos+uuid), process exactly once. |
 | 47 | **Upfront Aggregate ID Hack (v134.0):** DB constraint leaking into HTTP API. | **ADR-006 (v135.0).** `aggregate_id` nullable. Domain generates via injected `IdGenerator`. |
 | 48 | **In-Memory Presence Anti-Pattern (v134.0):** No Phase 2 path. | **ADR-028 (v135.0).** `PresenceStore` trait. `ConnectionId` removed from trait. |
-
----
-
-**Conclusion:** v144.0 is a pure dependency upgrade. All versions have been updated to the latest stable majors as of August 2026. The architecture remains KISS-compliant, DRY-compliant, domain-pure, honestly durable, natively secure, and unconditionally ready for production.
+| **🆕 49** | **Missing System Health Observability:** Users can't see if workflows are failing silently. | **ADR-034 (v145.0).** Added health endpoint and dashboard. |
+| **🆕 50** | **Missing Cross-App Permission Matrix:** Admins can't see who has access to what across apps. | **ADR-035 (v145.0).** Added permission matrix and unified audit log. |
+| **🆕 51** | **Missing Onboarding Progress Tracking:** Silent churn from incomplete onboarding. | **ADR-036 (v145.0).** Added activation tracker and inactivity detection. |
+| **🆕 52** | **Missing Data Consolidation:** Users copy-paste data between apps for analysis. | **ADR-037 (v145.0).** Added cross-app materialized views and "Combine Data" UI. |
+| **🆕 53** | **Missing Changelog & Stability Policy:** Users fear breaking changes without warning. | **ADR-038 (v145.0).** Added changelog and stability policy. |

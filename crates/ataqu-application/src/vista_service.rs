@@ -62,16 +62,18 @@ impl VistaService {
 
     pub async fn process_event(&self, event: &OutboxEvent) -> VistaResult<()> {
         metrics::counter!("ataqu_vista_events_processed_total", "schema" => event.schema.clone(), "event_type" => event.event_type.clone()).increment(1);
-        let tenant_id = event
+        let tenant_id = match event
             .payload
             .get("tenant_id")
             .and_then(|v| v.as_str())
             .and_then(|s| Uuid::parse_str(s).ok())
-            .map(TenantId::new)
-            .unwrap_or_else(|| TenantId::new(Uuid::nil()));
-        if tenant_id.as_uuid() == Uuid::nil() {
-            tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload");
-        }
+        {
+            Some(id) => TenantId::new(id),
+            None => {
+                tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload. Skipping.");
+                return Ok(());
+            }
+        };
         let current_view = self
             .repo
             .get_aggregated_view(&tenant_id)
@@ -236,10 +238,14 @@ impl VistaService {
         }
 
         // Tenant isolation enforcement: require the query to explicitly filter by tenant_id.
-        // String manipulation of SQL is unsafe and bypassable. We force the user to include it.
-        if !upper_sql.contains("TENANT_ID") {
+        // We check for common patterns to ensure it's likely in a WHERE clause.
+        let has_tenant_filter = upper_sql.contains("TENANT_ID =")
+            || upper_sql.contains("TENANT_ID=")
+            || upper_sql.contains("TENANT_ID IN")
+            || upper_sql.contains("TENANT_ID IN");
+        if !has_tenant_filter {
             return Err(VistaServiceError::Validation(
-                "Query must include a tenant_id filter in the WHERE clause".to_string(),
+                "Query must include a tenant_id filter (e.g., tenant_id = '...') in the WHERE clause".to_string(),
             ));
         }
 

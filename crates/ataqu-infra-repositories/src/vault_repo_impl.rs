@@ -1,11 +1,13 @@
 use async_trait::async_trait;
-use ataqu_domain_vault::inventory::{Product, Variant};
+use ataqu_domain_vault::inventory::{Product, Variant, Warehouse};
 use ataqu_domain_vault::repository::VaultRepository;
-use ataqu_domain_vault::inventory::Warehouse;
-use ataqu_domain_vault::stock::StockMovement;
-use ataqu_kernel::TenantId;
+use ataqu_domain_vault::stock::{Reservation, StockMovement};
+use ataqu_kernel::{RepositoryError, TenantId};
 use sea_orm::ConnectionTrait;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set, Statement,
+};
+use std::time::SystemTime;
 use uuid::Uuid;
 
 mod product_entity {
@@ -175,23 +177,23 @@ fn variant_model_to_domain(model: variant_entity::Model) -> Variant {
 
 #[async_trait]
 impl VaultRepository for VaultRepositoryImpl {
-    async fn save_product(&self, product: &Product) -> Result<(), ataqu_kernel::RepositoryError> {
+    async fn save_product(&self, product: &Product) -> Result<(), RepositoryError> {
         let active = product_domain_to_active(product);
         let exists = product_entity::Entity::find_by_id(product.id)
             .one(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?
+            .map_err(|e| RepositoryError::Database(e.to_string()))?
             .is_some();
         if exists {
             product_entity::Entity::update(active)
                 .exec(&self.db)
                 .await
-                .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
         } else {
             product_entity::Entity::insert(active)
                 .exec(&self.db)
                 .await
-                .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
         }
         Ok(())
     }
@@ -200,13 +202,13 @@ impl VaultRepository for VaultRepositoryImpl {
         &self,
         tenant_id: &TenantId,
         id: &Uuid,
-    ) -> Result<Option<Product>, ataqu_kernel::RepositoryError> {
+    ) -> Result<Option<Product>, RepositoryError> {
         let model = product_entity::Entity::find()
             .filter(product_entity::Column::Id.eq(*id))
             .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(model.map(product_model_to_domain))
     }
 
@@ -215,44 +217,44 @@ impl VaultRepository for VaultRepositoryImpl {
         tenant_id: &TenantId,
         limit: u64,
         offset: u64,
-    ) -> Result<Vec<Product>, ataqu_kernel::RepositoryError> {
+    ) -> Result<Vec<Product>, RepositoryError> {
         let models = product_entity::Entity::find()
             .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
             .offset(offset)
             .all(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(models.into_iter().map(product_model_to_domain).collect())
     }
 
-    async fn delete_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
+    async fn delete_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), RepositoryError> {
         product_entity::Entity::delete_many()
             .filter(product_entity::Column::Id.eq(*id))
             .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .exec(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
-    async fn save_variant(&self, variant: &Variant) -> Result<(), ataqu_kernel::RepositoryError> {
+    async fn save_variant(&self, variant: &Variant) -> Result<(), RepositoryError> {
         let active = variant_domain_to_active(variant);
         let exists = variant_entity::Entity::find_by_id(variant.id)
             .one(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?
+            .map_err(|e| RepositoryError::Database(e.to_string()))?
             .is_some();
         if exists {
             variant_entity::Entity::update(active)
                 .exec(&self.db)
                 .await
-                .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
         } else {
             variant_entity::Entity::insert(active)
                 .exec(&self.db)
                 .await
-                .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
         }
         Ok(())
     }
@@ -261,13 +263,13 @@ impl VaultRepository for VaultRepositoryImpl {
         &self,
         tenant_id: &TenantId,
         id: &Uuid,
-    ) -> Result<Option<Variant>, ataqu_kernel::RepositoryError> {
+    ) -> Result<Option<Variant>, RepositoryError> {
         let model = variant_entity::Entity::find()
             .filter(variant_entity::Column::Id.eq(*id))
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .one(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(model.map(variant_model_to_domain))
     }
 
@@ -276,28 +278,109 @@ impl VaultRepository for VaultRepositoryImpl {
         tenant_id: &TenantId,
         limit: u64,
         offset: u64,
-    ) -> Result<Vec<Variant>, ataqu_kernel::RepositoryError> {
+    ) -> Result<Vec<Variant>, RepositoryError> {
         let models = variant_entity::Entity::find()
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
             .offset(offset)
             .all(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(models.into_iter().map(variant_model_to_domain).collect())
     }
 
-    async fn delete_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
+    async fn delete_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), RepositoryError> {
         variant_entity::Entity::delete_many()
             .filter(variant_entity::Column::Id.eq(*id))
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .exec(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
-    async fn save_movement(&self, movement: &StockMovement) -> Result<(), ataqu_kernel::RepositoryError> {
+    async fn find_low_stock_variants(
+        &self,
+        tenant_id: &TenantId,
+        threshold: i64,
+    ) -> Result<Vec<Variant>, RepositoryError> {
+        let models = variant_entity::Entity::find()
+            .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(variant_entity::Column::StockQuantity.lte(threshold))
+            .all(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+        Ok(models.into_iter().map(variant_model_to_domain).collect())
+    }
+
+    async fn save_warehouse(&self, warehouse: &Warehouse) -> Result<(), RepositoryError> {
+        let active = warehouse_entity::ActiveModel {
+            id: Set(warehouse.id),
+            tenant_id: Set(warehouse.tenant_id.as_uuid()),
+            name: Set(warehouse.name.clone()),
+            location: Set(warehouse.location.clone()),
+            created_at: Set(warehouse.created_at.into()),
+        };
+        warehouse_entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn list_warehouses(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<Warehouse>, RepositoryError> {
+        let models = warehouse_entity::Entity::find()
+            .filter(warehouse_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .all(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+        Ok(models
+            .into_iter()
+            .map(|m| Warehouse {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                name: m.name,
+                location: m.location,
+                created_at: m.created_at.into(),
+            })
+            .collect())
+    }
+
+    async fn update_warehouse(&self, warehouse: &Warehouse) -> Result<(), RepositoryError> {
+        let active = warehouse_entity::ActiveModel {
+            id: Set(warehouse.id),
+            tenant_id: Set(warehouse.tenant_id.as_uuid()),
+            name: Set(warehouse.name.clone()),
+            location: Set(warehouse.location.clone()),
+            created_at: Set(warehouse.created_at.into()),
+        };
+        warehouse_entity::Entity::update(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn delete_warehouse(
+        &self,
+        tenant_id: &TenantId,
+        id: &Uuid,
+    ) -> Result<(), RepositoryError> {
+        warehouse_entity::Entity::delete_many()
+            .filter(warehouse_entity::Column::Id.eq(*id))
+            .filter(warehouse_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn save_movement(&self, movement: &StockMovement) -> Result<(), RepositoryError> {
         let active = stock_movement_entity::ActiveModel {
             id: Set(movement.id),
             tenant_id: Set(movement.tenant_id.as_uuid()),
@@ -310,7 +393,7 @@ impl VaultRepository for VaultRepositoryImpl {
         stock_movement_entity::Entity::insert(active)
             .exec(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -320,7 +403,7 @@ impl VaultRepository for VaultRepositoryImpl {
         variant_id: &Uuid,
         limit: u64,
         offset: u64,
-    ) -> Result<Vec<StockMovement>, ataqu_kernel::RepositoryError> {
+    ) -> Result<Vec<StockMovement>, RepositoryError> {
         let models = stock_movement_entity::Entity::find()
             .filter(stock_movement_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(stock_movement_entity::Column::VariantId.eq(*variant_id))
@@ -328,7 +411,7 @@ impl VaultRepository for VaultRepositoryImpl {
             .offset(offset)
             .all(&self.db)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
 
         Ok(models
             .into_iter()
@@ -344,29 +427,11 @@ impl VaultRepository for VaultRepositoryImpl {
             .collect())
     }
 
-    async fn find_low_stock_variants(
-        &self,
-        tenant_id: &TenantId,
-        threshold: i64,
-    ) -> Result<Vec<Variant>, ataqu_kernel::RepositoryError> {
-        let models = variant_entity::Entity::find()
-            .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .filter(variant_entity::Column::StockQuantity.lte(threshold))
-            .all(&self.db)
-            .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
-
-        Ok(models.into_iter().map(variant_model_to_domain).collect())
-    }
-
-    async fn save_reservation(
-        &self,
-        reservation: &ataqu_domain_vault::stock::Reservation,
-    ) -> Result<(), ataqu_kernel::RepositoryError> {
+    async fn save_reservation(&self, reservation: &Reservation) -> Result<(), RepositoryError> {
         let created_at: chrono::DateTime<chrono::Utc> = reservation.created_at.into();
         let expires_at: Option<chrono::DateTime<chrono::Utc>> =
             reservation.expires_at.map(|t| t.into());
-        let stmt = sea_orm::Statement::from_sql_and_values(
+        let stmt = Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             r#"INSERT INTO vault.reservations (id, tenant_id, variant_id, quantity, status, expires_at, created_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
@@ -375,86 +440,87 @@ impl VaultRepository for VaultRepositoryImpl {
                 reservation.tenant_id.as_uuid().into(),
                 reservation.variant_id.into(),
                 reservation.quantity.into(),
-                format!("{:?}", reservation.status).to_lowercase().into(),
+                reservation.status.clone().into(),
                 expires_at.into(),
                 created_at.into(),
             ],
         );
-        self.db.execute_raw(stmt).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+        self.db
+            .execute_raw(stmt)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
 
-    async fn list_warehouses(
+    async fn find_expired_reservations(
         &self,
-        tenant_id: &ataqu_kernel::TenantId,
-    ) -> Result<Vec<ataqu_domain_vault::inventory::Warehouse>, ataqu_kernel::RepositoryError> {
-        let stmt = sea_orm::Statement::from_sql_and_values(
+        now: SystemTime,
+    ) -> Result<Vec<Reservation>, RepositoryError> {
+        let now_dt: chrono::DateTime<chrono::Utc> = now.into();
+        let stmt = Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
-            "SELECT id, tenant_id, name, location, created_at FROM vault.warehouses WHERE tenant_id = $1",
-            vec![tenant_id.as_uuid().into()],
+            r#"SELECT id, tenant_id, variant_id, quantity, status, expires_at, created_at
+               FROM vault.reservations
+               WHERE expires_at IS NOT NULL AND expires_at < $1"#,
+            [now_dt.into()],
         );
         let rows = self
             .db
             .query_all_raw(stmt)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
-        let mut whs = Vec::new();
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+        let mut reservations = Vec::new();
         for row in rows {
-            let created_at: chrono::DateTime<chrono::Utc> =
-                row.try_get("", "created_at").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
-            whs.push(ataqu_domain_vault::inventory::Warehouse {
-                id: row.try_get("", "id").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?,
-                tenant_id: ataqu_kernel::TenantId::new(
-                    row.try_get("", "tenant_id").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?,
-                ),
-                name: row.try_get("", "name").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?,
-                location: row.try_get("", "location").map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?,
+            let id: Uuid = row
+                .try_get("", "id")
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+            let tenant_id_val: Uuid = row
+                .try_get("", "tenant_id")
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+            let variant_id_val: Uuid = row
+                .try_get("", "variant_id")
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+            let quantity: i64 = row
+                .try_get("", "quantity")
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+            let status: String = row
+                .try_get("", "status")
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+            let expires_at: Option<chrono::DateTime<chrono::Utc>> =
+                row.try_get("", "expires_at")
+                    .map_err(|e| RepositoryError::Database(e.to_string()))?;
+            let created_at: chrono::DateTime<chrono::Utc> = row
+                .try_get("", "created_at")
+                .map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+            reservations.push(Reservation {
+                id,
+                tenant_id: TenantId::new(tenant_id_val),
+                variant_id: variant_id_val,
+                quantity,
+                status,
+                expires_at: expires_at.map(|t| t.into()),
                 created_at: created_at.into(),
             });
         }
-        Ok(whs)
+        Ok(reservations)
     }
 
-    async fn save_warehouse(
+    async fn delete_reservation(
         &self,
-        warehouse: &ataqu_domain_vault::inventory::Warehouse,
-    ) -> Result<(), ataqu_kernel::RepositoryError> {
-        let created_at: chrono::DateTime<chrono::Utc> = warehouse.created_at.into();
-        let stmt = sea_orm::Statement::from_sql_and_values(
+        tenant_id: TenantId,
+        reservation_id: Uuid,
+    ) -> Result<(), RepositoryError> {
+        let stmt = Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
-            "INSERT INTO vault.warehouses (id, tenant_id, name, location, created_at) VALUES ($1, $2, $3, $4, $5)",
-            vec![
-                warehouse.id.into(),
-                warehouse.tenant_id.as_uuid().into(),
-                warehouse.name.clone().into(),
-                warehouse.location.clone().into(),
-                created_at.into(),
-            ],
+            r#"DELETE FROM vault.reservations WHERE tenant_id = $1 AND id = $2"#,
+            [tenant_id.as_uuid().into(), reservation_id.into()],
         );
-        self.db.execute_raw(stmt).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
-        Ok(())
-    }
-
-    async fn update_warehouse(&self, warehouse: &Warehouse) -> Result<(), ataqu_kernel::RepositoryError> {
-        let model = warehouse_entity::Model {
-            id: warehouse.id,
-            tenant_id: warehouse.tenant_id.as_uuid(),
-            name: warehouse.name.clone(),
-            location: warehouse.location.clone(),
-            created_at: warehouse.created_at.into(),
-        };
-        let active: warehouse_entity::ActiveModel = model.into();
-        active.update(&self.db).await.map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
-        Ok(())
-    }
-    async fn delete_warehouse(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), ataqu_kernel::RepositoryError> {
-        warehouse_entity::Entity::delete_many()
-            .filter(warehouse_entity::Column::Id.eq(*id))
-            .filter(warehouse_entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .exec(&self.db)
+        self.db
+            .execute_raw(stmt)
             .await
-            .map_err(|e| ataqu_kernel::RepositoryError::Database(e.to_string()))?;
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
     }
-
 }

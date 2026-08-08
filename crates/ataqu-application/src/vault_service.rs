@@ -250,6 +250,20 @@ impl VaultService {
             .save_variant(&variant)
             .await
             .map_err(VaultServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "variant_id": variant.id,
+            "tenant_id": variant.tenant_id.as_uuid(),
+            "product_id": variant.product_id,
+            "sku": variant.sku,
+            "price": variant.price,
+            "stock_quantity": variant.stock_quantity,
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "VariantCreated", variant.id, &payload)
+            .await
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+
         Ok(variant)
     }
 
@@ -276,6 +290,18 @@ impl VaultService {
             .save_variant(&new_variant)
             .await
             .map_err(VaultServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "variant_id": new_variant.id,
+            "tenant_id": new_variant.tenant_id.as_uuid(),
+            "sku": new_variant.sku,
+            "price": new_variant.price,
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "VariantUpdated", new_variant.id, &payload)
+            .await
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+
         Ok(new_variant)
     }
 
@@ -519,5 +545,40 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
         Ok(new_variant)
+    }
+
+    pub async fn reap_expired_reservations(&self) -> VaultResult<()> {
+        let now = self.clock.now();
+        let expired = self
+            .repo
+            .find_expired_reservations(now)
+            .await
+            .map_err(VaultServiceError::Repository)?;
+
+        for reservation in expired {
+            let variant = match self.get_variant(reservation.tenant_id, reservation.variant_id).await {
+                Ok(v) => v,
+                Err(_) => continue, // Variant might be deleted, skip
+            };
+
+            let mut new_variant = variant.clone();
+            new_variant.reserved_quantity -= reservation.quantity;
+            if new_variant.reserved_quantity < 0 {
+                new_variant.reserved_quantity = 0; // Sanity check
+            }
+            new_variant.updated_at = now;
+            new_variant.version += 1;
+
+            self.repo
+                .save_variant(&new_variant)
+                .await
+                .map_err(VaultServiceError::Repository)?;
+
+            self.repo
+                .delete_reservation(reservation.tenant_id, reservation.id)
+                .await
+                .map_err(VaultServiceError::Repository)?;
+        }
+        Ok(())
     }
 }
