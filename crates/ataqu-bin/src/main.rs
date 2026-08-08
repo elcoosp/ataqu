@@ -30,7 +30,7 @@ use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 // use ChangelogService;
 // use HealthService;
 // use OnboardingService;
-// // use ataqu_application::pause_service::IdempotencyPort;
+// // // use ataqu_application::pause_service::IdempotencyPort;
 // use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
@@ -40,7 +40,17 @@ use ataqu_infra_pools::Pools;
 
 // use S3Service;
 use sea_orm::{ConnectionTrait, TransactionTrait};
-use ataqu_api::stubs::*;
+
+// Local stubs for missing dependencies
+pub trait AuditRepositoryTrait {}
+pub struct DummyAuditRepo;
+impl AuditRepositoryTrait for DummyAuditRepo {}
+pub struct HealthService;
+pub struct OnboardingService;
+pub struct ChangelogService;
+pub struct S3Service;
+
+
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
