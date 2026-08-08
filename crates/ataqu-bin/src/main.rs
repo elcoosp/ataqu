@@ -88,7 +88,8 @@ async fn main() -> anyhow::Result<()> {
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
     let aegis_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),));
+        pools.core.clone(),
+    ));
     let aegis_domain = Arc::new(RealAegisDomain);
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
@@ -468,7 +469,7 @@ async fn main() -> anyhow::Result<()> {
             pools.ops.clone(),
             std::path::PathBuf::from("/tmp/ataqu_email_spill"),
             10 * 1024 * 1024,
-        );
+        });
     tokio::spawn(async move {
         if let Err(e) = email_writer.run().await {
             tracing::error!("Email tracking writer crashed: {}", e);
@@ -492,7 +493,7 @@ async fn main() -> anyhow::Result<()> {
         moka::sync::Cache::builder()
             .time_to_live(Duration::from_secs(600))
             .build(),
-    );
+    });
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let http_client = reqwest::Client::new();
@@ -627,12 +628,12 @@ async fn main() -> anyhow::Result<()> {
                                     let sql = format!(
                                         "DELETE FROM {}.{} WHERE {} = $1",
                                         table.schema, table.table, table.tenant_id_column
-                                    );
+                                    });
                                     let stmt = sea_orm::Statement::from_sql_and_values(
                                         sea_orm::DbBackend::Postgres,
                                         &sql,
                                         [tenant_uuid.into()],
-                                    );
+                                    });
                                     if let Err(e) = txn.execute_raw(stmt).await {
                                         tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
                                         let _ = txn.rollback().await;
@@ -786,7 +787,7 @@ async fn main() -> anyhow::Result<()> {
                                 tracing::info!(
                                     "Booking reminder email sent for {}",
                                     booking_id_clone
-                                );
+                                });
                             }
                         })
                         .await
