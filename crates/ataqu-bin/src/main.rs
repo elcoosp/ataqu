@@ -529,7 +529,6 @@ async fn main() -> anyhow::Result<()> {
     let onboarding_service =
         Arc::new(OnboardingService);
     let changelog_service = Arc::new(ChangelogService);
-    ));
 
     let state = AppState {
         db: pools.core.clone(),
