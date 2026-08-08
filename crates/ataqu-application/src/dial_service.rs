@@ -60,6 +60,10 @@ pub enum DialServiceError {
 
 pub type DialResult<T> = Result<T, DialServiceError>;
 
+use printpdf::PdfDocument;
+use printpdf::Mm;
+use printpdf::BuiltinFont;
+use printpdf::text::Text;
 pub struct DialService {
     repo: Arc<dyn DialRepository + Send + Sync>,
     presence: Arc<dyn PresenceStore + Send + Sync>,
@@ -508,27 +512,23 @@ impl DialService {
             channel_id: Uuid,
             requester_id: Uuid,
         ) -> DialResult<Vec<u8>> {
-            use lopdf::{Document, Page, Object, Dictionary, ObjectId, Stream, content::Content};
-            use lopdf::font::Font;
-    
             let (messages, _total) = self
                 .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
                 .await?;
     
-            let mut doc = Document::new();
-            let page_id = doc.new_page();
-            let page = doc.get_page_mut(page_id).unwrap();
-            // Set up a basic font (Helvetica)
-            let font_id = doc.add_font(&Font::Helvetica);
-            // Create a content stream with text
-            let mut content = Content::new();
-            content.begin_text();
-            content.set_font(font_id, 12.0);
-            // Title
+            let doc = PdfDocument::new("Channel Export", Mm(20.0), Mm(20.0), "layer1");
+            let (mut page, mut layer) = doc.add_page(Mm(210.0), Mm(297.0), "A4");
+            let mut y = Mm(280.0);
+            let font = doc.add_builtin_font(BuiltinFont::Helvetica)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            let font_bold = doc.add_builtin_font(BuiltinFont::HelveticaBold)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+    
             let title = format!("Channel export: {}", channel_id);
-            content.set_position(50.0, 750.0);
-            content.show_text(&title);
-            let mut y = 720.0;
+            layer.use_text(&title, Mm(14.0), Mm(10.0), y, &font_bold)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            y = y - Mm(25.0);
+    
             for msg in messages {
                 let line = format!(
                     "[{}] {}: {}",
@@ -537,21 +537,20 @@ impl DialService {
                     msg.content
                 );
                 let line = if line.len() > 200 { &line[..200] } else { &line };
-                content.set_position(50.0, y);
-                content.show_text(&line);
-                y -= 15.0;
-                if y < 50.0 {
-                    // New page? We'll just stop; for simplicity we'll keep it on one page.
-                    break;
+                if y < Mm(20.0) {
+                    let (new_page, new_layer) = doc.add_page(Mm(210.0), Mm(297.0), "A4");
+                    page = new_page;
+                    layer = new_layer;
+                    y = Mm(280.0);
                 }
+                layer.use_text(line, Mm(10.0), Mm(10.0), y, &font)
+                    .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+                y = y - Mm(15.0);
             }
-            content.end_text();
-            // Add the content to the page
-            let stream_id = doc.add_object(Stream::new(content.into(), vec![]));
-            page.set_content(stream_id);
     
-            // Render to bytes
-            let pdf_bytes = doc.save_to_bytes().map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            let pdf_bytes = doc
+                .render_to_bytes()
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
             Ok(pdf_bytes)
         }
 
