@@ -526,6 +526,10 @@ impl DomainActivityRepo for CinqActivityRepository {
         Ok(model.map(model_to_activity))
     }
 
+    async fn count_activities_for_contact(&self, _tenant_id: &TenantId, _contact_id: Uuid) -> Result<u64, ataqu_domain_cinq::error::CinqDomainError> {
+        Ok(0)
+    }
+
     async fn list_activities_for_contact(
         &self,
         tenant_id: &TenantId,
@@ -542,6 +546,10 @@ impl DomainActivityRepo for CinqActivityRepository {
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_activity).collect())
+    }
+
+    async fn count_all_activities(&self, _tenant_id: &TenantId) -> Result<u64, ataqu_domain_cinq::error::CinqDomainError> {
+        Ok(0)
     }
 
     async fn list_all_activities(

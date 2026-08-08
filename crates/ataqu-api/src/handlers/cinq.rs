@@ -573,7 +573,7 @@ pub async fn list_activities(
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ActivityResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let activities = if let Some(contact_id) = params.contact_id {
+    let (activities, total) = if let Some(contact_id) = params.contact_id {
         state
             .cinq_service
             .list_activities_for_contact(auth.tenant_id, contact_id, limit, offset)
@@ -586,7 +586,6 @@ pub async fn list_activities(
             .await
             .map_err(|e| ApiResponseError::internal(&e.to_string()))?
     };
-    let total = 0;
     let items = activities
         .into_iter()
         .map(|a| ActivityResponse {

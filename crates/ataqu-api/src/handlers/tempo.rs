@@ -38,6 +38,7 @@ pub struct BookingResponse {
     pub duration_minutes: i32,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
@@ -49,6 +50,7 @@ impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
             duration_minutes: b.duration_minutes,
             status: format!("{:?}", b.status).to_lowercase(),
             created_at: b.created_at.into(),
+            version: b.version,
         }
     }
 }

@@ -176,7 +176,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                                 "channel_id": msg.channel_id.as_uuid(),
                                                 "author_id": msg.author_id.as_uuid(),
                                                 "content": msg.content,
-                                                "created_at": msg.created_at,
+                                                "created_at": chrono::DateTime::<chrono::Utc>::from(msg.created_at).to_rfc3339(),
                                             })
                                             .to_string();
 

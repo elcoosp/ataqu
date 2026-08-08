@@ -106,7 +106,7 @@ impl PauseService {
             return guard.get_cached::<Uuid>();
         }
         let result = async {
-            let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock);
+            let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock)?;
             self.employee_repo.insert(tenant_id, &event).await?;
             let payload = serde_json::json!({
                 "employee_id": event.employee_id,

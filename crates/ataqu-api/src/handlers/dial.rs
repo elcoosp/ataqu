@@ -642,31 +642,18 @@ pub async fn delete_reaction(
     auth: AuthContext,
     Path((message_id, reaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
-    // Fetch reaction to verify ownership
-    let reactions = state
-        .dial_service
-        .list_reactions(auth.tenant_id, message_id)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-    let reaction = reactions
-        .iter()
-        .find(|r| r.id == reaction_id)
-        .ok_or_else(|| ApiResponseError::not_found("Reaction not found"))?;
-
-    if reaction.user_id.as_uuid() != auth.user_id {
-        return Err(ApiResponseError::Forbidden(
-            "Cannot delete another user's reaction".to_string(),
-        ));
-    }
-
+    // Ownership and existence are checked in the service layer
     state
         .dial_service
         .delete_reaction(auth.tenant_id, message_id, reaction_id)
         .await
         .map_err(|e| match e {
             ataqu_application::dial_service::DialServiceError::Validation(msg) => {
-                ApiResponseError::validation(&msg)
+                if msg.contains("not found") {
+                    ApiResponseError::not_found(&msg)
+                } else {
+                    ApiResponseError::validation(&msg)
+                }
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;

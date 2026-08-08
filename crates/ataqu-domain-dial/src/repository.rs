@@ -107,11 +107,13 @@ pub trait DialRepository: Send + Sync {
         tenant_id: &TenantId,
         message_id: &MessageId,
     ) -> Result<Vec<Reaction>, DialError>;
+
     async fn get_reaction(
         &self,
         tenant_id: &TenantId,
         reaction_id: &Uuid,
     ) -> Result<Option<Reaction>, DialError>;
+
     async fn delete_reaction(
         &self,
         tenant_id: &TenantId,
