@@ -56,13 +56,29 @@ pub struct AppState {
     pub http_client: reqwest::Client,
 }
 
+async fn force_attachment_middleware(req: Request, next: Next) -> Response {
+    let is_upload = req.uri().path().starts_with("/uploads/");
+    let mut resp = next.run(req).await;
+    if is_upload {
+        let headers = resp.headers_mut();
+        headers.insert("content-disposition", "attachment".parse().unwrap());
+    }
+    resp
+}
+
 async fn security_headers_middleware(req: Request, next: Next) -> Response {
     let mut resp = next.run(req).await;
     let headers = resp.headers_mut();
     headers.insert("x-content-type-options", "nosniff".parse().unwrap());
     headers.insert("x-frame-options", "DENY".parse().unwrap());
-    headers.insert("content-security-policy", "default-src 'self'".parse().unwrap());
-    headers.insert("referrer-policy", "strict-origin-when-cross-origin".parse().unwrap());
+    headers.insert(
+        "content-security-policy",
+        "default-src 'self'".parse().unwrap(),
+    );
+    headers.insert(
+        "referrer-policy",
+        "strict-origin-when-cross-origin".parse().unwrap(),
+    );
     resp
 }
 
@@ -199,6 +215,7 @@ pub fn create_router(state: AppState) -> Router {
         .with_state(state.clone());
 
     let default_router = Router::new()
+        .layer(axum::middleware::from_fn(force_attachment_middleware))
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
         .merge(public_routes)

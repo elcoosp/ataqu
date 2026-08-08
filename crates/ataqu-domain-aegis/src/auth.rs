@@ -110,10 +110,10 @@ pub trait AuthRepository: Send + Sync {
     async fn list_tenants(&self) -> Result<Vec<Uuid>, AuthError>;
 
     async fn save_api_key(&self, key: &crate::api_key::ApiKey) -> Result<(), AuthError>;
-    async fn find_api_key_by_hash(
+    async fn find_api_keys_by_prefix_global(
         &self,
-        hash: &str,
-    ) -> Result<Option<crate::api_key::ApiKey>, AuthError>;
+        prefix: &str,
+    ) -> Result<Vec<crate::api_key::ApiKey>, AuthError>;
     async fn list_api_keys(
         &self,
         tenant_id: Uuid,

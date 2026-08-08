@@ -520,10 +520,14 @@ impl AegisService {
             user_id,
             name: created.name.clone(),
             key_hash: {
-                use sha2::{Digest, Sha256};
-                let mut hasher = Sha256::new();
-                hasher.update(created.key.as_bytes());
-                format!("{:x}", hasher.finalize())
+                use argon2::Argon2;
+                use argon2::password_hash::{PasswordHasher, SaltString};
+                let salt = SaltString::generate(&mut rand::thread_rng());
+                let argon2 = Argon2::default();
+                argon2
+                    .hash_password(created.key.as_bytes(), &salt)
+                    .unwrap()
+                    .to_string()
             },
             prefix: created.prefix.clone(),
             scopes,
@@ -561,45 +565,56 @@ impl AegisService {
         &self,
         key: &str,
     ) -> Result<ApiKeyAuthData, AegisServiceError> {
-        use sha2::{Digest, Sha256};
-        let mut hasher = Sha256::new();
-        hasher.update(key.as_bytes());
-        let hash = format!("{:x}", hasher.finalize());
-
-        let api_key = self
-            .repo
-            .find_api_key_by_hash(&hash)
-            .await?
-            .ok_or(AegisServiceError::AuthenticationFailed)?;
-
-        if let Some(expires_at) = api_key.expires_at {
-            if expires_at < self.clock.now() {
-                return Err(AegisServiceError::AuthenticationFailed);
-            }
-        }
-
-        let user = self
-            .repo
-            .find_by_id(api_key.user_id)
-            .await?
-            .ok_or(AegisServiceError::AuthenticationFailed)?;
-
-        if !user.is_active {
+        if key.len() < 12 {
             return Err(AegisServiceError::AuthenticationFailed);
         }
+        let prefix = &key[..12];
 
-        let _ = self
-            .repo
-            .update_api_key_last_used(api_key.id, self.clock.now())
-            .await;
+        // Find all keys with this prefix (across all tenants)
+        // This requires changing the repo trait to not require tenant_id.
+        let api_keys = self.repo.find_api_keys_by_prefix_global(prefix).await?;
 
-        Ok(ApiKeyAuthData {
-            user_id: user.id,
-            tenant_id: user.tenant_id,
-            email: user.email,
-            role: user.role,
-            scopes: api_key.scopes,
-        })
+        for api_key in api_keys {
+            if let Some(expires_at) = api_key.expires_at {
+                if expires_at < self.clock.now() {
+                    continue;
+                }
+            }
+
+            // Verify the key against the stored Argon2 hash
+            let parsed_hash = PasswordHash::new(&api_key.key_hash)
+                .map_err(|_| AegisServiceError::AuthenticationFailed)?;
+            if argon2::Argon2::default()
+                .verify_password(key.as_bytes(), &parsed_hash)
+                .is_err()
+            {
+                continue;
+            }
+
+            let user = self
+                .repo
+                .find_by_id(api_key.user_id)
+                .await?
+                .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+            if !user.is_active {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+
+            let _ = self
+                .repo
+                .update_api_key_last_used(api_key.id, self.clock.now())
+                .await;
+
+            return Ok(ApiKeyAuthData {
+                user_id: user.id,
+                tenant_id: user.tenant_id,
+                email: user.email,
+                role: user.role,
+                scopes: api_key.scopes,
+            });
+        }
+        Err(AegisServiceError::AuthenticationFailed)
     }
 
     /// Note: SSO exchange is not tenant-scoped. If multiple tenants have users with the

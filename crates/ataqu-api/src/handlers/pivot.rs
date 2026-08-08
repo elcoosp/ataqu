@@ -52,7 +52,7 @@ pub async fn create_db(
         .pivot_service
         .create_database(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(db.into())))
 }
 
@@ -64,7 +64,7 @@ pub async fn list_dbs(
         .pivot_service
         .list_databases(auth.tenant_id, 100, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(dbs.into_iter().map(|d| d.into()).collect()))
 }
 
@@ -77,7 +77,7 @@ pub async fn delete_db(
         .pivot_service
         .delete_database(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -131,7 +131,7 @@ pub async fn create_doc(
         .pivot_service
         .create_document(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -157,7 +157,7 @@ pub async fn list_docs(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(docs.into_iter().map(|d| d.into()).collect()))
 }
 
@@ -175,7 +175,7 @@ pub async fn get_doc(
             ataqu_application::pivot_service::PivotServiceError::DocumentNotFound => {
                 ApiResponseError::not_found("Document not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     let etag = format!("\"{}\"", doc.version);
     let mut resp_headers = axum::http::HeaderMap::new();
@@ -226,7 +226,7 @@ pub async fn update_doc(
             ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(doc.into()))
 }
@@ -240,7 +240,7 @@ pub async fn delete_doc(
         .pivot_service
         .delete_document(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -313,7 +313,7 @@ pub async fn create_block(
         .pivot_service
         .create_block(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(block.into())))
 }
 
@@ -326,7 +326,7 @@ pub async fn list_blocks(
         .pivot_service
         .get_blocks_for_document(auth.tenant_id, doc_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(blocks.into_iter().map(|b| b.into()).collect()))
 }
 
@@ -426,7 +426,7 @@ pub async fn update_block(
             ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(block.into()))
 }
@@ -440,7 +440,7 @@ pub async fn delete_block(
         .pivot_service
         .delete_block(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -483,7 +483,7 @@ pub async fn create_relation(
         .pivot_service
         .create_relation(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(rel.into())))
 }
 
@@ -496,7 +496,7 @@ pub async fn list_relations(
         .pivot_service
         .get_relations_for_document(auth.tenant_id, doc_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(rels.into_iter().map(|r| r.into()).collect()))
 }
 
@@ -514,7 +514,7 @@ pub async fn search_docs(
         .pivot_service
         .search_documents(auth.tenant_id, params.q, 20, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(docs.into_iter().map(|d| d.into()).collect()))
 }
 
@@ -527,7 +527,7 @@ pub async fn list_doc_versions(
         .pivot_service
         .list_document_versions(auth.tenant_id, id, 20)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list = versions
         .iter()
         .map(|v| {
@@ -563,7 +563,7 @@ pub async fn create_template(
         .pivot_service
         .create_template(auth.tenant_id, payload.name, payload.content)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({ "id": template.id })))
 }
 
@@ -575,7 +575,7 @@ pub async fn list_templates(
         .pivot_service
         .list_templates(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list = templates
         .iter()
         .map(|t| {

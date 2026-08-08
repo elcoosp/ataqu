@@ -71,14 +71,16 @@ pub async fn auth_middleware(
             auth_header,
             &DecodingKey::from_secret(&app_state.jwt_secret),
             &{
-            let mut v = Validation::new(Algorithm::HS256);
-            v.validate_exp = true;
-            v
-        },
+                let mut v = Validation::new(Algorithm::HS256);
+                v.validate_exp = true;
+                v
+            },
         ) {
             if token_data.claims.token_type != "access" {
                 return Err(ApiResponseError::unauthorized("Invalid token type"));
             }
+            // [LOW-001] Token version validation against DB is omitted for performance.
+            // We rely on short access token TTL (15m) and the JWT blocklist for revocation.
             // Note: token_version validation against DB would require a DB lookup on every request.
             // For now, we rely on short access token TTL (15 min) and the JWT blocklist for revocation.
             // A more robust solution would use a Redis-backed token version cache.

@@ -121,7 +121,7 @@ pub async fn create_contact(
         .cinq_service
         .create_contact(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -145,7 +145,7 @@ pub async fn list_contacts(
         .cinq_service
         .list_contacts(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let items = contacts.into_iter().map(ContactResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
@@ -238,7 +238,7 @@ pub async fn update_contact(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(ContactResponse::from(contact)))
 }
@@ -256,7 +256,7 @@ pub async fn delete_contact(
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
                 ApiResponseError::not_found("Contact not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -275,7 +275,7 @@ pub async fn bulk_delete_contacts(
         .cinq_service
         .bulk_delete_contacts(auth.tenant_id, payload.ids)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -292,7 +292,7 @@ pub async fn create_deal(
             ataqu_application::cinq_service::CinqServiceError::PipelineStageNotFound => {
                 ApiResponseError::validation("Invalid pipeline_stage_id")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
 
     let cmd = CreateDealCommand {
@@ -311,7 +311,7 @@ pub async fn create_deal(
         .cinq_service
         .create_deal(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -331,7 +331,7 @@ pub async fn list_deals(
         .cinq_service
         .list_deals(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let items = deals.into_iter().map(DealResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -421,7 +421,7 @@ pub async fn update_deal(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(DealResponse::from(deal)))
 }
@@ -439,7 +439,7 @@ pub async fn delete_deal(
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
                 ApiResponseError::not_found("Deal not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -452,7 +452,7 @@ pub async fn list_pipeline_stages(
         .cinq_service
         .list_pipeline_stages(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         stages
             .into_iter()
@@ -479,7 +479,7 @@ pub async fn create_pipeline_stage(
         .cinq_service
         .create_pipeline_stage(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
         StatusCode::CREATED,
         Json(PipelineStageResponse {
@@ -508,7 +508,7 @@ pub async fn update_pipeline_stage(
         .cinq_service
         .update_pipeline_stage(auth.tenant_id, id, payload.name, payload.order, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(PipelineStageResponse {
         id: stage.id,
         name: stage.name,
@@ -525,7 +525,7 @@ pub async fn delete_pipeline_stage(
         .cinq_service
         .delete_pipeline_stage(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -554,7 +554,7 @@ pub async fn create_activity(
         .cinq_service
         .create_activity(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
         StatusCode::CREATED,
         Json(ActivityResponse {
@@ -584,13 +584,13 @@ pub async fn list_activities(
             .cinq_service
             .list_activities_for_contact(auth.tenant_id, contact_id, limit, offset)
             .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?
     } else {
         state
             .cinq_service
             .list_all_activities(auth.tenant_id, limit, offset)
             .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?
     };
     let items = activities
         .into_iter()
@@ -645,7 +645,7 @@ pub async fn search_contacts(
         .cinq_service
         .search_contacts(auth.tenant_id, &params.q, params.limit.unwrap_or(20))
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -670,7 +670,7 @@ pub async fn search_by_custom_field(
             serde_json::json!(params.value),
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -697,7 +697,7 @@ pub async fn search_custom_fields_cross(
         .cinq_service
         .search_custom_fields_cross(auth.tenant_id, &params.q, limit)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -747,7 +747,7 @@ pub async fn import_csv(
         .cinq_service
         .import_contacts(auth.tenant_id, rows)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     Ok(Json(ImportCsvResultDetailed {
         imported,
@@ -764,7 +764,7 @@ pub async fn export_csv(
         .cinq_service
         .export_contacts(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     Ok((
         StatusCode::OK,
@@ -841,7 +841,7 @@ pub async fn create_task(
         .cinq_service
         .create_task(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -861,7 +861,7 @@ pub async fn list_tasks(
         .cinq_service
         .list_tasks(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
 
@@ -879,7 +879,7 @@ pub async fn get_task(
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
                 ApiResponseError::not_found("Task not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     let etag = format!("\"{}\"", task.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
@@ -953,7 +953,7 @@ pub async fn update_task(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(task.into()))
 }
@@ -971,7 +971,7 @@ pub async fn delete_task(
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
                 ApiResponseError::not_found("Task not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -991,7 +991,7 @@ pub async fn list_contact_tasks(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
 

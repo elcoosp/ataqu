@@ -330,7 +330,12 @@ async fn main() -> anyhow::Result<()> {
                     let host = parsed_url.host_str().ok_or("Invalid URL")?;
 
                     // Block internal IPs and localhost
-                    if host == "localhost" || host.starts_with("127.") || host.starts_with("10.") || host.starts_with("192.168.") || host.starts_with("169.254.") {
+                    if host == "localhost"
+                        || host.starts_with("127.")
+                        || host.starts_with("10.")
+                        || host.starts_with("192.168.")
+                        || host.starts_with("169.254.")
+                    {
                         return Err("SSRF attempt blocked: internal IP".to_string());
                     }
                     if host.starts_with("172.") {
@@ -496,8 +501,8 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // [MED-001] Restrict CORS origins
-    let allowed_origins = std::env::var("ALLOWED_ORIGINS")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let allowed_origins =
+        std::env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "http://localhost:3000".to_string());
     let origins: Vec<axum::http::HeaderValue> = allowed_origins
         .split(',')
         .filter_map(|s| s.trim().parse().ok())
@@ -808,9 +813,9 @@ async fn main() -> anyhow::Result<()> {
     use std::os::unix::fs::PermissionsExt;
     std::fs::set_permissions(admin_socket_path, std::fs::Permissions::from_mode(0o600))?;
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-    let id_gen_for_admin = id_gen.clone();
-    let clock_for_admin = clock.clone();
-    let jwt_blocklist_for_admin = jwt_blocklist.clone();
+    let _id_gen_for_admin = id_gen.clone();
+    let _clock_for_admin = clock.clone();
+    let _jwt_blocklist_for_admin = jwt_blocklist.clone();
 
     tokio::spawn(async move {
         tracing::info!("Admin server listening on UDS: {}", admin_socket_path);

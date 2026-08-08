@@ -164,7 +164,7 @@ fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
         MfaSetupFailed(msg) => ApiResponseError::validation(&msg),
         Database(msg) => ApiResponseError::internal(&msg),
         Outbox(msg) => ApiResponseError::internal(&msg),
-        Domain(e) => ApiResponseError::internal(&e.to_string()),
+        Domain(e) => ApiResponseError::internal("An unexpected error occurred"),
         NotFound(msg) => ApiResponseError::not_found(&msg),
         Conflict(msg) => ApiResponseError::conflict(&msg),
         MfaRequired => ApiResponseError::unauthorized("MFA required"),
@@ -616,5 +616,10 @@ pub fn routes() -> axum::Router<crate::AppState> {
 }
 
 pub fn public_routes() -> axum::Router<crate::AppState> {
+    use axum::routing::post;
     axum::Router::new()
+        .route("/password-reset/request", post(request_password_reset))
+        .route("/password-reset/confirm", post(reset_password))
+        .route("/sso/login", post(sso_login))
+        .route("/sso/callback", post(sso_callback))
 }

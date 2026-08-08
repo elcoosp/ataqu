@@ -30,7 +30,7 @@ pub async fn request_tenant_deletion(
         .aegis_service
         .request_gdpr_deletion(tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     Ok(StatusCode::ACCEPTED)
 }
