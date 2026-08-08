@@ -30,7 +30,7 @@ use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 // use ChangelogService;
 // use HealthService;
 // use OnboardingService;
-// use ataqu_application::pause_service::IdempotencyPort;
+// // use ataqu_application::pause_service::IdempotencyPort;
 // use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
@@ -40,7 +40,7 @@ use ataqu_infra_pools::Pools;
 
 // use S3Service;
 use sea_orm::{ConnectionTrait, TransactionTrait};
-use ataqu_api::*;
+use ataqu_api::stubs::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
