@@ -243,6 +243,8 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     if let Some(count) = state.presence_counts.get(&auth.user_id) {
         let new_count = count.fetch_sub(1, std::sync::atomic::Ordering::SeqCst) - 1;
         if new_count == 0 {
+            drop(count);
+            state.presence_counts.remove(&auth.user_id);
             if let Err(e) = state
                 .dial_service
                 .set_offline(auth.tenant_id, auth.user_id)

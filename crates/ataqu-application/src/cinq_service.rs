@@ -742,11 +742,18 @@ impl CinqService {
                 expected_version, stage.version
             )));
         }
-        if let Some(name) = name {
-            stage.name = name;
+        let domain_cmd = pipeline_domain::UpdatePipelineStageCommand {
+            id,
+            tenant_id,
+            name,
+            order,
+        };
+        let event = pipeline_domain::update_pipeline_stage(domain_cmd, self.clock.as_ref())?;
+        if let Some(n) = event.name {
+            stage.name = n;
         }
-        if let Some(order) = order {
-            stage.order = order;
+        if let Some(o) = event.order {
+            stage.order = o;
         }
         stage.version += 1;
         self.stage_repo.save_pipeline_stage(&stage).await?;

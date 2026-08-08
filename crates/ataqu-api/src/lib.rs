@@ -129,9 +129,6 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::idempotency::idempotency_middleware,
         ))
         .layer(axum::middleware::from_fn(
-            crate::middleware::csrf::csrf_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(

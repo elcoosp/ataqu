@@ -90,6 +90,8 @@ pub enum AuthError {
     InvalidCredentials,
     #[error("MFA already enabled")]
     MfaAlreadyEnabled,
+    #[error("Validation error: {0}")]
+    Validation(String),
     #[error("Database error: {0}")]
     Database(String),
 }

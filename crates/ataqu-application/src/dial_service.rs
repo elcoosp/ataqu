@@ -164,6 +164,11 @@ impl DialService {
                     "Channel name cannot be empty".to_string(),
                 ));
             }
+            if n.chars().count() > dial_domain::MAX_CHANNEL_NAME_LEN {
+                return Err(DialServiceError::Validation(
+                    "Channel name too long".to_string(),
+                ));
+            }
             channel.name = n;
         }
         channel.version += 1;

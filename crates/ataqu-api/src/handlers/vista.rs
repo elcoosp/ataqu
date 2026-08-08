@@ -66,7 +66,7 @@ pub async fn create_dashboard(
         .create_dashboard(auth.tenant_id, payload.name, payload.config)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(serde_json::json!({ "id": dashboard.id })))
+    Ok(Json(serde_json::json!({ "id": dashboard.id, "version": dashboard.version })))
 }
 
 pub async fn list_dashboards(
@@ -87,6 +87,7 @@ pub async fn list_dashboards(
                 "config": d.config,
                 "created_at": d.created_at,
                 "updated_at": d.updated_at,
+                "version": d.version,
             })
         })
         .collect();
@@ -143,6 +144,7 @@ pub async fn update_dashboard(
         "config": dashboard.config,
         "created_at": dashboard.created_at,
         "updated_at": dashboard.updated_at,
+        "version": dashboard.version,
     })))
 }
 

@@ -419,6 +419,11 @@ pub async fn update_user_role(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateRoleRequest>,
 ) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
     let if_match = headers
         .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
@@ -427,11 +432,6 @@ pub async fn update_user_role(
             ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
         })?;
 
-    if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden(
-            "Admin access required".to_string(),
-        ));
-    }
     if !["admin", "member", "viewer"].contains(&req.role.as_str()) {
         return Err(ApiResponseError::validation("Invalid role"));
     }
@@ -489,6 +489,11 @@ pub async fn create_api_key(
     auth: AuthContext,
     Json(req): Json<CreateApiKeyRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
     let scopes = req.scopes.unwrap_or_default();
     for scope in &scopes {
         if !["read", "write", "admin"].contains(&scope.as_str()) {

@@ -108,6 +108,7 @@ pub struct CreateActivityRequest {
 pub struct ListActivitiesParams {
     pub contact_id: Option<Uuid>,
     pub limit: Option<u64>,
+    pub offset: Option<u64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

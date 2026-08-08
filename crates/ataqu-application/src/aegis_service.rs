@@ -115,7 +115,7 @@ impl RealAegisDomain {
             .reveal(&ataqu_security::PiiAccessKey::new())
             .contains('@')
         {
-            return Err(AuthError::InvalidCredentials);
+            return Err(AuthError::Validation("Invalid email format".to_string()));
         }
         let salt = SaltString::generate(&mut rand::thread_rng());
         let argon2 = Argon2::default();

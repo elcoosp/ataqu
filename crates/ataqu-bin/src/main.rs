@@ -445,14 +445,6 @@ async fn main() -> anyhow::Result<()> {
             rate_limiter_cleanup.cleanup();
         }
     });
-
-    let rate_limiter_cleanup = rate_limiter.clone();
-    tokio::spawn(async move {
-        loop {
-            tokio::time::sleep(Duration::from_secs(60)).await;
-            rate_limiter_cleanup.cleanup();
-        }
-    });
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();
@@ -796,10 +788,7 @@ async fn main() -> anyhow::Result<()> {
         loop {
             if let Ok((mut stream, _)) = admin_listener.accept().await {
                 let admin_token = admin_token.clone();
-                let _id_gen = id_gen_for_admin.clone();
-                let _clock = clock_for_admin.clone();
                 let aegis = aegis_service_for_admin.clone();
-                let _jwt_blocklist = jwt_blocklist_for_admin.clone();
 
                 tokio::spawn(async move {
                     use tokio::io::{AsyncReadExt, AsyncWriteExt};
