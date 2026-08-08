@@ -90,7 +90,8 @@ pub async fn auth_middleware(
             let user_version = match app_state.user_version_cache.get(&user_id) {
                 Some(v) => v,
                 None => {
-                    let user = app_state.aegis_service
+                    let user = app_state
+                        .aegis_service
                         .find_user_by_id(user_id)
                         .await
                         .map_err(|_| ApiResponseError::unauthorized("Invalid user"))?

@@ -444,10 +444,7 @@ impl AegisService {
             .map_err(AegisServiceError::Domain)
     }
 
-    pub async fn find_user_by_id(
-        &self,
-        user_id: Uuid,
-    ) -> Result<Option<User>, AegisServiceError> {
+    pub async fn find_user_by_id(&self, user_id: Uuid) -> Result<Option<User>, AegisServiceError> {
         self.repo
             .find_by_id(user_id)
             .await
@@ -499,7 +496,16 @@ impl AegisService {
         Ok(())
     }
 
-    pub async fn logout(&self, _user_id: &str) -> Result<(), AegisServiceError> {
+    /// [VULN-002] Increments the user version to invalidate all existing tokens.
+    pub async fn increment_user_version(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
+        let mut user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
+            .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+        user.version += 1;
+        user.updated_at = self.clock.now();
+        self.repo.save_user(&user).await?;
         Ok(())
     }
 

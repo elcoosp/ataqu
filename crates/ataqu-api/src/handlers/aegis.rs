@@ -468,16 +468,17 @@ pub async fn deactivate_user(
 pub async fn logout(
     State(state): State<AppState>,
     auth: AuthContext,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> ApiResult<StatusCode> {
-    if let Some(auth_header) = headers
-        .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| s.strip_prefix("Bearer "))
-    {
-        state.jwt_blocklist.insert(auth_header.to_string(), ());
-    }
-    let _ = state.aegis_service.logout(&auth.user_id.to_string()).await;
+    // [VULN-002] To ensure durable logout without an in-memory blocklist,
+    // we increment the user's version. This invalidates all existing tokens
+    // for this user across all services and restarts.
+    state
+        .aegis_service
+        .increment_user_version(auth.user_id)
+        .await
+        .map_err(map_aegis_error)?;
+
     Ok(StatusCode::NO_CONTENT)
 }
 
