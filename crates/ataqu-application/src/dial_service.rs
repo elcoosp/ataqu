@@ -1,4 +1,4 @@
-use lopdf::{Document, Object, Stream, Dictionary, ObjectId};
+use lopdf::{Document, Stream, Dictionary};
 use lopdf::content::Content;
 use std::io::Cursor;
 // DIAL application service – orchestrates chat operations using domain repositories.
@@ -518,7 +518,7 @@ impl DialService {
             let mut doc = Document::new();
     
             // Build content stream
-            let mut content = Content::new();
+            let mut content = Vec::new();
             content.begin_text();
             content.set_font("Helvetica", 12.0);
             let title = format!("Channel export: {}", channel_id);
