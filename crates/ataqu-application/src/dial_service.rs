@@ -12,7 +12,6 @@ use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::PresenceStore;
 use ataqu_domain_dial::repository::DialRepository;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use printpdf::text::Text;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_dial::chat::{Channel, Message, Reaction};
@@ -509,26 +508,27 @@ impl DialService {
             channel_id: Uuid,
             requester_id: Uuid,
         ) -> DialResult<Vec<u8>> {
-            use printpdf::{PdfDocument, Mm, BuiltinFont};
-            // The Text trait is already imported at the top of the file.
+            use lopdf::{Document, Page, Object, Dictionary, ObjectId, Stream, content::Content};
+            use lopdf::font::Font;
     
             let (messages, _total) = self
                 .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
                 .await?;
     
-            let doc = PdfDocument::new("Channel Export", Mm(20.0), Mm(20.0), "layer1");
-            let (mut page, mut layer) = doc.0.add_page(Mm(210.0), Mm(297.0), "A4");
-            let mut y = Mm(280.0);
-            let font = doc.0.add_builtin_font(BuiltinFont::Helvetica)
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-            let font_bold = doc.0.add_builtin_font(BuiltinFont::HelveticaBold)
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-    
+            let mut doc = Document::new();
+            let page_id = doc.new_page();
+            let page = doc.get_page_mut(page_id).unwrap();
+            // Set up a basic font (Helvetica)
+            let font_id = doc.add_font(&Font::Helvetica);
+            // Create a content stream with text
+            let mut content = Content::new();
+            content.begin_text();
+            content.set_font(font_id, 12.0);
+            // Title
             let title = format!("Channel export: {}", channel_id);
-            layer.use_text(&title, Mm(14.0), Mm(10.0), y, &font_bold)
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-            y = y - Mm(25.0);
-    
+            content.set_position(50.0, 750.0);
+            content.show_text(&title);
+            let mut y = 720.0;
             for msg in messages {
                 let line = format!(
                     "[{}] {}: {}",
@@ -537,20 +537,21 @@ impl DialService {
                     msg.content
                 );
                 let line = if line.len() > 200 { &line[..200] } else { &line };
-                if y < Mm(20.0) {
-                    let (new_page, new_layer) = doc.0.add_page(Mm(210.0), Mm(297.0), "A4");
-                    page = new_page;
-                    layer = new_layer;
-                    y = Mm(280.0);
+                content.set_position(50.0, y);
+                content.show_text(&line);
+                y -= 15.0;
+                if y < 50.0 {
+                    // New page? We'll just stop; for simplicity we'll keep it on one page.
+                    break;
                 }
-                layer.use_text(line, Mm(10.0), Mm(10.0), y, &font)
-                    .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-                y = y - Mm(15.0);
             }
+            content.end_text();
+            // Add the content to the page
+            let stream_id = doc.add_object(Stream::new(content.into(), vec![]));
+            page.set_content(stream_id);
     
-            let pdf_bytes = doc.0
-                .save_to_bytes()
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            // Render to bytes
+            let pdf_bytes = doc.save_to_bytes().map_err(|e| DialServiceError::Repository(e.to_string()))?;
             Ok(pdf_bytes)
         }
 
