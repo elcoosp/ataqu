@@ -453,6 +453,7 @@ impl AegisService {
 
     pub async fn update_user_role(
         &self,
+        tenant_id: TenantId,
         user_id: Uuid,
         role: String,
         expected_version: i32,
@@ -462,6 +463,11 @@ impl AegisService {
             .find_by_id(user_id)
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+
+        // [VULN-001] Enforce tenant isolation
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::NotFound("User not found".into()));
+        }
         if user.version != expected_version {
             return Err(AegisServiceError::Conflict(format!(
                 "Version mismatch: expected {}, found {}",
@@ -474,12 +480,22 @@ impl AegisService {
         Ok(())
     }
 
-    pub async fn deactivate_user(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
+    pub async fn deactivate_user(
+        &self,
+        tenant_id: TenantId,
+        user_id: Uuid,
+    ) -> Result<(), AegisServiceError> {
         let mut user = self
             .repo
             .find_by_id(user_id)
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+
+        // [VULN-001] Enforce tenant isolation
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::NotFound("User not found".into()));
+        }
+
         ataqu_domain_aegis::auth::deactivate_user(&mut user, self.clock.as_ref());
         user.version += 1; // [VULN-001] Increment version to invalidate old tokens
         self.repo.save_user(&user).await?;
@@ -636,8 +652,9 @@ impl AegisService {
 
     /// Note: SSO exchange is not tenant-scoped. If multiple tenants have users with the
     /// same email, the first match is returned. This is a known limitation.
-    /// SECURITY NOTE: SSO exchange is not tenant-scoped. If multiple tenants have users with the
-    /// same email, the first match is returned. This is a known limitation.
+    /// [VULN-003] SECURITY NOTE: SSO exchange is not tenant-scoped. If multiple tenants have users with the
+    /// same email, the first match is returned. This is a known limitation. A proper fix requires
+    /// tenant context in the SSO flow.
     pub async fn sso_exchange(
         &self,
         email: Email,

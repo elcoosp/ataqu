@@ -438,7 +438,7 @@ pub async fn update_user_role(
     }
     state
         .aegis_service
-        .update_user_role(user_id, req.role, if_match)
+        .update_user_role(auth.tenant_id, user_id, req.role, if_match)
         .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::OK)
@@ -456,7 +456,7 @@ pub async fn deactivate_user(
     }
     state
         .aegis_service
-        .deactivate_user(user_id)
+        .deactivate_user(auth.tenant_id, user_id)
         .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::NO_CONTENT)
