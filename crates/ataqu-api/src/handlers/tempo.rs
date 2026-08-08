@@ -103,11 +103,20 @@ pub async fn cancel_booking(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<BookingResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let cmd = UpdateBookingStatusCommand {
         tenant_id: auth.tenant_id,
         booking_id: id,
         status: BookingStatus::Cancelled,
+        expected_version: if_match,
     };
     let booking = state
         .tempo_service
@@ -126,13 +135,30 @@ pub async fn reschedule_booking(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<RescheduleBookingRequest>,
 ) -> ApiResult<Json<BookingResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let booking = state
         .tempo_service
-        .reschedule_booking(auth.tenant_id, id, payload.starts_at)
+        .reschedule_booking(auth.tenant_id, id, payload.starts_at, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::tempo_service::TempoServiceError::Validation(msg) => {
+                if msg.contains("Version mismatch") {
+                    ApiResponseError::conflict(&msg)
+                } else {
+                    ApiResponseError::validation(&msg)
+                }
+            }
+            _ => ApiResponseError::internal(&e.to_string()),
+        })?;
     Ok(Json(booking.into()))
 }
 
@@ -140,11 +166,20 @@ pub async fn confirm_booking(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<BookingResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let cmd = UpdateBookingStatusCommand {
         tenant_id: auth.tenant_id,
         booking_id: id,
         status: BookingStatus::Confirmed,
+        expected_version: if_match,
     };
     let booking = state
         .tempo_service

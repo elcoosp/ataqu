@@ -226,14 +226,6 @@ pub fn public_routes() -> Router<AppState> {
     )
 }
 
-pub async fn list_templates(
-    State(_state): State<AppState>,
-    _auth: AuthContext,
-) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    // Templates are now persisted via PIVOT. This endpoint is deprecated.
-    Ok(Json(vec![]))
-}
-
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post};
     Router::new()

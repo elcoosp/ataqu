@@ -40,6 +40,15 @@ pub trait DialRepository: Send + Sync {
     ) -> Result<Message, DialError>;
     async fn insert_thread(&self, thread: &Thread) -> Result<(), DialError>;
     async fn insert_mention(&self, mention: &Mention) -> Result<(), DialError>;
+
+    async fn delete_mentions_for_message(
+        &self,
+        _tenant_id: &TenantId,
+        _message_id: &MessageId,
+    ) -> Result<(), DialError> {
+        Ok(())
+    }
+
     async fn get_mentions_for_user(
         &self,
         tenant_id: &TenantId,

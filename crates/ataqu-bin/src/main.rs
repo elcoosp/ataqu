@@ -437,6 +437,7 @@ async fn main() -> anyhow::Result<()> {
     );
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
+    let http_client = reqwest::Client::new();
 
     let rate_limiter_cleanup = rate_limiter.clone();
     tokio::spawn(async move {
@@ -472,6 +473,7 @@ async fn main() -> anyhow::Result<()> {
         metrics_handle,
         sso_states: sso_states.clone(),
         jwt_blocklist: jwt_blocklist.clone(),
+        http_client,
     };
 
     let cors = tower_http::cors::CorsLayer::new()

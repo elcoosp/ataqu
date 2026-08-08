@@ -63,6 +63,15 @@ pub trait TempoRepository: Send + Sync {
         tenant_id: &TenantId,
         slug: &str,
     ) -> Result<Option<EventType>, RepositoryError>;
+
+    async fn find_event_type_by_id(
+        &self,
+        _tenant_id: &TenantId,
+        _id: Uuid,
+    ) -> Result<Option<EventType>, RepositoryError> {
+        Ok(None)
+    }
+
     async fn update_event_type(&self, event_type: &EventType) -> Result<(), RepositoryError>;
     async fn delete_event_type(
         &self,
@@ -89,4 +98,13 @@ pub trait TempoRepository: Send + Sync {
         tenant_id: &TenantId,
         slot_id: Uuid,
     ) -> Result<(), RepositoryError>;
+
+    async fn update_booking_version(
+        &self,
+        _tenant_id: &TenantId,
+        _booking_id: &BookingId,
+        _version: i32,
+    ) -> Result<(), RepositoryError> {
+        Ok(())
+    }
 }

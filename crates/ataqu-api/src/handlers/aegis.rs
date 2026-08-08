@@ -132,7 +132,7 @@ pub async fn mfa_verify(
         .verify_mfa(auth.user_id, &req.code)
         .await
         .map_err(map_aegis_error)?;
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Deserialize)]
@@ -248,7 +248,7 @@ pub async fn sso_callback(
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
 
-    let client = reqwest::Client::new();
+    let client = state.http_client.clone();
     let email_str = match provider {
         ataqu_domain_aegis::sso::SsoProvider::Google => {
             let token_url = "https://oauth2.googleapis.com/token";
@@ -573,7 +573,7 @@ pub async fn request_password_reset(
         .request_password_reset(email)
         .await
         .map_err(map_aegis_error)?;
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Deserialize)]
@@ -591,7 +591,7 @@ pub async fn reset_password(
         .reset_password(&req.token, req.new_password)
         .await
         .map_err(map_aegis_error)?;
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {

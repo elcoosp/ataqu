@@ -296,7 +296,22 @@ impl DialRepository for DialRepositoryImpl {
         Ok(())
     }
 
+    async fn delete_mentions_for_message(
+        &self,
+        tenant_id: &TenantId,
+        message_id: &MessageId,
+    ) -> Result<(), DialError> {
+        mention_entity::Entity::delete_many()
+            .filter(mention_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(mention_entity::Column::MessageId.eq(message_id.as_uuid()))
+            .exec(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(())
+    }
+
     async fn insert_mention(&self, mention: &Mention) -> Result<(), DialError> {
+
         let active = mention_domain_to_active(mention);
         mention_entity::Entity::insert(active)
             .exec(&self.db)

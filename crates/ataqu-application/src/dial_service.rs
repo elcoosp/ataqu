@@ -328,6 +328,11 @@ impl DialService {
             .get_channel(&tenant_id, &message.channel_id)
             .await?;
 
+        // Remove old mentions for this message
+        self.repo
+            .delete_mentions_for_message(&tenant_id, &MessageId::new(message_id))
+            .await?;
+
         // Persist new mentions extracted by the domain function
         for user_id_str in &event.new_mentioned_user_ids {
             if user_id_str == "channel" {

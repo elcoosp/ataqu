@@ -536,10 +536,11 @@ impl VaultService {
     }
 
     pub async fn update_warehouse(&self, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
-        let warehouses = self.list_warehouses(cmd.tenant_id).await?;
-        let mut warehouse = warehouses
-            .into_iter()
-            .find(|w| w.id == cmd.id)
+        let mut warehouse = self
+            .repo
+            .get_warehouse_by_id(&cmd.tenant_id, cmd.id)
+            .await
+            .map_err(VaultServiceError::Repository)?
             .ok_or(VaultServiceError::WarehouseNotFound)?;
 
         if let Some(name) = cmd.name {

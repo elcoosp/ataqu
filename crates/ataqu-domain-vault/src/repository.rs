@@ -74,4 +74,13 @@ pub trait VaultRepository: Send + Sync {
         tenant_id: TenantId,
         reservation_id: Uuid,
     ) -> Result<(), RepositoryError>;
+
+    async fn get_warehouse_by_id(
+        &self,
+        _tenant_id: &TenantId,
+        _id: Uuid,
+    ) -> Result<Option<Warehouse>, RepositoryError> {
+        Ok(None)
+    }
+
 }

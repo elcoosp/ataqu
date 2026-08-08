@@ -53,6 +53,7 @@ pub struct AppState {
     pub metrics_handle: PrometheusHandle,
     pub sso_states: Arc<moka::sync::Cache<String, ataqu_domain_aegis::sso::SsoProvider>>,
     pub jwt_blocklist: Arc<moka::sync::Cache<String, ()>>,
+    pub http_client: reqwest::Client,
 }
 
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
