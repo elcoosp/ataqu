@@ -324,12 +324,11 @@ pub async fn list_deals(
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<DealResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let deals = state
+    let (deals, total) = state
         .cinq_service
         .list_deals(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = 0;
     let items = deals.into_iter().map(DealResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -557,7 +556,7 @@ pub async fn create_activity(
         StatusCode::CREATED,
         Json(ActivityResponse {
             id: activity.id,
-            activity_type: format!("{:?}", activity.activity_type).to_lowercase(),
+            activity_type: serde_json::to_string(&activity.activity_type).unwrap_or_default().trim_matches('"').to_string(),
             description: activity.description,
             scheduled_at: activity.scheduled_at,
             contact_id: activity.contact_id,
@@ -620,7 +619,7 @@ pub async fn get_activity(
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(ActivityResponse {
         id: activity.id,
-        activity_type: format!("{:?}", activity.activity_type).to_lowercase(),
+        activity_type: serde_json::to_string(&activity.activity_type).unwrap_or_default().trim_matches('"').to_string(),
         description: activity.description,
         scheduled_at: activity.scheduled_at,
         contact_id: activity.contact_id,
@@ -806,7 +805,7 @@ impl From<ataqu_domain_cinq::task::Task> for TaskResponse {
             title: t.title,
             description: t.description,
             due_date: t.due_date,
-            status: format!("{:?}", t.status).to_lowercase(),
+            status: serde_json::to_string(&t.status).unwrap_or_default().trim_matches('"').to_string(),
             created_at: t.created_at,
             updated_at: t.updated_at,
         }

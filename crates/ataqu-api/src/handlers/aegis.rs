@@ -489,7 +489,7 @@ pub async fn create_api_key(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(req): Json<CreateApiKeyRequest>,
-) -> ApiResult<Json<serde_json::Value>> {
+) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
     if !auth.has_role("admin") {
         return Err(ApiResponseError::Forbidden(
             "Admin access required".to_string(),
@@ -513,13 +513,16 @@ pub async fn create_api_key(
         )
         .await
         .map_err(map_aegis_error)?;
-    Ok(Json(serde_json::json!({
-        "id": key.id,
-        "name": key.name,
-        "key": key.key,
-        "prefix": key.prefix,
-        "scopes": key.scopes,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "id": key.id,
+            "name": key.name,
+            "key": key.key,
+            "prefix": key.prefix,
+            "scopes": key.scopes,
+        }))
+    ))
 }
 
 pub async fn list_api_keys(

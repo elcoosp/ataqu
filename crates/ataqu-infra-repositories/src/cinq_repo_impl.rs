@@ -397,6 +397,10 @@ impl DomainDealRepo for CinqDealRepository {
         Ok(model.map(model_to_deal))
     }
 
+    async fn count_deals(&self, _tenant_id: &TenantId) -> Result<u64, ataqu_domain_cinq::error::CinqDomainError> {
+        Ok(0)
+    }
+
     async fn list_deals(
         &self,
         tenant_id: &TenantId,

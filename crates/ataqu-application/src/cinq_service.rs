@@ -615,8 +615,10 @@ impl CinqService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> CinqResult<Vec<Deal>> {
-        Ok(self.deal_repo.list_deals(&tenant_id, limit, offset).await?)
+    ) -> CinqResult<(Vec<Deal>, u64)> {
+        let total = self.deal_repo.count_deals(&tenant_id).await?;
+        let deals = self.deal_repo.list_deals(&tenant_id, limit, offset).await?;
+        Ok((deals, total))
     }
 
     pub async fn create_activity(&self, cmd: CreateActivityCommand) -> CinqResult<Activity> {

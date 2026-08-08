@@ -67,6 +67,8 @@ pub trait DealRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> CinqRepositoryResult<Vec<Deal>>;
+
+    async fn count_deals(&self, tenant_id: &TenantId) -> CinqRepositoryResult<u64>;
     async fn delete_deal(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<()>;
 }
 
