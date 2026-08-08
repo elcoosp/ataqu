@@ -461,7 +461,7 @@ async fn main() -> anyhow::Result<()> {
     );
     let user_version_cache = Arc::new(
         moka::sync::Cache::builder()
-            .time_to_live(Duration::from_secs(60)) // Cache user version for 1 minute
+            .time_to_live(Duration::from_secs(5)) // [VULN-004] Reduced TTL to 5s to minimize token validity window
             .build(),
     );
     let rate_limiter =

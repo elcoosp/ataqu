@@ -484,6 +484,7 @@ impl AegisService {
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
         ataqu_domain_aegis::auth::deactivate_user(&mut user, self.clock.as_ref());
+        user.version += 1; // [VULN-001] Increment version to invalidate old tokens
         self.repo.save_user(&user).await?;
 
         let payload = serde_json::json!({
