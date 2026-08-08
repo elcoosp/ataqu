@@ -98,25 +98,23 @@ pub async fn unified_search(
         .list_users(auth.tenant_id.as_uuid())
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    for u in users {
-        let email_str = u
-            .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
-            .to_string();
-        if email_str.contains(&params.q)
-            || u.name
-                .as_deref()
-                .map(|n| n.contains(&params.q))
-                .unwrap_or(false)
-        {
-            results.push(UnifiedSearchResult {
-                app: "aegis".to_string(),
-                entity_type: "user".to_string(),
-                id: u.id,
-                title: u.name.unwrap_or_else(|| "Unknown".to_string()),
-                subtitle: None,
-            });
-        }
+    let user_matches: Vec<_> = users
+        .into_iter()
+        .filter(|u| {
+            let email_str = u.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+            email_str.contains(&params.q)
+                || u.name.as_deref().map(|n| n.contains(&params.q)).unwrap_or(false)
+        })
+        .take(overall_limit)
+        .collect();
+    for u in user_matches {
+        results.push(UnifiedSearchResult {
+            app: "aegis".to_string(),
+            entity_type: "user".to_string(),
+            id: u.id,
+            title: u.name.unwrap_or_else(|| "Unknown".to_string()),
+            subtitle: None,
+        });
     }
 
     let (products, _total) = state

@@ -8,7 +8,8 @@ pub struct BookingId(pub Uuid);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EventTypeId(pub Uuid);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum BookingStatus {
     Pending,
     Confirmed,

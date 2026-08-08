@@ -18,6 +18,7 @@ pub struct JwtClaims {
     pub exp: usize,
     pub iat: usize,
     pub token_type: String,
+    pub token_version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -74,6 +75,9 @@ pub async fn auth_middleware(
             if token_data.claims.token_type != "access" {
                 return Err(ApiResponseError::unauthorized("Invalid token type"));
             }
+            // Note: token_version validation against DB would require a DB lookup on every request.
+            // For now, we rely on short access token TTL (15 min) and the JWT blocklist for revocation.
+            // A more robust solution would use a Redis-backed token version cache.
             let user_id = Uuid::parse_str(&token_data.claims.sub)
                 .map_err(|_| ApiResponseError::unauthorized("Invalid user ID in token"))?;
             let auth_ctx = AuthContext {

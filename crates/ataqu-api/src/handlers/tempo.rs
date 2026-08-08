@@ -48,7 +48,7 @@ impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
             event_type_id: b.event_type_id.0,
             starts_at: b.starts_at.into(),
             duration_minutes: b.duration_minutes,
-            status: format!("{:?}", b.status).to_lowercase(),
+            status: serde_json::to_string(&b.status).unwrap_or_default().trim_matches('"').to_string(),
             created_at: b.created_at.into(),
             version: b.version,
         }
@@ -426,7 +426,7 @@ pub async fn public_create_booking(
         Json(PublicBookingResponse {
             id: booking.id.0,
             starts_at: booking.starts_at.into(),
-            status: format!("{:?}", booking.status).to_lowercase(),
+            status: serde_json::to_string(&booking.status).unwrap_or_default().trim_matches('"').to_string(),
         }),
     ))
 }

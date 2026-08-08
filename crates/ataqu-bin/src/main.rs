@@ -696,11 +696,9 @@ async fn main() -> anyhow::Result<()> {
                 }
             };
             let dispatcher = OutboxDispatcher::new(dispatcher_pool.clone(), handler);
-            {
-                dispatcher.run().await;
-                tracing::error!("Outbox dispatcher stopped. Restarting in 5s...");
-                tokio::time::sleep(Duration::from_secs(5)).await;
-            }
+            dispatcher.run().await;
+            tracing::error!("Outbox dispatcher stopped. Restarting in 5s...");
+            tokio::time::sleep(Duration::from_secs(5)).await;
         }
     });
 

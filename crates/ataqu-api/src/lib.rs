@@ -154,6 +154,7 @@ pub fn create_router(state: AppState) -> Router {
             axum::routing::get(handlers::search::unified_search),
         )
         .route("/metrics", axum::routing::get(metrics_handler))
+        .route("/admin/health", axum::routing::get(health_check))
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,

@@ -29,6 +29,12 @@ pub async fn track_email_public(
         _ => return Err(ApiResponseError::validation("Invalid event_type")),
     }
 
+    // Basic rate limiting to prevent abuse
+    let rate_key = format!("email_track_pub:{}", req.tenant_id);
+    if !state.rate_limiter.check(&rate_key) {
+        return Err(ApiResponseError::RateLimited);
+    }
+
     let tracking_event = ataqu_infra_repositories::email_tracking_writer::TrackingEvent {
         tenant_id: req.tenant_id,
         contact_id: req.contact_id,

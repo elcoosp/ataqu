@@ -99,6 +99,7 @@ struct JwtClaims {
     exp: usize,
     iat: usize,
     token_type: String,
+    token_version: i32,
 }
 
 pub struct RealAegisDomain;
@@ -232,10 +233,12 @@ fn generate_token_pair(
         exp: now + config.access_token_ttl.as_secs() as usize,
         iat: now,
         token_type: "access".to_string(),
+        token_version: user.version,
     };
     let refresh_claims = JwtClaims {
         exp: now + config.refresh_token_ttl.as_secs() as usize,
         token_type: "refresh".to_string(),
+        token_version: user.version,
         ..claims.clone()
     };
     let access = encode(
@@ -593,6 +596,8 @@ impl AegisService {
         })
     }
 
+    /// Note: SSO exchange is not tenant-scoped. If multiple tenants have users with the
+    /// same email, the first match is returned. This is a known limitation.
     pub async fn sso_exchange(
         &self,
         email: Email,
@@ -673,6 +678,7 @@ impl AegisService {
             exp: now + 900,
             iat: now,
             token_type: "reset_password".to_string(),
+            token_version: user.version,
         };
         let token = encode(
             &Header::default(),

@@ -362,7 +362,7 @@ pub async fn edit_message(
         "id": edited.id.as_uuid(),
         "channel_id": edited.channel_id.as_uuid(),
         "content": edited.content,
-        "edited_at": edited.edited_at,
+        "edited_at": edited.edited_at.map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()),
     })
     .to_string();
     if let Some(subscribers) = state.ws_registry.get(&key) {

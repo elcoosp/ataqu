@@ -1,4 +1,4 @@
-use crate::block::{Block, BlockType};
+use crate::block::Block;
 use crate::database::DatabaseCreatedEvent;
 use crate::document::DocumentCreatedEvent;
 use ataqu_kernel::{RepositoryError, TenantId};
