@@ -324,7 +324,7 @@ impl AegisService {
         info!("Authenticating user");
         let user = self
             .repo
-            .find_by_email(&cmd.email)
+            .find_by_email(&cmd.email, cmd.tenant_id)
             .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
 
@@ -430,7 +430,7 @@ impl AegisService {
         email: &Email,
     ) -> Result<Option<User>, AegisServiceError> {
         self.repo
-            .find_by_email(email)
+            .find_by_email(email, None)
             .await
             .map_err(AegisServiceError::Domain)
     }
@@ -597,7 +597,7 @@ impl AegisService {
         &self,
         email: Email,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
-        let user = self.repo.find_by_email(&email).await?
+        let user = self.repo.find_by_email(&email, None).await?
             .ok_or(AegisServiceError::NotFound(
                 "User not found. Please sign up first.".to_string(),
             ))?;
@@ -651,7 +651,7 @@ impl AegisService {
     }
 
     pub async fn request_password_reset(&self, email: Email) -> Result<(), AegisServiceError> {
-        let user = match self.repo.find_by_email(&email).await? {
+        let user = match self.repo.find_by_email(&email, None).await? {
             Some(u) => u,
             None => return Ok(()),
         };

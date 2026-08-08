@@ -1,3 +1,4 @@
+use ataqu_security::Email;
 use async_trait::async_trait;
 use ataqu_domain_pause::employee::Employee;
 use ataqu_domain_pause::leave::{LeaveRequest, LeaveStatus, LeaveType};
@@ -141,7 +142,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             id: Set(event.employee_id),
             tenant_id: Set(tenant_id.as_uuid()),
             full_name: Set(event.full_name.clone()),
-            email: Set(event.email.clone()),
+            email: Set(event.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string()),
             phone: Set(event.phone.clone()),
             job_title: Set(event.job_title.clone()),
             department: Set(event.department.clone()),
@@ -174,7 +175,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             id: m.id,
             tenant_id: TenantId::new(m.tenant_id),
             full_name: m.full_name,
-            email: m.email,
+            email: Email::new(m.email),
             phone: m.phone,
             job_title: m.job_title,
             department: m.department,
@@ -206,7 +207,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
                 id: m.id,
                 tenant_id: TenantId::new(m.tenant_id),
                 full_name: m.full_name,
-                email: m.email,
+                email: Email::new(m.email),
                 phone: m.phone,
                 job_title: m.job_title,
                 department: m.department,
@@ -239,7 +240,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
                 id: m.id,
                 tenant_id: TenantId::new(m.tenant_id),
                 full_name: m.full_name,
-                email: m.email,
+                email: Email::new(m.email),
                 phone: m.phone,
                 job_title: m.job_title,
                 department: m.department,
@@ -261,7 +262,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             id: Set(employee.id),
             tenant_id: Set(tenant_id.as_uuid()),
             full_name: Set(employee.full_name.clone()),
-            email: Set(employee.email.clone()),
+            email: Set(employee.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string()),
             phone: Set(employee.phone.clone()),
             job_title: Set(employee.job_title.clone()),
             department: Set(employee.department.clone()),

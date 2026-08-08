@@ -116,10 +116,14 @@ fn domain_to_active(user: &User) -> user_entity::ActiveModel {
 
 #[async_trait]
 impl AuthRepository for AegisUserRepository {
-    async fn find_by_email(&self, email: &Email) -> Result<Option<User>, AuthError> {
+    async fn find_by_email(&self, email: &Email, tenant_id: Option<TenantId>) -> Result<Option<User>, AuthError> {
         let email_str = email.reveal(&ataqu_security::PiiAccessKey::new());
-        let model = user_entity::Entity::find()
-            .filter(user_entity::Column::Email.eq(email_str))
+        let mut query = user_entity::Entity::find()
+            .filter(user_entity::Column::Email.eq(email_str));
+        if let Some(tid) = tenant_id {
+            query = query.filter(user_entity::Column::TenantId.eq(tid.as_uuid()));
+        }
+        let model = query
             .one(&self.db)
             .await
             .map_err(|e| AuthError::Database(e.to_string()))?;

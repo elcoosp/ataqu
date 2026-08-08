@@ -47,7 +47,7 @@ impl From<Employee> for EmployeeResponse {
         Self {
             id: e.id,
             full_name: e.full_name,
-            email: ApiEmail::new(Email::new(e.email)),
+            email: ApiEmail::new(e.email),
             phone: e.phone.map(|p| ApiPhone::new(PhoneNumber::new(p))),
             job_title: e.job_title,
             department: e.department,
@@ -97,7 +97,7 @@ pub async fn create_employee(
     let cmd = CreateEmployeeCommand {
         tenant_id: auth.tenant_id,
         full_name: req.full_name.clone(),
-        email: req.email.clone(),
+        email: Email::new(req.email.clone()),
         phone: req.phone.clone(),
         job_title: req.job_title.clone(),
         department: req.department.clone(),

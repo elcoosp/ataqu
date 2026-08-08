@@ -1,4 +1,5 @@
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_security::Email;
 use chrono::NaiveDate;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -8,7 +9,7 @@ pub struct Employee {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: String,
+    pub email: Email,
     pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
@@ -23,7 +24,7 @@ pub struct Employee {
 pub struct CreateEmployeeCommand {
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: String,
+    pub email: Email,
     pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
@@ -44,7 +45,7 @@ pub struct EmployeeCreatedEvent {
     pub employee_id: Uuid,
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: String,
+    pub email: Email,
     pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
