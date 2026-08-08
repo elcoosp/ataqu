@@ -301,7 +301,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
         Ok(())
     }
 
-    async fn count(&self, tenant_id: &TenantId) -> Result<u64, PauseDomainError> {
+    async fn count_employees(&self, tenant_id: &TenantId) -> Result<u64, PauseDomainError> {
         let count = employee_entity::Entity::find()
             .filter(employee_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .count(&self.db)
@@ -495,6 +495,10 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
                 version: m.version,
             })
             .collect())
+    }
+
+    async fn count_leave_requests(&self, _tenant_id: &TenantId) -> Result<u64, PauseDomainError> {
+        Ok(0)
     }
 
     async fn list_with_employee_names(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<(LeaveRequest, String)>, PauseDomainError> {

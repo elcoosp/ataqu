@@ -25,6 +25,8 @@ pub trait SparkRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Workflow>, SparkError>;
+
+    async fn count_workflows(&self, tenant_id: &TenantId) -> Result<u64, SparkError>;
     async fn list_active_workflows_by_event_type(
         &self,
         schema: &str,

@@ -226,11 +226,10 @@ impl TempoService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> TempoResult<Vec<Booking>> {
-        self.repo
-            .list_bookings(&tenant_id, limit, offset)
-            .await
-            .map_err(TempoServiceError::Repository)
+    ) -> TempoResult<(Vec<Booking>, u64)> {
+        let total = self.repo.count_bookings(&tenant_id).await.map_err(TempoServiceError::Repository)?;
+        let bookings = self.repo.list_bookings(&tenant_id, limit, offset).await.map_err(TempoServiceError::Repository)?;
+        Ok((bookings, total))
     }
 
     pub async fn update_booking_status(
@@ -383,11 +382,10 @@ impl TempoService {
         Ok(event_type)
     }
 
-    pub async fn list_event_types(&self, tenant_id: TenantId) -> TempoResult<Vec<EventType>> {
-        self.repo
-            .list_event_types(&tenant_id)
-            .await
-            .map_err(TempoServiceError::Repository)
+    pub async fn list_event_types(&self, tenant_id: TenantId) -> TempoResult<(Vec<EventType>, u64)> {
+        let total = self.repo.count_event_types(&tenant_id).await.map_err(TempoServiceError::Repository)?;
+        let event_types = self.repo.list_event_types(&tenant_id).await.map_err(TempoServiceError::Repository)?;
+        Ok((event_types, total))
     }
 
     pub async fn get_event_type_by_slug(

@@ -16,7 +16,7 @@ use ataqu_domain_pivot::repository::{
 use ataqu_kernel::{Clock, IdGenerator, RepositoryError, TenantId};
 
 // Re-export domain types for API layer
-pub use ataqu_domain_pivot::block::BlockCreatedEvent as Block;
+pub use ataqu_domain_pivot::block::Block;
 pub use ataqu_domain_pivot::block::Relation;
 pub use ataqu_domain_pivot::database::DatabaseCreatedEvent as Database;
 pub use ataqu_domain_pivot::document::DocumentCreatedEvent as Document;
@@ -253,22 +253,31 @@ impl PivotService {
         };
         let event =
             block_domain::create_block(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref());
+        let block = Block {
+            id: event.id,
+            tenant_id: event.tenant_id,
+            document_id: event.document_id,
+            block_type: event.block_type,
+            created_at: event.created_at,
+            updated_at: event.created_at,
+            version: 0,
+        };
         self.block_repo
-            .save_block(&event)
+            .save_block(&block)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
 
         let payload = serde_json::json!({
-            "block_id": event.id,
-            "tenant_id": event.tenant_id.as_uuid(),
-            "document_id": event.document_id,
+            "block_id": block.id,
+            "tenant_id": block.tenant_id.as_uuid(),
+            "document_id": block.document_id,
         });
         self.outbox
-            .append("collab_ops", "BlockCreated", event.id, &payload)
+            .append("collab_ops", "BlockCreated", block.id, &payload)
             .await
             .map_err(|e| PivotServiceError::Repository(e))?;
 
-        Ok(event)
+        Ok(block)
     }
 
     pub async fn get_blocks_for_document(

@@ -20,6 +20,8 @@ pub trait VaultRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Product>, RepositoryError>;
+
+    async fn count_products(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError>;
     async fn delete_product(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), RepositoryError>;
 
     async fn save_variant(&self, variant: &Variant) -> Result<(), RepositoryError>;
@@ -34,6 +36,8 @@ pub trait VaultRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Variant>, RepositoryError>;
+
+    async fn count_variants(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError>;
     async fn delete_variant(&self, tenant_id: &TenantId, id: &Uuid) -> Result<(), RepositoryError>;
     async fn find_low_stock_variants(
         &self,

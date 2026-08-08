@@ -148,6 +148,10 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
+    async fn count_event_types(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        Ok(0)
+    }
+
     async fn list_event_types(
         &self,
         tenant_id: &TenantId,
@@ -296,6 +300,10 @@ impl TempoRepository for TempoRepositoryImpl {
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
 
         Ok(model.map(map_booking))
+    }
+
+    async fn count_bookings(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        Ok(0)
     }
 
     async fn list_bookings(

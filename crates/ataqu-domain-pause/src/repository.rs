@@ -1,8 +1,8 @@
-//! Repository port traits for PAUSE domain.
-use crate::{Employee, LeaveRequest, LeaveStatus, PauseDomainError};
-use async_trait::async_trait;
+use crate::{
+    Employee, EmployeeDocument, LeaveRequest, PauseDomainError,
+};
 use ataqu_kernel::TenantId;
-use std::time::SystemTime;
+use async_trait::async_trait;
 use uuid::Uuid;
 
 #[async_trait]
@@ -29,29 +29,17 @@ pub trait EmployeeRepositoryPort: Send + Sync {
         query: &str,
         limit: u64,
     ) -> Result<Vec<Employee>, PauseDomainError>;
+    async fn update(
+        &self,
+        tenant_id: &TenantId,
+        employee: &Employee,
+    ) -> Result<(), PauseDomainError>;
     async fn deactivate(
         &self,
         tenant_id: &TenantId,
         employee_id: Uuid,
     ) -> Result<(), PauseDomainError>;
-    async fn count(&self, tenant_id: &TenantId) -> Result<u64, PauseDomainError>;
-    async fn update(
-        &self,
-        tenant_id: &TenantId,
-        employee: &crate::Employee,
-    ) -> Result<(), PauseDomainError>;
-}
-
-#[async_trait]
-pub trait EmployeeDocumentRepository: Send + Sync {
-    async fn save_document(&self, doc: &crate::EmployeeDocument) -> Result<(), PauseDomainError>;
-    async fn list_documents_for_employee(
-        &self,
-        tenant_id: &TenantId,
-        employee_id: Uuid,
-        limit: u64,
-        offset: u64,
-    ) -> Result<Vec<crate::EmployeeDocument>, PauseDomainError>;
+    async fn count_employees(&self, tenant_id: &TenantId) -> Result<u64, PauseDomainError>;
 }
 
 #[async_trait]
@@ -64,7 +52,7 @@ pub trait LeaveRequestRepositoryPort: Send + Sync {
     async fn find_by_id(
         &self,
         tenant_id: &TenantId,
-        id: Uuid,
+        leave_id: Uuid,
     ) -> Result<Option<LeaveRequest>, PauseDomainError>;
     async fn list(
         &self,
@@ -72,6 +60,14 @@ pub trait LeaveRequestRepositoryPort: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<LeaveRequest>, PauseDomainError>;
+    async fn update_status(
+        &self,
+        tenant_id: &TenantId,
+        leave_id: Uuid,
+        status: crate::LeaveStatus,
+        reviewer_id: Uuid,
+        now: std::time::SystemTime,
+    ) -> Result<(), PauseDomainError>;
     async fn list_for_employee(
         &self,
         tenant_id: &TenantId,
@@ -83,13 +79,23 @@ pub trait LeaveRequestRepositoryPort: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<LeaveRequest>, PauseDomainError>;
-    async fn update_status(
+    async fn list_with_employee_names(
         &self,
         tenant_id: &TenantId,
-        id: Uuid,
-        status: LeaveStatus,
-        reviewer_id: Uuid,
-        updated_at: SystemTime,
-    ) -> Result<(), PauseDomainError>;
-    async fn list_with_employee_names(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<(LeaveRequest, String)>, PauseDomainError>;
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<(LeaveRequest, String)>, PauseDomainError>;
+    async fn count_leave_requests(&self, tenant_id: &TenantId) -> Result<u64, PauseDomainError>;
+}
+
+#[async_trait]
+pub trait EmployeeDocumentRepository: Send + Sync {
+    async fn save_document(&self, doc: &EmployeeDocument) -> Result<(), PauseDomainError>;
+    async fn list_documents_for_employee(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<EmployeeDocument>, PauseDomainError>;
 }

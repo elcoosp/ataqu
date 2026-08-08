@@ -21,6 +21,8 @@ pub trait TempoRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Booking>, RepositoryError>;
+
+    async fn count_bookings(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError>;
     async fn update_booking_status(
         &self,
         tenant_id: &TenantId,
@@ -58,6 +60,8 @@ pub trait TempoRepository: Send + Sync {
         &self,
         tenant_id: &TenantId,
     ) -> Result<Vec<EventType>, RepositoryError>;
+
+    async fn count_event_types(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError>;
     async fn find_event_type_by_slug(
         &self,
         tenant_id: &TenantId,

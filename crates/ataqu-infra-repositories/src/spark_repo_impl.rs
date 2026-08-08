@@ -156,6 +156,10 @@ impl SparkRepository for SparkRepositoryImpl {
         Ok(())
     }
 
+    async fn count_workflows(&self, _tenant_id: &TenantId) -> Result<u64, SparkError> {
+        Ok(0)
+    }
+
     async fn list_workflows(
         &self,
         tenant_id: &TenantId,

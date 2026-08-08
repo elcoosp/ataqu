@@ -53,17 +53,15 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<ListWorkflowsParams>,
-) -> ApiResult<Json<Vec<WorkflowResponse>>> {
-    let workflows = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<WorkflowResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (workflows, total) = state
         .spark_service
-        .list_workflows(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_workflows(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let resp = workflows
+    let items = workflows
         .into_iter()
         .map(|w| WorkflowResponse {
             id: w.id,
@@ -73,7 +71,7 @@ pub async fn list_workflows(
             updated_at: w.updated_at.into(),
         })
         .collect();
-    Ok(Json(resp))
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
 }
 
 pub async fn create_workflow(

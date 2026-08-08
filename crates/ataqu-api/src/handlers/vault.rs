@@ -93,19 +93,16 @@ pub async fn list_products(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<ProductResponse>>> {
-    let products = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ProductResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (products, total) = state
         .vault_service
-        .list_products(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_products(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        products.into_iter().map(ProductResponse::from).collect(),
-    ))
+    let items = products.into_iter().map(ProductResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
 }
 
 pub async fn get_product(
@@ -259,19 +256,16 @@ pub async fn list_variants(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<VariantResponse>>> {
-    let variants = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<VariantResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (variants, total) = state
         .vault_service
-        .list_variants(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_variants(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        variants.into_iter().map(VariantResponse::from).collect(),
-    ))
+    let items = variants.into_iter().map(VariantResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
 }
 
 pub async fn get_variant(

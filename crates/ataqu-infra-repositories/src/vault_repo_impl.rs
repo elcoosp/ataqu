@@ -212,6 +212,10 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(model.map(product_model_to_domain))
     }
 
+    async fn count_products(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        Ok(0)
+    }
+
     async fn list_products(
         &self,
         tenant_id: &TenantId,
@@ -271,6 +275,10 @@ impl VaultRepository for VaultRepositoryImpl {
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(model.map(variant_model_to_domain))
+    }
+
+    async fn count_variants(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        Ok(0)
     }
 
     async fn list_variants(

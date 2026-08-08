@@ -79,13 +79,14 @@ pub async fn create_booking(
 pub async fn list_bookings(
     State(state): State<AppState>,
     auth: AuthContext,
-) -> ApiResult<Json<Vec<BookingResponse>>> {
-    let bookings = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<BookingResponse>>> {
+    let (bookings, total) = state
         .tempo_service
         .list_bookings(auth.tenant_id, 100, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(bookings.into_iter().map(|b| b.into()).collect()))
+    let items = bookings.into_iter().map(|b| b.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit: 100, offset: 0 }))
 }
 
 pub async fn get_booking(
@@ -245,13 +246,14 @@ pub async fn create_event_type(
 pub async fn list_event_types(
     State(state): State<AppState>,
     auth: AuthContext,
-) -> ApiResult<Json<Vec<EventTypeResponse>>> {
-    let event_types = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<EventTypeResponse>>> {
+    let (event_types, total) = state
         .tempo_service
         .list_event_types(auth.tenant_id)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(event_types.into_iter().map(|e| e.into()).collect()))
+    let items = event_types.into_iter().map(|e| e.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit: 100, offset: 0 }))
 }
 
 #[derive(Debug, Deserialize)]

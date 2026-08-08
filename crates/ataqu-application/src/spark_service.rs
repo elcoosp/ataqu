@@ -149,8 +149,10 @@ impl SparkService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> SparkResult<Vec<Workflow>> {
-        Ok(self.repo.list_workflows(&tenant_id, limit, offset).await?)
+    ) -> SparkResult<(Vec<Workflow>, u64)> {
+        let total = self.repo.count_workflows(&tenant_id).await?;
+        let workflows = self.repo.list_workflows(&tenant_id, limit, offset).await?;
+        Ok((workflows, total))
     }
 
     pub async fn trigger_workflow(&self, cmd: TriggerWorkflowCommand) -> SparkResult<()> {

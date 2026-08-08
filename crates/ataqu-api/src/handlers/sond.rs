@@ -93,17 +93,16 @@ pub async fn list_forms(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<FormResponse>>> {
-    let forms = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<FormResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (forms, total) = state
         .sond_service
-        .list_forms(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_forms(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(forms.into_iter().map(|f| f.into()).collect()))
+    let items = forms.into_iter().map(|f| f.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
 }
 
 pub async fn get_form(

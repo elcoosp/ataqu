@@ -220,17 +220,16 @@ pub async fn list_employees(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<EmployeeResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<EmployeeResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let employees = state
+    let (employees, total) = state
         .pause_service
         .list_employees(&auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        employees.into_iter().map(EmployeeResponse::from).collect(),
-    ))
+    let items = employees.into_iter().map(EmployeeResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
 }
 
 pub async fn deactivate_employee(
@@ -281,16 +280,16 @@ pub async fn list_leave_requests(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<LeaveRequestResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<LeaveRequestResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let requests_with_names = state
+    let (requests_with_names, total) = state
         .pause_service
         .list_leave_requests_with_names(&auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    let responses = requests_with_names
+    let items = requests_with_names
         .into_iter()
         .map(|(r, name)| LeaveRequestResponse {
             id: r.id,
@@ -306,7 +305,7 @@ pub async fn list_leave_requests(
         })
         .collect();
 
-    Ok(Json(responses))
+    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
 }
 
 

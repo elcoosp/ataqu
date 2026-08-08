@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use ataqu_domain_pivot::block::{BlockCreatedEvent, BlockType, RelationCreatedEvent};
+use ataqu_domain_pivot::block::{Block, BlockType, RelationCreatedEvent};
 use ataqu_domain_pivot::database::DatabaseCreatedEvent;
 use ataqu_domain_pivot::document::{DocumentCreatedEvent, DocumentVersion};
 use ataqu_domain_pivot::repository::{
@@ -450,15 +450,15 @@ impl DatabaseRepository for PivotDatabaseRepository {
 
 #[async_trait]
 impl BlockRepository for PivotBlockRepository {
-    async fn save_block(&self, event: &BlockCreatedEvent) -> Result<(), RepositoryError> {
-        let created_at: chrono::DateTime<chrono::Utc> = event.created_at.into();
-        let block_type_str = match &event.block_type {
+    async fn save_block(&self, block: &Block) -> Result<(), RepositoryError> {
+        let created_at: chrono::DateTime<chrono::Utc> = block.created_at.into();
+        let block_type_str = match &block.block_type {
             BlockType::Markdown(_) => "markdown",
             BlockType::Table { .. } => "table",
             BlockType::View { .. } => "view",
             BlockType::Checklist { .. } => "checklist",
         };
-        let content = match &event.block_type {
+        let content = match &block.block_type {
             BlockType::Markdown(text) => serde_json::json!({ "text": text }),
             BlockType::Table { columns, rows } => {
                 serde_json::json!({ "columns": columns, "rows": rows })
@@ -472,9 +472,9 @@ impl BlockRepository for PivotBlockRepository {
             r#"INSERT INTO collab_ops.blocks (id, tenant_id, document_id, block_type, content, created_at)
                VALUES ($1, $2, $3, $4, $5, $6)"#,
             vec![
-                event.id.into(),
-                event.tenant_id.as_uuid().into(),
-                event.document_id.into(),
+                block.id.into(),
+                block.tenant_id.as_uuid().into(),
+                block.document_id.into(),
                 block_type_str.into(),
                 content.into(),
                 created_at.into(),
@@ -491,7 +491,7 @@ impl BlockRepository for PivotBlockRepository {
         &self,
         tenant_id: &TenantId,
         doc_id: Uuid,
-    ) -> Result<Vec<BlockCreatedEvent>, RepositoryError> {
+    ) -> Result<Vec<Block>, RepositoryError> {
         let stmt = Statement::from_sql_and_values(
             DbBackend::Postgres,
             r#"SELECT id, tenant_id, document_id, block_type, content, created_at FROM collab_ops.blocks
@@ -559,7 +559,7 @@ impl BlockRepository for PivotBlockRepository {
                 _ => continue,
             };
 
-            blocks.push(BlockCreatedEvent {
+            blocks.push(Block {
                 id: row
                     .try_get("", "id")
                     .map_err(|e| RepositoryError::Database(e.to_string()))?,
@@ -600,7 +600,7 @@ impl BlockRepository for PivotBlockRepository {
         &self,
         tenant_id: &TenantId,
         block_id: Uuid,
-    ) -> Result<BlockCreatedEvent, RepositoryError> {
+    ) -> Result<Block, RepositoryError> {
         let stmt = Statement::from_sql_and_values(
             DbBackend::Postgres,
             r#"SELECT id, tenant_id, document_id, block_type, content, created_at FROM collab_ops.blocks
@@ -672,7 +672,7 @@ impl BlockRepository for PivotBlockRepository {
             }
         };
 
-        Ok(BlockCreatedEvent {
+        Ok(Block {
             id: row
                 .try_get("", "id")
                 .map_err(|e| RepositoryError::Database(e.to_string()))?,

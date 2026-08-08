@@ -119,7 +119,7 @@ pub async fn unified_search(
         }
     }
 
-    let products = state
+    let (products, _total) = state
         .vault_service
         .list_products(auth.tenant_id, 100, 0)
         .await
@@ -136,7 +136,7 @@ pub async fn unified_search(
         }
     }
 
-    let workflows = state
+    let (workflows, _total) = state
         .spark_service
         .list_workflows(auth.tenant_id, 100, 0)
         .await
@@ -170,7 +170,7 @@ pub async fn unified_search(
         }
     }
 
-    let event_types = state
+    let (event_types, _total) = state
         .tempo_service
         .list_event_types(auth.tenant_id)
         .await
@@ -187,7 +187,7 @@ pub async fn unified_search(
         }
     }
 
-    let forms = state
+    let (forms, _total) = state
         .sond_service
         .list_forms(auth.tenant_id, 100, 0)
         .await
