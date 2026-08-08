@@ -88,8 +88,7 @@ async fn main() -> anyhow::Result<()> {
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
     let aegis_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
-    });
+        pools.core.clone(),));
     let aegis_domain = Arc::new(RealAegisDomain);
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
