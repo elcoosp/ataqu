@@ -60,13 +60,19 @@ Stop paying for 10 tools that don't talk to each other. Ataqu gives you a comple
 
 ### 1.7 Free Tier (The Entry Point)
 Ataqu offers a **generous free tier** to remove adoption friction:
-- **100 elements** (contacts, deals, products, documents, employees, forms, workflows, channels, bookings)
+- **100 base elements** + **up to 100 bonus elements** by completing activation tasks:
+  - Import data, Enable integration, Create workflow, Invite team (each +25)
 - **All 10 apps** accessible
 - **Unlimited users** per tenant
 - **Native integrations** enabled via pre-installed SPARK templates
 - **No time limit** — forever free
 
-When you hit 100 elements, you're prompted to upgrade. No data loss. No lock-in.
+**Soft limit behavior:**
+- At 85 elements : gentle nudge to complete tasks for more free space.
+- At 100 elements : creating is blocked, but reading/editing continues.
+- Upgrade when you've earned all bonus elements (200 max) or want unlimited.
+
+No data loss. No lock-in.
 
 ### 1.6 Data Sovereignty & The Trust Narrative
 "Zero lock-in" is our strongest pillar. In a cynical SaaS market, we define exactly what Data Sovereignty means at Ataqu:
