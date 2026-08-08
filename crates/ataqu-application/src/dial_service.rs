@@ -1,4 +1,6 @@
-use pdf::prelude::*;
+use pdf::document::Document;
+use pdf::page::Page;
+use pdf::font::Font;
 use std::io::Cursor;
 // DIAL application service – orchestrates chat operations using domain repositories.
 use std::sync::Arc;
