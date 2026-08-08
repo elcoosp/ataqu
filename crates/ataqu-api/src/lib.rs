@@ -72,7 +72,7 @@ pub struct AppState {
     pub http_client: reqwest::Client,
 
     pub health_service: Arc<HealthService>, // stub
-    pub health_cache: Arc<moka::sync::Cache<()>>, // stub
+    pub health_cache: Arc<moka::sync::Cache<(), ()>>, // stub
     pub audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>, // stub
     pub s3_service: Arc<S3Service>, // stub
     pub idempotency_guard: Arc<dyn ataqu_application::pause_service::IdempotencyPort + Send + Sync>,
