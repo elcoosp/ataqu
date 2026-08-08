@@ -982,6 +982,99 @@ CREATE TABLE core.changelog (
 
 ---
 
+
+### 🆕 ADR-039: Shopify Sync (P0)
+
+**Status:** Accepted.
+
+**Context:** VAULT needs to sync inventory with Shopify to eliminate manual stock updates. Research shows that Cin7 users love this feature because it prevents overselling and reduces operational friction.
+
+**Decision:** Implement a Shopify sync with OAuth 2.0 authentication, a background worker, and optional webhooks.
+
+**Tables:**
+```sql
+CREATE TABLE vault.shopify_integrations (
+    id BIGSERIAL PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    shop_url TEXT NOT NULL UNIQUE,
+    access_token TEXT NOT NULL,             -- encrypted via ADR-007
+    scope TEXT NOT NULL,
+    last_synced_at TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE vault.shopify_sync_logs (
+    id BIGSERIAL PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    sync_type TEXT NOT NULL,
+    status TEXT NOT NULL,
+    product_id UUID,
+    shopify_id BIGINT,
+    error_message TEXT,
+    retry_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**Endpoints:**
+- `GET /api/v1/vault/shopify/auth` → redirect to Shopify OAuth.
+- `GET /api/v1/vault/shopify/callback` → OAuth callback, stores token.
+- `POST /api/v1/vault/shopify/sync` → manual force sync.
+- `DELETE /api/v1/vault/shopify/disconnect` → revokes connection.
+
+**Worker:** `shopify_sync_worker` runs every 5 minutes, polls Shopify API for products, inventory, and orders. Uses the `transactional_batch_insert` helper for batch persistence.
+
+**Webhooks (optional):** Shopify can push updates via webhook to `/api/v1/vault/shopify/webhook`. If enabled, this reduces latency.
+
+**Error Handling:** Failed syncs are logged to `vault.shopify_sync_logs`. The System Health Dashboard shows sync status.
+
+---
+
+### 🆕 ADR-040: Chart Drill-Down (P0)
+
+**Status:** Accepted.
+
+**Context:** VISTA dashboards need interactivity. Users want to "investigate" the data behind a chart by clicking on it. Tableau's drill-down is a key "love driver."
+
+**Decision:** Expose a `POST /api/v1/vista/drill-down` endpoint that accepts a dimension and value, and returns the raw data behind that chart element.
+
+**Endpoint:**
+```
+POST /api/v1/vista/drill-down
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+    "dashboardId": "uuid",
+    "widgetId": "uuid",
+    "dimension": "month",
+    "value": "2026-08",
+    "filters": {
+        "dateRange": { "from": "2026-01-01", "to": "2026-12-31" },
+        "team": "sales"
+    },
+    "limit": 1000
+}
+```
+
+**Response:**
+```json
+{
+    "data": [
+        { "id": "uuid", "name": "Acme Corp", "amount": 15000, "stage": "Won" }
+    ],
+    "total": 42,
+    "hasMore": false
+}
+```
+
+**Implementation:** A new method in `ataqu-domain-vista` builds the SQL query dynamically from the dimension and filters. The result is mapped to a generic `serde_json::Value` array.
+
+**Security:** The endpoint respects tenant isolation via `TenantId`. Filters are validated against the widget's data source.
+
+
 ## 3. SYSTEM ARCHITECTURE & DATABASE STRATEGY
 
 ### 3.1 Overview
@@ -1009,6 +1102,13 @@ One PostgreSQL 18.4 instance in `/var/lib/postgresql/`. WAL archived to S3 via `
 | `vault` | `vault_role` | VAULT (Inventory) | |
 | `dial` | `dial_role` | DIAL (Chat), DLQ, Presence | |
 | `vista` | `vista_role` | VISTA (Analytics), Aggregator DLQ, **Cross-App Materialized Views** | `vista.cross_app_*` views for data consolidation |
+
+
+**New tables added via ADR-039 and ADR-037:**
+- `vault.shopify_integrations`
+- `vault.shopify_sync_logs`
+- `vista.cross_app_revenue_inventory` (materialized view)
+- `vista.cross_app_support_sales` (materialized view)
 
 The `dispatcher_role` has `SELECT` and column-level `UPDATE` on `core.outbox` tracking columns.
 
@@ -1124,6 +1224,16 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | 26 | `ataqu-api` | API | Axum handlers, middleware, Moka cache, `Idempotency-Key` parsing, API serialization wrappers (`ApiEmail`), **health endpoint** |
 | 27 | `ataqu-admin` | Admin | CLI binary, UDS client, audit logging |
 
+| 28 | `ataqu-domain-health` | Domain | Health metrics aggregation (ADR-034) |
+| 29 | `ataqu-domain-onboarding` | Domain | Activation progress tracking, inactivity detection (ADR-036) |
+| 30 | `ataqu-domain-changelog` | Domain | Changelog service (ADR-038) |
+| 31 | `ataqu-domain-shopify` | Domain | Shopify sync logic (ADR-039) |
+| 32 | `ataqu-infra-shopify` | Infra | Shopify API client, OAuth, sync worker |
+| 33 | `ataqu-application/src/health_service.rs` | App | Health service |
+| 34 | `ataqu-application/src/onboarding_service.rs` | App | Onboarding service |
+| 35 | `ataqu-application/src/changelog_service.rs` | App | Changelog service |
+| 36 | `ataqu-application/src/shopify_service.rs` | App | Shopify service |
+
 **Dependency direction:** `api → application → {domain, infra}`. Domain depends on nothing. Infra depends on domain traits. No circular dependencies. SeaORM `Model`/`ActiveModel` confined to `ataqu-infra-repositories` (ADR-033).
 
 ### 5.2 Resilience Policy Summary
@@ -1166,6 +1276,11 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 | SPARK | `ataqu-domain-spark` | `collab_crm` | Automation, fenced leases, `cron_worker` (ADR-026), **workflow health monitoring** |
 | CINQ | `ataqu-domain-cinq` | `collab_crm` | CRM, `JSONB` with graceful degradation (ADR-030), observable email tracking (ADR-031). Consumes PAUSE projections. |
 | VISTA | `ataqu-domain-vista` | `vista` | Aggregator with `LISTEN/NOTIFY` (ADR-010), DLQ inclusion, stateful cursor, **System Health Dashboard**, **Cross-App Materialized Views (ADR-037)** |
+
+| **🆕 Health** | `ataqu-domain-health` | `core` | **Health metrics aggregation (ADR-034). Collects outbox lag, workflow failures, pool status.** |
+| **🆕 Onboarding** | `ataqu-domain-onboarding` | `core` | **Activation progress tracking, inactivity detection (ADR-036).** |
+| **🆕 Changelog** | `ataqu-domain-changelog` | `core` | **Changelog entries (ADR-038).** |
+| **🆕 Shopify** | `ataqu-domain-shopify` | `vault` | **Shopify sync (ADR-039).** |
 | **🆕 Health** | `ataqu-domain-health` | `core` | **Health metrics aggregation (ADR-034). Collects outbox lag, workflow failures, pool status.** |
 | **🆕 Onboarding** | `ataqu-domain-onboarding` | `core` | **Activation progress tracking, inactivity detection (ADR-036).** |
 
@@ -1370,6 +1485,11 @@ PII fields are wrapped in domain newtypes that explicitly implement `fmt::Debug`
 
 ---
 
+
+- **🆕 Build TEMPO Ultra-Simple Booking UX (3-screen public booking)**
+- **🆕 Build SOND Conversational Mode (toggle + one-question-per-slide preview)**
+- **🆕 Build VAULT Shopify Sync UI (connection, status, error log)**
+- **🆕 Build VISTA Chart Drill-Down (click → side panel with data table)**
 ## 10. KNOWN LIMITATIONS & EXPLICIT TRADE-OFFS
 
 | # | Limitation | Trade-off Rationale |
