@@ -3,6 +3,8 @@
 pub mod api_key;
 pub mod auth;
 pub mod mfa;
+pub mod repository;
+pub use repository::*;
 pub mod sso;
 pub mod types;
 

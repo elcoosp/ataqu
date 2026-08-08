@@ -12,6 +12,7 @@ pub struct DLQEntry {
     pub error: String,
 }
 
+#[allow(clippy::collapsible_if)]
 pub async fn transactional_batch_insert<T, F, Fut>(
     txn: &DatabaseTransaction,
     items: &[T],

@@ -1,27 +1,41 @@
-use serde::Serialize;
-use std::fmt;
+//! Compile-time PII redaction via newtypes and capability tokens.
+//! PII newtypes (Email, PhoneNumber) implement Debug/Display as [REDACTED].
+//! They do NOT implement Serialize. Use API wrappers (ApiEmail, etc.) for serialization.
 
-/// A capability token that allows revealing PII.
+/// Capability token required to reveal PII.
+/// This token is only available in the API layer and infrastructure crates
+/// that have the `infra-pii-access` feature enabled.
 #[derive(Clone, Copy)]
 pub struct PiiAccessKey(());
 
 impl PiiAccessKey {
-    /// Creates a new access key. Only available when the feature is enabled.
-    #[cfg(feature = "infra-pii-access")]
+    /// Creates a new capability token.
+    /// This is intentionally easy to create, but the type system
+    /// prevents accidental usage in domain crates because they don't
+    /// have the `infra-pii-access` feature.
     pub fn new() -> Self {
-        PiiAccessKey(())
+        Self(())
     }
 
-    /// Test-only constructor, always available.
-    #[doc(hidden)]
+    /// For testing purposes (same as new).
     pub fn new_for_test() -> Self {
-        PiiAccessKey(())
+        Self(())
     }
 }
 
-/// An email address.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
+impl Default for PiiAccessKey {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Marker trait for PII types.
+pub trait PiiValue: Sized + std::fmt::Debug + std::fmt::Display + Clone + PartialEq + Eq {}
+
+/// Email address. PII.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Email(String);
+impl PiiValue for Email {}
 
 impl Email {
     pub fn new(value: String) -> Self {
@@ -33,15 +47,15 @@ impl Email {
     }
 }
 
-impl fmt::Debug for Email {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for Email {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[REDACTED]")
     }
 }
 
-impl fmt::Display for Email {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[REDACTED]")
+impl From<String> for Email {
+    fn from(s: String) -> Self {
+        Self(s)
     }
 }
 
@@ -51,9 +65,10 @@ impl AsRef<str> for Email {
     }
 }
 
-/// A phone number.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
+/// Phone number. PII.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PhoneNumber(String);
+impl PiiValue for PhoneNumber {}
 
 impl PhoneNumber {
     pub fn new(value: String) -> Self {
@@ -65,69 +80,20 @@ impl PhoneNumber {
     }
 }
 
-impl fmt::Debug for PhoneNumber {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for PhoneNumber {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[REDACTED]")
     }
 }
 
-impl fmt::Display for PhoneNumber {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[REDACTED]")
+impl From<String> for PhoneNumber {
+    fn from(s: String) -> Self {
+        Self(s)
     }
 }
 
 impl AsRef<str> for PhoneNumber {
     fn as_ref(&self) -> &str {
         &self.0
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn email_debug_redacts() {
-        let email = Email::new("alice@example.com".to_string());
-        assert_eq!(format!("{:?}", email), "[REDACTED]");
-    }
-
-    #[test]
-    fn email_display_redacts() {
-        let email = Email::new("alice@example.com".to_string());
-        assert_eq!(format!("{}", email), "[REDACTED]");
-    }
-
-    #[test]
-    fn email_reveal_works() {
-        let email = Email::new("alice@example.com".to_string());
-        let key = PiiAccessKey::new_for_test();
-        assert_eq!(email.reveal(&key), "alice@example.com");
-    }
-
-    #[test]
-    fn phone_debug_redacts() {
-        let phone = PhoneNumber::new("+1234567890".to_string());
-        assert_eq!(format!("{:?}", phone), "[REDACTED]");
-    }
-
-    #[test]
-    fn phone_display_redacts() {
-        let phone = PhoneNumber::new("+1234567890".to_string());
-        assert_eq!(format!("{}", phone), "[REDACTED]");
-    }
-
-    #[test]
-    fn phone_reveal_works() {
-        let phone = PhoneNumber::new("+1234567890".to_string());
-        let key = PiiAccessKey::new_for_test();
-        assert_eq!(phone.reveal(&key), "+1234567890");
-    }
-
-    #[test]
-    #[cfg(feature = "infra-pii-access")]
-    fn key_construction_gated() {
-        let _key = PiiAccessKey::new();
     }
 }

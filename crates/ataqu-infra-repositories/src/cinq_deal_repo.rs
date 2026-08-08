@@ -1,3 +1,4 @@
+#![allow(clippy::question_mark)]
 use crate::cinq_contact_repo::CrossFieldRateLimiter;
 use crate::entities::deal;
 use crate::entities::deal::Entity as DealEntity;
@@ -95,6 +96,7 @@ impl DealRepository {
     }
 
     // Create deal
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_deal(
         &self,
         tenant_id: Uuid,

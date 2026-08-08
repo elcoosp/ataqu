@@ -95,6 +95,7 @@ pub struct TempoRepositoryImpl {
     db: DatabaseConnection,
 }
 
+#[allow(clippy::useless_conversion)]
 impl TempoRepositoryImpl {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
@@ -137,8 +138,8 @@ impl TempoRepository for TempoRepositoryImpl {
             description: Set(event_type.description.clone()),
             duration_minutes: Set(event_type.duration_minutes),
             is_active: Set(event_type.is_active),
-            created_at: Set(event_type.created_at.into()),
-            updated_at: Set(event_type.updated_at.into()),
+            created_at: Set(event_type.created_at),
+            updated_at: Set(event_type.updated_at),
             version: Set(event_type.version),
         };
         event_type_entity::Entity::insert(active)
@@ -173,7 +174,7 @@ impl TempoRepository for TempoRepositoryImpl {
                 duration_minutes: m.duration_minutes,
                 is_active: m.is_active,
                 created_at: m.created_at.into(),
-                updated_at: m.updated_at.into(),
+                updated_at: m.updated_at,
                 version: m.version,
             })
             .collect())
@@ -200,7 +201,7 @@ impl TempoRepository for TempoRepositoryImpl {
             duration_minutes: m.duration_minutes,
             is_active: m.is_active,
             created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
+            updated_at: m.updated_at,
             version: m.version,
         }))
     }
@@ -226,7 +227,7 @@ impl TempoRepository for TempoRepositoryImpl {
             duration_minutes: m.duration_minutes,
             is_active: m.is_active,
             created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
+            updated_at: m.updated_at,
             version: m.version,
         }))
     }
@@ -240,8 +241,8 @@ impl TempoRepository for TempoRepositoryImpl {
             description: Set(event_type.description.clone()),
             duration_minutes: Set(event_type.duration_minutes),
             is_active: Set(event_type.is_active),
-            created_at: Set(event_type.created_at.into()),
-            updated_at: Set(event_type.updated_at.into()),
+            created_at: Set(event_type.created_at),
+            updated_at: Set(event_type.updated_at),
             version: Set(event_type.version),
         };
         event_type_entity::Entity::update(active)
@@ -485,8 +486,8 @@ impl TempoRepository for TempoRepositoryImpl {
             id: Set(slot.id),
             tenant_id: Set(slot.tenant_id.as_uuid()),
             event_type_id: Set(slot.event_type_id),
-            start_time: Set(slot.start_time.into()),
-            end_time: Set(slot.end_time.into()),
+            start_time: Set(slot.start_time),
+            end_time: Set(slot.end_time),
             is_booked: Set(slot.is_booked),
             created_at: Set(Utc::now()),
         };
