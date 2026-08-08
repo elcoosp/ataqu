@@ -701,7 +701,7 @@ impl AegisService {
     pub async fn request_password_reset(
         &self,
         email: Email,
-    ) -> Result<String, AegisServiceError> {
+    ) -> Result<(), AegisServiceError> {
         let user = self
             .repo
             .find_by_email(&email)
@@ -732,7 +732,18 @@ impl AegisService {
         )
         .map_err(|e| AegisServiceError::Internal(e.to_string()))?;
 
-        Ok(token)
+        let payload = serde_json::json!({
+            "user_id": user.id,
+            "tenant_id": user.tenant_id.as_uuid(),
+            "email": user.email.reveal(&ataqu_security::PiiAccessKey::new()),
+            "token": token,
+        });
+        self.outbox
+            .append("core", "PasswordResetRequested", user.id, &payload)
+            .await
+            .map_err(AegisServiceError::Outbox)?;
+
+        Ok(())
     }
 
     pub async fn reset_password(

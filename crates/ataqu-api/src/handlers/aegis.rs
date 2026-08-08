@@ -513,9 +513,11 @@ pub async fn request_password_reset(
     Json(req): Json<RequestPasswordResetRequest>,
 ) -> ApiResult<StatusCode> {
     let email = Email::new(req.email);
-    if let Ok(token) = state.aegis_service.request_password_reset(email).await {
-        tracing::info!(reset_token = %token, "Password reset token generated (dev mode: returns token in logs)");
-    }
+    state
+        .aegis_service
+        .request_password_reset(email)
+        .await
+        .map_err(map_aegis_error)?;
     Ok(StatusCode::OK)
 }
 

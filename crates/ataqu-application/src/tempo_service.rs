@@ -212,8 +212,42 @@ impl TempoService {
         cmd: UpdateBookingStatusCommand,
     ) -> TempoResult<Booking> {
         let booking_id = BookingId(cmd.booking_id);
+        let booking = self
+            .repo
+            .find_booking_by_id(&cmd.tenant_id, &booking_id)
+            .await
+            .map_err(TempoServiceError::Repository)?
+            .ok_or(TempoServiceError::BookingNotFound)?;
+
+        match (&booking.status, &cmd.status) {
+            (BookingStatus::Cancelled, _) | (_, BookingStatus::Cancelled) => {
+                // Allow cancellation, but prevent updating a cancelled booking
+                if booking.status == BookingStatus::Cancelled {
+                    return Err(TempoServiceError::Validation(
+                        "Cannot update a cancelled booking".to_string(),
+                    ));
+                }
+            }
+            (BookingStatus::Completed, _) => {
+                return Err(TempoServiceError::Validation(
+                    "Cannot update a completed booking".to_string(),
+                ));
+            }
+            (BookingStatus::NoShow, _) => {
+                return Err(TempoServiceError::Validation(
+                    "Cannot update a no-show booking".to_string(),
+                ));
+            }
+            (current, new) if current == new => {
+                return Err(TempoServiceError::Validation(
+                    "Booking is already in this status".to_string(),
+                ));
+            }
+            _ => {}
+        }
+
         self.repo
-            .update_booking_status(&cmd.tenant_id, &booking_id, cmd.status)
+            .update_booking_status(&cmd.tenant_id, &booking_id, cmd.status.clone())
             .await
             .map_err(TempoServiceError::Repository)?;
         self.get_booking(cmd.tenant_id, cmd.booking_id).await

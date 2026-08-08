@@ -536,6 +536,62 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
 
+                    // Handle Password Reset Emails
+                    if event.schema == "core" && event.event_type == "PasswordResetRequested" {
+                        let recipient = event
+                            .payload
+                            .get("email")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("noreply@ataqu.com");
+                        let token = event
+                            .payload
+                            .get("token")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+
+                        use lettre::{
+                            Message, SmtpTransport, Transport, message::header::ContentType,
+                            transport::smtp::authentication::Credentials,
+                        };
+
+                        let email = Message::builder()
+                            .from("Ataqu Security <noreply@ataqu.com>".parse().unwrap())
+                            .to(recipient.parse().unwrap_or("noreply@ataqu.com".parse().unwrap()))
+                            .subject("Password Reset Request")
+                            .header(ContentType::TEXT_PLAIN)
+                            .body(format!(
+                                "You requested a password reset. Use the following token: {}",
+                                token
+                            ))
+                            .unwrap();
+
+                        let smtp_host =
+                            std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
+                        let smtp_port: u16 = std::env::var("SMTP_PORT")
+                            .unwrap_or_else(|_| "1025".to_string())
+                            .parse()
+                            .unwrap_or(1025);
+                        let smtp_user = std::env::var("SMTP_USER").ok();
+                        let smtp_pass = std::env::var("SMTP_PASS").ok();
+
+                        let mailer = SmtpTransport::relay(&smtp_host)
+                            .map(|builder| {
+                                let builder = builder.port(smtp_port);
+                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref()) {
+                                    builder.credentials(Credentials::new(u.clone(), p.clone())).build()
+                                } else {
+                                    builder.build()
+                                }
+                            })
+                            .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
+
+                        if let Err(e) = mailer.send(&email) {
+                            tracing::error!("Failed to send password reset email: {}", e);
+                        } else {
+                            tracing::info!("Password reset email sent for {}", recipient);
+                        }
+                    }
+
                     // Handle internal system events that don't fit SPARK's trigger/action model
                     if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
                         let booking_id = event
@@ -698,7 +754,10 @@ async fn main() -> anyhow::Result<()> {
 
                         let response = match actual_cmd {
                             "ping" => "pong\n".to_string(),
-                            "flush_cache" => "OK\n".to_string(),
+                            "flush_cache" => {
+                                ataqu_api::middleware::idempotency::flush_idempotency_cache();
+                                "OK\n".to_string()
+                            }
                             "list_tenants" => {
                                 match aegis.list_tenants().await {
                                     Ok(tenants) => {

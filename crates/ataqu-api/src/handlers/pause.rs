@@ -282,15 +282,22 @@ pub async fn list_leave_requests(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
+    // Fetch all employees in one go to avoid N+1 queries
+    let employees = state
+        .pause_service
+        .list_employees(&auth.tenant_id, 10000, 0)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let employee_map: std::collections::HashMap<Uuid, String> = employees
+        .into_iter()
+        .map(|e| (e.id, e.full_name))
+        .collect();
+
     let mut responses = Vec::new();
     for r in requests {
-        let employee = state
-            .pause_service
-            .find_employee(&auth.tenant_id, r.employee_id)
-            .await
-            .ok();
-        let employee_name = employee
-            .map(|e| e.full_name)
+        let employee_name = employee_map
+            .get(&r.employee_id)
+            .cloned()
             .unwrap_or_else(|| "Unknown".to_string());
         responses.push(LeaveRequestResponse {
             id: r.id,

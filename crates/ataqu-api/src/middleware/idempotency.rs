@@ -11,6 +11,10 @@ use uuid::Uuid;
 
 pub const IDEMPOTENCY_KEY_HEADER: &str = "Idempotency-Key";
 
+pub fn flush_idempotency_cache() {
+    IDEMPOTENCY_CACHE.invalidate_all();
+}
+
 lazy_static::lazy_static! {
     static ref IDEMPOTENCY_CACHE: Cache<Uuid, (StatusCode, Vec<u8>)> = Cache::builder()
         .max_capacity(10_000)
