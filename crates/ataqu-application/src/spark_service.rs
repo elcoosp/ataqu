@@ -1,3 +1,4 @@
+#![allow(clippy::collapsible_if)]
 use std::sync::Arc;
 
 use ataqu_domain_spark::repository::SparkRepository;
@@ -103,7 +104,7 @@ impl SparkService {
         self.outbox
             .append("collab_crm", "WorkflowCreated", workflow.id, &payload)
             .await
-            .map_err(|e| SparkServiceError::Repository(e))?;
+            .map_err(SparkServiceError::Repository)?;
 
         Ok(workflow)
     }
@@ -217,10 +218,10 @@ impl SparkService {
             if workflow.tenant_id != event_tenant_id {
                 continue;
             }
-            if evaluate_conditions(&workflow.conditions, &event.payload) {
-                if let Err(e) = self.execute_workflow(&workflow).await {
-                    tracing::error!(error = %e, "Failed to execute workflow {}", workflow.id);
-                }
+            if evaluate_conditions(&workflow.conditions, &event.payload)
+                && let Err(e) = self.execute_workflow(&workflow).await
+            {
+                tracing::error!(error = %e, "Failed to execute workflow {}", workflow.id);
             }
         }
         Ok(())

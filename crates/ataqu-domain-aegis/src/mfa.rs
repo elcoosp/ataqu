@@ -35,10 +35,10 @@ pub fn verify_totp(secret: &str, code: &str) -> bool {
 
     for offset in -1i64..=1 {
         let step = (current_step as i64 + offset) as u64;
-        if let Ok(expected) = generate_totp_code(&decoded, step) {
-            if constant_time_eq(code.as_bytes(), format!("{:06}", expected).as_bytes()) {
-                return true;
-            }
+        if let Ok(expected) = generate_totp_code(&decoded, step)
+            && constant_time_eq(code.as_bytes(), format!("{:06}", expected).as_bytes())
+        {
+            return true;
         }
     }
     false

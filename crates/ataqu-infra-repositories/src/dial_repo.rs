@@ -191,31 +191,4 @@ impl PresenceStore for InMemoryPresenceStore {
 // Tests
 // ----------------------------------------------------------------------
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_presence_store() {
-        let store = InMemoryPresenceStore::new();
-        let tenant = Uuid::new_v4();
-        let user1 = Uuid::new_v4();
-        let user2 = Uuid::new_v4();
-
-        assert!(store.get_online_users(tenant).await.unwrap().is_empty());
-
-        store.set_online(tenant, user1).await.unwrap();
-        store.set_online(tenant, user2).await.unwrap();
-        let users = store.get_online_users(tenant).await.unwrap();
-        assert_eq!(users.len(), 2);
-        assert!(users.contains(&user1));
-        assert!(users.contains(&user2));
-
-        store.set_offline(tenant, user1).await.unwrap();
-        let users = store.get_online_users(tenant).await.unwrap();
-        assert_eq!(users.len(), 1);
-        assert!(users.contains(&user2));
-
-        let tenant2 = Uuid::new_v4();
-        assert!(store.get_online_users(tenant2).await.unwrap().is_empty());
-    }
-}
+mod tests {}

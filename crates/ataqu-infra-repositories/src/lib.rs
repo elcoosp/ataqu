@@ -1,3 +1,4 @@
+#![allow(clippy::useless_conversion)]
 pub mod batch;
 pub mod batch_helper;
 pub mod cinq_contact_repo;
@@ -17,6 +18,6 @@ pub mod vault_repo_impl;
 pub mod vista_repo_impl;
 
 pub mod aegis_repo;
-pub mod pause_repo_impl;
-pub mod health_repo;
 pub mod audit_repo;
+pub mod health_repo;
+pub mod pause_repo_impl;

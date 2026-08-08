@@ -243,7 +243,7 @@ impl SondService {
         self.outbox
             .append("collab_ops", "ResponseSubmitted", response.id, &payload)
             .await
-            .map_err(|e| SondServiceError::Repository(e))?;
+            .map_err(SondServiceError::Repository)?;
 
         Ok(response)
     }

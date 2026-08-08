@@ -3,6 +3,8 @@ name = "ataqu-api"
 version = "0.1.0"
 edition = "2024"
 
+
+
 [dependencies]
 axum = { version = "0.8.9", features = ["ws", "multipart"] }
 tower = "0.5.3"
@@ -21,6 +23,7 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
 async-trait = "0.1"
 ataqu-application = { path = "../ataqu-application" }
+ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
 ataqu-contracts = { path = "../ataqu-contracts" }
@@ -35,6 +38,7 @@ ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-vista = { path = "../ataqu-domain-vista" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
+ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 csv = "1.3"
 rand = "0.8.5"
@@ -46,6 +50,8 @@ metrics = "0.23"
 sha2 = "0.10"
 base64 = "0.22.1"
 reqwest = { version = "0.12", features = ["json"] }
+
+
 
 [dev-dependencies]
 mockall = "0.15.0"

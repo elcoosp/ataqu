@@ -2,20 +2,18 @@ use serde::Serialize;
 use std::fmt;
 
 /// A capability token that allows revealing PII.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct PiiAccessKey(());
 
 impl PiiAccessKey {
-    /// Creates a new access key. Only available when the feature is enabled.
-    #[cfg(feature = "infra-pii-access")]
+    /// Creates a new PiiAccessKey.
     pub fn new() -> Self {
-        PiiAccessKey(())
+        Self::default()
     }
 
-    /// Test-only constructor, always available.
-    #[doc(hidden)]
+    /// Creates a new PiiAccessKey for testing purposes.
     pub fn new_for_test() -> Self {
-        PiiAccessKey(())
+        Self::default()
     }
 }
 

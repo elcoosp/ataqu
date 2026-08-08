@@ -2,6 +2,7 @@ use std::time::SystemTime;
 pub use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(transparent)]
 pub struct TenantId(Uuid);
 
 impl TenantId {

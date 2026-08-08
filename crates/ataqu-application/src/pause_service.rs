@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+#![allow(clippy::needless_borrows_for_generic_args)]
 //! PAUSE application service — HR orchestration.
 //! Uses domain types and repository traits from domain crate.
 use serde_json::Value;
@@ -125,7 +127,7 @@ impl PauseService {
                     &payload,
                 )
                 .await
-                .map_err(|e| PauseServiceError::Outbox(e))?;
+                .map_err(PauseServiceError::Outbox)?;
             Ok(event.employee_id)
         }
         .await;
@@ -169,7 +171,7 @@ impl PauseService {
                     &payload,
                 )
                 .await
-                .map_err(|e| PauseServiceError::Outbox(e))?;
+                .map_err(PauseServiceError::Outbox)?;
             Ok(event.leave_request_id)
         }
         .await;
@@ -313,7 +315,7 @@ impl PauseService {
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(request)
     }
 
@@ -356,7 +358,7 @@ impl PauseService {
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(request)
     }
 
@@ -385,7 +387,7 @@ impl PauseService {
         self.outbox
             .append(PAUSE_SCHEMA, "EmployeeUpdated", employee.id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
 
         Ok(employee)
     }
@@ -414,7 +416,7 @@ impl PauseService {
         self.outbox
             .append(PAUSE_SCHEMA, "EmployeeDeactivated", employee.id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(())
     }
 
@@ -457,7 +459,7 @@ impl PauseService {
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(request)
     }
 

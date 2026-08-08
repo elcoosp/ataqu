@@ -573,7 +573,7 @@ impl EmployeeDocumentRepository for PauseRepositoryImpl {
             file_name: Set(doc.file_name.clone()),
             file_url: Set(doc.file_url.clone()),
             doc_type: Set(doc.doc_type.clone()),
-            created_at: Set(doc.created_at.into()),
+            created_at: Set(doc.created_at),
         };
         employee_document_entity::Entity::insert(active)
             .exec(&self.db)

@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 //! CINQ CRM orchestration service – uses domain repositories and outbox.
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -193,7 +194,7 @@ impl CinqService {
         self.outbox
             .append(CINQ_SCHEMA, "ContactCreated", contact.id, &payload)
             .await
-            .map_err(|e| CinqServiceError::Repository(e))?;
+            .map_err(CinqServiceError::Repository)?;
 
         Ok(contact)
     }
@@ -516,7 +517,7 @@ impl CinqService {
         self.outbox
             .append(CINQ_SCHEMA, "DealCreated", deal.id, &payload)
             .await
-            .map_err(|e| CinqServiceError::Repository(e))?;
+            .map_err(CinqServiceError::Repository)?;
 
         Ok(deal)
     }
@@ -594,7 +595,7 @@ impl CinqService {
             self.outbox
                 .append(CINQ_SCHEMA, "DealWon", deal.id, &payload)
                 .await
-                .map_err(|e| CinqServiceError::Repository(e))?;
+                .map_err(CinqServiceError::Repository)?;
         }
 
         Ok(deal)
