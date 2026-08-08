@@ -13,27 +13,27 @@ pub struct TrackEmailResponse {
     pub status: String,
 }
 
+#[derive(Debug, serde::Deserialize)]
+pub struct PublicTrackEmailRequest {
+    pub contact_id: Uuid,
+    pub event_type: String,
+    pub tenant_id: Uuid,
+}
+
 pub async fn track_email_public(
     State(state): State<AppState>,
-    axum::extract::Query(req): axum::extract::Query<TrackEmailRequest>,
+    axum::extract::Query(req): axum::extract::Query<PublicTrackEmailRequest>,
 ) -> ApiResult<impl axum::response::IntoResponse> {
     match req.event_type.as_str() {
         "open" | "click" | "bounce" | "send" | "deliver" => {}
         _ => return Err(ApiResponseError::validation("Invalid event_type")),
     }
 
-    let tenant_id = req
-        .metadata
-        .get("tenant_id")
-        .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .ok_or_else(|| ApiResponseError::validation("tenant_id missing in metadata"))?;
-
     let tracking_event = ataqu_infra_repositories::email_tracking_writer::TrackingEvent {
-        tenant_id,
+        tenant_id: req.tenant_id,
         contact_id: req.contact_id,
         event_type: req.event_type,
-        metadata: req.metadata,
+        metadata: serde_json::json!({}),
         occurred_at: Utc::now(),
     };
 
