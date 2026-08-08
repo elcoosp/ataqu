@@ -512,11 +512,9 @@ impl DialService {
                 .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
                 .await?;
     
-            // We will build the PDF as a Vec<u8>.
-            // First, construct the content stream for the page.
+            // Build the content stream
             let mut content_lines = Vec::new();
             content_lines.push(b"BT\n".to_vec());
-            // Use Helvetica 12pt (built-in font)
             content_lines.push(b"/F1 12 Tf\n".to_vec());
             let mut y = 750.0;
             let title = format!("Channel export: {}", channel_id);
@@ -533,7 +531,7 @@ impl DialService {
                 );
                 let line = if line.len() > 200 { &line[..200] } else { &line };
                 if y < 50.0 {
-                    break; // one page only for simplicity
+                    break; // one page only
                 }
                 content_lines.push(format!("1 0 0 1 50 {} Tm\n", y).into_bytes());
                 content_lines.push(format!("({}) Tj\n", escape_pdf_text(line)).into_bytes());
@@ -543,93 +541,74 @@ impl DialService {
             let content_stream = content_lines.concat();
             let content_len = content_stream.len();
     
-            // Helper to escape parentheses in PDF strings
+            // Escape parentheses for PDF strings
             fn escape_pdf_text(s: &str) -> String {
                 s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
             }
     
-            // Build objects as (object_number, content_bytes)
-            let mut objects: Vec<(usize, Vec<u8>)> = Vec::new();
-            let mut obj_num = 1;
+            // Fixed object numbers:
+            // 1: Content stream
+            // 2: Page
+            // 3: Pages
+            // 4: Catalog
+            let content_obj = 1;
+            let page_obj = 2;
+            let pages_obj = 3;
+            let catalog_obj = 4;
     
-            // Helper to add an object and return its offset in the final file.
-            // We'll store the object number and its bytes, and later compute offsets.
-            let mut add_object = |bytes: Vec<u8>| {
-                let num = obj_num;
-                obj_num += 1;
-                objects.push((num, bytes));
-                num
-            };
+            // Build object bodies as Vec<u8>
+            let content_body = format!(
+                "<< /Length {} >>\nstream\n{}endstream\n",
+                content_len,
+                String::from_utf8_lossy(&content_stream)
+            ).into_bytes();
     
-            // 1. Content stream object
-            let content_obj = add_object(
-                format!(
-                    "<< /Length {} >>\nstream\n{}endstream\n",
-                    content_len,
-                    String::from_utf8_lossy(&content_stream)
-                )
-                .into_bytes()
-            );
+            let page_body = format!(
+                "<< /Type /Page /Parent {} 0 R /MediaBox [0 0 612 792] /Contents {} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\n",
+                pages_obj, content_obj
+            ).into_bytes();
     
-            // 2. Page object (references the content stream, parent pages, resources)
-            let page_obj = add_object(
-                format!(
-                    "<< /Type /Page /Parent {} 0 R /MediaBox [0 0 612 792] /Contents {} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\n",
-                    obj_num + 1, // Pages object will be next
-                    content_obj
-                )
-                .into_bytes()
-            );
+            let pages_body = format!(
+                "<< /Type /Pages /Kids [{} 0 R] /Count 1 >>\n",
+                page_obj
+            ).into_bytes();
     
-            // 3. Pages object
-            let pages_obj = add_object(
-                format!(
-                    "<< /Type /Pages /Kids [{} 0 R] /Count 1 >>\n",
-                    page_obj
-                )
-                .into_bytes()
-            );
+            let catalog_body = format!(
+                "<< /Type /Catalog /Pages {} 0 R >>\n",
+                pages_obj
+            ).into_bytes();
     
-            // 4. Catalog object
-            let catalog_obj = add_object(
-                format!(
-                    "<< /Type /Catalog /Pages {} 0 R >>\n",
-                    pages_obj
-                )
-                .into_bytes()
-            );
-    
-            // Now build the final PDF bytes.
+            // Assemble the PDF
             let mut buffer = Vec::new();
             buffer.extend_from_slice(b"%PDF-1.4\n");
     
-            // We'll store the offset of each object as we write them.
-            let mut object_offsets: Vec<usize> = Vec::new();
+            // Write objects in order: 1..4
+            let objects = [
+                (content_obj, content_body),
+                (page_obj, page_body),
+                (pages_obj, pages_body),
+                (catalog_obj, catalog_body),
+            ];
     
-            // Objects are written in order of their object numbers.
-            // We need to sort objects by number (they were added in order, so they already are).
-            for (num, bytes) in &objects {
+            let mut object_offsets = Vec::new();
+            for (num, body) in objects.iter() {
                 let offset = buffer.len();
                 object_offsets.push(offset);
                 buffer.extend_from_slice(format!("{} 0 obj\n", num).as_bytes());
-                buffer.extend_from_slice(bytes);
+                buffer.extend_from_slice(body);
                 buffer.extend_from_slice(b"\nendobj\n");
             }
     
-            // Total number of objects (including object 0, which is free)
-            let total_objects = obj_num; // obj_num was incremented after last object
-    
-            // Write xref table
+            let total_objects = 5; // objects 0..4
             let xref_offset = buffer.len();
+    
             buffer.extend_from_slice(b"xref\n");
             buffer.extend_from_slice(format!("0 {}\n", total_objects).as_bytes());
-            // Entry for object 0: free
             buffer.extend_from_slice(b"0000000000 65535 f \n");
             for offset in object_offsets {
                 buffer.extend_from_slice(format!("{:010} 00000 n \n", offset).as_bytes());
             }
     
-            // Trailer and startxref
             buffer.extend_from_slice(
                 format!(
                     "trailer\n<< /Size {} /Root {} 0 R >>\nstartxref\n{}\n%%EOF\n",
