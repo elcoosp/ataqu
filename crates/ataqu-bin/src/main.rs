@@ -469,7 +469,7 @@ async fn main() -> anyhow::Result<()> {
             pools.ops.clone(),
             std::path::PathBuf::from("/tmp/ataqu_email_spill"),
             10 * 1024 * 1024,
-        });
+        ));
     tokio::spawn(async move {
         if let Err(e) = email_writer.run().await {
             tracing::error!("Email tracking writer crashed: {}", e);
@@ -504,7 +504,7 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(60)).await;
             rate_limiter_cleanup.cleanup();
         }
-    });
+    ));
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();
@@ -628,7 +628,7 @@ async fn main() -> anyhow::Result<()> {
                                     let sql = format!(
                                         "DELETE FROM {}.{} WHERE {} = $1",
                                         table.schema, table.table, table.tenant_id_column
-                                    });
+                                    ));
                                     let stmt = sea_orm::Statement::from_sql_and_values(
                                         sea_orm::DbBackend::Postgres,
                                         &sql,
