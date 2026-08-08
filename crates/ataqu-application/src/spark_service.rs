@@ -115,7 +115,11 @@ impl SparkService {
             .ok_or(SparkServiceError::WorkflowNotFound)
     }
 
-    pub async fn update_workflow(&self, cmd: UpdateWorkflowCommand, expected_version: i32) -> SparkResult<Workflow> {
+    pub async fn update_workflow(
+        &self,
+        cmd: UpdateWorkflowCommand,
+        expected_version: i32,
+    ) -> SparkResult<Workflow> {
         let mut workflow = self.get_workflow(cmd.tenant_id, cmd.id).await?;
         if workflow.version != expected_version {
             return Err(SparkServiceError::Validation(format!(

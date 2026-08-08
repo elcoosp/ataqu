@@ -58,12 +58,17 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     info!(user_id = %auth.user_id, "WebSocket connected");
 
     // Presence tracking: increment count
-    let count = state.presence_counts
+    let count = state
+        .presence_counts
         .entry(auth.user_id)
         .or_insert_with(|| std::sync::atomic::AtomicUsize::new(0));
     let prev_count = count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     if prev_count == 0 {
-        if let Err(e) = state.dial_service.set_online(auth.tenant_id, auth.user_id).await {
+        if let Err(e) = state
+            .dial_service
+            .set_online(auth.tenant_id, auth.user_id)
+            .await
+        {
             tracing::error!("Failed to set presence: {}", e);
         }
     }
@@ -96,7 +101,11 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     let entry =
                                         state.ws_registry.entry(key).or_insert_with(DashMap::new);
                                     entry.insert(connection_id, tx.clone());
-                                    state.conn_index.entry(connection_id).or_insert_with(Vec::new).push(key);
+                                    state
+                                        .conn_index
+                                        .entry(connection_id)
+                                        .or_insert_with(Vec::new)
+                                        .push(key);
 
                                     let _ = tx.send(
                                         serde_json::json!({
@@ -117,7 +126,9 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     if let Some(subscribers) = state.ws_registry.get(&key) {
                                         subscribers.remove(&connection_id);
                                     }
-                                    if let Some(mut channels) = state.conn_index.get_mut(&connection_id) {
+                                    if let Some(mut channels) =
+                                        state.conn_index.get_mut(&connection_id)
+                                    {
                                         channels.retain(|&k| k != key);
                                     }
                                     let _ = tx.send(
@@ -223,7 +234,11 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     if let Some(count) = state.presence_counts.get(&auth.user_id) {
         let new_count = count.fetch_sub(1, std::sync::atomic::Ordering::SeqCst) - 1;
         if new_count == 0 {
-            if let Err(e) = state.dial_service.set_offline(auth.tenant_id, auth.user_id).await {
+            if let Err(e) = state
+                .dial_service
+                .set_offline(auth.tenant_id, auth.user_id)
+                .await
+            {
                 tracing::error!("Failed to remove presence: {}", e);
             }
         }

@@ -72,11 +72,7 @@ pub fn create_employee(
     }
 }
 
-pub fn update_employee(
-    employee: &mut Employee,
-    cmd: UpdateEmployeeCommand,
-    clock: &dyn Clock,
-) {
+pub fn update_employee(employee: &mut Employee, cmd: UpdateEmployeeCommand, clock: &dyn Clock) {
     if let Some(name) = cmd.full_name {
         employee.full_name = name;
     }

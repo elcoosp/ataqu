@@ -82,7 +82,11 @@ pub async fn create_product(
         axum::http::header::ETAG,
         format!("\"{}\"", product.version).parse().unwrap(),
     );
-    Ok((StatusCode::CREATED, headers, Json(ProductResponse::from(product))))
+    Ok((
+        StatusCode::CREATED,
+        headers,
+        Json(ProductResponse::from(product)),
+    ))
 }
 
 pub async fn list_products(
@@ -92,7 +96,11 @@ pub async fn list_products(
 ) -> ApiResult<Json<Vec<ProductResponse>>> {
     let products = state
         .vault_service
-        .list_products(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_products(
+            auth.tenant_id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(
@@ -116,11 +124,20 @@ pub async fn get_product(
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
 
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
         }
     }
-    Ok((StatusCode::OK, resp_headers, Json(ProductResponse::from(product))).into_response())
+    Ok((
+        StatusCode::OK,
+        resp_headers,
+        Json(ProductResponse::from(product)),
+    )
+        .into_response())
 }
 
 pub async fn update_product(
@@ -231,7 +248,11 @@ pub async fn create_variant(
         axum::http::header::ETAG,
         format!("\"{}\"", variant.version).parse().unwrap(),
     );
-    Ok((StatusCode::CREATED, headers, Json(VariantResponse::from(variant))))
+    Ok((
+        StatusCode::CREATED,
+        headers,
+        Json(VariantResponse::from(variant)),
+    ))
 }
 
 pub async fn list_variants(
@@ -241,7 +262,11 @@ pub async fn list_variants(
 ) -> ApiResult<Json<Vec<VariantResponse>>> {
     let variants = state
         .vault_service
-        .list_variants(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_variants(
+            auth.tenant_id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(
@@ -265,11 +290,20 @@ pub async fn get_variant(
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
 
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
         }
     }
-    Ok((StatusCode::OK, resp_headers, Json(VariantResponse::from(variant))).into_response())
+    Ok((
+        StatusCode::OK,
+        resp_headers,
+        Json(VariantResponse::from(variant)),
+    )
+        .into_response())
 }
 
 #[derive(Debug, Deserialize)]
@@ -405,7 +439,12 @@ pub async fn list_movements(
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
     let movements = state
         .vault_service
-        .list_movements(auth.tenant_id, variant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_movements(
+            auth.tenant_id,
+            variant_id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let list: Vec<_> = movements
@@ -461,7 +500,8 @@ pub async fn reserve_stock(
     headers: axum::http::HeaderMap,
     Json(payload): Json<ReserveStockRequest>,
 ) -> ApiResult<impl IntoResponse> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -482,7 +522,11 @@ pub async fn reserve_stock(
         axum::http::header::ETAG,
         format!("\"{}\"", variant.version).parse().unwrap(),
     );
-    Ok((StatusCode::OK, headers, Json(VariantResponse::from(variant))))
+    Ok((
+        StatusCode::OK,
+        headers,
+        Json(VariantResponse::from(variant)),
+    ))
 }
 
 #[derive(Debug, Deserialize)]

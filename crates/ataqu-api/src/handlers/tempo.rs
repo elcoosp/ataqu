@@ -233,7 +233,8 @@ pub async fn update_event_type(
     headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateEventTypeRequest>,
 ) -> ApiResult<Json<EventTypeResponse>> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {

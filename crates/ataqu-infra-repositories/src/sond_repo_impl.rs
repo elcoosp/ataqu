@@ -4,7 +4,9 @@ use ataqu_domain_sond::form::Form;
 use ataqu_domain_sond::repository::SondRepository;
 use ataqu_domain_sond::response::Response;
 use ataqu_kernel::TenantId;
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, Set, QueryOrder, QuerySelect};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect, Set,
+};
 use uuid::Uuid;
 
 mod form_entity {
@@ -88,7 +90,9 @@ impl SondRepository for SondRepositoryImpl {
             tenant_id: Set(form.tenant_id.as_uuid()),
             title: Set(form.title.clone()),
             description: Set(form.description.clone()),
-            questions: Set(serde_json::to_value(&form.questions).unwrap_or(serde_json::Value::Array(vec![]))),
+            questions: Set(
+                serde_json::to_value(&form.questions).unwrap_or(serde_json::Value::Array(vec![]))
+            ),
             branding: Set(form.branding.clone()),
             created_at: Set(form.created_at),
             updated_at: Set(form.updated_at),
@@ -101,7 +105,11 @@ impl SondRepository for SondRepositoryImpl {
         Ok(())
     }
 
-    async fn get_form(&self, tenant_id: TenantId, form_id: Uuid) -> Result<Option<Form>, SondError> {
+    async fn get_form(
+        &self,
+        tenant_id: TenantId,
+        form_id: Uuid,
+    ) -> Result<Option<Form>, SondError> {
         let model = form_entity::Entity::find()
             .filter(form_entity::Column::Id.eq(form_id))
             .filter(form_entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -130,7 +138,12 @@ impl SondRepository for SondRepositoryImpl {
         Ok(())
     }
 
-    async fn list_forms(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Form>, SondError> {
+    async fn list_forms(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Form>, SondError> {
         let models = form_entity::Entity::find()
             .filter(form_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -147,7 +160,9 @@ impl SondRepository for SondRepositoryImpl {
             id: Set(response.id),
             tenant_id: Set(response.tenant_id.as_uuid()),
             form_id: Set(response.form_id),
-            answers: Set(serde_json::to_value(&response.answers).unwrap_or(serde_json::Value::Array(vec![]))),
+            answers: Set(
+                serde_json::to_value(&response.answers).unwrap_or(serde_json::Value::Array(vec![]))
+            ),
             respondent_id: Set(response.respondent_id),
             submitted_at: Set(response.submitted_at),
         };
@@ -179,7 +194,13 @@ impl SondRepository for SondRepositoryImpl {
         }
     }
 
-    async fn list_responses(&self, tenant_id: &TenantId, form_id: Uuid, limit: u64, offset: u64) -> Result<Vec<Response>, SondError> {
+    async fn list_responses(
+        &self,
+        tenant_id: &TenantId,
+        form_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Response>, SondError> {
         let models = response_entity::Entity::find()
             .filter(response_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(response_entity::Column::FormId.eq(form_id))
@@ -190,13 +211,16 @@ impl SondRepository for SondRepositoryImpl {
             .await
             .map_err(|e| SondError::Repository(e.to_string()))?;
 
-        Ok(models.into_iter().map(|m| Response {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            form_id: m.form_id,
-            answers: serde_json::from_value(m.answers).unwrap_or_default(),
-            respondent_id: m.respondent_id,
-            submitted_at: m.submitted_at,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| Response {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                form_id: m.form_id,
+                answers: serde_json::from_value(m.answers).unwrap_or_default(),
+                respondent_id: m.respondent_id,
+                submitted_at: m.submitted_at,
+            })
+            .collect())
     }
 }

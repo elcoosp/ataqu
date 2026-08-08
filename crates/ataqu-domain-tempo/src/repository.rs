@@ -54,14 +54,21 @@ pub trait TempoRepository: Send + Sync {
     ) -> Result<Vec<Booking>, RepositoryError>;
 
     async fn save_event_type(&self, event_type: &EventType) -> Result<(), RepositoryError>;
-    async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, RepositoryError>;
+    async fn list_event_types(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<EventType>, RepositoryError>;
     async fn find_event_type_by_slug(
         &self,
         tenant_id: &TenantId,
         slug: &str,
     ) -> Result<Option<EventType>, RepositoryError>;
     async fn update_event_type(&self, event_type: &EventType) -> Result<(), RepositoryError>;
-    async fn delete_event_type(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), RepositoryError>;
+    async fn delete_event_type(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<(), RepositoryError>;
 
     async fn check_overlap(
         &self,

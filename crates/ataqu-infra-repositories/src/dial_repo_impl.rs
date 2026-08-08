@@ -69,7 +69,7 @@ fn channel_model_to_domain(model: channel_entity::Model) -> Channel {
         participants: Vec::new(),
         created_at: model.created_at.into(),
         updated_at: model.created_at.into(),
-archived_at: model.archived_at.map(|dt| dt.into()),
+        archived_at: model.archived_at.map(|dt| dt.into()),
         version: 0,
     }
 }

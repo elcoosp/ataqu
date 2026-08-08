@@ -674,7 +674,7 @@ mod tests {
             participants: vec![],
             created_at: UNIX_EPOCH,
             updated_at: UNIX_EPOCH,
-archived_at: Some(UNIX_EPOCH),
+            archived_at: Some(UNIX_EPOCH),
             version: 0,
         };
 
@@ -758,7 +758,7 @@ archived_at: Some(UNIX_EPOCH),
             participants: vec![],
             created_at: UNIX_EPOCH,
             updated_at: UNIX_EPOCH,
-archived_at: Some(UNIX_EPOCH),
+            archived_at: Some(UNIX_EPOCH),
             version: 0,
         };
 

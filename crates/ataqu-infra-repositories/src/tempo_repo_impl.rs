@@ -6,7 +6,9 @@ use ataqu_domain_tempo::schedule::{Booking, BookingId, BookingStatus, EventTypeI
 use ataqu_kernel::{RepositoryError, TenantId};
 use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, Set};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, Set,
+};
 use std::time::SystemTime;
 use uuid::Uuid;
 
@@ -115,7 +117,11 @@ fn map_booking(m: booking_entity::Model) -> Booking {
             _ => BookingStatus::Pending,
         },
         created_at: m.created_at.into(),
-        reminder_sent_at: if m.reminder_sent { Some(m.updated_at.into()) } else { None },
+        reminder_sent_at: if m.reminder_sent {
+            Some(m.updated_at.into())
+        } else {
+            None
+        },
     }
 }
 
@@ -141,28 +147,38 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn list_event_types(&self, tenant_id: &TenantId) -> Result<Vec<EventType>, RepositoryError> {
+    async fn list_event_types(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<EventType>, RepositoryError> {
         let models = event_type_entity::Entity::find()
             .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .all(&self.db)
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
 
-        Ok(models.into_iter().map(|m| EventType {
-            id: EventTypeId(m.id),
-            tenant_id: TenantId::new(m.tenant_id),
-            name: m.name,
-            slug: m.slug,
-            description: m.description,
-            duration_minutes: m.duration_minutes,
-            is_active: m.is_active,
-            created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
-            version: m.version,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| EventType {
+                id: EventTypeId(m.id),
+                tenant_id: TenantId::new(m.tenant_id),
+                name: m.name,
+                slug: m.slug,
+                description: m.description,
+                duration_minutes: m.duration_minutes,
+                is_active: m.is_active,
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+                version: m.version,
+            })
+            .collect())
     }
 
-    async fn find_event_type_by_slug(&self, tenant_id: &TenantId, slug: &str) -> Result<Option<EventType>, RepositoryError> {
+    async fn find_event_type_by_slug(
+        &self,
+        tenant_id: &TenantId,
+        slug: &str,
+    ) -> Result<Option<EventType>, RepositoryError> {
         let model = event_type_entity::Entity::find()
             .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(event_type_entity::Column::Slug.eq(slug))
@@ -204,7 +220,11 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn delete_event_type(&self, tenant_id: &TenantId, id: Uuid) -> Result<(), RepositoryError> {
+    async fn delete_event_type(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<(), RepositoryError> {
         event_type_entity::Entity::delete_many()
             .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(event_type_entity::Column::Id.eq(id))
@@ -235,7 +255,11 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn find_booking_by_id(&self, tenant_id: &TenantId, id: &BookingId) -> Result<Option<Booking>, RepositoryError> {
+    async fn find_booking_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: &BookingId,
+    ) -> Result<Option<Booking>, RepositoryError> {
         let model = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(booking_entity::Column::Id.eq(id.0))
@@ -246,7 +270,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(model.map(map_booking))
     }
 
-    async fn list_bookings(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<Booking>, RepositoryError> {
+    async fn list_bookings(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Booking>, RepositoryError> {
         let models = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -258,7 +287,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(models.into_iter().map(map_booking).collect())
     }
 
-    async fn update_booking_status(&self, tenant_id: &TenantId, id: &BookingId, status: BookingStatus) -> Result<(), RepositoryError> {
+    async fn update_booking_status(
+        &self,
+        tenant_id: &TenantId,
+        id: &BookingId,
+        status: BookingStatus,
+    ) -> Result<(), RepositoryError> {
         let mut active = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(booking_entity::Column::Id.eq(id.0))
@@ -278,7 +312,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn reschedule_booking(&self, tenant_id: &TenantId, id: &BookingId, starts_at: DateTime<Utc>) -> Result<(), RepositoryError> {
+    async fn reschedule_booking(
+        &self,
+        tenant_id: &TenantId,
+        id: &BookingId,
+        starts_at: DateTime<Utc>,
+    ) -> Result<(), RepositoryError> {
         let mut active = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(booking_entity::Column::Id.eq(id.0))
@@ -298,7 +337,13 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn check_overlap(&self, tenant_id: &TenantId, event_type_id: Uuid, starts_at: SystemTime, ends_at: SystemTime) -> Result<bool, RepositoryError> {
+    async fn check_overlap(
+        &self,
+        tenant_id: &TenantId,
+        event_type_id: Uuid,
+        starts_at: SystemTime,
+        ends_at: SystemTime,
+    ) -> Result<bool, RepositoryError> {
         let start_dt: DateTime<Utc> = starts_at.into();
         let end_dt: DateTime<Utc> = ends_at.into();
         let count = booking_entity::Entity::find()
@@ -312,7 +357,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(count > 0)
     }
 
-    async fn find_bookings_for_no_show_check(&self, tenant_id: &TenantId, lower_bound: SystemTime, upper_bound: SystemTime) -> Result<Vec<Booking>, RepositoryError> {
+    async fn find_bookings_for_no_show_check(
+        &self,
+        tenant_id: &TenantId,
+        lower_bound: SystemTime,
+        upper_bound: SystemTime,
+    ) -> Result<Vec<Booking>, RepositoryError> {
         let lower_dt: DateTime<Utc> = lower_bound.into();
         let upper_dt: DateTime<Utc> = upper_bound.into();
         let models = booking_entity::Entity::find()
@@ -326,7 +376,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(models.into_iter().map(map_booking).collect())
     }
 
-    async fn find_upcoming_bookings_for_reminder(&self, tenant_id: &TenantId, start_bound: SystemTime, end_bound: SystemTime) -> Result<Vec<Booking>, RepositoryError> {
+    async fn find_upcoming_bookings_for_reminder(
+        &self,
+        tenant_id: &TenantId,
+        start_bound: SystemTime,
+        end_bound: SystemTime,
+    ) -> Result<Vec<Booking>, RepositoryError> {
         let start_dt: DateTime<Utc> = start_bound.into();
         let end_dt: DateTime<Utc> = end_bound.into();
         let models = booking_entity::Entity::find()
@@ -340,7 +395,12 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(models.into_iter().map(map_booking).collect())
     }
 
-    async fn mark_reminder_sent(&self, tenant_id: &TenantId, id: &BookingId, now: SystemTime) -> Result<(), RepositoryError> {
+    async fn mark_reminder_sent(
+        &self,
+        tenant_id: &TenantId,
+        id: &BookingId,
+        now: SystemTime,
+    ) -> Result<(), RepositoryError> {
         let mut active = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(booking_entity::Column::Id.eq(id.0))
@@ -377,7 +437,11 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn list_availability_slots(&self, tenant_id: &TenantId, event_type_id: &EventTypeId) -> Result<Vec<AvailabilitySlot>, RepositoryError> {
+    async fn list_availability_slots(
+        &self,
+        tenant_id: &TenantId,
+        event_type_id: &EventTypeId,
+    ) -> Result<Vec<AvailabilitySlot>, RepositoryError> {
         let models = availability_slot_entity::Entity::find()
             .filter(availability_slot_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(availability_slot_entity::Column::EventTypeId.eq(event_type_id.0))
@@ -385,17 +449,24 @@ impl TempoRepository for TempoRepositoryImpl {
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
 
-        Ok(models.into_iter().map(|m| AvailabilitySlot {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            event_type_id: m.event_type_id,
-            start_time: m.start_time,
-            end_time: m.end_time,
-            is_booked: m.is_booked,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| AvailabilitySlot {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                event_type_id: m.event_type_id,
+                start_time: m.start_time,
+                end_time: m.end_time,
+                is_booked: m.is_booked,
+            })
+            .collect())
     }
 
-    async fn delete_availability_slot(&self, tenant_id: &TenantId, slot_id: Uuid) -> Result<(), RepositoryError> {
+    async fn delete_availability_slot(
+        &self,
+        tenant_id: &TenantId,
+        slot_id: Uuid,
+    ) -> Result<(), RepositoryError> {
         availability_slot_entity::Entity::delete_many()
             .filter(availability_slot_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(availability_slot_entity::Column::Id.eq(slot_id))

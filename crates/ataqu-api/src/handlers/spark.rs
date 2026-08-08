@@ -1,6 +1,6 @@
 use axum::{
-    extract::Query,
     Router,
+    extract::Query,
     extract::{Path, State},
     http::StatusCode,
     response::Json,
@@ -56,7 +56,11 @@ pub async fn list_workflows(
 ) -> ApiResult<Json<Vec<WorkflowResponse>>> {
     let workflows = state
         .spark_service
-        .list_workflows(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_workflows(
+            auth.tenant_id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let resp = workflows
@@ -127,7 +131,8 @@ pub async fn update_workflow(
     headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateWorkflowRequest>,
 ) -> ApiResult<Json<WorkflowResponse>> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {

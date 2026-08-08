@@ -153,15 +153,27 @@ pub async fn get_channel(
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     let etag = format!("\"{}\"", channel.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             let mut h = axum::http::HeaderMap::new();
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
-            return Ok((StatusCode::NOT_MODIFIED, h, Json(ChannelResponse::from(channel))));
+            return Ok((
+                StatusCode::NOT_MODIFIED,
+                h,
+                Json(ChannelResponse::from(channel)),
+            ));
         }
     }
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
-    Ok((StatusCode::OK, resp_headers, Json(ChannelResponse::from(channel))))
+    Ok((
+        StatusCode::OK,
+        resp_headers,
+        Json(ChannelResponse::from(channel)),
+    ))
 }
 
 pub async fn archive_channel(
@@ -333,7 +345,8 @@ pub async fn edit_message(
     headers: axum::http::HeaderMap,
     Json(payload): Json<EditMessageRequest>,
 ) -> ApiResult<Json<MessageResponse>> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let _if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -369,7 +382,11 @@ pub async fn delete_message(
     Path(message_id): Path<Uuid>,
 ) -> ApiResult<StatusCode> {
     let is_moderator = auth.has_role("admin");
-    let msg = state.dial_service.get_message(auth.tenant_id, message_id).await.ok();
+    let msg = state
+        .dial_service
+        .get_message(auth.tenant_id, message_id)
+        .await
+        .ok();
     state
         .dial_service
         .delete_message(auth.tenant_id, message_id, auth.user_id, is_moderator)
@@ -558,19 +575,32 @@ pub async fn upload_file(
 ) -> ApiResult<Json<serde_json::Value>> {
     // Basic file upload implementation: saves to local disk.
     // A real implementation would use S3 presigned URLs.
-    let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "/tmp/ataqu_uploads".to_string());
-    tokio::fs::create_dir_all(&upload_dir).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let upload_dir =
+        std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "/tmp/ataqu_uploads".to_string());
+    tokio::fs::create_dir_all(&upload_dir)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
     let mut file_urls = Vec::new();
     while let Ok(Some(field)) = multipart.next_field().await {
         let file_name = field.file_name().unwrap_or("unknown").to_string();
-        let extension = field.content_type().unwrap_or("application/octet-stream").split('/').last().unwrap_or("bin");
+        let extension = field
+            .content_type()
+            .unwrap_or("application/octet-stream")
+            .split('/')
+            .last()
+            .unwrap_or("bin");
         let file_id = uuid::Uuid::now_v7();
         let saved_name = format!("{}.{}", file_id, extension);
         let file_path = std::path::Path::new(&upload_dir).join(&saved_name);
 
-        let data = field.bytes().await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-        tokio::fs::write(&file_path, &data).await.map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        let data = field
+            .bytes()
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        tokio::fs::write(&file_path, &data)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
         let url = format!("/uploads/{}", saved_name);
         file_urls.push(serde_json::json!({
@@ -604,7 +634,11 @@ pub async fn add_reaction(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    let msg = state.dial_service.get_message(auth.tenant_id, message_id).await.ok();
+    let msg = state
+        .dial_service
+        .get_message(auth.tenant_id, message_id)
+        .await
+        .ok();
     if let Some(m) = msg {
         let key = (auth.tenant_id.as_uuid(), m.channel_id.as_uuid());
         let broadcast = serde_json::json!({
@@ -665,11 +699,15 @@ pub async fn delete_reaction(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    let reaction = reactions.iter().find(|r| r.id == reaction_id)
+    let reaction = reactions
+        .iter()
+        .find(|r| r.id == reaction_id)
         .ok_or_else(|| ApiResponseError::not_found("Reaction not found"))?;
 
     if reaction.user_id.as_uuid() != auth.user_id {
-        return Err(ApiResponseError::Forbidden("Cannot delete another user's reaction".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Cannot delete another user's reaction".to_string(),
+        ));
     }
 
     state

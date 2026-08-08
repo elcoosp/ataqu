@@ -119,7 +119,11 @@ pub async fn get_form(
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     let etag = format!("\"{}\"", form.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             let mut h = axum::http::HeaderMap::new();
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
             return Ok((StatusCode::NOT_MODIFIED, h, Json(FormResponse::from(form))));

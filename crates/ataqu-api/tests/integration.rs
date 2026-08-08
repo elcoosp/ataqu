@@ -6,7 +6,9 @@ async fn test_db_connection() {
     // Skip test if DB is not available to prevent CI/local failures due to env issues
     let result = sea_orm::Database::connect(&db_url).await;
     if result.is_err() {
-        eprintln!("Skipping test_db_connection: Could not connect to DB. Ensure PostgreSQL is running and credentials are correct.");
+        eprintln!(
+            "Skipping test_db_connection: Could not connect to DB. Ensure PostgreSQL is running and credentials are correct."
+        );
         eprintln!("Error: {:?}", result.err());
         return;
     }

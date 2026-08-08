@@ -137,7 +137,11 @@ pub async fn create_doc(
         axum::http::header::ETAG,
         format!("\"{}\"", doc.version).parse().unwrap(),
     );
-    Ok((StatusCode::CREATED, headers, Json(DocumentResponse::from(doc))))
+    Ok((
+        StatusCode::CREATED,
+        headers,
+        Json(DocumentResponse::from(doc)),
+    ))
 }
 
 pub async fn list_docs(
@@ -178,11 +182,20 @@ pub async fn get_doc(
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
 
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
         }
     }
-    Ok((StatusCode::OK, resp_headers, Json(DocumentResponse::from(doc))).into_response())
+    Ok((
+        StatusCode::OK,
+        resp_headers,
+        Json(DocumentResponse::from(doc)),
+    )
+        .into_response())
 }
 
 pub async fn update_doc(
@@ -395,7 +408,9 @@ pub async fn update_block(
             _ => return Err(ApiResponseError::validation("Invalid block_type")),
         }
     } else {
-        return Err(ApiResponseError::validation("block_type required for update"));
+        return Err(ApiResponseError::validation(
+            "block_type required for update",
+        ));
     };
 
     let block = state

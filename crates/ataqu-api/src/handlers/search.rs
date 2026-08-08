@@ -184,8 +184,16 @@ pub async fn unified_search(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for u in users {
-        let email_str = u.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
-        if email_str.contains(&params.q) || u.name.as_deref().map(|n| n.contains(&params.q)).unwrap_or(false) {
+        let email_str = u
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
+        if email_str.contains(&params.q)
+            || u.name
+                .as_deref()
+                .map(|n| n.contains(&params.q))
+                .unwrap_or(false)
+        {
             results.push(UnifiedSearchResult {
                 app: "aegis".to_string(),
                 entity_type: "user".to_string(),

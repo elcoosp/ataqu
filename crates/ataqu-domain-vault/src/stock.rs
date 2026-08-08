@@ -20,7 +20,11 @@ pub struct CreateReservationCommand {
     pub expires_at: Option<SystemTime>,
 }
 
-pub fn create_reservation(cmd: CreateReservationCommand, id_gen: &dyn IdGenerator, clock: &dyn Clock) -> Reservation {
+pub fn create_reservation(
+    cmd: CreateReservationCommand,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
+) -> Reservation {
     Reservation {
         id: id_gen.new_uuid_v7(),
         tenant_id: cmd.tenant_id,
@@ -51,7 +55,11 @@ pub struct CreateMovementCommand {
     pub reference: Option<String>,
 }
 
-pub fn create_movement(cmd: CreateMovementCommand, id_gen: &dyn IdGenerator, clock: &dyn Clock) -> StockMovement {
+pub fn create_movement(
+    cmd: CreateMovementCommand,
+    id_gen: &dyn IdGenerator,
+    clock: &dyn Clock,
+) -> StockMovement {
     StockMovement {
         id: id_gen.new_uuid_v7(),
         tenant_id: cmd.tenant_id,

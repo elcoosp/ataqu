@@ -31,24 +31,49 @@ impl VistaRepository for VistaRepositoryImpl {
             [tenant_id.as_uuid().into()],
         );
 
-        let row = self.db.query_one_raw(stmt).await
+        let row = self
+            .db
+            .query_one_raw(stmt)
+            .await
             .map_err(|e| e.to_string())?
             .ok_or("Aggregated view not found".to_string())?;
 
-        let last_updated_dt: chrono::DateTime<chrono::Utc> = row.try_get("", "last_updated_at").map_err(|e| e.to_string())?;
+        let last_updated_dt: chrono::DateTime<chrono::Utc> = row
+            .try_get("", "last_updated_at")
+            .map_err(|e| e.to_string())?;
 
         let view = AggregatedView {
             tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
-            total_events: row.try_get::<i64>("", "total_events").map_err(|e| e.to_string())? as u64,
-            total_contacts: row.try_get::<i64>("", "total_contacts").map_err(|e| e.to_string())? as u64,
-            total_deals: row.try_get::<i64>("", "total_deals").map_err(|e| e.to_string())? as u64,
-            total_deals_won: row.try_get::<i64>("", "total_deals_won").map_err(|e| e.to_string())? as u64,
-            total_pipeline_value: row.try_get("", "total_pipeline_value").map_err(|e| e.to_string())?,
-            total_revenue: row.try_get("", "total_revenue").map_err(|e| e.to_string())?,
-            total_products: row.try_get::<i64>("", "total_products").map_err(|e| e.to_string())? as u64,
-            low_stock_variants: row.try_get::<i64>("", "low_stock_variants").map_err(|e| e.to_string())? as u64,
-            total_bookings: row.try_get::<i64>("", "total_bookings").map_err(|e| e.to_string())? as u64,
-            pending_leave_requests: row.try_get::<i64>("", "pending_leave_requests").map_err(|e| e.to_string())? as u64,
+            total_events: row
+                .try_get::<i64>("", "total_events")
+                .map_err(|e| e.to_string())? as u64,
+            total_contacts: row
+                .try_get::<i64>("", "total_contacts")
+                .map_err(|e| e.to_string())? as u64,
+            total_deals: row
+                .try_get::<i64>("", "total_deals")
+                .map_err(|e| e.to_string())? as u64,
+            total_deals_won: row
+                .try_get::<i64>("", "total_deals_won")
+                .map_err(|e| e.to_string())? as u64,
+            total_pipeline_value: row
+                .try_get("", "total_pipeline_value")
+                .map_err(|e| e.to_string())?,
+            total_revenue: row
+                .try_get("", "total_revenue")
+                .map_err(|e| e.to_string())?,
+            total_products: row
+                .try_get::<i64>("", "total_products")
+                .map_err(|e| e.to_string())? as u64,
+            low_stock_variants: row
+                .try_get::<i64>("", "low_stock_variants")
+                .map_err(|e| e.to_string())? as u64,
+            total_bookings: row
+                .try_get::<i64>("", "total_bookings")
+                .map_err(|e| e.to_string())? as u64,
+            pending_leave_requests: row
+                .try_get::<i64>("", "pending_leave_requests")
+                .map_err(|e| e.to_string())? as u64,
             last_updated_at: last_updated_dt.into(),
         };
         Ok(view)
@@ -93,12 +118,16 @@ impl VistaRepository for VistaRepositoryImpl {
                 last_updated_dt.into(),
             ],
         );
-        self.db.execute_raw(stmt).await
-            .map_err(|e| e.to_string())?;
+        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
         Ok(())
     }
 
-    async fn get_data_points(&self, tenant_id: &TenantId, metric: &str, limit: u64) -> Result<Vec<ataqu_domain_vista::AnalyticsDataPoint>, String> {
+    async fn get_data_points(
+        &self,
+        tenant_id: &TenantId,
+        metric: &str,
+        limit: u64,
+    ) -> Result<Vec<ataqu_domain_vista::AnalyticsDataPoint>, String> {
         let sql = r#"
             SELECT tenant_id, metric_name, value, timestamp
             FROM vista.data_points
@@ -109,14 +138,22 @@ impl VistaRepository for VistaRepositoryImpl {
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             sql,
-            [tenant_id.as_uuid().into(), metric.into(), (limit as i64).into()],
+            [
+                tenant_id.as_uuid().into(),
+                metric.into(),
+                (limit as i64).into(),
+            ],
         );
-        let rows = self.db.query_all_raw(stmt).await
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
             .map_err(|e| e.to_string())?;
 
         let mut points = Vec::new();
         for row in rows {
-            let ts: chrono::DateTime<chrono::Utc> = row.try_get("", "timestamp").map_err(|e| e.to_string())?;
+            let ts: chrono::DateTime<chrono::Utc> =
+                row.try_get("", "timestamp").map_err(|e| e.to_string())?;
             points.push(ataqu_domain_vista::AnalyticsDataPoint {
                 id: row.try_get("", "id").map_err(|e| e.to_string())?,
                 tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
@@ -128,7 +165,10 @@ impl VistaRepository for VistaRepositoryImpl {
         Ok(points)
     }
 
-    async fn save_data_point(&self, point: &ataqu_domain_vista::AnalyticsDataPoint) -> Result<(), String> {
+    async fn save_data_point(
+        &self,
+        point: &ataqu_domain_vista::AnalyticsDataPoint,
+    ) -> Result<(), String> {
         let sql = r#"
             INSERT INTO vista.data_points (tenant_id, metric_name, value, timestamp)
             VALUES ($1, $2, $3, $4)
@@ -144,12 +184,14 @@ impl VistaRepository for VistaRepositoryImpl {
                 timestamp_dt.into(),
             ],
         );
-        self.db.execute_raw(stmt).await
-            .map_err(|e| e.to_string())?;
+        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
         Ok(())
     }
 
-    async fn save_dashboard(&self, dashboard: &ataqu_domain_vista::Dashboard) -> Result<(), String> {
+    async fn save_dashboard(
+        &self,
+        dashboard: &ataqu_domain_vista::Dashboard,
+    ) -> Result<(), String> {
         let sql = r#"
             INSERT INTO vista.dashboards (id, tenant_id, name, config, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6)
@@ -170,12 +212,15 @@ impl VistaRepository for VistaRepositoryImpl {
                 dashboard.updated_at.into(),
             ],
         );
-        self.db.execute_raw(stmt).await
-            .map_err(|e| e.to_string())?;
+        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
         Ok(())
     }
 
-    async fn get_dashboard_by_id(&self, tenant_id: &TenantId, id: Uuid) -> Result<Option<ataqu_domain_vista::Dashboard>, String> {
+    async fn get_dashboard_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<ataqu_domain_vista::Dashboard>, String> {
         let sql = r#"
             SELECT id, tenant_id, name, config, created_at, updated_at
             FROM vista.dashboards
@@ -186,7 +231,10 @@ impl VistaRepository for VistaRepositoryImpl {
             sql,
             [tenant_id.as_uuid().into(), id.into()],
         );
-        let row = self.db.query_one_raw(stmt).await
+        let row = self
+            .db
+            .query_one_raw(stmt)
+            .await
             .map_err(|e| e.to_string())?;
 
         if let Some(row) = row {
@@ -204,7 +252,10 @@ impl VistaRepository for VistaRepositoryImpl {
         }
     }
 
-    async fn list_dashboards(&self, tenant_id: &TenantId) -> Result<Vec<ataqu_domain_vista::Dashboard>, String> {
+    async fn list_dashboards(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<ataqu_domain_vista::Dashboard>, String> {
         let sql = r#"
             SELECT id, tenant_id, name, config, created_at, updated_at
             FROM vista.dashboards
@@ -215,7 +266,10 @@ impl VistaRepository for VistaRepositoryImpl {
             sql,
             [tenant_id.as_uuid().into()],
         );
-        let rows = self.db.query_all_raw(stmt).await
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
             .map_err(|e| e.to_string())?;
 
         let mut dashboards = Vec::new();
@@ -240,18 +294,24 @@ impl VistaRepository for VistaRepositoryImpl {
             sql,
             [tenant_id.as_uuid().into(), id.into()],
         );
-        self.db.execute_raw(stmt).await
-            .map_err(|e| e.to_string())?;
+        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
         Ok(())
     }
 
-    async fn execute_raw_sql(&self, tenant_id: &TenantId, sql: &str) -> Result<Vec<serde_json::Value>, String> {
+    async fn execute_raw_sql(
+        &self,
+        tenant_id: &TenantId,
+        sql: &str,
+    ) -> Result<Vec<serde_json::Value>, String> {
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             sql,
             [tenant_id.as_uuid().into()],
         );
-        let rows = self.db.query_all_raw(stmt).await
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
             .map_err(|e| e.to_string())?;
 
         let mut results = Vec::new();

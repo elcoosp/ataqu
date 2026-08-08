@@ -100,11 +100,7 @@ pub fn create_task(
     })
 }
 
-pub fn update_task(
-    cmd: UpdateTaskCommand,
-    _task: &Task,
-    clock: &dyn Clock,
-) -> TaskUpdated {
+pub fn update_task(cmd: UpdateTaskCommand, _task: &Task, clock: &dyn Clock) -> TaskUpdated {
     let now = clock.now().into();
     TaskUpdated {
         id: cmd.id,

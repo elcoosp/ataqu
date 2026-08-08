@@ -131,11 +131,14 @@ impl PauseService {
                 .await
                 .map_err(|e| PauseServiceError::Outbox(e))?;
             Ok(event.employee_id)
-        }.await;
+        }
+        .await;
 
         match result {
             Ok(id) => {
-                self.idempotency.commit(&command_id, serde_json::to_value(id).unwrap()).await?;
+                self.idempotency
+                    .commit(&command_id, serde_json::to_value(id).unwrap())
+                    .await?;
                 Ok(id)
             }
             Err(e) => {
@@ -160,8 +163,8 @@ impl PauseService {
         let result = async {
             let event = ataqu_domain_pause::leave::request_leave(command, id_gen, clock);
             self.leave_request_repo.insert(tenant_id, &event).await?;
-            let payload =
-                serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            let payload = serde_json::to_value(&event)
+                .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
             self.outbox
                 .append(
                     PAUSE_SCHEMA,
@@ -172,11 +175,14 @@ impl PauseService {
                 .await
                 .map_err(|e| PauseServiceError::Outbox(e))?;
             Ok(event.leave_request_id)
-        }.await;
+        }
+        .await;
 
         match result {
             Ok(id) => {
-                self.idempotency.commit(&command_id, serde_json::to_value(id).unwrap()).await?;
+                self.idempotency
+                    .commit(&command_id, serde_json::to_value(id).unwrap())
+                    .await?;
                 Ok(id)
             }
             Err(e) => {

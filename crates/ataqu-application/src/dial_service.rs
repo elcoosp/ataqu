@@ -310,7 +310,10 @@ impl DialService {
             .update_message_content(&tenant_id, &message_id, &event.new_content, event.edited_at)
             .await?;
 
-        let channel = self.repo.get_channel(&tenant_id, &message.channel_id).await?;
+        let channel = self
+            .repo
+            .get_channel(&tenant_id, &message.channel_id)
+            .await?;
 
         // Persist new mentions extracted by the domain function
         for user_id_str in &event.new_mentioned_user_ids {
@@ -504,8 +507,14 @@ impl DialService {
         message_id: Uuid,
         user_id: Uuid,
     ) -> DialResult<Mention> {
-        let message = self.repo.get_message(&tenant_id, &MessageId::new(message_id)).await?;
-        let channel = self.repo.get_channel(&tenant_id, &message.channel_id).await?;
+        let message = self
+            .repo
+            .get_message(&tenant_id, &MessageId::new(message_id))
+            .await?;
+        let channel = self
+            .repo
+            .get_channel(&tenant_id, &message.channel_id)
+            .await?;
 
         if !channel.participants.contains(&UserId::new(user_id)) {
             return Err(DialServiceError::Validation(

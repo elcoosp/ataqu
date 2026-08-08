@@ -200,7 +200,6 @@ impl CinqService {
         Ok(contact)
     }
 
-
     pub async fn update_contact(&self, cmd: UpdateContactCommand) -> CinqResult<Contact> {
         let mut contact = self
             .contact_repo

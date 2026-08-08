@@ -517,18 +517,25 @@ async fn main() -> anyhow::Result<()> {
 
                     // Handle GDPR deletion requests
                     if event.schema == "core" && event.event_type == "GdprDeletionRequested" {
-                        if let Some(tenant_id_str) = event.payload.get("tenant_id").and_then(|v| v.as_str()) {
+                        if let Some(tenant_id_str) =
+                            event.payload.get("tenant_id").and_then(|v| v.as_str())
+                        {
                             if let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str) {
                                 tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
                                 let txn = match gdpr_db_pool.begin().await {
                                     Ok(t) => t,
                                     Err(e) => {
                                         tracing::error!(error = %e, "Failed to begin GDPR transaction");
-                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                            e.to_string(),
+                                        ));
                                     }
                                 };
                                 for table in gdpr_registry.tables.iter() {
-                                    let sql = format!("DELETE FROM {}.{} WHERE {} = $1", table.schema, table.table, table.tenant_id_column);
+                                    let sql = format!(
+                                        "DELETE FROM {}.{} WHERE {} = $1",
+                                        table.schema, table.table, table.tenant_id_column
+                                    );
                                     let stmt = sea_orm::Statement::from_sql_and_values(
                                         sea_orm::DbBackend::Postgres,
                                         &sql,
@@ -537,12 +544,16 @@ async fn main() -> anyhow::Result<()> {
                                     if let Err(e) = txn.execute_raw(stmt).await {
                                         tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
                                         let _ = txn.rollback().await;
-                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                            e.to_string(),
+                                        ));
                                     }
                                 }
                                 if let Err(e) = txn.commit().await {
                                     tracing::error!(error = %e, "Failed to commit GDPR transaction");
-                                    return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
+                                    return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                        e.to_string(),
+                                    ));
                                 }
                             }
                         }
@@ -568,7 +579,9 @@ async fn main() -> anyhow::Result<()> {
 
                         let email = Message::builder()
                             .from("Ataqu Security <noreply@ataqu.com>".parse().unwrap())
-                            .to(recipient.parse().unwrap_or("noreply@ataqu.com".parse().unwrap()))
+                            .to(recipient
+                                .parse()
+                                .unwrap_or("noreply@ataqu.com".parse().unwrap()))
                             .subject("Password Reset Request")
                             .header(ContentType::TEXT_PLAIN)
                             .body(format!(
@@ -589,8 +602,11 @@ async fn main() -> anyhow::Result<()> {
                         let mailer = SmtpTransport::relay(&smtp_host)
                             .map(|builder| {
                                 let builder = builder.port(smtp_port);
-                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref()) {
-                                    builder.credentials(Credentials::new(u.clone(), p.clone())).build()
+                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref())
+                                {
+                                    builder
+                                        .credentials(Credentials::new(u.clone(), p.clone()))
+                                        .build()
                                 } else {
                                     builder.build()
                                 }
@@ -629,7 +645,9 @@ async fn main() -> anyhow::Result<()> {
 
                         let email = Message::builder()
                             .from("Ataqu Scheduling <noreply@ataqu.com>".parse().unwrap())
-                            .to(recipient.parse().unwrap_or("user@example.com".parse().unwrap()))
+                            .to(recipient
+                                .parse()
+                                .unwrap_or("user@example.com".parse().unwrap()))
                             .subject("Booking Reminder")
                             .header(ContentType::TEXT_PLAIN)
                             .body(format!(
@@ -650,8 +668,11 @@ async fn main() -> anyhow::Result<()> {
                         let mailer = SmtpTransport::relay(&smtp_host)
                             .map(|builder| {
                                 let builder = builder.port(smtp_port);
-                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref()) {
-                                    builder.credentials(Credentials::new(u.clone(), p.clone())).build()
+                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref())
+                                {
+                                    builder
+                                        .credentials(Credentials::new(u.clone(), p.clone()))
+                                        .build()
                                 } else {
                                     builder.build()
                                 }
@@ -700,7 +721,11 @@ async fn main() -> anyhow::Result<()> {
             for tid in &tenants {
                 let tenant_id = TenantId::new(*tid);
                 if let Err(e) = tempo_service_for_noshow.no_show_worker(tenant_id).await {
-                    tracing::error!("No-show worker crashed for tenant {}: {}. Restarting in 5s...", tid, e);
+                    tracing::error!(
+                        "No-show worker crashed for tenant {}: {}. Restarting in 5s...",
+                        tid,
+                        e
+                    );
                     tokio::time::sleep(Duration::from_secs(5)).await;
                     break;
                 }
@@ -719,7 +744,11 @@ async fn main() -> anyhow::Result<()> {
             for tid in &tenants {
                 let tenant_id = TenantId::new(*tid);
                 if let Err(e) = tempo_service_for_reminder.reminder_worker(tenant_id).await {
-                    tracing::error!("Reminder worker crashed for tenant {}: {}. Restarting in 5s...", tid, e);
+                    tracing::error!(
+                        "Reminder worker crashed for tenant {}: {}. Restarting in 5s...",
+                        tid,
+                        e
+                    );
                     tokio::time::sleep(Duration::from_secs(5)).await;
                     break;
                 }
@@ -782,15 +811,14 @@ async fn main() -> anyhow::Result<()> {
                                 ataqu_api::middleware::idempotency::flush_idempotency_cache();
                                 "OK\n".to_string()
                             }
-                            "list_tenants" => {
-                                match aegis.list_tenants().await {
-                                    Ok(tenants) => {
-                                        let tenants: Vec<String> = tenants.iter().map(|u| u.to_string()).collect();
-                                        format!("{}\n", tenants.join("\n"))
-                                    }
-                                    Err(e) => format!("Error: {}\n", e),
+                            "list_tenants" => match aegis.list_tenants().await {
+                                Ok(tenants) => {
+                                    let tenants: Vec<String> =
+                                        tenants.iter().map(|u| u.to_string()).collect();
+                                    format!("{}\n", tenants.join("\n"))
                                 }
-                            }
+                                Err(e) => format!("Error: {}\n", e),
+                            },
                             _ => "Unknown command\n".to_string(),
                         };
 

@@ -1,11 +1,15 @@
 use async_trait::async_trait;
 use ataqu_domain_pause::employee::Employee;
 use ataqu_domain_pause::leave::{LeaveRequest, LeaveStatus, LeaveType};
-use ataqu_domain_pause::repository::{EmployeeDocumentRepository, EmployeeRepositoryPort, LeaveRequestRepositoryPort};
+use ataqu_domain_pause::repository::{
+    EmployeeDocumentRepository, EmployeeRepositoryPort, LeaveRequestRepositoryPort,
+};
 use ataqu_domain_pause::{EmployeeDocument, PauseDomainError};
 use ataqu_kernel::TenantId;
 use sea_orm::entity::prelude::*;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, Set};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, Set,
+};
 use std::time::SystemTime;
 use uuid::Uuid;
 
@@ -196,20 +200,23 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             .await
             .map_err(map_err)?;
 
-        Ok(models.into_iter().map(|m| Employee {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            full_name: m.full_name,
-            email: m.email,
-            phone: m.phone,
-            job_title: m.job_title,
-            department: m.department,
-            hire_date: m.hire_date,
-            is_active: m.is_active,
-            created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
-            version: m.version,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| Employee {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                full_name: m.full_name,
+                email: m.email,
+                phone: m.phone,
+                job_title: m.job_title,
+                department: m.department,
+                hire_date: m.hire_date,
+                is_active: m.is_active,
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+                version: m.version,
+            })
+            .collect())
     }
 
     async fn search(
@@ -226,20 +233,23 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             .await
             .map_err(map_err)?;
 
-        Ok(models.into_iter().map(|m| Employee {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            full_name: m.full_name,
-            email: m.email,
-            phone: m.phone,
-            job_title: m.job_title,
-            department: m.department,
-            hire_date: m.hire_date,
-            is_active: m.is_active,
-            created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
-            version: m.version,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| Employee {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                full_name: m.full_name,
+                email: m.email,
+                phone: m.phone,
+                job_title: m.job_title,
+                department: m.department,
+                hire_date: m.hire_date,
+                is_active: m.is_active,
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+                version: m.version,
+            })
+            .collect())
     }
 
     async fn update(
@@ -268,7 +278,11 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
         Ok(())
     }
 
-    async fn deactivate(&self, tenant_id: &TenantId, employee_id: Uuid) -> Result<(), PauseDomainError> {
+    async fn deactivate(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+    ) -> Result<(), PauseDomainError> {
         let mut active = employee_entity::Entity::find()
             .filter(employee_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(employee_entity::Column::Id.eq(employee_id))
@@ -368,21 +382,24 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
             .await
             .map_err(map_err)?;
 
-        Ok(models.into_iter().map(|m| LeaveRequest {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            employee_id: m.employee_id,
-            leave_type: leave_type_from_str(&m.leave_type),
-            start_date: m.start_date,
-            end_date: m.end_date,
-            reason: m.reason,
-            status: leave_status_from_str(&m.status),
-            reviewer_id: m.reviewer_id,
-            reviewed_at: m.reviewed_at.map(|t| t.into()),
-            created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
-            version: m.version,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| LeaveRequest {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                employee_id: m.employee_id,
+                leave_type: leave_type_from_str(&m.leave_type),
+                start_date: m.start_date,
+                end_date: m.end_date,
+                reason: m.reason,
+                status: leave_status_from_str(&m.status),
+                reviewer_id: m.reviewer_id,
+                reviewed_at: m.reviewed_at.map(|t| t.into()),
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+                version: m.version,
+            })
+            .collect())
     }
 
     async fn update_status(
@@ -424,21 +441,24 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
             .await
             .map_err(map_err)?;
 
-        Ok(models.into_iter().map(|m| LeaveRequest {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            employee_id: m.employee_id,
-            leave_type: leave_type_from_str(&m.leave_type),
-            start_date: m.start_date,
-            end_date: m.end_date,
-            reason: m.reason,
-            status: leave_status_from_str(&m.status),
-            reviewer_id: m.reviewer_id,
-            reviewed_at: m.reviewed_at.map(|t| t.into()),
-            created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
-            version: m.version,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| LeaveRequest {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                employee_id: m.employee_id,
+                leave_type: leave_type_from_str(&m.leave_type),
+                start_date: m.start_date,
+                end_date: m.end_date,
+                reason: m.reason,
+                status: leave_status_from_str(&m.status),
+                reviewer_id: m.reviewer_id,
+                reviewed_at: m.reviewed_at.map(|t| t.into()),
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+                version: m.version,
+            })
+            .collect())
     }
 
     async fn list_pending(
@@ -456,21 +476,24 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
             .await
             .map_err(map_err)?;
 
-        Ok(models.into_iter().map(|m| LeaveRequest {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            employee_id: m.employee_id,
-            leave_type: leave_type_from_str(&m.leave_type),
-            start_date: m.start_date,
-            end_date: m.end_date,
-            reason: m.reason,
-            status: leave_status_from_str(&m.status),
-            reviewer_id: m.reviewer_id,
-            reviewed_at: m.reviewed_at.map(|t| t.into()),
-            created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
-            version: m.version,
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| LeaveRequest {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                employee_id: m.employee_id,
+                leave_type: leave_type_from_str(&m.leave_type),
+                start_date: m.start_date,
+                end_date: m.end_date,
+                reason: m.reason,
+                status: leave_status_from_str(&m.status),
+                reviewer_id: m.reviewer_id,
+                reviewed_at: m.reviewed_at.map(|t| t.into()),
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+                version: m.version,
+            })
+            .collect())
     }
 }
 
@@ -509,14 +532,17 @@ impl EmployeeDocumentRepository for PauseRepositoryImpl {
             .await
             .map_err(map_err)?;
 
-        Ok(models.into_iter().map(|m| EmployeeDocument {
-            id: m.id,
-            tenant_id: TenantId::new(m.tenant_id),
-            employee_id: m.employee_id,
-            file_name: m.file_name,
-            file_url: m.file_url,
-            doc_type: m.doc_type,
-            created_at: m.created_at.into(),
-        }).collect())
+        Ok(models
+            .into_iter()
+            .map(|m| EmployeeDocument {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                employee_id: m.employee_id,
+                file_name: m.file_name,
+                file_url: m.file_url,
+                doc_type: m.doc_type,
+                created_at: m.created_at.into(),
+            })
+            .collect())
     }
 }

@@ -125,7 +125,11 @@ pub async fn create_contact(
         axum::http::header::ETAG,
         format!("\"{}\"", contact.version).parse().unwrap(),
     );
-    Ok((StatusCode::CREATED, headers, Json(ContactResponse::from(contact))))
+    Ok((
+        StatusCode::CREATED,
+        headers,
+        Json(ContactResponse::from(contact)),
+    ))
 }
 
 pub async fn list_contacts(
@@ -164,16 +168,28 @@ pub async fn get_contact(
 
     let etag = format!("\"{}\"", contact.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             let mut h = axum::http::HeaderMap::new();
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
-            return Ok((StatusCode::NOT_MODIFIED, h, Json(ContactResponse::from(contact))));
+            return Ok((
+                StatusCode::NOT_MODIFIED,
+                h,
+                Json(ContactResponse::from(contact)),
+            ));
         }
     }
 
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
-    Ok((StatusCode::OK, resp_headers, Json(ContactResponse::from(contact))))
+    Ok((
+        StatusCode::OK,
+        resp_headers,
+        Json(ContactResponse::from(contact)),
+    ))
 }
 
 pub async fn update_contact(
@@ -335,7 +351,11 @@ pub async fn get_deal(
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     let etag = format!("\"{}\"", deal.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             let mut h = axum::http::HeaderMap::new();
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
             return Ok((StatusCode::NOT_MODIFIED, h, Json(DealResponse::from(deal))));
@@ -838,7 +858,11 @@ pub async fn get_task(
         })?;
     let etag = format!("\"{}\"", task.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match.to_str().map(|s| s == etag.as_str()).unwrap_or(false) {
+        if if_none_match
+            .to_str()
+            .map(|s| s == etag.as_str())
+            .unwrap_or(false)
+        {
             let mut h = axum::http::HeaderMap::new();
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
             return Ok((StatusCode::NOT_MODIFIED, h, Json(TaskResponse::from(task))));
@@ -935,7 +959,12 @@ pub async fn list_contact_tasks(
 ) -> ApiResult<Json<Vec<TaskResponse>>> {
     let tasks = state
         .cinq_service
-        .list_tasks_for_contact(auth.tenant_id, id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_tasks_for_contact(
+            auth.tenant_id,
+            id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))

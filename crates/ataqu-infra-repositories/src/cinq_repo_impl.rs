@@ -836,5 +836,4 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(())
     }
-
 }

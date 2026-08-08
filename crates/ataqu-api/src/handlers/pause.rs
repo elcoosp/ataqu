@@ -120,7 +120,9 @@ pub async fn create_employee(
         )
         .await
         .map_err(|e| match e {
-            ataqu_application::pause_service::PauseServiceError::Idempotency(msg) if msg.contains("already in progress") => {
+            ataqu_application::pause_service::PauseServiceError::Idempotency(msg)
+                if msg.contains("already in progress") =>
+            {
                 ApiResponseError::Conflict(msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
@@ -172,7 +174,9 @@ pub async fn request_leave(
         )
         .await
         .map_err(|e| match e {
-            ataqu_application::pause_service::PauseServiceError::Idempotency(msg) if msg.contains("already in progress") => {
+            ataqu_application::pause_service::PauseServiceError::Idempotency(msg)
+                if msg.contains("already in progress") =>
+            {
                 ApiResponseError::Conflict(msg)
             }
             _ => ApiResponseError::internal(&e.to_string()),
@@ -288,10 +292,8 @@ pub async fn list_leave_requests(
         .list_employees(&auth.tenant_id, 10000, 0)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let employee_map: std::collections::HashMap<Uuid, String> = employees
-        .into_iter()
-        .map(|e| (e.id, e.full_name))
-        .collect();
+    let employee_map: std::collections::HashMap<Uuid, String> =
+        employees.into_iter().map(|e| (e.id, e.full_name)).collect();
 
     let mut responses = Vec::new();
     for r in requests {
@@ -322,7 +324,8 @@ pub async fn approve_leave(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -368,7 +371,8 @@ pub async fn reject_leave(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -414,7 +418,8 @@ pub async fn cancel_leave(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -468,7 +473,8 @@ pub async fn update_employee(
     headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateEmployeeRequest>,
 ) -> ApiResult<Json<EmployeeResponse>> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -539,7 +545,12 @@ pub async fn list_documents(
 ) -> ApiResult<Json<Vec<serde_json::Value>>> {
     let docs = state
         .pause_service
-        .list_documents(auth.tenant_id, employee_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_documents(
+            auth.tenant_id,
+            employee_id,
+            params.limit.unwrap_or(100),
+            params.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let list = docs

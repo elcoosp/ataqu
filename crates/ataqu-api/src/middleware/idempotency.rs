@@ -15,8 +15,6 @@ pub fn flush_idempotency_cache() {
     IDEMPOTENCY_CACHE.invalidate_all();
 }
 
-
-
 lazy_static::lazy_static! {
     static ref IDEMPOTENCY_CACHE: Cache<Uuid, (StatusCode, Vec<u8>)> = Cache::builder()
         .max_capacity(10_000)
@@ -26,17 +24,19 @@ lazy_static::lazy_static! {
 
 pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Response, StatusCode> {
     // Skip idempotency for multipart uploads
-    let is_multipart = req.headers().get(axum::http::header::CONTENT_TYPE)
+    let is_multipart = req
+        .headers()
+        .get(axum::http::header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
         .map(|v| v.starts_with("multipart/form-data"))
         .unwrap_or(false);
 
-    if !is_multipart && (
-        req.method() == axum::http::Method::POST
-        || req.method() == axum::http::Method::PUT
-        || req.method() == axum::http::Method::PATCH
-        || req.method() == axum::http::Method::DELETE
-    ) {
+    if !is_multipart
+        && (req.method() == axum::http::Method::POST
+            || req.method() == axum::http::Method::PUT
+            || req.method() == axum::http::Method::PATCH
+            || req.method() == axum::http::Method::DELETE)
+    {
         if let Some(key) = req
             .headers()
             .get(IDEMPOTENCY_KEY_HEADER)
@@ -76,8 +76,11 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
 
             // Cache successful responses and client errors (4xx) except 401, 403, 429
             let status = resp.status();
-            let should_cache = status.is_success() ||
-                (status.is_client_error() && status != StatusCode::UNAUTHORIZED && status != StatusCode::FORBIDDEN && status != StatusCode::TOO_MANY_REQUESTS);
+            let should_cache = status.is_success()
+                || (status.is_client_error()
+                    && status != StatusCode::UNAUTHORIZED
+                    && status != StatusCode::FORBIDDEN
+                    && status != StatusCode::TOO_MANY_REQUESTS);
 
             if should_cache {
                 let (parts, body) = resp.into_parts();

@@ -146,7 +146,9 @@ impl VaultService {
         self.outbox
             .append(VAULT_SCHEMA, "ProductCreated", product.id, &payload)
             .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         Ok(product)
     }
@@ -187,7 +189,9 @@ impl VaultService {
         self.outbox
             .append(VAULT_SCHEMA, "ProductUpdated", product.id, &payload)
             .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         Ok(product)
     }
@@ -262,7 +266,9 @@ impl VaultService {
         self.outbox
             .append(VAULT_SCHEMA, "VariantCreated", variant.id, &payload)
             .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         Ok(variant)
     }
@@ -301,7 +307,9 @@ impl VaultService {
         self.outbox
             .append(VAULT_SCHEMA, "VariantUpdated", new_variant.id, &payload)
             .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         Ok(new_variant)
     }
@@ -365,9 +373,16 @@ impl VaultService {
             "reason": movement.reason.clone(),
         });
         self.outbox
-            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .append(
+                VAULT_SCHEMA,
+                "StockAdjusted",
+                new_variant.id,
+                &stock_payload,
+            )
             .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         let stock_payload = serde_json::json!({
             "variant_id": new_variant.id,
@@ -377,9 +392,16 @@ impl VaultService {
             "reason": movement.reason.clone(),
         });
         self.outbox
-            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .append(
+                VAULT_SCHEMA,
+                "StockAdjusted",
+                new_variant.id,
+                &stock_payload,
+            )
             .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         let stock_payload = serde_json::json!({
             "variant_id": new_variant.id,
@@ -389,9 +411,16 @@ impl VaultService {
             "reason": movement.reason.clone(),
         });
         self.outbox
-            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .append(
+                VAULT_SCHEMA,
+                "StockAdjusted",
+                new_variant.id,
+                &stock_payload,
+            )
             .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         let threshold = std::env::var("LOW_STOCK_THRESHOLD")
             .ok()
@@ -409,7 +438,9 @@ impl VaultService {
             self.outbox
                 .append(VAULT_SCHEMA, "LowStockAlert", new_variant.id, &payload)
                 .await
-                .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+                .map_err(|e| {
+                    VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+                })?;
         }
 
         Ok(new_variant)
@@ -588,7 +619,10 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)?;
 
         for reservation in expired {
-            let variant = match self.get_variant(reservation.tenant_id, reservation.variant_id).await {
+            let variant = match self
+                .get_variant(reservation.tenant_id, reservation.variant_id)
+                .await
+            {
                 Ok(v) => v,
                 Err(_) => continue, // Variant might be deleted, skip
             };

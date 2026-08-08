@@ -50,9 +50,12 @@ fn map_model_to_domain(model: workflow_entity::Model) -> Result<Workflow, SparkE
         id: model.id,
         tenant_id: model.tenant_id,
         name: model.name,
-        trigger: serde_json::from_value(model.trigger).map_err(|e| SparkError::Database(e.to_string()))?,
-        conditions: serde_json::from_value(model.conditions).map_err(|e| SparkError::Database(e.to_string()))?,
-        actions: serde_json::from_value(model.actions).map_err(|e| SparkError::Database(e.to_string()))?,
+        trigger: serde_json::from_value(model.trigger)
+            .map_err(|e| SparkError::Database(e.to_string()))?,
+        conditions: serde_json::from_value(model.conditions)
+            .map_err(|e| SparkError::Database(e.to_string()))?,
+        actions: serde_json::from_value(model.actions)
+            .map_err(|e| SparkError::Database(e.to_string()))?,
         is_active: model.is_active,
         webhook_secret: model.webhook_secret,
         created_at: model.created_at.into(),
@@ -68,9 +71,12 @@ impl SparkRepository for SparkRepositoryImpl {
             id: Set(workflow.id),
             tenant_id: Set(workflow.tenant_id),
             name: Set(workflow.name.clone()),
-            trigger: Set(serde_json::to_value(&workflow.trigger).map_err(|e| SparkError::Database(e.to_string()))?),
-            conditions: Set(serde_json::to_value(&workflow.conditions).map_err(|e| SparkError::Database(e.to_string()))?),
-            actions: Set(serde_json::to_value(&workflow.actions).map_err(|e| SparkError::Database(e.to_string()))?),
+            trigger: Set(serde_json::to_value(&workflow.trigger)
+                .map_err(|e| SparkError::Database(e.to_string()))?),
+            conditions: Set(serde_json::to_value(&workflow.conditions)
+                .map_err(|e| SparkError::Database(e.to_string()))?),
+            actions: Set(serde_json::to_value(&workflow.actions)
+                .map_err(|e| SparkError::Database(e.to_string()))?),
             is_active: Set(workflow.is_active),
             webhook_secret: Set(workflow.webhook_secret.clone()),
             created_at: Set(workflow.created_at.into()),
@@ -121,9 +127,12 @@ impl SparkRepository for SparkRepositoryImpl {
             id: Set(workflow.id),
             tenant_id: Set(workflow.tenant_id),
             name: Set(workflow.name.clone()),
-            trigger: Set(serde_json::to_value(&workflow.trigger).map_err(|e| SparkError::Database(e.to_string()))?),
-            conditions: Set(serde_json::to_value(&workflow.conditions).map_err(|e| SparkError::Database(e.to_string()))?),
-            actions: Set(serde_json::to_value(&workflow.actions).map_err(|e| SparkError::Database(e.to_string()))?),
+            trigger: Set(serde_json::to_value(&workflow.trigger)
+                .map_err(|e| SparkError::Database(e.to_string()))?),
+            conditions: Set(serde_json::to_value(&workflow.conditions)
+                .map_err(|e| SparkError::Database(e.to_string()))?),
+            actions: Set(serde_json::to_value(&workflow.actions)
+                .map_err(|e| SparkError::Database(e.to_string()))?),
             is_active: Set(workflow.is_active),
             webhook_secret: Set(workflow.webhook_secret.clone()),
             created_at: Set(workflow.created_at.into()),
@@ -182,10 +191,12 @@ impl SparkRepository for SparkRepositoryImpl {
         let mut workflows = Vec::new();
         for m in models {
             let wf = map_model_to_domain(m)?;
-            let trigger_json = serde_json::to_value(&wf.trigger).map_err(|e| SparkError::Database(e.to_string()))?;
+            let trigger_json = serde_json::to_value(&wf.trigger)
+                .map_err(|e| SparkError::Database(e.to_string()))?;
             if let Some(t_obj) = trigger_json.as_object() {
                 if t_obj.get("schema").and_then(|v| v.as_str()) == Some(schema)
-                    && t_obj.get("event_type").and_then(|v| v.as_str()) == Some(event_type) {
+                    && t_obj.get("event_type").and_then(|v| v.as_str()) == Some(event_type)
+                {
                     workflows.push(wf);
                 }
             }
@@ -203,7 +214,8 @@ impl SparkRepository for SparkRepositoryImpl {
         let mut workflows = Vec::new();
         for m in models {
             let wf = map_model_to_domain(m)?;
-            let trigger_json = serde_json::to_value(&wf.trigger).map_err(|e| SparkError::Database(e.to_string()))?;
+            let trigger_json = serde_json::to_value(&wf.trigger)
+                .map_err(|e| SparkError::Database(e.to_string()))?;
             if trigger_json.get("cron").is_some() {
                 workflows.push(wf);
             }

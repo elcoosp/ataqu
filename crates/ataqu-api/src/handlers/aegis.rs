@@ -232,9 +232,11 @@ pub async fn sso_callback(
     State(state): State<AppState>,
     Json(req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
-    let provider = state.sso_states.get(&req.state).map(|p| p.clone()).ok_or_else(|| {
-        ApiResponseError::unauthorized("Invalid or expired SSO state")
-    })?;
+    let provider = state
+        .sso_states
+        .get(&req.state)
+        .map(|p| p.clone())
+        .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
     state.sso_states.remove(&req.state);
 
     let config = ataqu_domain_aegis::sso::SsoConfig {
@@ -258,28 +260,44 @@ pub async fn sso_callback(
                 ("grant_type", "authorization_code"),
             ];
 
-            let token_resp = client.post(token_url).form(&params).send().await
-                .map_err(|e| ApiResponseError::internal(&format!("Google token exchange failed: {}", e)))?;
+            let token_resp = client
+                .post(token_url)
+                .form(&params)
+                .send()
+                .await
+                .map_err(|e| {
+                    ApiResponseError::internal(&format!("Google token exchange failed: {}", e))
+                })?;
 
             if !token_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized("Google token exchange failed"));
+                return Err(ApiResponseError::unauthorized(
+                    "Google token exchange failed",
+                ));
             }
 
-            let token_data: OAuthTokenResponse = token_resp.json().await
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Google token: {}", e)))?;
+            let token_data: OAuthTokenResponse = token_resp.json().await.map_err(|e| {
+                ApiResponseError::internal(&format!("Failed to parse Google token: {}", e))
+            })?;
 
             let userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo";
-            let userinfo_resp = client.get(userinfo_url)
+            let userinfo_resp = client
+                .get(userinfo_url)
                 .bearer_auth(&token_data.access_token)
-                .send().await
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to fetch Google user info: {}", e)))?;
+                .send()
+                .await
+                .map_err(|e| {
+                    ApiResponseError::internal(&format!("Failed to fetch Google user info: {}", e))
+                })?;
 
             if !userinfo_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized("Failed to fetch Google user info"));
+                return Err(ApiResponseError::unauthorized(
+                    "Failed to fetch Google user info",
+                ));
             }
 
-            let user_info: GoogleUserInfo = userinfo_resp.json().await
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Google user info: {}", e)))?;
+            let user_info: GoogleUserInfo = userinfo_resp.json().await.map_err(|e| {
+                ApiResponseError::internal(&format!("Failed to parse Google user info: {}", e))
+            })?;
 
             user_info.email
         }
@@ -294,37 +312,63 @@ pub async fn sso_callback(
                 ("scope", "https://graph.microsoft.com/User.Read"),
             ];
 
-            let token_resp = client.post(token_url).form(&params).send().await
-                .map_err(|e| ApiResponseError::internal(&format!("Microsoft token exchange failed: {}", e)))?;
+            let token_resp = client
+                .post(token_url)
+                .form(&params)
+                .send()
+                .await
+                .map_err(|e| {
+                    ApiResponseError::internal(&format!("Microsoft token exchange failed: {}", e))
+                })?;
 
             if !token_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized("Microsoft token exchange failed"));
+                return Err(ApiResponseError::unauthorized(
+                    "Microsoft token exchange failed",
+                ));
             }
 
-            let token_data: OAuthTokenResponse = token_resp.json().await
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Microsoft token: {}", e)))?;
+            let token_data: OAuthTokenResponse = token_resp.json().await.map_err(|e| {
+                ApiResponseError::internal(&format!("Failed to parse Microsoft token: {}", e))
+            })?;
 
             let userinfo_url = "https://graph.microsoft.com/v1.0/me";
-            let userinfo_resp = client.get(userinfo_url)
+            let userinfo_resp = client
+                .get(userinfo_url)
                 .bearer_auth(&token_data.access_token)
-                .send().await
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to fetch Microsoft user info: {}", e)))?;
+                .send()
+                .await
+                .map_err(|e| {
+                    ApiResponseError::internal(&format!(
+                        "Failed to fetch Microsoft user info: {}",
+                        e
+                    ))
+                })?;
 
             if !userinfo_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized("Failed to fetch Microsoft user info"));
+                return Err(ApiResponseError::unauthorized(
+                    "Failed to fetch Microsoft user info",
+                ));
             }
 
-            let user_info: MicrosoftUserInfo = userinfo_resp.json().await
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse Microsoft user info: {}", e)))?;
+            let user_info: MicrosoftUserInfo = userinfo_resp.json().await.map_err(|e| {
+                ApiResponseError::internal(&format!("Failed to parse Microsoft user info: {}", e))
+            })?;
 
-            user_info.mail.or(user_info.user_principal_name).ok_or_else(|| {
-                ApiResponseError::internal("Microsoft user info did not contain an email")
-            })?
+            user_info
+                .mail
+                .or(user_info.user_principal_name)
+                .ok_or_else(|| {
+                    ApiResponseError::internal("Microsoft user info did not contain an email")
+                })?
         }
     };
 
     let email = Email::new(email_str);
-    let resp = state.aegis_service.sso_exchange(email).await.map_err(map_aegis_error)?;
+    let resp = state
+        .aegis_service
+        .sso_exchange(email)
+        .await
+        .map_err(map_aegis_error)?;
 
     Ok(Json(LoginResponse {
         access_token: resp.access_token,
@@ -375,7 +419,8 @@ pub async fn update_user_role(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateRoleRequest>,
 ) -> ApiResult<StatusCode> {
-    let if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -421,7 +466,11 @@ pub async fn logout(
     auth: AuthContext,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<StatusCode> {
-    if let Some(auth_header) = headers.get("Authorization").and_then(|v| v.to_str().ok()).and_then(|s| s.strip_prefix("Bearer ")) {
+    if let Some(auth_header) = headers
+        .get("Authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.strip_prefix("Bearer "))
+    {
         state.jwt_blocklist.insert(auth_header.to_string());
     }
     let _ = state.aegis_service.logout(&auth.user_id.to_string()).await;

@@ -16,10 +16,7 @@ pub trait VistaRepository: Send + Sync {
     ) -> Result<Vec<AnalyticsDataPoint>, String>;
 
     async fn save_dashboard(&self, dashboard: &crate::Dashboard) -> Result<(), String>;
-    async fn list_dashboards(
-        &self,
-        tenant_id: &TenantId,
-    ) -> Result<Vec<crate::Dashboard>, String>;
+    async fn list_dashboards(&self, tenant_id: &TenantId) -> Result<Vec<crate::Dashboard>, String>;
     async fn get_dashboard_by_id(
         &self,
         tenant_id: &TenantId,

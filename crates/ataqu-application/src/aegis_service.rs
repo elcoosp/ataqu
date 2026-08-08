@@ -434,7 +434,10 @@ impl AegisService {
             .map_err(AegisServiceError::Domain)
     }
 
-    pub async fn find_user_by_email(&self, email: &Email) -> Result<Option<User>, AegisServiceError> {
+    pub async fn find_user_by_email(
+        &self,
+        email: &Email,
+    ) -> Result<Option<User>, AegisServiceError> {
         self.repo
             .find_by_email(email)
             .await
@@ -671,10 +674,7 @@ impl AegisService {
         Ok(())
     }
 
-    pub async fn request_password_reset(
-        &self,
-        email: Email,
-    ) -> Result<(), AegisServiceError> {
+    pub async fn request_password_reset(&self, email: Email) -> Result<(), AegisServiceError> {
         let user = self
             .repo
             .find_by_email(&email)
@@ -692,7 +692,10 @@ impl AegisService {
         let claims = JwtClaims {
             sub: user.id.to_string(),
             tenant_id: user.tenant_id.as_uuid(),
-            email: user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+            email: user
+                .email
+                .reveal(&ataqu_security::PiiAccessKey::new())
+                .to_string(),
             roles: vec!["reset_password".to_string()],
             exp: now + 900, // 15 minutes
             iat: now,

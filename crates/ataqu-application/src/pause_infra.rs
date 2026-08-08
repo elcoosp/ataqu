@@ -5,9 +5,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use crate::pause_service::{IdempotencyGuardHandle, IdempotencyPort, PauseServiceError};
-use ataqu_infra_idempotency::{
-    CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore,
-};
+use ataqu_infra_idempotency::{CachedResponse, IdempotencyStore, SeaOrmIdempotencyStore};
 
 /// Real Idempotency using the idempotency infrastructure crate
 pub struct RealIdempotency {

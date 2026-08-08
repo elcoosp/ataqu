@@ -181,7 +181,9 @@ impl TempoService {
         self.outbox
             .append("collab_ops", "BookingCreated", booking.id.0, &payload)
             .await
-            .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         // CRM Integration: Emit event for CINQ to consume
         if let Some(contact_id) = cmd.contact_id {
@@ -194,9 +196,16 @@ impl TempoService {
                 "scheduled_at": booking.starts_at,
             });
             self.outbox
-                .append("collab_crm", "TempoBookingCreatedForContact", contact_id, &crm_payload)
+                .append(
+                    "collab_crm",
+                    "TempoBookingCreatedForContact",
+                    contact_id,
+                    &crm_payload,
+                )
                 .await
-                .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+                .map_err(|e| {
+                    TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+                })?;
         }
 
         Ok(booking)
@@ -295,7 +304,9 @@ impl TempoService {
                 self.outbox
                     .append("collab_ops", "NoShowDetected", booking.id.0, &payload)
                     .await
-                    .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+                    .map_err(|e| {
+                        TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+                    })?;
             }
         }
         Ok(updated)
@@ -324,7 +335,9 @@ impl TempoService {
             self.outbox
                 .append("collab_ops", "SendBookingReminder", booking.id.0, &payload)
                 .await
-                .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+                .map_err(|e| {
+                    TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+                })?;
 
             self.repo
                 .mark_reminder_sent(&tenant_id, &booking.id, now)
@@ -377,7 +390,11 @@ impl TempoService {
             ))
     }
 
-    pub async fn update_event_type(&self, cmd: UpdateEventTypeCommand, expected_version: i32) -> TempoResult<EventType> {
+    pub async fn update_event_type(
+        &self,
+        cmd: UpdateEventTypeCommand,
+        expected_version: i32,
+    ) -> TempoResult<EventType> {
         let mut event_type = self
             .repo
             .list_event_types(&cmd.tenant_id)

@@ -182,7 +182,6 @@ pub fn deactivate_user(user: &mut User, clock: &dyn Clock) {
     user.updated_at = clock.now();
 }
 
-
 #[cfg(test)]
 mod tests {
     // tests...
