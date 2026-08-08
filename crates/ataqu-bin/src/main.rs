@@ -40,7 +40,17 @@ use ataqu_infra_pools::Pools;
 
 // use S3Service;
 use sea_orm::{ConnectionTrait, TransactionTrait};
-use ataqu_api::stubs::*;
+
+// Local stubs for missing dependencies (to be replaced with real implementations later)
+pub trait AuditRepositoryTrait {}
+pub struct DummyAuditRepo;
+impl AuditRepositoryTrait for DummyAuditRepo {}
+pub struct HealthService;
+pub struct OnboardingService;
+pub struct ChangelogService;
+pub struct S3Service;
+
+
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -519,8 +529,7 @@ async fn main() -> anyhow::Result<()> {
     // Onboarding & Changelog Stubs
     let onboarding_service =
         Arc::new(OnboardingService);
-    let changelog_service = Arc::new(ChangelogService::new(
-        pools.core.clone(),
+    let changelog_service = Arc::new(ChangelogService,
     ));
 
     let state = AppState {
