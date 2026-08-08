@@ -874,6 +874,22 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    let vista_service_for_refresher = vista_service.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = vista_service_for_refresher
+                .refresh_materialized_views()
+                .await
+            {
+                tracing::error!(
+                    "VISTA materialized view refresher crashed: {}. Restarting in 15m...",
+                    e
+                );
+            }
+            tokio::time::sleep(Duration::from_secs(900)).await;
+        }
+    });
+
     let admin_socket_path = "/tmp/ataqu-admin.sock";
     let _ = std::fs::remove_file(admin_socket_path);
     let admin_listener = tokio::net::UnixListener::bind(admin_socket_path)?;

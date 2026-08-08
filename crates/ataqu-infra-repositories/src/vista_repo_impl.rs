@@ -298,34 +298,6 @@ impl VistaRepository for VistaRepositoryImpl {
         Ok(())
     }
 
-    async fn execute_raw_sql(
-        &self,
-        tenant_id: &TenantId,
-        sql: &str,
-    ) -> Result<Vec<serde_json::Value>, String> {
-        let stmt = sea_orm::Statement::from_sql_and_values(
-            sea_orm::DbBackend::Postgres,
-            sql,
-            [tenant_id.as_uuid().into()],
-        );
-        let rows = self
-            .db
-            .query_all_raw(stmt)
-            .await
-            .map_err(|e| e.to_string())?;
-
-        let mut results = Vec::new();
-        for row in rows {
-            let mut obj = serde_json::Map::new();
-            for col_name in row.column_names() {
-                let val: Option<String> = row.try_get("", &col_name).ok();
-                obj.insert(col_name, serde_json::json!(val));
-            }
-            results.push(serde_json::Value::Object(obj));
-        }
-        Ok(results)
-    }
-
     async fn get_raw_data_points(
         &self,
         tenant_id: &TenantId,
