@@ -64,6 +64,54 @@ Implement TEMPO: public booking links, calendar sync (Google/Outlook OAuth), eve
 - Frontend shows "No-show detected" badge on booking if `no_show_detected: true`.
 - "Reschedule" button on booking detail: opens reschedule modal.
 
+
+### 🆕 Ultra-Simple Booking UX (P0)
+
+**Objective:** Redesign the public booking page (`/book/:slug`) to be a 3-screen maximum flow, matching Calendly's radical simplicity.
+
+**UI Contract:**
+
+**Screen 1: Event Type Selection (if multiple event types exist)**
+- If only one event type exists, skip this screen entirely.
+- Cards: name (bold), duration badge (`30 min`), description (1 line), CTA "Select".
+- Glassmorphic cards `.ataqu-glass` with hover state: `border-primary`.
+- Mobile-first: full-width cards on small screens.
+
+**Screen 2: Time Slot Picker**
+- Calendar grid showing next 30 days.
+- Available slots: `bg-primary/10` on hover, `bg-primary` when selected.
+- Timezone dropdown (auto-detected via `Intl.DateTimeFormat`).
+- "Show more dates" button at bottom.
+- Once slot selected → "Continue" button appears (primary CTA).
+- Loading state: skeleton loader for slots.
+
+**Screen 3: Guest Details + Confirmation**
+- Form: Name (required), Email (required).
+- Optional fields hidden behind "Show more" link.
+- "Book" button (primary CTA).
+- Success: confirmation screen with meeting details + "Add to Calendar" button.
+- Error: inline message ("This slot is no longer available. Please select another.").
+
+**Implementation Steps:**
+1. Create `apps/tempo/src/routes/book.$slug.tsx` (public route, no `<Shell>` wrapper).
+2. Create `apps/tempo/src/components/booking/event-type-selector.tsx` (cards for screen 1).
+3. Create `apps/tempo/src/components/booking/time-slot-picker.tsx` (calendar grid for screen 2).
+4. Create `apps/tempo/src/components/booking/guest-form.tsx` (name/email form for screen 3).
+5. Create `apps/tempo/src/components/booking/confirmation-screen.tsx` (success screen).
+6. Zustand store for booking state: `useBookingStore` (eventType, selectedSlot, guestDetails, currentScreen).
+7. API call: `POST /api/v1/tempo/bookings` with `Idempotency-Key` header.
+8. Styling: `.ataqu-glass` container, dark-mode native, `font-mono` for times.
+
+**Definition of Done:**
+- [ ] Public booking page loads in <500ms.
+- [ ] 3-screen flow works on mobile (375px).
+- [ ] Timezone auto-detection works.
+- [ ] Booking mutation includes `Idempotency-Key`.
+- [ ] Success screen shows meeting details with "Add to Calendar" button.
+- [ ] Error states display inline, not in toasts.
+- [ ] No loading spinners. Skeleton loaders only.
+
+
 ### Command Palette Actions (`apps/tempo/src/actions.ts`)
 - `Create Event Type` → opens new event type modal
 - `Go to Event Types` → navigate to `/`

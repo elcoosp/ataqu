@@ -61,6 +61,66 @@ Implement VAULT: product catalog with variants, real-time stock display, stock a
 - "Reserve Stock" button: modal with product select, quantity, deal ID.
 - Empty state: "No reservations. When CINQ deals are won, stock is reserved automatically."
 
+
+### 🆕 Shopify Sync (P0)
+
+**Objective:** Connect VAULT to Shopify via OAuth. Sync products, variants, inventory, and orders unidirectionally (Shopify → VAULT) for the MLP. Stock updates are pushed from VAULT → Shopify.
+
+**Backend Context Mapping:**
+- **Endpoint:** `POST /api/v1/vault/shopify/sync` (manual force sync).
+- **OAuth Flow:** `GET /api/v1/vault/shopify/auth` → Shopify → callback to `/api/v1/vault/shopify/callback`.
+- **Webhook (optional):** `/api/v1/vault/shopify/webhook` for real-time updates.
+- **Tables:** `vault.shopify_integrations`, `vault.shopify_sync_logs` (ADR-039).
+- **Worker:** `shopify_sync_worker` runs every 5 minutes.
+
+**UI Contract:**
+
+**Shopify Connection Settings (VAULT → Settings → Channels):**
+
+**Before connection:**
+- Card: "Connect Shopify" with icon.
+- Description: "Sync your Shopify products and inventory with VAULT."
+- CTA: "Connect Shopify" button → redirects to Shopify OAuth.
+
+**During connection:**
+- Shopify OAuth screen (user logs in, authorizes).
+- Redirect back to VAULT with `?shopify_sync=success`.
+
+**After connection:**
+- Status card showing:
+  - Shop name.
+  - Connection status: `Connected` (green) or `Error` (red).
+  - Last sync timestamp (e.g., "Last sync: 2 minutes ago").
+  - Product count (e.g., "1,234 products synced").
+- Actions:
+  - "Sync now" button (manual force sync).
+  - "Disconnect" button (confirmation modal).
+- Error log: expandable section showing recent sync errors (max 20 entries).
+  - Each error: timestamp, product/order name, error reason, "Retry" button.
+
+**Sync Status in System Health Dashboard (VISTA):**
+- New component: "Shopify Sync" with status (green/yellow/red) and last sync timestamp.
+- Amber if sync fails > 1 hour. Red if > 6 hours.
+
+**Implementation Steps:**
+1. Create `apps/vault/src/api/shopify-api.ts` (OAuth, sync, disconnect).
+2. Create `apps/vault/src/components/settings/shopify-connect.tsx` (connection card).
+3. Create `apps/vault/src/components/settings/shopify-status.tsx` (status + actions).
+4. Create `apps/vault/src/components/settings/shopify-error-log.tsx` (expandable error list).
+5. Create `apps/vault/src/hooks/use-shopify-sync.ts` (TanStack Query for sync status).
+6. Zustand store: `useShopifyStore` (connection status, sync status, error log).
+7. Sync status polling every 10 seconds (or via SSE).
+
+**Definition of Done:**
+- [ ] OAuth flow works: redirects to Shopify, returns to VAULT with token.
+- [ ] Connection status displays correctly.
+- [ ] "Sync now" button triggers manual sync.
+- [ ] Error log displays recent sync failures with retry.
+- [ ] System Health Dashboard shows Shopify sync status.
+- [ ] Sync status updates in real-time (no page refresh).
+- [ ] "Disconnect" button requires confirmation.
+
+
 ### Command Palette Actions (`apps/vault/src/actions.ts`)
 - `Create Product` → opens product creation modal
 - `Create Variant` → only when viewing a product
