@@ -462,6 +462,9 @@ pub async fn deactivate_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// SECURITY NOTE: The JWT blocklist is in-memory (moka cache). On server restart,
+/// all revoked tokens become valid again until their TTL expires.
+/// A Redis-backed blocklist would be more robust.
 pub async fn logout(
     State(state): State<AppState>,
     auth: AuthContext,

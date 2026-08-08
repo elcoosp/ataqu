@@ -598,6 +598,8 @@ impl AegisService {
 
     /// Note: SSO exchange is not tenant-scoped. If multiple tenants have users with the
     /// same email, the first match is returned. This is a known limitation.
+    /// SECURITY NOTE: SSO exchange is not tenant-scoped. If multiple tenants have users with the
+    /// same email, the first match is returned. This is a known limitation.
     pub async fn sso_exchange(
         &self,
         email: Email,
@@ -632,6 +634,8 @@ impl AegisService {
         Ok(())
     }
 
+    /// NOTE: The system user has a nil TenantId so it can operate across all tenants.
+    /// This is necessary for SPARK actions that create resources in different tenants.
     pub async fn ensure_system_user(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
         if self.repo.find_by_id(user_id).await?.is_none() {
             let now = self.clock.now();

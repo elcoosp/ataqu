@@ -351,6 +351,9 @@ impl VaultService {
     /// Note: This operation should be wrapped in a DB transaction to ensure atomicity
     /// between the variant save and the movement save. The current repo trait doesn't
     /// expose transaction support, so this is a known limitation.
+    /// NOTE: This operation should be wrapped in a DB transaction to ensure atomicity
+    /// between the variant save and the movement save. The current repo trait doesn't
+    /// expose transaction support, so this is a known limitation.
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
 
