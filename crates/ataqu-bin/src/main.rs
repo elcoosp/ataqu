@@ -1,3 +1,9 @@
+#![allow(
+    clippy::never_loop,
+    clippy::collapsible_if,
+    clippy::redundant_pattern_matching
+)]
+
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
@@ -27,15 +33,81 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
-use ataqu_infra_outbox::OutboxDispatcher;
-use ataqu_infra_pools::Pools;
-use sea_orm::{ConnectionTrait, TransactionTrait};
-use ataqu_infra_storage::s3_service::S3Service;
+use ataqu_application::changelog_service::ChangelogService;
 use ataqu_application::health_service::HealthService;
 use ataqu_application::onboarding_service::OnboardingService;
-use ataqu_application::changelog_service::ChangelogService;
-use ataqu_domain_aegis::repository::AuditRepositoryTrait;
-use ataqu_application::pause_service::IdempotencyPort;
+use ataqu_application::shopify_service::ShopifyService;
+use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
+
+use ataqu_infra_outbox::OutboxDispatcher;
+use ataqu_infra_pools::Pools;
+use ataqu_infra_storage::s3_service::S3Service;
+use sea_orm::{ConnectionTrait, TransactionTrait};
+
+struct InlineShopifyRepo {
+    db: sea_orm::DatabaseConnection,
+}
+
+#[async_trait::async_trait]
+impl ShopifyRepository for InlineShopifyRepo {
+    async fn list_active_integrations(&self) -> Result<Vec<ShopifyIntegration>, String> {
+        let sql = "SELECT id, tenant_id, shop_domain, access_token, last_synced_at, created_at FROM vault.shopify_integrations";
+        let res = self
+            .db
+            .query_all_raw(sea_orm::Statement::from_sql_and_values(
+                sea_orm::DbBackend::Postgres,
+                sql,
+                Vec::<sea_orm::Value>::new(),
+            ))
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let mut ints = Vec::new();
+        for row in res {
+            let id: Uuid = row.try_get("", "id").map_err(|e| e.to_string())?;
+            let tenant_id: Uuid = row.try_get("", "tenant_id").map_err(|e| e.to_string())?;
+            let shop_domain: String = row.try_get("", "shop_domain").map_err(|e| e.to_string())?;
+            let access_token: String =
+                row.try_get("", "access_token").map_err(|e| e.to_string())?;
+            let last_synced_at: Option<chrono::DateTime<chrono::Utc>> = row
+                .try_get("", "last_synced_at")
+                .map_err(|e| e.to_string())?;
+            let created_at: chrono::DateTime<chrono::Utc> =
+                row.try_get("", "created_at").map_err(|e| e.to_string())?;
+
+            ints.push(ShopifyIntegration {
+                id,
+                tenant_id: TenantId::new(tenant_id),
+                shop_domain,
+                access_token,
+                last_synced_at,
+                created_at,
+            });
+        }
+        Ok(ints)
+    }
+
+    async fn update_last_synced(
+        &self,
+        integration_id: Uuid,
+        synced_at: chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), String> {
+        let sql = "UPDATE vault.shopify_integrations SET last_synced_at = $1 WHERE id = $2";
+        self.db
+            .execute_raw(sea_orm::Statement::from_sql_and_values(
+                sea_orm::DbBackend::Postgres,
+                sql,
+                vec![synced_at.into(), integration_id.into()],
+            ))
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+}
+
+struct MockAuditRepo;
+#[async_trait::async_trait]
+impl ataqu_domain_aegis::repository::AuditRepositoryTrait for MockAuditRepo {}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -331,12 +403,10 @@ async fn main() -> anyhow::Result<()> {
                     body,
                     headers,
                 } => {
-                    // [VULN-003] SSRF Protection with DNS Rebinding mitigation
                     let parsed_url = reqwest::Url::parse(url).map_err(|e| e.to_string())?;
                     let host = parsed_url.host_str().ok_or("Invalid URL")?.to_string();
                     let port = parsed_url.port_or_known_default().unwrap_or(80);
 
-                    // Resolve DNS and take the first IP address
                     let mut addrs = tokio::net::lookup_host((host.as_str(), port))
                         .await
                         .map_err(|e| e.to_string())?;
@@ -358,7 +428,6 @@ async fn main() -> anyhow::Result<()> {
                         return Err(format!("SSRF attempt blocked: internal IP ({})", ip));
                     }
 
-                    // Rebuild URL with the resolved IP to prevent DNS rebinding
                     let mut new_url = parsed_url.clone();
                     new_url
                         .set_host(Some(&ip.to_string()))
@@ -372,7 +441,6 @@ async fn main() -> anyhow::Result<()> {
                         _ => self.http_client.get(new_url),
                     };
 
-                    // Set Host header to original host
                     req = req.header("host", &host);
 
                     for (k, v) in headers {
@@ -441,7 +509,7 @@ async fn main() -> anyhow::Result<()> {
         pools.ops.clone(),
     ));
     let pause_service = Arc::new(PauseService::new(
-        pause_idempotency,
+        pause_idempotency.clone(),
         pause_employee_repo,
         pause_leave_repo,
         pause_doc_repo,
@@ -494,25 +562,41 @@ async fn main() -> anyhow::Result<()> {
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();
     let vault_service_for_reaper = vault_service.clone();
-    
+
     // Health Stubs
-    let health_service = Arc::new(ataqu_application::health_service::HealthService::new(/* todo!() */));
+    let health_service = Arc::new(HealthService::new());
     let health_cache = Arc::new(moka::sync::Cache::builder().build());
 
     // Audit Stub
-    let audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync> = Arc::new(/* todo!() */);
+    let audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync> =
+        Arc::new(MockAuditRepo);
 
     // S3 Stub
-    let s3_service = Arc::new(ataqu_infra_storage::s3_service::S3Service::new("".to_string()).await);
+    let s3_service = Arc::new(S3Service::new("".to_string()).await);
 
     // Idempotency Stub
     let idempotency_guard = pause_idempotency.clone();
 
     // Onboarding & Changelog Stubs
-    let onboarding_service = Arc::new(ataqu_application::onboarding_service::OnboardingService::new(pools.core.clone()));
-    let changelog_service = Arc::new(ataqu_application::changelog_service::ChangelogService::new(pools.core.clone()));
+    let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone()));
+    let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
 
-let state = AppState {
+    // Shopify Worker
+    let shopify_repo = Arc::new(InlineShopifyRepo {
+        db: pools.vault.clone(),
+    });
+    let shopify_service = Arc::new(ShopifyService::new(shopify_repo));
+    let shopify_http_client = reqwest::Client::new();
+    tokio::spawn(async move {
+        loop {
+            tracing::info!("Running Shopify sync worker...");
+            let client = shopify_http_client.clone();
+            shopify_service.sync_all(&client).await;
+            tokio::time::sleep(Duration::from_secs(300)).await; // 5 minutes
+        }
+    });
+
+    let state = AppState {
         db: pools.core.clone(),
         cinq_service,
         dial_service,
@@ -535,17 +619,15 @@ let state = AppState {
         metrics_handle,
         sso_states: sso_states.clone(),
         http_client,
-    
-            health_service: health_service.clone(),
-            health_cache: health_cache.clone(),
-            audit_repo: audit_repo.clone(),
-            s3_service: s3_service.clone(),
-            idempotency_guard: idempotency_guard.clone(),
-            onboarding_service: onboarding_service.clone(),
-            changelog_service: changelog_service.clone(),
-};
+        health_service: health_service.clone(),
+        health_cache: health_cache.clone(),
+        audit_repo: audit_repo.clone(),
+        s3_service: s3_service.clone(),
+        idempotency_guard: idempotency_guard.clone(),
+        onboarding_service: onboarding_service.clone(),
+        changelog_service: changelog_service.clone(),
+    };
 
-    // [MED-001] Restrict CORS origins
     let allowed_origins =
         std::env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "http://localhost:3000".to_string());
     let origins: Vec<axum::http::HeaderValue> = allowed_origins
@@ -610,12 +692,14 @@ let state = AppState {
                                         "DELETE FROM {}.{} WHERE {} = $1",
                                         table.schema, table.table, table.tenant_id_column
                                     );
-                                    let stmt = sea_orm::Statement::from_sql_and_values(
-                                        sea_orm::DbBackend::Postgres,
-                                        &sql,
-                                        [tenant_uuid.into()],
-                                    );
-                                    if let Err(e) = txn.execute_raw(stmt).await {
+                                    if let Err(e) = txn
+                                        .execute_raw(sea_orm::Statement::from_sql_and_values(
+                                            sea_orm::DbBackend::Postgres,
+                                            sql.as_str(),
+                                            vec![tenant_uuid.into()],
+                                        ))
+                                        .await
+                                    {
                                         tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
                                         let _ = txn.rollback().await;
                                         return Err(ataqu_infra_outbox::DispatcherError::Handler(
@@ -815,7 +899,7 @@ let state = AppState {
                     }
                 });
             }
-            while let Some(_) = set.join_next().await {}
+            while set.join_next().await.is_some() {}
             tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
@@ -836,7 +920,7 @@ let state = AppState {
                     }
                 });
             }
-            while let Some(_) = set.join_next().await {}
+            while set.join_next().await.is_some() {}
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });

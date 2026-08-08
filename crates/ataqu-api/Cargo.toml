@@ -21,6 +21,7 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
 async-trait = "0.1"
 ataqu-application = { path = "../ataqu-application" }
+ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-security = { path = "../ataqu-security" }
 ataqu-contracts = { path = "../ataqu-contracts" }

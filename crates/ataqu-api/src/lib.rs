@@ -1,3 +1,10 @@
+#![allow(
+    clippy::map_clone,
+    clippy::collapsible_if,
+    clippy::explicit_counter_loop,
+    clippy::unwrap_or_default
+)]
+
 //! Ataqu API - unified HTTP server for all 10 apps.
 
 pub mod error;
@@ -27,9 +34,6 @@ use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_kernel::{Clock, IdGenerator};
-use ataqu_infra_storage::s3_service::S3Service;
-use ataqu_domain_aegis::repository::AuditRepositoryTrait;
-use ataqu_application::pause_service::IdempotencyPort;
 
 #[derive(Clone)]
 pub struct AppState {

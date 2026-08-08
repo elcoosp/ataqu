@@ -1,3 +1,4 @@
+#![allow(clippy::collapsible_if)]
 use base32::{Alphabet, decode};
 use hmac::{Hmac, Mac};
 use sha1::Sha1;

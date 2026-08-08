@@ -8,6 +8,7 @@ pub struct PiiAccessKey(());
 impl PiiAccessKey {
     /// Creates a new access key. Only available when the feature is enabled.
     #[cfg(feature = "infra-pii-access")]
+    #[allow(clippy::new_without_default)] // Capability token, default makes no semantic sense
     pub fn new() -> Self {
         PiiAccessKey(())
     }
