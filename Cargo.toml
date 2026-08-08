@@ -7,7 +7,6 @@ members = [
     "crates/ataqu-bin",
     "crates/ataqu-contracts",
     "crates/ataqu-domain-aegis",
-    "crates/ataqu-domain-billing",
     "crates/ataqu-domain-cinq",
     "crates/ataqu-domain-dial",
     "crates/ataqu-domain-gdpr",

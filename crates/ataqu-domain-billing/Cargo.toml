@@ -1,7 +1,0 @@
-[package]
-name = "ataqu-domain-billing"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-uuid = { version = "1.24", features = ["v4", "serde"] }

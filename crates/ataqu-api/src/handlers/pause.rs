@@ -280,31 +280,18 @@ pub async fn list_leave_requests(
 ) -> ApiResult<Json<Vec<LeaveRequestResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let requests = state
+    let requests_with_names = state
         .pause_service
-        .list_leave_requests(&auth.tenant_id, limit, offset)
+        .list_leave_requests_with_names(&auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
-    // Fetch all employees in one go to avoid N+1 queries
-    let employees = state
-        .pause_service
-        .list_employees(&auth.tenant_id, 10000, 0)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let employee_map: std::collections::HashMap<Uuid, String> =
-        employees.into_iter().map(|e| (e.id, e.full_name)).collect();
-
-    let mut responses = Vec::new();
-    for r in requests {
-        let employee_name = employee_map
-            .get(&r.employee_id)
-            .cloned()
-            .unwrap_or_else(|| "Unknown".to_string());
-        responses.push(LeaveRequestResponse {
+    let responses = requests_with_names
+        .into_iter()
+        .map(|(r, name)| LeaveRequestResponse {
             id: r.id,
             employee_id: r.employee_id,
-            employee_name,
+            employee_name: name,
             leave_type: format!("{:?}", r.leave_type).to_lowercase(),
             start_date: r.start_date,
             end_date: r.end_date,
@@ -312,8 +299,8 @@ pub async fn list_leave_requests(
             status: format!("{:?}", r.status).to_lowercase(),
             created_at: r.created_at.into(),
             updated_at: r.updated_at.into(),
-        });
-    }
+        })
+        .collect();
 
     Ok(Json(responses))
 }

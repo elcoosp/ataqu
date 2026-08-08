@@ -91,4 +91,5 @@ pub trait LeaveRequestRepositoryPort: Send + Sync {
         reviewer_id: Uuid,
         updated_at: SystemTime,
     ) -> Result<(), PauseDomainError>;
+    async fn list_with_employee_names(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<(LeaveRequest, String)>, PauseDomainError>;
 }

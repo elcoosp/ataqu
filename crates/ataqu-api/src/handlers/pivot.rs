@@ -409,7 +409,7 @@ pub async fn update_block(
         }
     } else {
         return Err(ApiResponseError::validation(
-            "block_type or content required for update",
+            "block_type is required for update",
         ));
     };
 

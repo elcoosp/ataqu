@@ -499,13 +499,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ataqu-domain-billing"
-version = "0.1.0"
-dependencies = [
- "uuid",
-]
-
-[[package]]
 name = "ataqu-domain-cinq"
 version = "0.1.0"
 dependencies = [

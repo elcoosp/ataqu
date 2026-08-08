@@ -495,6 +495,52 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
             })
             .collect())
     }
+
+    async fn list_with_employee_names(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<(LeaveRequest, String)>, PauseDomainError> {
+        let models = leave_request_entity::Entity::find()
+            .filter(leave_request_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(map_err)?;
+
+        let mut employee_ids = Vec::new();
+        for m in &models {
+            employee_ids.push(m.employee_id);
+        }
+
+        let employees = employee_entity::Entity::find()
+            .filter(employee_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(employee_entity::Column::Id.is_in(employee_ids))
+            .all(&self.db)
+            .await
+            .map_err(map_err)?;
+
+        let employee_map: std::collections::HashMap<Uuid, String> = employees.into_iter().map(|e| (e.id, e.full_name)).collect();
+
+        let mut results = Vec::new();
+        for m in models {
+            let lr = LeaveRequest {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                employee_id: m.employee_id,
+                leave_type: leave_type_from_str(&m.leave_type),
+                start_date: m.start_date,
+                end_date: m.end_date,
+                reason: m.reason,
+                status: leave_status_from_str(&m.status),
+                reviewer_id: m.reviewer_id,
+                reviewed_at: m.reviewed_at.map(|t| t.into()),
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+                version: m.version,
+            };
+            let name = employee_map.get(&m.employee_id).cloned().unwrap_or_default();
+            results.push((lr, name));
+        }
+        Ok(results)
+    }
 }
 
 #[async_trait]
