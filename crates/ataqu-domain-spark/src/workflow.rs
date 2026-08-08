@@ -22,6 +22,7 @@ pub struct Workflow {
     pub webhook_secret: Option<String>,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
+    pub version: i32,
 }
 
 pub fn create_workflow(
@@ -47,6 +48,7 @@ pub fn create_workflow(
         webhook_secret: None,
         created_at,
         updated_at: created_at,
+        version: 0,
     };
 
     let event = WorkflowCreated {

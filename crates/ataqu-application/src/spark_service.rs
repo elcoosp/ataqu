@@ -115,8 +115,14 @@ impl SparkService {
             .ok_or(SparkServiceError::WorkflowNotFound)
     }
 
-    pub async fn update_workflow(&self, cmd: UpdateWorkflowCommand) -> SparkResult<Workflow> {
+    pub async fn update_workflow(&self, cmd: UpdateWorkflowCommand, expected_version: i32) -> SparkResult<Workflow> {
         let mut workflow = self.get_workflow(cmd.tenant_id, cmd.id).await?;
+        if workflow.version != expected_version {
+            return Err(SparkServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, workflow.version
+            )));
+        }
         if let Some(name) = cmd.name {
             workflow.name = name;
         }
@@ -124,6 +130,7 @@ impl SparkService {
             workflow.is_active = is_active;
         }
         workflow.updated_at = self.clock.now();
+        workflow.version += 1;
         self.repo.update_workflow(&workflow).await?;
         Ok(workflow)
     }
@@ -221,7 +228,7 @@ impl SparkService {
                 if let Ok(cron_job) = croner::Cron::new(cron).parse() {
                     if let Ok(next_run) = cron_job.find_next_occurrence(&now, false) {
                         // Trigger only if the next occurrence is within the next 60 seconds (polling interval)
-                        if next_run <= now + chrono::Duration::seconds(60) {
+                        if next_run > now && next_run <= now + chrono::Duration::seconds(60) {
                             tracing::info!("Triggering scheduled workflow {}", workflow.id);
                             let payload = serde_json::json!({ "time": now.to_rfc3339() });
                             if evaluate_conditions(&workflow.conditions, &payload) {

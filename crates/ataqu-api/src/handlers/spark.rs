@@ -127,7 +127,7 @@ pub async fn update_workflow(
     headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateWorkflowRequest>,
 ) -> ApiResult<Json<WorkflowResponse>> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers.get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -141,7 +141,7 @@ pub async fn update_workflow(
     };
     let workflow = state
         .spark_service
-        .update_workflow(cmd)
+        .update_workflow(cmd, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let resp = WorkflowResponse {

@@ -118,6 +118,7 @@ impl VistaRepository for VistaRepositoryImpl {
         for row in rows {
             let ts: chrono::DateTime<chrono::Utc> = row.try_get("", "timestamp").map_err(|e| e.to_string())?;
             points.push(ataqu_domain_vista::AnalyticsDataPoint {
+                id: row.try_get("", "id").map_err(|e| e.to_string())?,
                 tenant_id: TenantId::new(row.try_get("", "tenant_id").map_err(|e| e.to_string())?),
                 metric_name: row.try_get("", "metric_name").map_err(|e| e.to_string())?,
                 value: row.try_get("", "value").map_err(|e| e.to_string())?,
@@ -196,6 +197,7 @@ impl VistaRepository for VistaRepositoryImpl {
                 config: row.try_get("", "config").map_err(|e| e.to_string())?,
                 created_at: row.try_get("", "created_at").map_err(|e| e.to_string())?,
                 updated_at: row.try_get("", "updated_at").map_err(|e| e.to_string())?,
+                version: row.try_get("", "version").map_err(|e| e.to_string())?,
             }))
         } else {
             Ok(None)
@@ -225,6 +227,7 @@ impl VistaRepository for VistaRepositoryImpl {
                 config: row.try_get("", "config").map_err(|e| e.to_string())?,
                 created_at: row.try_get("", "created_at").map_err(|e| e.to_string())?,
                 updated_at: row.try_get("", "updated_at").map_err(|e| e.to_string())?,
+                version: row.try_get("", "version").map_err(|e| e.to_string())?,
             });
         }
         Ok(dashboards)

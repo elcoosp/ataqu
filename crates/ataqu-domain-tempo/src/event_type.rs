@@ -13,6 +13,7 @@ pub struct EventType {
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -49,5 +50,6 @@ pub fn create_event_type(
         is_active: true,
         created_at: now,
         updated_at: now,
+        version: 0,
     })
 }

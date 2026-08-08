@@ -377,7 +377,7 @@ impl TempoService {
             ))
     }
 
-    pub async fn update_event_type(&self, cmd: UpdateEventTypeCommand) -> TempoResult<EventType> {
+    pub async fn update_event_type(&self, cmd: UpdateEventTypeCommand, expected_version: i32) -> TempoResult<EventType> {
         let mut event_type = self
             .repo
             .list_event_types(&cmd.tenant_id)
@@ -386,6 +386,13 @@ impl TempoService {
             .into_iter()
             .find(|et| et.id.0 == cmd.id)
             .ok_or(TempoServiceError::EventTypeNotFound)?;
+
+        if event_type.version != expected_version {
+            return Err(TempoServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, event_type.version
+            )));
+        }
 
         if let Some(name) = cmd.name {
             event_type.name = name;
@@ -402,6 +409,7 @@ impl TempoService {
         if let Some(is_active) = cmd.is_active {
             event_type.is_active = is_active;
         }
+        event_type.version += 1;
 
         self.repo
             .update_event_type(&event_type)

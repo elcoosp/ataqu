@@ -230,8 +230,15 @@ pub async fn update_event_type(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateEventTypeRequest>,
 ) -> ApiResult<Json<EventTypeResponse>> {
+    let if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let cmd = UpdateEventTypeCommand {
         tenant_id: auth.tenant_id,
         id,
@@ -243,7 +250,7 @@ pub async fn update_event_type(
     };
     let event_type = state
         .tempo_service
-        .update_event_type(cmd)
+        .update_event_type(cmd, if_match)
         .await
         .map_err(|e| match e {
             ataqu_application::tempo_service::TempoServiceError::EventTypeNotFound => {

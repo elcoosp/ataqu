@@ -122,13 +122,22 @@ pub async fn list_channels(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<ListChannelsParams>,
-) -> ApiResult<Json<Vec<ChannelResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ChannelResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
     let channels = state
         .dial_service
-        .list_channels(auth.tenant_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_channels(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(channels.into_iter().map(|c| c.into()).collect()))
+    let total = channels.len() as u64;
+    let items = channels.into_iter().map(|c| c.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_channel(
@@ -265,10 +274,12 @@ pub async fn list_messages(
     auth: AuthContext,
     Path(channel_id): Path<Uuid>,
     Query(params): Query<ListMessagesParams>,
-) -> ApiResult<Json<Vec<MessageResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<MessageResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
     let msgs = state
         .dial_service
-        .list_messages(auth.tenant_id, channel_id, auth.user_id, params.limit.unwrap_or(100), params.offset.unwrap_or(0))
+        .list_messages(auth.tenant_id, channel_id, auth.user_id, limit, offset)
         .await
         .map_err(|e| match e {
             ataqu_application::dial_service::DialServiceError::Validation(msg) => {
@@ -276,7 +287,14 @@ pub async fn list_messages(
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
-    Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
+    let total = msgs.len() as u64;
+    let items = msgs.into_iter().map(|m| m.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn export_channel(

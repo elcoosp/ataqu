@@ -285,7 +285,8 @@ impl VaultService {
             )));
         }
 
-        let new_variant = variant.update_variant(cmd.price, cmd.sku, self.clock.as_ref());
+        let mut new_variant = variant.update_variant(cmd.price, cmd.sku, self.clock.as_ref());
+        new_variant.version += 1;
         self.repo
             .save_variant(&new_variant)
             .await
@@ -355,6 +356,30 @@ impl VaultService {
             .save_movement(&movement)
             .await
             .map_err(VaultServiceError::Repository)?;
+
+        let stock_payload = serde_json::json!({
+            "variant_id": new_variant.id,
+            "tenant_id": new_variant.tenant_id.as_uuid(),
+            "delta": cmd.delta,
+            "new_quantity": new_variant.stock_quantity,
+            "reason": movement.reason.clone(),
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .await
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+
+        let stock_payload = serde_json::json!({
+            "variant_id": new_variant.id,
+            "tenant_id": new_variant.tenant_id.as_uuid(),
+            "delta": cmd.delta,
+            "new_quantity": new_variant.stock_quantity,
+            "reason": movement.reason.clone(),
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .await
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
 
         let stock_payload = serde_json::json!({
             "variant_id": new_variant.id,
@@ -508,8 +533,15 @@ impl VaultService {
         tenant_id: TenantId,
         variant_id: Uuid,
         quantity: i64,
+        expected_version: i32,
     ) -> VaultResult<Variant> {
         let variant = self.get_variant(tenant_id, variant_id).await?;
+        if variant.version != expected_version {
+            return Err(VaultServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, variant.version
+            )));
+        }
         if variant.available() < quantity {
             return Err(VaultServiceError::Stock(
                 ataqu_domain_vault::inventory::StockError::InsufficientStock {
@@ -539,7 +571,7 @@ impl VaultService {
         let mut new_variant = variant.clone();
         new_variant.reserved_quantity += quantity;
         new_variant.updated_at = self.clock.now();
-        new_variant.version += 1; // Increment version for OCC
+        new_variant.version += 1;
         self.repo
             .save_variant(&new_variant)
             .await

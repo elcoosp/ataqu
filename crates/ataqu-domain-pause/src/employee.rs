@@ -1,42 +1,51 @@
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use ataqu_security::{Email, PhoneNumber};
 use chrono::NaiveDate;
 use std::time::SystemTime;
 use uuid::Uuid;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Employee {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: Email,
-    pub phone: Option<PhoneNumber>,
+    pub email: String,
+    pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
     pub hire_date: NaiveDate,
     pub is_active: bool,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
+    pub version: i32,
 }
 
 #[derive(Debug, Clone)]
 pub struct CreateEmployeeCommand {
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: Email,
-    pub phone: Option<PhoneNumber>,
+    pub email: String,
+    pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
     pub hire_date: NaiveDate,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
+pub struct UpdateEmployeeCommand {
+    pub tenant_id: TenantId,
+    pub employee_id: Uuid,
+    pub full_name: Option<String>,
+    pub job_title: Option<String>,
+    pub department: Option<Option<String>>,
+}
+
+#[derive(Debug, Clone)]
 pub struct EmployeeCreatedEvent {
     pub employee_id: Uuid,
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: ataqu_security::Email,
-    pub phone: Option<ataqu_security::PhoneNumber>,
+    pub email: String,
+    pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
     pub hire_date: NaiveDate,
@@ -63,16 +72,11 @@ pub fn create_employee(
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct UpdateEmployeeCommand {
-    pub tenant_id: TenantId,
-    pub employee_id: Uuid,
-    pub full_name: Option<String>,
-    pub job_title: Option<String>,
-    pub department: Option<Option<String>>,
-}
-
-pub fn update_employee(employee: &mut Employee, cmd: UpdateEmployeeCommand, clock: &dyn Clock) {
+pub fn update_employee(
+    employee: &mut Employee,
+    cmd: UpdateEmployeeCommand,
+    clock: &dyn Clock,
+) {
     if let Some(name) = cmd.full_name {
         employee.full_name = name;
     }

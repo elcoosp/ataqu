@@ -113,7 +113,7 @@ pub async fn update_dashboard(
     headers: axum::http::HeaderMap,
     Json(payload): Json<CreateDashboardRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers.get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -121,7 +121,7 @@ pub async fn update_dashboard(
         })?;
     let dashboard = state
         .vista_service
-        .update_dashboard(auth.tenant_id, id, Some(payload.name), Some(payload.config))
+        .update_dashboard(auth.tenant_id, id, Some(payload.name), Some(payload.config), if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({

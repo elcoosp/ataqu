@@ -202,6 +202,11 @@ pub async fn submit_form(
     Path(form_id): Path<Uuid>,
     Json(payload): Json<SubmitRequest>,
 ) -> ApiResult<StatusCode> {
+    // Rate limit public form submissions by form_id
+    let rate_key = format!("sond_submit:{}", form_id);
+    if !state.rate_limiter.check(&rate_key) {
+        return Err(ApiResponseError::RateLimited);
+    }
     let form = state
         .sond_service
         .get_form_public(form_id)

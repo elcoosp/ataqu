@@ -52,6 +52,7 @@ impl VistaService {
             config,
             created_at: chrono::DateTime::<chrono::Utc>::from(self.clock.now()),
             updated_at: chrono::DateTime::<chrono::Utc>::from(self.clock.now()),
+            version: 0,
         };
         self.repo
             .save_dashboard(&dashboard)
@@ -193,6 +194,7 @@ impl VistaService {
         id: Uuid,
         name: Option<String>,
         config: Option<serde_json::Value>,
+        expected_version: i32,
     ) -> VistaResult<ataqu_domain_vista::Dashboard> {
         let mut dashboard = self
             .repo
@@ -203,6 +205,13 @@ impl VistaService {
                 "Dashboard not found".to_string(),
             ))?;
 
+        if dashboard.version != expected_version {
+            return Err(VistaServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, dashboard.version
+            )));
+        }
+
         if let Some(n) = name {
             dashboard.name = n;
         }
@@ -210,6 +219,7 @@ impl VistaService {
             dashboard.config = c;
         }
         dashboard.updated_at = chrono::DateTime::<chrono::Utc>::from(self.clock.now());
+        dashboard.version += 1;
 
         self.repo
             .save_dashboard(&dashboard)

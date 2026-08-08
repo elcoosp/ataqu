@@ -1,41 +1,27 @@
-use ataqu_kernel::{Clock, TenantId};
+use ataqu_kernel::TenantId;
 use std::time::SystemTime;
+use uuid::Uuid;
 
-/// Represents a time-series analytics data point.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct AnalyticsDataPoint {
+    pub id: Uuid,
     pub tenant_id: TenantId,
-    pub timestamp: SystemTime,
     pub metric_name: String,
     pub value: f64,
+    pub timestamp: SystemTime,
 }
 
-/// Pure function to validate and prepare an analytics data point for ingestion.
 pub fn prepare_data_point(
     tenant_id: TenantId,
     metric_name: String,
     value: f64,
-    clock: &dyn Clock,
-) -> Result<AnalyticsDataPoint, AnalyticsError> {
-    if metric_name.trim().is_empty() {
-        return Err(AnalyticsError::InvalidMetricName);
-    }
-    if value.is_nan() || value.is_infinite() {
-        return Err(AnalyticsError::InvalidValue);
-    }
-
+    clock: &dyn ataqu_kernel::Clock,
+) -> Result<AnalyticsDataPoint, String> {
     Ok(AnalyticsDataPoint {
+        id: Uuid::new_v4(),
         tenant_id,
-        timestamp: clock.now(),
         metric_name,
         value,
+        timestamp: clock.now(),
     })
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AnalyticsError {
-    #[error("Metric name cannot be empty")]
-    InvalidMetricName,
-    #[error("Metric value must be a finite number")]
-    InvalidValue,
 }

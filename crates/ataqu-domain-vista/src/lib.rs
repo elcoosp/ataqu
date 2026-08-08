@@ -1,9 +1,21 @@
 pub mod aggregation;
 pub mod analytics;
-pub mod dashboard;
 pub mod repository;
 
-pub use aggregation::{AggregatedView, process_aggregation_event};
-pub use analytics::{AnalyticsDataPoint, AnalyticsError, prepare_data_point};
-pub use dashboard::Dashboard;
-pub use repository::VistaRepository;
+use ataqu_kernel::TenantId;
+use chrono::{DateTime, Utc};
+use serde_json::Value;
+use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+pub struct Dashboard {
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub name: String,
+    pub config: Value,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub version: i32,
+}
+
+pub use analytics::AnalyticsDataPoint;

@@ -47,8 +47,8 @@ impl From<Employee> for EmployeeResponse {
         Self {
             id: e.id,
             full_name: e.full_name,
-            email: ApiEmail::new(e.email),
-            phone: e.phone.map(ApiPhone::new),
+            email: ApiEmail::new(Email::new(e.email)),
+            phone: e.phone.map(|p| ApiPhone::new(PhoneNumber::new(p))),
             job_title: e.job_title,
             department: e.department,
             hire_date: e.hire_date,
@@ -97,8 +97,8 @@ pub async fn create_employee(
     let cmd = CreateEmployeeCommand {
         tenant_id: auth.tenant_id,
         full_name: req.full_name.clone(),
-        email: Email::new(req.email.clone()),
-        phone: req.phone.clone().map(PhoneNumber::new),
+        email: req.email.clone(),
+        phone: req.phone.clone(),
         job_title: req.job_title.clone(),
         department: req.department.clone(),
         hire_date: req.hire_date,
@@ -322,7 +322,7 @@ pub async fn approve_leave(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers.get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -335,7 +335,7 @@ pub async fn approve_leave(
     }
     let request = state
         .pause_service
-        .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
+        .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
@@ -368,7 +368,7 @@ pub async fn reject_leave(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers.get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -381,7 +381,7 @@ pub async fn reject_leave(
     }
     let request = state
         .pause_service
-        .reject_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
+        .reject_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
@@ -414,7 +414,7 @@ pub async fn cancel_leave(
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<LeaveRequestResponse>> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers.get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -427,7 +427,7 @@ pub async fn cancel_leave(
     }
     let request = state
         .pause_service
-        .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock)
+        .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
@@ -468,7 +468,7 @@ pub async fn update_employee(
     headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateEmployeeRequest>,
 ) -> ApiResult<Json<EmployeeResponse>> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers.get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -488,7 +488,7 @@ pub async fn update_employee(
     };
     let employee = state
         .pause_service
-        .update_employee(&auth.tenant_id, cmd)
+        .update_employee(&auth.tenant_id, cmd, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(employee.into()))

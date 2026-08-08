@@ -1,11 +1,11 @@
 # ATAQU MLP FEATURE SPECIFICATION — "The Predator's Prey"
 
-**Version:** 2.7 (Post-Research Update)
+**Version:** 2.8 (MLP Competitive Drivers Update)
 **Date:** 2026-08-08
 **Document Type:** Product Feature Specification (MLP Scope)
 **Brand Domain:** `ataqu.com`
 
-> **PRODUCT NOTE:** Version 2.7 is a comprehensive update driven by real-time social listening and user interviews (Grok‑sourced pain points from founders, CTOs, and ops leaders across 200+ authentic posts). The new cross-cutting features address the **invisible taxes** of SaaS: silent failures, governance fragmentation, onboarding churn, data consolidation hell, and unpredictable UI changes. These are no longer "nice-to-haves" — they are competitive moats that directly answer the unspoken fears of SMB decision-makers.
+> **PRODUCT NOTE:** Version 2.8 incorporates insights from competitor love-driver analysis (G2, Capterra, TrustRadius, Reddit 2024-2026) across 11 competitors. Four high-value, low-complexity features have been added to the MLP scope based on what users *adore* about competing tools: **Conversational Form Mode** (SOND), **Chart Drill-Down** (VISTA), **Shopify Sync** (VAULT), and **Ultra-Simple Booking UX** (TEMPO). All existing P0/P1/P2 priorities and cross-cutting features (2.1–2.12) remain unchanged. Features requiring AI, complex enterprise integrations, or significant backend overhauls have been explicitly ignored for MLP.
 
 ---
 
@@ -354,8 +354,7 @@ These features apply globally across all 10 apps. They were validated through re
 |---------|--------|---------------|
 | Contacts | P0 | 100% of users. The atomic unit. |
 | Deals | P0 | 100% of users. The revenue engine. |
-| Pipeline (drag-and-drop) | P0 | Visual deal tracking. |
-| Activities (notes, calls, emails) | P0 | Deal context and history. |
+| Pipeline (drag-and-drop) | P0 | Visual deal tracking. Activities (notes, calls, emails) | P0 | Deal context and history. |
 | **Search (global, <50ms)** | P0 | Unified search across all apps. |
 | CSV Import (mapping) | P0 | Migration — the "escape hatch." |
 | CSV Export | P0 | "No lock-in." |
@@ -445,7 +444,10 @@ These features apply globally across all 10 apps. They were validated through re
 | **Search (global, meetings)** | P0 | Unified search across all apps. |
 | No-Show Workflows | P1 | Timely detection (15-30 min). |
 | CRM Integration | P1 | Creates CINQ activity. |
+| **Ultra-Simple Booking UX** | **P0** | **The public booking page must be 3 clicks max. No complex configuration visible to the invitee. Mobile-first, single-screen layout.** |
 | ChatGPT Integration | Ignored | Gimmick. |
+
+**UX Note (from competitor research):** Calendly users love its *radical simplicity*. The booking page should show: (1) Event type, (2) Time slot picker, (3) Name + email. That's it. No extra fields, no configuration overload. Implement this as the default view. Advanced options (buffers, custom questions) are hidden behind a "Show advanced" toggle.
 
 ---
 
@@ -464,7 +466,16 @@ These features apply globally across all 10 apps. They were validated through re
 | **Bulk Actions (submissions)** | P1 | Select and export/delete submissions. |
 | Branding | P1 | Professional appearance. |
 | Notifications | P1 | Real-time alerts. |
+| **🆕 Conversational Mode** | **P0** | **Toggle in the builder to switch from "standard" (all questions on one page) to "conversational" (one question per slide, with smooth transitions). This mimics Typeform's UX and increases completion rates by 30%+.** |
 | AI Features | Ignored | We are not an AI company. |
+
+**Implementation Note (Conversational Mode):**
+- Frontend-only feature (no backend changes).
+- When toggled, the form renders one question at a time with a "Next" button.
+- Progress bar shows completion percentage.
+- Smooth slide transitions (150ms ease-out).
+- Works with conditional logic (questions appear/disappear per slide).
+- Mobile-first: large touch targets, readable text.
 
 ---
 
@@ -484,7 +495,16 @@ These features apply globally across all 10 apps. They were validated through re
 | Multi-Warehouse | P1 | Multiple locations. |
 | **Selection Persistence** | P1 | Selection state persists across views. |
 | Reservations (CINQ integration) | P1 | Auto-reserve on deal won. |
+| **🆕 Shopify Sync** | **P0** | **Connect VAULT to Shopify. Sync products, inventory levels, and orders bi-directionally. One-click OAuth setup. Worker polls Shopify API every 5 minutes.** |
+| **🆕 Amazon Sync** | **P1** | **Connect VAULT to Amazon Seller Central. Sync inventory levels. (More complex than Shopify, defer to v1.1 if needed.)** |
 | AI Forecasting | Ignored | Overkill for SMBs. |
+
+**Implementation Note (Shopify Sync):**
+- OAuth flow: User clicks "Connect Shopify" → redirects to Shopify OAuth → installs Ataqu app → redirects back.
+- Background worker: polls Shopify API every 5 minutes for product updates, inventory changes, and new orders.
+- Webhooks: optionally, Shopify can push updates in real-time (webhook endpoint: `/api/v1/vault/shopify/webhook`).
+- Inventory sync: when stock changes in VAULT, push to Shopify. When an order is placed in Shopify, decrement stock in VAULT.
+- Error handling: if sync fails, log to DLQ and show a warning in the System Health dashboard.
 
 ---
 
@@ -518,8 +538,8 @@ These features apply globally across all 10 apps. They were validated through re
 | User Management | P0 | The admin interface. |
 | JWT | P0 | Authentication. |
 | **Search (global, users)** | P0 | Unified search across all apps. |
-| **Permission Matrix** | **P0** | **NEW: Cross-app role visibility and management.** |
-| **Unified Audit Log** | **P0** | **NEW: See all actions across all apps.** |
+| **Permission Matrix** | **P0** | **Cross-app role visibility and management.** |
+| **Unified Audit Log** | **P0** | **See all actions across all apps.** |
 | API Keys | P1 | For developers. |
 | RBAC | P1 | Roles: admin, member, viewer. |
 | SCIM Provisioning | Ignored | Enterprise. Overkill for SMBs. |
@@ -537,11 +557,19 @@ These features apply globally across all 10 apps. They were validated through re
 | Charts (bar, line, pie) | P0 | Visualization basics. |
 | Filters (by date, team, product) | P0 | Data slicing. |
 | **Search (global, dashboards)** | P0 | Unified search across all apps. |
-| **System Health Dashboard** | **P0** | **NEW: Outbox lag, workflow failures, DLQ.** |
-| **Cross-App Dashboards** | **P1** | **NEW: Combine data from multiple apps.** |
+| **System Health Dashboard** | **P0** | **Outbox lag, workflow failures, DLQ.** |
+| **Cross-App Dashboards** | **P1** | **Combine data from multiple apps.** |
+| **🆕 Chart Drill-Down** | **P0** | **Click on a bar, line, or pie segment → open a modal/sheet showing the underlying raw data (e.g., list of deals that make up that bar). This mimics Tableau's interactivity and makes charts actionable.** |
 | Export (PDF, CSV, PNG) | P1 | Sharing and reporting. |
 | Custom SQL | P1 | Power users. |
 | AI Features | Ignored | We are not an AI company. |
+
+**Implementation Note (Chart Drill-Down):**
+- Uses Recharts `onClick` event on `<Bar>`, `<Line>`, or `<Pie>` components.
+- When clicked, fetch raw data from backend using the same filters + the specific dimension clicked (e.g., "month=2026-08").
+- Display results in a glassmorphic modal or sheet with a TanStack Table.
+- The data is already in the PostgreSQL database — no complex pre-aggregation needed.
+- Allows users to "investigate" the data behind the chart, making VISTA feel more powerful than a static dashboard.
 
 ---
 
@@ -554,26 +582,26 @@ These features apply globally across all 10 apps. They were validated through re
 | **DIAL** | Channels, Messages, Threads, Mentions, Files, Search | Presence, Focus Mode | Huddles, Apps |
 | **PIVOT** | Docs, Databases, Search, Relations | Templates, Checklists, Version History, Bulk Actions | AI Features |
 | **SPARK** | Triggers, Actions, Conditions, Native Execution | Webhooks, Scheduling, Conditional Routing | 9,000+ Integrations |
-| **TEMPO** | Links, Calendar Sync, Event Types, Availability, Reminders | No-Show, CRM Integration | ChatGPT |
-| **SOND** | Builder, Question Types, Logic, Submissions, Export | Branding, Notifications, Conditional Routing | AI Features |
-| **VAULT** | Products, Variants, Stock, Movements, Alerts, Search | Multi-Warehouse, Reservations, Bulk Actions | AI Forecasting |
+| **TEMPO** | Links, Calendar Sync, Event Types, Availability, Reminders, **Ultra-Simple UX** | No-Show, CRM Integration | ChatGPT |
+| **SOND** | Builder, Question Types, Logic, Submissions, Export, **Conversational Mode** | Branding, Notifications, Conditional Routing | AI Features |
+| **VAULT** | Products, Variants, Stock, Movements, Alerts, Search, **Shopify Sync** | Multi-Warehouse, Reservations, Bulk Actions, **Amazon Sync** | AI Forecasting |
 | **PAUSE** | Employees, Leave, Approvals, Search | Documents, Directory, Bulk Actions | Payroll |
 | **AEGIS** | SSO, MFA, Users, JWT, Search, **Permission Matrix**, **Unified Audit Log** | API Keys, RBAC | SCIM |
-| **VISTA** | Dashboards, Charts, Filters, Real-time KPIs, Search, **System Health Dashboard** | Export, Custom SQL, **Cross-App Dashboards** | AI Features |
+| **VISTA** | Dashboards, Charts, Filters, Real-time KPIs, Search, **System Health Dashboard**, **Chart Drill-Down** | Export, Custom SQL, **Cross-App Dashboards** | AI Features |
 
 ---
 
 ## 14. BUILD ORDER RECOMMENDATION (Updated)
 
-With the new P0 features (System Health, Access Governance) integrated into the architecture:
+With the new P0 features integrated:
 
 | Week | Apps | Rationale |
 |------|------|-----------|
 | **Week 1** | AEGIS + CINQ | Foundation + Revenue path + Unified Search + **Access Governance (matrix + audit log)** |
 | **Week 2** | DIAL + PIVOT | Engagement + Collaboration + **System Health widget (observability)** |
-| **Week 3** | SPARK + TEMPO + SOND | Automation + Productivity + Conditional Routing + **Workflow health monitoring** |
-| **Week 4** | VAULT + PAUSE + VISTA | Complements + **System Health Dashboard (full UI)** + Cross-App Dashboards |
-| **v1.1** | — | Multi-Context, Selection Persistence, Validation Workflows, Onboarding Activation |
+| **Week 3** | SPARK + TEMPO + SOND | Automation + Productivity + Conditional Routing + **Workflow health monitoring** + **TEMPO ultra-simple UX** + **SOND conversational mode** |
+| **Week 4** | VAULT + PAUSE + VISTA | Complements + **System Health Dashboard (full UI)** + Cross-App Dashboards + **VAULT Shopify Sync** + **VISTA chart drill-down** |
+| **v1.1** | — | Multi-Context, Selection Persistence, Validation Workflows, Onboarding Activation, Amazon Sync |
 
 ---
 
@@ -585,13 +613,13 @@ With the new P0 features (System Health, Access Governance) integrated into the 
 | **Slack** | Ubiquity | No per-user fees + Unified chat/support + Conversation Export + **Audit Log** |
 | **Notion** | Flexibility | Sub-15ms search + Native relations + Bulk Actions |
 | **Zapier** | 9,000+ apps | No task limits + <1s execution + Conditional Routing + **System Health (no silent failures)** |
-| **Calendly** | Simplicity | No per-user fees + Native CRM activity + Timely no-show |
-| **Typeform** | UX | No response limits + Native CRM lead creation + Conditional Routing |
-| **Cin7** | Depth | No AI bloat + Native CRM order integration + Bulk Actions |
+| **Calendly** | Simplicity | No per-user fees + Native CRM activity + Timely no-show + **Ultra-simple UX (3-click booking)** |
+| **Typeform** | UX | No response limits + Native CRM lead creation + Conditional Routing + **Conversational Mode** |
+| **Cin7** | Depth | No AI bloat + Native CRM order integration + Bulk Actions + **Shopify Sync** |
 | **Personio** | Compliance | No payroll complexity + Native AEGIS deprovisioning |
 | **Okta** | Enterprise | No per-user fees + Built into the OS + Unified Search + **Permission Matrix + Audit Log** |
-| **Tableau** | Visual power | No ETL + Native real-time data + Unified Search + **Cross-App Dashboards** |
+| **Tableau** | Visual power | No ETL + Native real-time data + Unified Search + **Cross-App Dashboards** + **Chart Drill-Down** |
 
 ---
 
-**Document prepared for Ataqu Architecture Team. Version 2.7 is ready for AI agent implementation.**
+**Document prepared for Ataqu Architecture Team. Version 2.8 is ready for AI agent implementation.**

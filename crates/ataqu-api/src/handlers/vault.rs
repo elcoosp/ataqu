@@ -458,11 +458,18 @@ pub async fn reserve_stock(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<ReserveStockRequest>,
 ) -> ApiResult<impl IntoResponse> {
+    let if_match = headers.get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let variant = state
         .vault_service
-        .reserve_stock(auth.tenant_id, id, payload.quantity)
+        .reserve_stock(auth.tenant_id, id, payload.quantity, if_match)
         .await
         .map_err(|e| match e {
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {

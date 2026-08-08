@@ -300,8 +300,13 @@ async fn main() -> anyhow::Result<()> {
                     variant_id,
                     quantity,
                 } => {
+                    let variant = self
+                        .vault_service
+                        .get_variant(*tenant_id, *variant_id)
+                        .await
+                        .map_err(|e| e.to_string())?;
                     self.vault_service
-                        .reserve_stock(*tenant_id, *variant_id, *quantity)
+                        .reserve_stock(*tenant_id, *variant_id, *quantity, variant.version)
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -352,6 +357,12 @@ async fn main() -> anyhow::Result<()> {
 
     // A fixed UUID for system-generated actions (SPARK dispatcher)
     let system_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+    if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
+        tracing::warn!(error = %e, "Failed to ensure system user exists");
+    }
+    if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
+        tracing::warn!(error = %e, "Failed to ensure system user exists");
+    }
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }

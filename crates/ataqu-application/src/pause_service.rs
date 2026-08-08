@@ -252,18 +252,32 @@ impl PauseService {
         leave_id: Uuid,
         reviewer_id: Uuid,
         clock: &dyn Clock,
+        expected_version: i32,
     ) -> Result<LeaveRequest, PauseServiceError> {
         let mut request = self
             .leave_request_repo
             .find_by_id(tenant_id, leave_id)
             .await?
             .ok_or(PauseServiceError::NotFound)?;
+        if request.version != expected_version {
+            return Err(PauseServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, request.version
+            )));
+        }
+        if request.version != expected_version {
+            return Err(PauseServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, request.version
+            )));
+        }
         if request.status != LeaveStatus::Pending {
             return Err(PauseServiceError::Validation(
                 "Leave request is not pending".to_string(),
             ));
         }
         let event = ataqu_domain_pause::leave::approve_leave(&mut request, reviewer_id, clock);
+        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,
@@ -289,18 +303,32 @@ impl PauseService {
         leave_id: Uuid,
         reviewer_id: Uuid,
         clock: &dyn Clock,
+        expected_version: i32,
     ) -> Result<LeaveRequest, PauseServiceError> {
         let mut request = self
             .leave_request_repo
             .find_by_id(tenant_id, leave_id)
             .await?
             .ok_or(PauseServiceError::NotFound)?;
+        if request.version != expected_version {
+            return Err(PauseServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, request.version
+            )));
+        }
+        if request.version != expected_version {
+            return Err(PauseServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, request.version
+            )));
+        }
         if request.status != LeaveStatus::Pending {
             return Err(PauseServiceError::Validation(
                 "Leave request is not pending".to_string(),
             ));
         }
         let event = ataqu_domain_pause::leave::reject_leave(&mut request, reviewer_id, clock);
+        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,
@@ -323,9 +351,17 @@ impl PauseService {
         &self,
         tenant_id: &TenantId,
         cmd: ataqu_domain_pause::employee::UpdateEmployeeCommand,
+        expected_version: i32,
     ) -> Result<ataqu_domain_pause::Employee, PauseServiceError> {
         let mut employee = self.find_employee(tenant_id, cmd.employee_id).await?;
+        if employee.version != expected_version {
+            return Err(PauseServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, employee.version
+            )));
+        }
         ataqu_domain_pause::employee::update_employee(&mut employee, cmd, self.clock.as_ref());
+        employee.version += 1;
         self.employee_repo.update(tenant_id, &employee).await?;
 
         let payload = serde_json::json!({
@@ -375,18 +411,32 @@ impl PauseService {
         leave_id: Uuid,
         reviewer_id: Uuid,
         clock: &dyn Clock,
+        expected_version: i32,
     ) -> Result<LeaveRequest, PauseServiceError> {
         let mut request = self
             .leave_request_repo
             .find_by_id(tenant_id, leave_id)
             .await?
             .ok_or(PauseServiceError::NotFound)?;
+        if request.version != expected_version {
+            return Err(PauseServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, request.version
+            )));
+        }
+        if request.version != expected_version {
+            return Err(PauseServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, request.version
+            )));
+        }
         if request.status != LeaveStatus::Pending {
             return Err(PauseServiceError::Validation(
                 "Leave request is not pending".to_string(),
             ));
         }
         let event = ataqu_domain_pause::leave::cancel_leave(&mut request, reviewer_id, clock);
+        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,
