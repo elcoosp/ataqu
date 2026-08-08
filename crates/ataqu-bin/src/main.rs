@@ -30,6 +30,12 @@ use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
 use sea_orm::{ConnectionTrait, TransactionTrait};
+use ataqu_infra_storage::s3_service::S3Service;
+use ataqu_application::health_service::HealthService;
+use ataqu_application::onboarding_service::OnboardingService;
+use ataqu_application::changelog_service::ChangelogService;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
+use ataqu_application::pause_service::IdempotencyPort;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -488,7 +494,25 @@ async fn main() -> anyhow::Result<()> {
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();
     let vault_service_for_reaper = vault_service.clone();
-    let state = AppState {
+    
+    // Health Stubs
+    let health_service = Arc::new(ataqu_application::health_service::HealthService::new(/* todo!() */));
+    let health_cache = Arc::new(moka::sync::Cache::builder().build());
+
+    // Audit Stub
+    let audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync> = Arc::new(/* todo!() */);
+
+    // S3 Stub
+    let s3_service = Arc::new(ataqu_infra_storage::s3_service::S3Service::new("".to_string()).await);
+
+    // Idempotency Stub
+    let idempotency_guard = pause_idempotency.clone();
+
+    // Onboarding & Changelog Stubs
+    let onboarding_service = Arc::new(ataqu_application::onboarding_service::OnboardingService::new(pools.core.clone()));
+    let changelog_service = Arc::new(ataqu_application::changelog_service::ChangelogService::new(pools.core.clone()));
+
+let state = AppState {
         db: pools.core.clone(),
         cinq_service,
         dial_service,
@@ -511,7 +535,15 @@ async fn main() -> anyhow::Result<()> {
         metrics_handle,
         sso_states: sso_states.clone(),
         http_client,
-    };
+    
+            health_service: health_service.clone(),
+            health_cache: health_cache.clone(),
+            audit_repo: audit_repo.clone(),
+            s3_service: s3_service.clone(),
+            idempotency_guard: idempotency_guard.clone(),
+            onboarding_service: onboarding_service.clone(),
+            changelog_service: changelog_service.clone(),
+};
 
     // [MED-001] Restrict CORS origins
     let allowed_origins =
