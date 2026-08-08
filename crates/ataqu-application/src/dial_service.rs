@@ -1,3 +1,6 @@
+use lopdf::{Document, Object, Stream, Dictionary, ObjectId};
+use lopdf::content::Content;
+use std::io::Cursor;
 //! DIAL application service – orchestrates chat operations using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
@@ -15,8 +18,6 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 // Re-export domain types for API layer
 pub use ataqu_domain_dial::chat::{Channel, Message, Reaction};
-use lopdf::{Document, Page, Object, Dictionary, Stream};
-use lopdf::content::Content;
 use std::io::Cursor;
 
 // Application commands (using domain types)
@@ -63,10 +64,6 @@ pub enum DialServiceError {
 
 pub type DialResult<T> = Result<T, DialServiceError>;
 
-use printpdf::PdfDocument;
-use printpdf::Mm;
-use printpdf::BuiltinFont;
-use printpdf::text::Text;
 pub struct DialService {
     repo: Arc<dyn DialRepository + Send + Sync>,
     presence: Arc<dyn PresenceStore + Send + Sync>,
@@ -515,21 +512,16 @@ impl DialService {
             channel_id: Uuid,
             requester_id: Uuid,
         ) -> DialResult<Vec<u8>> {
-            use lopdf::{Document, Page, Stream};
-            use lopdf::content::Content;
-            use std::io::Cursor;
-    
             let (messages, _total) = self
                 .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
                 .await?;
     
             let mut doc = Document::new();
-            let page = Page::new("A4".into());
-            // We'll build a content stream
+    
+            // Build content stream
             let mut content = Content::new();
             content.begin_text();
             content.set_font("Helvetica", 12.0);
-            // Title
             let title = format!("Channel export: {}", channel_id);
             content.set_position(50.0, 750.0);
             content.show_text(&title);
@@ -546,7 +538,7 @@ impl DialService {
                 content.show_text(&line);
                 y -= 15.0;
                 if y < 50.0 {
-                    break; // Truncate to one page for simplicity
+                    break; // one page only for simplicity
                 }
             }
             content.end_text();
@@ -555,18 +547,26 @@ impl DialService {
             let stream = Stream::new(content.into(), vec![]);
             let stream_id = doc.add_object(stream);
     
-            // Add the page to the document
-            let page_id = doc.add_object(page);
-            doc.pages.push(page_id);
+            // Create a page dictionary
+            let mut page = Dictionary::new();
+            page.set("Type", "Page");
+            page.set("Contents", stream_id);
+            // MediaBox: [0, 0, 595, 842] is A4 in points
+            page.set("MediaBox", vec![0.0, 0.0, 595.0, 842.0].into());
     
-            // Set the page's contents to our stream
-            if let Some(page_obj) = doc.get_object_mut(page_id) {
-                if let Ok(page_dict) = page_obj.as_dict_mut() {
-                    page_dict.set("Contents", stream_id);
-                }
-            }
+            let page_id = doc.add_object(page.into());
     
-            // Render to bytes
+            // Create a Pages dictionary
+            let mut pages = Dictionary::new();
+            pages.set("Type", "Pages");
+            pages.set("Kids", vec![page_id.into()].into());
+            pages.set("Count", 1);
+            let pages_id = doc.add_object(pages.into());
+    
+            // Set the Root of the trailer to the Pages object
+            doc.trailer.set("Root", pages_id);
+    
+            // Write to bytes
             let mut bytes = Cursor::new(Vec::new());
             doc.save_to(&mut bytes).map_err(|e| DialServiceError::Repository(e.to_string()))?;
             Ok(bytes.into_inner())
