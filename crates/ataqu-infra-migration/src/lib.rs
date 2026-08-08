@@ -42,6 +42,14 @@ pub mod m_vault_add_warehouses;
 pub mod m_vista_add_dashboards;
 pub mod m_vista_tables;
 
+// NEW STUBS
+pub mod m20250101_000011_create_audit_and_permissions;
+pub mod m20250101_000012_create_vista_views;
+pub mod m20250101_000013_create_shopify_integrations;
+pub mod m20250101_000014_create_onboarding_and_changelog;
+pub mod m20250101_000015_create_establishments;
+pub mod m20250101_000016_create_workflow_runs;
+
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -89,6 +97,13 @@ impl MigratorTrait for Migrator {
             Box::new(m_vault_add_warehouses::Migration),
             Box::new(m_vista_tables::Migration),
             Box::new(m_vista_add_dashboards::Migration),
+            // NEW MIGRATIONS
+            Box::new(m20250101_000011_create_audit_and_permissions::Migration),
+            Box::new(m20250101_000012_create_vista_views::Migration),
+            Box::new(m20250101_000013_create_shopify_integrations::Migration),
+            Box::new(m20250101_000014_create_onboarding_and_changelog::Migration),
+            Box::new(m20250101_000015_create_establishments::Migration),
+            Box::new(m20250101_000016_create_workflow_runs::Migration),
         ]
     }
 }
