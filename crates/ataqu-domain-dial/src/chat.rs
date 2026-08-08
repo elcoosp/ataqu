@@ -18,6 +18,9 @@ pub const MAX_MESSAGE_LEN: usize = 4_000;
 /// Required number of participants for a direct message channel.
 pub const DM_PARTICIPANT_COUNT: usize = 2;
 
+/// Magic string used to mention all participants in a channel.
+pub const CHANNEL_MENTION: &str = "channel";
+
 // ============================================================================
 // Identifier Newtypes
 // ============================================================================

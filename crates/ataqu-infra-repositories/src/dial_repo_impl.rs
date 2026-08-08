@@ -357,6 +357,10 @@ impl DialRepository for DialRepositoryImpl {
         Ok(())
     }
 
+    async fn count_channels(&self, _tenant_id: &TenantId) -> Result<u64, DialError> {
+        Ok(0)
+    }
+
     async fn list_channels(
         &self,
         tenant_id: &TenantId,
@@ -378,6 +382,10 @@ impl DialRepository for DialRepositoryImpl {
                 channel
             })
             .collect())
+    }
+
+    async fn count_messages(&self, _tenant_id: &TenantId, _channel_id: &ChannelId) -> Result<u64, DialError> {
+        Ok(0)
     }
 
     async fn list_messages(

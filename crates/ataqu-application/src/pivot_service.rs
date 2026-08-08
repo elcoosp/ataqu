@@ -289,7 +289,7 @@ impl PivotService {
         block_type: BlockType,
         expected_version: i32,
     ) -> PivotResult<Block> {
-        let block = self
+        let block_event = self
             .block_repo
             .get_block_by_id(&tenant_id, block_id)
             .await
@@ -299,21 +299,21 @@ impl PivotService {
             })?;
 
         // ADR-005: Optimistic Concurrency Control
-        if block.version != expected_version {
+        if block_event.version != expected_version {
             return Err(PivotServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",
-                expected_version, block.version
+                expected_version, block_event.version
             )));
         }
 
         let updated_block = Block {
-            id: block.id,
-            tenant_id: block.tenant_id,
-            document_id: block.document_id,
+            id: block_event.id,
+            tenant_id: block_event.tenant_id,
+            document_id: block_event.document_id,
             block_type,
-            created_at: block.created_at,
+            created_at: block_event.created_at,
             updated_at: self.clock.now().into(),
-            version: block.version + 1,
+            version: block_event.version + 1,
         };
         self.block_repo
             .save_block(&updated_block)

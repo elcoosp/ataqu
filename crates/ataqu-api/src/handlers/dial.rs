@@ -125,12 +125,11 @@ pub async fn list_channels(
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ChannelResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let channels = state
+    let (channels, total) = state
         .dial_service
         .list_channels(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = channels.len() as u64 + offset;
     let items = channels.into_iter().map(|c| c.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -289,7 +288,7 @@ pub async fn list_messages(
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<MessageResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let msgs = state
+    let (msgs, total) = state
         .dial_service
         .list_messages(auth.tenant_id, channel_id, auth.user_id, limit, offset)
         .await
@@ -299,7 +298,6 @@ pub async fn list_messages(
             }
             _ => ApiResponseError::internal(&e.to_string()),
         })?;
-    let total = msgs.len() as u64 + offset;
     let items = msgs.into_iter().map(|m| m.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,

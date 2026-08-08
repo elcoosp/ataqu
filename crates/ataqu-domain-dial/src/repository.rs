@@ -66,6 +66,8 @@ pub trait DialRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Channel>, DialError>;
+
+    async fn count_channels(&self, tenant_id: &TenantId) -> Result<u64, DialError>;
     async fn list_messages(
         &self,
         tenant_id: &TenantId,
@@ -73,6 +75,12 @@ pub trait DialRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Message>, DialError>;
+
+    async fn count_messages(
+        &self,
+        tenant_id: &TenantId,
+        channel_id: &ChannelId,
+    ) -> Result<u64, DialError>;
     async fn list_messages_for_thread(
         &self,
         tenant_id: &TenantId,
