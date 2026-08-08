@@ -311,7 +311,6 @@ impl DialRepository for DialRepositoryImpl {
     }
 
     async fn insert_mention(&self, mention: &Mention) -> Result<(), DialError> {
-
         let active = mention_domain_to_active(mention);
         mention_entity::Entity::insert(active)
             .exec(&self.db)
@@ -384,7 +383,11 @@ impl DialRepository for DialRepositoryImpl {
             .collect())
     }
 
-    async fn count_messages(&self, _tenant_id: &TenantId, _channel_id: &ChannelId) -> Result<u64, DialError> {
+    async fn count_messages(
+        &self,
+        _tenant_id: &TenantId,
+        _channel_id: &ChannelId,
+    ) -> Result<u64, DialError> {
         Ok(0)
     }
 

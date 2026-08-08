@@ -216,8 +216,16 @@ impl VaultService {
         limit: u64,
         offset: u64,
     ) -> VaultResult<(Vec<Product>, u64)> {
-        let total = self.repo.count_products(&tenant_id).await.map_err(VaultServiceError::Repository)?;
-        let products = self.repo.list_products(&tenant_id, limit, offset).await.map_err(VaultServiceError::Repository)?;
+        let total = self
+            .repo
+            .count_products(&tenant_id)
+            .await
+            .map_err(VaultServiceError::Repository)?;
+        let products = self
+            .repo
+            .list_products(&tenant_id, limit, offset)
+            .await
+            .map_err(VaultServiceError::Repository)?;
         Ok((products, total))
     }
 
@@ -343,8 +351,16 @@ impl VaultService {
         limit: u64,
         offset: u64,
     ) -> VaultResult<(Vec<Variant>, u64)> {
-        let total = self.repo.count_variants(&tenant_id).await.map_err(VaultServiceError::Repository)?;
-        let variants = self.repo.list_variants(&tenant_id, limit, offset).await.map_err(VaultServiceError::Repository)?;
+        let total = self
+            .repo
+            .count_variants(&tenant_id)
+            .await
+            .map_err(VaultServiceError::Repository)?;
+        let variants = self
+            .repo
+            .list_variants(&tenant_id, limit, offset)
+            .await
+            .map_err(VaultServiceError::Repository)?;
         Ok((variants, total))
     }
 

@@ -200,17 +200,13 @@ impl SparkService {
             .repo
             .list_active_workflows_by_event_type(&event.schema, &event.event_type)
             .await?;
-        let event_tenant_id = match event
-            .payload
-            .get("tenant_id")
-            .and_then(|v| {
-                if let serde_json::Value::String(s) = v {
-                    Uuid::parse_str(s).ok()
-                } else {
-                    None
-                }
-            })
-        {
+        let event_tenant_id = match event.payload.get("tenant_id").and_then(|v| {
+            if let serde_json::Value::String(s) = v {
+                Uuid::parse_str(s).ok()
+            } else {
+                None
+            }
+        }) {
             Some(id) => id,
             None => {
                 tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload. Skipping.");
@@ -238,7 +234,9 @@ impl SparkService {
             if let Trigger::Schedule { cron } = &workflow.trigger {
                 if let Ok(cron_job) = croner::Cron::new(cron).parse() {
                     // Find the previous occurrence to see if we missed it
-                    if let Ok(prev_run) = cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false) {
+                    if let Ok(prev_run) =
+                        cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false)
+                    {
                         if prev_run <= now {
                             tracing::info!("Triggering scheduled workflow {}", workflow.id);
                             let payload = serde_json::json!({ "time": now.to_rfc3339() });

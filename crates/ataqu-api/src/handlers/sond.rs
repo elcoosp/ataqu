@@ -102,7 +102,12 @@ pub async fn list_forms(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let items = forms.into_iter().map(|f| f.into()).collect();
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_form(

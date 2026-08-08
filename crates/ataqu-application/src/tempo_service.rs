@@ -227,8 +227,16 @@ impl TempoService {
         limit: u64,
         offset: u64,
     ) -> TempoResult<(Vec<Booking>, u64)> {
-        let total = self.repo.count_bookings(&tenant_id).await.map_err(TempoServiceError::Repository)?;
-        let bookings = self.repo.list_bookings(&tenant_id, limit, offset).await.map_err(TempoServiceError::Repository)?;
+        let total = self
+            .repo
+            .count_bookings(&tenant_id)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        let bookings = self
+            .repo
+            .list_bookings(&tenant_id, limit, offset)
+            .await
+            .map_err(TempoServiceError::Repository)?;
         Ok((bookings, total))
     }
 
@@ -382,9 +390,20 @@ impl TempoService {
         Ok(event_type)
     }
 
-    pub async fn list_event_types(&self, tenant_id: TenantId) -> TempoResult<(Vec<EventType>, u64)> {
-        let total = self.repo.count_event_types(&tenant_id).await.map_err(TempoServiceError::Repository)?;
-        let event_types = self.repo.list_event_types(&tenant_id).await.map_err(TempoServiceError::Repository)?;
+    pub async fn list_event_types(
+        &self,
+        tenant_id: TenantId,
+    ) -> TempoResult<(Vec<EventType>, u64)> {
+        let total = self
+            .repo
+            .count_event_types(&tenant_id)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        let event_types = self
+            .repo
+            .list_event_types(&tenant_id)
+            .await
+            .map_err(TempoServiceError::Repository)?;
         Ok((event_types, total))
     }
 
@@ -555,9 +574,16 @@ impl TempoService {
         });
 
         self.outbox
-            .append("collab_crm", "TempoInviteeCreated", Uuid::new_v4(), &contact_payload)
+            .append(
+                "collab_crm",
+                "TempoInviteeCreated",
+                Uuid::new_v4(),
+                &contact_payload,
+            )
             .await
-            .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         let cmd = CreateBookingCommand {
             tenant_id,

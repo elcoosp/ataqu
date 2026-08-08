@@ -45,7 +45,11 @@ impl RateLimiter {
             .requests
             .iter()
             .filter_map(|entry| {
-                if entry.value().iter().all(|t| now.duration_since(*t) >= self.window) {
+                if entry
+                    .value()
+                    .iter()
+                    .all(|t| now.duration_since(*t) >= self.window)
+                {
                     Some(entry.key().clone())
                 } else {
                     None

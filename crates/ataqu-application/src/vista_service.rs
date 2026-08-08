@@ -63,17 +63,13 @@ impl VistaService {
 
     pub async fn process_event(&self, event: &OutboxEvent) -> VistaResult<()> {
         metrics::counter!("ataqu_vista_events_processed_total", "schema" => event.schema.clone(), "event_type" => event.event_type.clone()).increment(1);
-        let tenant_id = match event
-            .payload
-            .get("tenant_id")
-            .and_then(|v| {
-                if let serde_json::Value::String(s) = v {
-                    Uuid::parse_str(s).ok()
-                } else {
-                    None
-                }
-            })
-        {
+        let tenant_id = match event.payload.get("tenant_id").and_then(|v| {
+            if let serde_json::Value::String(s) = v {
+                Uuid::parse_str(s).ok()
+            } else {
+                None
+            }
+        }) {
             Some(id) => TenantId::new(id),
             None => {
                 tracing::warn!(event_type = %event.event_type, "Outbox event missing tenant_id in payload. Skipping.");

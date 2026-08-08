@@ -71,7 +71,12 @@ pub async fn list_workflows(
             updated_at: w.updated_at.into(),
         })
         .collect();
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn create_workflow(

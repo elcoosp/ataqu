@@ -1,4 +1,3 @@
-use ataqu_security::Email;
 use async_trait::async_trait;
 use ataqu_domain_pause::employee::Employee;
 use ataqu_domain_pause::leave::{LeaveRequest, LeaveStatus, LeaveType};
@@ -7,6 +6,7 @@ use ataqu_domain_pause::repository::{
 };
 use ataqu_domain_pause::{EmployeeDocument, PauseDomainError};
 use ataqu_kernel::TenantId;
+use ataqu_security::Email;
 use sea_orm::entity::prelude::*;
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, Set,
@@ -142,7 +142,10 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             id: Set(event.employee_id),
             tenant_id: Set(tenant_id.as_uuid()),
             full_name: Set(event.full_name.clone()),
-            email: Set(event.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string()),
+            email: Set(event
+                .email
+                .reveal(&ataqu_security::PiiAccessKey::new())
+                .to_string()),
             phone: Set(event.phone.clone()),
             job_title: Set(event.job_title.clone()),
             department: Set(event.department.clone()),
@@ -262,7 +265,10 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             id: Set(employee.id),
             tenant_id: Set(tenant_id.as_uuid()),
             full_name: Set(employee.full_name.clone()),
-            email: Set(employee.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string()),
+            email: Set(employee
+                .email
+                .reveal(&ataqu_security::PiiAccessKey::new())
+                .to_string()),
             phone: Set(employee.phone.clone()),
             job_title: Set(employee.job_title.clone()),
             department: Set(employee.department.clone()),
@@ -501,7 +507,12 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
         Ok(0)
     }
 
-    async fn list_with_employee_names(&self, tenant_id: &TenantId, limit: u64, offset: u64) -> Result<Vec<(LeaveRequest, String)>, PauseDomainError> {
+    async fn list_with_employee_names(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<(LeaveRequest, String)>, PauseDomainError> {
         let models = leave_request_entity::Entity::find()
             .filter(leave_request_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .limit(limit)
@@ -522,7 +533,8 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
             .await
             .map_err(map_err)?;
 
-        let employee_map: std::collections::HashMap<Uuid, String> = employees.into_iter().map(|e| (e.id, e.full_name)).collect();
+        let employee_map: std::collections::HashMap<Uuid, String> =
+            employees.into_iter().map(|e| (e.id, e.full_name)).collect();
 
         let mut results = Vec::new();
         for m in models {
@@ -541,7 +553,10 @@ impl LeaveRequestRepositoryPort for PauseRepositoryImpl {
                 updated_at: m.updated_at.into(),
                 version: m.version,
             };
-            let name = employee_map.get(&m.employee_id).cloned().unwrap_or_default();
+            let name = employee_map
+                .get(&m.employee_id)
+                .cloned()
+                .unwrap_or_default();
             results.push((lr, name));
         }
         Ok(results)

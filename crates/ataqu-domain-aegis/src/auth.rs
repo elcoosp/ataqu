@@ -99,7 +99,11 @@ pub enum AuthError {
 /// Repository trait for user persistence (async).
 #[async_trait]
 pub trait AuthRepository: Send + Sync {
-    async fn find_by_email(&self, email: &Email, tenant_id: Option<TenantId>) -> Result<Option<User>, AuthError>;
+    async fn find_by_email(
+        &self,
+        email: &Email,
+        tenant_id: Option<TenantId>,
+    ) -> Result<Option<User>, AuthError>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AuthError>;
     async fn save_user(&self, user: &User) -> Result<(), AuthError>;
     async fn list_users(&self, tenant_id: Uuid) -> Result<Vec<User>, AuthError>;

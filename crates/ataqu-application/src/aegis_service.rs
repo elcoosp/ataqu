@@ -336,7 +336,10 @@ impl AegisService {
                 return Err(AegisServiceError::AuthenticationFailed);
             }
         }
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
         let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config)?;
         self.repo.save_user(&updated_user).await?;
@@ -405,7 +408,10 @@ impl AegisService {
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
             access_token: access,
@@ -604,16 +610,22 @@ impl AegisService {
         &self,
         email: Email,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
-        let user = self.repo.find_by_email(&email, None).await?
-            .ok_or(AegisServiceError::NotFound(
-                "User not found. Please sign up first.".to_string(),
-            ))?;
+        let user =
+            self.repo
+                .find_by_email(&email, None)
+                .await?
+                .ok_or(AegisServiceError::NotFound(
+                    "User not found. Please sign up first.".to_string(),
+                ))?;
 
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
 
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
             access_token: access,
@@ -669,7 +681,10 @@ impl AegisService {
             return Ok(());
         }
 
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()

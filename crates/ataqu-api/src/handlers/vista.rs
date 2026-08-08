@@ -66,7 +66,9 @@ pub async fn create_dashboard(
         .create_dashboard(auth.tenant_id, payload.name, payload.config)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(serde_json::json!({ "id": dashboard.id, "version": dashboard.version })))
+    Ok(Json(
+        serde_json::json!({ "id": dashboard.id, "version": dashboard.version }),
+    ))
 }
 
 pub async fn list_dashboards(
@@ -129,13 +131,7 @@ pub async fn update_dashboard(
         })?;
     let dashboard = state
         .vista_service
-        .update_dashboard(
-            auth.tenant_id,
-            id,
-            payload.name,
-            payload.config,
-            if_match,
-        )
+        .update_dashboard(auth.tenant_id, id, payload.name, payload.config, if_match)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     Ok(Json(serde_json::json!({

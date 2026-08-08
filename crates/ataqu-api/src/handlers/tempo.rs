@@ -48,7 +48,10 @@ impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
             event_type_id: b.event_type_id.0,
             starts_at: b.starts_at.into(),
             duration_minutes: b.duration_minutes,
-            status: serde_json::to_string(&b.status).unwrap_or_default().trim_matches('"').to_string(),
+            status: serde_json::to_string(&b.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             created_at: b.created_at.into(),
             version: b.version,
         }
@@ -86,7 +89,12 @@ pub async fn list_bookings(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let items = bookings.into_iter().map(|b| b.into()).collect();
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit: 100, offset: 0 }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit: 100,
+        offset: 0,
+    }))
 }
 
 pub async fn get_booking(
@@ -253,7 +261,12 @@ pub async fn list_event_types(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let items = event_types.into_iter().map(|e| e.into()).collect();
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit: 100, offset: 0 }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit: 100,
+        offset: 0,
+    }))
 }
 
 #[derive(Debug, Deserialize)]
@@ -426,7 +439,10 @@ pub async fn public_create_booking(
         Json(PublicBookingResponse {
             id: booking.id.0,
             starts_at: booking.starts_at.into(),
-            status: serde_json::to_string(&booking.status).unwrap_or_default().trim_matches('"').to_string(),
+            status: serde_json::to_string(&booking.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
         }),
     ))
 }

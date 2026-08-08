@@ -102,7 +102,12 @@ pub async fn list_products(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let items = products.into_iter().map(ProductResponse::from).collect();
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_product(
@@ -265,7 +270,12 @@ pub async fn list_variants(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let items = variants.into_iter().map(VariantResponse::from).collect();
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_variant(

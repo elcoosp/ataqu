@@ -204,9 +204,7 @@ impl DialService {
         offset: u64,
     ) -> DialResult<(Vec<Channel>, u64)> {
         let total = self.repo.count_channels(&tenant_id).await?;
-        let channels = self.repo
-            .list_channels(&tenant_id, limit, offset)
-            .await?;
+        let channels = self.repo.list_channels(&tenant_id, limit, offset).await?;
         Ok((channels, total))
     }
 
@@ -414,8 +412,12 @@ impl DialService {
                 "User is not a participant in this channel".to_string(),
             ));
         }
-        let total = self.repo.count_messages(&tenant_id, &channel_id_obj).await?;
-        let messages = self.repo
+        let total = self
+            .repo
+            .count_messages(&tenant_id, &channel_id_obj)
+            .await?;
+        let messages = self
+            .repo
             .list_messages(&tenant_id, &channel_id_obj, limit, offset)
             .await?;
         Ok((messages, total))

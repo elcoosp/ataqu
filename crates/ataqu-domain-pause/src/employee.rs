@@ -92,10 +92,14 @@ pub fn deactivate_employee(employee: &mut Employee, clock: &dyn Clock) {
     employee.updated_at = clock.now();
 }
 
-
 pub fn validate_employee_email(email: &Email) -> Result<(), PauseDomainError> {
-    if !email.reveal(&ataqu_security::PiiAccessKey::new()).contains('@') {
-        return Err(PauseDomainError::Validation("Invalid email format".to_string()));
+    if !email
+        .reveal(&ataqu_security::PiiAccessKey::new())
+        .contains('@')
+    {
+        return Err(PauseDomainError::Validation(
+            "Invalid email format".to_string(),
+        ));
     }
     Ok(())
 }

@@ -123,7 +123,10 @@ pub fn create_contact(
     })
 }
 
-pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> Result<ContactUpdated, CinqDomainError> {
+pub fn update_contact(
+    cmd: UpdateContactCommand,
+    clock: &dyn Clock,
+) -> Result<ContactUpdated, CinqDomainError> {
     if let Some(ref name) = cmd.name {
         validate_contact_name(name)?;
     }

@@ -88,7 +88,10 @@ pub async fn idempotency_middleware(mut req: Request, next: Next) -> Result<Resp
                 let bytes = to_bytes(body, 1024 * 1024)
                     .await
                     .map_err(|_| StatusCode::PAYLOAD_TOO_LARGE)?;
-                IDEMPOTENCY_CACHE.insert(command_id, (parts.status, parts.headers.clone(), bytes.to_vec()));
+                IDEMPOTENCY_CACHE.insert(
+                    command_id,
+                    (parts.status, parts.headers.clone(), bytes.to_vec()),
+                );
                 return Ok(Response::from_parts(parts, Body::from(bytes)));
             }
             return Ok(resp);

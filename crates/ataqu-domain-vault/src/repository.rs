@@ -86,5 +86,4 @@ pub trait VaultRepository: Send + Sync {
     ) -> Result<Option<Warehouse>, RepositoryError> {
         Ok(None)
     }
-
 }

@@ -218,8 +218,16 @@ impl PauseService {
         limit: u64,
         offset: u64,
     ) -> Result<(Vec<Employee>, u64), PauseServiceError> {
-        let total = self.employee_repo.count_employees(tenant_id).await.map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
-        let employees = self.employee_repo.list(tenant_id, limit, offset).await.map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        let total = self
+            .employee_repo
+            .count_employees(tenant_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        let employees = self
+            .employee_repo
+            .list(tenant_id, limit, offset)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
         Ok((employees, total))
     }
 
@@ -253,8 +261,16 @@ impl PauseService {
         limit: u64,
         offset: u64,
     ) -> Result<(Vec<(LeaveRequest, String)>, u64), PauseServiceError> {
-        let total = self.leave_request_repo.count_leave_requests(tenant_id).await.map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
-        let requests = self.leave_request_repo.list_with_employee_names(tenant_id, limit, offset).await.map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        let total = self
+            .leave_request_repo
+            .count_leave_requests(tenant_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        let requests = self
+            .leave_request_repo
+            .list_with_employee_names(tenant_id, limit, offset)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
         Ok((requests, total))
     }
 

@@ -17,7 +17,11 @@ pub trait BlockRepository: Send + Sync {
         tenant_id: &TenantId,
         document_id: Uuid,
     ) -> Result<Vec<Block>, RepositoryError>;
-    async fn delete_block(&self, tenant_id: &TenantId, block_id: Uuid) -> Result<(), RepositoryError>;
+    async fn delete_block(
+        &self,
+        tenant_id: &TenantId,
+        block_id: Uuid,
+    ) -> Result<(), RepositoryError>;
 }
 
 #[async_trait::async_trait]
@@ -29,7 +33,11 @@ pub trait DatabaseRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<DatabaseCreatedEvent>, RepositoryError>;
-    async fn delete_database(&self, tenant_id: &TenantId, db_id: Uuid) -> Result<(), RepositoryError>;
+    async fn delete_database(
+        &self,
+        tenant_id: &TenantId,
+        db_id: Uuid,
+    ) -> Result<(), RepositoryError>;
 }
 
 #[async_trait::async_trait]
@@ -50,7 +58,11 @@ pub trait DocumentRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<DocumentCreatedEvent>, RepositoryError>;
-    async fn delete_document(&self, tenant_id: &TenantId, doc_id: Uuid) -> Result<(), RepositoryError>;
+    async fn delete_document(
+        &self,
+        tenant_id: &TenantId,
+        doc_id: Uuid,
+    ) -> Result<(), RepositoryError>;
     async fn search_documents(
         &self,
         tenant_id: &TenantId,
@@ -64,7 +76,10 @@ pub trait DocumentRepository: Send + Sync {
         doc_id: Uuid,
         limit: u64,
     ) -> Result<Vec<crate::document::DocumentVersion>, RepositoryError>;
-    async fn save_template(&self, template: &crate::document::Template) -> Result<(), RepositoryError>;
+    async fn save_template(
+        &self,
+        template: &crate::document::Template,
+    ) -> Result<(), RepositoryError>;
     async fn list_templates(
         &self,
         tenant_id: &TenantId,
@@ -73,7 +88,10 @@ pub trait DocumentRepository: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait RelationRepository: Send + Sync {
-    async fn save_relation(&self, event: &crate::block::RelationCreatedEvent) -> Result<(), RepositoryError>;
+    async fn save_relation(
+        &self,
+        event: &crate::block::RelationCreatedEvent,
+    ) -> Result<(), RepositoryError>;
     async fn get_relations_for_document(
         &self,
         tenant_id: &TenantId,

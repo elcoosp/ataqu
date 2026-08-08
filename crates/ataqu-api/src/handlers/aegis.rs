@@ -524,7 +524,7 @@ pub async fn create_api_key(
             "key": key.key,
             "prefix": key.prefix,
             "scopes": key.scopes,
-        }))
+        })),
     ))
 }
 

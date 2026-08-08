@@ -1,8 +1,6 @@
-use crate::{
-    Employee, EmployeeDocument, LeaveRequest, PauseDomainError,
-};
-use ataqu_kernel::TenantId;
+use crate::{Employee, EmployeeDocument, LeaveRequest, PauseDomainError};
 use async_trait::async_trait;
+use ataqu_kernel::TenantId;
 use uuid::Uuid;
 
 #[async_trait]

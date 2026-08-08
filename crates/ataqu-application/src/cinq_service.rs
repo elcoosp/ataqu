@@ -447,7 +447,9 @@ impl CinqService {
                 wtr.write_record(&[
                     c.id.to_string(),
                     c.name.clone(),
-                    c.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+                    c.email
+                        .reveal(&ataqu_security::PiiAccessKey::new())
+                        .to_string(),
                     c.phone
                         .as_ref()
                         .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
@@ -662,8 +664,14 @@ impl CinqService {
         limit: u64,
         offset: u64,
     ) -> CinqResult<(Vec<Activity>, u64)> {
-        let total = self.activity_repo.count_activities_for_contact(&tenant_id, contact_id).await?;
-        let activities = self.activity_repo.list_activities_for_contact(&tenant_id, contact_id, limit, offset).await?;
+        let total = self
+            .activity_repo
+            .count_activities_for_contact(&tenant_id, contact_id)
+            .await?;
+        let activities = self
+            .activity_repo
+            .list_activities_for_contact(&tenant_id, contact_id, limit, offset)
+            .await?;
         Ok((activities, total))
     }
 
@@ -674,7 +682,10 @@ impl CinqService {
         offset: u64,
     ) -> CinqResult<(Vec<Activity>, u64)> {
         let total = self.activity_repo.count_all_activities(&tenant_id).await?;
-        let activities = self.activity_repo.list_all_activities(&tenant_id, limit, offset).await?;
+        let activities = self
+            .activity_repo
+            .list_all_activities(&tenant_id, limit, offset)
+            .await?;
         Ok((activities, total))
     }
 

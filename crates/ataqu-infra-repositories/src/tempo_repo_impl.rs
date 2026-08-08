@@ -210,7 +210,6 @@ impl TempoRepository for TempoRepositoryImpl {
         tenant_id: &TenantId,
         slug: &str,
     ) -> Result<Option<EventType>, RepositoryError> {
-
         let model = event_type_entity::Entity::find()
             .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(event_type_entity::Column::Slug.eq(slug))

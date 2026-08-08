@@ -101,9 +101,15 @@ pub async fn unified_search(
     let user_matches: Vec<_> = users
         .into_iter()
         .filter(|u| {
-            let email_str = u.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+            let email_str = u
+                .email
+                .reveal(&ataqu_security::PiiAccessKey::new())
+                .to_string();
             email_str.contains(&params.q)
-                || u.name.as_deref().map(|n| n.contains(&params.q)).unwrap_or(false)
+                || u.name
+                    .as_deref()
+                    .map(|n| n.contains(&params.q))
+                    .unwrap_or(false)
         })
         .take(overall_limit)
         .collect();

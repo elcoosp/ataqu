@@ -619,7 +619,9 @@ async fn main() -> anyhow::Result<()> {
                             } else {
                                 tracing::info!("Password reset email sent for {}", recipient_clone);
                             }
-                        }).await.ok();
+                        })
+                        .await
+                        .ok();
                     }
 
                     if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
@@ -687,9 +689,14 @@ async fn main() -> anyhow::Result<()> {
                             if let Err(e) = mailer_clone.send(&email_clone) {
                                 tracing::error!("Failed to send booking reminder email: {}", e);
                             } else {
-                                tracing::info!("Booking reminder email sent for {}", booking_id_clone);
+                                tracing::info!(
+                                    "Booking reminder email sent for {}",
+                                    booking_id_clone
+                                );
                             }
-                        }).await.ok();
+                        })
+                        .await
+                        .ok();
                     }
 
                     Ok(())
@@ -725,11 +732,7 @@ async fn main() -> anyhow::Result<()> {
                 set.spawn(async move {
                     let tenant_id = TenantId::new(tid);
                     if let Err(e) = tempo_service.no_show_worker(tenant_id).await {
-                        tracing::error!(
-                            "No-show worker crashed for tenant {}: {}.",
-                            tid,
-                            e
-                        );
+                        tracing::error!("No-show worker crashed for tenant {}: {}.", tid, e);
                     }
                 });
             }
@@ -750,11 +753,7 @@ async fn main() -> anyhow::Result<()> {
                 set.spawn(async move {
                     let tenant_id = TenantId::new(tid);
                     if let Err(e) = tempo_service.reminder_worker(tenant_id).await {
-                        tracing::error!(
-                            "Reminder worker crashed for tenant {}: {}.",
-                            tid,
-                            e
-                        );
+                        tracing::error!("Reminder worker crashed for tenant {}: {}.", tid, e);
                     }
                 });
             }

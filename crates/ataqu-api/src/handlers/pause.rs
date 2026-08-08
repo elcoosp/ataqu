@@ -204,11 +204,17 @@ pub async fn request_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type).unwrap_or_default().trim_matches('"').to_string(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: serde_json::to_string(&request.status).unwrap_or_default().trim_matches('"').to_string(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };
@@ -229,7 +235,12 @@ pub async fn list_employees(
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let items = employees.into_iter().map(EmployeeResponse::from).collect();
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn deactivate_employee(
@@ -295,19 +306,29 @@ pub async fn list_leave_requests(
             id: r.id,
             employee_id: r.employee_id,
             employee_name: name,
-            leave_type: serde_json::to_string(&r.leave_type).unwrap_or_default().trim_matches('"').to_string(),
+            leave_type: serde_json::to_string(&r.leave_type)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             start_date: r.start_date,
             end_date: r.end_date,
             reason: r.reason,
-            status: serde_json::to_string(&r.status).unwrap_or_default().trim_matches('"').to_string(),
+            status: serde_json::to_string(&r.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             created_at: r.created_at.into(),
             updated_at: r.updated_at.into(),
         })
         .collect();
 
-    Ok(Json(ataqu_contracts::PaginatedResponse { items, total, limit, offset }))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
-
 
 pub async fn approve_leave(
     State(state): State<AppState>,
@@ -345,11 +366,17 @@ pub async fn approve_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type).unwrap_or_default().trim_matches('"').to_string(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: serde_json::to_string(&request.status).unwrap_or_default().trim_matches('"').to_string(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };
@@ -392,11 +419,17 @@ pub async fn reject_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type).unwrap_or_default().trim_matches('"').to_string(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: serde_json::to_string(&request.status).unwrap_or_default().trim_matches('"').to_string(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };
@@ -439,11 +472,17 @@ pub async fn cancel_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type).unwrap_or_default().trim_matches('"').to_string(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: serde_json::to_string(&request.status).unwrap_or_default().trim_matches('"').to_string(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };

@@ -96,14 +96,21 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 
     // Check DB connection by executing a simple query
     use sea_orm::ConnectionTrait;
-    match state.db.execute_raw(sea_orm::Statement::from_string(
-        sea_orm::DbBackend::Postgres,
-        "SELECT 1",
-    )).await {
+    match state
+        .db
+        .execute_raw(sea_orm::Statement::from_string(
+            sea_orm::DbBackend::Postgres,
+            "SELECT 1",
+        ))
+        .await
+    {
         Ok(_) => (axum::http::StatusCode::OK, "ready"),
         Err(e) => {
             tracing::error!(error = %e, "Readiness check DB query failed");
-            (axum::http::StatusCode::SERVICE_UNAVAILABLE, "database unavailable")
+            (
+                axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                "database unavailable",
+            )
         }
     }
 }

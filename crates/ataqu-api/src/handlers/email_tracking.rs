@@ -48,13 +48,11 @@ pub async fn track_email_public(
         .unwrap();
 
     match state.email_tracking_tx.try_send(tracking_event) {
-        Ok(()) => {
-            Ok((
-                axum::http::StatusCode::OK,
-                [(axum::http::header::CONTENT_TYPE, "image/gif")],
-                pixel,
-            ))
-        }
+        Ok(()) => Ok((
+            axum::http::StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "image/gif")],
+            pixel,
+        )),
         Err(e) => {
             metrics::counter!("ataqu_email_tracking_dropped_total").increment(1);
             tracing::error!("Failed to enqueue tracking event: {}", e);

@@ -352,7 +352,13 @@ pub async fn edit_message(
         })?;
     let edited = state
         .dial_service
-        .edit_message(auth.tenant_id, message_id, auth.user_id, payload.content, if_match)
+        .edit_message(
+            auth.tenant_id,
+            message_id,
+            auth.user_id,
+            payload.content,
+            if_match,
+        )
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
