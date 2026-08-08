@@ -183,6 +183,22 @@ impl TempoService {
             .await
             .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
 
+        // CRM Integration: Emit event for CINQ to consume
+        if let Some(contact_id) = cmd.contact_id {
+            let starts_at_dt: chrono::DateTime<chrono::Utc> = booking.starts_at.into();
+            let crm_payload = serde_json::json!({
+                "tenant_id": booking.tenant_id.as_uuid(),
+                "contact_id": contact_id,
+                "activity_type": "meeting",
+                "description": format!("Scheduled meeting for {}", starts_at_dt.to_rfc3339()),
+                "scheduled_at": booking.starts_at,
+            });
+            self.outbox
+                .append("collab_crm", "TempoBookingCreatedForContact", contact_id, &crm_payload)
+                .await
+                .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+        }
+
         Ok(booking)
     }
 

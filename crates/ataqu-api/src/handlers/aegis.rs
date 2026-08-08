@@ -375,7 +375,7 @@ pub async fn update_user_role(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateRoleRequest>,
 ) -> ApiResult<StatusCode> {
-    let _if_match = headers.get(axum::http::header::IF_MATCH)
+    let if_match = headers.get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
         .ok_or_else(|| {
@@ -392,7 +392,7 @@ pub async fn update_user_role(
     }
     state
         .aegis_service
-        .update_user_role(user_id, req.role)
+        .update_user_role(user_id, req.role, if_match)
         .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::OK)

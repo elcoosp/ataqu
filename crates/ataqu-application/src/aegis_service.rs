@@ -138,6 +138,7 @@ impl RealAegisDomain {
             created_at: now,
             updated_at: now,
             last_login_at: None,
+            version: 0,
         };
         let event = UserCreated {
             user_id,
@@ -444,13 +445,21 @@ impl AegisService {
         &self,
         user_id: Uuid,
         role: String,
+        expected_version: i32,
     ) -> Result<(), AegisServiceError> {
         let mut user = self
             .repo
             .find_by_id(user_id)
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+        if user.version != expected_version {
+            return Err(AegisServiceError::Conflict(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, user.version
+            )));
+        }
         user.role = role;
+        user.version += 1;
         self.repo.save_user(&user).await?;
         Ok(())
     }
@@ -547,42 +556,6 @@ impl AegisService {
             .map_err(AegisServiceError::Domain)
     }
 
-    pub async fn validate_api_key(&self, key: &str) -> Result<User, AegisServiceError> {
-        use sha2::{Digest, Sha256};
-        let mut hasher = Sha256::new();
-        hasher.update(key.as_bytes());
-        let hash = format!("{:x}", hasher.finalize());
-
-        let api_key = self
-            .repo
-            .find_api_key_by_hash(&hash)
-            .await?
-            .ok_or(AegisServiceError::AuthenticationFailed)?;
-
-        if let Some(expires_at) = api_key.expires_at {
-            if expires_at < self.clock.now() {
-                return Err(AegisServiceError::AuthenticationFailed);
-            }
-        }
-
-        let user = self
-            .repo
-            .find_by_id(api_key.user_id)
-            .await?
-            .ok_or(AegisServiceError::AuthenticationFailed)?;
-
-        if !user.is_active {
-            return Err(AegisServiceError::AuthenticationFailed);
-        }
-
-        let _ = self
-            .repo
-            .update_api_key_last_used(api_key.id, self.clock.now())
-            .await;
-
-        Ok(user)
-    }
-
     pub async fn validate_api_key_data(
         &self,
         key: &str,
@@ -628,29 +601,28 @@ impl AegisService {
         })
     }
 
-    pub async fn validate_api_key_for_tenant(
-        &self,
-        key: &str,
-        tenant_id: TenantId,
-    ) -> Result<User, AegisServiceError> {
-        let user = self.validate_api_key(key).await?;
-        if user.tenant_id != tenant_id {
-            return Err(AegisServiceError::AuthenticationFailed);
-        }
-        Ok(user)
-    }
-
     pub async fn sso_exchange(
         &self,
         email: Email,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
-        let user = self
-            .repo
-            .find_by_email(&email)
-            .await?
-            .ok_or(AegisServiceError::NotFound(
-                "SSO User not found".to_string(),
-            ))?;
+        let user = match self.repo.find_by_email(&email).await? {
+            Some(u) => u,
+            None => {
+                // Auto-provision new SSO user
+                let cmd = DomainCreateUserCommand {
+                    tenant_id: TenantId::new(Uuid::nil()), // SSO users start in nil tenant, must select tenant later
+                    email: email.clone(),
+                    password: Uuid::new_v4().to_string(), // Random password
+                    name: None,
+                };
+                let (_event, user) = self
+                    .domain
+                    .create_user(cmd, self.id_gen.as_ref(), self.clock.as_ref())
+                    .map_err(AegisServiceError::Domain)?;
+                self.repo.save_user(&user).await?;
+                user
+            }
+        };
 
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
@@ -692,6 +664,7 @@ impl AegisService {
                 created_at: now,
                 updated_at: now,
                 last_login_at: None,
+                version: 0,
             };
             self.repo.save_user(&user).await?;
         }

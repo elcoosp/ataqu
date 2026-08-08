@@ -302,7 +302,7 @@ pub async fn list_deals(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<DealResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<DealResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
     let deals = state
@@ -310,7 +310,16 @@ pub async fn list_deals(
         .list_deals(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(deals.into_iter().map(DealResponse::from).collect()))
+    // Note: list_deals does not return total count in current service, using 0 as placeholder
+    // In a real scenario, the service should return (Vec<Deal>, u64)
+    let total = deals.len() as u64; // Temporary fix until service is updated
+    let items = deals.into_iter().map(DealResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_deal(

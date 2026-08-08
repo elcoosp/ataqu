@@ -47,6 +47,7 @@ pub struct User {
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
     pub last_login_at: Option<SystemTime>,
+    pub version: i32,
 }
 
 /// Event emitted when a user is created.
