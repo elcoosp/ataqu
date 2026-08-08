@@ -83,13 +83,13 @@ async fn main() -> anyhow::Result<()> {
         CinqActivityRepository, CinqContactRepository, CinqDealRepository,
         CinqPipelineStageRepository, CinqTaskRepository,
     };
-    let contact_repo = Arc::new(CinqContactRepository::new(pools.core.clone()));
-    let deal_repo = Arc::new(CinqDealRepository::new(pools.core.clone()));
-    let activity_repo = Arc::new(CinqActivityRepository::new(pools.core.clone()));
-    let task_repo = Arc::new(CinqTaskRepository::new(pools.core.clone()));
-    let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.core.clone()));
+    let contact_repo = Arc::new(CinqContactRepository::new(pools.cinq.clone()));
+    let deal_repo = Arc::new(CinqDealRepository::new(pools.cinq.clone()));
+    let activity_repo = Arc::new(CinqActivityRepository::new(pools.cinq.clone()));
+    let task_repo = Arc::new(CinqTaskRepository::new(pools.cinq.clone()));
+    let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.cinq.clone()));
     let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
+        pools.cinq.clone(),
     ));
     let cinq_service = Arc::new(CinqService::new(
         contact_repo,
@@ -103,10 +103,10 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
-    let dial_repo = Arc::new(DialRepositoryImpl::new(pools.core.clone()));
-    let dial_presence = Arc::new(DbPresenceStore::new(pools.core.clone()));
+    let dial_repo = Arc::new(DialRepositoryImpl::new(pools.dial.clone()));
+    let dial_presence = Arc::new(DbPresenceStore::new(pools.dial.clone()));
     let dial_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
+        pools.dial.clone(),
     ));
     let dial_service = Arc::new(DialService::new(
         dial_repo,
@@ -120,12 +120,12 @@ async fn main() -> anyhow::Result<()> {
         PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository,
         PivotRelationRepository,
     };
-    let pivot_doc_repo = Arc::new(PivotDocumentRepository::new(pools.core.clone()));
-    let pivot_db_repo = Arc::new(PivotDatabaseRepository::new(pools.core.clone()));
-    let pivot_block_repo = Arc::new(PivotBlockRepository::new(pools.core.clone()));
-    let pivot_rel_repo = Arc::new(PivotRelationRepository::new(pools.core.clone()));
+    let pivot_doc_repo = Arc::new(PivotDocumentRepository::new(pools.ops.clone()));
+    let pivot_db_repo = Arc::new(PivotDatabaseRepository::new(pools.ops.clone()));
+    let pivot_block_repo = Arc::new(PivotBlockRepository::new(pools.ops.clone()));
+    let pivot_rel_repo = Arc::new(PivotRelationRepository::new(pools.ops.clone()));
     let pivot_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
+        pools.ops.clone(),
     ));
     let pivot_service = Arc::new(PivotService::new(
         pivot_doc_repo,
@@ -138,9 +138,9 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
-    let sond_repo = Arc::new(SondRepositoryImpl::new(pools.core.clone()));
+    let sond_repo = Arc::new(SondRepositoryImpl::new(pools.ops.clone()));
     let sond_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
+        pools.ops.clone(),
     ));
     let sond_service = Arc::new(SondService::new(
         sond_repo,
@@ -150,9 +150,9 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
-    let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.core.clone()));
+    let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.vault.clone()));
     let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
+        pools.vault.clone(),
     ));
     let vault_service = Arc::new(VaultService::new(
         vault_repo,
@@ -162,11 +162,11 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
-    let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.core.clone()));
+    let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.vista.clone()));
     let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone(), id_gen.clone()));
 
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
-    let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.core.clone()));
+    let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.spark.clone()));
 
     use ataqu_application::cinq_service::{CreateActivityCommand, CreateContactCommand};
     use ataqu_application::dial_service::{CreateChannelCommand, SendMessageCommand};
@@ -371,9 +371,9 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
-    let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.core.clone()));
+    let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.ops.clone()));
     let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
+        pools.ops.clone(),
     ));
     let tempo_service = Arc::new(TempoService::new(
         tempo_repo,
@@ -384,12 +384,12 @@ async fn main() -> anyhow::Result<()> {
 
     use ataqu_application::pause_infra::RealIdempotency;
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
-    let pause_idempotency = Arc::new(RealIdempotency::new(pools.core.clone()));
-    let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
-    let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
-    let pause_doc_repo = Arc::new(PauseRepositoryImpl::new(pools.core.clone()));
+    let pause_idempotency = Arc::new(RealIdempotency::new(pools.ops.clone()));
+    let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
+    let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
+    let pause_doc_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
     let pause_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
-        pools.core.clone(),
+        pools.ops.clone(),
     ));
     let pause_service = Arc::new(PauseService::new(
         pause_idempotency,
@@ -402,7 +402,7 @@ async fn main() -> anyhow::Result<()> {
 
     let (email_writer, email_tracking_tx) =
         ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
-            pools.core.clone(),
+            pools.ops.clone(),
             std::path::PathBuf::from("/tmp/ataqu_email_spill"),
             10 * 1024 * 1024,
         );

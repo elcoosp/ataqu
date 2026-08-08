@@ -677,6 +677,7 @@ dependencies = [
 name = "ataqu-infra-pools"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "sea-orm",
  "sqlx",
  "thiserror 2.0.19",
