@@ -98,7 +98,7 @@ async fn main() -> anyhow::Result<()> {
         id_gen.clone(),
         clock.clone(),
         aegis_config,
-    });
+    ));
 
     use ataqu_infra_repositories::cinq_repo_impl::{
         CinqActivityRepository, CinqContactRepository, CinqDealRepository,
