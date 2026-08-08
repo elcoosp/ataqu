@@ -105,7 +105,6 @@ pub fn create_contact(
     clock: &dyn Clock,
 ) -> Result<ContactCreated, CinqDomainError> {
     validate_contact_name(&cmd.name)?;
-    validate_contact_email(&cmd.email)?;
     validate_contact_phone(&cmd.phone)?;
 
     let id = id_gen.new_uuid_v7();
@@ -127,9 +126,6 @@ pub fn create_contact(
 pub fn update_contact(cmd: UpdateContactCommand, clock: &dyn Clock) -> Result<ContactUpdated, CinqDomainError> {
     if let Some(ref name) = cmd.name {
         validate_contact_name(name)?;
-    }
-    if let Some(ref email) = cmd.email {
-        validate_contact_email(email)?;
     }
     if let Some(ref phone) = cmd.phone {
         validate_contact_phone(phone)?;
@@ -156,10 +152,6 @@ pub fn validate_contact_name(name: &str) -> CinqResult<()> {
             "Name cannot be empty".to_string(),
         ));
     }
-    Ok(())
-}
-
-pub fn validate_contact_email(_email: &Email) -> CinqResult<()> {
     Ok(())
 }
 

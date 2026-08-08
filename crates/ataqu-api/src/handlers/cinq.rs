@@ -102,6 +102,9 @@ pub async fn create_contact(
     auth: AuthContext,
     Json(payload): Json<CreateContactRequest>,
 ) -> ApiResult<(StatusCode, axum::http::HeaderMap, Json<ContactResponse>)> {
+    if !payload.email.contains('@') {
+        return Err(ApiResponseError::validation("Invalid email format"));
+    }
     let cmd = CreateContactCommand {
         tenant_id: auth.tenant_id,
         name: payload.name,
@@ -203,6 +206,11 @@ pub async fn update_contact(
             ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
         })?;
 
+    if let Some(ref email) = payload.email {
+        if !email.contains('@') {
+            return Err(ApiResponseError::validation("Invalid email format"));
+        }
+    }
     let cmd = UpdateContactCommand {
         id,
         tenant_id: auth.tenant_id,
