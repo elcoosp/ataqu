@@ -79,13 +79,31 @@ pub async fn auth_middleware(
             if token_data.claims.token_type != "access" {
                 return Err(ApiResponseError::unauthorized("Invalid token type"));
             }
-            // [LOW-001] Token version validation against DB is omitted for performance.
-            // We rely on short access token TTL (15m) and the JWT blocklist for revocation.
+
             // Note: token_version validation against DB would require a DB lookup on every request.
             // For now, we rely on short access token TTL (15 min) and the JWT blocklist for revocation.
             // A more robust solution would use a Redis-backed token version cache.
             let user_id = Uuid::parse_str(&token_data.claims.sub)
                 .map_err(|_| ApiResponseError::unauthorized("Invalid user ID in token"))?;
+
+            // [VULN-001] Validate token_version against cached user version
+            let user_version = match app_state.user_version_cache.get(&user_id) {
+                Some(v) => v,
+                None => {
+                    let user = app_state.aegis_service
+                        .find_user_by_id(user_id)
+                        .await
+                        .map_err(|_| ApiResponseError::unauthorized("Invalid user"))?
+                        .ok_or_else(|| ApiResponseError::unauthorized("User not found"))?;
+                    let v = user.version;
+                    app_state.user_version_cache.insert(user_id, v);
+                    v
+                }
+            };
+
+            if token_data.claims.token_version != user_version {
+                return Err(ApiResponseError::unauthorized("Token version mismatch"));
+            }
             let auth_ctx = AuthContext {
                 user_id,
                 tenant_id: TenantId::new(token_data.claims.tenant_id),

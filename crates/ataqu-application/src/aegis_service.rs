@@ -444,6 +444,16 @@ impl AegisService {
             .map_err(AegisServiceError::Domain)
     }
 
+    pub async fn find_user_by_id(
+        &self,
+        user_id: Uuid,
+    ) -> Result<Option<User>, AegisServiceError> {
+        self.repo
+            .find_by_id(user_id)
+            .await
+            .map_err(AegisServiceError::Domain)
+    }
+
     pub async fn update_user_role(
         &self,
         user_id: Uuid,

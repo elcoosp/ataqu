@@ -164,7 +164,7 @@ fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
         MfaSetupFailed(msg) => ApiResponseError::validation(&msg),
         Database(msg) => ApiResponseError::internal(&msg),
         Outbox(msg) => ApiResponseError::internal(&msg),
-        Domain(e) => ApiResponseError::internal("An unexpected error occurred"),
+        Domain(_e) => ApiResponseError::internal("An unexpected error occurred"),
         NotFound(msg) => ApiResponseError::not_found(&msg),
         Conflict(msg) => ApiResponseError::conflict(&msg),
         MfaRequired => ApiResponseError::unauthorized("MFA required"),
@@ -464,7 +464,7 @@ pub async fn deactivate_user(
 
 /// SECURITY NOTE: The JWT blocklist is in-memory (moka cache). On server restart,
 /// all revoked tokens become valid again until their TTL expires.
-/// A Redis-backed blocklist would be more robust.
+/// [VULN-002] For production, this should be replaced with a Redis-backed blocklist.
 pub async fn logout(
     State(state): State<AppState>,
     auth: AuthContext,

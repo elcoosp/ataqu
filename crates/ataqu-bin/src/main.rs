@@ -459,6 +459,11 @@ async fn main() -> anyhow::Result<()> {
             .time_to_live(Duration::from_secs(86400))
             .build(),
     );
+    let user_version_cache = Arc::new(
+        moka::sync::Cache::builder()
+            .time_to_live(Duration::from_secs(60)) // Cache user version for 1 minute
+            .build(),
+    );
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let http_client = reqwest::Client::new();
@@ -497,6 +502,7 @@ async fn main() -> anyhow::Result<()> {
         metrics_handle,
         sso_states: sso_states.clone(),
         jwt_blocklist: jwt_blocklist.clone(),
+        user_version_cache,
         http_client,
     };
 
