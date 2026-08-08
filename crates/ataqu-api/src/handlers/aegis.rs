@@ -424,6 +424,7 @@ pub async fn update_user_role(
             "Admin access required".to_string(),
         ));
     }
+
     let if_match = headers
         .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())

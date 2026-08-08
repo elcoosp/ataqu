@@ -152,6 +152,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/search",
             axum::routing::get(handlers::search::unified_search),
         )
+        .route("/metrics", axum::routing::get(metrics_handler))
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
@@ -178,7 +179,6 @@ pub fn create_router(state: AppState) -> Router {
 
     let default_router = Router::new()
         .route("/health", axum::routing::get(health_check))
-        .route("/metrics", axum::routing::get(metrics_handler))
         .route("/ready", axum::routing::get(readiness_check))
         .merge(public_routes)
         .merge(private_routes)

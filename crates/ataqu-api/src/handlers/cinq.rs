@@ -329,7 +329,7 @@ pub async fn list_deals(
         .list_deals(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = deals.len() as u64 + offset;
+    let total = 0;
     let items = deals.into_iter().map(DealResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -573,20 +573,21 @@ pub async fn list_activities(
     Query(params): Query<ListActivitiesParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ActivityResponse>>> {
     let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
     let activities = if let Some(contact_id) = params.contact_id {
         state
             .cinq_service
-            .list_activities_for_contact(auth.tenant_id, contact_id, limit, 0)
+            .list_activities_for_contact(auth.tenant_id, contact_id, limit, offset)
             .await
             .map_err(|e| ApiResponseError::internal(&e.to_string()))?
     } else {
         state
             .cinq_service
-            .list_all_activities(auth.tenant_id, limit, 0)
+            .list_all_activities(auth.tenant_id, limit, offset)
             .await
             .map_err(|e| ApiResponseError::internal(&e.to_string()))?
     };
-    let total = activities.len() as u64 + 0;
+    let total = 0;
     let items = activities
         .into_iter()
         .map(|a| ActivityResponse {
@@ -603,7 +604,7 @@ pub async fn list_activities(
         items,
         total,
         limit,
-        offset: 0,
+        offset,
     }))
 }
 
@@ -705,8 +706,17 @@ pub struct ImportCsvResultDetailed {
 pub async fn import_csv(
     State(state): State<AppState>,
     auth: AuthContext,
+    headers: axum::http::HeaderMap,
     body: String,
 ) -> ApiResult<Json<ImportCsvResultDetailed>> {
+    // Enforce Idempotency-Key for CSV imports
+    let _command_id = headers
+        .get("Idempotency-Key")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| uuid::Uuid::parse_str(s).ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Idempotency-Key header required".to_string())
+        })?;
     if body.len() > 5 * 1024 * 1024 {
         return Err(ApiResponseError::validation("CSV file too large (max 5MB)"));
     }

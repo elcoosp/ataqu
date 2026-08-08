@@ -235,7 +235,7 @@ impl VistaService {
 
     pub async fn execute_raw_sql(
         &self,
-        tenant_id: TenantId,
+        _tenant_id: TenantId,
         sql: &str,
     ) -> VistaResult<Vec<serde_json::Value>> {
         let trimmed_sql = sql.trim_start();
@@ -251,19 +251,10 @@ impl VistaService {
             ));
         }
 
-        let tenant_id_str = tenant_id.as_uuid().to_string();
-        let lower_sql = sql.to_lowercase();
-        let has_tenant_filter = lower_sql.contains(&format!("tenant_id = '{}'", tenant_id_str))
-            || lower_sql.contains(&format!("tenant_id='{}'", tenant_id_str));
-        if !has_tenant_filter {
-            return Err(VistaServiceError::Validation(
-                "Query must include the current tenant_id filter in the WHERE clause".to_string(),
-            ));
-        }
-
-        self.repo
-            .execute_raw_sql(&tenant_id, sql)
-            .await
-            .map_err(VistaServiceError::Repository)
+        // To prevent SQL injection and cross-tenant data leakage, we disable raw SQL execution.
+        // Only predefined, parameterized queries should be allowed in the future.
+        Err(VistaServiceError::Validation(
+            "Raw SQL execution is disabled for security reasons".to_string(),
+        ))
     }
 }

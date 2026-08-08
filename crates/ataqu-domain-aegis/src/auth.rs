@@ -90,10 +90,10 @@ pub enum AuthError {
     InvalidCredentials,
     #[error("MFA already enabled")]
     MfaAlreadyEnabled,
-    #[error("Validation error: {0}")]
-    Validation(String),
     #[error("Database error: {0}")]
     Database(String),
+    #[error("Validation error: {0}")]
+    Validation(String),
 }
 
 /// Repository trait for user persistence (async).

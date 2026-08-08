@@ -62,7 +62,7 @@ pub struct UpdateVariantCommand {
 #[derive(Debug, Clone)]
 pub struct BulkStockAdjustCommand {
     pub tenant_id: TenantId,
-    pub adjustments: Vec<(Uuid, i64)>,
+    pub adjustments: Vec<(Uuid, i64, i32)>, // (variant_id, delta, expected_version)
     pub reason: String,
 }
 
@@ -430,8 +430,14 @@ impl VaultService {
         cmd: BulkStockAdjustCommand,
     ) -> VaultResult<Vec<Variant>> {
         let mut updated_variants = Vec::new();
-        for (variant_id, delta) in cmd.adjustments {
+        for (variant_id, delta, expected_version) in cmd.adjustments {
             let variant = self.get_variant(cmd.tenant_id, variant_id).await?;
+            if variant.version != expected_version {
+                return Err(VaultServiceError::Validation(format!(
+                    "Version mismatch for variant {}: expected {}, found {}",
+                    variant_id, expected_version, variant.version
+                )));
+            }
             let new_variant = variant.adjust_stock(delta, self.clock.as_ref())?;
             self.repo
                 .save_variant(&new_variant)

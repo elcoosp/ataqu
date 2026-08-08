@@ -285,7 +285,6 @@ impl PauseService {
             ));
         }
         let event = ataqu_domain_pause::leave::approve_leave(&mut request, reviewer_id, clock);
-        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,
@@ -329,7 +328,6 @@ impl PauseService {
             ));
         }
         let event = ataqu_domain_pause::leave::reject_leave(&mut request, reviewer_id, clock);
-        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,
@@ -431,7 +429,6 @@ impl PauseService {
             ));
         }
         let event = ataqu_domain_pause::leave::cancel_leave(&mut request, reviewer_id, clock);
-        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,

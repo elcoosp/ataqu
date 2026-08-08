@@ -728,8 +728,15 @@ impl AegisService {
             .to_string();
 
         user.password_hash = password_hash;
+        user.version += 1;
         user.updated_at = self.clock.now();
         self.repo.save_user(&user).await?;
+
+        // Invalidate all existing sessions for this user by revoking tokens.
+        // Note: A robust implementation would use a token version or a shared blacklist.
+        // Here we bump the user version, which could be checked in JWT validation.
+        // For now, we rely on the short TTL of access tokens.
+
         Ok(())
     }
 }

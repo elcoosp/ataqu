@@ -235,9 +235,9 @@ impl SparkService {
         for workflow in workflows {
             if let Trigger::Schedule { cron } = &workflow.trigger {
                 if let Ok(cron_job) = croner::Cron::new(cron).parse() {
-                    if let Ok(next_run) = cron_job.find_next_occurrence(&now, false) {
-                        // Trigger only if the next occurrence is within the next 60 seconds (polling interval)
-                        if next_run > now && next_run <= now + chrono::Duration::seconds(60) {
+                    // Find the previous occurrence to see if we missed it
+                    if let Ok(prev_run) = cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false) {
+                        if prev_run <= now {
                             tracing::info!("Triggering scheduled workflow {}", workflow.id);
                             let payload = serde_json::json!({ "time": now.to_rfc3339() });
                             if evaluate_conditions(&workflow.conditions, &payload) {

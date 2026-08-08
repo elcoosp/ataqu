@@ -407,7 +407,7 @@ pub async fn update_stock(
 
 #[derive(Debug, Deserialize)]
 pub struct BulkStockAdjustRequest {
-    pub adjustments: Vec<(Uuid, i64)>,
+    pub adjustments: Vec<(Uuid, i64, i32)>,
     pub reason: String,
 }
 
