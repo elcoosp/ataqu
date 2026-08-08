@@ -508,8 +508,8 @@ impl DialService {
             channel_id: Uuid,
             requester_id: Uuid,
         ) -> DialResult<Vec<u8>> {
-            use printpdf::{PdfDocument, Mm};
-            use printpdf::text::Text;
+            use printpdf::{PdfDocument, Mm, BuiltinFont};
+            use printpdf::prelude::*;
     
             let (messages, _total) = self
                 .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
@@ -518,9 +518,9 @@ impl DialService {
             let doc = PdfDocument::new("Channel Export", Mm(20.0), Mm(20.0), "layer1");
             let (mut page, mut layer) = doc.0.add_page(Mm(210.0), Mm(297.0), "A4");
             let mut y = Mm(280.0);
-            let font = doc.0.add_builtin_font(printpdf::BuiltinFont::Helvetica)
+            let font = doc.0.add_builtin_font(BuiltinFont::Helvetica)
                 .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-            let font_bold = doc.0.add_builtin_font(printpdf::BuiltinFont::HelveticaBold)
+            let font_bold = doc.0.add_builtin_font(BuiltinFont::HelveticaBold)
                 .map_err(|e| DialServiceError::Repository(e.to_string()))?;
     
             let title = format!("Channel export: {}", channel_id);
