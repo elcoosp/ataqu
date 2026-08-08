@@ -307,6 +307,36 @@ pub async fn list_messages(
     }))
 }
 
+pub async fn export_channel_pdf(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(channel_id): Path<Uuid>,
+) -> ApiResult<impl axum::response::IntoResponse> {
+    let data = state
+        .dial_service
+        .export_channel_pdf(auth.tenant_id, channel_id, auth.user_id)
+        .await
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+
+    Ok((
+        StatusCode::OK,
+        [
+            (
+                axum::http::header::CONTENT_TYPE,
+                "application/pdf".to_string(),
+            ),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                (
+                    axum::http::header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"channel_{}.pdf\"", channel_id),
+                ),
+            ),
+        ],
+        data,
+    ))
+}
+
 pub async fn export_channel(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -680,6 +710,10 @@ pub fn routes() -> Router<AppState> {
             post(send_message).get(list_messages),
         )
         .route("/channels/:id/export", axum::routing::get(export_channel))
+        .route(
+            "/channels/:id/export/pdf",
+            axum::routing::get(export_channel_pdf),
+        )
         .route("/messages/:id", put(edit_message).delete(delete_message))
         .route(
             "/messages/:id/reactions",

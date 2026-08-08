@@ -502,6 +502,57 @@ impl DialService {
         Ok(data)
     }
 
+    pub async fn export_channel_pdf(
+            &self,
+            tenant_id: TenantId,
+            channel_id: Uuid,
+            requester_id: Uuid,
+        ) -> DialResult<Vec<u8>> {
+            use printpdf::{PdfDocument, Mm};
+            use printpdf::text::Text;
+    
+            let (messages, _total) = self
+                .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
+                .await?;
+    
+            let doc = PdfDocument::new("Channel Export", Mm(20.0), Mm(20.0), "layer1");
+            let (mut page, mut layer) = doc.0.add_page(Mm(210.0), Mm(297.0), "A4");
+            let mut y = Mm(280.0);
+            let font = doc.0.add_builtin_font(printpdf::BuiltinFont::Helvetica)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            let font_bold = doc.0.add_builtin_font(printpdf::BuiltinFont::HelveticaBold)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+    
+            let title = format!("Channel export: {}", channel_id);
+            layer.use_text(&title, Mm(14.0), Mm(10.0), y, &font_bold)
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            y = y - Mm(25.0);
+    
+            for msg in messages {
+                let line = format!(
+                    "[{}] {}: {}",
+                    chrono::DateTime::<chrono::Utc>::from(msg.created_at).to_rfc3339(),
+                    msg.author_id.as_uuid(),
+                    msg.content
+                );
+                let line = if line.len() > 200 { &line[..200] } else { &line };
+                if y < Mm(20.0) {
+                    let (new_page, new_layer) = doc.0.add_page(Mm(210.0), Mm(297.0), "A4");
+                    page = new_page;
+                    layer = new_layer;
+                    y = Mm(280.0);
+                }
+                layer.use_text(line, Mm(10.0), Mm(10.0), y, &font)
+                    .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+                y = y - Mm(15.0);
+            }
+    
+            let pdf_bytes = doc.0
+                .save_to_bytes()
+                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            Ok(pdf_bytes)
+        }
+
     pub async fn list_thread_messages(
         &self,
         tenant_id: TenantId,
