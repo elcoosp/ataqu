@@ -353,6 +353,7 @@ dependencies = [
  "ataqu-domain-vault",
  "ataqu-domain-vista",
  "ataqu-infra-repositories",
+ "ataqu-infra-storage",
  "ataqu-kernel",
  "ataqu-security",
  "axum",
