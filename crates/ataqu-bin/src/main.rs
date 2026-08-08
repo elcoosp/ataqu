@@ -325,38 +325,54 @@ async fn main() -> anyhow::Result<()> {
                     body,
                     headers,
                 } => {
-                    // [HIGH-001] SSRF Protection
+                    // [VULN-003] SSRF Protection with DNS Rebinding mitigation
                     let parsed_url = reqwest::Url::parse(url).map_err(|e| e.to_string())?;
-                    let host = parsed_url.host_str().ok_or("Invalid URL")?;
+                    let host = parsed_url.host_str().ok_or("Invalid URL")?.to_string();
+                    let port = parsed_url.port_or_known_default().unwrap_or(80);
 
-                    // Block internal IPs and localhost
-                    if host == "localhost"
-                        || host.starts_with("127.")
-                        || host.starts_with("10.")
-                        || host.starts_with("192.168.")
-                        || host.starts_with("169.254.")
-                    {
-                        return Err("SSRF attempt blocked: internal IP".to_string());
-                    }
-                    if host.starts_with("172.") {
-                        let parts: Vec<&str> = host.split('.').collect();
-                        if parts.len() == 4 {
-                            if let Ok(second_octet) = parts[1].parse::<u8>() {
-                                if second_octet >= 16 && second_octet <= 31 {
-                                    return Err("SSRF attempt blocked: internal IP".to_string());
-                                }
-                            }
+                    // Resolve DNS and take the first IP address
+                    let mut addrs = tokio::net::lookup_host((host.as_str(), port))
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    let addr = addrs.next().ok_or("DNS resolution failed")?;
+                    let ip = addr.ip();
+
+                    let is_blocked = match ip {
+                        std::net::IpAddr::V4(v4) => {
+                            v4.is_loopback()
+                                || v4.is_private()
+                                || v4.is_link_local()
+                                || v4.is_unspecified()
+                                || v4.is_broadcast()
+                                || v4.is_documentation()
                         }
+                        std::net::IpAddr::V6(v6) => v6.is_loopback() || v6.is_unspecified(),
+                    };
+                    if is_blocked {
+                        return Err(format!("SSRF attempt blocked: internal IP ({})", ip));
                     }
+
+                    // Rebuild URL with the resolved IP to prevent DNS rebinding
+                    let mut new_url = parsed_url.clone();
+                    new_url
+                        .set_host(Some(&ip.to_string()))
+                        .map_err(|e| e.to_string())?;
 
                     let mut req = match method.to_uppercase().as_str() {
-                        "POST" => self.http_client.post(url),
-                        "PUT" => self.http_client.put(url),
-                        "PATCH" => self.http_client.patch(url),
-                        "DELETE" => self.http_client.delete(url),
-                        _ => self.http_client.get(url),
+                        "POST" => self.http_client.post(new_url),
+                        "PUT" => self.http_client.put(new_url),
+                        "PATCH" => self.http_client.patch(new_url),
+                        "DELETE" => self.http_client.delete(new_url),
+                        _ => self.http_client.get(new_url),
                     };
+
+                    // Set Host header to original host
+                    req = req.header("host", &host);
+
                     for (k, v) in headers {
+                        if k.eq_ignore_ascii_case("host") {
+                            continue;
+                        }
                         req = req.header(k, v);
                     }
                     req = req.json(&body);
@@ -379,7 +395,10 @@ async fn main() -> anyhow::Result<()> {
         dial_service: dial_service.clone(),
         cinq_service: cinq_service.clone(),
         vault_service: vault_service.clone(),
-        http_client: reqwest::Client::new(),
+        http_client: reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new()),
         system_user_id,
     });
 
