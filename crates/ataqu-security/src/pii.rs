@@ -128,6 +128,6 @@ mod tests {
     #[test]
     #[cfg(feature = "infra-pii-access")]
     fn key_construction_gated() {
-        let _key = PiiAccessKey::new();
+        let _key = PiiAccessKey::new_for_test();
     }
 }

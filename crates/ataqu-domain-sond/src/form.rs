@@ -4,6 +4,14 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FormMode {
+    #[default]
+    Standard,
+    Conversational,
+}
+
 // Form contains TenantId -> no Serialize/Deserialize
 #[derive(Debug, Clone, PartialEq)]
 pub struct Form {
@@ -13,6 +21,7 @@ pub struct Form {
     pub description: Option<String>,
     pub questions: Vec<Question>,
     pub branding: serde_json::Value,
+    pub mode: FormMode,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
@@ -26,6 +35,7 @@ pub struct CreateFormCommand {
     pub description: Option<String>,
     pub questions: Vec<QuestionInput>,
     pub branding: serde_json::Value,
+    pub mode: Option<FormMode>,
 }
 
 // Event contains TenantId -> no Serialize/Deserialize
@@ -37,6 +47,7 @@ pub struct FormCreated {
     pub description: Option<String>,
     pub question_count: usize,
     pub branding: serde_json::Value,
+    pub mode: FormMode,
     pub created_at: DateTime<Utc>,
 }
 
@@ -47,6 +58,7 @@ pub struct UpdateFormCommand {
     pub title: Option<String>,
     pub description: Option<String>,
     pub questions: Option<Vec<QuestionInput>>,
+    pub mode: Option<FormMode>,
     pub expected_version: i32,
 }
 
@@ -58,6 +70,7 @@ pub struct FormUpdated {
     pub title: Option<String>,
     pub description: Option<String>,
     pub question_count: usize,
+    pub mode: Option<FormMode>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -88,6 +101,7 @@ pub fn create_form(
         questions.push(q);
     }
 
+    let mode = cmd.mode.unwrap_or_default();
     let event = FormCreated {
         id: form_id,
         tenant_id: cmd.tenant_id,
@@ -95,6 +109,7 @@ pub fn create_form(
         description: cmd.description,
         question_count: questions.len(),
         branding: cmd.branding,
+        mode,
         created_at,
     };
     Ok(event)
@@ -134,8 +149,36 @@ pub fn update_form(
         title: cmd.title,
         description: cmd.description,
         question_count: new_question_count,
+        mode: cmd.mode,
         updated_at,
     })
+}
+
+pub fn validate_conversational_step(
+    form: &Form,
+    question_id: Uuid,
+    answer: &crate::response::AnswerInput,
+) -> Result<(), String> {
+    if form.mode != FormMode::Conversational {
+        return Err("Form is not in conversational mode".to_string());
+    }
+    let question = form
+        .questions
+        .iter()
+        .find(|q| q.id == question_id)
+        .ok_or_else(|| format!("Question {} not found in form", question_id))?;
+
+    if question.required {
+        let is_empty = match &answer.value {
+            crate::response::AnswerValue::Text(t) => t.trim().is_empty(),
+            crate::response::AnswerValue::Email(e) => e.trim().is_empty(),
+            _ => false,
+        };
+        if is_empty {
+            return Err("Answer is required".to_string());
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -175,6 +218,7 @@ mod tests {
                 page: 1,
             }],
             branding: serde_json::json!({}),
+            mode: None,
         };
         let result = create_form(cmd, &id_gen, &clock);
         assert!(result.is_ok());
@@ -199,6 +243,7 @@ mod tests {
                 page: 1,
             }],
             branding: serde_json::json!({}),
+            mode: None,
         };
         let result = create_form(cmd, &id_gen, &clock);
         assert!(matches!(result, Err(SondError::InvalidTitle(_))));
@@ -214,6 +259,7 @@ mod tests {
             description: None,
             questions: vec![],
             branding: serde_json::json!({}),
+            mode: None,
         };
         let result = create_form(cmd, &id_gen, &clock);
         assert!(matches!(result, Err(SondError::InvalidQuestionCount(_))));
@@ -231,6 +277,7 @@ mod tests {
             description: None,
             questions: vec![],
             branding: serde_json::json!({}),
+            mode: FormMode::Standard,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             version: 0,
@@ -240,6 +287,7 @@ mod tests {
             title: Some("New Title".to_string()),
             description: Some("New desc".to_string()),
             questions: None,
+            mode: None,
             expected_version: 0,
         };
         let result = update_form(cmd, &form, &id_gen, &clock);
