@@ -27,14 +27,29 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
-use ataqu_application::changelog_service::ChangelogService;
-use ataqu_application::health_service::HealthService;
-use ataqu_application::onboarding_service::OnboardingService;
+// use ataqu_application::changelog_service::ChangelogService;
+// use ataqu_application::health_service::HealthService;
+// use ataqu_application::onboarding_service::OnboardingService;
 use ataqu_application::pause_service::IdempotencyPort;
-use ataqu_domain_aegis::repository::AuditRepositoryTrait;
+// use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
-use ataqu_infra_storage::s3_service::S3Service;
+
+
+// === Stubs for missing dependencies (to be implemented later) ===
+pub mod stubs {
+    pub struct HealthService;
+    pub struct OnboardingService;
+    pub struct ChangelogService;
+    pub struct S3Service;
+    pub trait AuditRepositoryTrait {}
+    pub struct DummyAuditRepo;
+    impl AuditRepositoryTrait for DummyAuditRepo {}
+}
+use stubs::*;
+
+
+// use ataqu_infra_storage::s3_service::S3Service;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 
 #[tokio::main]
@@ -497,23 +512,23 @@ async fn main() -> anyhow::Result<()> {
 
     // Health Stubs
     let health_service =
-        Arc::new(ataqu_application::health_service::HealthService::new(/* todo!() */));
-    let health_cache = Arc::new(moka::sync::Cache::builder().build());
+        Arc::new(HealthService);
+    let health_cache = Arc::new(moka::sync::Cache::<(), ()>::builder().build());
 
     // Audit Stub
-    let audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync> =
+    let audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync> =
         Arc::new(/* todo!() */);
 
     // S3 Stub
     let s3_service =
-        Arc::new(ataqu_infra_storage::s3_service::S3Service::new("".to_string()).await);
+        Arc::new(S3Service);
 
     // Idempotency Stub
     let idempotency_guard = pause_idempotency.clone();
 
     // Onboarding & Changelog Stubs
     let onboarding_service =
-        Arc::new(ataqu_application::onboarding_service::OnboardingService::new(pools.core.clone()));
+        Arc::new(OnboardingService);
     let changelog_service = Arc::new(ataqu_application::changelog_service::ChangelogService::new(
         pools.core.clone(),
     ));
