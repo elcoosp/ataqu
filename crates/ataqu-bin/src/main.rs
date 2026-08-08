@@ -529,7 +529,7 @@ async fn main() -> anyhow::Result<()> {
     // Onboarding & Changelog Stubs
     let onboarding_service =
         Arc::new(OnboardingService);
-    let changelog_service = Arc::new(ChangelogService,
+    let changelog_service = Arc::new(ChangelogService);
     ));
 
     let state = AppState {
