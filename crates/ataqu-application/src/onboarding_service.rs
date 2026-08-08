@@ -38,7 +38,8 @@ impl OnboardingService {
 
         let (tasks, last_active) = match row {
             Some(r) => {
-                let tasks: Vec<String> = serde_json::from_value(r.tasks_completed).unwrap_or_default();
+                let tasks: Vec<String> =
+                    serde_json::from_value(r.tasks_completed).unwrap_or_default();
                 (tasks, r.last_active_at)
             }
             None => {
@@ -63,7 +64,11 @@ impl OnboardingService {
         })
     }
 
-    pub async fn complete_task(&self, tenant_id: Uuid, task_id: String) -> Result<OnboardingStatus, DbErr> {
+    pub async fn complete_task(
+        &self,
+        tenant_id: Uuid,
+        task_id: String,
+    ) -> Result<OnboardingStatus, DbErr> {
         let current = self.get_status(tenant_id).await?;
         let mut tasks = current.tasks_completed.clone();
         if !tasks.contains(&task_id) {

@@ -12,3 +12,6 @@ pub mod spark;
 pub mod tempo;
 pub mod vault;
 pub mod vista;
+
+pub mod changelog;
+pub mod onboarding;

@@ -35,6 +35,7 @@ ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-vista = { path = "../ataqu-domain-vista" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
+ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 csv = "1.3"
 rand = "0.8.5"

@@ -20,6 +20,7 @@ ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 ataqu-infra-pools = { path = "../ataqu-infra-pools" }
 ataqu-infra-migration = { path = "../ataqu-infra-migration" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
+ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 
 ataqu-domain-cinq = { path = "../ataqu-domain-cinq" }
 ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
