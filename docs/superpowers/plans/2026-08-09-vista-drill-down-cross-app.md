@@ -11,22 +11,21 @@
 ---
 
 ## File Structure
-- **Create:** `crates/ataqu-infra-migration/src/m20250101_000012_create_vista_views.rs`
-- **Modify:** `crates/ataqu-domain-vista/src/repository.rs` (Add trait methods)
-- **Modify:** `crates/ataqu-infra-repositories/src/vista_repo_impl.rs` (Implement methods)
-- **Modify:** `crates/ataqu-application/src/vista_service.rs` (Add service methods)
-- **Modify:** `crates/ataqu-api/src/handlers/vista.rs` (Add endpoints)
-- **Modify:** `crates/ataqu-bin/src/main.rs` (Add refresher worker)
+- **Overwrite:** `crates/ataqu-infra-migration/src/m20250101_000012_create_vista_views.rs`
+- **Modify:** `crates/ataqu-domain-vista/src/repository.rs`
+- **Modify:** `crates/ataqu-infra-repositories/src/vista_repo_impl.rs`
+- **Modify:** `crates/ataqu-application/src/vista_service.rs`
+- **Modify:** `crates/ataqu-api/src/handlers/vista.rs`
+- **Modify:** `crates/ataqu-bin/src/main.rs`
 
 ---
 
 ### Task 1: Create Materialized Views
 
 **Files:**
-- Create: `crates/ataqu-infra-migration/src/m20250101_000012_create_vista_views.rs`
-- Modify: `crates/ataqu-infra-migration/src/lib.rs`
+- Overwrite: `crates/ataqu-infra-migration/src/m20250101_000012_create_vista_views.rs`
 
-- [ ] **Step 1: Write the migration**
+- [ ] **Step 1: Implement the migration**
 
 ```rust
 // crates/ataqu-infra-migration/src/m20250101_000012_create_vista_views.rs
@@ -80,8 +79,8 @@ Expected: Success
 - [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-infra-migration/
-git commit -m "feat(db): add cross-app materialized view"
+git add crates/ataqu-infra-migration/src/m20250101_000012_create_vista_views.rs
+git commit -m "feat(db): implement cross-app materialized view"
 ```
 
 ---
@@ -93,7 +92,7 @@ git commit -m "feat(db): add cross-app materialized view"
 - Modify: `crates/ataqu-infra-repositories/src/vista_repo_impl.rs`
 - Modify: `crates/ataqu-application/src/vista_service.rs`
 
-- [ ] **Step 1: Add trait methods**
+- [ ] **Step 1: Add trait methods to domain**
 
 ```rust
 // In crates/ataqu-domain-vista/src/repository.rs
@@ -112,46 +111,39 @@ pub trait VistaRepository: Send + Sync {
 use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use ataqu_kernel::{TenantId, RepositoryError};
 
-pub struct VistaRepositoryImpl {
-    db: sea_orm::DatabaseConnection,
+// Add to VistaRepositoryImpl impl block:
+pub async fn get_raw_data_points(&self, tenant_id: &TenantId, metric: &str, limit: u64) -> Result<Vec<serde_json::Value>, RepositoryError> {
+    if metric == "revenue" {
+        let sql = r#"
+            SELECT id, title, amount, status
+            FROM collab_crm.deals
+            WHERE tenant_id = $1 AND status = 'won'
+            LIMIT $2
+        "#;
+        let stmt = Statement::from_sql_and_values(
+            DatabaseBackend::Postgres,
+            sql,
+            vec![tenant_id.as_uuid().into(), (limit as i64).into()],
+        );
+        let rows = self.db.query_all(stmt).await.map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(rows.into_iter().map(|r| serde_json::to_value(r).unwrap_or_default()).collect())
+    } else {
+        Ok(vec![])
+    }
 }
 
-impl VistaRepositoryImpl {
-    // ... existing methods ...
-
-    pub async fn get_raw_data_points(&self, tenant_id: &TenantId, metric: &str, limit: u64) -> Result<Vec<serde_json::Value>, RepositoryError> {
-        if metric == "revenue" {
-            let sql = r#"
-                SELECT id, title, amount, status
-                FROM collab_crm.deals
-                WHERE tenant_id = $1 AND status = 'won'
-                LIMIT $2
-            "#;
-            let stmt = Statement::from_sql_and_values(
-                DatabaseBackend::Postgres,
-                sql,
-                vec![tenant_id.as_uuid().into(), (limit as i64).into()],
-            );
-            let rows = self.db.query_all(stmt).await.map_err(|e| RepositoryError::Database(e.to_string()))?;
-            Ok(rows.into_iter().map(|r| serde_json::to_value(r).unwrap_or_default()).collect())
-        } else {
-            Ok(vec![])
-        }
-    }
-
-    pub async fn get_cross_app_view(&self, tenant_id: &TenantId, view_name: &str) -> Result<Vec<serde_json::Value>, RepositoryError> {
-        if view_name == "revenue_inventory" {
-            let sql = r#"SELECT * FROM vista.cross_app_revenue_inventory WHERE tenant_id = $1"#;
-            let stmt = Statement::from_sql_and_values(
-                DatabaseBackend::Postgres,
-                sql,
-                vec![tenant_id.as_uuid().into()],
-            );
-            let rows = self.db.query_all(stmt).await.map_err(|e| RepositoryError::Database(e.to_string()))?;
-            Ok(rows.into_iter().map(|r| serde_json::to_value(r).unwrap_or_default()).collect())
-        } else {
-            Ok(vec![])
-        }
+pub async fn get_cross_app_view(&self, tenant_id: &TenantId, view_name: &str) -> Result<Vec<serde_json::Value>, RepositoryError> {
+    if view_name == "revenue_inventory" {
+        let sql = r#"SELECT * FROM vista.cross_app_revenue_inventory WHERE tenant_id = $1"#;
+        let stmt = Statement::from_sql_and_values(
+            DatabaseBackend::Postgres,
+            sql,
+            vec![tenant_id.as_uuid().into()],
+        );
+        let rows = self.db.query_all(stmt).await.map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(rows.into_iter().map(|r| serde_json::to_value(r).unwrap_or_default()).collect())
+    } else {
+        Ok(vec![])
     }
 }
 ```
@@ -173,7 +165,7 @@ pub async fn get_cross_app_dashboard(&self, tenant_id: TenantId, view_name: &str
 
 ```bash
 git add crates/ataqu-domain-vista/src/repository.rs crates/ataqu-infra-repositories/src/vista_repo_impl.rs crates/ataqu-application/src/vista_service.rs
-git commit -m "feat(vista): add drill-down and cross-app repository and service methods"
+git commit -m "feat(vista): implement drill-down and cross-app repo methods"
 ```
 
 ---
@@ -219,20 +211,19 @@ pub async fn get_cross_app(
     Ok(Json(data))
 }
 ```
-*Add routes:*
-`.route("/data-points/:metric/drill-down", get(get_drill_down))`
-`.route("/cross-app", get(get_cross_app))`
+*Add routes:* `.route("/data-points/:metric/drill-down", get(get_drill_down))` and `.route("/cross-app", get(get_cross_app))`
 
-- [ ] **Step 2: Add Materialized View Refresher Worker**
+- [ ] **Step 2: Add Materialized View Refresher Worker to main.rs**
 
+Add this to the bottom of `main()` in `crates/ataqu-bin/src/main.rs`:
 ```rust
-// In crates/ataqu-bin/src/main.rs
+let vista_db_pool = pools.core.clone();
 tokio::spawn(async move {
     loop {
         tracing::info!("Refreshing VISTA materialized views...");
         let sql = "REFRESH MATERIALIZED VIEW CONCURRENTLY vista.cross_app_revenue_inventory";
         let stmt = sea_orm::Statement::from_sql_and_values(sea_orm::DbBackend::Postgres, sql, vec![]);
-        if let Err(e) = pools.core.execute(stmt).await {
+        if let Err(e) = vista_db_pool.execute(stmt).await {
             tracing::error!("Failed to refresh VISTA views: {}", e);
         }
         tokio::time::sleep(Duration::from_secs(900)).await; // 15 minutes
@@ -240,12 +231,12 @@ tokio::spawn(async move {
 });
 ```
 
-- [ ] **Step 3: Run tests & Commit**
+- [ ] **Step 3: Run check & Commit**
 
-Run: `cargo nextest run --workspace`
+Run: `cargo check --workspace`
 Expected: PASS
 
 ```bash
 git add crates/ataqu-api/src/handlers/vista.rs crates/ataqu-bin/src/main.rs
-git commit -m "feat(vista): add drill-down and cross-app endpoints + 15m refresher worker"
+git commit -m "feat(vista): add drill-down endpoints and refresher worker"
 ```

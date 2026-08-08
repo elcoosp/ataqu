@@ -11,10 +11,10 @@
 ---
 
 ## File Structure
-- **Modify:** `crates/ataqu-application/Cargo.toml` (Add `printpdf`)
+- **Modify:** `crates/ataqu-application/Cargo.toml`
 - **Modify:** `crates/ataqu-application/src/dial_service.rs`
-- **Modify:** `crates/ataqu-application/src/cinq_service.rs` (Add method to consume Tempo events)
-- **Modify:** `crates/ataqu-bin/src/main.rs` (Add outbox handler)
+- **Modify:** `crates/ataqu-application/src/cinq_service.rs`
+- **Modify:** `crates/ataqu-bin/src/main.rs`
 
 ---
 
@@ -96,7 +96,7 @@ pub async fn export_channel_pdf(
 
 ```bash
 git add crates/ataqu-application/Cargo.toml crates/ataqu-application/src/dial_service.rs crates/ataqu-api/src/handlers/dial.rs
-git commit -m "feat(dial): add PDF export for channel messages"
+git commit -m "feat(dial): implement PDF export for channel messages"
 ```
 
 ---
@@ -144,10 +144,10 @@ pub async fn process_tempo_booking_event(&self, event: &OutboxEvent) -> CinqResu
 }
 ```
 
-- [ ] **Step 2: Add handler in outbox dispatcher**
+- [ ] **Step 2: Add handler in outbox dispatcher in `main.rs`**
 
+Find the outbox dispatcher closure in `crates/ataqu-bin/src/main.rs` and add:
 ```rust
-// In crates/ataqu-bin/src/main.rs (inside the outbox handler closure)
 let cinq_service_clone = cinq_service.clone();
 // ... inside handler ...
 if let Err(e) = cinq_service_clone.process_tempo_booking_event(&event).await {

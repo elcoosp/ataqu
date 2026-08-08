@@ -12,10 +12,10 @@
 
 ## File Structure
 - **Modify:** `crates/ataqu-api/src/middleware/idempotency.rs`
-- **Modify:** `crates/ataqu-api/src/lib.rs` (Inject IdempotencyGuard into AppState)
 - **Create:** `crates/ataqu-infra-storage/src/s3_service.rs`
 - **Modify:** `crates/ataqu-infra-storage/src/lib.rs`
 - **Modify:** `crates/ataqu-api/src/handlers/dial.rs`
+- **Modify:** `crates/ataqu-bin/src/main.rs`
 
 ---
 
@@ -23,17 +23,8 @@
 
 **Files:**
 - Modify: `crates/ataqu-api/src/middleware/idempotency.rs`
-- Modify: `crates/ataqu-api/src/lib.rs`
 
-- [ ] **Step 1: Update AppState in lib.rs**
-
-```rust
-// crates/ataqu-api/src/lib.rs
-// Add to AppState:
-pub idempotency_guard: Arc<dyn ataqu_application::pause_service::IdempotencyPort + Send + Sync>,
-```
-
-- [ ] **Step 2: Rewrite idempotency_middleware**
+- [ ] **Step 1: Rewrite idempotency_middleware to use injected Guard**
 
 ```rust
 // crates/ataqu-api/src/middleware/idempotency.rs
@@ -95,7 +86,6 @@ pub async fn idempotency_middleware(
             let hash = hasher.finalize();
             let command_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, &hash);
 
-            // Check durable store
             let guard = match state.idempotency_guard.acquire(&command_id).await {
                 Ok(g) => g,
                 Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
@@ -136,7 +126,6 @@ pub async fn idempotency_middleware(
                 return Ok(Response::from_parts(parts, Body::from(bytes)));
             }
 
-            // If we shouldn't cache, rollback the in-progress record
             let _ = state.idempotency_guard.rollback(&command_id).await;
             return Ok(resp);
         }
@@ -145,21 +134,20 @@ pub async fn idempotency_middleware(
 }
 ```
 
-- [ ] **Step 3: Update main.rs to inject the guard**
+- [ ] **Step 2: Replace stub in `main.rs`**
 
+Find the `idempotency_guard` stub in `crates/ataqu-bin/src/main.rs` and replace it with:
 ```rust
-// In crates/ataqu-bin/src/main.rs
-// Use the existing RealIdempotency created for PauseService for the whole API
-// Add `idempotency_guard: pause_idempotency.clone()` to AppState initialization
+let idempotency_guard = pause_idempotency.clone();
 ```
 
-- [ ] **Step 4: Run check & Commit**
+- [ ] **Step 3: Run check & Commit**
 
 Run: `cargo check --workspace`
 Expected: PASS
 
 ```bash
-git add crates/ataqu-api/src/middleware/idempotency.rs crates/ataqu-api/src/lib.rs crates/ataqu-bin/src/main.rs
+git add crates/ataqu-api/src/middleware/idempotency.rs crates/ataqu-bin/src/main.rs
 git commit -m "fix(api): use durable IdempotencyGuard in middleware"
 ```
 
@@ -168,14 +156,14 @@ git commit -m "fix(api): use durable IdempotencyGuard in middleware"
 ### Task 2: S3 Service for Presigned URLs
 
 **Files:**
-- Create:** `crates/ataqu-infra-storage/src/s3_service.rs`
-- Modify:** `crates/ataqu-infra-storage/src/lib.rs`
-- Modify:** `crates/ataqu-infra-storage/Cargo.toml`
+- Create: `crates/ataqu-infra-storage/src/s3_service.rs`
+- Modify: `crates/ataqu-infra-storage/src/lib.rs`
+- Modify: `crates/ataqu-infra-storage/Cargo.toml`
 
 - [ ] **Step 1: Add dependencies**
 
 ```toml
-# crates/ataqu-infra-storage/Cargo.toml
+# In crates/ataqu-infra-storage/Cargo.toml
 [dependencies]
 aws-config = { version = "1.5", features = ["behavior-version-latest"] }
 aws-sdk-s3 = "1.40"
@@ -231,7 +219,7 @@ pub mod s3_service;
 
 ```bash
 git add crates/ataqu-infra-storage/
-git commit -m "feat(infra): add S3Service for presigned URLs"
+git commit -m "feat(infra): implement S3Service for presigned URLs"
 ```
 
 ---
@@ -240,8 +228,7 @@ git commit -m "feat(infra): add S3Service for presigned URLs"
 
 **Files:**
 - Modify: `crates/ataqu-api/src/handlers/dial.rs`
-- Modify: `crates/ataqu-api/src/lib.rs` (Add `s3_service` to AppState)
-- Modify: `crates/ataqu-bin/src/main.rs` (Init S3Service)
+- Modify: `crates/ataqu-bin/src/main.rs`
 
 - [ ] **Step 1: Modify upload_file handler**
 
@@ -264,16 +251,12 @@ pub async fn upload_file(
 }
 ```
 
-- [ ] **Step 2: Wire up in lib.rs and main.rs**
+- [ ] **Step 2: Replace stub in `main.rs`**
 
+Find the `s3_service` stub in `crates/ataqu-bin/src/main.rs` and replace it with:
 ```rust
-// In crates/ataqu-api/src/lib.rs
-pub s3_service: Arc<ataqu_infra_storage::s3_service::S3Service>,
-
-// In crates/ataqu-bin/src/main.rs
 let s3_bucket = std::env::var("S3_BUCKET").unwrap_or_else(|_| "ataqu-uploads".to_string());
 let s3_service = Arc::new(ataqu_infra_storage::s3_service::S3Service::new(s3_bucket).await);
-// Add `s3_service` to AppState
 ```
 
 - [ ] **Step 3: Run check & Commit**
@@ -282,6 +265,6 @@ Run: `cargo check --workspace`
 Expected: PASS
 
 ```bash
-git add crates/ataqu-api/src/handlers/dial.rs crates/ataqu-api/src/lib.rs crates/ataqu-bin/src/main.rs
+git add crates/ataqu-api/src/handlers/dial.rs crates/ataqu-bin/src/main.rs
 git commit -m "feat(api): update DIAL upload to return S3 presigned URL"
 ```

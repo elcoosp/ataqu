@@ -11,9 +11,9 @@
 ---
 
 ## File Structure
-- **Modify:** `crates/ataqu-domain-spark/src/workflow.rs` (Add ApprovalAction)
-- **Create:** `crates/ataqu-infra-migration/src/m20250101_000016_create_workflow_runs.rs`
-- **Modify:** `crates/ataqu-domain-spark/src/repository.rs` (Add run trait)
+- **Overwrite:** `crates/ataqu-infra-migration/src/m20250101_000016_create_workflow_runs.rs`
+- **Modify:** `crates/ataqu-domain-spark/src/workflow.rs`
+- **Modify:** `crates/ataqu-domain-spark/src/repository.rs`
 - **Modify:** `crates/ataqu-application/src/spark_service.rs`
 - **Modify:** `crates/ataqu-api/src/handlers/spark.rs`
 
@@ -22,7 +22,7 @@
 ### Task 1: Database Migration for Workflow Runs
 
 **Files:**
-- Create: `crates/ataqu-infra-migration/src/m20250101_000016_create_workflow_runs.rs`
+- Overwrite: `crates/ataqu-infra-migration/src/m20250101_000016_create_workflow_runs.rs`
 
 - [ ] **Step 1: Write the migration file**
 
@@ -74,8 +74,8 @@ Expected: Success
 - [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-infra-migration/
-git commit -m "feat(db): add workflow_runs table for validation states"
+git add crates/ataqu-infra-migration/src/m20250101_000016_create_workflow_runs.rs
+git commit -m "feat(db): implement workflow_runs schema"
 ```
 
 ---
@@ -146,10 +146,8 @@ pub async fn approve_workflow_run(&self, run_id: uuid::Uuid) -> SparkResult<()> 
     self.run_repo.update_run_status(run_id, "approved").await
         .map_err(|e| SparkServiceError::Repository(e))?;
 
-    // Fetch run and resume execution
     if let Some(run) = self.run_repo.get_run(run_id).await.map_err(|e| SparkServiceError::Repository(e))? {
         let workflow = self.get_workflow(TenantId::new(run.tenant_id.as_uuid()), run.workflow_id).await?;
-        // Note: A real implementation would resume from the next action, not restart
         self.execute_workflow(&workflow, run_id).await?;
     }
     Ok(())
@@ -160,7 +158,7 @@ pub async fn approve_workflow_run(&self, run_id: uuid::Uuid) -> SparkResult<()> 
 
 ```bash
 git add crates/ataqu-domain-spark/src/workflow.rs crates/ataqu-domain-spark/src/repository.rs crates/ataqu-application/src/spark_service.rs
-git commit -m "feat(spark): add approval action and run pausing logic"
+git commit -m "feat(spark): implement approval action and run pausing"
 ```
 
 ---
@@ -198,5 +196,5 @@ Expected: PASS
 
 ```bash
 git add crates/ataqu-api/src/handlers/spark.rs
-git commit -m "feat(api): add workflow run approval endpoint"
+git commit -m "feat(api): implement workflow run approval endpoint"
 ```

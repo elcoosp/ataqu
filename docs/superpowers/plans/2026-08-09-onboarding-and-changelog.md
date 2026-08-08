@@ -11,19 +11,19 @@
 ---
 
 ## File Structure
-- **Create:** `crates/ataqu-infra-migration/src/m20250101_000014_create_onboarding_and_changelog.rs`
-- **Create:** `crates/ataqu-application/src/onboarding_service.rs`
-- **Create:** `crates/ataqu-application/src/changelog_service.rs`
-- **Modify:** `crates/ataqu-api/src/handlers/mod.rs` (Add `onboarding` and `changelog` modules)
-- **Create:** `crates/ataqu-api/src/handlers/onboarding.rs`
-- **Create:** `crates/ataqu-api/src/handlers/changelog.rs`
+- **Overwrite:** `crates/ataqu-infra-migration/src/m20250101_000014_create_onboarding_and_changelog.rs`
+- **Overwrite:** `crates/ataqu-application/src/onboarding_service.rs` (Plan 0 created this as empty)
+- **Overwrite:** `crates/ataqu-application/src/changelog_service.rs` (Plan 0 created this as empty)
+- **Overwrite:** `crates/ataqu-api/src/handlers/onboarding.rs` (Plan 0 created this as empty)
+- **Overwrite:** `crates/ataqu-api/src/handlers/changelog.rs` (Plan 0 created this as empty)
+- **Modify:** `crates/ataqu-bin/src/main.rs`
 
 ---
 
 ### Task 1: Database Migration
 
 **Files:**
-- Create: `crates/ataqu-infra-migration/src/m20250101_000014_create_onboarding_and_changelog.rs`
+- Overwrite: `crates/ataqu-infra-migration/src/m20250101_000014_create_onboarding_and_changelog.rs`
 
 - [ ] **Step 1: Write the migration file**
 
@@ -68,10 +68,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager.get_connection().execute_unprepared(
-            r#"
-            DROP TABLE core.changelog;
-            DROP TABLE core.onboarding_progress;
-            "#
+            r#"DROP TABLE core.changelog; DROP TABLE core.onboarding_progress;"#
         ).await?;
         Ok(())
     }
@@ -86,8 +83,8 @@ Expected: Success
 - [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-infra-migration/
-git commit -m "feat(db): add onboarding and changelog tables"
+git add crates/ataqu-infra-migration/src/m20250101_000014_create_onboarding_and_changelog.rs
+git commit -m "feat(db): implement onboarding and changelog schema"
 ```
 
 ---
@@ -95,8 +92,8 @@ git commit -m "feat(db): add onboarding and changelog tables"
 ### Task 2: Onboarding Service & API
 
 **Files:**
-- Create: `crates/ataqu-application/src/onboarding_service.rs`
-- Create: `crates/ataqu-api/src/handlers/onboarding.rs`
+- Overwrite: `crates/ataqu-application/src/onboarding_service.rs`
+- Overwrite: `crates/ataqu-api/src/handlers/onboarding.rs`
 
 - [ ] **Step 1: Write OnboardingService**
 
@@ -185,7 +182,7 @@ pub async fn get_onboarding_status(
 
 ```bash
 git add crates/ataqu-application/src/onboarding_service.rs crates/ataqu-api/src/handlers/onboarding.rs
-git commit -m "feat(app): add onboarding service and API"
+git commit -m "feat(app): implement OnboardingService and API"
 ```
 
 ---
@@ -193,8 +190,9 @@ git commit -m "feat(app): add onboarding service and API"
 ### Task 3: Changelog Service & API
 
 **Files:**
-- Create: `crates/ataqu-application/src/changelog_service.rs`
-- Create: `crates/ataqu-api/src/handlers/changelog.rs`
+- Overwrite: `crates/ataqu-application/src/changelog_service.rs`
+- Overwrite: `crates/ataqu-api/src/handlers/changelog.rs`
+- Modify: `crates/ataqu-bin/src/main.rs`
 
 - [ ] **Step 1: Write ChangelogService**
 
@@ -248,33 +246,20 @@ pub async fn get_changelog(
 }
 ```
 
-- [ ] **Step 3: Export modules and add routes**
+- [ ] **Step 3: Replace stubs in `main.rs`**
 
+Find the `onboarding_service` and `changelog_service` stubs in `crates/ataqu-bin/src/main.rs` and replace them with:
 ```rust
-// crates/ataqu-api/src/handlers/mod.rs
-pub mod onboarding;
-pub mod changelog;
-
-// crates/ataqu-api/src/lib.rs (in private_routes)
-.route("/api/onboarding/status", axum::routing::get(handlers::onboarding::get_onboarding_status))
-.route("/api/changelog", axum::routing::get(handlers::changelog::get_changelog))
-```
-
-- [ ] **Step 4: Wire up in main.rs**
-
-```rust
-// In crates/ataqu-bin/src/main.rs
 let onboarding_service = Arc::new(ataqu_application::onboarding_service::OnboardingService::new(pools.core.clone()));
 let changelog_service = Arc::new(ataqu_application::changelog_service::ChangelogService::new(pools.core.clone()));
-// Add to AppState
 ```
 
-- [ ] **Step 5: Run check & Commit**
+- [ ] **Step 4: Run check & Commit**
 
 Run: `cargo check --workspace`
 Expected: PASS
 
 ```bash
-git add crates/ataqu-application/src/changelog_service.rs crates/ataqu-api/src/handlers/changelog.rs crates/ataqu-api/src/handlers/mod.rs crates/ataqu-api/src/lib.rs crates/ataqu-bin/src/main.rs
-git commit -m "feat(app): add changelog service and API"
+git add crates/ataqu-application/src/changelog_service.rs crates/ataqu-api/src/handlers/changelog.rs crates/ataqu-bin/src/main.rs
+git commit -m "feat(app): implement ChangelogService and API"
 ```

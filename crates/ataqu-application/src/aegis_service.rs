@@ -294,7 +294,7 @@ impl AegisService {
 
         match self.repo.save_user(&user).await {
             Ok(_) => (),
-            Err(AuthError::Database(msg)) if msg.contains("duplicate key") => {
+            Err(AuthError::Database(msg)) if msg.contains("23505") => {
                 return Err(AegisServiceError::Conflict(
                     "Email already exists".to_string(),
                 ));

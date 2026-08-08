@@ -11,9 +11,9 @@
 ---
 
 ## File Structure
-- **Modify:** `crates/ataqu-domain-sond/src/form.rs` (Add `FormMode` enum)
-- **Modify:** `crates/ataqu-application/src/sond_service.rs` (Update commands and logic)
-- **Modify:** `crates/ataqu-api/src/handlers/sond.rs` (Add step-by-step submission endpoint)
+- **Modify:** `crates/ataqu-domain-sond/src/form.rs`
+- **Modify:** `crates/ataqu-application/src/sond_service.rs`
+- **Modify:** `crates/ataqu-api/src/handlers/sond.rs`
 
 ---
 
@@ -113,7 +113,6 @@ mod tests {
     #[tokio::test]
     async fn test_validate_single_answer_conversational() {
         let mut mock_repo = MockSondRepo::new();
-        // Setup mock to return a form with 2 questions
         mock_repo.expect_get_form_by_id().returning(|_| {
             Ok(Some(Form {
                 id: Uuid::new_v4(),
@@ -131,10 +130,9 @@ mod tests {
 
         let service = SondService::new(Arc::new(mock_repo), Arc::new(MockOutbox {}), Arc::new(MockIdGen {}), Arc::new(MockClock {}));
 
-        let q1_id = Uuid::new_v4(); // Assume this matches the mock
+        let q1_id = Uuid::new_v4();
         let result = service.submit_conversational_answer(TenantId::new(Uuid::new_v4()), Uuid::new_v4(), q1_id, AnswerInput { question_id: q1_id, value: AnswerValue::Text("Answer".to_string()) }).await;
         assert!(result.is_ok());
-        // assert_eq!(result.unwrap().next_question_id, Some(q2_id)); // This would require fixed UUIDs in mock
     }
 }
 ```
@@ -162,14 +160,11 @@ pub async fn submit_conversational_answer(
 ) -> SondResult<ConversationalStepResult> {
     let form = self.repo.get_form_by_id(form_id).await?.ok_or(SondServiceError::FormNotFound)?;
 
-    // Validate the single answer
     let _ = ataqu_domain_sond::response::validate_answers(&[answer], &form.questions)?;
 
-    // Find current question index
     let current_idx = form.questions.iter().position(|q| q.id == question_id)
         .ok_or(SondServiceError::Validation("Invalid question_id".to_string()))?;
 
-    // Find next question
     let next_question = form.questions.get(current_idx + 1);
 
     Ok(ConversationalStepResult {
@@ -233,8 +228,7 @@ pub async fn submit_conversational_step(
     })))
 }
 ```
-*Add route to `public_routes()`:*
-`.route("/forms/:id/submit/step", axum::routing::post(submit_conversational_step))`
+*Add route to `public_routes()`:* `.route("/forms/:id/submit/step", axum::routing::post(submit_conversational_step))`
 
 - [ ] **Step 2: Run check to verify it compiles**
 

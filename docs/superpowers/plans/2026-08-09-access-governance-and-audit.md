@@ -11,24 +11,21 @@
 ---
 
 ## File Structure
-- **Create:** `crates/ataqu-infra-migration/src/m20250101_000011_create_audit_and_permissions.rs`
-- **Create:** `crates/ataqu-infra-repositories/src/audit_repo.rs`
-- **Modify:** `crates/ataqu-infra-repositories/src/lib.rs`
-- **Create:** `crates/ataqu-application/src/audit_service.rs`
-- **Modify:** `crates/ataqu-application/src/lib.rs`
-- **Modify:** `crates/ataqu-domain-aegis/src/repository.rs` (Add audit/permission traits)
-- **Modify:** `crates/ataqu-application/src/aegis_service.rs` (Implement methods)
-- **Modify:** `crates/ataqu-api/src/handlers/aegis.rs` (Add endpoints)
+- **Overwrite:** `crates/ataqu-infra-migration/src/m20250101_000011_create_audit_and_permissions.rs`
+- **Overwrite:** `crates/ataqu-infra-repositories/src/audit_repo.rs`
+- **Modify:** `crates/ataqu-domain-aegis/src/repository.rs`
+- **Modify:** `crates/ataqu-application/src/aegis_service.rs`
+- **Modify:** `crates/ataqu-api/src/handlers/aegis.rs`
+- **Modify:** `crates/ataqu-bin/src/main.rs`
 
 ---
 
 ### Task 1: Database Migration for Audit & Permissions
 
 **Files:**
-- Create: `crates/ataqu-infra-migration/src/m20250101_000011_create_audit_and_permissions.rs`
-- Modify: `crates/ataqu-infra-migration/src/lib.rs`
+- Overwrite: `crates/ataqu-infra-migration/src/m20250101_000011_create_audit_and_permissions.rs`
 
-- [ ] **Step 1: Write the migration file**
+- [ ] **Step 1: Implement the migration SQL**
 
 ```rust
 // crates/ataqu-infra-migration/src/m20250101_000011_create_audit_and_permissions.rs
@@ -84,45 +81,41 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager.get_connection().execute_unprepared(
-            r#"
-            DROP TABLE core.audit_logs;
-            DROP TABLE core.permissions;
-            "#
+            r#"DROP TABLE core.audit_logs; DROP TABLE core.permissions;"#
         ).await?;
         Ok(())
     }
 }
 ```
 
-- [ ] **Step 2: Add to migrator lib.rs**
-
-Add `Box::new(Migration),` to the `vec![]` in `crates/ataqu-infra-migration/src/lib.rs`.
-
-- [ ] **Step 3: Run migration**
+- [ ] **Step 2: Run migration**
 
 Run: `cargo run --bin migrator`
 Expected: Success
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-infra-migration/
-git commit -m "feat(db): add permissions and audit_logs tables"
+git add crates/ataqu-infra-migration/src/m20250101_000011_create_audit_and_permissions.rs
+git commit -m "feat(db): implement audit and permissions schema"
 ```
 
 ---
 
-### Task 2: Audit & Permission Repository
+### Task 2: Audit Repository & API
 
 **Files:**
-- Create: `crates/ataqu-infra-repositories/src/audit_repo.rs`
-- Modify: `crates/ataqu-infra-repositories/src/lib.rs`
+- Overwrite: `crates/ataqu-infra-repositories/src/audit_repo.rs`
+- Modify: `crates/ataqu-domain-aegis/src/repository.rs`
+- Modify: `crates/ataqu-application/src/aegis_service.rs`
+- Modify: `crates/ataqu-api/src/handlers/aegis.rs`
+- Modify: `crates/ataqu-bin/src/main.rs`
 
-- [ ] **Step 1: Write implementation for AuditRepository**
+- [ ] **Step 1: Implement AuditRepository**
 
 ```rust
 // crates/ataqu-infra-repositories/src/audit_repo.rs
-use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement, Value};
+use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 use uuid::Uuid;
 use serde_json::Value;
 
@@ -187,30 +180,7 @@ impl AuditRepository {
 }
 ```
 
-- [ ] **Step 2: Export module**
-
-```rust
-// crates/ataqu-infra-repositories/src/lib.rs
-pub mod audit_repo;
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add crates/ataqu-infra-repositories/src/audit_repo.rs crates/ataqu-infra-repositories/src/lib.rs
-git commit -m "feat(infra): add AuditRepository"
-```
-
----
-
-### Task 3: API Endpoints for Matrix & Logs
-
-**Files:**
-- Modify: `crates/ataqu-domain-aegis/src/repository.rs`
-- Modify: `crates/ataqu-application/src/aegis_service.rs`
-- Modify: `crates/ataqu-api/src/handlers/aegis.rs`
-
-- [ ] **Step 1: Add trait methods to AEGIS domain**
+- [ ] **Step 2: Add trait to AEGIS domain and implement in service**
 
 ```rust
 // In crates/ataqu-domain-aegis/src/repository.rs
@@ -220,8 +190,6 @@ pub trait AuditRepositoryTrait: Send + Sync {
     async fn list_logs(&self, tenant_id: Uuid, limit: u64, offset: u64) -> Result<Vec<serde_json::Value>, String>;
 }
 ```
-
-- [ ] **Step 2: Implement in AegisService**
 
 ```rust
 // In crates/ataqu-application/src/aegis_service.rs
@@ -239,8 +207,6 @@ impl AegisService {
     }
 
     pub async fn get_permission_matrix(&self, tenant_id: Uuid) -> Result<serde_json::Value, AegisServiceError> {
-        // For v1, we return a simple list of users with their roles.
-        // A full matrix would query the permissions table.
         let users = self.repo.list_users(tenant_id).await?;
         Ok(serde_json::to_value(users).unwrap_or_default())
     }
@@ -275,18 +241,13 @@ pub async fn get_permission_matrix(
     Ok(Json(matrix))
 }
 ```
-*Add routes:*
-`.route("/audit-log", get(get_audit_log))`
-`.route("/permission-matrix", get(get_permission_matrix))`
+*Add routes:* `.route("/audit-log", get(get_audit_log))` and `.route("/permission-matrix", get(get_permission_matrix))`
 
-- [ ] **Step 4: Wire up in main.rs**
+- [ ] **Step 4: Replace stubs in `main.rs`**
 
+Find the `audit_repo` stub in `crates/ataqu-bin/src/main.rs` and replace it with:
 ```rust
-// In crates/ataqu-bin/src/main.rs
-use ataqu_infra_repositories::audit_repo::AuditRepository;
-
-// Implement the trait adapter
-pub struct AuditRepoAdapter(AuditRepository);
+pub struct AuditRepoAdapter(ataqu_infra_repositories::audit_repo::AuditRepository);
 #[async_trait::async_trait]
 impl ataqu_domain_aegis::repository::AuditRepositoryTrait for AuditRepoAdapter {
     async fn append_log(&self, tenant_id: Uuid, user_id: Uuid, action: &str, app: &str, entity_type: Option<&str>, entity_id: Option<Uuid>, old_value: Option<serde_json::Value>, new_value: Option<serde_json::Value>) -> Result<(), String> {
@@ -297,8 +258,7 @@ impl ataqu_domain_aegis::repository::AuditRepositoryTrait for AuditRepoAdapter {
     }
 }
 
-// Inside main():
-let audit_repo = Arc::new(AuditRepoAdapter(AuditRepository::new(pools.core.clone())));
+let audit_repo = Arc::new(AuditRepoAdapter(ataqu_infra_repositories::audit_repo::AuditRepository::new(pools.core.clone())));
 // Pass `audit_repo` to `AegisService::new`
 ```
 
@@ -308,6 +268,6 @@ Run: `cargo check --workspace`
 Expected: PASS
 
 ```bash
-git add crates/ataqu-domain-aegis/src/repository.rs crates/ataqu-application/src/aegis_service.rs crates/ataqu-api/src/handlers/aegis.rs crates/ataqu-bin/src/main.rs
-git commit -m "feat(api): add audit log and permission matrix endpoints"
+git add crates/ataqu-infra-repositories/src/audit_repo.rs crates/ataqu-domain-aegis/src/repository.rs crates/ataqu-application/src/aegis_service.rs crates/ataqu-api/src/handlers/aegis.rs crates/ataqu-bin/src/main.rs
+git commit -m "feat(api): implement audit log and permission matrix"
 ```

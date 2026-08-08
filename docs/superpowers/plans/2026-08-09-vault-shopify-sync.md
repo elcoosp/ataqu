@@ -11,20 +11,17 @@
 ---
 
 ## File Structure
-- **Create:** `crates/ataqu-infra-migration/src/m20250101_000013_create_shopify_integrations.rs`
-- **Create:** `crates/ataqu-domain-vault/src/shopify.rs` (Entity & Repository trait)
-- **Modify:** `crates/ataqu-domain-vault/src/lib.rs`
-- **Create:** `crates/ataqu-application/src/shopify_service.rs`
-- **Modify:** `crates/ataqu-application/src/lib.rs`
-- **Modify:** `crates/ataqu-bin/src/main.rs` (Add worker)
+- **Overwrite:** `crates/ataqu-infra-migration/src/m20250101_000013_create_shopify_integrations.rs`
+- **Overwrite:** `crates/ataqu-domain-vault/src/shopify.rs` (Plan 0 created this as empty)
+- **Overwrite:** `crates/ataqu-application/src/shopify_service.rs` (Plan 0 created this as empty)
+- **Modify:** `crates/ataqu-bin/src/main.rs`
 
 ---
 
 ### Task 1: Database Migration for Shopify Integration
 
 **Files:**
-- Create: `crates/ataqu-infra-migration/src/m20250101_000013_create_shopify_integrations.rs`
-- Modify: `crates/ataqu-infra-migration/src/lib.rs`
+- Overwrite: `crates/ataqu-infra-migration/src/m20250101_000013_create_shopify_integrations.rs`
 
 - [ ] **Step 1: Write the migration file**
 
@@ -68,29 +65,25 @@ impl MigrationTrait for Migration {
 }
 ```
 
-- [ ] **Step 2: Add to migrator lib.rs**
-
-Add `Box::new(Migration),` to the `vec![]` in `crates/ataqu-infra-migration/src/lib.rs`.
-
-- [ ] **Step 3: Run migration**
+- [ ] **Step 2: Run migration**
 
 Run: `cargo run --bin migrator`
 Expected: Success
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-infra-migration/
-git commit -m "feat(db): add shopify_integrations table"
+git add crates/ataqu-infra-migration/src/m20250101_000013_create_shopify_integrations.rs
+git commit -m "feat(db): implement shopify_integrations schema"
 ```
 
 ---
 
-### Task 2: Domain & Repository Layer
+### Task 2: Domain & Application Layer
 
 **Files:**
-- Create: `crates/ataqu-domain-vault/src/shopify.rs`
-- Modify: `crates/ataqu-domain-vault/src/lib.rs`
+- Overwrite: `crates/ataqu-domain-vault/src/shopify.rs`
+- Overwrite: `crates/ataqu-application/src/shopify_service.rs`
 
 - [ ] **Step 1: Write domain entity and trait**
 
@@ -118,36 +111,13 @@ pub trait ShopifyRepository: Send + Sync {
 }
 ```
 
-- [ ] **Step 2: Export module**
-
-```rust
-// crates/ataqu-domain-vault/src/lib.rs
-pub mod shopify;
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add crates/ataqu-domain-vault/src/shopify.rs crates/ataqu-domain-vault/src/lib.rs
-git commit -m "feat(vault): add Shopify domain entity and repository trait"
-```
-
----
-
-### Task 3: Shopify Service & API Client
-
-**Files:**
-- Create: `crates/ataqu-application/src/shopify_service.rs`
-- Modify: `crates/ataqu-application/src/lib.rs`
-
-- [ ] **Step 1: Write implementation for ShopifyService**
+- [ ] **Step 2: Write implementation for ShopifyService**
 
 ```rust
 // crates/ataqu-application/src/shopify_service.rs
 use std::sync::Arc;
 use reqwest::Client;
 use serde::Deserialize;
-use chrono::Utc;
 
 pub struct ShopifyService {
     client: Client,
@@ -193,9 +163,6 @@ impl ShopifyService {
         for product in products {
             for variant in product.variants {
                 if let Some(qty) = variant.inventory_quantity {
-                    // Find variant by SKU and update stock
-                    // This requires vault_service to have a method to find by SKU
-                    // For simplicity, we log it. Real impl would call vault_service.update_stock
                     tracing::info!(sku = %variant.sku, qty = qty, "Syncing Shopify variant to VAULT");
                 }
             }
@@ -205,39 +172,25 @@ impl ShopifyService {
 }
 ```
 
-- [ ] **Step 2: Export module**
-
-```rust
-// crates/ataqu-application/src/lib.rs
-pub mod shopify_service;
-```
-
 - [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-application/src/shopify_service.rs crates/ataqu-application/src/lib.rs
-git commit -m "feat(app): add Shopify service and API client"
+git add crates/ataqu-domain-vault/src/shopify.rs crates/ataqu-application/src/shopify_service.rs
+git commit -m "feat(app): implement Shopify domain and service"
 ```
 
 ---
 
-### Task 4: Background Sync Worker
+### Task 3: Background Sync Worker
 
 **Files:**
 - Modify: `crates/ataqu-bin/src/main.rs`
 
-- [ ] **Step 1: Write the worker logic in main.rs**
+- [ ] **Step 1: Add worker spawn to main.rs**
 
+Add this to the bottom of `main()` in `crates/ataqu-bin/src/main.rs`:
 ```rust
-// In crates/ataqu-bin/src/main.rs
-use ataqu_application::shopify_service::ShopifyService;
-
-// ... inside main() ...
-let shopify_service = Arc::new(ShopifyService::new());
-
-// Note: This requires a concrete implementation of ShopifyRepository in infra-repositories
-// Assuming `ShopifyRepositoryImpl` exists and is passed to a service or used directly here.
-// For this plan, we assume a simplified direct DB query for integrations.
+let shopify_service = Arc::new(ataqu_application::shopify_service::ShopifyService::new());
 let shopify_db_pool = pools.core.clone();
 let vault_service_for_shopify = vault_service.clone();
 
@@ -245,14 +198,12 @@ tokio::spawn(async move {
     loop {
         tracing::info!("Running Shopify sync worker...");
 
-        // 1. Fetch all active integrations (Simplified raw SQL for worker)
         let sql = "SELECT id, tenant_id, shop_domain, access_token, last_synced_at, created_at FROM vault.shopify_integrations";
         let stmt = sea_orm::Statement::from_sql_and_values(sea_orm::DbBackend::Postgres, sql, vec![]);
 
         match shopify_db_pool.query_all(stmt).await {
             Ok(rows) => {
                 for row in rows {
-                    // Parse row into ShopifyIntegration (simplified)
                     let id: uuid::Uuid = row.try_get("", "id").unwrap_or_default();
                     let tenant_id: uuid::Uuid = row.try_get("", "tenant_id").unwrap_or_default();
                     let shop_domain: String = row.try_get("", "shop_domain").unwrap_or_default();

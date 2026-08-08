@@ -568,53 +568,6 @@ pub async fn search_messages(
     Ok(Json(serde_json::json!({ "messages": list })))
 }
 
-pub async fn upload_file(
-    State(_state): State<AppState>,
-    auth: AuthContext,
-    mut multipart: axum::extract::Multipart,
-) -> ApiResult<Json<serde_json::Value>> {
-    // Basic file upload implementation: saves to local disk.
-    // A real implementation would use S3 presigned URLs.
-    let upload_dir =
-        std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "/tmp/ataqu_uploads".to_string());
-    tokio::fs::create_dir_all(&upload_dir)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-    let mut file_urls = Vec::new();
-    while let Ok(Some(field)) = multipart.next_field().await {
-        let file_name = field.file_name().unwrap_or("unknown").to_string();
-        let extension = std::path::Path::new(&file_name)
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .unwrap_or("bin")
-            .to_string();
-        let file_id = uuid::Uuid::now_v7();
-        let saved_name = format!("{}.{}", file_id, extension);
-        let file_path = std::path::Path::new(&upload_dir).join(&saved_name);
-
-        let data = field
-            .bytes()
-            .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-        tokio::fs::write(&file_path, &data)
-            .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-        let url = format!("/uploads/{}", saved_name);
-        file_urls.push(serde_json::json!({
-            "name": file_name,
-            "url": url,
-            "size": data.len(),
-        }));
-    }
-
-    Ok(Json(serde_json::json!({
-        "files": file_urls,
-        "uploaded_by": auth.user_id,
-    })))
-}
-
 #[derive(Debug, Deserialize)]
 pub struct AddReactionRequest {
     pub emoji: String,
@@ -752,6 +705,5 @@ pub fn routes() -> Router<AppState> {
         .route("/mentions/:id/read", post(mark_mention_read))
         .route("/presence/online", get(get_online_users))
         .route("/search", get(search_messages))
-        .route("/files", post(upload_file))
         .nest("/ws", super::dial_ws::routes())
 }

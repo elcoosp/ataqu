@@ -11,11 +11,11 @@
 ---
 
 ## File Structure
-- **Create:** `crates/ataqu-infra-migration/src/m20250101_000015_create_establishments.rs`
-- **Create:** `crates/ataqu-domain-cinq/src/establishment.rs`
-- **Modify:** `crates/ataqu-domain-cinq/src/repository.rs` (Add trait)
-- **Modify:** `crates/ataqu-domain-cinq/src/deal.rs` (Add `establishment_id`)
-- **Modify:** `crates/ataqu-infra-repositories/src/cinq_repo_impl.rs` (Implement repo)
+- **Overwrite:** `crates/ataqu-infra-migration/src/m20250101_000015_create_establishments.rs`
+- **Overwrite:** `crates/ataqu-domain-cinq/src/establishment.rs` (Plan 0 created this as empty)
+- **Modify:** `crates/ataqu-domain-cinq/src/repository.rs`
+- **Modify:** `crates/ataqu-domain-cinq/src/deal.rs`
+- **Modify:** `crates/ataqu-infra-repositories/src/cinq_repo_impl.rs`
 - **Modify:** `crates/ataqu-application/src/cinq_service.rs`
 - **Modify:** `crates/ataqu-api/src/handlers/cinq.rs`
 
@@ -24,7 +24,7 @@
 ### Task 1: Database Migration for Establishments
 
 **Files:**
-- Create: `crates/ataqu-infra-migration/src/m20250101_000015_create_establishments.rs`
+- Overwrite: `crates/ataqu-infra-migration/src/m20250101_000015_create_establishments.rs`
 
 - [ ] **Step 1: Write the migration file**
 
@@ -82,8 +82,8 @@ Expected: Success
 - [ ] **Step 3: Commit**
 
 ```bash
-git add crates/ataqu-infra-migration/
-git commit -m "feat(db): add establishments table and deal relation"
+git add crates/ataqu-infra-migration/src/m20250101_000015_create_establishments.rs
+git commit -m "feat(db): implement establishments schema"
 ```
 
 ---
@@ -91,9 +91,10 @@ git commit -m "feat(db): add establishments table and deal relation"
 ### Task 2: Domain & Repository Layer
 
 **Files:**
-- Create: `crates/ataqu-domain-cinq/src/establishment.rs`
+- Overwrite: `crates/ataqu-domain-cinq/src/establishment.rs`
 - Modify: `crates/ataqu-domain-cinq/src/repository.rs`
 - Modify: `crates/ataqu-domain-cinq/src/deal.rs`
+- Modify: `crates/ataqu-infra-repositories/src/cinq_repo_impl.rs`
 
 - [ ] **Step 1: Write Establishment Domain Entity**
 
@@ -126,7 +127,7 @@ pub establishment_id: Option<Uuid>,
 pub establishment_id: Option<Uuid>,
 ```
 
-- [ ] **Step 3: Add Repository Trait**
+- [ ] **Step 3: Add Repository Trait and Implement**
 
 ```rust
 // In crates/ataqu-domain-cinq/src/repository.rs
@@ -137,18 +138,16 @@ pub trait EstablishmentRepository: Send + Sync {
 }
 ```
 
-- [ ] **Step 4: Export module**
-
 ```rust
-// crates/ataqu-domain-cinq/src/lib.rs
-pub mod establishment;
+// In crates/ataqu-infra-repositories/src/cinq_repo_impl.rs
+// Add implementation for EstablishmentRepository trait
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add crates/ataqu-domain-cinq/
-git commit -m "feat(cinq): add establishment domain entity and repo trait"
+git add crates/ataqu-domain-cinq/ crates/ataqu-infra-repositories/src/cinq_repo_impl.rs
+git commit -m "feat(cinq): implement establishment domain and repo"
 ```
 
 ---
@@ -229,5 +228,5 @@ Expected: PASS
 
 ```bash
 git add crates/ataqu-application/src/cinq_service.rs crates/ataqu-api/src/handlers/cinq.rs
-git commit -m "feat(api): add establishment endpoints to CINQ"
+git commit -m "feat(api): implement establishment endpoints"
 ```
