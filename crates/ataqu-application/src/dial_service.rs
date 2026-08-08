@@ -1,7 +1,5 @@
-use printpdf::PdfDocument;
-use printpdf::Mm;
-use printpdf::BuiltinFont;
-use printpdf::Text;
+use pdf::{Document, Page, font::Font};
+use std::io::Cursor;
 // DIAL application service – orchestrates chat operations using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
@@ -516,20 +514,18 @@ impl DialService {
                 .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
                 .await?;
     
-            // Create a new PDF document with margins (20 mm on both sides)
-            let doc = PdfDocument::new("Channel Export", Mm(20.0), Mm(20.0), "layer1");
-            let (mut page, mut layer) = doc.0.add_page(Mm(210.0), Mm(297.0), "A4");
-            let mut y = Mm(280.0);
-            let font = doc.0.add_builtin_font(BuiltinFont::Helvetica)
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-            let font_bold = doc.0.add_builtin_font(BuiltinFont::HelveticaBold)
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            let mut doc = Document::new();
+    
+            // Add a page with size A4 (210x297 mm)
+            let mut page = doc.add_page();
+            page.set_size(210.0, 297.0);
+    
+            let mut y = 750.0; // y coordinate from top
     
             // Title
             let title = format!("Channel export: {}", channel_id);
-            layer.use_text(&title, Mm(14.0), Mm(10.0), y, &font_bold)
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-            y = y - Mm(25.0);
+            page.add_text(50.0, y, &title, &Font::Helvetica, 14.0);
+            y -= 25.0;
     
             for msg in messages {
                 let line = format!(
@@ -538,24 +534,22 @@ impl DialService {
                     msg.author_id.as_uuid(),
                     msg.content
                 );
-                // Truncate if too long to prevent overflow
                 let line = if line.len() > 200 { &line[..200] } else { &line };
-                if y < Mm(20.0) {
-                    let (new_page, new_layer) = doc.0.add_page(Mm(210.0), Mm(297.0), "A4");
+                if y < 50.0 {
+                    // New page
+                    let mut new_page = doc.add_page();
+                    new_page.set_size(210.0, 297.0);
                     page = new_page;
-                    layer = new_layer;
-                    y = Mm(280.0);
+                    y = 750.0;
                 }
-                layer.use_text(line, Mm(10.0), Mm(10.0), y, &font)
-                    .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-                y = y - Mm(15.0);
+                page.add_text(50.0, y, &line, &Font::Helvetica, 10.0);
+                y -= 15.0;
             }
     
             // Render to bytes
-            let pdf_bytes = doc.0
-                .render_to_bytes()
-                .map_err(|e| DialServiceError::Repository(e.to_string()))?;
-            Ok(pdf_bytes)
+            let mut bytes = Cursor::new(Vec::new());
+            doc.save_to(&mut bytes).map_err(|e| DialServiceError::Repository(e.to_string()))?;
+            Ok(bytes.into_inner())
         }
 
     pub async fn list_thread_messages(
