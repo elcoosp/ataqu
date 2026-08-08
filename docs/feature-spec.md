@@ -1,11 +1,11 @@
 # ATAQU MLP FEATURE SPECIFICATION — "The Predator's Prey"
 
-**Version:** 2.8 (MLP Competitive Drivers Update)
+**Version:** 2.9 (MLP Competitive Drivers Update)
 **Date:** 2026-08-08
 **Document Type:** Product Feature Specification (MLP Scope)
 **Brand Domain:** `ataqu.com`
 
-> **PRODUCT NOTE:** Version 2.8 incorporates insights from competitor love-driver analysis (G2, Capterra, TrustRadius, Reddit 2024-2026) across 11 competitors. Four high-value, low-complexity features have been added to the MLP scope based on what users *adore* about competing tools: **Conversational Form Mode** (SOND), **Chart Drill-Down** (VISTA), **Shopify Sync** (VAULT), and **Ultra-Simple Booking UX** (TEMPO). All existing P0/P1/P2 priorities and cross-cutting features (2.1–2.12) remain unchanged. Features requiring AI, complex enterprise integrations, or significant backend overhauls have been explicitly ignored for MLP.
+> **PRODUCT NOTE:** Version 2.9 incorporates insights from competitor love-driver analysis (G2, Capterra, TrustRadius, Reddit 2024-2026) across 11 competitors. Four high-value, low-complexity features have been added to the MLP scope based on what users *adore* about competing tools: **Conversational Form Mode** (SOND), **Chart Drill-Down** (VISTA), **Shopify Sync** (VAULT), and **Ultra-Simple Booking UX** (TEMPO). All existing P0/P1/P2 priorities and cross-cutting features (2.1–2.12) remain unchanged. Features requiring AI, complex enterprise integrations, or significant backend overhauls have been explicitly ignored for MLP.
 
 ---
 
@@ -432,7 +432,7 @@ These features apply globally across all 10 apps. They were validated through re
 
 ## 7. TEMPO (Scheduling) — vs Calendly
 
-**Ataqu Advantage:** TEMPO is "Calendly without the per-user fees, with native CRM integration, and with timely no-show detection within 15 minutes."
+**Ataqu Advantage:** TEMPO is "Calendly without the per-user fees, with native CRM integration, with timely no-show detection within 15 minutes, and with an ultra‑simple booking UX."
 
 | Feature | Status | Justification |
 |---------|--------|---------------|
@@ -444,7 +444,7 @@ These features apply globally across all 10 apps. They were validated through re
 | **Search (global, meetings)** | P0 | Unified search across all apps. |
 | No-Show Workflows | P1 | Timely detection (15-30 min). |
 | CRM Integration | P1 | Creates CINQ activity. |
-| **Ultra-Simple Booking UX** | **P0** | **The public booking page must be 3 clicks max. No complex configuration visible to the invitee. Mobile-first, single-screen layout.** |
+| **🆕 Ultra-Simple Booking UX** | **P0** | **The public booking page must be 3 clicks max. No complex configuration visible to the invitee. Mobile-first, single-screen layout.** |
 | ChatGPT Integration | Ignored | Gimmick. |
 
 **UX Note (from competitor research):** Calendly users love its *radical simplicity*. The booking page should show: (1) Event type, (2) Time slot picker, (3) Name + email. That's it. No extra fields, no configuration overload. Implement this as the default view. Advanced options (buffers, custom questions) are hidden behind a "Show advanced" toggle.
@@ -453,7 +453,7 @@ These features apply globally across all 10 apps. They were validated through re
 
 ## 8. SOND (Forms) — vs Typeform
 
-**Ataqu Advantage:** SOND is "Typeform without the response limits, with native CRM and automation integration, and with conditional routing built-in."
+**Ataqu Advantage:** SOND is "Typeform without the response limits, with native CRM and automation integration, with conditional routing built‑in, and with a conversational mode that boosts completion rates."
 
 | Feature | Status | Justification |
 |---------|--------|---------------|
@@ -481,7 +481,7 @@ These features apply globally across all 10 apps. They were validated through re
 
 ## 9. VAULT (Inventory) — vs Cin7
 
-**Ataqu Advantage:** VAULT is "Cin7 without the AI bloat, with native CRM and order management integration, and with real-time stock visibility."
+**Ataqu Advantage:** VAULT is "Cin7 without the AI bloat, with native CRM and order management integration, with real‑time stock visibility, and with native Shopify sync."
 
 | Feature | Status | Justification |
 |---------|--------|---------------|
@@ -548,7 +548,7 @@ These features apply globally across all 10 apps. They were validated through re
 
 ## 12. VISTA (Analytics & BI) — vs Tableau
 
-**Ataqu Advantage:** VISTA is "Tableau without the data engineers, without the ETL pipelines, with native data from your CRM, inventory, and chat, and with a built-in health dashboard."
+**Ataqu Advantage:** VISTA is "Tableau without the data engineers, without the ETL pipelines, with native data from your CRM, inventory, and chat, with a built‑in health dashboard, and with interactive chart drill‑down."
 
 | Feature | Status | Justification |
 |---------|--------|---------------|
@@ -622,4 +622,4 @@ With the new P0 features integrated:
 
 ---
 
-**Document prepared for Ataqu Architecture Team. Version 2.8 is ready for AI agent implementation.**
+**Document prepared for Ataqu Architecture Team. Version 2.9 is ready for AI agent implementation.**
