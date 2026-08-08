@@ -55,6 +55,58 @@ Implement VISTA: configurable dashboard with drag-and-drop widgets, real-time KP
 - Connection state in Zustand: `connected`, `disconnected`.
 - On reconnect: refetch all dashboard queries.
 
+
+### 🆕 Chart Drill-Down (P0)
+
+**Objective:** Add interactivity to all chart widgets (Bar, Line, Pie, Area). Click on any chart element → opens a side panel (sheet/drawer) showing the raw data behind that element.
+
+**Backend Context Mapping:**
+- **Endpoint:** `POST /api/v1/vista/drill-down`
+- **Payload:** `{ dashboardId, widgetId, dimension, value, filters, limit: 1000 }`
+- **Response:** `{ data: Record<string, any>[], total: number, hasMore: boolean }`
+- **Security:** Tenant isolation via `TenantId`. Filters validated against widget data source.
+
+**UI Contract:**
+
+**Interaction:**
+- Hover: subtle highlight (amber border, 2px).
+- Click: side panel slides in from right.
+
+**Side Panel (350px width, .ataqu-glass):**
+- Title: `"Deals in August 2026"` (dynamic based on dimension + value).
+- Data Table: TanStack Table with all relevant columns.
+  - Virtualized if > 100 rows.
+  - Sortable columns.
+- Export: "Export CSV" button.
+- Close: "X" button or click outside to close.
+
+**Supported Charts:**
+- **Bar Chart:** Click on a bar → shows items in that category.
+- **Line Chart:** Click on a data point → shows items at that timestamp.
+- **Pie Chart:** Click on a segment → shows items in that segment.
+- **Area Chart:** Click on a data point → same as line chart.
+
+**Implementation Steps:**
+1. Add `POST /api/v1/vista/drill-down` to `apps/vista/src/api/vista-api.ts`.
+2. Create `apps/vista/src/components/dashboard/chart-interaction.tsx` (onClick handler for Recharts).
+3. Create `apps/vista/src/components/dashboard/drill-down-panel.tsx` (side panel).
+4. Create `apps/vista/src/components/dashboard/drill-down-table.tsx` (TanStack Table).
+5. Zustand store: `useDrillDownStore` (isOpen, data, loading, widgetId, dimension, value).
+6. Modify each chart widget to accept `onDataPointClick` prop.
+7. Styling: `.ataqu-glass`, `shadow-lg`, smooth slide-in 200ms (translateX).
+8. Loading state: skeleton loader in side panel.
+
+**Definition of Done:**
+- [ ] Click on bar chart → side panel opens with data for that bar.
+- [ ] Click on line chart → side panel opens with data for that point.
+- [ ] Click on pie chart → side panel opens with data for that segment.
+- [ ] Side panel closes on "X" click or click outside.
+- [ ] Data table is virtualized for > 100 rows.
+- [ ] Export CSV downloads the data.
+- [ ] Loading state shows skeleton loader.
+- [ ] Empty state: "No data found for this selection."
+
+
 ### Command Palette Actions (`apps/vista/src/actions.ts`)
 - `Go to Dashboard [Name]` → fuzzy search dashboards
 - `Create Dashboard` → opens new dashboard modal

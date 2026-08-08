@@ -49,6 +49,51 @@ Implement SOND: visual drag-and-drop form builder, question types (text, email, 
   - `<Switch>` labeled "Trigger SPARK workflow on submission." Same pattern. Badge: "Connected to SPARK".
 - Empty state: `<EmptyState icon={Inbox} title="No submissions yet" description="Publish your form to start collecting responses." />`.
 
+
+### 🆕 Conversational Mode (P0)
+
+**Objective:** Add a toggle in the form builder that switches between "Standard" (all questions on one page) and "Conversational" (one question per slide) — matching Typeform's UX.
+
+**UI Contract:**
+
+**Builder Toggle:**
+- Location: Form Settings panel (tab: "Display").
+- Switch: `[Standard] [Conversational]`.
+- Label: "Display mode" with tooltip: *"Conversational mode shows one question at a time — higher completion rates."*
+- Default: Standard.
+- Persisted in `form.config.conversational_mode` (JSONB).
+
+**Conversational Mode (Frontend-Only):**
+- The form renders one question per slide.
+- Each slide: question text + input/choices + "Next" button.
+- Progress bar at top: `Question 3 of 10`.
+- Slide transition: 150ms ease-out (`transform: translateX`).
+- Conditional logic: hidden questions are skipped silently.
+- Last question: "Next" button changes to "Submit".
+- Validation: inline error on "Next" click. User cannot proceed until valid.
+- On submit: standard `POST /api/v1/sond/forms/:id/submissions`.
+- Confirmation screen after submission: "Thank you! Your response has been recorded."
+
+**Implementation Steps:**
+1. Add `conversational_mode` to `Form` type in `apps/sond/src/api/types.ts`.
+2. Create `apps/sond/src/components/builder/conversational-toggle.tsx` (switch in settings panel).
+3. Create `apps/sond/src/components/preview/conversational-slide.tsx` (one question per slide).
+4. Modify `apps/sond/src/components/preview/form-preview.tsx` to support both modes.
+5. Zustand store: `useFormPreviewStore` (currentSlide, answers, mode).
+6. Validation: uses same Zod schemas as standard mode.
+7. Styling: `bg-card`, `max-w-lg`, centered. Progress bar: amber (`bg-primary`).
+
+**Definition of Done:**
+- [ ] Toggle appears in form settings and persists to backend.
+- [ ] Conversational mode renders one question per slide.
+- [ ] Progress bar updates correctly with conditional logic.
+- [ ] Validation blocks proceeding on invalid input.
+- [ ] Slide transitions are smooth (150ms, compositor-friendly).
+- [ ] Submission works and shows confirmation screen.
+- [ ] No loading spinners. Skeleton loaders only.
+- [ ] Works on mobile (375px).
+
+
 ### Command Palette Actions (`apps/sond/src/actions.ts`)
 - `Create Form` → opens form builder
 - `Go to Forms` → navigate to `/`
