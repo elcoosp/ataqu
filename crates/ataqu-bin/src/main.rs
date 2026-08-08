@@ -437,6 +437,14 @@ async fn main() -> anyhow::Result<()> {
     );
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
+
+    let rate_limiter_cleanup = rate_limiter.clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            rate_limiter_cleanup.cleanup();
+        }
+    });
     let vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();

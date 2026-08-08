@@ -131,8 +131,8 @@ pub async fn update_dashboard(
         .update_dashboard(
             auth.tenant_id,
             id,
-            payload.name.clone(),
-            payload.config.clone(),
+            payload.name,
+            payload.config,
             if_match,
         )
         .await

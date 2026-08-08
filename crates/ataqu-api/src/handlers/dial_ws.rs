@@ -73,17 +73,26 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
         }
     }
 
+    struct AbortOnDrop(Option<tokio::task::JoinHandle<()>>);
+    impl Drop for AbortOnDrop {
+        fn drop(&mut self) {
+            if let Some(handle) = self.0.take() {
+                handle.abort();
+            }
+        }
+    }
+
     let (mut ws_sender, mut ws_receiver) = socket.split();
     let (tx, mut rx) = mpsc::unbounded_channel::<String>();
     let connection_id = uuid::Uuid::new_v4();
 
-    let send_task = tokio::spawn(async move {
+    let _send_task = AbortOnDrop(Some(tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
             if ws_sender.send(Message::Text(msg.into())).await.is_err() {
                 break;
             }
         }
-    });
+    })));
 
     while let Some(Ok(msg)) = ws_receiver.next().await {
         match msg {
@@ -244,7 +253,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
         }
     }
 
-    send_task.abort();
+    // _send_task is aborted automatically via AbortOnDrop Drop impl
     info!(user_id = %auth.user_id, "WebSocket disconnected");
 }
 
