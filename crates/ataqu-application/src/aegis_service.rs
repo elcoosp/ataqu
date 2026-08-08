@@ -284,7 +284,7 @@ impl AegisService {
         }
     }
 
-    #[instrument(skip(self, cmd), fields(email = %cmd.email))]
+    #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
     pub async fn create_user(
         &self,
         cmd: DomainCreateUserCommand,
@@ -319,7 +319,7 @@ impl AegisService {
         })
     }
 
-    #[instrument(skip(self, cmd), fields(email = %cmd.email))]
+    #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
     pub async fn authenticate(
         &self,
         cmd: DomainAuthenticateCommand,
