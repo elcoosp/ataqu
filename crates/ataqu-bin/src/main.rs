@@ -473,16 +473,6 @@ async fn main() -> anyhow::Result<()> {
             .time_to_live(Duration::from_secs(600))
             .build(),
     );
-    let jwt_blocklist = Arc::new(
-        moka::sync::Cache::builder()
-            .time_to_live(Duration::from_secs(86400))
-            .build(),
-    );
-    let user_version_cache = Arc::new(
-        moka::sync::Cache::builder()
-            .time_to_live(Duration::from_secs(5)) // [VULN-004] Reduced TTL to 5s to minimize token validity window
-            .build(),
-    );
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let http_client = reqwest::Client::new();
@@ -520,8 +510,6 @@ async fn main() -> anyhow::Result<()> {
         rate_limiter,
         metrics_handle,
         sso_states: sso_states.clone(),
-        jwt_blocklist: jwt_blocklist.clone(),
-        user_version_cache,
         http_client,
     };
 
@@ -840,7 +828,6 @@ async fn main() -> anyhow::Result<()> {
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
     let _id_gen_for_admin = id_gen.clone();
     let _clock_for_admin = clock.clone();
-    let _jwt_blocklist_for_admin = jwt_blocklist.clone();
 
     tokio::spawn(async move {
         tracing::info!("Admin server listening on UDS: {}", admin_socket_path);
