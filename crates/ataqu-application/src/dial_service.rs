@@ -1,7 +1,7 @@
-use lopdf::{Document, Object, Stream, Dictionary, ObjectId};
+use lopdf::{Document, Stream, Dictionary};
 use lopdf::content::Content;
 use std::io::Cursor;
-//! DIAL application service – orchestrates chat operations using domain repositories.
+// DIAL application service – orchestrates chat operations using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -18,7 +18,6 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 // Re-export domain types for API layer
 pub use ataqu_domain_dial::chat::{Channel, Message, Reaction};
-use std::io::Cursor;
 
 // Application commands (using domain types)
 #[derive(Debug, Clone)]
@@ -519,7 +518,7 @@ impl DialService {
             let mut doc = Document::new();
     
             // Build content stream
-            let mut content = Content::new();
+            let mut content = Vec::new();
             content.begin_text();
             content.set_font("Helvetica", 12.0);
             let title = format!("Channel export: {}", channel_id);
