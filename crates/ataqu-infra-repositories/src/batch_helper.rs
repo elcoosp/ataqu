@@ -1,3 +1,4 @@
+#![allow(clippy::collapsible_if)]
 use sea_orm::{ConnectionTrait, DatabaseTransaction, DbBackend, DbErr, Statement};
 use serde::Serialize;
 use tracing::warn;

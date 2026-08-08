@@ -306,6 +306,7 @@ pub async fn create_deal(
         probability: payload.probability,
         variant_id: payload.variant_id,
         quantity: payload.quantity,
+        establishment_id: payload.establishment_id,
     };
     let deal = state
         .cinq_service

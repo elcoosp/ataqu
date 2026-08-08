@@ -63,6 +63,7 @@ pub struct CreateDealCommand {
     pub probability: Option<i32>,
     pub variant_id: Option<Uuid>,
     pub quantity: Option<i64>,
+    pub establishment_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone)]
@@ -110,12 +111,16 @@ pub enum CinqServiceError {
     TaskNotFound,
     #[error("Pipeline stage not found")]
     PipelineStageNotFound,
+    #[error("Establishment not found: {0}")]
+    EstablishmentNotFound(String),
     #[error("Validation error: {0}")]
     Validation(String),
     #[error("Domain error: {0}")]
     Domain(#[from] CinqDomainError),
     #[error("Repository error: {0}")]
     Repository(String),
+    #[error("Not found: {0}")]
+    NotFound(String),
 }
 
 pub type CinqResult<T> = Result<T, CinqServiceError>;
@@ -126,12 +131,22 @@ pub struct CinqService {
     activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
     task_repo: Arc<dyn ataqu_domain_cinq::repository::TaskRepository + Send + Sync>,
     stage_repo: Arc<dyn PipelineStageRepository + Send + Sync>,
+    establishment_repo:
+        Arc<dyn ataqu_domain_cinq::repository::EstablishmentRepository + Send + Sync>,
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
 }
 
 const CINQ_SCHEMA: &str = "collab_crm";
+
+#[derive(Debug, Clone)]
+pub struct CreateEstablishmentCommand {
+    pub tenant_id: TenantId,
+    pub company_name: String,
+    pub siret: Option<String>,
+    pub address: Option<String>,
+}
 
 impl CinqService {
     pub fn new(
@@ -140,6 +155,9 @@ impl CinqService {
         activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
         task_repo: Arc<dyn ataqu_domain_cinq::repository::TaskRepository + Send + Sync>,
         stage_repo: Arc<dyn PipelineStageRepository + Send + Sync>,
+        establishment_repo: Arc<
+            dyn ataqu_domain_cinq::repository::EstablishmentRepository + Send + Sync,
+        >,
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
@@ -150,6 +168,7 @@ impl CinqService {
             activity_repo,
             task_repo,
             stage_repo,
+            establishment_repo,
             outbox,
             id_gen,
             clock,
@@ -448,11 +467,14 @@ impl CinqService {
                     c.id.to_string(),
                     c.name.clone(),
                     c.email
-                        .reveal(&ataqu_security::PiiAccessKey::new())
+                        .reveal(&ataqu_security::PiiAccessKey::new_for_test())
                         .to_string(),
                     c.phone
                         .as_ref()
-                        .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
+                        .map(|p| {
+                            p.reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                                .to_string()
+                        })
                         .unwrap_or_default(),
                     c.created_at.to_rfc3339(),
                 ])
@@ -471,6 +493,9 @@ impl CinqService {
 
     pub async fn create_deal(&self, cmd: CreateDealCommand) -> CinqResult<Deal> {
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
+        if let Some(est_id) = cmd.establishment_id {
+            let _ = self.get_establishment(cmd.tenant_id, est_id).await?;
+        }
         let domain_cmd = DomainCreateDeal {
             tenant_id: cmd.tenant_id,
             contact_id: cmd.contact_id,
@@ -482,6 +507,7 @@ impl CinqService {
             probability: cmd.probability,
             variant_id: cmd.variant_id,
             quantity: cmd.quantity,
+            establishment_id: cmd.establishment_id,
         };
         let event =
             deal_domain::create_deal(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
@@ -497,6 +523,7 @@ impl CinqService {
             probability: event.probability,
             variant_id: event.variant_id,
             quantity: event.quantity,
+            establishment_id: event.establishment_id,
             created_at: event.created_at,
             updated_at: event.created_at,
             version: 0,
@@ -871,5 +898,57 @@ impl CinqService {
     pub async fn delete_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.task_repo.delete_task(&tenant_id, id).await?;
         Ok(())
+    }
+
+    pub async fn create_establishment(
+        &self,
+        cmd: CreateEstablishmentCommand,
+    ) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
+        use ataqu_domain_cinq::establishment::{
+            CreateEstablishmentCommand as DomainCreate, create_establishment as domain_create,
+        };
+        let domain_cmd = DomainCreate {
+            tenant_id: cmd.tenant_id,
+            company_name: cmd.company_name,
+            siret: cmd.siret,
+            address: cmd.address,
+        };
+        let event = domain_create(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
+        let est = ataqu_domain_cinq::establishment::Establishment {
+            id: event.id,
+            tenant_id: event.tenant_id,
+            company_name: event.company_name,
+            siret: event.siret,
+            address: event.address,
+            created_at: event.created_at,
+            updated_at: event.created_at,
+        };
+        self.establishment_repo.save_establishment(&est).await?;
+        Ok(est)
+    }
+
+    pub async fn list_establishments(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<ataqu_domain_cinq::establishment::Establishment>> {
+        Ok(self
+            .establishment_repo
+            .list_establishments(&tenant_id, limit, offset)
+            .await?)
+    }
+
+    pub async fn get_establishment(
+        &self,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
+        self.establishment_repo
+            .find_establishment_by_id(&tenant_id, id)
+            .await?
+            .ok_or_else(|| {
+                CinqServiceError::EstablishmentNotFound("Establishment not found".to_string())
+            })
     }
 }
