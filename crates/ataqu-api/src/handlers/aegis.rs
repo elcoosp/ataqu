@@ -45,7 +45,7 @@ pub async fn create_user(
             StatusCode::CREATED,
             Json(serde_json::json!({
                 "user_id": resp.user_id,
-                "email": crate::serializers::ApiEmail(resp.email),
+                "email": crate::serializers::ApiEmail(resp.email.clone()),
             })),
         )),
         Err(err) => {
@@ -289,7 +289,7 @@ pub async fn list_users(
         .map(|u| {
             serde_json::json!({
                 "id": u.id,
-                "email": crate::serializers::ApiEmail(u.email),
+                "email": crate::serializers::ApiEmail(u.email.clone()),
                 "name": u.name,
                 "role": u.role,
                 "is_active": u.is_active,

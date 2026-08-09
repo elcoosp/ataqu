@@ -29,11 +29,11 @@ pub struct CreateEmployeeRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct EmployeeResponse <'a> {
+pub struct EmployeeResponse {
     pub id: Uuid,
     pub full_name: String,
-    pub email: ApiEmail<'a>,
-    pub phone: Option<ApiPhone<'a>>,
+    pub email: ApiEmail,
+    pub phone: Option<ApiPhone>,
     pub job_title: String,
     pub department: Option<String>,
     pub hire_date: NaiveDate,
@@ -69,7 +69,7 @@ pub struct CreateLeaveRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct LeaveRequestResponse <'a> {
+pub struct LeaveRequestResponse {
     pub id: Uuid,
     pub employee_id: Uuid,
     pub employee_name: String,

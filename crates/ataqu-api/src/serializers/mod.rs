@@ -1,13 +1,14 @@
 //! API‑layer serialization wrappers for PII newtypes.
-//! These implement `Serialize` to reveal the inner value for HTTP responses.
+//! These own the PII data and implement `Serialize` to reveal the inner value for HTTP responses.
 
 use ataqu_security::{Email, PhoneNumber, PiiAccessKey};
 use serde::{Serialize, Serializer};
 
 /// Wrapper for `Email` that serializes the actual email address.
-pub struct ApiEmail<'a>(pub &'a Email);
+#[derive(Debug, Clone)]
+pub struct ApiEmail(pub Email);
 
-impl<'a> Serialize for ApiEmail<'a> {
+impl Serialize for ApiEmail {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -18,9 +19,10 @@ impl<'a> Serialize for ApiEmail<'a> {
 }
 
 /// Wrapper for `PhoneNumber` that serializes the actual phone number.
-pub struct ApiPhone<'a>(pub &'a PhoneNumber);
+#[derive(Debug, Clone)]
+pub struct ApiPhone(pub PhoneNumber);
 
-impl<'a> Serialize for ApiPhone<'a> {
+impl Serialize for ApiPhone {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
