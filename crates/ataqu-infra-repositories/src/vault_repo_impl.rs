@@ -378,7 +378,7 @@ impl VaultRepository for VaultRepositoryImpl {
                 name: m.name,
                 location: m.location,
                 created_at: m.created_at.into(),
-            
+
                 version: 0,
             })
             .collect())

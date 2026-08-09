@@ -632,9 +632,13 @@ pub async fn shopify_auth(
     auth: AuthContext,
 ) -> ApiResult<Json<serde_json::Value>> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
-    Ok(Json(serde_json::json!({"url": "https://shopify.com/oauth/authorize"})))
+    Ok(Json(
+        serde_json::json!({"url": "https://shopify.com/oauth/authorize"}),
+    ))
 }
 
 pub async fn shopify_sync(
@@ -642,21 +646,17 @@ pub async fn shopify_sync(
     auth: AuthContext,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
     Ok(StatusCode::ACCEPTED)
 }
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route(
-            "/shopify/auth",
-            axum::routing::get(shopify_auth),
-        )
-        .route(
-            "/shopify/sync",
-            axum::routing::post(shopify_sync),
-        )
+        .route("/shopify/auth", axum::routing::get(shopify_auth))
+        .route("/shopify/sync", axum::routing::post(shopify_sync))
         .route(
             "/products",
             axum::routing::post(create_product).get(list_products),

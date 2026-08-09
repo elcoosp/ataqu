@@ -575,19 +575,21 @@ pub async fn get_audit_log(
         .map_err(map_aegis_error)?;
     let resp = logs
         .into_iter()
-        .map(|l| serde_json::json!({
-            "tenant_id": l.tenant_id,
-            "user_id": l.user_id,
-            "action": l.action,
-            "app": l.app,
-            "entity_type": l.entity_type,
-            "entity_id": l.entity_id,
-            "old_value": l.old_value,
-            "new_value": l.new_value,
-            "ip_address": l.ip_address,
-            "user_agent": l.user_agent,
-            "created_at": l.created_at,
-        }))
+        .map(|l| {
+            serde_json::json!({
+                "tenant_id": l.tenant_id,
+                "user_id": l.user_id,
+                "action": l.action,
+                "app": l.app,
+                "entity_type": l.entity_type,
+                "entity_id": l.entity_id,
+                "old_value": l.old_value,
+                "new_value": l.new_value,
+                "ip_address": l.ip_address,
+                "user_agent": l.user_agent,
+                "created_at": l.created_at,
+            })
+        })
         .collect();
     Ok(Json(resp))
 }

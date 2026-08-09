@@ -6,14 +6,9 @@ use std::fmt;
 pub struct PiiAccessKey(());
 
 impl PiiAccessKey {
-    /// Creates a new PiiAccessKey.
+    #[cfg(any(test, feature = "infra-pii-access"))]
     pub fn new() -> Self {
-        Self(())
-    }
-
-    /// Creates a new PiiAccessKey for testing purposes.
-    pub fn new_for_test() -> Self {
-        Self(())
+        PiiAccessKey(())
     }
 }
 
