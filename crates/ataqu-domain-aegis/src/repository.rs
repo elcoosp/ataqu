@@ -38,6 +38,14 @@ pub trait AuthRepository: Send + Sync {
         id: Uuid,
         now: std::time::SystemTime,
     ) -> Result<(), crate::AuthError>;
+
+    async fn upsert_permission(
+        &self,
+        tenant_id: ataqu_kernel::TenantId,
+        user_id: Uuid,
+        app: String,
+        role: String,
+    ) -> Result<(), crate::AuthError>;
 }
 
 #[derive(Debug, Clone)]

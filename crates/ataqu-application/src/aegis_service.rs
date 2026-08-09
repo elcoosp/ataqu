@@ -964,4 +964,59 @@ impl AegisService {
             .map_err(AegisServiceError::Internal)?;
         Ok(())
     }
+
+    /// Update a user's permission for a specific app.
+    pub async fn update_user_permission(
+        &self,
+        tenant_id: TenantId,
+        user_id: Uuid,
+        app: String,
+        role: String,
+    ) -> Result<(), AegisServiceError> {
+        // Validate app and role
+        const VALID_APPS: &[&str] = &["aegis", "cinq", "dial", "pause", "pivot", "sond", "spark", "tempo", "vault", "vista"];
+        if !VALID_APPS.contains(&app.as_str()) {
+            return Err(AegisServiceError::Validation(format!("Invalid app: {}", app)));
+        }
+        const VALID_ROLES: &[&str] = &["admin", "editor", "viewer", "none"];
+        if !VALID_ROLES.contains(&role.as_str()) {
+            return Err(AegisServiceError::Validation(format!("Invalid role: {}", role)));
+        }
+
+        // Check user exists and belongs to tenant
+        let user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
+            .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::NotFound("User not found in this tenant".into()));
+        }
+
+        // Prepare audit log payload before moving values
+        let audit_payload = serde_json::json!({ "app": app.clone(), "role": role.clone() });
+
+        // Upsert permission
+        self.repo.upsert_permission(tenant_id, user_id, app, role).await?;
+
+        // Audit log
+        self.audit_repo
+            .append_log(
+                tenant_id,
+                user_id,
+                "update_permission",
+                "aegis",
+                Some("permission"),
+                Some(user_id),
+                Some(audit_payload),
+                None,
+                None,
+                None,
+            )
+            .await
+            .map_err(|e| AegisServiceError::Internal(e))?;
+
+        Ok(())
+    }
+
 }

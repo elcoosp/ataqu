@@ -125,6 +125,14 @@ pub trait AuthRepository: Send + Sync {
         id: Uuid,
         last_used_at: std::time::SystemTime,
     ) -> Result<(), AuthError>;
+
+    async fn upsert_permission(
+        &self,
+        tenant_id: TenantId,
+        user_id: Uuid,
+        app: String,
+        role: String,
+    ) -> Result<(), AuthError>;
 }
 
 /// Pure function to create a user. Returns a UserCreated event.

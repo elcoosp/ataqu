@@ -296,4 +296,37 @@ impl AuthRepository for AegisUserRepository {
             })
             .collect())
     }
+
+    async fn upsert_permission(
+        &self,
+        tenant_id: ataqu_kernel::TenantId,
+        user_id: Uuid,
+        app: String,
+        role: String,
+    ) -> Result<(), AuthError> {
+        use sea_orm::Statement;
+        use sea_orm::DbBackend;
+        let sql = r#"
+            INSERT INTO core.permissions (tenant_id, user_id, app, role, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, NOW(), NOW())
+            ON CONFLICT (tenant_id, user_id, app) DO UPDATE
+            SET role = EXCLUDED.role, updated_at = NOW()
+        "#;
+        let stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            sql,
+            vec![
+                tenant_id.as_uuid().into(),
+                user_id.into(),
+                app.into(),
+                role.into(),
+            ],
+        );
+        self.db
+            .execute_raw(stmt)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(())
+    }
+
 }
