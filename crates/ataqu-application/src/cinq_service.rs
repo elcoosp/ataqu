@@ -494,12 +494,12 @@ impl CinqService {
                     c.id.to_string(),
                     c.name.clone(),
                     c.email
-                        .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                        .reveal(&ataqu_security::PiiAccessKey::new())
                         .to_string(),
                     c.phone
                         .as_ref()
                         .map(|p| {
-                            p.reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                            p.reveal(&ataqu_security::PiiAccessKey::new())
                                 .to_string()
                         })
                         .unwrap_or_default(),

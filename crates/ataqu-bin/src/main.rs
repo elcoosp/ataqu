@@ -710,9 +710,7 @@ async fn main() -> anyhow::Result<()> {
         http_client,
         health_service,
         health_cache,
-        audit_repo: audit_repo.clone() as Arc<dyn AuditRepositoryTrait + Send + Sync>,
         s3_service,
-        idempotency_guard,
         onboarding_service,
         changelog_service,
     };

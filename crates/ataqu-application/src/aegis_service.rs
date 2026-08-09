@@ -154,7 +154,7 @@ impl RealAegisDomain {
     ) -> Result<(UserCreated, User), AuthError> {
         if !cmd
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+            .reveal(&ataqu_security::PiiAccessKey::new())
             .contains('@')
         {
             return Err(AuthError::Validation("Invalid email format".to_string()));
@@ -384,7 +384,7 @@ impl AegisService {
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+            .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
         let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
         let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config)?;
@@ -459,7 +459,7 @@ impl AegisService {
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+            .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -749,7 +749,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+            .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -808,7 +808,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+            .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
         let reset_token = generate_reset_token(&user, &email_str, &self.config)?;
         let payload = serde_json::json!({

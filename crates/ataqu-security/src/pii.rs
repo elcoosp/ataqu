@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn email_reveal_works() {
         let email = Email::new("alice@example.com".to_string());
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         assert_eq!(email.reveal(&key), "alice@example.com");
     }
 
@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn phone_reveal_works() {
         let phone = PhoneNumber::new("+1234567890".to_string());
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         assert_eq!(phone.reveal(&key), "+1234567890");
     }
 

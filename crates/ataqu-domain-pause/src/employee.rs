@@ -94,7 +94,7 @@ pub fn deactivate_employee(employee: &mut Employee, clock: &dyn Clock) {
 
 pub fn validate_employee_email(email: &Email) -> Result<(), PauseDomainError> {
     if !email
-        .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+        .reveal(&ataqu_security::PiiAccessKey::new())
         .contains('@')
     {
         return Err(PauseDomainError::Validation(

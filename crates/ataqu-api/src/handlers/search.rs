@@ -103,7 +103,7 @@ pub async fn unified_search(
         .filter(|u| {
             let email_str = u
                 .email
-                .reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                .reveal(&ataqu_security::PiiAccessKey::new())
                 .to_string();
             email_str.contains(&params.q)
                 || u.name

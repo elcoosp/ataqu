@@ -33,7 +33,13 @@ pub async fn idempotency_middleware(
         .extensions()
         .get::<crate::middleware::AuthContext>()
         .map(|a| a.tenant_id.as_uuid().to_string())
-        .unwrap_or_else(|| "global".to_string());
+        .unwrap_or_else(|| {
+            req.headers()
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "global".to_string())
+        });
 
     let key_str = req
         .headers()

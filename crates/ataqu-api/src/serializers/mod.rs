@@ -13,7 +13,7 @@ impl Serialize for ApiEmail {
     where
         S: Serializer,
     {
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         serializer.serialize_str(self.0.reveal(&key))
     }
 }
@@ -27,7 +27,7 @@ impl Serialize for ApiPhone {
     where
         S: Serializer,
     {
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         serializer.serialize_str(self.0.reveal(&key))
     }
 }
