@@ -39,6 +39,7 @@ pub struct SparkRepositoryImpl {
     db: DatabaseConnection,
 }
 
+#[allow(clippy::collapsible_if)]
 impl SparkRepositoryImpl {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }

@@ -492,9 +492,11 @@ dependencies = [
  "ataqu-kernel",
  "ataqu-security",
  "base32",
+ "chrono",
  "hmac 0.12.1",
  "rand 0.8.7",
  "serde",
+ "serde_json",
  "sha1 0.10.7",
  "sha2 0.10.9",
  "thiserror 2.0.19",
@@ -727,6 +729,8 @@ version = "0.1.0"
 name = "ataqu-kernel"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "chrono",
  "serde",
  "thiserror 2.0.19",
  "uuid",

@@ -163,10 +163,12 @@ async fn main() -> anyhow::Result<()> {
         pools.core.clone(),
     ));
     let aegis_domain = Arc::new(RealAegisDomain);
+    let audit_repo = Arc::new(AuditRepository::new(pools.core.clone()));
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
         aegis_outbox,
         aegis_domain,
+        audit_repo,
         id_gen.clone(),
         clock.clone(),
         aegis_config,
@@ -603,8 +605,8 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // Audit stub
-    let audit_repo: Arc<dyn ataqu_api::stubs::AuditRepositoryTrait + Send + Sync> =
-        Arc::new(ataqu_api::stubs::DummyAuditRepo);
+    use ataqu_infra_repositories::audit_repo::AuditRepository;
+    let audit_repo = Arc::new(AuditRepository::new(pools.core.clone()));
 
     // S3 stub
     let s3_service = Arc::new(ataqu_api::stubs::S3Service);

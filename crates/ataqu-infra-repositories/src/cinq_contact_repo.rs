@@ -26,6 +26,8 @@ impl CrossFieldRateLimiter {
         }
     }
 
+    #[allow(clippy::question_mark)]
+    #[allow(clippy::needless_return, clippy::question_mark)]
     pub async fn check_and_consume(&self, tenant_id: Uuid) -> Result<(), &'static str> {
         let now = Instant::now();
         let mut entry = self.inner.entry(tenant_id).or_insert((now, 0));
@@ -98,6 +100,7 @@ impl ContactRepository {
     }
 
     // Tier 3: Cross-field search (slow, rate-limited, result capped)
+    #[allow(clippy::question_mark)]
     pub async fn find_by_custom_fields_cross(
         &self,
         tenant_id: Uuid,

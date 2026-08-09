@@ -20,6 +20,7 @@ pub fn generate_otpauth_url(secret: &str, email: &str) -> String {
     )
 }
 
+#[allow(clippy::collapsible_if)]
 pub fn verify_totp(secret: &str, code: &str) -> bool {
     let decoded = match decode(Alphabet::Rfc4648 { padding: false }, secret) {
         Some(bytes) => bytes,

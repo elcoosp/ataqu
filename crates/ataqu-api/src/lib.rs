@@ -88,7 +88,7 @@ pub struct AppState {
     pub http_client: reqwest::Client,
     pub health_service: Arc<ataqu_application::health_service::HealthService>,
     pub health_cache: Arc<moka::sync::Cache<String, serde_json::Value>>,
-    pub audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
+    pub audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
     pub s3_service: Arc<S3Service>,
     pub idempotency_guard: Arc<dyn IdempotencyPort + Send + Sync>,
     pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>,
