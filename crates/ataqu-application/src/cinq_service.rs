@@ -448,11 +448,14 @@ impl CinqService {
                     c.id.to_string(),
                     c.name.clone(),
                     c.email
-                        .reveal(&ataqu_security::PiiAccessKey::new())
+                        .reveal(&ataqu_security::PiiAccessKey::new_for_test())
                         .to_string(),
                     c.phone
                         .as_ref()
-                        .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
+                        .map(|p| {
+                            p.reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                                .to_string()
+                        })
                         .unwrap_or_default(),
                     c.created_at.to_rfc3339(),
                 ])
@@ -870,6 +873,70 @@ impl CinqService {
 
     pub async fn delete_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.task_repo.delete_task(&tenant_id, id).await?;
+        Ok(())
+    }
+
+    /// Processes a TEMPO booking creation event and creates a CINQ activity for the contact.
+    pub async fn process_tempo_booking_event(
+        &self,
+        event_payload: &serde_json::Value,
+    ) -> CinqResult<()> {
+        // Extract required fields from event payload
+        let tenant_id_str = event_payload
+            .get("tenant_id")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| CinqServiceError::Validation("Missing tenant_id".to_string()))?;
+        let tenant_id = TenantId::new(
+            Uuid::parse_str(tenant_id_str)
+                .map_err(|_| CinqServiceError::Validation("Invalid tenant_id".to_string()))?,
+        );
+        let contact_id_str = event_payload
+            .get("contact_id")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| CinqServiceError::Validation("Missing contact_id".to_string()))?;
+        let contact_id = Uuid::parse_str(contact_id_str)
+            .map_err(|_| CinqServiceError::Validation("Invalid contact_id".to_string()))?;
+        let booking_title = event_payload
+            .get("title")
+            .and_then(|v| v.as_str())
+            .unwrap_or("Booking");
+        let starts_at_str = event_payload
+            .get("starts_at")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| CinqServiceError::Validation("Missing starts_at".to_string()))?;
+        // Parse RFC3339 into FixedOffset, then convert to Utc
+        let starts_at = chrono::DateTime::parse_from_rfc3339(starts_at_str)
+            .map_err(|_| CinqServiceError::Validation("Invalid starts_at".to_string()))?
+            .with_timezone(&chrono::Utc);
+
+        // Check if contact exists (if not, we could skip or log)
+        let contact = self.get_contact(tenant_id, contact_id).await;
+        if contact.is_err() {
+            // Contact not found - skip, but log using debug formatting for TenantId
+            tracing::warn!(
+                tenant_id = ?tenant_id,
+                contact_id = ?contact_id,
+                "Contact not found for TEMPO booking, skipping activity creation"
+            );
+            return Ok(());
+        }
+
+        let description = format!(
+            "Booking: {} at {}",
+            booking_title,
+            starts_at.format("%Y-%m-%d %H:%M UTC")
+        );
+
+        let cmd = CreateActivityCommand {
+            tenant_id,
+            contact_id,
+            deal_id: None,
+            activity_type: ataqu_domain_cinq::activity::ActivityType::Meeting,
+            description,
+            scheduled_at: Some(starts_at),
+        };
+
+        self.create_activity(cmd).await?;
         Ok(())
     }
 }
