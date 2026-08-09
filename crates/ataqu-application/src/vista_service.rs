@@ -1,6 +1,10 @@
 //! VISTA application service – orchestrates analytics using real repositories.
+
 use std::sync::Arc;
 use uuid::Uuid;
+
+use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
+use sea_orm::DbBackend;
 
 use ataqu_domain_vista::aggregation::{AggregatedView, process_aggregation_event};
 use ataqu_domain_vista::analytics::prepare_data_point;
@@ -22,6 +26,7 @@ pub type VistaResult<T> = Result<T, VistaServiceError>;
 
 pub struct VistaService {
     repo: Arc<dyn VistaRepository + Send + Sync>,
+    db: DatabaseConnection,
     clock: Arc<dyn Clock>,
     id_gen: Arc<dyn IdGenerator>,
 }
@@ -29,11 +34,13 @@ pub struct VistaService {
 impl VistaService {
     pub fn new(
         repo: Arc<dyn VistaRepository + Send + Sync>,
+        db: DatabaseConnection,
         clock: Arc<dyn Clock>,
         id_gen: Arc<dyn IdGenerator>,
     ) -> Self {
         Self {
             repo,
+            db,
             clock,
             id_gen,
         }
@@ -243,7 +250,7 @@ impl VistaService {
         &self,
         tenant_id: TenantId,
         metric: String,
-        dimension: String,
+        _dimension: String,
         value: String,
         limit: u64,
     ) -> VistaResult<Vec<serde_json::Value>> {
@@ -253,10 +260,42 @@ impl VistaService {
             ));
         }
 
-        self.repo
-            .get_raw_data_points(&tenant_id, &metric, &dimension, &value, limit)
-            .await
-            .map_err(VistaServiceError::Repository)
+        let sql = format!(
+            r#"
+            SELECT *
+            FROM core.analytics_data_points
+            WHERE tenant_id = $1
+              AND metric_name = $2
+              AND (timestamp::text LIKE $3 OR metric_name LIKE $3)
+            ORDER BY timestamp DESC
+            LIMIT $4
+            "#
+        );
+        let pattern = format!("%{}%", value);
+        let stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            &sql,
+            [
+                tenant_id.as_uuid().into(),
+                metric.clone().into(),
+                pattern.into(),
+                (limit as i64).into(),
+            ],
+        );
+
+        let rows = self.db.query_all_raw(stmt).await
+            .map_err(|e| VistaServiceError::Repository(e.to_string()))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            let mut obj = serde_json::Map::new();
+            for col_name in row.column_names() {
+                let val: Option<String> = row.try_get("", &col_name).ok();
+                obj.insert(col_name, serde_json::json!(val));
+            }
+            results.push(serde_json::Value::Object(obj));
+        }
+        Ok(results)
     }
 
     pub async fn get_cross_app_dashboard(

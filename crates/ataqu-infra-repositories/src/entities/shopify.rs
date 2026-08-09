@@ -1,19 +1,17 @@
-//! SeaORM entity for email tracking.
+//! SeaORM entity for Shopify integrations.
 use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
-use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "email_tracking", schema_name = "collab_crm")]
+#[sea_orm(table_name = "shopify_integrations", schema_name = "vault")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i64,
+    pub id: Uuid,
     pub tenant_id: Uuid,
-    pub contact_id: Uuid,
-    pub event_type: String,
-    pub metadata: JsonValue,
-    pub occurred_at: DateTime<Utc>,
+    pub shop_domain: String,
+    pub access_token: String,
+    pub last_synced_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
 

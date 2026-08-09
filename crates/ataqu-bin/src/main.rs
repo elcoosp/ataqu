@@ -110,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
         pools.cinq.clone(),
     ));
     let cinq_service = Arc::new(CinqService::new(
+        pools.cinq.clone(),
         contact_repo,
         deal_repo,
         activity_repo,
@@ -192,7 +193,7 @@ async fn main() -> anyhow::Result<()> {
     // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.vista.clone()));
-    let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone(), id_gen.clone()));
+    let vista_service = Arc::new(VistaService::new(vista_repo, pools.vista.clone(), clock.clone(), id_gen.clone()));
 
     // SPARK
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
@@ -554,11 +555,12 @@ async fn main() -> anyhow::Result<()> {
     let shopify_repo = Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()));
     let shopify_service = Arc::new(ShopifyService::new(shopify_repo, vault_service.clone()));
     let shopify_http_client = reqwest::Client::new();
-    tokio::spawn(async move {
+        let shopify_service_clone = shopify_service.clone();
+tokio::spawn(async move {
         loop {
             tracing::info!("Running Shopify sync worker...");
             let client = shopify_http_client.clone();
-            shopify_service.sync_all(&client).await;
+            shopify_service_clone.sync_all(&client).await;
             tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
@@ -695,7 +697,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
 let app_state = AppState {
-        db: pools.core.clone(),
+db: pools.core.clone(),
         cinq_service,
         dial_service,
         pivot_service,
@@ -706,6 +708,7 @@ let app_state = AppState {
         vista_service,
         aegis_service,
         pause_service,
+        shopify_service: shopify_service.clone(),
         jwt_secret,
         id_gen,
         clock,
@@ -723,7 +726,8 @@ let app_state = AppState {
         s3_service,
         onboarding_service,
         changelog_service,
-    };
+    
+};
 
     let app = create_router(app_state);
 

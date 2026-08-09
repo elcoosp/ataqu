@@ -1,7 +1,6 @@
 //! CINQ CRM orchestration service – uses domain repositories and outbox.
 use std::collections::HashMap;
 use std::sync::Arc;
-use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
 use ataqu_domain_cinq::activity::{
@@ -129,7 +128,6 @@ pub type CinqResult<T> = Result<T, CinqServiceError>;
 
 pub struct CinqService {
     contact_repo: Arc<dyn ContactRepository + Send + Sync>,
-    db: DatabaseConnection,
     deal_repo: Arc<dyn DealRepository + Send + Sync>,
     activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
     task_repo: Arc<dyn ataqu_domain_cinq::repository::TaskRepository + Send + Sync>,
@@ -155,7 +153,6 @@ pub struct CreateEstablishmentCommand {
 impl CinqService {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        db: DatabaseConnection,
         contact_repo: Arc<dyn ContactRepository + Send + Sync>,
         deal_repo: Arc<dyn DealRepository + Send + Sync>,
         activity_repo: Arc<dyn ActivityRepository + Send + Sync>,
@@ -170,10 +167,8 @@ impl CinqService {
         audit_repo: Option<
             Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
         >,
-    
     ) -> Self {
         Self {
-            db,
             contact_repo,
             deal_repo,
             activity_repo,
@@ -1138,4 +1133,26 @@ impl CinqService {
     }
 
 
+    pub async fn get_tracking_events_for_contact(
+        &self,
+        tenant_id: TenantId,
+        contact_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>> {
+
+
+    pub async fn get_tracking_events_for_contact(
+        &self,
+        tenant_id: TenantId,
+        contact_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> CinqResult<Vec<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>> {
+        use ataqu_infra_repositories::email_tracking_repo::EmailTrackingRepository;
+        let repo = EmailTrackingRepository::new(self.db.clone());
+        repo.get_tracking_events_for_contact(&tenant_id, contact_id, limit, offset)
+            .await
+            .map_err(|e| CinqServiceError::Repository(e.to_string()))
+    }
 }

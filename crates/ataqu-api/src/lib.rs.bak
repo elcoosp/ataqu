@@ -16,7 +16,7 @@ use tokio::sync::mpsc::Sender;
 use uuid::Uuid;
 
 use crate::middleware::rate_limit::RateLimiter;
-use ataqu_application::{ 
+use ataqu_application::{shopify_service::ShopifyService, 
     aegis_service::AegisService, cinq_service::CinqService, dial_service::DialService,
     pause_service::PauseService, pivot_service::PivotService, sond_service::SondService,
     spark_service::SparkService, tempo_service::TempoService, vault_service::VaultService,

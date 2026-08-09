@@ -22,6 +22,13 @@ impl ShopifyService {
     }
 
     pub async fn sync_all(&self, client: &reqwest::Client) {
+        // For now, we'll fetch integrations by iterating over all tenants.
+        // In a real system, we'd have a background worker that processes each tenant.
+        // We'll just list all integrations using the repo's list_all method.
+        // We don't have a list_all method; we need to query all tenants.
+        // For simplicity, we'll use the repo's list_active_integrations which already exists.
+        // That method currently uses SQL to fetch all active integrations.
+        // We'll rely on that.
         let integrations = match self.repo.list_active_integrations().await {
             Ok(ints) => ints,
             Err(e) => {
