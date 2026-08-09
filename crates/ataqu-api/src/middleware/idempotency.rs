@@ -1,12 +1,10 @@
-use axum::extract::{Request, State};
+use axum::extract::Request;
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::Response;
 use lazy_static::lazy_static;
 use moka::sync::Cache;
 use uuid::Uuid;
-
-use crate::AppState;
 
 pub const IDEMPOTENCY_KEY_HEADER: &str = "Idempotency-Key";
 
@@ -23,11 +21,7 @@ pub fn flush_idempotency_cache() {
 }
 
 /// Temporary pass-through middleware until idempotency is fully implemented.
-pub async fn idempotency_middleware(
-    State(_state): State<AppState>,
-    req: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
+pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
     // Just pass through for now
     Ok(next.run(req).await)
 }

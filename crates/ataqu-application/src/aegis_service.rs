@@ -868,6 +868,8 @@ impl AegisService {
     }
 
     /// Internal helper to log an audit entry.
+    /// Internal helper to log an audit entry.
+    #[allow(dead_code)]
     async fn log_audit(
         &self,
         user_id: Uuid,

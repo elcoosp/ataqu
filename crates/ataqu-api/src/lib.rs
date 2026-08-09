@@ -5,7 +5,6 @@
 use axum::{
     Router,
     extract::State,
-    response::IntoResponse,
     routing::{get, post},
 };
 use dashmap::DashMap;
@@ -43,9 +42,9 @@ pub use stubs::*;
 
 // Type aliases matching the handler expectations
 pub type WsRegistry =
-    Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, tokio::sync::mpsc::UnboundedSender<String>>>>>;
-pub type ConnIndex = Arc<DashMap<usize, Uuid>>;
-pub type PresenceCounts = Arc<DashMap<Uuid, i32>>;
+    Arc<DashMap<(Uuid, Uuid), Arc<DashMap<Uuid, tokio::sync::mpsc::UnboundedSender<String>>>>>;
+pub type ConnIndex = Arc<DashMap<Uuid, Vec<(Uuid, Uuid)>>>;
+pub type PresenceCounts = Arc<DashMap<Uuid, std::sync::atomic::AtomicUsize>>;
 pub type SsoStates = Arc<Cache<String, String>>;
 
 /// Application state shared across handlers.
@@ -238,14 +237,6 @@ pub fn create_router(state: AppState) -> Router {
             state.clone(),
             crate::middleware::auth::auth_middleware,
         ));
-
-    let track_router = Router::new()
-        .route(
-            "/track",
-            axum::routing::get(handlers::email_tracking::track_email_public),
-        )
-        .layer(axum::middleware::from_fn(request_id_middleware))
-        .with_state(state.clone());
 
     let default_router = Router::new()
         .layer(axum::middleware::from_fn(force_attachment_middleware))
