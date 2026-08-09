@@ -591,11 +591,12 @@ async fn main() -> anyhow::Result<()> {
     let cinq_service_clone = cinq_service.clone();
     let cinq_service_clone = cinq_service.clone();
     let cinq_service = cinq_service.clone();
-            let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
+            let handler = |event: ataqu_infra_outbox::OutboxEvent| {
                 let vista = vista.clone();
                 let spark = spark.clone();
                 let gdpr_registry = gdpr_registry.clone();
                 let gdpr_db_pool = gdpr_db_pool.clone();
+                let cinq_service_clone = cinq_service.clone();
                 async move {
                     if let Err(e) = vista.process_event(&event).await {
                         tracing::error!(error = %e, "VISTA event processing failed");
