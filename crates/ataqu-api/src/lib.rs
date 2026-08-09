@@ -13,7 +13,7 @@ use moka::sync::Cache;
 use metrics_exporter_prometheus::PrometheusHandle;
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::mpsc::{UnboundedSender, Sender};
 use uuid::Uuid;
 
 use ataqu_application::{
