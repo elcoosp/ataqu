@@ -222,6 +222,28 @@ pub async fn webhook_trigger(
     Ok(StatusCode::ACCEPTED)
 }
 
+pub async fn approve_workflow_run(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(run_id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state
+        .spark_service
+        .approve_workflow_run(auth.tenant_id, run_id)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::spark_service::SparkServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
+            ataqu_application::spark_service::SparkServiceError::WorkflowNotFound => {
+                ApiResponseError::not_found("Workflow run not found")
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
+
+    Ok(StatusCode::OK)
+}
+
 pub fn public_routes() -> Router<AppState> {
     Router::new().route(
         "/webhooks/:tenant_id/:workflow_id",
@@ -240,4 +262,8 @@ pub fn routes() -> Router<AppState> {
                 .delete(delete_workflow),
         )
         .route("/workflows/:id/execute", post(execute_workflow))
+        .route(
+            "/workflows/runs/:run_id/approve",
+            post(approve_workflow_run),
+        )
 }

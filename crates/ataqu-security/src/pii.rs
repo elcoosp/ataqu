@@ -5,6 +5,7 @@ use std::fmt;
 #[derive(Clone, Copy)]
 pub struct PiiAccessKey(());
 
+#[allow(clippy::new_without_default)]
 impl PiiAccessKey {
     /// Creates a new access key. Only available when the feature is enabled.
     #[cfg(feature = "infra-pii-access")]
@@ -129,6 +130,13 @@ mod tests {
     #[test]
     #[cfg(feature = "infra-pii-access")]
     fn key_construction_gated() {
-        let _key = PiiAccessKey::new();
+        let _key = PiiAccessKey::new_for_test();
+    }
+}
+
+#[cfg(feature = "infra-pii-access")]
+impl Default for PiiAccessKey {
+    fn default() -> Self {
+        Self::new()
     }
 }
