@@ -30,7 +30,7 @@ use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 // use ChangelogService;
 // use HealthService;
 // use OnboardingService;
-// // 
+// //
 // use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
@@ -421,7 +421,7 @@ async fn main() -> anyhow::Result<()> {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new()),
         system_user_id,
-    ));
+    });
 
     let spark_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.core.clone(),
@@ -493,7 +493,7 @@ async fn main() -> anyhow::Result<()> {
         moka::sync::Cache::builder()
             .time_to_live(Duration::from_secs(600))
             .build(),
-    ));
+    );
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let http_client = reqwest::Client::new();
@@ -621,7 +621,7 @@ async fn main() -> anyhow::Result<()> {
                                         tracing::error!(error = %e, "Failed to begin GDPR transaction");
                                         return Err(ataqu_infra_outbox::DispatcherError::Handler(
                                             e.to_string(),
-                                        );
+                                        ));
                                     }
                                 };
                                 for table in gdpr_registry.tables.iter() {
@@ -639,14 +639,14 @@ async fn main() -> anyhow::Result<()> {
                                         let _ = txn.rollback().await;
                                         return Err(ataqu_infra_outbox::DispatcherError::Handler(
                                             e.to_string(),
-                                        });
+                                        ));
                                     }
                                 }
                                 if let Err(e) = txn.commit().await {
                                     tracing::error!(error = %e, "Failed to commit GDPR transaction");
                                     return Err(ataqu_infra_outbox::DispatcherError::Handler(
                                         e.to_string(),
-                                    });
+                                    ));
                                 }
                             }
                         }
@@ -787,7 +787,7 @@ async fn main() -> anyhow::Result<()> {
                                 tracing::info!(
                                     "Booking reminder email sent for {}",
                                     booking_id_clone
-                                });
+                                );
                             }
                         })
                         .await
