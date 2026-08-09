@@ -512,22 +512,6 @@ async fn main() -> anyhow::Result<()> {
         microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
-    let sso_config = ataqu_domain_aegis::sso::SsoConfig {
-        google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
-        google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
-        google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
-        microsoft_client_id: std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default(),
-        microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
-        microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
-    };
-    let sso_config = ataqu_domain_aegis::sso::SsoConfig {
-        google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
-        google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
-        google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
-        microsoft_client_id: std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default(),
-        microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
-        microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
-    };
 
     // Cleanup task for rate limiter
     let rate_limiter_cleanup = rate_limiter.clone();
@@ -551,33 +535,11 @@ async fn main() -> anyhow::Result<()> {
     // S3 stub
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
 
-    // Idempotency guard
-    let idempotency_guard = pause_idempotency.clone();
-
     // Onboarding & Changelog stubs
     let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone()));
     let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
 
-    let onboarding_service_for_inactivity = onboarding_service.clone();
-    tokio::spawn(async move {
-        loop {
-            if let Err(e) = onboarding_service_for_inactivity.check_inactivity().await {
-                tracing::error!(error = %e, "Onboarding inactivity check failed");
-            }
-            tokio::time::sleep(Duration::from_secs(86400)).await;
-        }
-    });
-
-    let onboarding_service_for_inactivity = onboarding_service.clone();
-    tokio::spawn(async move {
-        loop {
-            if let Err(e) = onboarding_service_for_inactivity.check_inactivity().await {
-                tracing::error!(error = %e, "Onboarding inactivity check failed");
-            }
-            tokio::time::sleep(Duration::from_secs(86400)).await;
-        }
-    });
-
+    // Single onboarding inactivity checker
     let onboarding_service_for_inactivity = onboarding_service.clone();
     tokio::spawn(async move {
         loop {
@@ -658,74 +620,81 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    let onboarding_service_for_inactivity = onboarding_service.clone();
-    tokio::spawn(async move {
-        loop {
-            if let Err(e) = onboarding_service_for_inactivity.check_inactivity().await {
-                tracing::error!(error = %e, "Onboarding inactivity check failed");
-            }
-            tokio::time::sleep(Duration::from_secs(86400)).await; // 24 hours
-        }
-    });
-
-    // UDS Admin Server
-    let admin_socket_path = "/tmp/ataqu-admin.sock";
-    let _ = std::fs::remove_file(admin_socket_path);
-    let admin_listener = match tokio::net::UnixListener::bind(admin_socket_path) {
+        // UDS Admin Server (single instance)
+    let admin_socket_path = std::env::var("ATAQU_ADMIN_SOCK")
+        .unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
+    let _ = std::fs::remove_file(&admin_socket_path);
+    let admin_listener = match tokio::net::UnixListener::bind(&admin_socket_path) {
         Ok(l) => {
             std::fs::set_permissions(
-                admin_socket_path,
+                &admin_socket_path,
                 std::os::unix::fs::PermissionsExt::from_mode(0o600),
             )
             .ok();
             l
         }
         Err(e) => {
-            tracing::error!(error = %e, "Failed to bind UDS admin socket");
-            return Err(anyhow::anyhow!("UDS bind failed"));
+            tracing::error!(error = %e, "Failed to bind admin UDS");
+            return Err(anyhow::anyhow!("Failed to bind admin UDS"));
         }
     };
 
-    let admin_audit_repo = audit_repo.clone();
+    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
     tokio::spawn(async move {
         use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
         loop {
             match admin_listener.accept().await {
                 Ok((mut stream, _)) => {
-                    let mut reader = tokio::io::BufReader::new(&mut stream);
-                    let mut line = String::new();
-                    if reader.read_line(&mut line).await.is_ok() {
-                        let parts: Vec<&str> = line.trim().splitn(2, ' ').collect();
-                        if parts.len() == 2 {
-                            let _token = parts[0];
-                            let command = parts[1];
-                            // Log admin command
-                            let _ = admin_audit_repo
-                                .append_log(
-                                    ataqu_kernel::TenantId::new(Uuid::nil()),
-                                    Uuid::nil(),
-                                    "admin_command",
-                                    "admin",
-                                    Some("command"),
-                                    None,
-                                    Some(serde_json::json!({"command": command})),
-                                    None,
-                                    None,
-                                    None,
-                                )
-                                .await;
-                            let _ = stream.write_all(b"OK\n").await;
-                        } else {
-                            let _ = stream.write_all(b"ERROR: Invalid command format\n").await;
+                    let admin_token = admin_token.clone();
+                    let audit_repo = audit_repo.clone();
+                    tokio::spawn(async move {
+                        let mut reader = tokio::io::BufReader::new(&mut stream);
+                        let mut line = String::new();
+                        if reader.read_line(&mut line).await.is_ok() {
+                            let parts: Vec<&str> = line.trim().splitn(2, ' ').collect();
+                            if parts.len() == 2 && parts[0] == admin_token {
+                                let cmd = parts[1].trim();
+                                // Log admin command
+                                let _ = audit_repo
+                                    .append_log(
+                                        ataqu_kernel::TenantId::new(Uuid::nil()),
+                                        Uuid::nil(),
+                                        "admin_command",
+                                        "admin",
+                                        Some("command"),
+                                        None,
+                                        Some(serde_json::json!({"command": cmd})),
+                                        None,
+                                        None,
+                                        None,
+                                    )
+                                    .await;
+                                let resp = match cmd {
+                                    "health" => "OK: Server is running\n",
+                                    "flush-cache" => {
+                                        ataqu_api::middleware::idempotency::flush_idempotency_cache();
+                                        "OK: Idempotency cache flushed\n"
+                                    }
+                                    _ => "ERROR: Unknown command\n",
+                                };
+                                let _ = stream.write_all(resp.as_bytes()).await;
+                            } else {
+                                let _ = stream
+                                    .write_all(b"ERROR: Invalid token or command\n")
+                                    .await;
+                            }
                         }
-                    }
+                    });
                 }
-                Err(e) => tracing::error!(error = %e, "UDS accept failed"),
+                Err(e) => {
+                    tracing::warn!(error = %e, "Admin UDS accept failed");
+                    tokio::time::sleep(Duration::from_secs(1)).await;
+                }
             }
         }
     });
 
-    let app_state = AppState {
+let app_state = AppState {
         db: pools.core.clone(),
         cinq_service,
         dial_service,
@@ -756,205 +725,7 @@ async fn main() -> anyhow::Result<()> {
         changelog_service,
     };
 
-    let admin_socket_path =
-        std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
-    let _ = std::fs::remove_file(&admin_socket_path);
-    let admin_listener = match tokio::net::UnixListener::bind(&admin_socket_path) {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to bind admin UDS");
-            return Err(anyhow::anyhow!("Failed to bind admin UDS"));
-        }
-    };
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let permissions = std::fs::Permissions::from_mode(0o600);
-        std::fs::set_permissions(&admin_socket_path, permissions)?;
-    }
-
-    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-    tokio::spawn(async move {
-        loop {
-            match admin_listener.accept().await {
-                Ok((mut stream, _)) => {
-                    let admin_token = admin_token.clone();
-                    tokio::spawn(async move {
-                        use tokio::io::{AsyncReadExt, AsyncWriteExt};
-                        let mut buf = [0; 1024];
-                        let n = match stream.read(&mut buf).await {
-                            Ok(n) if n > 0 => n,
-                            _ => return,
-                        };
-                        let req = String::from_utf8_lossy(&buf[..n]);
-                        let parts: Vec<&str> = req.splitn(2, ' ').collect();
-                        if parts.len() != 2 || parts[0] != admin_token {
-                            let _ = stream
-                                .write_all(
-                                    b"ERROR: Invalid token
-",
-                                )
-                                .await;
-                            return;
-                        }
-                        let cmd = parts[1].trim();
-                        let resp = match cmd {
-                            "health" => "OK: Server is running
-"
-                            .to_string(),
-                            "flush-cache" => {
-                                ataqu_api::middleware::idempotency::flush_idempotency_cache();
-                                "OK: Idempotency cache flushed
-"
-                                .to_string()
-                            }
-                            _ => "ERROR: Unknown command
-"
-                            .to_string(),
-                        };
-                        let _ = stream.write_all(resp.as_bytes()).await;
-                    });
-                }
-                Err(e) => {
-                    tracing::warn!(error = %e, "Admin UDS accept failed");
-                    tokio::time::sleep(Duration::from_secs(1)).await;
-                }
-            }
-        }
-    });
-
     let app = create_router(app_state);
-
-    let admin_socket_path =
-        std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
-    let _ = std::fs::remove_file(&admin_socket_path);
-    let admin_listener = match tokio::net::UnixListener::bind(&admin_socket_path) {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to bind admin UDS");
-            return Err(anyhow::anyhow!("Failed to bind admin UDS"));
-        }
-    };
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let permissions = std::fs::Permissions::from_mode(0o600);
-        std::fs::set_permissions(&admin_socket_path, permissions)?;
-    }
-
-    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-    tokio::spawn(async move {
-        loop {
-            match admin_listener.accept().await {
-                Ok((mut stream, _)) => {
-                    let admin_token = admin_token.clone();
-                    tokio::spawn(async move {
-                        use tokio::io::{AsyncReadExt, AsyncWriteExt};
-                        let mut buf = [0; 1024];
-                        let n = match stream.read(&mut buf).await {
-                            Ok(n) if n > 0 => n,
-                            _ => return,
-                        };
-                        let req = String::from_utf8_lossy(&buf[..n]);
-                        let parts: Vec<&str> = req.splitn(2, ' ').collect();
-                        if parts.len() != 2 || parts[0] != admin_token {
-                            let _ = stream
-                                .write_all(
-                                    b"ERROR: Invalid token
-",
-                                )
-                                .await;
-                            return;
-                        }
-                        let cmd = parts[1].trim();
-                        let resp = match cmd {
-                            "health" => "OK: Server is running
-"
-                            .to_string(),
-                            "flush-cache" => {
-                                ataqu_api::middleware::idempotency::flush_idempotency_cache();
-                                "OK: Idempotency cache flushed
-"
-                                .to_string()
-                            }
-                            _ => "ERROR: Unknown command
-"
-                            .to_string(),
-                        };
-                        let _ = stream.write_all(resp.as_bytes()).await;
-                    });
-                }
-                Err(e) => {
-                    tracing::warn!(error = %e, "Admin UDS accept failed");
-                    tokio::time::sleep(Duration::from_secs(1)).await;
-                }
-            }
-        }
-    });
-
-    let admin_socket_path =
-        std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
-    let _ = std::fs::remove_file(&admin_socket_path);
-    let admin_listener = match tokio::net::UnixListener::bind(&admin_socket_path) {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to bind admin UDS");
-            return Err(anyhow::anyhow!("Failed to bind admin UDS"));
-        }
-    };
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let permissions = std::fs::Permissions::from_mode(0o600);
-        std::fs::set_permissions(&admin_socket_path, permissions)?;
-    }
-
-    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-    tokio::spawn(async move {
-        loop {
-            match admin_listener.accept().await {
-                Ok((mut stream, _)) => {
-                    let admin_token = admin_token.clone();
-                    tokio::spawn(async move {
-                        use tokio::io::{AsyncReadExt, AsyncWriteExt};
-                        let mut buf = [0; 1024];
-                        let n = match stream.read(&mut buf).await {
-                            Ok(n) if n > 0 => n,
-                            _ => return,
-                        };
-                        let req = String::from_utf8_lossy(&buf[..n]);
-                        let parts: Vec<&str> = req.splitn(2, ' ').collect();
-                        if parts.len() != 2 || parts[0] != admin_token {
-                            let _ = stream
-                                .write_all(
-                                    b"ERROR: Invalid token
-",
-                                )
-                                .await;
-                            return;
-                        }
-                        let cmd = parts[1].trim();
-                        let resp = match cmd {
-                            "health" => "OK: Server is running
-"
-                            .to_string(),
-                            "flush-cache" => {
-                                ataqu_api::middleware::idempotency::flush_idempotency_cache();
-                                "OK: Idempotency cache flushed
-"
-                                .to_string()
-                            }
-                            _ => "ERROR: Unknown command
-"
-                            .to_string(),
-                        };
-                        let _ = stream.write_all(resp.as_bytes()).await;
-                    });
-                }
-                Err(e) => {
-                    tracing::warn!(error = %e, "Admin UDS accept failed");
-                    tokio::time::sleep(Duration::from_secs(1)).await;
-                }
-            }
-        }
-    });
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = TcpListener::bind(addr).await?;

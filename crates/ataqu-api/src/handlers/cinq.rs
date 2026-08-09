@@ -401,22 +401,6 @@ pub async fn update_deal(
             .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
     }
 
-    if let Some(stage_id) = payload.pipeline_stage_id {
-        state
-            .cinq_service
-            .get_pipeline_stage(auth.tenant_id, stage_id)
-            .await
-            .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
-    }
-
-    if let Some(stage_id) = payload.pipeline_stage_id {
-        state
-            .cinq_service
-            .get_pipeline_stage(auth.tenant_id, stage_id)
-            .await
-            .map_err(|_| ApiResponseError::validation("Invalid pipeline_stage_id"))?;
-    }
-
     let cmd = UpdateDealCommand {
         id,
         tenant_id: auth.tenant_id,

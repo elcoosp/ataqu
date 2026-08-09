@@ -428,7 +428,7 @@ impl TempoRepository for TempoRepositoryImpl {
         let models = booking_entity::Entity::find()
             .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(booking_entity::Column::StartsAt.between(lower_dt, upper_dt))
-            .filter(booking_entity::Column::Status.eq("pending"))
+            .filter(booking_entity::Column::Status.is_in(vec!["pending", "confirmed"]))
             .all(&self.db)
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;

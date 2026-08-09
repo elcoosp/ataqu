@@ -15,6 +15,8 @@ use ataqu_application::vault_service::{
     BulkStockAdjustCommand, CreateProductCommand, CreateVariantCommand, UpdateProductCommand,
     UpdateStockCommand, UpdateVariantCommand, UpdateWarehouseCommand,
 };
+use ataqu_domain_vault::shopify::ShopifyIntegration;
+use ataqu_kernel::TenantId;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -627,8 +629,18 @@ pub async fn delete_warehouse(
     Ok(StatusCode::NO_CONTENT)
 }
 
-pub async fn shopify_auth(
-    State(_state): State<AppState>,
+// ----------------------------------------------------------------------
+// Shopify OAuth and Webhook endpoints
+// ----------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+pub struct ShopifyOAuthCallback {
+    pub code: String,
+    pub shop: String,
+    pub state: Option<String>,
+}
+
+pub async fn shopify_auth_start(State(_state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<serde_json::Value>> {
     if !auth.has_role("admin") {
@@ -636,13 +648,81 @@ pub async fn shopify_auth(
             "Admin access required".to_string(),
         ));
     }
-    Ok(Json(
-        serde_json::json!({"url": "https://shopify.com/oauth/authorize"}),
-    ))
+    // Generate state with tenant and user info for OAuth
+    let state_str = format!("{}_{}", auth.tenant_id.as_uuid(), auth.user_id);
+    let redirect_uri = std::env::var("SHOPIFY_REDIRECT_URI")
+        .unwrap_or_else(|_| "https://api.ataqu.com/api/v1/vault/shopify/callback".to_string());
+    let shop = std::env::var("SHOPIFY_SHOP").unwrap_or_else(|_| "your-shop.myshopify.com".to_string());
+    let client_id = std::env::var("SHOPIFY_CLIENT_ID").unwrap_or_default();
+    let url = format!(
+        "https://{}/admin/oauth/authorize?client_id={}&scope=read_products,write_products,read_inventory,write_inventory&redirect_uri={}&state={}",
+        shop,
+        client_id,
+        urlencoding::encode(&redirect_uri),
+        state_str
+    );
+    Ok(Json(serde_json::json!({ "url": url })))
 }
 
-pub async fn shopify_sync(
+pub async fn shopify_callback(
     State(_state): State<AppState>,
+    Query(query): Query<ShopifyOAuthCallback>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let client = reqwest::Client::new();
+    let token_url = format!("https://{}/admin/oauth/access_token", query.shop);
+    let resp = client
+        .post(&token_url)
+        .json(&serde_json::json!({
+            "client_id": std::env::var("SHOPIFY_CLIENT_ID").unwrap_or_default(),
+            "client_secret": std::env::var("SHOPIFY_CLIENT_SECRET").unwrap_or_default(),
+            "code": query.code,
+        }))
+        .send()
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to exchange code"))?;
+    let token_data: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|_| ApiResponseError::internal("Invalid token response"))?;
+    let access_token = token_data["access_token"].as_str()
+        .ok_or_else(|| ApiResponseError::internal("Missing access token"))?;
+
+    // Parse state to get tenant_id and user_id
+    let state_str = query.state.unwrap_or_default();
+    let state_parts: Vec<&str> = state_str.split("_").collect();
+    if state_parts.len() < 2 {
+        return Err(ApiResponseError::validation("Invalid state"));
+    }
+    let tenant_id = Uuid::parse_str(state_parts[0]).map_err(|_| ApiResponseError::validation("Invalid tenant"))?;
+    let _user_id = Uuid::parse_str(state_parts[1]).map_err(|_| ApiResponseError::validation("Invalid user"))?;
+
+    // Save integration (TODO: store in repository)
+    let _integration = ShopifyIntegration {
+        id: Uuid::new_v4(),
+        tenant_id: TenantId::new(tenant_id),
+        shop_domain: query.shop,
+        access_token: access_token.to_string(),
+        last_synced_at: None,
+        created_at: chrono::Utc::now(),
+    };
+    // For now, just return success
+    Ok(Json(serde_json::json!({ "status": "connected" })))
+}
+
+pub async fn shopify_webhook(State(_state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    __body: String,
+) -> ApiResult<StatusCode> {
+    let topic = headers
+        .get("X-Shopify-Topic")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    tracing::info!(topic = %topic, "Shopify webhook received");
+    // TODO: Process webhook based on topic
+    Ok(StatusCode::OK)
+}
+
+pub async fn shopify_sync(State(_state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
@@ -650,12 +730,15 @@ pub async fn shopify_sync(
             "Admin access required".to_string(),
         ));
     }
+    // TODO: Trigger sync for the tenant
     Ok(StatusCode::ACCEPTED)
 }
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/shopify/auth", axum::routing::get(shopify_auth))
+        .route("/shopify/auth", axum::routing::get(shopify_auth_start))
+        .route("/shopify/callback", axum::routing::get(shopify_callback))
+        .route("/shopify/webhook", axum::routing::post(shopify_webhook))
         .route("/shopify/sync", axum::routing::post(shopify_sync))
         .route(
             "/products",

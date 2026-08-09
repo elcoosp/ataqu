@@ -748,13 +748,14 @@ impl AegisService {
     pub async fn sso_exchange(
         &self,
         email: Email,
+        tenant_id: ataqu_kernel::TenantId,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
         let user =
             self.repo
-                .find_by_email(&email, None)
+                .find_by_email(&email, Some(tenant_id))
                 .await?
                 .ok_or(AegisServiceError::NotFound(
-                    "User not found. Please sign up first.".to_string(),
+                    "User not found in this tenant. Please sign up first.".to_string(),
                 ))?;
 
         if !user.is_active {

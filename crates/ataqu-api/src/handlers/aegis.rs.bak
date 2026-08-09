@@ -238,24 +238,17 @@ pub async fn sso_callback(
     State(state): State<AppState>,
     Json(req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
-    let state_data_str = state
+    let provider_str = state
         .sso_states
         .get(&req.state)
-        .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?
-        .clone();
+        .map(|v| v.clone())
+        .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
     state.sso_states.invalidate(&req.state);
-
-    let state_data: serde_json::Value = serde_json::from_str(&state_data_str)
-        .map_err(|_| ApiResponseError::unauthorized("Invalid SSO state data"))?;
-    let provider_str = state_data["provider"].as_str()
-        .ok_or_else(|| ApiResponseError::unauthorized("Missing provider in SSO state"))?;
-    let tenant_id = state_data["tenant_id"].as_str()
-        .and_then(|s| uuid::Uuid::parse_str(s).ok())
-        .ok_or_else(|| ApiResponseError::unauthorized("Missing tenant in SSO state"))?;
 
     let config = state.sso_config.clone();
 
     let client = state.http_client.clone();
+    let provider_str = provider_str.as_str().to_string();
     let email_str = if provider_str == "Google" {
         let token_resp = client
             .post("https://oauth2.googleapis.com/token")
@@ -319,10 +312,9 @@ pub async fn sso_callback(
     };
 
     let email = Email::new(email_str);
-    let tenant_id = ataqu_kernel::TenantId::new(tenant_id);
     let resp = state
         .aegis_service
-        .sso_exchange(email, tenant_id)
+        .sso_exchange(email)
         .await
         .map_err(map_aegis_error)?;
 
@@ -649,8 +641,8 @@ pub async fn export_audit_log(
             auth.tenant_id,
             limit,
             offset,
-            query.action,
-            query.app,
+            query.action.as_deref(),
+            query.app.as_deref(),
             query.from_date,
             query.to_date,
         )
@@ -661,7 +653,7 @@ pub async fn export_audit_log(
     use csv::Writer;
     let mut wtr = Writer::from_writer(vec![]);
     wtr.write_record(["id", "user_id", "action", "app", "entity_type", "entity_id", "old_value", "new_value", "ip_address", "user_agent", "created_at"])
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| ApiResponseError::internal(e.to_string()))?;
     for l in &logs {
         wtr.write_record(&[
             &l.id.to_string(),
@@ -675,14 +667,14 @@ pub async fn export_audit_log(
             &l.ip_address.map(|ip| ip.to_string()).unwrap_or_default(),
             l.user_agent.as_deref().unwrap_or(""),
             &l.created_at.to_rfc3339(),
-        ]).map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        ]).map_err(|e| ApiResponseError::internal(e.to_string()))?;
     }
-    let data = String::from_utf8(wtr.into_inner().map_err(|e| ApiResponseError::internal(&e.to_string()))?)
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let data = String::from_utf8(wtr.into_inner().map_err(|e| ApiResponseError::internal(e.to_string()))?)
+        .map_err(|e| ApiResponseError::internal(e.to_string()))?;
 
     let headers = [
         (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
-        (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"audit_log.csv\"".to_string()),
+        (axum::http::header::CONTENT_DISPOSITION, "attachment; filename="audit_log.csv"".to_string()),
     ];
     Ok((StatusCode::OK, headers, data))
 }

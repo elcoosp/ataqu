@@ -45,6 +45,10 @@ pub mod m_vista_add_dashboards;
 pub mod m_vista_tables;
 
 // NEW STUBS
+
+pub mod m20250101_000017_create_shopify_sync_logs;
+pub mod m20250101_000018_create_user_preferences;
+
 pub mod m20250101_000011_create_audit_and_permissions;
 pub mod m20250101_000012_create_vista_views;
 
@@ -106,7 +110,10 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000014_create_onboarding_and_changelog::Migration),
             Box::new(m20250101_000015_create_establishments::Migration),
             Box::new(m20250101_000016_create_workflow_runs::Migration),
-        ]
+        
+            Box::new(m20250101_000017_create_shopify_sync_logs::Migration),
+            Box::new(m20250101_000018_create_user_preferences::Migration),
+]
     }
 }
 

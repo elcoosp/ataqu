@@ -3,8 +3,6 @@ name = "ataqu-api"
 version = "0.1.0"
 edition = "2024"
 
-
-
 [dependencies]
 ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 axum = { version = "0.8.9", features = ["ws", "multipart"] }
@@ -25,7 +23,7 @@ tracing = "0.1"
 async-trait = "0.1"
 ataqu-application = { path = "../ataqu-application" }
 ataqu-kernel = { path = "../ataqu-kernel" }
-ataqu-security = { path = "../ataqu-security" }
+ataqu-security = { path = "../ataqu-security", features = ["infra-pii-access"] }
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
 ataqu-domain-pause = { path = "../ataqu-domain-pause" }
@@ -50,8 +48,7 @@ metrics = "0.23"
 sha2 = "0.10"
 base64 = "0.22.1"
 reqwest = { version = "0.12", features = ["json"] }
-
-
+urlencoding = "2.1"
 
 [dev-dependencies]
 mockall = "0.15.0"
