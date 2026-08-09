@@ -374,11 +374,10 @@ impl VaultRepository for VaultRepositoryImpl {
             .into_iter()
             .map(|m| Warehouse {
                 id: m.id,
-                tenant_id: TenantId::new(m.tenant_id),
+                tenant_id: ataqu_kernel::TenantId::new(m.tenant_id),
                 name: m.name,
                 location: m.location,
                 created_at: m.created_at.into(),
-
                 version: 0,
             })
             .collect())

@@ -16,7 +16,6 @@ use tokio::sync::mpsc::Sender;
 use uuid::Uuid;
 
 use crate::middleware::rate_limit::RateLimiter;
-use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_application::{
     aegis_service::AegisService, cinq_service::CinqService, dial_service::DialService,
     pause_service::PauseService, pivot_service::PivotService, sond_service::SondService,
