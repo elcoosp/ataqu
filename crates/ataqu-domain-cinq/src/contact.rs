@@ -1,4 +1,3 @@
-#![allow(clippy::collapsible_if)]
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::{Email, PhoneNumber};
 use chrono::{DateTime, Utc};

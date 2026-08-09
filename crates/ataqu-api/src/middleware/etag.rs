@@ -1,5 +1,3 @@
-#![allow(clippy::unwrap_or_default)]
-#![allow(clippy::collapsible_if)]
 use axum::{
     extract::Request,
     http::{StatusCode, header},

@@ -1,4 +1,3 @@
-#![allow(clippy::collapsible_if)]
 use std::sync::Arc;
 
 use ataqu_domain_spark::repository::{
@@ -210,7 +209,6 @@ impl SparkService {
         Ok(())
     }
 
-    #[allow(clippy::collapsible_if)]
     pub async fn evaluate_trigger(&self, event: &OutboxEvent) -> SparkResult<()> {
         let workflows = self
             .repo

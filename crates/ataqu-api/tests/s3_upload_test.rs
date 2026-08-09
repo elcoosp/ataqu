@@ -1,5 +1,3 @@
-#![allow(clippy::assertions_on_constants)]
-
 // Integration test for S3 upload, requires real AWS credentials to run.
 // Marked as ignored.
 #[tokio::test]

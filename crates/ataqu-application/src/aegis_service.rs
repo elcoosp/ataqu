@@ -271,7 +271,6 @@ pub struct AegisService {
 }
 
 impl AegisService {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         repo: Arc<dyn AuthRepository + Send + Sync>,
         outbox: Arc<dyn crate::outbox::Outbox + Send + Sync>,
@@ -329,7 +328,6 @@ impl AegisService {
     }
 
     #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
-    #[allow(clippy::collapsible_if)]
     pub async fn authenticate(
         &self,
         cmd: DomainAuthenticateCommand,

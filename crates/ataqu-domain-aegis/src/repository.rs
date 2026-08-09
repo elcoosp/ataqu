@@ -65,7 +65,6 @@ pub struct PermissionEntry {
 }
 
 #[async_trait]
-#[allow(clippy::too_many_arguments)]
 pub trait AuditRepositoryTrait: Send + Sync {
     async fn append_log(
         &self,
