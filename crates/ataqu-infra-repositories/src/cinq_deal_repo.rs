@@ -1,3 +1,4 @@
+#![allow(clippy::question_mark)]
 use crate::cinq_contact_repo::CrossFieldRateLimiter;
 use crate::entities::deal;
 use crate::entities::deal::Entity as DealEntity;

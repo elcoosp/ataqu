@@ -25,6 +25,7 @@ pub struct Deal {
     pub probability: Option<i32>,
     pub variant_id: Option<Uuid>,
     pub quantity: Option<i64>,
+    pub establishment_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
@@ -42,6 +43,7 @@ pub struct CreateDealCommand {
     pub probability: Option<i32>,
     pub variant_id: Option<Uuid>,
     pub quantity: Option<i64>,
+    pub establishment_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone)]
@@ -73,6 +75,7 @@ pub struct DealCreated {
     pub probability: Option<i32>,
     pub variant_id: Option<Uuid>,
     pub quantity: Option<i64>,
+    pub establishment_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -120,6 +123,7 @@ pub fn create_deal(
         probability: cmd.probability,
         variant_id: cmd.variant_id,
         quantity: cmd.quantity,
+        establishment_id: cmd.establishment_id,
         created_at: now,
     })
 }

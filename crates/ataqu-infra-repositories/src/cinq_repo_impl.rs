@@ -20,7 +20,6 @@ use ataqu_kernel::TenantId;
 use ataqu_security::{Email, PhoneNumber};
 
 use crate::entities::contact as contact_entity;
-use crate::entities::deal as deal_entity;
 
 // Define activity and pipeline_stage entities in their own modules
 mod activity_entity {
@@ -328,6 +327,7 @@ fn deal_to_active(deal: &Deal) -> deal_entity::ActiveModel {
         .to_string()),
         pipeline_stage_id: Set(deal.pipeline_stage_id),
         custom_fields: Set(serde_json::json!({})),
+        establishment_id: Set(deal.establishment_id),
         created_at: Set(deal.created_at),
         updated_at: Set(deal.updated_at),
     }
@@ -352,6 +352,7 @@ fn model_to_deal(model: deal_entity::Model) -> Deal {
         probability: None,
         variant_id: None,
         quantity: None,
+        establishment_id: model.establishment_id,
         created_at: model.created_at,
         updated_at: model.updated_at,
         version: 0,
@@ -680,6 +681,59 @@ impl DomainPipelineRepo for CinqPipelineStageRepository {
     }
 }
 
+mod establishment_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "establishments", schema_name = "collab_crm")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub company_name: String,
+        pub siret: Option<String>,
+        pub address: Option<String>,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
+mod deal_entity {
+    use chrono::{DateTime, Utc};
+    use rust_decimal::Decimal;
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "deals", schema_name = "collab_crm")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub contact_id: Uuid,
+        pub title: String,
+        pub amount: Decimal,
+        pub status: String,
+        pub pipeline_stage_id: Uuid,
+        pub custom_fields: serde_json::Value,
+        pub establishment_id: Option<Uuid>,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
 mod task_entity {
     use chrono::{DateTime, Utc};
     use sea_orm::entity::prelude::*;
@@ -871,5 +925,101 @@ impl ataqu_domain_cinq::repository::TaskRepository for CinqTaskRepository {
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(())
+    }
+}
+
+// ---------- Establishment Repository ----------
+pub struct CinqEstablishmentRepository {
+    db: DatabaseConnection,
+}
+impl CinqEstablishmentRepository {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
+}
+
+fn establishment_to_model(
+    est: &ataqu_domain_cinq::establishment::Establishment,
+) -> establishment_entity::ActiveModel {
+    establishment_entity::ActiveModel {
+        id: Set(est.id),
+        tenant_id: Set(est.tenant_id.as_uuid()),
+        company_name: Set(est.company_name.clone()),
+        siret: Set(est.siret.clone()),
+        address: Set(est.address.clone()),
+        created_at: Set(est.created_at),
+        updated_at: Set(est.updated_at),
+    }
+}
+
+fn model_to_establishment(
+    model: establishment_entity::Model,
+) -> ataqu_domain_cinq::establishment::Establishment {
+    ataqu_domain_cinq::establishment::Establishment {
+        id: model.id,
+        tenant_id: TenantId::new(model.tenant_id),
+        company_name: model.company_name,
+        siret: model.siret,
+        address: model.address,
+        created_at: model.created_at,
+        updated_at: model.updated_at,
+    }
+}
+
+#[async_trait]
+impl ataqu_domain_cinq::repository::EstablishmentRepository for CinqEstablishmentRepository {
+    async fn save_establishment(
+        &self,
+        est: &ataqu_domain_cinq::establishment::Establishment,
+    ) -> Result<(), CinqDomainError> {
+        let active = establishment_to_model(est);
+        let exists = establishment_entity::Entity::find_by_id(est.id)
+            .one(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?
+            .is_some();
+        if exists {
+            establishment_entity::Entity::update(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        } else {
+            establishment_entity::Entity::insert(active)
+                .exec(&self.db)
+                .await
+                .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        }
+        Ok(())
+    }
+
+    async fn find_establishment_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<ataqu_domain_cinq::establishment::Establishment>, CinqDomainError> {
+        let model = establishment_entity::Entity::find()
+            .filter(establishment_entity::Column::Id.eq(id))
+            .filter(establishment_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(model.map(model_to_establishment))
+    }
+
+    async fn list_establishments(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<ataqu_domain_cinq::establishment::Establishment>, CinqDomainError> {
+        let models = establishment_entity::Entity::find()
+            .filter(establishment_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .limit(limit)
+            .offset(offset)
+            .order_by_asc(establishment_entity::Column::CompanyName)
+            .all(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(models.into_iter().map(model_to_establishment).collect())
     }
 }

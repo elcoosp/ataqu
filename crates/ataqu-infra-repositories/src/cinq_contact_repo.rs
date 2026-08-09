@@ -5,13 +5,14 @@ use sea_orm::sea_query::Expr;
 use sea_orm::*;
 use serde_json::{Value as JsonValue, json};
 use std::sync::Arc;
+use std::time::Instant;
 use tracing::warn;
 use uuid::Uuid;
 
 // Simple per-tenant rate limiter for cross-field search (Tier 3)
 #[derive(Clone)]
 pub struct CrossFieldRateLimiter {
-    inner: Arc<DashMap<Uuid, (std::time::Instant, usize)>>,
+    inner: Arc<DashMap<Uuid, (Instant, usize)>>,
     window_duration: std::time::Duration,
     max_requests: usize,
 }
@@ -31,8 +32,10 @@ impl CrossFieldRateLimiter {
         }
     }
 
+    #[allow(clippy::question_mark)]
+    #[allow(clippy::needless_return, clippy::question_mark)]
     pub async fn check_and_consume(&self, tenant_id: Uuid) -> Result<(), &'static str> {
-        let now = std::time::Instant::now();
+        let now = Instant::now();
         let mut entry = self.inner.entry(tenant_id).or_insert((now, 0));
         if now.duration_since(entry.0) < self.window_duration {
             if entry.1 >= self.max_requests {
@@ -46,6 +49,12 @@ impl CrossFieldRateLimiter {
             entry.1 = 1;
             Ok(())
         }
+    }
+}
+
+impl Default for CrossFieldRateLimiter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -97,6 +106,7 @@ impl ContactRepository {
     }
 
     // Tier 3: Cross-field search (slow, rate-limited, result capped)
+    #[allow(clippy::question_mark)]
     pub async fn find_by_custom_fields_cross(
         &self,
         tenant_id: Uuid,

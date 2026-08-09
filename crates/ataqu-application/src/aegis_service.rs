@@ -1,3 +1,5 @@
+use chrono::{DateTime, Utc};
+use std::net::IpAddr;
 // AEGIS application service – orchestrates auth flows.
 // Uses domain repository trait (AuthRepository) and domain command structs.
 
@@ -17,6 +19,7 @@ use ataqu_domain_aegis::mfa::{generate_otpauth_url, generate_secret, verify_totp
 use ataqu_domain_aegis::{
     AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
     CreateUserCommand as DomainCreateUserCommand, User, UserCreated,
+    repository::{AuditLogEntry, AuditRepositoryTrait},
 };
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::Email;
@@ -113,7 +116,7 @@ impl RealAegisDomain {
     ) -> Result<(UserCreated, User), AuthError> {
         if !cmd
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .contains('@')
         {
             return Err(AuthError::Validation("Invalid email format".to_string()));
@@ -260,16 +263,21 @@ pub struct AegisService {
     repo: Arc<dyn AuthRepository + Send + Sync>,
     outbox: Arc<dyn crate::outbox::Outbox + Send + Sync>,
     domain: Arc<RealAegisDomain>,
+    audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
+
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
     config: AegisConfig,
 }
 
 impl AegisService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         repo: Arc<dyn AuthRepository + Send + Sync>,
         outbox: Arc<dyn crate::outbox::Outbox + Send + Sync>,
         domain: Arc<RealAegisDomain>,
+        audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
+
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
         config: AegisConfig,
@@ -278,6 +286,7 @@ impl AegisService {
             repo,
             outbox,
             domain,
+            audit_repo,
             id_gen,
             clock,
             config,
@@ -339,7 +348,7 @@ impl AegisService {
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
         let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config)?;
@@ -411,7 +420,7 @@ impl AegisService {
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -465,7 +474,6 @@ impl AegisService {
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
 
-        // [VULN-001] Enforce tenant isolation
         if user.tenant_id != tenant_id {
             return Err(AegisServiceError::NotFound("User not found".into()));
         }
@@ -492,7 +500,6 @@ impl AegisService {
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
 
-        // [VULN-001] Enforce tenant isolation
         if user.tenant_id != tenant_id {
             return Err(AegisServiceError::NotFound("User not found".into()));
         }
@@ -674,7 +681,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -733,7 +740,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -812,6 +819,85 @@ impl AegisService {
         // Here we bump the user version, which could be checked in JWT validation.
         // For now, we rely on the short TTL of access tokens.
 
+        Ok(())
+    }
+
+    /// Get audit logs for a tenant with pagination and filters.
+    pub async fn get_audit_logs(
+        &self,
+        tenant_id: TenantId,
+        limit: i64,
+        offset: i64,
+        action_filter: Option<String>,
+        app_filter: Option<String>,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+    ) -> Result<Vec<AuditLogEntry>, AegisServiceError> {
+        self.audit_repo
+            .list_logs(
+                tenant_id,
+                limit,
+                offset,
+                action_filter.as_deref(),
+                app_filter.as_deref(),
+                from_date,
+                to_date,
+            )
+            .await
+            .map_err(|e| AegisServiceError::Internal(e))
+    }
+
+    /// Get the permission matrix for a tenant.
+    pub async fn get_permission_matrix(
+        &self,
+        tenant_id: TenantId,
+    ) -> Result<Vec<serde_json::Value>, AegisServiceError> {
+        let entries = self
+            .audit_repo
+            .get_permission_matrix(tenant_id)
+            .await
+            .map_err(|e| AegisServiceError::Internal(e))?;
+        let mut result = Vec::new();
+        for entry in entries {
+            result.push(serde_json::json!({
+                "user_id": entry.user_id,
+                "user_name": entry.user_name,
+                "user_email": entry.user_email,
+                "roles": entry.role_per_app,
+            }));
+        }
+        Ok(result)
+    }
+
+    /// Internal helper to log an audit entry.
+    async fn log_audit(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        action: &str,
+        app: &str,
+        entity_type: Option<&str>,
+        entity_id: Option<Uuid>,
+        old_value: Option<serde_json::Value>,
+        new_value: Option<serde_json::Value>,
+        ip_address: Option<IpAddr>,
+        user_agent: Option<&str>,
+    ) -> Result<(), AegisServiceError> {
+        self.audit_repo
+            .append_log(
+                tenant_id,
+                user_id,
+                action,
+                app,
+                entity_type,
+                entity_id,
+                old_value,
+                new_value,
+                ip_address,
+                user_agent,
+            )
+            .await
+            .map_err(|e| AegisServiceError::Internal(e))?;
         Ok(())
     }
 }

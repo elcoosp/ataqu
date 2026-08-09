@@ -16,3 +16,6 @@ sha1 = "0.10"
 rand = "0.8"
 urlencoding = "2.1"
 sha2 = "0.10"
+
+chrono = { version = "0.4.45", features = ["serde"] }
+serde_json = "1.0.151"
