@@ -103,7 +103,7 @@ impl SparkService {
         self.outbox
             .append("collab_crm", "WorkflowCreated", workflow.id, &payload)
             .await
-            .map_err(|e| SparkServiceError::Repository(e))?;
+            .map_err(SparkServiceError::Repository)?;
 
         Ok(workflow)
     }
@@ -195,6 +195,7 @@ impl SparkService {
         Ok(())
     }
 
+    #[allow(clippy::collapsible_if)]
     pub async fn evaluate_trigger(&self, event: &OutboxEvent) -> SparkResult<()> {
         let workflows = self
             .repo
@@ -217,10 +218,10 @@ impl SparkService {
             if workflow.tenant_id != event_tenant_id {
                 continue;
             }
-            if evaluate_conditions(&workflow.conditions, &event.payload) {
-                if let Err(e) = self.execute_workflow(&workflow).await {
-                    tracing::error!(error = %e, "Failed to execute workflow {}", workflow.id);
-                }
+            if evaluate_conditions(&workflow.conditions, &event.payload)
+                && let Err(e) = self.execute_workflow(&workflow).await
+            {
+                tracing::error!(error = %e, "Failed to execute workflow {}", workflow.id);
             }
         }
         Ok(())
@@ -231,21 +232,23 @@ impl SparkService {
         let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
 
         for workflow in workflows {
-            if let Trigger::Schedule { cron } = &workflow.trigger {
-                if let Ok(cron_job) = croner::Cron::new(cron).parse() {
-                    // Find the previous occurrence to see if we missed it
-                    if let Ok(prev_run) =
-                        cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false)
+            if let Trigger::Schedule { cron } = &workflow.trigger
+                && let Ok(cron_job) = croner::Cron::new(cron).parse()
+            {
+                // Find the previous occurrence to see if we missed it
+                if let Ok(prev_run) =
+                    cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false)
+                    && prev_run <= now
+                {
+                    tracing::info!("Triggering scheduled workflow {}", workflow.id);
+                    let payload = serde_json::json!({
+                        "workflow_id": workflow.id,
+                        "trigger_time": chrono::Utc::now(),
+                    });
+                    if evaluate_conditions(&workflow.conditions, &payload)
+                        && let Err(e) = self.execute_workflow(&workflow).await
                     {
-                        if prev_run <= now {
-                            tracing::info!("Triggering scheduled workflow {}", workflow.id);
-                            let payload = serde_json::json!({ "time": now.to_rfc3339() });
-                            if evaluate_conditions(&workflow.conditions, &payload) {
-                                if let Err(e) = self.execute_workflow(&workflow).await {
-                                    tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
-                                }
-                            }
-                        }
+                        tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
                     }
                 }
             }

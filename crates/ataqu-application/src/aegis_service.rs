@@ -320,6 +320,7 @@ impl AegisService {
     }
 
     #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
+    #[allow(clippy::collapsible_if)]
     pub async fn authenticate(
         &self,
         cmd: DomainAuthenticateCommand,
@@ -331,10 +332,10 @@ impl AegisService {
             .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
 
-        if let Some(tenant_id) = cmd.tenant_id {
-            if user.tenant_id != tenant_id {
-                return Err(AegisServiceError::AuthenticationFailed);
-            }
+        if let Some(tenant_id) = cmd.tenant_id
+            && user.tenant_id != tenant_id
+        {
+            return Err(AegisServiceError::AuthenticationFailed);
         }
         let email_str = user
             .email
@@ -608,10 +609,10 @@ impl AegisService {
         let api_keys = self.repo.find_api_keys_by_prefix_global(prefix).await?;
 
         for api_key in api_keys {
-            if let Some(expires_at) = api_key.expires_at {
-                if expires_at < self.clock.now() {
-                    continue;
-                }
+            if let Some(expires_at) = api_key.expires_at
+                && expires_at < self.clock.now()
+            {
+                continue;
             }
 
             // Verify the key against the stored Argon2 hash

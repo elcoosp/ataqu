@@ -128,14 +128,9 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     }
 
                                     let key = (auth.tenant_id.as_uuid(), channel_id);
-                                    let entry =
-                                        state.ws_registry.entry(key).or_insert_with(DashMap::new);
+                                    let entry = state.ws_registry.entry(key).or_default();
                                     entry.insert(connection_id, tx.clone());
-                                    state
-                                        .conn_index
-                                        .entry(connection_id)
-                                        .or_insert_with(Vec::new)
-                                        .push(key);
+                                    state.conn_index.entry(connection_id).or_default().push(key);
 
                                     let _ = tx.send(
                                         serde_json::json!({

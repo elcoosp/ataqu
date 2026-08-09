@@ -731,16 +731,13 @@ pub async fn import_csv(
     let mut rdr = ReaderBuilder::new().from_reader(body.as_bytes());
     let mut rows = Vec::new();
     let mut failed_rows = Vec::new();
-    let mut row_index = 1;
-
-    for result in rdr.deserialize() {
+    for (row_index, result) in (1..).zip(rdr.deserialize()) {
         match result {
             Ok(record) => rows.push(record),
             Err(e) => {
                 failed_rows.push((row_index, format!("Parse error: {}", e)));
             }
         }
-        row_index += 1;
     }
 
     let (imported, service_failed) = state

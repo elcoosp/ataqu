@@ -134,6 +134,7 @@ pub struct CinqService {
 const CINQ_SCHEMA: &str = "collab_crm";
 
 impl CinqService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         contact_repo: Arc<dyn ContactRepository + Send + Sync>,
         deal_repo: Arc<dyn DealRepository + Send + Sync>,
@@ -193,7 +194,7 @@ impl CinqService {
         self.outbox
             .append(CINQ_SCHEMA, "ContactCreated", contact.id, &payload)
             .await
-            .map_err(|e| CinqServiceError::Repository(e))?;
+            .map_err(CinqServiceError::Repository)?;
 
         Ok(contact)
     }
@@ -516,7 +517,7 @@ impl CinqService {
         self.outbox
             .append(CINQ_SCHEMA, "DealCreated", deal.id, &payload)
             .await
-            .map_err(|e| CinqServiceError::Repository(e))?;
+            .map_err(CinqServiceError::Repository)?;
 
         Ok(deal)
     }
@@ -594,7 +595,7 @@ impl CinqService {
             self.outbox
                 .append(CINQ_SCHEMA, "DealWon", deal.id, &payload)
                 .await
-                .map_err(|e| CinqServiceError::Repository(e))?;
+                .map_err(CinqServiceError::Repository)?;
         }
 
         Ok(deal)

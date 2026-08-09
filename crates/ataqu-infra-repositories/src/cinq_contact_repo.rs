@@ -16,6 +16,12 @@ pub struct CrossFieldRateLimiter {
     max_requests: usize,
 }
 
+impl Default for CrossFieldRateLimiter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CrossFieldRateLimiter {
     pub fn new() -> Self {
         Self {
@@ -30,7 +36,7 @@ impl CrossFieldRateLimiter {
         let mut entry = self.inner.entry(tenant_id).or_insert((now, 0));
         if now.duration_since(entry.0) < self.window_duration {
             if entry.1 >= self.max_requests {
-                return Err("rate limit exceeded");
+                Err("rate limit exceeded")
             } else {
                 entry.1 += 1;
                 Ok(())
@@ -97,9 +103,7 @@ impl ContactRepository {
         search: &str,
         limit: u64,
     ) -> Result<Vec<contact::Model>, &'static str> {
-        if let Err(e) = self.rate_limiter.check_and_consume(tenant_id).await {
-            return Err(e);
-        }
+        self.rate_limiter.check_and_consume(tenant_id).await?;
 
         let sql = r#"
             SELECT *
