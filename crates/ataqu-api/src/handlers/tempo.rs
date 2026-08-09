@@ -260,13 +260,11 @@ pub async fn list_event_types(
     let offset = params.offset.unwrap_or(0);
     let (event_types, total) = state
         .tempo_service
-        .list_event_types(auth.tenant_id)
+        .list_event_types(auth.tenant_id, limit, offset)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let items = event_types
         .into_iter()
-        .skip(offset as usize)
-        .take(limit as usize)
         .map(|e| e.into())
         .collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {

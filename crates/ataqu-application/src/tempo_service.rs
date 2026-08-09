@@ -393,6 +393,8 @@ impl TempoService {
     pub async fn list_event_types(
         &self,
         tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
     ) -> TempoResult<(Vec<EventType>, u64)> {
         let total = self
             .repo
@@ -404,7 +406,12 @@ impl TempoService {
             .list_event_types(&tenant_id)
             .await
             .map_err(TempoServiceError::Repository)?;
-        Ok((event_types, total))
+        let items = event_types
+            .into_iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .collect();
+        Ok((items, total))
     }
 
     pub async fn get_event_type_by_slug(

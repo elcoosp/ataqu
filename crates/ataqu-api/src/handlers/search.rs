@@ -176,7 +176,7 @@ pub async fn unified_search(
 
     let (event_types, _total) = state
         .tempo_service
-        .list_event_types(auth.tenant_id)
+        .list_event_types(auth.tenant_id, 100, 0)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for et in event_types {
