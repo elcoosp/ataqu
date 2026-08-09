@@ -55,7 +55,7 @@ impl From<Contact> for ContactResponse {
             name: c.name,
             company: c.company,
             email: ApiEmail(c.email),
-            phone: c.phone.map(ApiPhone::new),
+            phone: c.phone.map(ApiPhone),
             created_at: c.created_at,
             updated_at: c.updated_at,
         }

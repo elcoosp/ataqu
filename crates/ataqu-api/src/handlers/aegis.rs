@@ -232,14 +232,14 @@ pub async fn sso_callback(
     State(state): State<AppState>,
     Json(req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
-    let provider = state
+    let _provider = state
         .sso_states
         .get(&req.state)
         .map(|p| p.clone())
         .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
     state.sso_states.invalidate(&req.state);
 
-    let config = ataqu_domain_aegis::sso::SsoConfig {
+    let _config = ataqu_domain_aegis::sso::SsoConfig {
         google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
         google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
         google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
@@ -248,7 +248,7 @@ pub async fn sso_callback(
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
 
-    let client = state.http_client.clone();
+    let _client = state.http_client.clone();
     let email_str = "".to_string(); // FIXME: provider parsing
 
     let email = Email::new(email_str);
