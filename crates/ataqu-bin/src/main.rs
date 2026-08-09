@@ -28,21 +28,10 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
-// use ChangelogService;
-// use HealthService;
-// use OnboardingService;
-// //
-// use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
-
-
-
-
-// use S3Service;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 use ataqu_api::stubs::*;
-
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -448,7 +437,7 @@ async fn main() -> anyhow::Result<()> {
         pools.ops.clone(),
     ));
     let pause_service = Arc::new(PauseService::new(
-        pause_idempotency,
+        pause_idempotency.clone(),
         pause_employee_repo,
         pause_leave_repo,
         pause_doc_repo,
@@ -525,28 +514,27 @@ async fn main() -> anyhow::Result<()> {
 
     let state = AppState {
         db: pools.core.clone(),
-        cinq_service,
-        dial_service,
-        pivot_service,
-        sond_service,
+        cinq_service: cinq_service.clone(),
+        dial_service: dial_service.clone(),
+        pivot_service: pivot_service.clone(),
+        sond_service: sond_service.clone(),
         spark_service: spark_service.clone(),
-        tempo_service,
-        vault_service,
-        vista_service,
-        aegis_service,
-        pause_service,
-        jwt_secret,
+        tempo_service: tempo_service.clone(),
+        vault_service: vault_service.clone(),
+        vista_service: vista_service.clone(),
+        aegis_service: aegis_service.clone(),
+        pause_service: pause_service.clone(),
+        jwt_secret: jwt_secret.clone(),
         id_gen: id_gen.clone(),
         clock: clock.clone(),
-        ws_registry,
-        conn_index,
-        presence_counts,
-        email_tracking_tx,
-        rate_limiter,
-        metrics_handle,
+        ws_registry: ws_registry.clone(),
+        conn_index: conn_index.clone(),
+        presence_counts: presence_counts.clone(),
+        email_tracking_tx: email_tracking_tx.clone(),
+        rate_limiter: rate_limiter.clone(),
+        metrics_handle: metrics_handle.clone(),
         sso_states: sso_states.clone(),
-        http_client,
-
+        http_client: http_client.clone(),
         health_service: health_service.clone(),
         health_cache: health_cache.clone(),
         audit_repo: audit_repo.clone(),
@@ -580,20 +568,41 @@ async fn main() -> anyhow::Result<()> {
     let dispatcher_pool = pools.dispatcher.clone();
     let gdpr_registry = Arc::new(ataqu_domain_gdpr::GdprRegistry::new());
     let gdpr_db_pool = pools.core.clone();
+
+    // We need to move clones of these into the async spawn, and then into the handler closure.
+    // We'll clone the necessary Arc values before moving into the async block.
+    let cinq_service_for_dispatcher = cinq_service.clone();
+    let vista_service_for_dispatcher = vista_service.clone();
+    let spark_service_for_dispatcher = spark_service.clone();
+    let gdpr_registry_for_dispatcher = gdpr_registry.clone();
+    let gdpr_db_pool_for_dispatcher = gdpr_db_pool.clone();
+    let dispatcher_pool_for_dispatcher = dispatcher_pool.clone();
+
     tokio::spawn(async move {
+        // These are owned by the async block now.
+        let dispatcher_pool = dispatcher_pool_for_dispatcher;
+        let gdpr_db_pool = gdpr_db_pool_for_dispatcher;
+        let gdpr_registry = gdpr_registry_for_dispatcher;
+        let spark = spark_service_for_dispatcher;
+        let vista = vista_service_for_dispatcher;
+        let cinq_service = cinq_service_for_dispatcher;
+
         loop {
-            let vista = vista_service_for_outbox.clone();
-            let spark = spark_service.clone();
+            // Clone for each iteration to capture fresh copies in the handler closure.
+            let vista = vista.clone();
+            let spark = spark.clone();
             let gdpr_registry = gdpr_registry.clone();
             let gdpr_db_pool = gdpr_db_pool.clone();
-            let cinq_service_clone = cinq_service.clone();
+            let cinq_service = cinq_service.clone();
 
-            let handler = |event: ataqu_infra_outbox::OutboxEvent| {
+            // The handler must be `move` and `Fn` so we move the owned clones into it.
+            let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
+                // Clone again for the async block inside the handler.
                 let vista = vista.clone();
                 let spark = spark.clone();
                 let gdpr_registry = gdpr_registry.clone();
                 let gdpr_db_pool = gdpr_db_pool.clone();
-                let cinq_service_clone = cinq_service_clone.clone();
+                let cinq_service = cinq_service.clone();
 
                 async move {
                     if let Err(e) = vista.process_event(&event).await {
@@ -791,7 +800,7 @@ async fn main() -> anyhow::Result<()> {
                     }
 
                     if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
-                        if let Err(e) = cinq_service_clone
+                        if let Err(e) = cinq_service
                             .process_tempo_booking_event(&event.payload)
                             .await
                         {
