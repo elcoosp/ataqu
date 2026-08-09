@@ -63,9 +63,7 @@ impl DealRepository {
         search: &str,
         limit: u64,
     ) -> Result<Vec<deal::Model>, &'static str> {
-        if let Err(e) = self.rate_limiter.check_and_consume(tenant_id).await {
-            return Err(e);
-        }
+        self.rate_limiter.check_and_consume(tenant_id).await?;
         let sql = r#"
             SELECT *
             FROM collab_crm.deals

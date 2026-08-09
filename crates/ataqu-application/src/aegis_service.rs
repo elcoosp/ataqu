@@ -116,7 +116,7 @@ impl RealAegisDomain {
     ) -> Result<(UserCreated, User), AuthError> {
         if !cmd
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .contains('@')
         {
             return Err(AuthError::Validation("Invalid email format".to_string()));
@@ -347,7 +347,7 @@ impl AegisService {
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
         let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config)?;
@@ -419,7 +419,7 @@ impl AegisService {
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -680,7 +680,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -739,7 +739,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)

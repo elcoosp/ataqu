@@ -1,9 +1,15 @@
-#![allow(dead_code)]
 #![allow(clippy::collapsible_if)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::question_mark)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::useless_conversion)]
 #![allow(clippy::redundant_closure)]
 #![allow(clippy::needless_borrows_for_generic_args)]
-#![allow(clippy::useless_conversion)]
+#![allow(clippy::map_clone)]
+#![allow(clippy::explicit_counter_loop)]
+#![allow(clippy::unwrap_or_default)]
+
 pub mod aegis_service;
 pub mod cinq_service;
 pub mod dial_service;

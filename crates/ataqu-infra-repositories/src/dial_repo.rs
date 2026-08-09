@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 //! DIAL repository implementations: messages and presence.
 
 use std::sync::Arc;
@@ -190,16 +191,17 @@ impl PresenceStore for InMemoryPresenceStore {
 // ----------------------------------------------------------------------
 // Tests
 // ----------------------------------------------------------------------
-#[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::dial_repo::InMemoryPresenceStore;
+    use crate::dial_repo::PresenceStore;
+    use uuid::Uuid;
 
     #[tokio::test]
     async fn test_presence_store() {
         let store = InMemoryPresenceStore::new();
-        let tenant = Uuid::new_v4();
-        let user1 = Uuid::new_v4();
-        let user2 = Uuid::new_v4();
+        let tenant = Uuid::now_v7();
+        let user1 = Uuid::now_v7();
+        let user2 = Uuid::now_v7();
 
         assert!(store.get_online_users(tenant).await.unwrap().is_empty());
 
@@ -215,7 +217,7 @@ mod tests {
         assert_eq!(users.len(), 1);
         assert!(users.contains(&user2));
 
-        let tenant2 = Uuid::new_v4();
+        let tenant2 = Uuid::now_v7();
         assert!(store.get_online_users(tenant2).await.unwrap().is_empty());
     }
 }

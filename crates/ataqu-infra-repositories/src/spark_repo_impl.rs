@@ -198,12 +198,12 @@ impl SparkRepository for SparkRepositoryImpl {
             let wf = map_model_to_domain(m)?;
             let trigger_json = serde_json::to_value(&wf.trigger)
                 .map_err(|e| SparkError::Database(e.to_string()))?;
-            if let Some(t_obj) = trigger_json.as_object() {
-                if t_obj.get("schema").and_then(|v| v.as_str()) == Some(schema)
-                    && t_obj.get("event_type").and_then(|v| v.as_str()) == Some(event_type)
-                {
-                    workflows.push(wf);
-                }
+
+            if let Some(t_obj) = trigger_json.as_object()
+                && t_obj.get("schema").and_then(|v| v.as_str()) == Some(schema)
+                && t_obj.get("event_type").and_then(|v| v.as_str()) == Some(event_type)
+            {
+                workflows.push(wf);
             }
         }
         Ok(workflows)

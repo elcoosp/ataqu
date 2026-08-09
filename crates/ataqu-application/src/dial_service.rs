@@ -1,4 +1,4 @@
-//! DIAL application service – orchestrates chat operations using domain repositories.
+// DIAL application service – orchestrates chat operations using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -500,6 +500,126 @@ impl DialService {
         .map_err(|e| DialServiceError::Repository(e.to_string()))?;
 
         Ok(data)
+    }
+
+    pub async fn export_channel_pdf(
+        &self,
+        tenant_id: TenantId,
+        channel_id: Uuid,
+        requester_id: Uuid,
+    ) -> DialResult<Vec<u8>> {
+        let (messages, _total) = self
+            .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
+            .await?;
+
+        // Build the content stream
+        let mut content_lines = Vec::new();
+        content_lines.push(b"BT\n".to_vec());
+        content_lines.push(b"/F1 12 Tf\n".to_vec());
+        let mut y = 750.0;
+        let title = format!("Channel export: {}", channel_id);
+        content_lines.push(format!("1 0 0 1 50 {} Tm\n", y).into_bytes());
+        content_lines.push(format!("({}) Tj\n", escape_pdf_text(&title)).into_bytes());
+        y -= 25.0;
+
+        for msg in messages {
+            let line = format!(
+                "[{}] {}: {}",
+                chrono::DateTime::<chrono::Utc>::from(msg.created_at).to_rfc3339(),
+                msg.author_id.as_uuid(),
+                msg.content
+            );
+            let line = if line.len() > 200 {
+                &line[..200]
+            } else {
+                &line
+            };
+            if y < 50.0 {
+                break; // one page only
+            }
+            content_lines.push(format!("1 0 0 1 50 {} Tm\n", y).into_bytes());
+            content_lines.push(format!("({}) Tj\n", escape_pdf_text(line)).into_bytes());
+            y -= 15.0;
+        }
+        content_lines.push(b"ET\n".to_vec());
+        let content_stream = content_lines.concat();
+        let content_len = content_stream.len();
+
+        // Escape parentheses for PDF strings
+        fn escape_pdf_text(s: &str) -> String {
+            s.replace("\\", "\\\\")
+                .replace("(", "\\(")
+                .replace(")", "\\)")
+        }
+
+        // Fixed object numbers:
+        // 1: Content stream
+        // 2: Page
+        // 3: Pages
+        // 4: Catalog
+        let content_obj = 1;
+        let page_obj = 2;
+        let pages_obj = 3;
+        let catalog_obj = 4;
+
+        // Build object bodies as Vec<u8>
+        let content_body = format!(
+            "<< /Length {} >>\nstream\n{}endstream\n",
+            content_len,
+            String::from_utf8_lossy(&content_stream)
+        )
+        .into_bytes();
+
+        let page_body = format!(
+                "<< /Type /Page /Parent {} 0 R /MediaBox [0 0 612 792] /Contents {} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\n",
+                pages_obj, content_obj
+            ).into_bytes();
+
+        let pages_body =
+            format!("<< /Type /Pages /Kids [{} 0 R] /Count 1 >>\n", page_obj).into_bytes();
+
+        let catalog_body = format!("<< /Type /Catalog /Pages {} 0 R >>\n", pages_obj).into_bytes();
+
+        // Assemble the PDF
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(b"%PDF-1.4\n");
+
+        // Write objects in order: 1..4
+        let objects = [
+            (content_obj, content_body),
+            (page_obj, page_body),
+            (pages_obj, pages_body),
+            (catalog_obj, catalog_body),
+        ];
+
+        let mut object_offsets = Vec::new();
+        for (num, body) in objects.iter() {
+            let offset = buffer.len();
+            object_offsets.push(offset);
+            buffer.extend_from_slice(format!("{} 0 obj\n", num).as_bytes());
+            buffer.extend_from_slice(body);
+            buffer.extend_from_slice(b"\nendobj\n");
+        }
+
+        let total_objects = 5; // objects 0..4
+        let xref_offset = buffer.len();
+
+        buffer.extend_from_slice(b"xref\n");
+        buffer.extend_from_slice(format!("0 {}\n", total_objects).as_bytes());
+        buffer.extend_from_slice(b"0000000000 65535 f \n");
+        for offset in object_offsets {
+            buffer.extend_from_slice(format!("{:010} 00000 n \n", offset).as_bytes());
+        }
+
+        buffer.extend_from_slice(
+            format!(
+                "trailer\n<< /Size {} /Root {} 0 R >>\nstartxref\n{}\n%%EOF\n",
+                total_objects, catalog_obj, xref_offset
+            )
+            .as_bytes(),
+        );
+
+        Ok(buffer)
     }
 
     pub async fn list_thread_messages(
