@@ -588,6 +588,7 @@ async fn main() -> anyhow::Result<()> {
             let gdpr_registry = gdpr_registry.clone();
             let gdpr_db_pool = gdpr_db_pool.clone();
     let cinq_service_clone = cinq_service.clone();
+    let cinq_service_clone = cinq_service.clone();
     let cinq_service = cinq_service.clone();
             let handler = |event: ataqu_infra_outbox::OutboxEvent| {
                 let vista = vista.clone();
