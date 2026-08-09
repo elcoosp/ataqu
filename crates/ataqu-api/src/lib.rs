@@ -31,6 +31,7 @@ use ataqu_application::{
 use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
+use tokio::sync::mpsc::Sender;
 
 pub mod error;
 pub mod handlers;

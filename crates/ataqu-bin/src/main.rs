@@ -2,6 +2,7 @@
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
 
+#![allow(unused_imports)]
 use dotenvy::dotenv;
 use std::net::SocketAddr;
 use std::sync::Arc;
