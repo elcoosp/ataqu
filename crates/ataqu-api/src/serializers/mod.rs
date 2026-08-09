@@ -1,19 +1,14 @@
-//! PII serialization wrappers (ADR-007)
-//! Use ApiEmail and ApiPhone at the API boundary to safely serialize PII.
+//! API‑layer serialization wrappers for PII newtypes.
+//! These own the PII data and implement `Serialize` to reveal the inner value for HTTP responses.
 
 use ataqu_security::{Email, PhoneNumber, PiiAccessKey};
-use serde::Serializer;
+use serde::{Serialize, Serializer};
 
-#[derive(Debug)]
+/// Wrapper for `Email` that serializes the actual email address.
+#[derive(Debug, Clone)]
 pub struct ApiEmail(pub Email);
 
-impl ApiEmail {
-    pub fn new(email: Email) -> Self {
-        Self(email)
-    }
-}
-
-impl serde::Serialize for ApiEmail {
+impl Serialize for ApiEmail {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -23,16 +18,11 @@ impl serde::Serialize for ApiEmail {
     }
 }
 
-#[derive(Debug)]
+/// Wrapper for `PhoneNumber` that serializes the actual phone number.
+#[derive(Debug, Clone)]
 pub struct ApiPhone(pub PhoneNumber);
 
-impl ApiPhone {
-    pub fn new(phone: PhoneNumber) -> Self {
-        Self(phone)
-    }
-}
-
-impl serde::Serialize for ApiPhone {
+impl Serialize for ApiPhone {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
