@@ -32,14 +32,6 @@ use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
 
-// Type aliases to simplify complex types
-pub type WsRegistry = Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, UnboundedSender<String>>>>>;
-pub type ConnIndex = Arc<DashMap<usize, Uuid>>;
-pub type PresenceCounts = Arc<DashMap<(Uuid, Uuid), i32>>;
-pub type SsoStates = Arc<Cache<String, String>>;
-pub type EmailTrackingTx = UnboundedSender<TrackingEvent>;
-
-
 pub mod error;
 pub mod handlers;
 pub mod middleware;
@@ -60,10 +52,29 @@ pub mod stubs {
 pub use stubs::*;
 
 // ----------------------------------------------------------------------
+// Type aliases for complex WebSocket / presence structures
+// ----------------------------------------------------------------------
+/// A map from connection id to sender for a specific channel.
+type ChannelSubscribers = Arc<DashMap<usize, UnboundedSender<String>>>;
+
+/// Registry: channel_id -> subscriber map.
+type WsRegistry = Arc<DashMap<(Uuid, Uuid), ChannelSubscribers>>;
+
+/// Connection index: connection_id -> channel_id (or some mapping)
+type ConnIndex = Arc<DashMap<usize, Uuid>>;
+
+/// Presence counts: user_id -> count (for online status)
+type PresenceCounts = Arc<DashMap<Uuid, i32>>;
+
+/// SSO state cache: state -> provider data
+type SsoStates = Arc<Cache<String, String>>;
+
+/// Email tracking channel
+type EmailTrackingTx = UnboundedSender<TrackingEvent>;
+
+// ----------------------------------------------------------------------
 // Application State
 // ----------------------------------------------------------------------
-#[derive(Clone)]
-
 #[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
@@ -98,7 +109,6 @@ pub struct AppState {
     pub onboarding_service: Arc<OnboardingService>,
     pub changelog_service: Arc<ChangelogService>,
 }
-
 
 // ----------------------------------------------------------------------
 // Router builder
