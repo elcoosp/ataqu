@@ -72,6 +72,7 @@ pub struct UpdateWarehouseCommand {
     pub id: Uuid,
     pub name: Option<String>,
     pub location: Option<Option<String>>,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -646,6 +647,7 @@ impl VaultService {
             name,
             location,
             created_at: self.clock.now(),
+            version: 0,
         };
         self.repo
             .save_warehouse(&warehouse)
@@ -682,6 +684,13 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)?
             .ok_or(VaultServiceError::WarehouseNotFound)?;
 
+        if warehouse.version != cmd.expected_version {
+            return Err(VaultServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, warehouse.version
+            )));
+        }
+
         if let Some(name) = cmd.name {
             warehouse.name = name;
         }
@@ -689,6 +698,7 @@ impl VaultService {
             warehouse.location = loc;
         }
 
+        warehouse.version += 1;
         self.repo
             .update_warehouse(&warehouse)
             .await

@@ -149,4 +149,5 @@ pub struct Warehouse {
     pub name: String,
     pub location: Option<String>,
     pub created_at: SystemTime,
+    pub version: i32,
 }

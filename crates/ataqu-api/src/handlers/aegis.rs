@@ -559,9 +559,43 @@ pub async fn reset_password(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn get_audit_log(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let logs = state
+        .aegis_service
+        .get_audit_logs(auth.tenant_id, 100, 0, None, None, None, None)
+        .await
+        .map_err(map_aegis_error)?;
+    let resp = logs
+        .into_iter()
+        .map(|l| serde_json::json!({
+            "tenant_id": l.tenant_id,
+            "user_id": l.user_id,
+            "action": l.action,
+            "app": l.app,
+            "entity_type": l.entity_type,
+            "entity_id": l.entity_id,
+            "old_value": l.old_value,
+            "new_value": l.new_value,
+            "ip_address": l.ip_address,
+            "user_agent": l.user_agent,
+            "created_at": l.created_at,
+        }))
+        .collect();
+    Ok(Json(resp))
+}
+
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::{delete, get, patch, post};
     axum::Router::new()
+        .route("/audit-log", get(get_audit_log))
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))
         .route("/users/:id/deactivate", post(deactivate_user))

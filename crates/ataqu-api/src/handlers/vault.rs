@@ -585,13 +585,22 @@ pub async fn update_warehouse(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateWarehouseRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let cmd = UpdateWarehouseCommand {
         tenant_id: auth.tenant_id,
         id,
         name: payload.name,
         location: payload.location,
+        expected_version: if_match,
     };
     let warehouse = state
         .vault_service
@@ -618,8 +627,36 @@ pub async fn delete_warehouse(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn shopify_auth(
+    State(_state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<serde_json::Value>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+    }
+    Ok(Json(serde_json::json!({"url": "https://shopify.com/oauth/authorize"})))
+}
+
+pub async fn shopify_sync(
+    State(_state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+    }
+    Ok(StatusCode::ACCEPTED)
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
+        .route(
+            "/shopify/auth",
+            axum::routing::get(shopify_auth),
+        )
+        .route(
+            "/shopify/sync",
+            axum::routing::post(shopify_sync),
+        )
         .route(
             "/products",
             axum::routing::post(create_product).get(list_products),
