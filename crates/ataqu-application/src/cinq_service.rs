@@ -149,6 +149,7 @@ pub struct CreateEstablishmentCommand {
 }
 
 impl CinqService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         contact_repo: Arc<dyn ContactRepository + Send + Sync>,
         deal_repo: Arc<dyn DealRepository + Send + Sync>,

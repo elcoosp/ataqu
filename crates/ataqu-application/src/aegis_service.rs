@@ -821,6 +821,7 @@ impl AegisService {
     }
 
     /// Get audit logs for a tenant with pagination and filters.
+    #[allow(clippy::too_many_arguments)]
     pub async fn get_audit_logs(
         &self,
         tenant_id: TenantId,
@@ -869,7 +870,7 @@ impl AegisService {
 
     /// Internal helper to log an audit entry.
     /// Internal helper to log an audit entry.
-    #[allow(dead_code)]
+    #[allow(dead_code, clippy::too_many_arguments)]
     async fn log_audit(
         &self,
         user_id: Uuid,

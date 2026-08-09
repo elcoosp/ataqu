@@ -95,6 +95,7 @@ impl DealRepository {
 
     // Create deal
     
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_deal(
         &self,
         tenant_id: Uuid,
