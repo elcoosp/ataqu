@@ -144,7 +144,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             full_name: Set(event.full_name.clone()),
             email: Set(event
                 .email
-                .reveal(&ataqu_security::PiiAccessKey::new())
+                .reveal(&ataqu_security::PiiAccessKey::new_for_test())
                 .to_string()),
             phone: Set(event.phone.clone()),
             job_title: Set(event.job_title.clone()),
@@ -267,7 +267,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             full_name: Set(employee.full_name.clone()),
             email: Set(employee
                 .email
-                .reveal(&ataqu_security::PiiAccessKey::new())
+                .reveal(&ataqu_security::PiiAccessKey::new_for_test())
                 .to_string()),
             phone: Set(employee.phone.clone()),
             job_title: Set(employee.job_title.clone()),

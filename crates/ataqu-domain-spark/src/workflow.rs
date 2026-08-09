@@ -83,3 +83,43 @@ pub fn trigger_workflow(
         triggered_at,
     })
 }
+
+/// The execution status of a single workflow run.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowRunStatus {
+    Running,
+    PendingApproval,
+    Approved,
+    Rejected,
+    Completed,
+    Failed,
+}
+
+/// A single execution instance of a workflow.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WorkflowRun {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub workflow_id: Uuid,
+    pub status: WorkflowRunStatus,
+    pub payload: serde_json::Value,
+    pub created_at: SystemTime,
+    pub updated_at: SystemTime,
+}
+
+#[cfg(test)]
+mod workflow_run_tests {
+    use super::*;
+
+    #[test]
+    fn run_status_serializes_to_snake_case() {
+        let serialized = serde_json::to_string(&WorkflowRunStatus::PendingApproval)
+            .expect("status must serialize");
+        assert_eq!(serialized, "\"pending_approval\"");
+
+        let serialized =
+            serde_json::to_string(&WorkflowRunStatus::Running).expect("status must serialize");
+        assert_eq!(serialized, "\"running\"");
+    }
+}

@@ -448,11 +448,14 @@ impl CinqService {
                     c.id.to_string(),
                     c.name.clone(),
                     c.email
-                        .reveal(&ataqu_security::PiiAccessKey::new())
+                        .reveal(&ataqu_security::PiiAccessKey::new_for_test())
                         .to_string(),
                     c.phone
                         .as_ref()
-                        .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
+                        .map(|p| {
+                            p.reveal(&ataqu_security::PiiAccessKey::new_for_test())
+                                .to_string()
+                        })
                         .unwrap_or_default(),
                     c.created_at.to_rfc3339(),
                 ])

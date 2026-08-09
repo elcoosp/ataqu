@@ -25,6 +25,7 @@ use ataqu_application::{
 };
 use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
+use crate::middleware::rate_limit::RateLimiter;
 
 pub mod error;
 pub mod handlers;
@@ -71,7 +72,7 @@ pub struct AppState {
     pub conn_index: ConnIndex,
     pub presence_counts: PresenceCounts,
     pub email_tracking_tx: Sender<TrackingEvent>,
-    pub rate_limiter: middleware::rate_limit::RateLimiter,
+    pub rate_limiter: RateLimiter,
     pub metrics_handle: PrometheusHandle,
     pub sso_states: SsoStates,
     pub http_client: reqwest::Client,
