@@ -268,7 +268,7 @@ impl SparkService {
             {
                 // Find the previous occurrence to see if we missed it in the last 60 seconds
                 if let Ok(prev_run) =
-                    cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false)
+                    cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(3600)), false)
                     && prev_run <= now
                 {
                     tracing::info!("Triggering scheduled workflow {}", workflow.id);

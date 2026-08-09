@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
+use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement, TransactionTrait};
 use uuid::Uuid;
 
 #[async_trait]
@@ -55,16 +55,16 @@ impl Outbox for SeaOrmOutbox {
                 payload.clone().into(),
             ],
         );
-        self.db.execute_raw(stmt).await.map_err(|e| e.to_string())?;
-
-        self.db
-            .execute_raw(Statement::from_sql_and_values(
-                DbBackend::Postgres,
-                "SELECT pg_notify('outbox_event', '')",
-                vec![],
-            ))
-            .await
-            .map_err(|e| e.to_string())?;
+        let txn = self.db.begin().await.map_err(|e| e.to_string())?;
+        txn.execute_raw(stmt).await.map_err(|e| e.to_string())?;
+        txn.execute_raw(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT pg_notify('outbox_event', '')",
+            vec![],
+        ))
+        .await
+        .map_err(|e| e.to_string())?;
+        txn.commit().await.map_err(|e| e.to_string())?;
 
         Ok(())
     }
