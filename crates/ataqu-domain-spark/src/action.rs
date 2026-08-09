@@ -1,6 +1,8 @@
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Action {
+    /// Pause the workflow run until an approver approves it.
+    RequestApproval { approver_role: String },
     SendEmail {
         to: String,
         subject: String,

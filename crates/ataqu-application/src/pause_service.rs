@@ -311,7 +311,7 @@ impl PauseService {
             )
             .await?;
         let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            serde_json::to_value(event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
@@ -354,7 +354,7 @@ impl PauseService {
             )
             .await?;
         let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            serde_json::to_value(event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
@@ -455,7 +455,7 @@ impl PauseService {
             )
             .await?;
         let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            serde_json::to_value(event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
