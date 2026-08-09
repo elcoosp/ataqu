@@ -39,73 +39,10 @@ use ataqu_application::shopify_service::ShopifyService;
 use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
 
 use ataqu_infra_pools::Pools;
+use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
 
 use sea_orm::ConnectionTrait;
-
-// ----------------------------------------------------------------------------
-// Inline Shopify repository implementation
-// ----------------------------------------------------------------------------
-struct InlineShopifyRepo {
-    db: sea_orm::DatabaseConnection,
-}
-
-#[async_trait::async_trait]
-impl ShopifyRepository for InlineShopifyRepo {
-    async fn list_active_integrations(&self) -> Result<Vec<ShopifyIntegration>, String> {
-        let sql = "SELECT id, tenant_id, shop_domain, access_token, last_synced_at, created_at FROM vault.shopify_integrations";
-        let res = self
-            .db
-            .query_all_raw(sea_orm::Statement::from_sql_and_values(
-                sea_orm::DbBackend::Postgres,
-                sql,
-                vec![],
-            ))
-            .await
-            .map_err(|e| e.to_string())?;
-
-        let mut ints = Vec::new();
-        for row in res {
-            let id: Uuid = row.try_get("", "id").map_err(|e| e.to_string())?;
-            let tenant_id: Uuid = row.try_get("", "tenant_id").map_err(|e| e.to_string())?;
-            let shop_domain: String = row.try_get("", "shop_domain").map_err(|e| e.to_string())?;
-            let access_token: String =
-                row.try_get("", "access_token").map_err(|e| e.to_string())?;
-            let last_synced_at: Option<chrono::DateTime<chrono::Utc>> = row
-                .try_get("", "last_synced_at")
-                .map_err(|e| e.to_string())?;
-            let created_at: chrono::DateTime<chrono::Utc> =
-                row.try_get("", "created_at").map_err(|e| e.to_string())?;
-
-            ints.push(ShopifyIntegration {
-                id,
-                tenant_id: TenantId::new(tenant_id),
-                shop_domain,
-                access_token,
-                last_synced_at,
-                created_at,
-            });
-        }
-        Ok(ints)
-    }
-
-    async fn update_last_synced(
-        &self,
-        integration_id: Uuid,
-        synced_at: chrono::DateTime<chrono::Utc>,
-    ) -> Result<(), String> {
-        let sql = "UPDATE vault.shopify_integrations SET last_synced_at = $1 WHERE id = $2";
-        self.db
-            .execute_raw(sea_orm::Statement::from_sql_and_values(
-                sea_orm::DbBackend::Postgres,
-                sql,
-                vec![synced_at.into(), integration_id.into()],
-            ))
-            .await
-            .map_err(|e| e.to_string())?;
-        Ok(())
-    }
-}
 
 // ----------------------------------------------------------------------------
 // Main
@@ -603,9 +540,7 @@ async fn main() -> anyhow::Result<()> {
     let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
 
     // Shopify worker
-    let shopify_repo = Arc::new(InlineShopifyRepo {
-        db: pools.vault.clone(),
-    });
+    let shopify_repo = Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()));
     let shopify_service = Arc::new(ShopifyService::new(shopify_repo));
     let shopify_http_client = reqwest::Client::new();
     tokio::spawn(async move {

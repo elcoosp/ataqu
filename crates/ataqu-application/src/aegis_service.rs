@@ -764,32 +764,10 @@ impl AegisService {
             .email
             .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs() as usize;
-        let claims = JwtClaims {
-            sub: user.id.to_string(),
-            tenant_id: user.tenant_id.as_uuid(),
-            email: email_str.clone(),
-            roles: vec!["reset_password".to_string()],
-            exp: now + 900,
-            iat: now,
-            token_type: "reset_password".to_string(),
-            token_version: user.version,
-        };
-        let token = encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(&self.config.jwt_secret),
-        )
-        .map_err(|e| AegisServiceError::Internal(e.to_string()))?;
-
         let payload = serde_json::json!({
             "user_id": user.id,
             "tenant_id": user.tenant_id.as_uuid(),
             "email": email_str,
-            "token": token,
         });
         self.outbox
             .append("core", "PasswordResetRequested", user.id, &payload)

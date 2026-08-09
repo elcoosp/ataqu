@@ -13,6 +13,7 @@ pub mod dial_repo_impl;
 pub mod email_tracking_writer;
 pub mod entities;
 pub mod generic_batch;
+pub mod shopify_repo_impl;
 pub mod health_repo;
 pub mod pause_repo_impl;
 pub mod pivot_repo_impl;

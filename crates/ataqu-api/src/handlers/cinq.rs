@@ -404,6 +404,7 @@ pub async fn update_deal(
         probability: payload.probability,
         variant_id: payload.variant_id,
         quantity: payload.quantity,
+        establishment_id: payload.establishment_id,
         expected_version: if_match,
     };
     let deal = state

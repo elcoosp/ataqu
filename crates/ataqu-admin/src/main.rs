@@ -1,15 +1,29 @@
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 
+fn print_help() {
+    eprintln!("Usage: ataqu-admin <command> [args]");
+    eprintln!("");
+    eprintln!("Commands:");
+    eprintln!("  health       - Check server health");
+    eprintln!("  flush-cache  - Flush idempotency cache");
+    eprintln!("  help         - Show this help message");
+}
+
 fn main() {
     let socket_path = "/tmp/ataqu-admin.sock";
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
 
     let mut args = std::env::args().skip(1);
     let command = args.next().unwrap_or_else(|| {
-        eprintln!("Usage: ataqu-admin <command>");
+        print_help();
         std::process::exit(1);
     });
+
+    if command == "help" || command == "--help" || command == "-h" {
+        print_help();
+        std::process::exit(0);
+    }
 
     if admin_token.is_empty() {
         eprintln!("ADMIN_TOKEN environment variable not set");
@@ -30,7 +44,6 @@ fn main() {
         std::process::exit(1);
     }
 
-    // Shutdown write end to signal EOF to server so it knows we're done sending
     if let Err(e) = stream.shutdown(std::net::Shutdown::Write) {
         eprintln!("Failed to shutdown write: {}", e);
     }

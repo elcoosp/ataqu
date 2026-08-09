@@ -79,6 +79,7 @@ pub struct UpdateDealCommand {
     pub probability: Option<Option<i32>>,
     pub variant_id: Option<Option<Uuid>>,
     pub quantity: Option<Option<i64>>,
+    pub establishment_id: Option<Option<Uuid>>,
     pub expected_version: i32,
 }
 
@@ -575,6 +576,7 @@ impl CinqService {
             probability: cmd.probability,
             variant_id: cmd.variant_id,
             quantity: cmd.quantity,
+            establishment_id: cmd.establishment_id,
             expected_version: cmd.expected_version,
         };
         let event = deal_domain::update_deal(domain_cmd, self.clock.as_ref())?;
@@ -604,6 +606,9 @@ impl CinqService {
         }
         if let Some(quantity) = event.quantity {
             deal.quantity = quantity;
+        }
+        if let Some(establishment_id) = cmd.establishment_id {
+            deal.establishment_id = establishment_id;
         }
         deal.updated_at = event.updated_at;
         deal.version = event.version;

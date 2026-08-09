@@ -68,6 +68,7 @@ pub struct UpdateDealRequest {
     pub probability: Option<Option<i32>>,
     pub variant_id: Option<Option<Uuid>>,
     pub quantity: Option<Option<i64>>,
+    pub establishment_id: Option<Option<Uuid>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
