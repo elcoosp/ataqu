@@ -163,3 +163,9 @@ impl GdprRegistry {
         }
     }
 }
+
+impl Default for GdprRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}

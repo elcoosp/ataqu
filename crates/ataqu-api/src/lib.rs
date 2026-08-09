@@ -90,7 +90,7 @@ pub struct AppState {
     pub health_cache: Arc<moka::sync::Cache<String, serde_json::Value>>,
     pub audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
     pub s3_service: Arc<S3Service>,
-    pub idempotency_guard: Arc<dyn ataqu_application::pause_service::IdempotencyPort + Send + Sync>,
+    pub idempotency_guard: Arc<dyn IdempotencyPort + Send + Sync>,
     pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>,
     pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
 }

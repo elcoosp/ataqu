@@ -1,3 +1,4 @@
+#![allow(clippy::useless_conversion)]
 use async_trait::async_trait;
 use ataqu_domain_tempo::availability::AvailabilitySlot;
 use ataqu_domain_tempo::event_type::EventType;
@@ -485,8 +486,8 @@ impl TempoRepository for TempoRepositoryImpl {
             id: Set(slot.id),
             tenant_id: Set(slot.tenant_id.as_uuid()),
             event_type_id: Set(slot.event_type_id),
-            start_time: Set(slot.start_time.into()),
-            end_time: Set(slot.end_time.into()),
+            start_time: Set(slot.start_time),
+            end_time: Set(slot.end_time),
             is_booked: Set(slot.is_booked),
             created_at: Set(Utc::now()),
         };

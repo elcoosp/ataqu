@@ -1,3 +1,4 @@
+#![allow(clippy::useless_conversion)]
 use async_trait::async_trait;
 use ataqu_domain_pause::employee::Employee;
 use ataqu_domain_pause::leave::{LeaveRequest, LeaveStatus, LeaveType};

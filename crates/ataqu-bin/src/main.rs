@@ -42,6 +42,7 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
+use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
 use ataqu_application::changelog_service::ChangelogService;
@@ -52,8 +53,12 @@ use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
+
 use sea_orm::{ConnectionTrait, TransactionTrait};
 
+// ----------------------------------------------------------------------------
+// Inline Shopify repository implementation
+// ----------------------------------------------------------------------------
 struct InlineShopifyRepo {
     db: sea_orm::DatabaseConnection,
 }
@@ -115,6 +120,9 @@ impl ShopifyRepository for InlineShopifyRepo {
     }
 }
 
+// ----------------------------------------------------------------------------
+// Main
+// ----------------------------------------------------------------------------
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
@@ -148,6 +156,7 @@ async fn main() -> anyhow::Result<()> {
         refresh_token_ttl: Duration::from_secs(604800),
     };
 
+    // AEGIS
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
     let aegis_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -163,6 +172,7 @@ async fn main() -> anyhow::Result<()> {
         aegis_config,
     ));
 
+    // CINQ
     use ataqu_infra_repositories::cinq_repo_impl::{
         CinqActivityRepository, CinqContactRepository, CinqDealRepository,
         CinqPipelineStageRepository, CinqTaskRepository,
@@ -172,6 +182,8 @@ async fn main() -> anyhow::Result<()> {
     let activity_repo = Arc::new(CinqActivityRepository::new(pools.cinq.clone()));
     let task_repo = Arc::new(CinqTaskRepository::new(pools.cinq.clone()));
     let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.cinq.clone()));
+    let establishment_repo = Arc::new(CinqEstablishmentRepository::new(pools.cinq.clone()));
+
     let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.cinq.clone(),
     ));
@@ -181,11 +193,13 @@ async fn main() -> anyhow::Result<()> {
         activity_repo,
         task_repo,
         stage_repo,
+        establishment_repo,
         cinq_outbox,
         id_gen.clone(),
         clock.clone(),
     ));
 
+    // DIAL
     use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.dial.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.dial.clone()));
@@ -200,6 +214,7 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
+    // PIVOT
     use ataqu_infra_repositories::pivot_repo_impl::{
         PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository,
         PivotRelationRepository,
@@ -221,6 +236,7 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
+    // SOND
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.ops.clone()));
     let sond_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -233,6 +249,7 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
+    // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.vault.clone()));
     let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -245,13 +262,16 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
+    // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.vista.clone()));
     let vista_service = Arc::new(VistaService::new(vista_repo, clock.clone(), id_gen.clone()));
 
+    // SPARK
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
     let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.spark.clone()));
 
+    // Action dispatcher for SPARK
     use ataqu_application::cinq_service::{CreateActivityCommand, CreateContactCommand};
     use ataqu_application::dial_service::{CreateChannelCommand, SendMessageCommand};
     use ataqu_application::spark_service::ActionDispatcher;
@@ -493,6 +513,7 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
+    // TEMPO
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.ops.clone()));
     let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -505,6 +526,7 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
+    // PAUSE
     use ataqu_application::pause_infra::RealIdempotency;
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
     let pause_idempotency = Arc::new(RealIdempotency::new(pools.ops.clone()));
@@ -523,6 +545,7 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
 
+    // Email tracking writer
     let (email_writer, email_tracking_tx) =
         ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
             pools.ops.clone(),
@@ -535,15 +558,18 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    let tempo_service_for_reminder = tempo_service.clone();
+    // Services for background tasks
     let aegis_service_for_noshow = aegis_service.clone();
     let aegis_service_for_reminder = aegis_service.clone();
     let spark_service_for_cron = spark_service.clone();
+    let vault_service_for_reaper = vault_service.clone();
 
+    // Prometheus
     let metrics_handle = metrics_exporter_prometheus::PrometheusBuilder::new()
         .install_recorder()
         .expect("failed to install Prometheus recorder");
 
+    // WebSocket state
     use dashmap::DashMap;
     let ws_registry = Arc::new(DashMap::new());
     let conn_index = Arc::new(DashMap::new());
@@ -557,6 +583,7 @@ async fn main() -> anyhow::Result<()> {
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
     let http_client = reqwest::Client::new();
 
+    // Cleanup task for rate limiter
     let rate_limiter_cleanup = rate_limiter.clone();
     tokio::spawn(async move {
         loop {
@@ -564,12 +591,8 @@ async fn main() -> anyhow::Result<()> {
             rate_limiter_cleanup.cleanup();
         }
     });
-    let _vista_service_for_outbox = vista_service.clone();
-    let tempo_service_for_noshow = tempo_service.clone();
-    let aegis_service_for_admin = aegis_service.clone();
-    let vault_service_for_reaper = vault_service.clone();
 
-    // Health Stubs
+    // Health service & cache
     let health_repo =
         Arc::new(ataqu_infra_repositories::health_repo::HealthRepository::new(pools.core.clone()));
     let health_service = Arc::new(HealthService::new(health_repo, clock.clone()));
@@ -579,21 +602,21 @@ async fn main() -> anyhow::Result<()> {
             .build(),
     );
 
-    // Audit Stub
+    // Audit stub
     let audit_repo: Arc<dyn ataqu_api::stubs::AuditRepositoryTrait + Send + Sync> =
         Arc::new(ataqu_api::stubs::DummyAuditRepo);
 
-    // S3 Stub
+    // S3 stub
     let s3_service = Arc::new(ataqu_api::stubs::S3Service);
 
-    // Idempotency Stub
+    // Idempotency guard
     let idempotency_guard = pause_idempotency.clone();
 
-    // Onboarding & Changelog Stubs
+    // Onboarding & Changelog stubs
     let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone()));
     let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
 
-    // Shopify Worker
+    // Shopify worker
     let shopify_repo = Arc::new(InlineShopifyRepo {
         db: pools.vault.clone(),
     });
@@ -608,8 +631,10 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // Build the final AppState
     let state = AppState {
         db: pools.core.clone(),
+        aegis_service: aegis_service.clone(),
         cinq_service: cinq_service.clone(),
         dial_service: dial_service.clone(),
         pivot_service: pivot_service.clone(),
@@ -618,7 +643,6 @@ async fn main() -> anyhow::Result<()> {
         tempo_service: tempo_service.clone(),
         vault_service: vault_service.clone(),
         vista_service: vista_service.clone(),
-        aegis_service: aegis_service.clone(),
         pause_service: pause_service.clone(),
         jwt_secret: jwt_secret.clone(),
         id_gen: id_gen.clone(),
@@ -630,7 +654,7 @@ async fn main() -> anyhow::Result<()> {
         rate_limiter: rate_limiter.clone(),
         metrics_handle: metrics_handle.clone(),
         sso_states: sso_states.clone(),
-        http_client,
+        http_client: http_client.clone(),
         health_service: health_service.clone(),
         health_cache: health_cache.clone(),
         audit_repo: audit_repo.clone(),
@@ -640,6 +664,7 @@ async fn main() -> anyhow::Result<()> {
         changelog_service: changelog_service.clone(),
     };
 
+    // CORS
     let allowed_origins =
         std::env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "http://localhost:3000".to_string());
     let origins: Vec<axum::http::HeaderValue> = allowed_origins
@@ -656,43 +681,40 @@ async fn main() -> anyhow::Result<()> {
             axum::http::Method::PATCH,
         ])
         .allow_headers(tower_http::cors::Any);
+
     let app = create_router(state)
         .layer(TraceLayer::new_for_http())
         .layer(cors);
 
+    // Outbox dispatcher
     let dispatcher_pool = pools.dispatcher.clone();
     let gdpr_registry = Arc::new(ataqu_domain_gdpr::GdprRegistry::new());
     let gdpr_db_pool = pools.core.clone();
 
-    // We need to move clones of these into the async spawn, and then into the handler closure.
-    // We'll clone the necessary Arc values before moving into the async block.
-    let cinq_service_for_dispatcher = cinq_service.clone();
-    let vista_service_for_dispatcher = vista_service.clone();
-    let spark_service_for_dispatcher = spark_service.clone();
-    let gdpr_registry_for_dispatcher = gdpr_registry.clone();
-    let gdpr_db_pool_for_dispatcher = gdpr_db_pool.clone();
-    let dispatcher_pool_for_dispatcher = dispatcher_pool.clone();
+    // Clone services for the outbox handler
+    let cinq_service_for_handler = cinq_service.clone();
+    let vista_service_for_handler = vista_service.clone();
+    let spark_service_for_handler = spark_service.clone();
+    let gdpr_registry_for_handler = gdpr_registry.clone();
+    let gdpr_db_pool_for_handler = gdpr_db_pool.clone();
+    let dispatcher_pool_for_handler = dispatcher_pool.clone();
 
     tokio::spawn(async move {
-        // These are owned by the async block now.
-        let dispatcher_pool = dispatcher_pool_for_dispatcher;
-        let gdpr_db_pool = gdpr_db_pool_for_dispatcher;
-        let gdpr_registry = gdpr_registry_for_dispatcher;
-        let spark = spark_service_for_dispatcher;
-        let vista = vista_service_for_dispatcher;
-        let cinq_service = cinq_service_for_dispatcher;
+        let dispatcher_pool = dispatcher_pool_for_handler;
+        let gdpr_db_pool = gdpr_db_pool_for_handler;
+        let gdpr_registry = gdpr_registry_for_handler;
+        let spark = spark_service_for_handler;
+        let vista = vista_service_for_handler;
+        let cinq_service = cinq_service_for_handler;
 
         loop {
-            // Clone for each iteration to capture fresh copies in the handler closure.
             let vista = vista.clone();
             let spark = spark.clone();
             let gdpr_registry = gdpr_registry.clone();
             let gdpr_db_pool = gdpr_db_pool.clone();
             let cinq_service = cinq_service.clone();
 
-            // The handler must be `move` and `Fn` so we move the owned clones into it.
             let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
-                // Clone again for the async block inside the handler.
                 let vista = vista.clone();
                 let spark = spark.clone();
                 let gdpr_registry = gdpr_registry.clone();
@@ -709,51 +731,50 @@ async fn main() -> anyhow::Result<()> {
                         return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
                     }
 
-                    if event.schema == "core" && event.event_type == "GdprDeletionRequested" {
-                        if let Some(tenant_id_str) =
+                    // GDPR deletion
+                    if event.schema == "core"
+                        && event.event_type == "GdprDeletionRequested"
+                        && let Some(tenant_id_str) =
                             event.payload.get("tenant_id").and_then(|v| v.as_str())
-                        {
-                            if let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str) {
-                                tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
-                                let txn = match gdpr_db_pool.begin().await {
-                                    Ok(t) => t,
-                                    Err(e) => {
-                                        tracing::error!(error = %e, "Failed to begin GDPR transaction");
-                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                            e.to_string(),
-                                        ));
-                                    }
-                                };
-                                for table in gdpr_registry.tables.iter() {
-                                    let sql = format!(
-                                        "DELETE FROM {}.{} WHERE {} = $1",
-                                        table.schema, table.table, table.tenant_id_column
-                                    );
-                                    if let Err(e) = txn
-                                        .execute_raw(sea_orm::Statement::from_sql_and_values(
-                                            sea_orm::DbBackend::Postgres,
-                                            sql.as_str(),
-                                            vec![tenant_uuid.into()],
-                                        ))
-                                        .await
-                                    {
-                                        tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
-                                        let _ = txn.rollback().await;
-                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                            e.to_string(),
-                                        ));
-                                    }
-                                }
-                                if let Err(e) = txn.commit().await {
-                                    tracing::error!(error = %e, "Failed to commit GDPR transaction");
-                                    return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                        e.to_string(),
-                                    ));
-                                }
+                        && let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str)
+                    {
+                        tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
+                        let txn = match gdpr_db_pool.begin().await {
+                            Ok(t) => t,
+                            Err(e) => {
+                                tracing::error!(error = %e, "Failed to begin GDPR transaction");
+                                return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                    e.to_string(),
+                                ));
                             }
+                        };
+                        for table in gdpr_registry.tables.iter() {
+                            let sql = format!(
+                                "DELETE FROM {}.{} WHERE {} = $1",
+                                table.schema, table.table, table.tenant_id_column
+                            );
+                            let stmt = sea_orm::Statement::from_sql_and_values(
+                                sea_orm::DbBackend::Postgres,
+                                &sql,
+                                [tenant_uuid.into()],
+                            );
+                            if let Err(e) = txn.execute_raw(stmt).await {
+                                tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
+                                let _ = txn.rollback().await;
+                                return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                    e.to_string(),
+                                ));
+                            }
+                        }
+                        if let Err(e) = txn.commit().await {
+                            tracing::error!(error = %e, "Failed to commit GDPR transaction");
+                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                e.to_string(),
+                            ));
                         }
                     }
 
+                    // Password reset email
                     if event.schema == "core" && event.event_type == "PasswordResetRequested" {
                         let recipient = event
                             .payload
@@ -821,6 +842,7 @@ async fn main() -> anyhow::Result<()> {
                         .ok();
                     }
 
+                    // Booking reminder email
                     if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
                         let booking_id = event
                             .payload
@@ -896,6 +918,7 @@ async fn main() -> anyhow::Result<()> {
                         .ok();
                     }
 
+                    // TEMPO Booking event -> create CINQ activity
                     if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
                         if let Err(e) = cinq_service
                             .process_tempo_booking_event(&event.payload)
@@ -922,6 +945,7 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // Spark cron worker
     tokio::spawn(async move {
         loop {
             if let Err(e) = spark_service_for_cron.poll_scheduled_triggers().await {
@@ -933,48 +957,57 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    tokio::spawn(async move {
-        loop {
-            let tenants = aegis_service_for_noshow
-                .list_tenants()
-                .await
-                .unwrap_or_default();
-            let mut set = tokio::task::JoinSet::new();
-            for tid in tenants {
-                let tempo_service = tempo_service_for_noshow.clone();
-                set.spawn(async move {
-                    let tenant_id = TenantId::new(tid);
-                    if let Err(e) = tempo_service.no_show_worker(tenant_id).await {
-                        tracing::error!("No-show worker crashed for tenant {}: {}.", tid, e);
-                    }
-                });
+    // No-show worker
+    tokio::spawn({
+        let ts = tempo_service.clone();
+        async move {
+            loop {
+                let tenants = aegis_service_for_noshow
+                    .list_tenants()
+                    .await
+                    .unwrap_or_default();
+                let mut set = tokio::task::JoinSet::new();
+                for tid in tenants {
+                    let ts2 = ts.clone();
+                    set.spawn(async move {
+                        let tenant_id = TenantId::new(tid);
+                        if let Err(e) = ts2.no_show_worker(tenant_id).await {
+                            tracing::error!("No-show worker crashed for tenant {}: {}.", tid, e);
+                        }
+                    });
+                }
+                while set.join_next().await.is_some() {}
+                tokio::time::sleep(Duration::from_secs(300)).await;
             }
-            while set.join_next().await.is_some() {}
-            tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
 
-    tokio::spawn(async move {
-        loop {
-            let tenants = aegis_service_for_reminder
-                .list_tenants()
-                .await
-                .unwrap_or_default();
-            let mut set = tokio::task::JoinSet::new();
-            for tid in tenants {
-                let tempo_service = tempo_service_for_reminder.clone();
-                set.spawn(async move {
-                    let tenant_id = TenantId::new(tid);
-                    if let Err(e) = tempo_service.reminder_worker(tenant_id).await {
-                        tracing::error!("Reminder worker crashed for tenant {}: {}.", tid, e);
-                    }
-                });
+    // Reminder worker
+    tokio::spawn({
+        let ts = tempo_service.clone();
+        async move {
+            loop {
+                let tenants = aegis_service_for_reminder
+                    .list_tenants()
+                    .await
+                    .unwrap_or_default();
+                let mut set = tokio::task::JoinSet::new();
+                for tid in tenants {
+                    let ts2 = ts.clone();
+                    set.spawn(async move {
+                        let tenant_id = TenantId::new(tid);
+                        if let Err(e) = ts2.reminder_worker(tenant_id).await {
+                            tracing::error!("Reminder worker crashed for tenant {}: {}.", tid, e);
+                        }
+                    });
+                }
+                while set.join_next().await.is_some() {}
+                tokio::time::sleep(Duration::from_secs(60)).await;
             }
-            while set.join_next().await.is_some() {}
-            tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 
+    // Vault reservation reaper
     tokio::spawn(async move {
         loop {
             if let Err(e) = vault_service_for_reaper.reap_expired_reservations().await {
@@ -986,21 +1019,21 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // Admin UDS server
     let admin_socket_path = "/tmp/ataqu-admin.sock";
     let _ = std::fs::remove_file(admin_socket_path);
     let admin_listener = tokio::net::UnixListener::bind(admin_socket_path)?;
     use std::os::unix::fs::PermissionsExt;
     std::fs::set_permissions(admin_socket_path, std::fs::Permissions::from_mode(0o600))?;
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-    let _id_gen_for_admin = id_gen.clone();
-    let _clock_for_admin = clock.clone();
+    let aegis_for_admin = aegis_service.clone();
 
     tokio::spawn(async move {
         tracing::info!("Admin server listening on UDS: {}", admin_socket_path);
         loop {
             if let Ok((mut stream, _)) = admin_listener.accept().await {
                 let admin_token = admin_token.clone();
-                let aegis = aegis_service_for_admin.clone();
+                let aegis = aegis_for_admin.clone();
 
                 tokio::spawn(async move {
                     use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -1042,6 +1075,7 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // Start HTTP server
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     info!("Listening on http://{}", addr);
     let listener = TcpListener::bind(addr).await?;

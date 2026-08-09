@@ -1,4 +1,3 @@
-// allowed: pre-existing clippy warnings blocking TASK-078 build
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::new_without_default)]
 #![allow(clippy::needless_return)]
@@ -28,5 +27,4 @@ pub use spark_service::ActionDispatcher;
 pub mod changelog_service;
 pub mod health_service;
 pub mod onboarding_service;
-
 pub mod shopify_service;
