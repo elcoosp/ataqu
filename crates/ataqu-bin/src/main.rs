@@ -163,6 +163,7 @@ async fn main() -> anyhow::Result<()> {
         pools.core.clone(),
     ));
     let aegis_domain = Arc::new(RealAegisDomain);
+    let audit_repo = Arc::new(AuditRepository::new(pools.core.clone()));
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
         aegis_outbox,
