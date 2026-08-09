@@ -1,4 +1,4 @@
-use ataqu_api::middleware::idempotency::{flush_idempotency_cache, IDEMPOTENCY_CACHE};
+use ataqu_api::middleware::idempotency::{IDEMPOTENCY_CACHE, flush_idempotency_cache};
 
 #[tokio::test]
 async fn test_idempotency_cache_logic() {

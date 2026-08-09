@@ -174,15 +174,15 @@ pub async fn get_contact(
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
-        {
-            let mut h = axum::http::HeaderMap::new();
-            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
-            return Ok((
-                StatusCode::NOT_MODIFIED,
-                h,
-                Json(ContactResponse::from(contact)),
-            ));
-        }
+    {
+        let mut h = axum::http::HeaderMap::new();
+        h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+        return Ok((
+            StatusCode::NOT_MODIFIED,
+            h,
+            Json(ContactResponse::from(contact)),
+        ));
+    }
 
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
@@ -209,9 +209,10 @@ pub async fn update_contact(
         })?;
 
     if let Some(ref email) = payload.email
-        && !email.contains('@') {
-            return Err(ApiResponseError::validation("Invalid email format"));
-        }
+        && !email.contains('@')
+    {
+        return Err(ApiResponseError::validation("Invalid email format"));
+    }
     let cmd = UpdateContactCommand {
         id,
         tenant_id: auth.tenant_id,
@@ -357,11 +358,11 @@ pub async fn get_deal(
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
-        {
-            let mut h = axum::http::HeaderMap::new();
-            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
-            return Ok((StatusCode::NOT_MODIFIED, h, Json(DealResponse::from(deal))));
-        }
+    {
+        let mut h = axum::http::HeaderMap::new();
+        h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+        return Ok((StatusCode::NOT_MODIFIED, h, Json(DealResponse::from(deal))));
+    }
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
     Ok((StatusCode::OK, resp_headers, Json(DealResponse::from(deal))))
@@ -889,11 +890,11 @@ pub async fn get_task(
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
-        {
-            let mut h = axum::http::HeaderMap::new();
-            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
-            return Ok((StatusCode::NOT_MODIFIED, h, Json(TaskResponse::from(task))));
-        }
+    {
+        let mut h = axum::http::HeaderMap::new();
+        h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+        return Ok((StatusCode::NOT_MODIFIED, h, Json(TaskResponse::from(task))));
+    }
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
     Ok((StatusCode::OK, resp_headers, Json(TaskResponse::from(task))))

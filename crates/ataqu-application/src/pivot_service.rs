@@ -86,7 +86,9 @@ impl PivotService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
-        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
+        audit_repo: Option<
+            Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+        >,
     ) -> Self {
         Self {
             doc_repo,
@@ -170,18 +172,21 @@ impl PivotService {
             .map_err(PivotServiceError::Repository)?;
 
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(
-                event.tenant_id,
-                Uuid::nil(),
-                "create_document",
-                "pivot",
-                Some("document"),
-                Some(event.id),
-                None,
-                Some(serde_json::json!({"title": event.title})),
-                None,
-                None,
-            ).await.ok();
+            audit_repo
+                .append_log(
+                    event.tenant_id,
+                    Uuid::nil(),
+                    "create_document",
+                    "pivot",
+                    Some("document"),
+                    Some(event.id),
+                    None,
+                    Some(serde_json::json!({"title": event.title})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
 
         Ok(event)
@@ -394,7 +399,12 @@ impl PivotService {
             "relation_type": relation.relation_type,
         });
         self.outbox
-            .append("collab_ops", "RelationCreated", relation.from_block_id, &payload)
+            .append(
+                "collab_ops",
+                "RelationCreated",
+                relation.from_block_id,
+                &payload,
+            )
             .await
             .map_err(PivotServiceError::Repository)?;
 

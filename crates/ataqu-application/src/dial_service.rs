@@ -76,7 +76,9 @@ impl DialService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
-        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
+        audit_repo: Option<
+            Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+        >,
     ) -> Self {
         Self {
             repo,
@@ -594,7 +596,9 @@ impl DialService {
         for i in 0..num_pages {
             kids.push_str(&format!("{} 0 R ", 3 + (i * 2) + 1));
         }
-        buffer.extend_from_slice(format!("<< /Type /Pages /Kids [{}] /Count {} >>\n", kids, num_pages).as_bytes());
+        buffer.extend_from_slice(
+            format!("<< /Type /Pages /Kids [{}] /Count {} >>\n", kids, num_pages).as_bytes(),
+        );
         buffer.extend_from_slice(b"endobj\n");
 
         // Object 2: Catalog
@@ -635,7 +639,8 @@ impl DialService {
         buffer.extend_from_slice(
             format!(
                 "trailer\n<< /Size {} /Root 2 0 R >>\nstartxref\n{}\n%%EOF\n",
-                total_objects + 1, xref_offset
+                total_objects + 1,
+                xref_offset
             )
             .as_bytes(),
         );

@@ -35,7 +35,11 @@ impl ChangelogService {
         ChangelogEntry::find_by_statement(stmt).all(&self.db).await
     }
 
-    pub async fn list_unread_entries(&self, user_id: Uuid, limit: i64) -> Result<Vec<ChangelogEntry>, DbErr> {
+    pub async fn list_unread_entries(
+        &self,
+        user_id: Uuid,
+        limit: i64,
+    ) -> Result<Vec<ChangelogEntry>, DbErr> {
         let stmt = Statement::from_sql_and_values(
             DbBackend::Postgres,
             "SELECT c.id, c.version, c.date, c.title, c.description, c.category, c.breaking_change, c.created_at

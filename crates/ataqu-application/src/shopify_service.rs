@@ -79,15 +79,20 @@ impl ShopifyService {
                                     if delta != 0 {
                                         if let Err(e) = self
                                             .vault_service
-                                            .update_stock(crate::vault_service::UpdateStockCommand {
-                                                tenant_id,
-                                                variant_id: variant.id,
-                                                delta,
-                                                reason: "shopify_sync".to_string(),
-                                                reference: Some(format!("shopify_sync_{}", Uuid::new_v4())),
-                                                alert_channel_id: None,
-                                                expected_version: variant.version,
-                                            })
+                                            .update_stock(
+                                                crate::vault_service::UpdateStockCommand {
+                                                    tenant_id,
+                                                    variant_id: variant.id,
+                                                    delta,
+                                                    reason: "shopify_sync".to_string(),
+                                                    reference: Some(format!(
+                                                        "shopify_sync_{}",
+                                                        Uuid::new_v4()
+                                                    )),
+                                                    alert_channel_id: None,
+                                                    expected_version: variant.version,
+                                                },
+                                            )
                                             .await
                                         {
                                             tracing::error!(error = %e, sku = %sku, "Failed to update VAULT stock from Shopify");
@@ -115,5 +120,3 @@ impl ShopifyService {
         Ok(())
     }
 }
-
-

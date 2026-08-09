@@ -37,7 +37,11 @@ pub async fn get_unread_changelog(
     auth: AuthContext,
     Query(query): Query<ChangelogQuery>,
 ) -> impl IntoResponse {
-    match state.changelog_service.list_unread_entries(auth.user_id, query.limit).await {
+    match state
+        .changelog_service
+        .list_unread_entries(auth.user_id, query.limit)
+        .await
+    {
         Ok(entries) => (StatusCode::OK, Json(entries)).into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,

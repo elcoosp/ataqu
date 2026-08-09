@@ -90,7 +90,9 @@ impl TempoService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
-        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
+        audit_repo: Option<
+            Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+        >,
     ) -> Self {
         Self {
             repo,
@@ -175,14 +177,21 @@ impl TempoService {
             .map_err(TempoServiceError::Repository)?;
 
         // Mark the matching availability slot as booked
-        if let Some(slot) = slots.iter().find(|s| {
-            let s_start: std::time::SystemTime = s.start_time.into();
-            let s_end: std::time::SystemTime = s.end_time.into();
-            s_start <= starts_at && s_end >= ends_at
-        }).cloned() {
+        if let Some(slot) = slots
+            .iter()
+            .find(|s| {
+                let s_start: std::time::SystemTime = s.start_time.into();
+                let s_end: std::time::SystemTime = s.end_time.into();
+                s_start <= starts_at && s_end >= ends_at
+            })
+            .cloned()
+        {
             let mut booked_slot = slot;
             booked_slot.is_booked = true;
-            self.repo.save_availability_slot(&booked_slot).await.map_err(TempoServiceError::Repository)?;
+            self.repo
+                .save_availability_slot(&booked_slot)
+                .await
+                .map_err(TempoServiceError::Repository)?;
         }
 
         let payload = serde_json::json!({

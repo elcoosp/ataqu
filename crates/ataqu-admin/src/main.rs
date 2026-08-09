@@ -11,7 +11,8 @@ fn print_help() {
 }
 
 fn main() {
-    let socket_path = std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
+    let socket_path =
+        std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
 
     let mut args = std::env::args().skip(1);

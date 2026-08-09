@@ -164,7 +164,9 @@ impl CinqService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
-        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
+        audit_repo: Option<
+            Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+        >,
     ) -> Self {
         Self {
             contact_repo,
@@ -209,18 +211,21 @@ impl CinqService {
 
         // Audit log
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(
-                contact.tenant_id,
-                Uuid::nil(), // System user for now, or should be passed in
-                "create_contact",
-                "cinq",
-                Some("contact"),
-                Some(contact.id),
-                None,
-                Some(serde_json::json!({"name": contact.name})),
-                None,
-                None,
-            ).await.ok();
+            audit_repo
+                .append_log(
+                    contact.tenant_id,
+                    Uuid::nil(), // System user for now, or should be passed in
+                    "create_contact",
+                    "cinq",
+                    Some("contact"),
+                    Some(contact.id),
+                    None,
+                    Some(serde_json::json!({"name": contact.name})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
 
         let payload = serde_json::json!({
@@ -286,7 +291,21 @@ impl CinqService {
         contact.version = event.version;
         self.contact_repo.save_contact(&contact).await?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(contact.tenant_id, Uuid::nil(), "update_contact", "cinq", Some("contact"), Some(contact.id), None, Some(serde_json::json!({"name": contact.name})), None, None).await.ok();
+            audit_repo
+                .append_log(
+                    contact.tenant_id,
+                    Uuid::nil(),
+                    "update_contact",
+                    "cinq",
+                    Some("contact"),
+                    Some(contact.id),
+                    None,
+                    Some(serde_json::json!({"name": contact.name})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(contact)
     }
@@ -294,7 +313,21 @@ impl CinqService {
     pub async fn delete_contact(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.contact_repo.delete_contact(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_contact", "cinq", Some("contact"), Some(id), None, None, None, None).await.ok();
+            audit_repo
+                .append_log(
+                    tenant_id,
+                    Uuid::nil(),
+                    "delete_contact",
+                    "cinq",
+                    Some("contact"),
+                    Some(id),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(())
     }
@@ -498,10 +531,7 @@ impl CinqService {
                         .to_string(),
                     c.phone
                         .as_ref()
-                        .map(|p| {
-                            p.reveal(&ataqu_security::PiiAccessKey::new())
-                                .to_string()
-                        })
+                        .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
                         .unwrap_or_default(),
                     c.created_at.to_rfc3339(),
                 ])
@@ -664,7 +694,21 @@ impl CinqService {
     pub async fn delete_deal(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.deal_repo.delete_deal(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_deal", "cinq", Some("deal"), Some(id), None, None, None, None).await.ok();
+            audit_repo
+                .append_log(
+                    tenant_id,
+                    Uuid::nil(),
+                    "delete_deal",
+                    "cinq",
+                    Some("deal"),
+                    Some(id),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(())
     }
@@ -856,7 +900,21 @@ impl CinqService {
         stage.version += 1;
         self.stage_repo.save_pipeline_stage(&stage).await?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(stage.tenant_id, Uuid::nil(), "update_pipeline_stage", "cinq", Some("pipeline_stage"), Some(stage.id), None, Some(serde_json::json!({"name": stage.name})), None, None).await.ok();
+            audit_repo
+                .append_log(
+                    stage.tenant_id,
+                    Uuid::nil(),
+                    "update_pipeline_stage",
+                    "cinq",
+                    Some("pipeline_stage"),
+                    Some(stage.id),
+                    None,
+                    Some(serde_json::json!({"name": stage.name})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(stage)
     }
@@ -866,7 +924,21 @@ impl CinqService {
             .delete_pipeline_stage(&tenant_id, id)
             .await?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_pipeline_stage", "cinq", Some("pipeline_stage"), Some(id), None, None, None, None).await.ok();
+            audit_repo
+                .append_log(
+                    tenant_id,
+                    Uuid::nil(),
+                    "delete_pipeline_stage",
+                    "cinq",
+                    Some("pipeline_stage"),
+                    Some(id),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(())
     }
@@ -978,7 +1050,21 @@ impl CinqService {
     pub async fn delete_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.task_repo.delete_task(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_task", "cinq", Some("task"), Some(id), None, None, None, None).await.ok();
+            audit_repo
+                .append_log(
+                    tenant_id,
+                    Uuid::nil(),
+                    "delete_task",
+                    "cinq",
+                    Some("task"),
+                    Some(id),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(())
     }
@@ -1045,5 +1131,4 @@ impl CinqService {
                 CinqServiceError::EstablishmentNotFound("Establishment not found".to_string())
             })
     }
-
 }

@@ -69,7 +69,9 @@ impl SondService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
-        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
+        audit_repo: Option<
+            Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+        >,
     ) -> Self {
         Self {
             repo,
@@ -114,18 +116,21 @@ impl SondService {
             .map_err(|e| SondServiceError::Repository(e.to_string()))?;
 
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(
-                form.tenant_id,
-                Uuid::nil(),
-                "create_form",
-                "sond",
-                Some("form"),
-                Some(form.id),
-                None,
-                Some(serde_json::json!({"title": form.title})),
-                None,
-                None,
-            ).await.ok();
+            audit_repo
+                .append_log(
+                    form.tenant_id,
+                    Uuid::nil(),
+                    "create_form",
+                    "sond",
+                    Some("form"),
+                    Some(form.id),
+                    None,
+                    Some(serde_json::json!({"title": form.title})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
 
         let payload = serde_json::json!({
@@ -200,18 +205,21 @@ impl SondService {
             .map_err(|e| SondServiceError::Repository(e.to_string()))?;
 
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(
-                form.tenant_id,
-                Uuid::nil(),
-                "create_form",
-                "sond",
-                Some("form"),
-                Some(form.id),
-                None,
-                Some(serde_json::json!({"title": form.title})),
-                None,
-                None,
-            ).await.ok();
+            audit_repo
+                .append_log(
+                    form.tenant_id,
+                    Uuid::nil(),
+                    "create_form",
+                    "sond",
+                    Some("form"),
+                    Some(form.id),
+                    None,
+                    Some(serde_json::json!({"title": form.title})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
 
         let payload = serde_json::json!({

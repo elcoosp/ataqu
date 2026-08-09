@@ -156,15 +156,15 @@ pub async fn get_channel(
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
-        {
-            let mut h = axum::http::HeaderMap::new();
-            h.insert(axum::http::header::ETAG, etag.parse().unwrap());
-            return Ok((
-                StatusCode::NOT_MODIFIED,
-                h,
-                Json(ChannelResponse::from(channel)),
-            ));
-        }
+    {
+        let mut h = axum::http::HeaderMap::new();
+        h.insert(axum::http::header::ETAG, etag.parse().unwrap());
+        return Ok((
+            StatusCode::NOT_MODIFIED,
+            h,
+            Json(ChannelResponse::from(channel)),
+        ));
+    }
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
     Ok((

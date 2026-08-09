@@ -21,12 +21,11 @@ impl AuditRepository {
         }
     }
 
-    
     async fn partition_exists(&self, date: DateTime<Utc>) -> bool {
         let year = date.format("%Y").to_string();
         let month = date.format("%m").to_string();
         let partition_name = format!("core.audit_logs_{}_{}", year, month);
-        
+
         sqlx::query_scalar::<_, i32>(
             "SELECT 1 FROM pg_tables WHERE schemaname = 'core' AND tablename = $1",
         )

@@ -297,7 +297,10 @@ pub async fn sso_callback(
             .json::<MicrosoftUserInfo>()
             .await
             .map_err(|_| ApiResponseError::internal("SSO user info parse failed"))?;
-        user_info.mail.or(user_info.user_principal_name).unwrap_or_default()
+        user_info
+            .mail
+            .or(user_info.user_principal_name)
+            .unwrap_or_default()
     } else {
         return Err(ApiResponseError::unauthorized("Invalid SSO provider"));
     };

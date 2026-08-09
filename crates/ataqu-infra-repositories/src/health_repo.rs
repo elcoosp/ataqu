@@ -43,7 +43,9 @@ impl HealthRepository {
             [],
         );
         let result = self.db.query_one_raw(stmt).await?;
-        Ok(result.and_then(|r| r.try_get_by_index::<i64>(0).ok()).unwrap_or(0))
+        Ok(result
+            .and_then(|r| r.try_get_by_index::<i64>(0).ok())
+            .unwrap_or(0))
     }
 
     pub async fn get_failed_workflows_last_hour(&self) -> Result<i64, sea_orm::DbErr> {
@@ -53,7 +55,9 @@ impl HealthRepository {
             [],
         );
         let result = self.db.query_one_raw(stmt).await?;
-        Ok(result.and_then(|r| r.try_get_by_index::<i64>(0).ok()).unwrap_or(0))
+        Ok(result
+            .and_then(|r| r.try_get_by_index::<i64>(0).ok())
+            .unwrap_or(0))
     }
 
     pub async fn get_workflow_dlq_depth(&self) -> Result<i64, sea_orm::DbErr> {
@@ -63,7 +67,9 @@ impl HealthRepository {
             [],
         );
         let result = self.db.query_one_raw(stmt).await?;
-        Ok(result.and_then(|r| r.try_get_by_index::<i64>(0).ok()).unwrap_or(0))
+        Ok(result
+            .and_then(|r| r.try_get_by_index::<i64>(0).ok())
+            .unwrap_or(0))
     }
 
     pub async fn get_db_pool_used(&self) -> Result<i64, sea_orm::DbErr> {

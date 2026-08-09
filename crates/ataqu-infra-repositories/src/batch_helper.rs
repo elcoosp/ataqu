@@ -1,4 +1,3 @@
-
 use sea_orm::{ConnectionTrait, DatabaseTransaction, DbBackend, DbErr, Statement};
 use serde::Serialize;
 use tracing::warn;
@@ -49,9 +48,9 @@ where
                             .get("id")
                             .and_then(|v| v.as_str())
                             .and_then(|s| uuid::Uuid::parse_str(s).ok())
-                        {
-                            successes.push(id);
-                        }
+                    {
+                        successes.push(id);
+                    }
                 }
             }
             Err(e) => {
@@ -84,9 +83,9 @@ where
                                     .get("id")
                                     .and_then(|v| v.as_str())
                                     .and_then(|s| uuid::Uuid::parse_str(s).ok())
-                                {
-                                    successes.push(id);
-                                }
+                            {
+                                successes.push(id);
+                            }
                         }
                         Err(e) => {
                             txn.execute_raw(Statement::from_sql_and_values(

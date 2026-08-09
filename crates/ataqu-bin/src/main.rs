@@ -1,5 +1,3 @@
-
-
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
@@ -83,7 +81,9 @@ async fn main() -> anyhow::Result<()> {
         pools.core.clone(),
     ));
     let aegis_domain = Arc::new(RealAegisDomain);
-    let audit_repo = Arc::new(ataqu_infra_repositories::audit_repo::AuditRepository::new(pools.core.clone()));
+    let audit_repo = Arc::new(ataqu_infra_repositories::audit_repo::AuditRepository::new(
+        pools.core.clone(),
+    ));
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
         aegis_outbox,
@@ -486,7 +486,6 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-
     // Prometheus
     let metrics_handle = metrics_exporter_prometheus::PrometheusBuilder::new()
         .install_recorder()
@@ -638,7 +637,11 @@ async fn main() -> anyhow::Result<()> {
     let _ = std::fs::remove_file(admin_socket_path);
     let admin_listener = match tokio::net::UnixListener::bind(admin_socket_path) {
         Ok(l) => {
-            std::fs::set_permissions(admin_socket_path, std::os::unix::fs::PermissionsExt::from_mode(0o600)).ok();
+            std::fs::set_permissions(
+                admin_socket_path,
+                std::os::unix::fs::PermissionsExt::from_mode(0o600),
+            )
+            .ok();
             l
         }
         Err(e) => {
@@ -661,18 +664,20 @@ async fn main() -> anyhow::Result<()> {
                             let _token = parts[0];
                             let command = parts[1];
                             // Log admin command
-                            let _ = admin_audit_repo.append_log(
-                                ataqu_kernel::TenantId::new(Uuid::nil()),
-                                Uuid::nil(),
-                                "admin_command",
-                                "admin",
-                                Some("command"),
-                                None,
-                                Some(serde_json::json!({"command": command})),
-                                None,
-                                None,
-                                None,
-                            ).await;
+                            let _ = admin_audit_repo
+                                .append_log(
+                                    ataqu_kernel::TenantId::new(Uuid::nil()),
+                                    Uuid::nil(),
+                                    "admin_command",
+                                    "admin",
+                                    Some("command"),
+                                    None,
+                                    Some(serde_json::json!({"command": command})),
+                                    None,
+                                    None,
+                                    None,
+                                )
+                                .await;
                             let _ = stream.write_all(b"OK\n").await;
                         } else {
                             let _ = stream.write_all(b"ERROR: Invalid command format\n").await;
@@ -715,7 +720,8 @@ async fn main() -> anyhow::Result<()> {
         changelog_service,
     };
 
-    let admin_socket_path = std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
+    let admin_socket_path =
+        std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
     let _ = std::fs::remove_file(&admin_socket_path);
     let admin_listener = match tokio::net::UnixListener::bind(&admin_socket_path) {
         Ok(l) => l,
@@ -746,21 +752,28 @@ async fn main() -> anyhow::Result<()> {
                         let req = String::from_utf8_lossy(&buf[..n]);
                         let parts: Vec<&str> = req.splitn(2, ' ').collect();
                         if parts.len() != 2 || parts[0] != admin_token {
-                            let _ = stream.write_all(b"ERROR: Invalid token
-").await;
+                            let _ = stream
+                                .write_all(
+                                    b"ERROR: Invalid token
+",
+                                )
+                                .await;
                             return;
                         }
                         let cmd = parts[1].trim();
                         let resp = match cmd {
                             "health" => "OK: Server is running
-".to_string(),
+"
+                            .to_string(),
                             "flush-cache" => {
                                 ataqu_api::middleware::idempotency::flush_idempotency_cache();
                                 "OK: Idempotency cache flushed
-".to_string()
+"
+                                .to_string()
                             }
                             _ => "ERROR: Unknown command
-".to_string(),
+"
+                            .to_string(),
                         };
                         let _ = stream.write_all(resp.as_bytes()).await;
                     });

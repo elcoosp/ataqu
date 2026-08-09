@@ -233,8 +233,6 @@ pub fn create_router(state: AppState) -> Router {
         ))
         .layer(axum::middleware::from_fn(request_id_middleware));
 
-    
-
     Router::new()
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))

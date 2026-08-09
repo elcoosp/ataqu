@@ -21,10 +21,7 @@ pub fn flush_idempotency_cache() {
 }
 
 /// Idempotency middleware using Moka cache.
-pub async fn idempotency_middleware(
-    req: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
+pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
     if req.method() == axum::http::Method::GET || req.method() == axum::http::Method::DELETE {
         return Ok(next.run(req).await);
     }
@@ -63,7 +60,9 @@ pub async fn idempotency_middleware(
         if resp.status().is_success() {
             let status = resp.status();
             let headers = resp.headers().clone();
-            let body = to_bytes(resp.into_body(), 1024 * 1024).await.unwrap_or_default();
+            let body = to_bytes(resp.into_body(), 1024 * 1024)
+                .await
+                .unwrap_or_default();
             IDEMPOTENCY_CACHE.insert(key.clone(), (status, headers.clone(), body.to_vec()));
 
             let mut new_resp = Response::builder().status(status);

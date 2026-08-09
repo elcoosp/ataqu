@@ -469,7 +469,10 @@ impl AegisService {
         })
     }
 
-    pub async fn list_users(&self, tenant_id: ataqu_kernel::TenantId) -> Result<Vec<User>, AegisServiceError> {
+    pub async fn list_users(
+        &self,
+        tenant_id: ataqu_kernel::TenantId,
+    ) -> Result<Vec<User>, AegisServiceError> {
         self.repo
             .list_users(tenant_id.as_uuid())
             .await
@@ -538,7 +541,9 @@ impl AegisService {
             Some(serde_json::json!({ "role": role })),
             None,
             None,
-        ).await.ok();
+        )
+        .await
+        .ok();
 
         Ok(())
     }
@@ -574,7 +579,9 @@ impl AegisService {
             Some(serde_json::json!({ "is_active": user.is_active })),
             None,
             None,
-        ).await.ok();
+        )
+        .await
+        .ok();
 
         let payload = serde_json::json!({
             "user_id": user.id,
@@ -661,7 +668,10 @@ impl AegisService {
         user_id: Uuid,
         id: Uuid,
     ) -> Result<(), AegisServiceError> {
-        let keys = self.repo.list_api_keys(tenant_id.as_uuid(), user_id).await?;
+        let keys = self
+            .repo
+            .list_api_keys(tenant_id.as_uuid(), user_id)
+            .await?;
         if !keys.iter().any(|k| k.id == id) {
             return Err(AegisServiceError::NotFound("API key not found".to_string()));
         }

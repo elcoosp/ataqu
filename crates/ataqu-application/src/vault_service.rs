@@ -108,7 +108,9 @@ impl VaultService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
-        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
+        audit_repo: Option<
+            Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+        >,
     ) -> Self {
         Self {
             repo,
@@ -153,18 +155,21 @@ impl VaultService {
             })?;
 
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(
-                product.tenant_id,
-                Uuid::nil(),
-                "create_product",
-                "vault",
-                Some("product"),
-                Some(product.id),
-                None,
-                Some(serde_json::json!({"name": product.name, "sku": product.sku})),
-                None,
-                None,
-            ).await.ok();
+            audit_repo
+                .append_log(
+                    product.tenant_id,
+                    Uuid::nil(),
+                    "create_product",
+                    "vault",
+                    Some("product"),
+                    Some(product.id),
+                    None,
+                    Some(serde_json::json!({"name": product.name, "sku": product.sku})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
 
         Ok(product)
@@ -211,7 +216,21 @@ impl VaultService {
             })?;
 
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(product.tenant_id, Uuid::nil(), "update_product", "vault", Some("product"), Some(product.id), None, Some(serde_json::json!({"name": product.name, "sku": product.sku})), None, None).await.ok();
+            audit_repo
+                .append_log(
+                    product.tenant_id,
+                    Uuid::nil(),
+                    "update_product",
+                    "vault",
+                    Some("product"),
+                    Some(product.id),
+                    None,
+                    Some(serde_json::json!({"name": product.name, "sku": product.sku})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
 
         Ok(product)
@@ -223,7 +242,21 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_product", "vault", Some("product"), Some(id), None, None, None, None).await.ok();
+            audit_repo
+                .append_log(
+                    tenant_id,
+                    Uuid::nil(),
+                    "delete_product",
+                    "vault",
+                    Some("product"),
+                    Some(id),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(())
     }
@@ -373,7 +406,21 @@ impl VaultService {
             })?;
 
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(new_variant.tenant_id, Uuid::nil(), "update_variant", "vault", Some("variant"), Some(new_variant.id), None, Some(serde_json::json!({"sku": new_variant.sku, "price": new_variant.price})), None, None).await.ok();
+            audit_repo
+                .append_log(
+                    new_variant.tenant_id,
+                    Uuid::nil(),
+                    "update_variant",
+                    "vault",
+                    Some("variant"),
+                    Some(new_variant.id),
+                    None,
+                    Some(serde_json::json!({"sku": new_variant.sku, "price": new_variant.price})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
 
         Ok(new_variant)
@@ -385,7 +432,21 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_variant", "vault", Some("variant"), Some(id), None, None, None, None).await.ok();
+            audit_repo
+                .append_log(
+                    tenant_id,
+                    Uuid::nil(),
+                    "delete_variant",
+                    "vault",
+                    Some("variant"),
+                    Some(id),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(())
     }
@@ -633,7 +694,21 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(warehouse.tenant_id, Uuid::nil(), "update_warehouse", "vault", Some("warehouse"), Some(warehouse.id), None, Some(serde_json::json!({"name": warehouse.name})), None, None).await.ok();
+            audit_repo
+                .append_log(
+                    warehouse.tenant_id,
+                    Uuid::nil(),
+                    "update_warehouse",
+                    "vault",
+                    Some("warehouse"),
+                    Some(warehouse.id),
+                    None,
+                    Some(serde_json::json!({"name": warehouse.name})),
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(warehouse)
     }
@@ -644,7 +719,21 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
         if let Some(audit_repo) = &self.audit_repo {
-            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_warehouse", "vault", Some("warehouse"), Some(id), None, None, None, None).await.ok();
+            audit_repo
+                .append_log(
+                    tenant_id,
+                    Uuid::nil(),
+                    "delete_warehouse",
+                    "vault",
+                    Some("warehouse"),
+                    Some(id),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .ok();
         }
         Ok(())
     }

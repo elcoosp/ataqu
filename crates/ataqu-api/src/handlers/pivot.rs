@@ -186,9 +186,9 @@ pub async fn get_doc(
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
-        {
-            return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
-        }
+    {
+        return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
+    }
     Ok((
         StatusCode::OK,
         resp_headers,
@@ -641,8 +641,5 @@ pub fn routes() -> Router<AppState> {
             "/templates",
             axum::routing::post(create_template).get(list_templates),
         )
-        .route(
-            "/templates/:id/apply",
-            axum::routing::post(apply_template),
-        )
+        .route("/templates/:id/apply", axum::routing::post(apply_template))
 }

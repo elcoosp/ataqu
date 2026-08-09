@@ -1,4 +1,3 @@
-
 use async_trait::async_trait;
 use ataqu_domain_tempo::availability::AvailabilitySlot;
 use ataqu_domain_tempo::event_type::EventType;

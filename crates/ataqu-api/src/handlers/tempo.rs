@@ -263,10 +263,7 @@ pub async fn list_event_types(
         .list_event_types(auth.tenant_id, limit, offset)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
-    let items = event_types
-        .into_iter()
-        .map(|e| e.into())
-        .collect();
+    let items = event_types.into_iter().map(|e| e.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
         total,

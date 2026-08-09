@@ -87,9 +87,9 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
             .dial_service
             .set_online(auth.tenant_id, auth.user_id)
             .await
-        {
-            tracing::error!("Failed to set presence: {}", e);
-        }
+    {
+        tracing::error!("Failed to set presence: {}", e);
+    }
 
     struct AbortOnDrop(Option<tokio::task::JoinHandle<()>>);
     impl Drop for AbortOnDrop {
@@ -126,91 +126,91 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                     continue;
                 }
                 if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text)
-                    && let Some(action) = parsed.get("action").and_then(|v| v.as_str()) {
-                        match action {
-                            "subscribe" => {
-                                if let Some(channel_id) = parsed
-                                    .get("channel_id")
-                                    .and_then(|v| v.as_str())
-                                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    && let Some(action) = parsed.get("action").and_then(|v| v.as_str())
+                {
+                    match action {
+                        "subscribe" => {
+                            if let Some(channel_id) = parsed
+                                .get("channel_id")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                            {
+                                // [VULN-001] Verify user is a participant before subscribing
+                                if state
+                                    .dial_service
+                                    .get_channel(auth.tenant_id, channel_id, auth.user_id)
+                                    .await
+                                    .is_err()
                                 {
-                                    // [VULN-001] Verify user is a participant before subscribing
-                                    if state
-                                        .dial_service
-                                        .get_channel(auth.tenant_id, channel_id, auth.user_id)
-                                        .await
-                                        .is_err()
-                                    {
-                                        let _ = tx.send(
-                                            serde_json::json!({
-                                                "type": "error",
-                                                "message": "Not authorized to subscribe to this channel"
-                                            })
-                                            .to_string(),
-                                        );
-                                        continue;
-                                    }
-
-                                    let key = (auth.tenant_id.as_uuid(), channel_id);
-                                    let entry = state.ws_registry.entry(key).or_default();
-                                    entry.insert(connection_id, tx.clone());
-                                    state.conn_index.entry(connection_id).or_default().push(key);
-
                                     let _ = tx.send(
                                         serde_json::json!({
-                                            "type": "subscribed",
-                                            "channel_id": channel_id
+                                            "type": "error",
+                                            "message": "Not authorized to subscribe to this channel"
                                         })
                                         .to_string(),
                                     );
+                                    continue;
                                 }
+
+                                let key = (auth.tenant_id.as_uuid(), channel_id);
+                                let entry = state.ws_registry.entry(key).or_default();
+                                entry.insert(connection_id, tx.clone());
+                                state.conn_index.entry(connection_id).or_default().push(key);
+
+                                let _ = tx.send(
+                                    serde_json::json!({
+                                        "type": "subscribed",
+                                        "channel_id": channel_id
+                                    })
+                                    .to_string(),
+                                );
                             }
-                            "unsubscribe" => {
-                                if let Some(channel_id) = parsed
+                        }
+                        "unsubscribe" => {
+                            if let Some(channel_id) = parsed
+                                .get("channel_id")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                            {
+                                let key = (auth.tenant_id.as_uuid(), channel_id);
+                                if let Some(subscribers) = state.ws_registry.get(&key) {
+                                    subscribers.remove(&connection_id);
+                                }
+                                if let Some(mut channels) = state.conn_index.get_mut(&connection_id)
+                                {
+                                    channels.retain(|&k| k != key);
+                                }
+                                let _ = tx.send(
+                                    serde_json::json!({
+                                        "type": "unsubscribed",
+                                        "channel_id": channel_id
+                                    })
+                                    .to_string(),
+                                );
+                            }
+                        }
+                        "message" => {
+                            if let (Some(channel_id), Some(content)) = (
+                                parsed
                                     .get("channel_id")
                                     .and_then(|v| v.as_str())
-                                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
-                                {
-                                    let key = (auth.tenant_id.as_uuid(), channel_id);
-                                    if let Some(subscribers) = state.ws_registry.get(&key) {
-                                        subscribers.remove(&connection_id);
-                                    }
-                                    if let Some(mut channels) =
-                                        state.conn_index.get_mut(&connection_id)
-                                    {
-                                        channels.retain(|&k| k != key);
-                                    }
-                                    let _ = tx.send(
-                                        serde_json::json!({
-                                            "type": "unsubscribed",
-                                            "channel_id": channel_id
-                                        })
-                                        .to_string(),
-                                    );
-                                }
-                            }
-                            "message" => {
-                                if let (Some(channel_id), Some(content)) = (
-                                    parsed
-                                        .get("channel_id")
+                                    .and_then(|s| uuid::Uuid::parse_str(s).ok()),
+                                parsed.get("content").and_then(|v| v.as_str()),
+                            ) {
+                                let cmd = ataqu_application::dial_service::SendMessageCommand {
+                                    tenant_id: auth.tenant_id,
+                                    channel_id,
+                                    thread_id: parsed
+                                        .get("thread_id")
                                         .and_then(|v| v.as_str())
                                         .and_then(|s| uuid::Uuid::parse_str(s).ok()),
-                                    parsed.get("content").and_then(|v| v.as_str()),
-                                ) {
-                                    let cmd = ataqu_application::dial_service::SendMessageCommand {
-                                        tenant_id: auth.tenant_id,
-                                        channel_id,
-                                        thread_id: parsed
-                                            .get("thread_id")
-                                            .and_then(|v| v.as_str())
-                                            .and_then(|s| uuid::Uuid::parse_str(s).ok()),
-                                        author_id: auth.user_id,
-                                        content: content.to_string(),
-                                    };
-                                    match state.dial_service.send_message(cmd).await {
-                                        Ok(msg) => {
-                                            let key = (auth.tenant_id.as_uuid(), channel_id);
-                                            let broadcast = serde_json::json!({
+                                    author_id: auth.user_id,
+                                    content: content.to_string(),
+                                };
+                                match state.dial_service.send_message(cmd).await {
+                                    Ok(msg) => {
+                                        let key = (auth.tenant_id.as_uuid(), channel_id);
+                                        let broadcast = serde_json::json!({
                                                 "type": "message",
                                                 "id": msg.id.as_uuid(),
                                                 "channel_id": msg.channel_id.as_uuid(),
@@ -220,49 +220,49 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                             })
                                             .to_string();
 
-                                            if let Some(subscribers) = state.ws_registry.get(&key) {
-                                                for entry in subscribers.iter() {
-                                                    let _ = entry.value().send(broadcast.clone());
-                                                }
-                                            }
-                                        }
-                                        Err(e) => {
-                                            let _ = tx.send(
-                                                serde_json::json!({
-                                                    "type": "error",
-                                                    "message": e.to_string()
-                                                })
-                                                .to_string(),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
-                            "typing" => {
-                                if let Some(channel_id) = parsed
-                                    .get("channel_id")
-                                    .and_then(|v| v.as_str())
-                                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
-                                {
-                                    let key = (auth.tenant_id.as_uuid(), channel_id);
-                                    let broadcast = serde_json::json!({
-                                        "type": "typing",
-                                        "channel_id": channel_id,
-                                        "user_id": auth.user_id,
-                                    })
-                                    .to_string();
-                                    if let Some(subscribers) = state.ws_registry.get(&key) {
-                                        for entry in subscribers.iter() {
-                                            if entry.key() != &connection_id {
+                                        if let Some(subscribers) = state.ws_registry.get(&key) {
+                                            for entry in subscribers.iter() {
                                                 let _ = entry.value().send(broadcast.clone());
                                             }
                                         }
                                     }
+                                    Err(e) => {
+                                        let _ = tx.send(
+                                            serde_json::json!({
+                                                "type": "error",
+                                                "message": e.to_string()
+                                            })
+                                            .to_string(),
+                                        );
+                                    }
                                 }
                             }
-                            _ => {}
                         }
+                        "typing" => {
+                            if let Some(channel_id) = parsed
+                                .get("channel_id")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                            {
+                                let key = (auth.tenant_id.as_uuid(), channel_id);
+                                let broadcast = serde_json::json!({
+                                    "type": "typing",
+                                    "channel_id": channel_id,
+                                    "user_id": auth.user_id,
+                                })
+                                .to_string();
+                                if let Some(subscribers) = state.ws_registry.get(&key) {
+                                    for entry in subscribers.iter() {
+                                        if entry.key() != &connection_id {
+                                            let _ = entry.value().send(broadcast.clone());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
                     }
+                }
             }
             Message::Close(_) => break,
             _ => {}
