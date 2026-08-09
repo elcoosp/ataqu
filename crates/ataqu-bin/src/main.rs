@@ -40,7 +40,17 @@ use ataqu_infra_pools::Pools;
 
 // use S3Service;
 use sea_orm::{ConnectionTrait, TransactionTrait};
-use ataqu_api::stubs::*;
+
+
+// Local stubs for missing dependencies (to be replaced with real implementations later)
+pub trait AuditRepositoryTrait {}
+pub struct DummyAuditRepo;
+impl AuditRepositoryTrait for DummyAuditRepo {}
+pub struct HealthService;
+pub struct OnboardingService;
+pub struct ChangelogService;
+pub struct S3Service;
+
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
