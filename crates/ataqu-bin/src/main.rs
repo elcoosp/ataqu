@@ -802,7 +802,7 @@ async fn main() -> anyhow::Result<()> {
                             tracing::error!(error = %e, "Failed to process TEMPO booking event");
                             return Err(ataqu_infra_outbox::DispatcherError::Handler(
                                 e.to_string(),
-                            });
+                            ));
                         }
                     }
 
