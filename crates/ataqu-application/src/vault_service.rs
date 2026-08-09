@@ -700,6 +700,7 @@ impl VaultService {
 
         warehouse.version += 1;
         warehouse.version += 1;
+        warehouse.version += 1;
         self.repo
             .update_warehouse(&warehouse)
             .await

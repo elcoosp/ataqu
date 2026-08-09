@@ -16,7 +16,6 @@ use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
 use ataqu_api::{AppState, create_router};
-use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
@@ -27,6 +26,7 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
@@ -520,6 +520,14 @@ async fn main() -> anyhow::Result<()> {
         microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
+    let sso_config = ataqu_domain_aegis::sso::SsoConfig {
+        google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
+        google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
+        google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
+        microsoft_client_id: std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default(),
+        microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
+        microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
+    };
 
     // Cleanup task for rate limiter
     let rate_limiter_cleanup = rate_limiter.clone();
@@ -549,6 +557,16 @@ async fn main() -> anyhow::Result<()> {
     // Onboarding & Changelog stubs
     let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone()));
     let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
+
+    let onboarding_service_for_inactivity = onboarding_service.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = onboarding_service_for_inactivity.check_inactivity().await {
+                tracing::error!(error = %e, "Onboarding inactivity check failed");
+            }
+            tokio::time::sleep(Duration::from_secs(86400)).await;
+        }
+    });
 
     let onboarding_service_for_inactivity = onboarding_service.clone();
     tokio::spawn(async move {
@@ -805,6 +823,72 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let app = create_router(app_state);
+
+    let admin_socket_path =
+        std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
+    let _ = std::fs::remove_file(&admin_socket_path);
+    let admin_listener = match tokio::net::UnixListener::bind(&admin_socket_path) {
+        Ok(l) => l,
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to bind admin UDS");
+            return Err(anyhow::anyhow!("Failed to bind admin UDS"));
+        }
+    };
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let permissions = std::fs::Permissions::from_mode(0o600);
+        std::fs::set_permissions(&admin_socket_path, permissions)?;
+    }
+
+    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
+    tokio::spawn(async move {
+        loop {
+            match admin_listener.accept().await {
+                Ok((mut stream, _)) => {
+                    let admin_token = admin_token.clone();
+                    tokio::spawn(async move {
+                        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+                        let mut buf = [0; 1024];
+                        let n = match stream.read(&mut buf).await {
+                            Ok(n) if n > 0 => n,
+                            _ => return,
+                        };
+                        let req = String::from_utf8_lossy(&buf[..n]);
+                        let parts: Vec<&str> = req.splitn(2, ' ').collect();
+                        if parts.len() != 2 || parts[0] != admin_token {
+                            let _ = stream
+                                .write_all(
+                                    b"ERROR: Invalid token
+",
+                                )
+                                .await;
+                            return;
+                        }
+                        let cmd = parts[1].trim();
+                        let resp = match cmd {
+                            "health" => "OK: Server is running
+"
+                            .to_string(),
+                            "flush-cache" => {
+                                ataqu_api::middleware::idempotency::flush_idempotency_cache();
+                                "OK: Idempotency cache flushed
+"
+                                .to_string()
+                            }
+                            _ => "ERROR: Unknown command
+"
+                            .to_string(),
+                        };
+                        let _ = stream.write_all(resp.as_bytes()).await;
+                    });
+                }
+                Err(e) => {
+                    tracing::warn!(error = %e, "Admin UDS accept failed");
+                    tokio::time::sleep(Duration::from_secs(1)).await;
+                }
+            }
+        }
+    });
 
     let admin_socket_path =
         std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
