@@ -29,11 +29,11 @@ pub struct CreateEmployeeRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct EmployeeResponse {
+pub struct EmployeeResponse <'a> {
     pub id: Uuid,
     pub full_name: String,
-    pub email: ApiEmail,
-    pub phone: Option<ApiPhone>,
+    pub email: ApiEmail<'a>,
+    pub phone: Option<ApiPhone<'a>>,
     pub job_title: String,
     pub department: Option<String>,
     pub hire_date: NaiveDate,
@@ -47,8 +47,8 @@ impl From<Employee> for EmployeeResponse {
         Self {
             id: e.id,
             full_name: e.full_name,
-            email: ApiEmail::new(e.email),
-            phone: e.phone.map(|p| ApiPhone::new(PhoneNumber::new(p))),
+            email: ApiEmail(e.email),
+            phone: e.phone.map(|p| ApiPhone(PhoneNumber::new(p))),
             job_title: e.job_title,
             department: e.department,
             hire_date: e.hire_date,
@@ -69,7 +69,7 @@ pub struct CreateLeaveRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct LeaveRequestResponse {
+pub struct LeaveRequestResponse <'a> {
     pub id: Uuid,
     pub employee_id: Uuid,
     pub employee_name: String,

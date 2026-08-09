@@ -38,12 +38,12 @@ pub struct PaginationParams {
 }
 
 #[derive(Debug, Serialize)]
-pub struct ContactResponse {
+pub struct ContactResponse <'a> {
     pub id: Uuid,
     pub name: String,
     pub company: Option<String>,
-    pub email: ApiEmail,
-    pub phone: Option<ApiPhone>,
+    pub email: ApiEmail<'a>,
+    pub phone: Option<ApiPhone<'a>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -54,7 +54,7 @@ impl From<Contact> for ContactResponse {
             id: c.id,
             name: c.name,
             company: c.company,
-            email: ApiEmail::new(c.email),
+            email: ApiEmail(c.email),
             phone: c.phone.map(ApiPhone::new),
             created_at: c.created_at,
             updated_at: c.updated_at,
@@ -63,7 +63,7 @@ impl From<Contact> for ContactResponse {
 }
 
 #[derive(Debug, Serialize)]
-pub struct DealResponse {
+pub struct DealResponse <'a> {
     pub id: Uuid,
     pub title: String,
     pub amount: Decimal,
@@ -790,7 +790,7 @@ pub struct CreateTaskRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct TaskResponse {
+pub struct TaskResponse <'a> {
     pub id: Uuid,
     pub contact_id: Option<Uuid>,
     pub deal_id: Option<Uuid>,

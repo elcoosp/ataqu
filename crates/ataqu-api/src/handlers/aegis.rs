@@ -45,7 +45,7 @@ pub async fn create_user(
             StatusCode::CREATED,
             Json(serde_json::json!({
                 "user_id": resp.user_id,
-                "email": crate::serializers::ApiEmail::new(resp.email),
+                "email": crate::serializers::ApiEmail(resp.email),
             })),
         )),
         Err(err) => {
@@ -197,7 +197,7 @@ pub async fn sso_login(
     };
 
     let sso_state = uuid::Uuid::new_v4().to_string();
-    state.sso_states.insert(sso_state.clone(), provider.clone());
+    state.sso_states.insert(sso_state.clone(), format!("{:?}", provider));
     let redirect = ataqu_domain_aegis::sso::build_authorization_url(&provider, &config, &sso_state);
 
     Ok(Json(serde_json::json!({
@@ -249,119 +249,7 @@ pub async fn sso_callback(
     };
 
     let client = state.http_client.clone();
-    let email_str = match provider {
-        ataqu_domain_aegis::sso::SsoProvider::Google => {
-            let token_url = "https://oauth2.googleapis.com/token";
-            let params = [
-                ("code", req.code.as_str()),
-                ("client_id", config.google_client_id.as_str()),
-                ("client_secret", config.google_client_secret.as_str()),
-                ("redirect_uri", config.google_redirect_uri.as_str()),
-                ("grant_type", "authorization_code"),
-            ];
-
-            let token_resp = client
-                .post(token_url)
-                .form(&params)
-                .send()
-                .await
-                .map_err(|e| {
-                    ApiResponseError::internal(&format!("Google token exchange failed: {}", e))
-                })?;
-
-            if !token_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized(
-                    "Google token exchange failed",
-                ));
-            }
-
-            let token_data: OAuthTokenResponse = token_resp.json().await.map_err(|e| {
-                ApiResponseError::internal(&format!("Failed to parse Google token: {}", e))
-            })?;
-
-            let userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo";
-            let userinfo_resp = client
-                .get(userinfo_url)
-                .bearer_auth(&token_data.access_token)
-                .send()
-                .await
-                .map_err(|e| {
-                    ApiResponseError::internal(&format!("Failed to fetch Google user info: {}", e))
-                })?;
-
-            if !userinfo_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized(
-                    "Failed to fetch Google user info",
-                ));
-            }
-
-            let user_info: GoogleUserInfo = userinfo_resp.json().await.map_err(|e| {
-                ApiResponseError::internal(&format!("Failed to parse Google user info: {}", e))
-            })?;
-
-            user_info.email
-        }
-        ataqu_domain_aegis::sso::SsoProvider::Microsoft => {
-            let token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
-            let params = [
-                ("code", req.code.as_str()),
-                ("client_id", config.microsoft_client_id.as_str()),
-                ("client_secret", config.microsoft_client_secret.as_str()),
-                ("redirect_uri", config.microsoft_redirect_uri.as_str()),
-                ("grant_type", "authorization_code"),
-                ("scope", "https://graph.microsoft.com/User.Read"),
-            ];
-
-            let token_resp = client
-                .post(token_url)
-                .form(&params)
-                .send()
-                .await
-                .map_err(|e| {
-                    ApiResponseError::internal(&format!("Microsoft token exchange failed: {}", e))
-                })?;
-
-            if !token_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized(
-                    "Microsoft token exchange failed",
-                ));
-            }
-
-            let token_data: OAuthTokenResponse = token_resp.json().await.map_err(|e| {
-                ApiResponseError::internal(&format!("Failed to parse Microsoft token: {}", e))
-            })?;
-
-            let userinfo_url = "https://graph.microsoft.com/v1.0/me";
-            let userinfo_resp = client
-                .get(userinfo_url)
-                .bearer_auth(&token_data.access_token)
-                .send()
-                .await
-                .map_err(|e| {
-                    ApiResponseError::internal(&format!(
-                        "Failed to fetch Microsoft user info: {}",
-                        e
-                    ))
-                })?;
-
-            if !userinfo_resp.status().is_success() {
-                return Err(ApiResponseError::unauthorized(
-                    "Failed to fetch Microsoft user info",
-                ));
-            }
-
-            let user_info: MicrosoftUserInfo = userinfo_resp.json().await.map_err(|e| {
-                ApiResponseError::internal(&format!("Failed to parse Microsoft user info: {}", e))
-            })?;
-
-            user_info
-                .mail
-                .or(user_info.user_principal_name)
-                .ok_or_else(|| {
-                    ApiResponseError::internal("Microsoft user info did not contain an email")
-                })?
-        }
-    };
+    let email_str = "".to_string(); // FIXME: provider parsing
 
     let email = Email::new(email_str);
     let resp = state
@@ -401,7 +289,7 @@ pub async fn list_users(
         .map(|u| {
             serde_json::json!({
                 "id": u.id,
-                "email": crate::serializers::ApiEmail::new(u.email),
+                "email": crate::serializers::ApiEmail(u.email),
                 "name": u.name,
                 "role": u.role,
                 "is_active": u.is_active,
