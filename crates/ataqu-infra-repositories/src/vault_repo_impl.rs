@@ -5,7 +5,8 @@ use ataqu_domain_vault::stock::{Reservation, StockMovement};
 use ataqu_kernel::{RepositoryError, TenantId};
 use sea_orm::ConnectionTrait;
 use sea_orm::{
-    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set, Statement,
+    ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect, Set,
+    Statement,
 };
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -212,8 +213,12 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(model.map(product_model_to_domain))
     }
 
-    async fn count_products(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
-        Ok(0)
+    async fn count_products(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        product_entity::Entity::find()
+            .filter(product_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .count(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))
     }
 
     async fn list_products(
@@ -277,8 +282,12 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(model.map(variant_model_to_domain))
     }
 
-    async fn count_variants(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
-        Ok(0)
+    async fn count_variants(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        variant_entity::Entity::find()
+            .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .count(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))
     }
 
     async fn list_variants(

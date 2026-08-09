@@ -1,6 +1,6 @@
 use axum::{
     Router,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
 };
@@ -254,18 +254,26 @@ pub async fn create_event_type(
 pub async fn list_event_types(
     State(state): State<AppState>,
     auth: AuthContext,
+    Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<EventTypeResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
     let (event_types, total) = state
         .tempo_service
         .list_event_types(auth.tenant_id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
-    let items = event_types.into_iter().map(|e| e.into()).collect();
+    let items = event_types
+        .into_iter()
+        .skip(offset as usize)
+        .take(limit as usize)
+        .map(|e| e.into())
+        .collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
         total,
-        limit: 100,
-        offset: 0,
+        limit,
+        offset,
     }))
 }
 
@@ -276,6 +284,12 @@ pub struct UpdateEventTypeRequest {
     pub description: Option<Option<String>>,
     pub duration_minutes: Option<i32>,
     pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
 }
 
 pub async fn update_event_type(

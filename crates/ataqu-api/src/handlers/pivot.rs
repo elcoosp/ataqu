@@ -589,6 +589,33 @@ pub async fn list_templates(
     Ok(Json(list))
 }
 
+pub async fn apply_template(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(template_id): Path<Uuid>,
+) -> ApiResult<impl IntoResponse> {
+    let doc = state
+        .pivot_service
+        .apply_template(auth.tenant_id, template_id)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::ETAG,
+        format!("\"{}\"", doc.version).parse().unwrap(),
+    );
+    Ok((
+        StatusCode::CREATED,
+        headers,
+        Json(DocumentResponse::from(doc)),
+    ))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
@@ -613,5 +640,9 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/templates",
             axum::routing::post(create_template).get(list_templates),
+        )
+        .route(
+            "/templates/:id/apply",
+            axum::routing::post(apply_template),
         )
 }

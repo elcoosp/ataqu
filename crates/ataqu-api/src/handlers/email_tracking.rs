@@ -29,6 +29,16 @@ pub async fn track_email_public(
         _ => return Err(ApiResponseError::validation("Invalid event_type")),
     }
 
+    // Validate tenant and contact exist
+    if state
+        .cinq_service
+        .get_contact(ataqu_kernel::TenantId::new(req.tenant_id), req.contact_id)
+        .await
+        .is_err()
+    {
+        return Err(ApiResponseError::not_found("Contact not found"));
+    }
+
     // Basic rate limiting to prevent abuse
     let rate_key = format!("email_track_pub:{}", req.tenant_id);
     if !state.rate_limiter.check(&rate_key) {

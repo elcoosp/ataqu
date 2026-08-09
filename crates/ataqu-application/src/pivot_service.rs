@@ -438,4 +438,27 @@ impl PivotService {
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
+
+    pub async fn apply_template(
+        &self,
+        tenant_id: TenantId,
+        template_id: Uuid,
+    ) -> PivotResult<Document> {
+        let templates = self
+            .doc_repo
+            .list_templates(&tenant_id)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        let template = templates
+            .iter()
+            .find(|t| t.id == template_id)
+            .ok_or_else(|| PivotServiceError::Validation("Template not found".to_string()))?;
+
+        let cmd = CreateDocumentCommand {
+            tenant_id,
+            title: template.name.clone(),
+            content: template.content.clone(),
+        };
+        self.create_document(cmd).await
+    }
 }
