@@ -80,7 +80,7 @@ pub async fn create_form(
         .sond_service
         .create_form(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -93,17 +93,21 @@ pub async fn list_forms(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<FormResponse>>> {
-    let forms = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<FormResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (forms, total) = state
         .sond_service
-        .list_forms(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_forms(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(forms.into_iter().map(|f| f.into()).collect()))
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let items = forms.into_iter().map(|f| f.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_form(
@@ -177,7 +181,7 @@ pub async fn update_form(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(updated_form.into()))
 }
@@ -191,7 +195,7 @@ pub async fn delete_form(
         .sond_service
         .delete_form(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -231,7 +235,7 @@ pub async fn submit_form(
         .sond_service
         .submit_response(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::CREATED)
 }
 
@@ -244,22 +248,22 @@ pub async fn export_responses(
         .sond_service
         .list_responses(auth.tenant_id, form_id, 100000, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let mut wtr = csv::Writer::from_writer(vec![]);
     wtr.write_record(["response_id", "submitted_at", "answers"])
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for r in responses {
         let answers_json = serde_json::to_string(&r.answers)
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
         wtr.write_record(&[r.id.to_string(), r.submitted_at.to_rfc3339(), answers_json])
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }
     let data = String::from_utf8(
         wtr.into_inner()
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?,
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?,
     )
-    .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
         StatusCode::OK,
         [

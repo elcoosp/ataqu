@@ -53,17 +53,15 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<ListWorkflowsParams>,
-) -> ApiResult<Json<Vec<WorkflowResponse>>> {
-    let workflows = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<WorkflowResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (workflows, total) = state
         .spark_service
-        .list_workflows(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_workflows(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let resp = workflows
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let items = workflows
         .into_iter()
         .map(|w| WorkflowResponse {
             id: w.id,
@@ -73,7 +71,12 @@ pub async fn list_workflows(
             updated_at: w.updated_at.into(),
         })
         .collect();
-    Ok(Json(resp))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn create_workflow(
@@ -93,7 +96,7 @@ pub async fn create_workflow(
         .spark_service
         .create_workflow(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let resp = WorkflowResponse {
         id: workflow.id,
         name: workflow.name,
@@ -148,7 +151,7 @@ pub async fn update_workflow(
         .spark_service
         .update_workflow(cmd, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let resp = WorkflowResponse {
         id: workflow.id,
         name: workflow.name,
@@ -168,7 +171,7 @@ pub async fn delete_workflow(
         .spark_service
         .delete_workflow(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -187,7 +190,7 @@ pub async fn execute_workflow(
         .spark_service
         .trigger_workflow(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -214,9 +217,31 @@ pub async fn webhook_trigger(
             ataqu_application::spark_service::SparkServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::ACCEPTED)
+}
+
+pub async fn approve_workflow_run(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(run_id): Path<Uuid>,
+) -> ApiResult<StatusCode> {
+    state
+        .spark_service
+        .approve_workflow_run(auth.tenant_id, run_id)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::spark_service::SparkServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
+            ataqu_application::spark_service::SparkServiceError::WorkflowNotFound => {
+                ApiResponseError::not_found("Workflow run not found")
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
+
+    Ok(StatusCode::OK)
 }
 
 pub fn public_routes() -> Router<AppState> {
@@ -224,14 +249,6 @@ pub fn public_routes() -> Router<AppState> {
         "/webhooks/:tenant_id/:workflow_id",
         axum::routing::post(webhook_trigger),
     )
-}
-
-pub async fn list_templates(
-    State(_state): State<AppState>,
-    _auth: AuthContext,
-) -> ApiResult<Json<Vec<serde_json::Value>>> {
-    // Templates are now persisted via PIVOT. This endpoint is deprecated.
-    Ok(Json(vec![]))
 }
 
 pub fn routes() -> Router<AppState> {
@@ -245,4 +262,8 @@ pub fn routes() -> Router<AppState> {
                 .delete(delete_workflow),
         )
         .route("/workflows/:id/execute", post(execute_workflow))
+        .route(
+            "/workflows/runs/:run_id/approve",
+            post(approve_workflow_run),
+        )
 }

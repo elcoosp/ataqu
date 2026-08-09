@@ -106,7 +106,7 @@ impl PauseService {
             return guard.get_cached::<Uuid>();
         }
         let result = async {
-            let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock);
+            let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock)?;
             self.employee_repo.insert(tenant_id, &event).await?;
             let payload = serde_json::json!({
                 "employee_id": event.employee_id,
@@ -217,11 +217,18 @@ impl PauseService {
         tenant_id: &TenantId,
         limit: u64,
         offset: u64,
-    ) -> Result<Vec<Employee>, PauseServiceError> {
-        self.employee_repo
+    ) -> Result<(Vec<Employee>, u64), PauseServiceError> {
+        let total = self
+            .employee_repo
+            .count_employees(tenant_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        let employees = self
+            .employee_repo
             .list(tenant_id, limit, offset)
             .await
-            .map_err(|e| PauseServiceError::Persistence(e.to_string()))
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        Ok((employees, total))
     }
 
     pub async fn search_employees(
@@ -246,6 +253,25 @@ impl PauseService {
             .list(tenant_id, limit, offset)
             .await
             .map_err(|e| PauseServiceError::Persistence(e.to_string()))
+    }
+
+    pub async fn list_leave_requests_with_names(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<(Vec<(LeaveRequest, String)>, u64), PauseServiceError> {
+        let total = self
+            .leave_request_repo
+            .count_leave_requests(tenant_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        let requests = self
+            .leave_request_repo
+            .list_with_employee_names(tenant_id, limit, offset)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?;
+        Ok((requests, total))
     }
 
     pub async fn approve_leave(
@@ -273,7 +299,6 @@ impl PauseService {
             ));
         }
         let event = ataqu_domain_pause::leave::approve_leave(&mut request, reviewer_id, clock);
-        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,
@@ -317,7 +342,6 @@ impl PauseService {
             ));
         }
         let event = ataqu_domain_pause::leave::reject_leave(&mut request, reviewer_id, clock);
-        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,
@@ -419,7 +443,6 @@ impl PauseService {
             ));
         }
         let event = ataqu_domain_pause::leave::cancel_leave(&mut request, reviewer_id, clock);
-        request.version += 1;
         self.leave_request_repo
             .update_status(
                 tenant_id,

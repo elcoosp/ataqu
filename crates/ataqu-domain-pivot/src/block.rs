@@ -152,3 +152,14 @@ mod tests {
         );
     }
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Block {
+    pub id: uuid::Uuid,
+    pub tenant_id: ataqu_kernel::TenantId,
+    pub document_id: uuid::Uuid,
+    pub block_type: BlockType,
+    pub created_at: std::time::SystemTime,
+    pub updated_at: std::time::SystemTime,
+    pub version: i32,
+}

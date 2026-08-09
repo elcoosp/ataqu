@@ -37,7 +37,7 @@ pub async fn unified_search(
         .cinq_service
         .search_contacts(auth.tenant_id, &params.q, limit)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for c in contacts {
         results.push(UnifiedSearchResult {
             app: "cinq".to_string(),
@@ -50,9 +50,9 @@ pub async fn unified_search(
 
     let messages = state
         .dial_service
-        .search_messages(auth.tenant_id, &params.q, limit, 0)
+        .search_messages(auth.tenant_id, auth.user_id, &params.q, limit, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for m in messages {
         results.push(UnifiedSearchResult {
             app: "dial".to_string(),
@@ -67,7 +67,7 @@ pub async fn unified_search(
         .pivot_service
         .search_documents(auth.tenant_id, params.q.clone(), limit, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for d in docs {
         results.push(UnifiedSearchResult {
             app: "pivot".to_string(),
@@ -82,7 +82,7 @@ pub async fn unified_search(
         .pause_service
         .search_employees(&auth.tenant_id, &params.q, limit)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for e in employees {
         results.push(UnifiedSearchResult {
             app: "pause".to_string(),
@@ -97,33 +97,37 @@ pub async fn unified_search(
         .aegis_service
         .list_users(auth.tenant_id.as_uuid())
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    for u in users {
-        let email_str = u
-            .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
-            .to_string();
-        if email_str.contains(&params.q)
-            || u.name
-                .as_deref()
-                .map(|n| n.contains(&params.q))
-                .unwrap_or(false)
-        {
-            results.push(UnifiedSearchResult {
-                app: "aegis".to_string(),
-                entity_type: "user".to_string(),
-                id: u.id,
-                title: u.name.unwrap_or_else(|| "Unknown".to_string()),
-                subtitle: None,
-            });
-        }
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let user_matches: Vec<_> = users
+        .into_iter()
+        .filter(|u| {
+            let email_str = u
+                .email
+                .reveal(&ataqu_security::PiiAccessKey::new())
+                .to_string();
+            email_str.contains(&params.q)
+                || u.name
+                    .as_deref()
+                    .map(|n| n.contains(&params.q))
+                    .unwrap_or(false)
+        })
+        .take(overall_limit)
+        .collect();
+    for u in user_matches {
+        results.push(UnifiedSearchResult {
+            app: "aegis".to_string(),
+            entity_type: "user".to_string(),
+            id: u.id,
+            title: u.name.unwrap_or_else(|| "Unknown".to_string()),
+            subtitle: None,
+        });
     }
 
-    let products = state
+    let (products, _total) = state
         .vault_service
         .list_products(auth.tenant_id, 100, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for p in products {
         if p.name.contains(&params.q) || p.sku.contains(&params.q) {
             results.push(UnifiedSearchResult {
@@ -136,11 +140,11 @@ pub async fn unified_search(
         }
     }
 
-    let workflows = state
+    let (workflows, _total) = state
         .spark_service
         .list_workflows(auth.tenant_id, 100, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for w in workflows {
         if w.name.contains(&params.q) {
             results.push(UnifiedSearchResult {
@@ -157,7 +161,7 @@ pub async fn unified_search(
         .vista_service
         .list_dashboards(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for d in dashboards {
         if d.name.contains(&params.q) {
             results.push(UnifiedSearchResult {
@@ -170,11 +174,11 @@ pub async fn unified_search(
         }
     }
 
-    let event_types = state
+    let (event_types, _total) = state
         .tempo_service
         .list_event_types(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for et in event_types {
         if et.name.contains(&params.q) || et.slug.contains(&params.q) {
             results.push(UnifiedSearchResult {
@@ -187,11 +191,11 @@ pub async fn unified_search(
         }
     }
 
-    let forms = state
+    let (forms, _total) = state
         .sond_service
         .list_forms(auth.tenant_id, 100, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     for f in forms {
         if f.title.contains(&params.q) {
             results.push(UnifiedSearchResult {

@@ -34,7 +34,7 @@ pub async fn get_kpis(
         .vista_service
         .get_aggregated_view(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(KpiSummary {
         total_events: view.total_events,
         total_contacts: view.total_contacts,
@@ -65,8 +65,10 @@ pub async fn create_dashboard(
         .vista_service
         .create_dashboard(auth.tenant_id, payload.name, payload.config)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(serde_json::json!({ "id": dashboard.id })))
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    Ok(Json(
+        serde_json::json!({ "id": dashboard.id, "version": dashboard.version }),
+    ))
 }
 
 pub async fn list_dashboards(
@@ -77,7 +79,7 @@ pub async fn list_dashboards(
         .vista_service
         .list_dashboards(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let resp = dashboards
         .into_iter()
         .map(|d| {
@@ -87,6 +89,7 @@ pub async fn list_dashboards(
                 "config": d.config,
                 "created_at": d.created_at,
                 "updated_at": d.updated_at,
+                "version": d.version,
             })
         })
         .collect();
@@ -102,7 +105,7 @@ pub async fn delete_dashboard(
         .vista_service
         .delete_dashboard(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -128,21 +131,16 @@ pub async fn update_dashboard(
         })?;
     let dashboard = state
         .vista_service
-        .update_dashboard(
-            auth.tenant_id,
-            id,
-            payload.name,
-            payload.config,
-            if_match,
-        )
+        .update_dashboard(auth.tenant_id, id, payload.name, payload.config, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({
         "id": dashboard.id,
         "name": dashboard.name,
         "config": dashboard.config,
         "created_at": dashboard.created_at,
         "updated_at": dashboard.updated_at,
+        "version": dashboard.version,
     })))
 }
 
@@ -169,7 +167,7 @@ pub async fn execute_raw_sql(
             ataqu_application::vista_service::VistaServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(results))
 }
@@ -183,7 +181,7 @@ pub async fn get_data_points_handler(
         .vista_service
         .get_data_points(auth.tenant_id, &metric, 1000)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let resp = points
         .into_iter()
         .map(|p| {
@@ -208,7 +206,6 @@ pub fn routes() -> Router<AppState> {
             "/dashboards/:id",
             axum::routing::delete(delete_dashboard).put(update_dashboard),
         )
-        .route("/raw-sql", axum::routing::post(execute_raw_sql))
         .route(
             "/data-points/:metric",
             axum::routing::get(get_data_points_handler),

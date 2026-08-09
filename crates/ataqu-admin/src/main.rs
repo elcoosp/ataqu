@@ -30,6 +30,11 @@ fn main() {
         std::process::exit(1);
     }
 
+    // Shutdown write end to signal EOF to server so it knows we're done sending
+    if let Err(e) = stream.shutdown(std::net::Shutdown::Write) {
+        eprintln!("Failed to shutdown write: {}", e);
+    }
+
     let mut response = String::new();
     if let Err(e) = stream.read_to_string(&mut response) {
         eprintln!("Failed to read from UDS: {}", e);

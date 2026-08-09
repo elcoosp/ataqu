@@ -38,6 +38,7 @@ pub struct BookingResponse {
     pub duration_minutes: i32,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
@@ -47,8 +48,12 @@ impl From<ataqu_application::tempo_service::Booking> for BookingResponse {
             event_type_id: b.event_type_id.0,
             starts_at: b.starts_at.into(),
             duration_minutes: b.duration_minutes,
-            status: format!("{:?}", b.status).to_lowercase(),
+            status: serde_json::to_string(&b.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             created_at: b.created_at.into(),
+            version: b.version,
         }
     }
 }
@@ -70,20 +75,26 @@ pub async fn create_booking(
         .tempo_service
         .create_booking(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(booking.into())))
 }
 
 pub async fn list_bookings(
     State(state): State<AppState>,
     auth: AuthContext,
-) -> ApiResult<Json<Vec<BookingResponse>>> {
-    let bookings = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<BookingResponse>>> {
+    let (bookings, total) = state
         .tempo_service
         .list_bookings(auth.tenant_id, 100, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(bookings.into_iter().map(|b| b.into()).collect()))
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let items = bookings.into_iter().map(|b| b.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit: 100,
+        offset: 0,
+    }))
 }
 
 pub async fn get_booking(
@@ -103,17 +114,26 @@ pub async fn cancel_booking(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<BookingResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let cmd = UpdateBookingStatusCommand {
         tenant_id: auth.tenant_id,
         booking_id: id,
         status: BookingStatus::Cancelled,
+        expected_version: if_match,
     };
     let booking = state
         .tempo_service
         .update_booking_status(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(booking.into()))
 }
 
@@ -126,13 +146,30 @@ pub async fn reschedule_booking(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<RescheduleBookingRequest>,
 ) -> ApiResult<Json<BookingResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let booking = state
         .tempo_service
-        .reschedule_booking(auth.tenant_id, id, payload.starts_at)
+        .reschedule_booking(auth.tenant_id, id, payload.starts_at, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|e| match e {
+            ataqu_application::tempo_service::TempoServiceError::Validation(msg) => {
+                if msg.contains("Version mismatch") {
+                    ApiResponseError::conflict(&msg)
+                } else {
+                    ApiResponseError::validation(&msg)
+                }
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
     Ok(Json(booking.into()))
 }
 
@@ -140,17 +177,26 @@ pub async fn confirm_booking(
     State(state): State<AppState>,
     auth: AuthContext,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResult<Json<BookingResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
     let cmd = UpdateBookingStatusCommand {
         tenant_id: auth.tenant_id,
         booking_id: id,
         status: BookingStatus::Confirmed,
+        expected_version: if_match,
     };
     let booking = state
         .tempo_service
         .update_booking_status(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(booking.into()))
 }
 
@@ -201,20 +247,26 @@ pub async fn create_event_type(
         .tempo_service
         .create_event_type(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(event_type.into())))
 }
 
 pub async fn list_event_types(
     State(state): State<AppState>,
     auth: AuthContext,
-) -> ApiResult<Json<Vec<EventTypeResponse>>> {
-    let event_types = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<EventTypeResponse>>> {
+    let (event_types, total) = state
         .tempo_service
         .list_event_types(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(event_types.into_iter().map(|e| e.into()).collect()))
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let items = event_types.into_iter().map(|e| e.into()).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit: 100,
+        offset: 0,
+    }))
 }
 
 #[derive(Debug, Deserialize)]
@@ -257,7 +309,7 @@ pub async fn update_event_type(
             ataqu_application::tempo_service::TempoServiceError::EventTypeNotFound => {
                 ApiResponseError::not_found("Event type not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(event_type.into()))
 }
@@ -271,7 +323,7 @@ pub async fn delete_event_type(
         .tempo_service
         .delete_event_type(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -318,7 +370,7 @@ pub async fn create_availability_slot(
         .tempo_service
         .create_availability_slot(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(slot.into())))
 }
 
@@ -331,7 +383,7 @@ pub async fn list_availability_slots(
         .tempo_service
         .list_availability_slots(auth.tenant_id, event_type_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(slots.into_iter().map(|s| s.into()).collect()))
 }
 
@@ -344,7 +396,7 @@ pub async fn delete_availability_slot(
         .tempo_service
         .delete_availability_slot(auth.tenant_id, slot_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -381,13 +433,16 @@ pub async fn public_create_booking(
             payload.invitee_email,
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
         StatusCode::CREATED,
         Json(PublicBookingResponse {
             id: booking.id.0,
             starts_at: booking.starts_at.into(),
-            status: format!("{:?}", booking.status).to_lowercase(),
+            status: serde_json::to_string(&booking.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
         }),
     ))
 }

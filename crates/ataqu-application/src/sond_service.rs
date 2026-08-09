@@ -172,11 +172,18 @@ impl SondService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> SondResult<Vec<Form>> {
-        self.repo
+    ) -> SondResult<(Vec<Form>, u64)> {
+        let total = self
+            .repo
+            .count_forms(&tenant_id)
+            .await
+            .map_err(|e| SondServiceError::Repository(e.to_string()))?;
+        let forms = self
+            .repo
             .list_forms(&tenant_id, limit, offset)
             .await
-            .map_err(|e| SondServiceError::Repository(e.to_string()))
+            .map_err(|e| SondServiceError::Repository(e.to_string()))?;
+        Ok((forms, total))
     }
 
     pub async fn submit_response(&self, cmd: SubmitResponseCommand) -> SondResult<Response> {

@@ -30,6 +30,12 @@ use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
 use sea_orm::{ConnectionTrait, TransactionTrait};
+use ataqu_infra_storage::s3_service::S3Service;
+use ataqu_application::health_service::HealthService;
+use ataqu_application::onboarding_service::OnboardingService;
+use ataqu_application::changelog_service::ChangelogService;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
+use ataqu_application::pause_service::IdempotencyPort;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -325,14 +331,54 @@ async fn main() -> anyhow::Result<()> {
                     body,
                     headers,
                 } => {
-                    let mut req = match method.to_uppercase().as_str() {
-                        "POST" => self.http_client.post(url),
-                        "PUT" => self.http_client.put(url),
-                        "PATCH" => self.http_client.patch(url),
-                        "DELETE" => self.http_client.delete(url),
-                        _ => self.http_client.get(url),
+                    // [VULN-003] SSRF Protection with DNS Rebinding mitigation
+                    let parsed_url = reqwest::Url::parse(url).map_err(|e| e.to_string())?;
+                    let host = parsed_url.host_str().ok_or("Invalid URL")?.to_string();
+                    let port = parsed_url.port_or_known_default().unwrap_or(80);
+
+                    // Resolve DNS and take the first IP address
+                    let mut addrs = tokio::net::lookup_host((host.as_str(), port))
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    let addr = addrs.next().ok_or("DNS resolution failed")?;
+                    let ip = addr.ip();
+
+                    let is_blocked = match ip {
+                        std::net::IpAddr::V4(v4) => {
+                            v4.is_loopback()
+                                || v4.is_private()
+                                || v4.is_link_local()
+                                || v4.is_unspecified()
+                                || v4.is_broadcast()
+                                || v4.is_documentation()
+                        }
+                        std::net::IpAddr::V6(v6) => v6.is_loopback() || v6.is_unspecified(),
                     };
+                    if is_blocked {
+                        return Err(format!("SSRF attempt blocked: internal IP ({})", ip));
+                    }
+
+                    // Rebuild URL with the resolved IP to prevent DNS rebinding
+                    let mut new_url = parsed_url.clone();
+                    new_url
+                        .set_host(Some(&ip.to_string()))
+                        .map_err(|e| e.to_string())?;
+
+                    let mut req = match method.to_uppercase().as_str() {
+                        "POST" => self.http_client.post(new_url),
+                        "PUT" => self.http_client.put(new_url),
+                        "PATCH" => self.http_client.patch(new_url),
+                        "DELETE" => self.http_client.delete(new_url),
+                        _ => self.http_client.get(new_url),
+                    };
+
+                    // Set Host header to original host
+                    req = req.header("host", &host);
+
                     for (k, v) in headers {
+                        if k.eq_ignore_ascii_case("host") {
+                            continue;
+                        }
                         req = req.header(k, v);
                     }
                     req = req.json(&body);
@@ -355,7 +401,10 @@ async fn main() -> anyhow::Result<()> {
         dial_service: dial_service.clone(),
         cinq_service: cinq_service.clone(),
         vault_service: vault_service.clone(),
-        http_client: reqwest::Client::new(),
+        http_client: reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new()),
         system_user_id,
     });
 
@@ -430,21 +479,9 @@ async fn main() -> anyhow::Result<()> {
             .time_to_live(Duration::from_secs(600))
             .build(),
     );
-    let jwt_blocklist = Arc::new(
-        moka::sync::Cache::builder()
-            .time_to_live(Duration::from_secs(86400))
-            .build(),
-    );
     let rate_limiter =
         ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
-
-    let rate_limiter_cleanup = rate_limiter.clone();
-    tokio::spawn(async move {
-        loop {
-            tokio::time::sleep(Duration::from_secs(60)).await;
-            rate_limiter_cleanup.cleanup();
-        }
-    });
+    let http_client = reqwest::Client::new();
 
     let rate_limiter_cleanup = rate_limiter.clone();
     tokio::spawn(async move {
@@ -457,7 +494,25 @@ async fn main() -> anyhow::Result<()> {
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();
     let vault_service_for_reaper = vault_service.clone();
-    let state = AppState {
+    
+    // Health Stubs
+    let health_service = Arc::new(ataqu_application::health_service::HealthService::new(/* todo!() */));
+    let health_cache = Arc::new(moka::sync::Cache::builder().build());
+
+    // Audit Stub
+    let audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync> = Arc::new(/* todo!() */);
+
+    // S3 Stub
+    let s3_service = Arc::new(ataqu_infra_storage::s3_service::S3Service::new("".to_string()).await);
+
+    // Idempotency Stub
+    let idempotency_guard = pause_idempotency.clone();
+
+    // Onboarding & Changelog Stubs
+    let onboarding_service = Arc::new(ataqu_application::onboarding_service::OnboardingService::new(pools.core.clone()));
+    let changelog_service = Arc::new(ataqu_application::changelog_service::ChangelogService::new(pools.core.clone()));
+
+let state = AppState {
         db: pools.core.clone(),
         cinq_service,
         dial_service,
@@ -479,11 +534,26 @@ async fn main() -> anyhow::Result<()> {
         rate_limiter,
         metrics_handle,
         sso_states: sso_states.clone(),
-        jwt_blocklist: jwt_blocklist.clone(),
-    };
+        http_client,
+    
+            health_service: health_service.clone(),
+            health_cache: health_cache.clone(),
+            audit_repo: audit_repo.clone(),
+            s3_service: s3_service.clone(),
+            idempotency_guard: idempotency_guard.clone(),
+            onboarding_service: onboarding_service.clone(),
+            changelog_service: changelog_service.clone(),
+};
 
+    // [MED-001] Restrict CORS origins
+    let allowed_origins =
+        std::env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let origins: Vec<axum::http::HeaderValue> = allowed_origins
+        .split(',')
+        .filter_map(|s| s.trim().parse().ok())
+        .collect();
     let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
+        .allow_origin(origins)
         .allow_methods([
             axum::http::Method::GET,
             axum::http::Method::POST,
@@ -526,16 +596,16 @@ async fn main() -> anyhow::Result<()> {
                         {
                             if let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str) {
                                 tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
+                                let txn = match gdpr_db_pool.begin().await {
+                                    Ok(t) => t,
+                                    Err(e) => {
+                                        tracing::error!(error = %e, "Failed to begin GDPR transaction");
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                            e.to_string(),
+                                        ));
+                                    }
+                                };
                                 for table in gdpr_registry.tables.iter() {
-                                    let txn = match gdpr_db_pool.begin().await {
-                                        Ok(t) => t,
-                                        Err(e) => {
-                                            tracing::error!(error = %e, "Failed to begin GDPR transaction");
-                                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                                e.to_string(),
-                                            ));
-                                        }
-                                    };
                                     let sql = format!(
                                         "DELETE FROM {}.{} WHERE {} = $1",
                                         table.schema, table.table, table.tenant_id_column
@@ -552,12 +622,12 @@ async fn main() -> anyhow::Result<()> {
                                             e.to_string(),
                                         ));
                                     }
-                                    if let Err(e) = txn.commit().await {
-                                        tracing::error!(error = %e, "Failed to commit GDPR transaction");
-                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                            e.to_string(),
-                                        ));
-                                    }
+                                }
+                                if let Err(e) = txn.commit().await {
+                                    tracing::error!(error = %e, "Failed to commit GDPR transaction");
+                                    return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                        e.to_string(),
+                                    ));
                                 }
                             }
                         }
@@ -625,7 +695,9 @@ async fn main() -> anyhow::Result<()> {
                             } else {
                                 tracing::info!("Password reset email sent for {}", recipient_clone);
                             }
-                        }).await.ok();
+                        })
+                        .await
+                        .ok();
                     }
 
                     if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
@@ -693,9 +765,14 @@ async fn main() -> anyhow::Result<()> {
                             if let Err(e) = mailer_clone.send(&email_clone) {
                                 tracing::error!("Failed to send booking reminder email: {}", e);
                             } else {
-                                tracing::info!("Booking reminder email sent for {}", booking_id_clone);
+                                tracing::info!(
+                                    "Booking reminder email sent for {}",
+                                    booking_id_clone
+                                );
                             }
-                        }).await.ok();
+                        })
+                        .await
+                        .ok();
                     }
 
                     Ok(())
@@ -734,11 +811,7 @@ async fn main() -> anyhow::Result<()> {
                 set.spawn(async move {
                     let tenant_id = TenantId::new(tid);
                     if let Err(e) = tempo_service.no_show_worker(tenant_id).await {
-                        tracing::error!(
-                            "No-show worker crashed for tenant {}: {}.",
-                            tid,
-                            e
-                        );
+                        tracing::error!("No-show worker crashed for tenant {}: {}.", tid, e);
                     }
                 });
             }
@@ -759,11 +832,7 @@ async fn main() -> anyhow::Result<()> {
                 set.spawn(async move {
                     let tenant_id = TenantId::new(tid);
                     if let Err(e) = tempo_service.reminder_worker(tenant_id).await {
-                        tracing::error!(
-                            "Reminder worker crashed for tenant {}: {}.",
-                            tid,
-                            e
-                        );
+                        tracing::error!("Reminder worker crashed for tenant {}: {}.", tid, e);
                     }
                 });
             }
@@ -786,20 +855,18 @@ async fn main() -> anyhow::Result<()> {
     let admin_socket_path = "/tmp/ataqu-admin.sock";
     let _ = std::fs::remove_file(admin_socket_path);
     let admin_listener = tokio::net::UnixListener::bind(admin_socket_path)?;
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(admin_socket_path, std::fs::Permissions::from_mode(0o600))?;
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-    let id_gen_for_admin = id_gen.clone();
-    let clock_for_admin = clock.clone();
-    let jwt_blocklist_for_admin = jwt_blocklist.clone();
+    let _id_gen_for_admin = id_gen.clone();
+    let _clock_for_admin = clock.clone();
 
     tokio::spawn(async move {
         tracing::info!("Admin server listening on UDS: {}", admin_socket_path);
         loop {
             if let Ok((mut stream, _)) = admin_listener.accept().await {
                 let admin_token = admin_token.clone();
-                let _id_gen = id_gen_for_admin.clone();
-                let _clock = clock_for_admin.clone();
                 let aegis = aegis_service_for_admin.clone();
-                let _jwt_blocklist = jwt_blocklist_for_admin.clone();
 
                 tokio::spawn(async move {
                     use tokio::io::{AsyncReadExt, AsyncWriteExt};

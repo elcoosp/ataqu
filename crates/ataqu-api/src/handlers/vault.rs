@@ -76,7 +76,7 @@ pub async fn create_product(
         .vault_service
         .create_product(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -93,19 +93,21 @@ pub async fn list_products(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<ProductResponse>>> {
-    let products = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ProductResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (products, total) = state
         .vault_service
-        .list_products(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_products(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        products.into_iter().map(ProductResponse::from).collect(),
-    ))
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let items = products.into_iter().map(ProductResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_product(
@@ -171,7 +173,7 @@ pub async fn update_product(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(product.into()))
 }
@@ -185,7 +187,7 @@ pub async fn delete_product(
         .vault_service
         .delete_product(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -242,7 +244,7 @@ pub async fn create_variant(
         .vault_service
         .create_variant(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -259,19 +261,21 @@ pub async fn list_variants(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<VariantResponse>>> {
-    let variants = state
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<VariantResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (variants, total) = state
         .vault_service
-        .list_variants(
-            auth.tenant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .list_variants(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        variants.into_iter().map(VariantResponse::from).collect(),
-    ))
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let items = variants.into_iter().map(VariantResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn get_variant(
@@ -342,7 +346,7 @@ pub async fn update_variant(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(variant.into()))
 }
@@ -356,7 +360,7 @@ pub async fn delete_variant(
         .vault_service
         .delete_variant(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -400,14 +404,14 @@ pub async fn update_stock(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(variant.into()))
 }
 
 #[derive(Debug, Deserialize)]
 pub struct BulkStockAdjustRequest {
-    pub adjustments: Vec<(Uuid, i64)>,
+    pub adjustments: Vec<(Uuid, i64, i32)>,
     pub reason: String,
 }
 
@@ -425,7 +429,7 @@ pub async fn bulk_adjust_stock(
         .vault_service
         .bulk_adjust_stock(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         variants.into_iter().map(VariantResponse::from).collect(),
     ))
@@ -446,7 +450,7 @@ pub async fn list_movements(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list: Vec<_> = movements
         .iter()
         .map(|m| {
@@ -482,7 +486,7 @@ pub async fn get_low_stock(
         .vault_service
         .find_low_stock_variants(auth.tenant_id, params.threshold)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         variants.into_iter().map(VariantResponse::from).collect(),
     ))
@@ -515,7 +519,7 @@ pub async fn reserve_stock(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
@@ -553,7 +557,7 @@ pub async fn create_warehouse(
         .vault_service
         .create_warehouse(auth.tenant_id, payload.name, payload.location)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({ "id": warehouse.id })))
 }
 
@@ -565,7 +569,7 @@ pub async fn list_warehouses(
         .vault_service
         .list_warehouses(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list = warehouses
         .iter()
         .map(|w| {
@@ -595,7 +599,7 @@ pub async fn update_warehouse(
         .vault_service
         .update_warehouse(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({
         "id": warehouse.id,
         "name": warehouse.name,
@@ -612,7 +616,7 @@ pub async fn delete_warehouse(
         .vault_service
         .delete_warehouse(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 

@@ -47,7 +47,7 @@ impl From<Employee> for EmployeeResponse {
         Self {
             id: e.id,
             full_name: e.full_name,
-            email: ApiEmail::new(Email::new(e.email)),
+            email: ApiEmail::new(e.email),
             phone: e.phone.map(|p| ApiPhone::new(PhoneNumber::new(p))),
             job_title: e.job_title,
             department: e.department,
@@ -97,7 +97,7 @@ pub async fn create_employee(
     let cmd = CreateEmployeeCommand {
         tenant_id: auth.tenant_id,
         full_name: req.full_name.clone(),
-        email: req.email.clone(),
+        email: Email::new(req.email.clone()),
         phone: req.phone.clone(),
         job_title: req.job_title.clone(),
         department: req.department.clone(),
@@ -107,7 +107,9 @@ pub async fn create_employee(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(|| Uuid::new_v4());
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Idempotency-Key header required".to_string())
+        })?;
 
     let employee_id = state
         .pause_service
@@ -125,14 +127,14 @@ pub async fn create_employee(
             {
                 ApiResponseError::Conflict(msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
 
     let employee = state
         .pause_service
         .find_employee(&auth.tenant_id, employee_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     Ok((StatusCode::CREATED, Json(employee.into())))
 }
@@ -162,7 +164,9 @@ pub async fn request_leave(
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(|| Uuid::new_v4());
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Idempotency-Key header required".to_string())
+        })?;
     let request_id = state
         .pause_service
         .request_leave(
@@ -179,14 +183,14 @@ pub async fn request_leave(
             {
                 ApiResponseError::Conflict(msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
 
     let request = state
         .pause_service
         .find_leave_request(&auth.tenant_id, request_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let employee = state
         .pause_service
@@ -200,11 +204,17 @@ pub async fn request_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: format!("{:?}", request.status).to_lowercase(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };
@@ -216,17 +226,21 @@ pub async fn list_employees(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<EmployeeResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<EmployeeResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let employees = state
+    let (employees, total) = state
         .pause_service
         .list_employees(&auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    Ok(Json(
-        employees.into_iter().map(EmployeeResponse::from).collect(),
-    ))
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    let items = employees.into_iter().map(EmployeeResponse::from).collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 pub async fn deactivate_employee(
@@ -243,7 +257,7 @@ pub async fn deactivate_employee(
         .pause_service
         .deactivate_employee(&auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -267,7 +281,7 @@ pub async fn search_employees(
         .pause_service
         .search_employees(&auth.tenant_id, &params.q, params.limit)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         employees.into_iter().map(EmployeeResponse::from).collect(),
     ))
@@ -277,47 +291,44 @@ pub async fn list_leave_requests(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
-) -> ApiResult<Json<Vec<LeaveRequestResponse>>> {
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<LeaveRequestResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let requests = state
+    let (requests_with_names, total) = state
         .pause_service
-        .list_leave_requests(&auth.tenant_id, limit, offset)
+        .list_leave_requests_with_names(&auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
-    // Fetch all employees in one go to avoid N+1 queries
-    let employees = state
-        .pause_service
-        .list_employees(&auth.tenant_id, 10000, 0)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let employee_map: std::collections::HashMap<Uuid, String> =
-        employees.into_iter().map(|e| (e.id, e.full_name)).collect();
-
-    let mut responses = Vec::new();
-    for r in requests {
-        let employee_name = employee_map
-            .get(&r.employee_id)
-            .cloned()
-            .unwrap_or_else(|| "Unknown".to_string());
-        responses.push(LeaveRequestResponse {
+    let items = requests_with_names
+        .into_iter()
+        .map(|(r, name)| LeaveRequestResponse {
             id: r.id,
             employee_id: r.employee_id,
-            employee_name,
-            leave_type: format!("{:?}", r.leave_type).to_lowercase(),
+            employee_name: name,
+            leave_type: serde_json::to_string(&r.leave_type)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             start_date: r.start_date,
             end_date: r.end_date,
             reason: r.reason,
-            status: format!("{:?}", r.status).to_lowercase(),
+            status: serde_json::to_string(&r.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             created_at: r.created_at.into(),
             updated_at: r.updated_at.into(),
-        });
-    }
+        })
+        .collect();
 
-    Ok(Json(responses))
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
 }
-
 
 pub async fn approve_leave(
     State(state): State<AppState>,
@@ -341,7 +352,7 @@ pub async fn approve_leave(
         .pause_service
         .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let employee = state
         .pause_service
@@ -355,11 +366,17 @@ pub async fn approve_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: format!("{:?}", request.status).to_lowercase(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };
@@ -388,7 +405,7 @@ pub async fn reject_leave(
         .pause_service
         .reject_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let employee = state
         .pause_service
@@ -402,11 +419,17 @@ pub async fn reject_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: format!("{:?}", request.status).to_lowercase(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };
@@ -435,7 +458,7 @@ pub async fn cancel_leave(
         .pause_service
         .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let employee = state
         .pause_service
@@ -449,11 +472,17 @@ pub async fn cancel_leave(
         employee_name: employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: format!("{:?}", request.leave_type).to_lowercase(),
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         start_date: request.start_date,
         end_date: request.end_date,
         reason: request.reason,
-        status: format!("{:?}", request.status).to_lowercase(),
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         created_at: request.created_at.into(),
         updated_at: request.updated_at.into(),
     };
@@ -503,7 +532,7 @@ pub async fn update_employee(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(employee.into()))
 }
@@ -537,7 +566,7 @@ pub async fn upload_document(
         .pause_service
         .upload_document(cmd, &*state.id_gen, &*state.clock)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({
         "id": doc.id,
         "file_name": doc.file_name,
@@ -560,7 +589,7 @@ pub async fn list_documents(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list = docs
         .iter()
         .map(|d| {

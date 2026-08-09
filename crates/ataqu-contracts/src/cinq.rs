@@ -3,20 +3,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ContactResponse {
-    pub id: Uuid,
-    pub name: String,
-    pub email: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DealResponse {
-    pub id: Uuid,
-    pub title: String,
-    pub amount: Decimal,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PipelineStageResponse {
     pub id: Uuid,
     pub name: String,
@@ -108,6 +94,7 @@ pub struct CreateActivityRequest {
 pub struct ListActivitiesParams {
     pub contact_id: Option<Uuid>,
     pub limit: Option<u64>,
+    pub offset: Option<u64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

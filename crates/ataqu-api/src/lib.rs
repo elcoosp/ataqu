@@ -19,6 +19,7 @@ use uuid::Uuid;
 use ataqu_application::aegis_service::AegisService;
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
+use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_application::pause_service::PauseService;
 use ataqu_application::pivot_service::PivotService;
 use ataqu_application::sond_service::SondService;
@@ -26,6 +27,8 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
+use ataqu_infra_storage::s3_service::S3Service;
 use ataqu_kernel::{Clock, IdGenerator};
 
 #[derive(Clone)]
@@ -52,7 +55,41 @@ pub struct AppState {
     pub rate_limiter: RateLimiter,
     pub metrics_handle: PrometheusHandle,
     pub sso_states: Arc<moka::sync::Cache<String, ataqu_domain_aegis::sso::SsoProvider>>,
-    pub jwt_blocklist: Arc<moka::sync::Cache<String, ()>>,
+    pub http_client: reqwest::Client,
+
+    pub health_service: Arc<ataqu_application::health_service::HealthService>,
+    pub health_cache: Arc<moka::sync::Cache<String, serde_json::Value>>,
+    pub audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+    pub s3_service: Arc<ataqu_infra_storage::s3_service::S3Service>,
+    pub idempotency_guard: Arc<dyn ataqu_application::pause_service::IdempotencyPort + Send + Sync>,
+    pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>,
+    pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
+}
+
+async fn force_attachment_middleware(req: Request, next: Next) -> Response {
+    let is_upload = req.uri().path().starts_with("/uploads/");
+    let mut resp = next.run(req).await;
+    if is_upload {
+        let headers = resp.headers_mut();
+        headers.insert("content-disposition", "attachment".parse().unwrap());
+    }
+    resp
+}
+
+async fn security_headers_middleware(req: Request, next: Next) -> Response {
+    let mut resp = next.run(req).await;
+    let headers = resp.headers_mut();
+    headers.insert("x-content-type-options", "nosniff".parse().unwrap());
+    headers.insert("x-frame-options", "DENY".parse().unwrap());
+    headers.insert(
+        "content-security-policy",
+        "default-src 'self'".parse().unwrap(),
+    );
+    headers.insert(
+        "referrer-policy",
+        "strict-origin-when-cross-origin".parse().unwrap(),
+    );
+    resp
 }
 
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
@@ -95,14 +132,21 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 
     // Check DB connection by executing a simple query
     use sea_orm::ConnectionTrait;
-    match state.db.execute_raw(sea_orm::Statement::from_string(
-        sea_orm::DbBackend::Postgres,
-        "SELECT 1",
-    )).await {
+    match state
+        .db
+        .execute_raw(sea_orm::Statement::from_string(
+            sea_orm::DbBackend::Postgres,
+            "SELECT 1",
+        ))
+        .await
+    {
         Ok(_) => (axum::http::StatusCode::OK, "ready"),
         Err(e) => {
             tracing::error!(error = %e, "Readiness check DB query failed");
-            (axum::http::StatusCode::SERVICE_UNAVAILABLE, "database unavailable")
+            (
+                axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                "database unavailable",
+            )
         }
     }
 }
@@ -124,12 +168,10 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", handlers::tempo::public_routes())
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
+        .nest("/api/aegis", handlers::aegis::public_routes())
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            crate::middleware::csrf::csrf_middleware,
         ))
         .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
@@ -155,6 +197,8 @@ pub fn create_router(state: AppState) -> Router {
             "/api/search",
             axum::routing::get(handlers::search::unified_search),
         )
+        .route("/metrics", axum::routing::get(metrics_handler))
+        .route("/admin/health", axum::routing::get(health_check))
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
@@ -166,6 +210,7 @@ pub fn create_router(state: AppState) -> Router {
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
         ))
+        .layer(axum::middleware::from_fn(security_headers_middleware))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             crate::middleware::auth::auth_middleware,
@@ -180,8 +225,8 @@ pub fn create_router(state: AppState) -> Router {
         .with_state(state.clone());
 
     let default_router = Router::new()
+        .layer(axum::middleware::from_fn(force_attachment_middleware))
         .route("/health", axum::routing::get(health_check))
-        .route("/metrics", axum::routing::get(metrics_handler))
         .route("/ready", axum::routing::get(readiness_check))
         .merge(public_routes)
         .merge(private_routes)

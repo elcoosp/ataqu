@@ -1,9 +1,12 @@
 pub mod aegis;
+pub mod changelog;
 pub mod cinq;
 pub mod dial;
 pub mod dial_ws;
 pub mod email_tracking;
 pub mod gdpr;
+pub mod health;
+pub mod onboarding;
 pub mod pause;
 pub mod pivot;
 pub mod search;

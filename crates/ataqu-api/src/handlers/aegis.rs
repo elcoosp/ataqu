@@ -132,7 +132,7 @@ pub async fn mfa_verify(
         .verify_mfa(auth.user_id, &req.code)
         .await
         .map_err(map_aegis_error)?;
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Deserialize)]
@@ -164,7 +164,7 @@ fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
         MfaSetupFailed(msg) => ApiResponseError::validation(&msg),
         Database(msg) => ApiResponseError::internal(&msg),
         Outbox(msg) => ApiResponseError::internal(&msg),
-        Domain(e) => ApiResponseError::internal(&e.to_string()),
+        Domain(_e) => ApiResponseError::internal("An unexpected error occurred"),
         NotFound(msg) => ApiResponseError::not_found(&msg),
         Conflict(msg) => ApiResponseError::conflict(&msg),
         MfaRequired => ApiResponseError::unauthorized("MFA required"),
@@ -248,7 +248,7 @@ pub async fn sso_callback(
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
 
-    let client = reqwest::Client::new();
+    let client = state.http_client.clone();
     let email_str = match provider {
         ataqu_domain_aegis::sso::SsoProvider::Google => {
             let token_url = "https://oauth2.googleapis.com/token";
@@ -419,6 +419,12 @@ pub async fn update_user_role(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateRoleRequest>,
 ) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+
     let if_match = headers
         .get(axum::http::header::IF_MATCH)
         .and_then(|v| v.to_str().ok())
@@ -427,17 +433,12 @@ pub async fn update_user_role(
             ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
         })?;
 
-    if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden(
-            "Admin access required".to_string(),
-        ));
-    }
     if !["admin", "member", "viewer"].contains(&req.role.as_str()) {
         return Err(ApiResponseError::validation("Invalid role"));
     }
     state
         .aegis_service
-        .update_user_role(user_id, req.role, if_match)
+        .update_user_role(auth.tenant_id, user_id, req.role, if_match)
         .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::OK)
@@ -455,25 +456,28 @@ pub async fn deactivate_user(
     }
     state
         .aegis_service
-        .deactivate_user(user_id)
+        .deactivate_user(auth.tenant_id, user_id)
         .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// SECURITY NOTE: The JWT blocklist is in-memory (moka cache). On server restart,
+/// all revoked tokens become valid again until their TTL expires.
+/// [VULN-002] For production, this should be replaced with a Redis-backed blocklist.
 pub async fn logout(
     State(state): State<AppState>,
     auth: AuthContext,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> ApiResult<StatusCode> {
-    if let Some(auth_header) = headers
-        .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| s.strip_prefix("Bearer "))
-    {
-        state.jwt_blocklist.insert(auth_header.to_string(), ());
-    }
-    let _ = state.aegis_service.logout(&auth.user_id.to_string()).await;
+    // [VULN-006] Durable revocation: increment user version to invalidate all existing tokens.
+    // This is checked against the DB on every request, so it's immediate and survives restarts.
+    state
+        .aegis_service
+        .increment_user_version(auth.user_id)
+        .await
+        .map_err(map_aegis_error)?;
+
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -488,7 +492,12 @@ pub async fn create_api_key(
     State(state): State<AppState>,
     auth: AuthContext,
     Json(req): Json<CreateApiKeyRequest>,
-) -> ApiResult<Json<serde_json::Value>> {
+) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
     let scopes = req.scopes.unwrap_or_default();
     for scope in &scopes {
         if !["read", "write", "admin"].contains(&scope.as_str()) {
@@ -507,13 +516,16 @@ pub async fn create_api_key(
         )
         .await
         .map_err(map_aegis_error)?;
-    Ok(Json(serde_json::json!({
-        "id": key.id,
-        "name": key.name,
-        "key": key.key,
-        "prefix": key.prefix,
-        "scopes": key.scopes,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "id": key.id,
+            "name": key.name,
+            "key": key.key,
+            "prefix": key.prefix,
+            "scopes": key.scopes,
+        })),
+    ))
 }
 
 pub async fn list_api_keys(
@@ -567,7 +579,7 @@ pub async fn request_password_reset(
         .request_password_reset(email)
         .await
         .map_err(map_aegis_error)?;
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Deserialize)]
@@ -585,7 +597,7 @@ pub async fn reset_password(
         .reset_password(&req.token, req.new_password)
         .await
         .map_err(map_aegis_error)?;
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {
@@ -596,13 +608,18 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/users/:id/deactivate", post(deactivate_user))
         .route("/logout", post(logout))
         .route("/login", post(login))
-        .route("/sso/login", post(sso_login))
-        .route("/sso/callback", post(sso_callback))
         .route("/refresh", post(refresh_token))
         .route("/mfa/setup", post(mfa_setup))
         .route("/mfa/verify", post(mfa_verify))
         .route("/api-keys", post(create_api_key).get(list_api_keys))
         .route("/api-keys/:id", delete(delete_api_key))
+}
+
+pub fn public_routes() -> axum::Router<crate::AppState> {
+    use axum::routing::post;
+    axum::Router::new()
         .route("/password-reset/request", post(request_password_reset))
         .route("/password-reset/confirm", post(reset_password))
+        .route("/sso/login", post(sso_login))
+        .route("/sso/callback", post(sso_callback))
 }

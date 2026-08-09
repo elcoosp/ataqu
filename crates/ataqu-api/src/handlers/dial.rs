@@ -103,7 +103,7 @@ pub async fn create_channel(
         .dial_service
         .create_channel(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -125,12 +125,11 @@ pub async fn list_channels(
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ChannelResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let channels = state
+    let (channels, total) = state
         .dial_service
-        .list_channels(auth.tenant_id, limit, offset)
+        .list_channels(auth.tenant_id, auth.user_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = channels.len() as u64 + offset;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let items = channels.into_iter().map(|c| c.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -183,9 +182,9 @@ pub async fn archive_channel(
 ) -> ApiResult<StatusCode> {
     state
         .dial_service
-        .archive_channel(auth.tenant_id, id)
+        .archive_channel(auth.tenant_id, auth.user_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     // Broadcast archive event to WebSocket subscribers
     let key = (auth.tenant_id.as_uuid(), id);
@@ -225,9 +224,9 @@ pub async fn update_channel(
 
     let channel = state
         .dial_service
-        .update_channel(auth.tenant_id, id, payload.name, if_match)
+        .update_channel(auth.tenant_id, auth.user_id, id, payload.name, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(channel.into()))
 }
 
@@ -253,7 +252,7 @@ pub async fn send_message(
         .dial_service
         .send_message(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     // Broadcast to WebSocket subscribers
     let key = (auth.tenant_id.as_uuid(), channel_id);
@@ -263,7 +262,7 @@ pub async fn send_message(
         "channel_id": msg.channel_id.as_uuid(),
         "author_id": msg.author_id.as_uuid(),
         "content": msg.content,
-        "created_at": msg.created_at,
+        "created_at": chrono::DateTime::<chrono::Utc>::from(msg.created_at).to_rfc3339(),
     })
     .to_string();
     if let Some(subscribers) = state.ws_registry.get(&key) {
@@ -289,7 +288,7 @@ pub async fn list_messages(
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<MessageResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let msgs = state
+    let (msgs, total) = state
         .dial_service
         .list_messages(auth.tenant_id, channel_id, auth.user_id, limit, offset)
         .await
@@ -297,9 +296,8 @@ pub async fn list_messages(
             ataqu_application::dial_service::DialServiceError::Validation(msg) => {
                 ApiResponseError::Forbidden(msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
-    let total = msgs.len() as u64 + offset;
     let items = msgs.into_iter().map(|m| m.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -318,7 +316,7 @@ pub async fn export_channel(
         .dial_service
         .export_channel_messages(auth.tenant_id, channel_id, auth.user_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     Ok((
         StatusCode::OK,
@@ -354,9 +352,15 @@ pub async fn edit_message(
         })?;
     let edited = state
         .dial_service
-        .edit_message(auth.tenant_id, message_id, auth.user_id, payload.content, if_match)
+        .edit_message(
+            auth.tenant_id,
+            message_id,
+            auth.user_id,
+            payload.content,
+            if_match,
+        )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let key = (auth.tenant_id.as_uuid(), edited.channel_id.as_uuid());
     let broadcast = serde_json::json!({
@@ -364,7 +368,7 @@ pub async fn edit_message(
         "id": edited.id.as_uuid(),
         "channel_id": edited.channel_id.as_uuid(),
         "content": edited.content,
-        "edited_at": edited.edited_at,
+        "edited_at": edited.edited_at.map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()),
     })
     .to_string();
     if let Some(subscribers) = state.ws_registry.get(&key) {
@@ -391,7 +395,7 @@ pub async fn delete_message(
         .dial_service
         .delete_message(auth.tenant_id, message_id, auth.user_id, is_moderator)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     if let Some(m) = msg {
         let key = (auth.tenant_id.as_uuid(), m.channel_id.as_uuid());
@@ -431,7 +435,7 @@ pub async fn start_thread(
         .dial_service
         .start_thread(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({
         "id": thread.id,
         "channel_id": thread.channel_id,
@@ -467,7 +471,7 @@ pub async fn list_thread_messages(
         .dial_service
         .list_thread_messages(auth.tenant_id, thread_id, 100, 0)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
 }
 
@@ -486,7 +490,7 @@ pub async fn add_mention(
         .dial_service
         .add_mention(auth.tenant_id, payload.message_id, payload.user_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({
         "id": mention.id,
         "message_id": mention.message_id,
@@ -503,7 +507,7 @@ pub async fn list_mentions(
         .dial_service
         .list_mentions(auth.tenant_id, auth.user_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list: Vec<_> = mentions
         .into_iter()
         .map(|m| {
@@ -527,7 +531,7 @@ pub async fn mark_mention_read(
         .dial_service
         .mark_mention_as_read(auth.tenant_id, mention_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -539,7 +543,7 @@ pub async fn get_online_users(
         .dial_service
         .get_online_users(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({ "online_users": users })))
 }
 
@@ -561,9 +565,9 @@ pub async fn search_messages(
         .unwrap_or(0);
     let messages = state
         .dial_service
-        .search_messages(auth.tenant_id, query, limit, offset)
+        .search_messages(auth.tenant_id, auth.user_id, query, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list: Vec<MessageResponse> = messages.into_iter().map(MessageResponse::from).collect();
     Ok(Json(serde_json::json!({ "messages": list })))
 }
@@ -584,7 +588,7 @@ pub async fn add_reaction(
         .dial_service
         .add_reaction(auth.tenant_id, message_id, auth.user_id, payload.emoji)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let msg = state
         .dial_service
@@ -625,7 +629,7 @@ pub async fn list_reactions(
         .dial_service
         .list_reactions(auth.tenant_id, message_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let list = reactions
         .into_iter()
         .map(|r| {
@@ -644,33 +648,20 @@ pub async fn delete_reaction(
     auth: AuthContext,
     Path((message_id, reaction_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResult<StatusCode> {
-    // Fetch reaction to verify ownership
-    let reactions = state
-        .dial_service
-        .list_reactions(auth.tenant_id, message_id)
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-
-    let reaction = reactions
-        .iter()
-        .find(|r| r.id == reaction_id)
-        .ok_or_else(|| ApiResponseError::not_found("Reaction not found"))?;
-
-    if reaction.user_id.as_uuid() != auth.user_id {
-        return Err(ApiResponseError::Forbidden(
-            "Cannot delete another user's reaction".to_string(),
-        ));
-    }
-
+    // Ownership and existence are checked in the service layer
     state
         .dial_service
-        .delete_reaction(auth.tenant_id, message_id, reaction_id)
+        .delete_reaction(auth.tenant_id, auth.user_id, message_id, reaction_id)
         .await
         .map_err(|e| match e {
             ataqu_application::dial_service::DialServiceError::Validation(msg) => {
-                ApiResponseError::validation(&msg)
+                if msg.contains("not found") {
+                    ApiResponseError::not_found(&msg)
+                } else {
+                    ApiResponseError::validation(&msg)
+                }
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }

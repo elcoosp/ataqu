@@ -67,7 +67,7 @@ pub struct DealResponse {
     pub id: Uuid,
     pub title: String,
     pub amount: Decimal,
-    pub status: DealStatus,
+    pub status: String,
     pub contact_id: Uuid,
     pub pipeline_stage_id: Uuid,
     pub owner_id: Option<Uuid>,
@@ -84,7 +84,10 @@ impl From<Deal> for DealResponse {
             id: d.id,
             title: d.title,
             amount: d.amount,
-            status: d.status,
+            status: serde_json::to_string(&d.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             contact_id: d.contact_id,
             pipeline_stage_id: d.pipeline_stage_id,
             owner_id: d.owner_id,
@@ -118,7 +121,7 @@ pub async fn create_contact(
         .cinq_service
         .create_contact(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -142,7 +145,7 @@ pub async fn list_contacts(
         .cinq_service
         .list_contacts(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     let items = contacts.into_iter().map(ContactResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
@@ -235,7 +238,7 @@ pub async fn update_contact(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(ContactResponse::from(contact)))
 }
@@ -253,7 +256,7 @@ pub async fn delete_contact(
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
                 ApiResponseError::not_found("Contact not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -272,7 +275,7 @@ pub async fn bulk_delete_contacts(
         .cinq_service
         .bulk_delete_contacts(auth.tenant_id, payload.ids)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -289,7 +292,7 @@ pub async fn create_deal(
             ataqu_application::cinq_service::CinqServiceError::PipelineStageNotFound => {
                 ApiResponseError::validation("Invalid pipeline_stage_id")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
 
     let cmd = CreateDealCommand {
@@ -308,7 +311,7 @@ pub async fn create_deal(
         .cinq_service
         .create_deal(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -324,12 +327,11 @@ pub async fn list_deals(
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<DealResponse>>> {
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
-    let deals = state
+    let (deals, total) = state
         .cinq_service
         .list_deals(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = deals.len() as u64 + offset;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let items = deals.into_iter().map(DealResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -419,7 +421,7 @@ pub async fn update_deal(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(DealResponse::from(deal)))
 }
@@ -437,7 +439,7 @@ pub async fn delete_deal(
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
                 ApiResponseError::not_found("Deal not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -450,7 +452,7 @@ pub async fn list_pipeline_stages(
         .cinq_service
         .list_pipeline_stages(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         stages
             .into_iter()
@@ -477,7 +479,7 @@ pub async fn create_pipeline_stage(
         .cinq_service
         .create_pipeline_stage(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
         StatusCode::CREATED,
         Json(PipelineStageResponse {
@@ -506,7 +508,7 @@ pub async fn update_pipeline_stage(
         .cinq_service
         .update_pipeline_stage(auth.tenant_id, id, payload.name, payload.order, if_match)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(PipelineStageResponse {
         id: stage.id,
         name: stage.name,
@@ -523,7 +525,7 @@ pub async fn delete_pipeline_stage(
         .cinq_service
         .delete_pipeline_stage(auth.tenant_id, id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -552,12 +554,15 @@ pub async fn create_activity(
         .cinq_service
         .create_activity(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
         StatusCode::CREATED,
         Json(ActivityResponse {
             id: activity.id,
-            activity_type: format!("{:?}", activity.activity_type).to_lowercase(),
+            activity_type: serde_json::to_string(&activity.activity_type)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             description: activity.description,
             scheduled_at: activity.scheduled_at,
             contact_id: activity.contact_id,
@@ -573,20 +578,20 @@ pub async fn list_activities(
     Query(params): Query<ListActivitiesParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ActivityResponse>>> {
     let limit = params.limit.unwrap_or(100);
-    let activities = if let Some(contact_id) = params.contact_id {
+    let offset = params.offset.unwrap_or(0);
+    let (activities, total) = if let Some(contact_id) = params.contact_id {
         state
             .cinq_service
-            .list_activities_for_contact(auth.tenant_id, contact_id, limit, 0)
+            .list_activities_for_contact(auth.tenant_id, contact_id, limit, offset)
             .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?
     } else {
         state
             .cinq_service
-            .list_all_activities(auth.tenant_id, limit, 0)
+            .list_all_activities(auth.tenant_id, limit, offset)
             .await
-            .map_err(|e| ApiResponseError::internal(&e.to_string()))?
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?
     };
-    let total = activities.len() as u64 + 0;
     let items = activities
         .into_iter()
         .map(|a| ActivityResponse {
@@ -603,7 +608,7 @@ pub async fn list_activities(
         items,
         total,
         limit,
-        offset: 0,
+        offset,
     }))
 }
 
@@ -619,7 +624,10 @@ pub async fn get_activity(
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     Ok(Json(ActivityResponse {
         id: activity.id,
-        activity_type: format!("{:?}", activity.activity_type).to_lowercase(),
+        activity_type: serde_json::to_string(&activity.activity_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
         description: activity.description,
         scheduled_at: activity.scheduled_at,
         contact_id: activity.contact_id,
@@ -637,7 +645,7 @@ pub async fn search_contacts(
         .cinq_service
         .search_contacts(auth.tenant_id, &params.q, params.limit.unwrap_or(20))
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -662,7 +670,7 @@ pub async fn search_by_custom_field(
             serde_json::json!(params.value),
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -689,7 +697,7 @@ pub async fn search_custom_fields_cross(
         .cinq_service
         .search_custom_fields_cross(auth.tenant_id, &params.q, limit)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -705,8 +713,17 @@ pub struct ImportCsvResultDetailed {
 pub async fn import_csv(
     State(state): State<AppState>,
     auth: AuthContext,
+    headers: axum::http::HeaderMap,
     body: String,
 ) -> ApiResult<Json<ImportCsvResultDetailed>> {
+    // Enforce Idempotency-Key for CSV imports
+    let _command_id = headers
+        .get("Idempotency-Key")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| uuid::Uuid::parse_str(s).ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Idempotency-Key header required".to_string())
+        })?;
     if body.len() > 5 * 1024 * 1024 {
         return Err(ApiResponseError::validation("CSV file too large (max 5MB)"));
     }
@@ -730,7 +747,7 @@ pub async fn import_csv(
         .cinq_service
         .import_contacts(auth.tenant_id, rows)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     Ok(Json(ImportCsvResultDetailed {
         imported,
@@ -747,7 +764,7 @@ pub async fn export_csv(
         .cinq_service
         .export_contacts(auth.tenant_id)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
     Ok((
         StatusCode::OK,
@@ -796,7 +813,10 @@ impl From<ataqu_domain_cinq::task::Task> for TaskResponse {
             title: t.title,
             description: t.description,
             due_date: t.due_date,
-            status: format!("{:?}", t.status).to_lowercase(),
+            status: serde_json::to_string(&t.status)
+                .unwrap_or_default()
+                .trim_matches('"')
+                .to_string(),
             created_at: t.created_at,
             updated_at: t.updated_at,
         }
@@ -821,7 +841,7 @@ pub async fn create_task(
         .cinq_service
         .create_task(cmd)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -841,7 +861,7 @@ pub async fn list_tasks(
         .cinq_service
         .list_tasks(auth.tenant_id, limit, offset)
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
 
@@ -859,7 +879,7 @@ pub async fn get_task(
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
                 ApiResponseError::not_found("Task not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     let etag = format!("\"{}\"", task.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
@@ -933,7 +953,7 @@ pub async fn update_task(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(Json(task.into()))
 }
@@ -951,7 +971,7 @@ pub async fn delete_task(
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
                 ApiResponseError::not_found("Task not found")
             }
-            _ => ApiResponseError::internal(&e.to_string()),
+            _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -971,7 +991,7 @@ pub async fn list_contact_tasks(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
 

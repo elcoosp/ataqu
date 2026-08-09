@@ -5,7 +5,7 @@ use axum::extract::{FromRequestParts, Request, State};
 use axum::http::request::Parts;
 use axum::middleware::Next;
 use axum::response::Response;
-use jsonwebtoken::{DecodingKey, Validation, decode};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -18,6 +18,7 @@ pub struct JwtClaims {
     pub exp: usize,
     pub iat: usize,
     pub token_type: String,
+    pub token_version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -62,20 +63,51 @@ pub async fn auth_middleware(
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.strip_prefix("Bearer "))
     {
-        if app_state.jwt_blocklist.contains_key(auth_header) {
-            return Err(ApiResponseError::unauthorized("Token has been revoked"));
-        }
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.validate_exp = true;
 
         if let Ok(token_data) = decode::<JwtClaims>(
             auth_header,
             &DecodingKey::from_secret(&app_state.jwt_secret),
-            &Validation::default(),
+            &validation,
         ) {
             if token_data.claims.token_type != "access" {
+                metrics::counter!("ataqu_auth_failures_total", "reason" => "invalid_token_type")
+                    .increment(1);
                 return Err(ApiResponseError::unauthorized("Invalid token type"));
             }
+
             let user_id = Uuid::parse_str(&token_data.claims.sub)
                 .map_err(|_| ApiResponseError::unauthorized("Invalid user ID in token"))?;
+
+            // [VULN-006] Fetch user directly from DB for durable revocation and active check
+            let user = app_state
+                .aegis_service
+                .find_user_by_id(user_id)
+                .await
+                .map_err(|_| {
+                    metrics::counter!("ataqu_auth_failures_total", "reason" => "user_fetch_error")
+                        .increment(1);
+                    ApiResponseError::unauthorized("Invalid user")
+                })?
+                .ok_or_else(|| {
+                    metrics::counter!("ataqu_auth_failures_total", "reason" => "user_not_found")
+                        .increment(1);
+                    ApiResponseError::unauthorized("User not found")
+                })?;
+
+            if !user.is_active {
+                metrics::counter!("ataqu_auth_failures_total", "reason" => "user_inactive")
+                    .increment(1);
+                return Err(ApiResponseError::unauthorized("User is not active"));
+            }
+
+            if token_data.claims.token_version != user.version {
+                metrics::counter!("ataqu_auth_failures_total", "reason" => "version_mismatch")
+                    .increment(1);
+                return Err(ApiResponseError::unauthorized("Token version mismatch"));
+            }
+
             let auth_ctx = AuthContext {
                 user_id,
                 tenant_id: TenantId::new(token_data.claims.tenant_id),
@@ -84,6 +116,8 @@ pub async fn auth_middleware(
             };
             req.extensions_mut().insert(auth_ctx);
             return Ok(next.run(req).await);
+        } else {
+            metrics::counter!("ataqu_auth_failures_total", "reason" => "invalid_jwt").increment(1);
         }
     }
 
@@ -97,6 +131,8 @@ pub async fn auth_middleware(
                     .iter()
                     .any(|s| s == "write" || s == "admin")
             {
+                metrics::counter!("ataqu_auth_failures_total", "reason" => "api_key_missing_write")
+                    .increment(1);
                 return Err(ApiResponseError::Forbidden(
                     "API key lacks write scope".to_string(),
                 ));
@@ -107,6 +143,8 @@ pub async fn auth_middleware(
                     .iter()
                     .any(|s| s == "read" || s == "write" || s == "admin")
             {
+                metrics::counter!("ataqu_auth_failures_total", "reason" => "api_key_missing_read")
+                    .increment(1);
                 return Err(ApiResponseError::Forbidden(
                     "API key lacks read scope".to_string(),
                 ));
@@ -127,12 +165,17 @@ pub async fn auth_middleware(
                 || path.starts_with("/api/aegis/users/")
                 || path.ends_with("/deactivate");
             if is_admin_endpoint && !api_key_data.scopes.iter().any(|s| s == "admin") {
+                metrics::counter!("ataqu_auth_failures_total", "reason" => "api_key_missing_admin")
+                    .increment(1);
                 return Err(ApiResponseError::Forbidden(
                     "API key lacks admin scope for this endpoint".to_string(),
                 ));
             }
 
             return Ok(next.run(req).await);
+        } else {
+            metrics::counter!("ataqu_auth_failures_total", "reason" => "invalid_api_key")
+                .increment(1);
         }
     }
 

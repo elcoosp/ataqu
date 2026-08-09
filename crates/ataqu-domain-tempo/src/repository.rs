@@ -21,6 +21,8 @@ pub trait TempoRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Booking>, RepositoryError>;
+
+    async fn count_bookings(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError>;
     async fn update_booking_status(
         &self,
         tenant_id: &TenantId,
@@ -58,11 +60,22 @@ pub trait TempoRepository: Send + Sync {
         &self,
         tenant_id: &TenantId,
     ) -> Result<Vec<EventType>, RepositoryError>;
+
+    async fn count_event_types(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError>;
     async fn find_event_type_by_slug(
         &self,
         tenant_id: &TenantId,
         slug: &str,
     ) -> Result<Option<EventType>, RepositoryError>;
+
+    async fn find_event_type_by_id(
+        &self,
+        _tenant_id: &TenantId,
+        _id: Uuid,
+    ) -> Result<Option<EventType>, RepositoryError> {
+        Ok(None)
+    }
+
     async fn update_event_type(&self, event_type: &EventType) -> Result<(), RepositoryError>;
     async fn delete_event_type(
         &self,
@@ -89,4 +102,13 @@ pub trait TempoRepository: Send + Sync {
         tenant_id: &TenantId,
         slot_id: Uuid,
     ) -> Result<(), RepositoryError>;
+
+    async fn update_booking_version(
+        &self,
+        _tenant_id: &TenantId,
+        _booking_id: &BookingId,
+        _version: i32,
+    ) -> Result<(), RepositoryError> {
+        Ok(())
+    }
 }

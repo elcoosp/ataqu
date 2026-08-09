@@ -116,10 +116,18 @@ fn domain_to_active(user: &User) -> user_entity::ActiveModel {
 
 #[async_trait]
 impl AuthRepository for AegisUserRepository {
-    async fn find_by_email(&self, email: &Email) -> Result<Option<User>, AuthError> {
+    async fn find_by_email(
+        &self,
+        email: &Email,
+        tenant_id: Option<TenantId>,
+    ) -> Result<Option<User>, AuthError> {
         let email_str = email.reveal(&ataqu_security::PiiAccessKey::new());
-        let model = user_entity::Entity::find()
-            .filter(user_entity::Column::Email.eq(email_str))
+        let mut query =
+            user_entity::Entity::find().filter(user_entity::Column::Email.eq(email_str));
+        if let Some(tid) = tenant_id {
+            query = query.filter(user_entity::Column::TenantId.eq(tid.as_uuid()));
+        }
+        let model = query
             .one(&self.db)
             .await
             .map_err(|e| AuthError::Database(e.to_string()))?;
@@ -205,31 +213,6 @@ impl AuthRepository for AegisUserRepository {
         Ok(())
     }
 
-    async fn find_api_key_by_hash(&self, hash: &str) -> Result<Option<ApiKey>, AuthError> {
-        let model = api_key_entity::Entity::find()
-            .filter(api_key_entity::Column::KeyHash.eq(hash))
-            .one(&self.db)
-            .await
-            .map_err(|e| AuthError::Database(e.to_string()))?;
-
-        if let Some(m) = model {
-            Ok(Some(ApiKey {
-                id: m.id,
-                tenant_id: TenantId::new(m.tenant_id),
-                user_id: m.user_id,
-                name: m.name,
-                key_hash: m.key_hash,
-                prefix: m.prefix,
-                scopes: m.scopes,
-                last_used_at: m.last_used_at.map(|t| t.into()),
-                expires_at: m.expires_at.map(|t| t.into()),
-                created_at: m.created_at.into(),
-            }))
-        } else {
-            Ok(None)
-        }
-    }
-
     async fn list_api_keys(
         &self,
         tenant_id: Uuid,
@@ -289,5 +272,28 @@ impl AuthRepository for AegisUserRepository {
                 .map_err(|e| AuthError::Database(e.to_string()))?;
         }
         Ok(())
+    }
+
+    async fn find_api_keys_by_prefix_global(&self, prefix: &str) -> Result<Vec<ApiKey>, AuthError> {
+        let models = api_key_entity::Entity::find()
+            .filter(api_key_entity::Column::Prefix.eq(prefix))
+            .all(&self.db)
+            .await
+            .map_err(|e| AuthError::Database(e.to_string()))?;
+        Ok(models
+            .into_iter()
+            .map(|m| ApiKey {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                user_id: m.user_id,
+                name: m.name,
+                key_hash: m.key_hash,
+                prefix: m.prefix,
+                scopes: m.scopes,
+                last_used_at: m.last_used_at.map(|t| t.into()),
+                expires_at: m.expires_at.map(|t| t.into()),
+                created_at: m.created_at.into(),
+            })
+            .collect())
     }
 }

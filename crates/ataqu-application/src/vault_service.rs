@@ -62,7 +62,7 @@ pub struct UpdateVariantCommand {
 #[derive(Debug, Clone)]
 pub struct BulkStockAdjustCommand {
     pub tenant_id: TenantId,
-    pub adjustments: Vec<(Uuid, i64)>,
+    pub adjustments: Vec<(Uuid, i64, i32)>, // (variant_id, delta, expected_version)
     pub reason: String,
 }
 
@@ -215,11 +215,18 @@ impl VaultService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> VaultResult<Vec<Product>> {
-        self.repo
+    ) -> VaultResult<(Vec<Product>, u64)> {
+        let total = self
+            .repo
+            .count_products(&tenant_id)
+            .await
+            .map_err(VaultServiceError::Repository)?;
+        let products = self
+            .repo
             .list_products(&tenant_id, limit, offset)
             .await
-            .map_err(VaultServiceError::Repository)
+            .map_err(VaultServiceError::Repository)?;
+        Ok((products, total))
     }
 
     pub async fn create_variant(&self, cmd: CreateVariantCommand) -> VaultResult<Variant> {
@@ -343,13 +350,26 @@ impl VaultService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> VaultResult<Vec<Variant>> {
-        self.repo
+    ) -> VaultResult<(Vec<Variant>, u64)> {
+        let total = self
+            .repo
+            .count_variants(&tenant_id)
+            .await
+            .map_err(VaultServiceError::Repository)?;
+        let variants = self
+            .repo
             .list_variants(&tenant_id, limit, offset)
             .await
-            .map_err(VaultServiceError::Repository)
+            .map_err(VaultServiceError::Repository)?;
+        Ok((variants, total))
     }
 
+    /// Note: This operation should be wrapped in a DB transaction to ensure atomicity
+    /// between the variant save and the movement save. The current repo trait doesn't
+    /// expose transaction support, so this is a known limitation.
+    /// NOTE: This operation should be wrapped in a DB transaction to ensure atomicity
+    /// between the variant save and the movement save. The current repo trait doesn't
+    /// expose transaction support, so this is a known limitation.
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
 
@@ -430,8 +450,14 @@ impl VaultService {
         cmd: BulkStockAdjustCommand,
     ) -> VaultResult<Vec<Variant>> {
         let mut updated_variants = Vec::new();
-        for (variant_id, delta) in cmd.adjustments {
+        for (variant_id, delta, expected_version) in cmd.adjustments {
             let variant = self.get_variant(cmd.tenant_id, variant_id).await?;
+            if variant.version != expected_version {
+                return Err(VaultServiceError::Validation(format!(
+                    "Version mismatch for variant {}: expected {}, found {}",
+                    variant_id, expected_version, variant.version
+                )));
+            }
             let new_variant = variant.adjust_stock(delta, self.clock.as_ref())?;
             self.repo
                 .save_variant(&new_variant)
@@ -530,10 +556,11 @@ impl VaultService {
     }
 
     pub async fn update_warehouse(&self, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
-        let warehouses = self.list_warehouses(cmd.tenant_id).await?;
-        let mut warehouse = warehouses
-            .into_iter()
-            .find(|w| w.id == cmd.id)
+        let mut warehouse = self
+            .repo
+            .get_warehouse_by_id(&cmd.tenant_id, cmd.id)
+            .await
+            .map_err(VaultServiceError::Repository)?
             .ok_or(VaultServiceError::WarehouseNotFound)?;
 
         if let Some(name) = cmd.name {

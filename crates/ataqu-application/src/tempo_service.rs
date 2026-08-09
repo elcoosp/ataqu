@@ -29,6 +29,7 @@ pub struct UpdateBookingStatusCommand {
     pub tenant_id: TenantId,
     pub booking_id: Uuid,
     pub status: BookingStatus,
+    pub expected_version: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -225,11 +226,18 @@ impl TempoService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> TempoResult<Vec<Booking>> {
-        self.repo
+    ) -> TempoResult<(Vec<Booking>, u64)> {
+        let total = self
+            .repo
+            .count_bookings(&tenant_id)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        let bookings = self
+            .repo
             .list_bookings(&tenant_id, limit, offset)
             .await
-            .map_err(TempoServiceError::Repository)
+            .map_err(TempoServiceError::Repository)?;
+        Ok((bookings, total))
     }
 
     pub async fn update_booking_status(
@@ -243,6 +251,13 @@ impl TempoService {
             .await
             .map_err(TempoServiceError::Repository)?
             .ok_or(TempoServiceError::BookingNotFound)?;
+
+        if booking.version != cmd.expected_version {
+            return Err(TempoServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                cmd.expected_version, booking.version
+            )));
+        }
 
         match (&booking.status, &cmd.status) {
             (BookingStatus::Cancelled, _) | (_, BookingStatus::Cancelled) => {
@@ -275,7 +290,13 @@ impl TempoService {
             .update_booking_status(&cmd.tenant_id, &booking_id, cmd.status.clone())
             .await
             .map_err(TempoServiceError::Repository)?;
-        self.get_booking(cmd.tenant_id, cmd.booking_id).await
+        let mut updated_booking = self.get_booking(cmd.tenant_id, cmd.booking_id).await?;
+        updated_booking.version += 1;
+        self.repo
+            .update_booking_version(&cmd.tenant_id, &booking_id, updated_booking.version)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        Ok(updated_booking)
     }
 
     pub async fn no_show_worker(&self, tenant_id: TenantId) -> TempoResult<Vec<Uuid>> {
@@ -369,11 +390,21 @@ impl TempoService {
         Ok(event_type)
     }
 
-    pub async fn list_event_types(&self, tenant_id: TenantId) -> TempoResult<Vec<EventType>> {
-        self.repo
+    pub async fn list_event_types(
+        &self,
+        tenant_id: TenantId,
+    ) -> TempoResult<(Vec<EventType>, u64)> {
+        let total = self
+            .repo
+            .count_event_types(&tenant_id)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        let event_types = self
+            .repo
             .list_event_types(&tenant_id)
             .await
-            .map_err(TempoServiceError::Repository)
+            .map_err(TempoServiceError::Repository)?;
+        Ok((event_types, total))
     }
 
     pub async fn get_event_type_by_slug(
@@ -397,11 +428,9 @@ impl TempoService {
     ) -> TempoResult<EventType> {
         let mut event_type = self
             .repo
-            .list_event_types(&cmd.tenant_id)
+            .find_event_type_by_id(&cmd.tenant_id, cmd.id)
             .await
             .map_err(TempoServiceError::Repository)?
-            .into_iter()
-            .find(|et| et.id.0 == cmd.id)
             .ok_or(TempoServiceError::EventTypeNotFound)?;
 
         if event_type.version != expected_version {
@@ -487,6 +516,7 @@ impl TempoService {
         tenant_id: TenantId,
         booking_id: Uuid,
         new_starts_at: DateTime<Utc>,
+        expected_version: i32,
     ) -> TempoResult<Booking> {
         let booking_id_obj = BookingId(booking_id);
         let mut booking = self
@@ -496,10 +526,23 @@ impl TempoService {
             .map_err(TempoServiceError::Repository)?
             .ok_or(TempoServiceError::BookingNotFound)?;
 
+        if booking.version != expected_version {
+            return Err(TempoServiceError::Validation(format!(
+                "Version mismatch: expected {}, found {}",
+                expected_version, booking.version
+            )));
+        }
+
         tempo_domain::reschedule_booking(&mut booking, new_starts_at.into());
+        booking.version += 1;
 
         self.repo
             .reschedule_booking(&tenant_id, &booking_id_obj, booking.starts_at.into())
+            .await
+            .map_err(TempoServiceError::Repository)?;
+
+        self.repo
+            .update_booking_version(&tenant_id, &booking_id_obj, booking.version)
             .await
             .map_err(TempoServiceError::Repository)?;
 
@@ -531,9 +574,16 @@ impl TempoService {
         });
 
         self.outbox
-            .append("collab_crm", "TempoInviteeCreated", Uuid::new_v4(), &contact_payload)
+            .append(
+                "collab_crm",
+                "TempoInviteeCreated",
+                Uuid::new_v4(),
+                &contact_payload,
+            )
             .await
-            .map_err(|e| TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e)))?;
+            .map_err(|e| {
+                TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
 
         let cmd = CreateBookingCommand {
             tenant_id,

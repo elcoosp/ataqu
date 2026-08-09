@@ -33,7 +33,11 @@ pub async fn ws_handler(
     let token_data = jsonwebtoken::decode::<crate::middleware::auth::JwtClaims>(
         token,
         &jsonwebtoken::DecodingKey::from_secret(&state.jwt_secret),
-        &jsonwebtoken::Validation::default(),
+        &{
+            let mut v = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
+            v.validate_exp = true;
+            v
+        },
     )
     .map_err(|_| ApiResponseError::unauthorized("Invalid token"))?;
 
@@ -106,6 +110,23 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                     .and_then(|v| v.as_str())
                                     .and_then(|s| uuid::Uuid::parse_str(s).ok())
                                 {
+                                    // [VULN-001] Verify user is a participant before subscribing
+                                    if state
+                                        .dial_service
+                                        .get_channel(auth.tenant_id, channel_id, auth.user_id)
+                                        .await
+                                        .is_err()
+                                    {
+                                        let _ = tx.send(
+                                            serde_json::json!({
+                                                "type": "error",
+                                                "message": "Not authorized to subscribe to this channel"
+                                            })
+                                            .to_string(),
+                                        );
+                                        continue;
+                                    }
+
                                     let key = (auth.tenant_id.as_uuid(), channel_id);
                                     let entry =
                                         state.ws_registry.entry(key).or_insert_with(DashMap::new);
@@ -176,7 +197,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                                 "channel_id": msg.channel_id.as_uuid(),
                                                 "author_id": msg.author_id.as_uuid(),
                                                 "content": msg.content,
-                                                "created_at": msg.created_at,
+                                                "created_at": chrono::DateTime::<chrono::Utc>::from(msg.created_at).to_rfc3339(),
                                             })
                                             .to_string();
 
@@ -243,6 +264,8 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     if let Some(count) = state.presence_counts.get(&auth.user_id) {
         let new_count = count.fetch_sub(1, std::sync::atomic::Ordering::SeqCst) - 1;
         if new_count == 0 {
+            drop(count);
+            state.presence_counts.remove(&auth.user_id);
             if let Err(e) = state
                 .dial_service
                 .set_offline(auth.tenant_id, auth.user_id)

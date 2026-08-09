@@ -20,6 +20,44 @@ Ataqu is a Unified OS, but showing a new user 10 apps on day one causes choice p
 ## 2. THE 4 PHASES OF ACTIVATION
 
 ### Phase 1: The Wedge Entry (0-3 Minutes)
+
+### 1.5 Activation Tasks & Free Tier Bonus
+
+The free tier is a **ladder, not a limit**. Each completed activation task unlocks **25 additional elements**:
+
+| Task | Bonus | Trigger |
+|------|-------|---------|
+| Import data | +25 | First CSV/JSON import completed |
+| Enable native integration | +25 | First native integration toggled on (e.g., CINQ→DIAL) |
+| Create SPARK workflow | +25 | First workflow saved and enabled |
+| Invite team member | +25 | First user invited (excluding the owner) |
+
+**Max free tier:** 200 elements (100 base + 100 bonus).
+
+**UI representation:**
+- The element counter in the Shell shows : `45 / 100 base + 25 bonus (1 task) = 125 max`
+- The Setup Progress widget displays tasks with their bonus status (✅ / ⬜)
+- Upgrade modal includes : *"You've completed 2/4 tasks. Upgrade to Starter ($15/mo) to unlock unlimited."*
+
+
+### 1.5 Activation Tasks & Free Tier Bonus
+
+The free tier is a **ladder, not a limit**. Each completed activation task unlocks **25 additional elements**:
+
+| Task | Bonus | Trigger |
+|------|-------|---------|
+| Import data | +25 | First CSV/JSON import completed |
+| Enable native integration | +25 | First native integration toggled on (e.g., CINQ→DIAL) |
+| Create SPARK workflow | +25 | First workflow saved and enabled |
+| Invite team member | +25 | First user invited (excluding the owner) |
+
+**Max free tier:** 200 elements (100 base + 100 bonus).
+
+**UI representation:**
+- The element counter in the Shell shows : `45 / 100 base + 25 bonus (1 task) = 125 max`
+- The Setup Progress widget displays tasks with their bonus status (✅ / ⬜)
+- Upgrade modal includes : *"You've completed 2/4 tasks. Upgrade to Starter ($15/mo) to unlock unlimited."*
+
 **The Goal:** Sign up, select a wedge app, and create the first entity. Time-to-First-Value (TTFV) must be under 3 minutes.
 
 1. **The SSO Gateway:** User lands on `app.ataqu.com` and clicks "Continue with Google/Workspace."

@@ -92,22 +92,28 @@ pub enum AuthError {
     MfaAlreadyEnabled,
     #[error("Database error: {0}")]
     Database(String),
+    #[error("Validation error: {0}")]
+    Validation(String),
 }
 
 /// Repository trait for user persistence (async).
 #[async_trait]
 pub trait AuthRepository: Send + Sync {
-    async fn find_by_email(&self, email: &Email) -> Result<Option<User>, AuthError>;
+    async fn find_by_email(
+        &self,
+        email: &Email,
+        tenant_id: Option<TenantId>,
+    ) -> Result<Option<User>, AuthError>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AuthError>;
     async fn save_user(&self, user: &User) -> Result<(), AuthError>;
     async fn list_users(&self, tenant_id: Uuid) -> Result<Vec<User>, AuthError>;
     async fn list_tenants(&self) -> Result<Vec<Uuid>, AuthError>;
 
     async fn save_api_key(&self, key: &crate::api_key::ApiKey) -> Result<(), AuthError>;
-    async fn find_api_key_by_hash(
+    async fn find_api_keys_by_prefix_global(
         &self,
-        hash: &str,
-    ) -> Result<Option<crate::api_key::ApiKey>, AuthError>;
+        prefix: &str,
+    ) -> Result<Vec<crate::api_key::ApiKey>, AuthError>;
     async fn list_api_keys(
         &self,
         tenant_id: Uuid,

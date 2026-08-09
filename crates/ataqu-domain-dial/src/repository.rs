@@ -40,6 +40,15 @@ pub trait DialRepository: Send + Sync {
     ) -> Result<Message, DialError>;
     async fn insert_thread(&self, thread: &Thread) -> Result<(), DialError>;
     async fn insert_mention(&self, mention: &Mention) -> Result<(), DialError>;
+
+    async fn delete_mentions_for_message(
+        &self,
+        _tenant_id: &TenantId,
+        _message_id: &MessageId,
+    ) -> Result<(), DialError> {
+        Ok(())
+    }
+
     async fn get_mentions_for_user(
         &self,
         tenant_id: &TenantId,
@@ -57,6 +66,8 @@ pub trait DialRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Channel>, DialError>;
+
+    async fn count_channels(&self, tenant_id: &TenantId) -> Result<u64, DialError>;
     async fn list_messages(
         &self,
         tenant_id: &TenantId,
@@ -64,6 +75,12 @@ pub trait DialRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Message>, DialError>;
+
+    async fn count_messages(
+        &self,
+        tenant_id: &TenantId,
+        channel_id: &ChannelId,
+    ) -> Result<u64, DialError>;
     async fn list_messages_for_thread(
         &self,
         tenant_id: &TenantId,
@@ -90,11 +107,13 @@ pub trait DialRepository: Send + Sync {
         tenant_id: &TenantId,
         message_id: &MessageId,
     ) -> Result<Vec<Reaction>, DialError>;
+
     async fn get_reaction(
         &self,
         tenant_id: &TenantId,
         reaction_id: &Uuid,
     ) -> Result<Option<Reaction>, DialError>;
+
     async fn delete_reaction(
         &self,
         tenant_id: &TenantId,

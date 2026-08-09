@@ -50,6 +50,7 @@ pub trait ContactRepository: Send + Sync {
     ) -> CinqRepositoryResult<Vec<Contact>>;
     async fn count_contacts(&self, tenant_id: &TenantId) -> CinqRepositoryResult<u64>;
     async fn delete_contact(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<()>;
+    async fn bulk_insert_contacts(&self, contacts: &[Contact]) -> CinqRepositoryResult<()>;
 }
 
 #[async_trait]
@@ -66,6 +67,8 @@ pub trait DealRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> CinqRepositoryResult<Vec<Deal>>;
+
+    async fn count_deals(&self, tenant_id: &TenantId) -> CinqRepositoryResult<u64>;
     async fn delete_deal(&self, tenant_id: &TenantId, id: Uuid) -> CinqRepositoryResult<()>;
 }
 
@@ -128,10 +131,18 @@ pub trait ActivityRepository: Send + Sync {
         offset: u64,
     ) -> CinqRepositoryResult<Vec<Activity>>;
 
+    async fn count_activities_for_contact(
+        &self,
+        tenant_id: &TenantId,
+        contact_id: Uuid,
+    ) -> CinqRepositoryResult<u64>;
+
     async fn list_all_activities(
         &self,
         tenant_id: &TenantId,
         limit: u64,
         offset: u64,
     ) -> CinqRepositoryResult<Vec<Activity>>;
+
+    async fn count_all_activities(&self, tenant_id: &TenantId) -> CinqRepositoryResult<u64>;
 }

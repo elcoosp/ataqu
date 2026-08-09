@@ -99,6 +99,7 @@ struct JwtClaims {
     exp: usize,
     iat: usize,
     token_type: String,
+    token_version: i32,
 }
 
 pub struct RealAegisDomain;
@@ -115,7 +116,7 @@ impl RealAegisDomain {
             .reveal(&ataqu_security::PiiAccessKey::new())
             .contains('@')
         {
-            return Err(AuthError::InvalidCredentials);
+            return Err(AuthError::Validation("Invalid email format".to_string()));
         }
         let salt = SaltString::generate(&mut rand::thread_rng());
         let argon2 = Argon2::default();
@@ -232,10 +233,12 @@ fn generate_token_pair(
         exp: now + config.access_token_ttl.as_secs() as usize,
         iat: now,
         token_type: "access".to_string(),
+        token_version: user.version,
     };
     let refresh_claims = JwtClaims {
         exp: now + config.refresh_token_ttl.as_secs() as usize,
         token_type: "refresh".to_string(),
+        token_version: user.version,
         ..claims.clone()
     };
     let access = encode(
@@ -281,7 +284,7 @@ impl AegisService {
         }
     }
 
-    #[instrument(skip(self, cmd), fields(email = %cmd.email))]
+    #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
     pub async fn create_user(
         &self,
         cmd: DomainCreateUserCommand,
@@ -316,7 +319,7 @@ impl AegisService {
         })
     }
 
-    #[instrument(skip(self, cmd), fields(email = %cmd.email))]
+    #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
     pub async fn authenticate(
         &self,
         cmd: DomainAuthenticateCommand,
@@ -324,7 +327,7 @@ impl AegisService {
         info!("Authenticating user");
         let user = self
             .repo
-            .find_by_email(&cmd.email)
+            .find_by_email(&cmd.email, cmd.tenant_id)
             .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
 
@@ -333,7 +336,10 @@ impl AegisService {
                 return Err(AegisServiceError::AuthenticationFailed);
             }
         }
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
         let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config)?;
         self.repo.save_user(&updated_user).await?;
@@ -402,7 +408,10 @@ impl AegisService {
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
             access_token: access,
@@ -430,13 +439,21 @@ impl AegisService {
         email: &Email,
     ) -> Result<Option<User>, AegisServiceError> {
         self.repo
-            .find_by_email(email)
+            .find_by_email(email, None)
+            .await
+            .map_err(AegisServiceError::Domain)
+    }
+
+    pub async fn find_user_by_id(&self, user_id: Uuid) -> Result<Option<User>, AegisServiceError> {
+        self.repo
+            .find_by_id(user_id)
             .await
             .map_err(AegisServiceError::Domain)
     }
 
     pub async fn update_user_role(
         &self,
+        tenant_id: TenantId,
         user_id: Uuid,
         role: String,
         expected_version: i32,
@@ -446,6 +463,11 @@ impl AegisService {
             .find_by_id(user_id)
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+
+        // [VULN-001] Enforce tenant isolation
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::NotFound("User not found".into()));
+        }
         if user.version != expected_version {
             return Err(AegisServiceError::Conflict(format!(
                 "Version mismatch: expected {}, found {}",
@@ -458,13 +480,24 @@ impl AegisService {
         Ok(())
     }
 
-    pub async fn deactivate_user(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
+    pub async fn deactivate_user(
+        &self,
+        tenant_id: TenantId,
+        user_id: Uuid,
+    ) -> Result<(), AegisServiceError> {
         let mut user = self
             .repo
             .find_by_id(user_id)
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+
+        // [VULN-001] Enforce tenant isolation
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::NotFound("User not found".into()));
+        }
+
         ataqu_domain_aegis::auth::deactivate_user(&mut user, self.clock.as_ref());
+        user.version += 1; // [VULN-001] Increment version to invalidate old tokens
         self.repo.save_user(&user).await?;
 
         let payload = serde_json::json!({
@@ -479,7 +512,16 @@ impl AegisService {
         Ok(())
     }
 
-    pub async fn logout(&self, _user_id: &str) -> Result<(), AegisServiceError> {
+    /// [VULN-002] Increments the user version to invalidate all existing tokens.
+    pub async fn increment_user_version(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
+        let mut user = self
+            .repo
+            .find_by_id(user_id)
+            .await?
+            .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+        user.version += 1;
+        user.updated_at = self.clock.now();
+        self.repo.save_user(&user).await?;
         Ok(())
     }
 
@@ -511,10 +553,14 @@ impl AegisService {
             user_id,
             name: created.name.clone(),
             key_hash: {
-                use sha2::{Digest, Sha256};
-                let mut hasher = Sha256::new();
-                hasher.update(created.key.as_bytes());
-                format!("{:x}", hasher.finalize())
+                use argon2::Argon2;
+                use argon2::password_hash::{PasswordHasher, SaltString};
+                let salt = SaltString::generate(&mut rand::thread_rng());
+                let argon2 = Argon2::default();
+                argon2
+                    .hash_password(created.key.as_bytes(), &salt)
+                    .unwrap()
+                    .to_string()
             },
             prefix: created.prefix.clone(),
             scopes,
@@ -552,61 +598,83 @@ impl AegisService {
         &self,
         key: &str,
     ) -> Result<ApiKeyAuthData, AegisServiceError> {
-        use sha2::{Digest, Sha256};
-        let mut hasher = Sha256::new();
-        hasher.update(key.as_bytes());
-        let hash = format!("{:x}", hasher.finalize());
-
-        let api_key = self
-            .repo
-            .find_api_key_by_hash(&hash)
-            .await?
-            .ok_or(AegisServiceError::AuthenticationFailed)?;
-
-        if let Some(expires_at) = api_key.expires_at {
-            if expires_at < self.clock.now() {
-                return Err(AegisServiceError::AuthenticationFailed);
-            }
-        }
-
-        let user = self
-            .repo
-            .find_by_id(api_key.user_id)
-            .await?
-            .ok_or(AegisServiceError::AuthenticationFailed)?;
-
-        if !user.is_active {
+        if key.len() < 12 {
             return Err(AegisServiceError::AuthenticationFailed);
         }
+        let prefix = &key[..12];
 
-        let _ = self
-            .repo
-            .update_api_key_last_used(api_key.id, self.clock.now())
-            .await;
+        // Find all keys with this prefix (across all tenants)
+        // This requires changing the repo trait to not require tenant_id.
+        let api_keys = self.repo.find_api_keys_by_prefix_global(prefix).await?;
 
-        Ok(ApiKeyAuthData {
-            user_id: user.id,
-            tenant_id: user.tenant_id,
-            email: user.email,
-            role: user.role,
-            scopes: api_key.scopes,
-        })
+        for api_key in api_keys {
+            if let Some(expires_at) = api_key.expires_at {
+                if expires_at < self.clock.now() {
+                    continue;
+                }
+            }
+
+            // Verify the key against the stored Argon2 hash
+            let parsed_hash = PasswordHash::new(&api_key.key_hash)
+                .map_err(|_| AegisServiceError::AuthenticationFailed)?;
+            if argon2::Argon2::default()
+                .verify_password(key.as_bytes(), &parsed_hash)
+                .is_err()
+            {
+                continue;
+            }
+
+            let user = self
+                .repo
+                .find_by_id(api_key.user_id)
+                .await?
+                .ok_or(AegisServiceError::AuthenticationFailed)?;
+
+            if !user.is_active {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+
+            let _ = self
+                .repo
+                .update_api_key_last_used(api_key.id, self.clock.now())
+                .await;
+
+            return Ok(ApiKeyAuthData {
+                user_id: user.id,
+                tenant_id: user.tenant_id,
+                email: user.email,
+                role: user.role,
+                scopes: api_key.scopes,
+            });
+        }
+        Err(AegisServiceError::AuthenticationFailed)
     }
 
+    /// Note: SSO exchange is not tenant-scoped. If multiple tenants have users with the
+    /// same email, the first match is returned. This is a known limitation.
+    /// [VULN-003] SECURITY NOTE: SSO exchange is not tenant-scoped. If multiple tenants have users with the
+    /// same email, the first match is returned. This is a known limitation. A proper fix requires
+    /// tenant context in the SSO flow.
     pub async fn sso_exchange(
         &self,
         email: Email,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
-        let user = self.repo.find_by_email(&email).await?
-            .ok_or(AegisServiceError::NotFound(
-                "User not found. Please sign up first.".to_string(),
-            ))?;
+        let user =
+            self.repo
+                .find_by_email(&email, None)
+                .await?
+                .ok_or(AegisServiceError::NotFound(
+                    "User not found. Please sign up first.".to_string(),
+                ))?;
 
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
 
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
             access_token: access,
@@ -627,6 +695,8 @@ impl AegisService {
         Ok(())
     }
 
+    /// NOTE: The system user has a nil TenantId so it can operate across all tenants.
+    /// This is necessary for SPARK actions that create resources in different tenants.
     pub async fn ensure_system_user(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
         if self.repo.find_by_id(user_id).await?.is_none() {
             let now = self.clock.now();
@@ -651,7 +721,7 @@ impl AegisService {
     }
 
     pub async fn request_password_reset(&self, email: Email) -> Result<(), AegisServiceError> {
-        let user = match self.repo.find_by_email(&email).await? {
+        let user = match self.repo.find_by_email(&email, None).await? {
             Some(u) => u,
             None => return Ok(()),
         };
@@ -660,7 +730,10 @@ impl AegisService {
             return Ok(());
         }
 
-        let email_str = user.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = user
+            .email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -673,6 +746,7 @@ impl AegisService {
             exp: now + 900,
             iat: now,
             token_type: "reset_password".to_string(),
+            token_version: user.version,
         };
         let token = encode(
             &Header::default(),
@@ -728,8 +802,15 @@ impl AegisService {
             .to_string();
 
         user.password_hash = password_hash;
+        user.version += 1;
         user.updated_at = self.clock.now();
         self.repo.save_user(&user).await?;
+
+        // Invalidate all existing sessions for this user by revoking tokens.
+        // Note: A robust implementation would use a token version or a shared blacklist.
+        // Here we bump the user version, which could be checked in JWT validation.
+        // For now, we rely on the short TTL of access tokens.
+
         Ok(())
     }
 }

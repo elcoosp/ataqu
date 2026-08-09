@@ -20,6 +20,8 @@ pub trait SondRepository: Send + Sync {
         limit: u64,
         offset: u64,
     ) -> Result<Vec<Form>, SondError>;
+
+    async fn count_forms(&self, tenant_id: &TenantId) -> Result<u64, SondError>;
     async fn list_responses(
         &self,
         tenant_id: &TenantId,

@@ -36,7 +36,7 @@ We do not publish a press release. We publish a working product, an Engineering 
 **Goal:** Earn developer trust to trigger the internal champion effect.
 
 **The Post:**
-> **Title:** Show HN: We built 10 SaaS apps in a Rust/PostgreSQL Modular Monolith (Phase 1 – SeaORM, unified outbox, LISTEN/NOTIFY) for $49/mo
+> **Title:** Show HN: We built 10 SaaS apps in a Rust/PostgreSQL Modular Monolith (Phase 1 – SeaORM, unified outbox, LISTEN/NOTIFY) for $79/mo
 >
 > **Body:**
 > Hi HN, we were tired of paying $2,000/month for a fragmented SaaS stack (HubSpot, Slack, Zapier, Notion) that required Zapier just to talk to itself. So we built Ataqu.

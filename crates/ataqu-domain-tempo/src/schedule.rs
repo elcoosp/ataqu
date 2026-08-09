@@ -8,7 +8,8 @@ pub struct BookingId(pub Uuid);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EventTypeId(pub Uuid);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum BookingStatus {
     Pending,
     Confirmed,
@@ -28,6 +29,7 @@ pub struct Booking {
     pub timezone: String,
     pub reminder_sent_at: Option<SystemTime>,
     pub created_at: SystemTime,
+    pub version: i32,
 }
 
 impl Identifiable for Booking {
@@ -93,6 +95,7 @@ pub fn create_booking(
         timezone,
         reminder_sent_at: None,
         created_at: now,
+        version: 0,
     }
 }
 
@@ -160,6 +163,7 @@ mod tests {
             timezone: "UTC".to_string(),
             reminder_sent_at: None,
             created_at: UNIX_EPOCH,
+            version: 0,
         };
         let existing = vec![existing_booking];
 

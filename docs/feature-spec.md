@@ -15,11 +15,22 @@
 
 ### Free Tier (The Entry Point)
 Ataqu offers a generous free tier to remove adoption friction entirely:
-- **100 elements** (contacts, deals, products, documents, employees, forms, workflows, channels, bookings)
+- **100 base elements** (contacts, deals, products, documents, employees, forms, workflows, channels, bookings)
+- **Unlock up to 100 bonus elements** by completing activation tasks:
+  - `Import data` → +25 elements
+  - `Enable a native integration` → +25 elements
+  - `Create a SPARK workflow` → +25 elements
+  - `Invite a team member` → +25 elements
+- **Max free tier** = 200 elements (100 base + 100 bonus)
 - **All 10 apps** accessible — no gating, no "upgrade to unlock"
 - **Unlimited users** per tenant — no per-seat tax from day one
 - **Native integrations** enabled via pre-installed SPARK templates
 - **No time limit** — forever free, because we earn your business every month
+
+**Soft limit behavior:**
+- At 85 elements : toast *"You're approaching the free tier limit. Complete tasks to earn more elements free."*
+- At 100 elements : creating is **blocked**, but reading, editing, and integrations continue working.
+- Upgrade prompt shows tasks completed and bonus earned : *"You've earned 50 bonus elements. Upgrade to Starter ($15/mo) to unlock unlimited."*
 
 ### Pricing Plans
 | Plan | Price | Elements | Users | Apps |
@@ -343,6 +354,24 @@ These features apply globally across all 10 apps. They were validated through re
 - Legacy toggle: Stored in `core.tenant_settings` (JSONB).
 
 **Priority:** P2
+
+### 2.13 Migration Wizards (P1)
+
+**The Problem:** Users are afraid to leave competitors because they don't know how to export their data or fear the migration effort.
+
+**The Solution:** An in-app step-by-step migration wizard for each major competitor (HubSpot, Slack, Zapier, Notion). The wizard guides the user through:
+1. Exporting data from the competitor (with screenshots)
+2. Uploading the CSV/JSON file to Ataqu
+3. Automatic column mapping (with manual override)
+4. Preview of the data before import
+5. One-click import and confirmation
+
+**Implementation:**
+- Route: `/migration/:competitor` (e.g., `/migration/hubspot`)
+- Backend: `POST /api/v1/migration/parse` and `POST /api/v1/migration/import`
+- Integration with the Stack Audit dashboard (`/audit`) – when a user marks a competitor as "decommissioned", they are prompted to use the migration wizard.
+
+**Priority:** P1
 
 ---
 

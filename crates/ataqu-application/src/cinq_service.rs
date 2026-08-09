@@ -447,7 +447,9 @@ impl CinqService {
                 wtr.write_record(&[
                     c.id.to_string(),
                     c.name.clone(),
-                    c.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+                    c.email
+                        .reveal(&ataqu_security::PiiAccessKey::new())
+                        .to_string(),
                     c.phone
                         .as_ref()
                         .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
@@ -615,8 +617,10 @@ impl CinqService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> CinqResult<Vec<Deal>> {
-        Ok(self.deal_repo.list_deals(&tenant_id, limit, offset).await?)
+    ) -> CinqResult<(Vec<Deal>, u64)> {
+        let total = self.deal_repo.count_deals(&tenant_id).await?;
+        let deals = self.deal_repo.list_deals(&tenant_id, limit, offset).await?;
+        Ok((deals, total))
     }
 
     pub async fn create_activity(&self, cmd: CreateActivityCommand) -> CinqResult<Activity> {
@@ -659,11 +663,16 @@ impl CinqService {
         contact_id: Uuid,
         limit: u64,
         offset: u64,
-    ) -> CinqResult<Vec<Activity>> {
-        Ok(self
+    ) -> CinqResult<(Vec<Activity>, u64)> {
+        let total = self
+            .activity_repo
+            .count_activities_for_contact(&tenant_id, contact_id)
+            .await?;
+        let activities = self
             .activity_repo
             .list_activities_for_contact(&tenant_id, contact_id, limit, offset)
-            .await?)
+            .await?;
+        Ok((activities, total))
     }
 
     pub async fn list_all_activities(
@@ -671,11 +680,13 @@ impl CinqService {
         tenant_id: TenantId,
         limit: u64,
         offset: u64,
-    ) -> CinqResult<Vec<Activity>> {
-        Ok(self
+    ) -> CinqResult<(Vec<Activity>, u64)> {
+        let total = self.activity_repo.count_all_activities(&tenant_id).await?;
+        let activities = self
             .activity_repo
             .list_all_activities(&tenant_id, limit, offset)
-            .await?)
+            .await?;
+        Ok((activities, total))
     }
 
     pub async fn create_pipeline_stage(
@@ -742,11 +753,18 @@ impl CinqService {
                 expected_version, stage.version
             )));
         }
-        if let Some(name) = name {
-            stage.name = name;
+        let domain_cmd = pipeline_domain::UpdatePipelineStageCommand {
+            id,
+            tenant_id,
+            name,
+            order,
+        };
+        let event = pipeline_domain::update_pipeline_stage(domain_cmd, self.clock.as_ref())?;
+        if let Some(n) = event.name {
+            stage.name = n;
         }
-        if let Some(order) = order {
-            stage.order = order;
+        if let Some(o) = event.order {
+            stage.order = o;
         }
         stage.version += 1;
         self.stage_repo.save_pipeline_stage(&stage).await?;

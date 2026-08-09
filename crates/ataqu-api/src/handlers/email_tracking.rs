@@ -29,6 +29,12 @@ pub async fn track_email_public(
         _ => return Err(ApiResponseError::validation("Invalid event_type")),
     }
 
+    // Basic rate limiting to prevent abuse
+    let rate_key = format!("email_track_pub:{}", req.tenant_id);
+    if !state.rate_limiter.check(&rate_key) {
+        return Err(ApiResponseError::RateLimited);
+    }
+
     let tracking_event = ataqu_infra_repositories::email_tracking_writer::TrackingEvent {
         tenant_id: req.tenant_id,
         contact_id: req.contact_id,
@@ -42,13 +48,11 @@ pub async fn track_email_public(
         .unwrap();
 
     match state.email_tracking_tx.try_send(tracking_event) {
-        Ok(()) => {
-            Ok((
-                axum::http::StatusCode::OK,
-                [(axum::http::header::CONTENT_TYPE, "image/gif")],
-                pixel,
-            ))
-        }
+        Ok(()) => Ok((
+            axum::http::StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "image/gif")],
+            pixel,
+        )),
         Err(e) => {
             metrics::counter!("ataqu_email_tracking_dropped_total").increment(1);
             tracing::error!("Failed to enqueue tracking event: {}", e);

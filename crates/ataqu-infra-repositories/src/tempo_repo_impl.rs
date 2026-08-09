@@ -122,6 +122,7 @@ fn map_booking(m: booking_entity::Model) -> Booking {
         } else {
             None
         },
+        version: m.version,
     }
 }
 
@@ -145,6 +146,10 @@ impl TempoRepository for TempoRepositoryImpl {
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
         Ok(())
+    }
+
+    async fn count_event_types(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        Ok(0)
     }
 
     async fn list_event_types(
@@ -172,6 +177,32 @@ impl TempoRepository for TempoRepositoryImpl {
                 version: m.version,
             })
             .collect())
+    }
+
+    async fn find_event_type_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> Result<Option<EventType>, RepositoryError> {
+        let model = event_type_entity::Entity::find()
+            .filter(event_type_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(event_type_entity::Column::Id.eq(id))
+            .one(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+        Ok(model.map(|m| EventType {
+            id: EventTypeId(m.id),
+            tenant_id: TenantId::new(m.tenant_id),
+            name: m.name,
+            slug: m.slug,
+            description: m.description,
+            duration_minutes: m.duration_minutes,
+            is_active: m.is_active,
+            created_at: m.created_at.into(),
+            updated_at: m.updated_at.into(),
+            version: m.version,
+        }))
     }
 
     async fn find_event_type_by_slug(
@@ -270,6 +301,10 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(model.map(map_booking))
     }
 
+    async fn count_bookings(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        Ok(0)
+    }
+
     async fn list_bookings(
         &self,
         tenant_id: &TenantId,
@@ -328,6 +363,31 @@ impl TempoRepository for TempoRepositoryImpl {
             .into_active_model();
 
         active.starts_at = Set(starts_at);
+        active.updated_at = Set(Utc::now());
+
+        booking_entity::Entity::update(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn update_booking_version(
+        &self,
+        tenant_id: &TenantId,
+        id: &BookingId,
+        version: i32,
+    ) -> Result<(), RepositoryError> {
+        let mut active = booking_entity::Entity::find()
+            .filter(booking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(booking_entity::Column::Id.eq(id.0))
+            .one(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?
+            .ok_or(RepositoryError::NotFound)?
+            .into_active_model();
+
+        active.version = Set(version);
         active.updated_at = Set(Utc::now());
 
         booking_entity::Entity::update(active)

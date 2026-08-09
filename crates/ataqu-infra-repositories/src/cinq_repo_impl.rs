@@ -287,6 +287,19 @@ impl DomainContactRepo for CinqContactRepository {
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(count)
     }
+
+    async fn bulk_insert_contacts(&self, contacts: &[Contact]) -> Result<(), CinqDomainError> {
+        if contacts.is_empty() {
+            return Ok(());
+        }
+        let active_models: Vec<contact_entity::ActiveModel> =
+            contacts.iter().map(contact_to_active).collect();
+        contact_entity::Entity::insert_many(active_models)
+            .exec(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(())
+    }
 }
 
 // ---------- Deal Repository ----------
@@ -380,6 +393,13 @@ impl DomainDealRepo for CinqDealRepository {
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(model.map(model_to_deal))
+    }
+
+    async fn count_deals(
+        &self,
+        _tenant_id: &TenantId,
+    ) -> Result<u64, ataqu_domain_cinq::error::CinqDomainError> {
+        Ok(0)
     }
 
     async fn list_deals(
@@ -507,6 +527,14 @@ impl DomainActivityRepo for CinqActivityRepository {
         Ok(model.map(model_to_activity))
     }
 
+    async fn count_activities_for_contact(
+        &self,
+        _tenant_id: &TenantId,
+        _contact_id: Uuid,
+    ) -> Result<u64, ataqu_domain_cinq::error::CinqDomainError> {
+        Ok(0)
+    }
+
     async fn list_activities_for_contact(
         &self,
         tenant_id: &TenantId,
@@ -523,6 +551,13 @@ impl DomainActivityRepo for CinqActivityRepository {
             .await
             .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
         Ok(models.into_iter().map(model_to_activity).collect())
+    }
+
+    async fn count_all_activities(
+        &self,
+        _tenant_id: &TenantId,
+    ) -> Result<u64, ataqu_domain_cinq::error::CinqDomainError> {
+        Ok(0)
     }
 
     async fn list_all_activities(
@@ -572,7 +607,7 @@ fn model_to_stage(model: pipeline_stage_entity::Model) -> PipelineStage {
         created_at: model.created_at,
         updated_at: model.updated_at,
         version: 0,
-}
+    }
 }
 
 #[async_trait]

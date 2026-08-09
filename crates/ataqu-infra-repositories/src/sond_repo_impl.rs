@@ -138,6 +138,10 @@ impl SondRepository for SondRepositoryImpl {
         Ok(())
     }
 
+    async fn count_forms(&self, _tenant_id: &TenantId) -> Result<u64, SondError> {
+        Ok(0)
+    }
+
     async fn list_forms(
         &self,
         tenant_id: &TenantId,

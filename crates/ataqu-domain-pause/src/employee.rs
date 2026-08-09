@@ -1,4 +1,6 @@
+use crate::PauseDomainError;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use ataqu_security::Email;
 use chrono::NaiveDate;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -8,7 +10,7 @@ pub struct Employee {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: String,
+    pub email: Email,
     pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
@@ -23,7 +25,7 @@ pub struct Employee {
 pub struct CreateEmployeeCommand {
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: String,
+    pub email: Email,
     pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
@@ -44,7 +46,7 @@ pub struct EmployeeCreatedEvent {
     pub employee_id: Uuid,
     pub tenant_id: TenantId,
     pub full_name: String,
-    pub email: String,
+    pub email: Email,
     pub phone: Option<String>,
     pub job_title: String,
     pub department: Option<String>,
@@ -56,10 +58,10 @@ pub fn create_employee(
     cmd: CreateEmployeeCommand,
     id_gen: &dyn IdGenerator,
     clock: &dyn Clock,
-) -> EmployeeCreatedEvent {
+) -> Result<EmployeeCreatedEvent, PauseDomainError> {
     let id = id_gen.new_uuid_v7();
     let now = clock.now();
-    EmployeeCreatedEvent {
+    Ok(EmployeeCreatedEvent {
         employee_id: id,
         tenant_id: cmd.tenant_id,
         full_name: cmd.full_name,
@@ -69,7 +71,7 @@ pub fn create_employee(
         department: cmd.department,
         hire_date: cmd.hire_date,
         created_at: now,
-    }
+    })
 }
 
 pub fn update_employee(employee: &mut Employee, cmd: UpdateEmployeeCommand, clock: &dyn Clock) {
@@ -88,4 +90,16 @@ pub fn update_employee(employee: &mut Employee, cmd: UpdateEmployeeCommand, cloc
 pub fn deactivate_employee(employee: &mut Employee, clock: &dyn Clock) {
     employee.is_active = false;
     employee.updated_at = clock.now();
+}
+
+pub fn validate_employee_email(email: &Email) -> Result<(), PauseDomainError> {
+    if !email
+        .reveal(&ataqu_security::PiiAccessKey::new())
+        .contains('@')
+    {
+        return Err(PauseDomainError::Validation(
+            "Invalid email format".to_string(),
+        ));
+    }
+    Ok(())
 }
