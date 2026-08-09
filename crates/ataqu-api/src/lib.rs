@@ -32,6 +32,14 @@ use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
 
+// Type aliases to simplify complex types
+pub type WsRegistry = Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, UnboundedSender<String>>>>;
+pub type ConnIndex = Arc<DashMap<usize, Uuid>>;
+pub type PresenceCounts = Arc<DashMap<(Uuid, Uuid), i32>>;
+pub type SsoStates = Arc<Cache<String, String>>;
+pub type EmailTrackingTx = UnboundedSender<TrackingEvent>;
+
+
 pub mod error;
 pub mod handlers;
 pub mod middleware;
@@ -55,6 +63,8 @@ pub use stubs::*;
 // Application State
 // ----------------------------------------------------------------------
 #[derive(Clone)]
+
+#[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
     pub cinq_service: Arc<CinqService>,
@@ -71,13 +81,13 @@ pub struct AppState {
     pub id_gen: Arc<dyn IdGenerator + Send + Sync>,
     pub clock: Arc<dyn Clock + Send + Sync>,
     // WebSocket and presence infrastructure
-    pub ws_registry: Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, tokio::sync::mpsc::UnboundedSender<String>>>>,
-    pub conn_index: Arc<DashMap<usize, Uuid>>,
-    pub presence_counts: Arc<DashMap<(Uuid, Uuid), i32>>,
-    pub email_tracking_tx: UnboundedSender<TrackingEvent>,
+    pub ws_registry: WsRegistry,
+    pub conn_index: ConnIndex,
+    pub presence_counts: PresenceCounts,
+    pub email_tracking_tx: EmailTrackingTx,
     pub rate_limiter: middleware::rate_limit::RateLimiter,
     pub metrics_handle: PrometheusHandle,
-    pub sso_states: Arc<Cache<String, String>>,
+    pub sso_states: SsoStates,
     pub http_client: reqwest::Client,
     // Stubs for new features
     pub health_service: Arc<HealthService>,
@@ -88,6 +98,7 @@ pub struct AppState {
     pub onboarding_service: Arc<OnboardingService>,
     pub changelog_service: Arc<ChangelogService>,
 }
+
 
 // ----------------------------------------------------------------------
 // Router builder
