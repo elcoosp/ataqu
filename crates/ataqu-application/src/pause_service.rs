@@ -125,7 +125,7 @@ impl PauseService {
                     &payload,
                 )
                 .await
-                .map_err(|e| PauseServiceError::Outbox(e))?;
+                .map_err(PauseServiceError::Outbox)?;
             Ok(event.employee_id)
         }
         .await;
@@ -169,7 +169,7 @@ impl PauseService {
                     &payload,
                 )
                 .await
-                .map_err(|e| PauseServiceError::Outbox(e))?;
+                .map_err(PauseServiceError::Outbox)?;
             Ok(event.leave_request_id)
         }
         .await;
@@ -309,11 +309,11 @@ impl PauseService {
             )
             .await?;
         let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            serde_json::to_value(event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(request)
     }
 
@@ -352,11 +352,11 @@ impl PauseService {
             )
             .await?;
         let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            serde_json::to_value(event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(request)
     }
 
@@ -385,7 +385,7 @@ impl PauseService {
         self.outbox
             .append(PAUSE_SCHEMA, "EmployeeUpdated", employee.id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
 
         Ok(employee)
     }
@@ -414,7 +414,7 @@ impl PauseService {
         self.outbox
             .append(PAUSE_SCHEMA, "EmployeeDeactivated", employee.id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(())
     }
 
@@ -453,11 +453,11 @@ impl PauseService {
             )
             .await?;
         let payload =
-            serde_json::to_value(&event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+            serde_json::to_value(event).map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
         self.outbox
             .append(PAUSE_SCHEMA, "LeaveStatusChanged", leave_id, &payload)
             .await
-            .map_err(|e| PauseServiceError::Outbox(e))?;
+            .map_err(PauseServiceError::Outbox)?;
         Ok(request)
     }
 

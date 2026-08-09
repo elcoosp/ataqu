@@ -79,6 +79,7 @@ fn map_form_model_to_domain(m: form_entity::Model) -> Form {
         created_at: m.created_at,
         updated_at: m.updated_at,
         version: m.version,
+        mode: ataqu_domain_sond::form::FormMode::Standard,
     }
 }
 

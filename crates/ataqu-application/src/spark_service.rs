@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use ataqu_domain_spark::repository::SparkRepository;
+use ataqu_domain_spark::repository::{
+    SparkRepository, WorkflowRun, WorkflowRunRepository, WorkflowRunStatus,
+};
 use ataqu_domain_spark::{Action, Condition, SparkError, Trigger, Workflow, evaluate_conditions};
 use ataqu_infra_outbox::OutboxEvent;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
@@ -56,6 +58,7 @@ pub type SparkResult<T> = Result<T, SparkServiceError>;
 
 pub struct SparkService {
     repo: Arc<dyn SparkRepository + Send + Sync>,
+    run_repo: Option<Arc<dyn WorkflowRunRepository + Send + Sync>>,
     dispatcher: Arc<dyn ActionDispatcher + Send + Sync>,
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
@@ -72,11 +75,22 @@ impl SparkService {
     ) -> Self {
         Self {
             repo,
+            run_repo: None,
             dispatcher,
             outbox,
             id_gen,
             clock,
         }
+    }
+
+    /// Attach the workflow-run repository so runs can be tracked and paused for approval.
+    #[must_use]
+    pub fn with_workflow_run_repository(
+        mut self,
+        run_repo: Arc<dyn WorkflowRunRepository + Send + Sync>,
+    ) -> Self {
+        self.run_repo = Some(run_repo);
+        self
     }
 
     pub async fn create_workflow(&self, cmd: CreateWorkflowCommand) -> SparkResult<Workflow> {
@@ -103,7 +117,7 @@ impl SparkService {
         self.outbox
             .append("collab_crm", "WorkflowCreated", workflow.id, &payload)
             .await
-            .map_err(|e| SparkServiceError::Repository(e))?;
+            .map_err(SparkServiceError::Repository)?;
 
         Ok(workflow)
     }
@@ -195,6 +209,7 @@ impl SparkService {
         Ok(())
     }
 
+    #[allow(clippy::collapsible_if)]
     pub async fn evaluate_trigger(&self, event: &OutboxEvent) -> SparkResult<()> {
         let workflows = self
             .repo
@@ -217,10 +232,10 @@ impl SparkService {
             if workflow.tenant_id != event_tenant_id {
                 continue;
             }
-            if evaluate_conditions(&workflow.conditions, &event.payload) {
-                if let Err(e) = self.execute_workflow(&workflow).await {
-                    tracing::error!(error = %e, "Failed to execute workflow {}", workflow.id);
-                }
+            if evaluate_conditions(&workflow.conditions, &event.payload)
+                && let Err(e) = self.execute_workflow(&workflow).await
+            {
+                tracing::error!(error = %e, "Failed to execute workflow {}", workflow.id);
             }
         }
         Ok(())
@@ -231,21 +246,23 @@ impl SparkService {
         let now: chrono::DateTime<chrono::Utc> = self.clock.now().into();
 
         for workflow in workflows {
-            if let Trigger::Schedule { cron } = &workflow.trigger {
-                if let Ok(cron_job) = croner::Cron::new(cron).parse() {
-                    // Find the previous occurrence to see if we missed it
-                    if let Ok(prev_run) =
-                        cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false)
+            if let Trigger::Schedule { cron } = &workflow.trigger
+                && let Ok(cron_job) = croner::Cron::new(cron).parse()
+            {
+                // Find the previous occurrence to see if we missed it
+                if let Ok(prev_run) =
+                    cron_job.find_next_occurrence(&(now - chrono::Duration::seconds(60)), false)
+                    && prev_run <= now
+                {
+                    tracing::info!("Triggering scheduled workflow {}", workflow.id);
+                    let payload = serde_json::json!({
+                        "workflow_id": workflow.id,
+                        "trigger_time": chrono::Utc::now(),
+                    });
+                    if evaluate_conditions(&workflow.conditions, &payload)
+                        && let Err(e) = self.execute_workflow(&workflow).await
                     {
-                        if prev_run <= now {
-                            tracing::info!("Triggering scheduled workflow {}", workflow.id);
-                            let payload = serde_json::json!({ "time": now.to_rfc3339() });
-                            if evaluate_conditions(&workflow.conditions, &payload) {
-                                if let Err(e) = self.execute_workflow(&workflow).await {
-                                    tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
-                                }
-                            }
-                        }
+                        tracing::error!(error = %e, "Failed to execute scheduled workflow {}", workflow.id);
                     }
                 }
             }
@@ -253,13 +270,105 @@ impl SparkService {
         Ok(())
     }
 
-    async fn execute_workflow(&self, workflow: &Workflow) -> SparkResult<()> {
+    pub async fn approve_workflow_run(&self, tenant_id: TenantId, run_id: Uuid) -> SparkResult<()> {
+        let Some(run_repo) = self.run_repo.as_ref() else {
+            return Err(SparkServiceError::Repository(
+                "Workflow run repository not configured".to_string(),
+            ));
+        };
+        let run = run_repo
+            .get_run(&tenant_id, &run_id)
+            .await?
+            .ok_or(SparkServiceError::WorkflowNotFound)?;
+        if run.status != WorkflowRunStatus::PendingApproval {
+            return Err(SparkServiceError::Validation(format!(
+                "Workflow run {run_id} is not pending approval"
+            )));
+        }
+        let workflow = self
+            .repo
+            .get_workflow(&tenant_id, &run.workflow_id)
+            .await?
+            .ok_or(SparkServiceError::WorkflowNotFound)?;
+        run_repo
+            .update_run_status(&tenant_id, &run_id, &WorkflowRunStatus::Approved)
+            .await?;
+        let resume_index = workflow
+            .actions
+            .iter()
+            .position(|action| matches!(action, Action::RequestApproval { .. }))
+            .map(|index| index + 1)
+            .unwrap_or(0);
+        self.execute_actions_from(&workflow, run_repo, &run, resume_index)
+            .await?;
+        Ok(())
+    }
+
+    async fn execute_workflow(&self, workflow: &Workflow) -> SparkResult<Uuid> {
+        let Some(run_repo) = self.run_repo.as_ref() else {
+            self.dispatch_actions_without_run_tracking(workflow).await;
+            return Ok(Uuid::nil());
+        };
+        let run_id = self.id_gen.new_uuid_v7();
+        let now = self.clock.now();
+        let run = WorkflowRun {
+            id: run_id,
+            tenant_id: workflow.tenant_id,
+            workflow_id: workflow.id,
+            status: WorkflowRunStatus::Running,
+            payload: serde_json::json!({}),
+            created_at: now,
+            updated_at: now,
+        };
+        run_repo.create_run(&run).await?;
+        self.execute_actions_from(workflow, run_repo, &run, 0)
+            .await?;
+        Ok(run_id)
+    }
+
+    async fn dispatch_actions_without_run_tracking(&self, workflow: &Workflow) {
         let tenant_id = TenantId::new(workflow.tenant_id);
         for action in &workflow.actions {
             if let Err(e) = self.dispatcher.dispatch(action, &tenant_id).await {
-                tracing::error!(error = %e, "Failed to dispatch action");
+                tracing::error!(error = %e, workflow_id = %workflow.id, "Failed to dispatch workflow action");
             }
         }
+    }
+
+    async fn execute_actions_from(
+        &self,
+        workflow: &Workflow,
+        run_repo: &Arc<dyn WorkflowRunRepository + Send + Sync>,
+        run: &WorkflowRun,
+        start_index: usize,
+    ) -> SparkResult<()> {
+        let tenant_id = TenantId::new(workflow.tenant_id);
+        for (index, action) in workflow.actions.iter().enumerate().skip(start_index) {
+            if matches!(action, Action::RequestApproval { .. }) {
+                run_repo
+                    .update_run_status(&tenant_id, &run.id, &WorkflowRunStatus::PendingApproval)
+                    .await?;
+                tracing::info!(
+                    workflow_id = %workflow.id,
+                    run_id = %run.id,
+                    action_index = index,
+                    "Workflow run paused pending approval"
+                );
+                return Ok(());
+            }
+            if let Err(e) = self.dispatcher.dispatch(action, &tenant_id).await {
+                tracing::error!(error = %e, workflow_id = %workflow.id, action_index = index, "Failed to dispatch workflow action");
+                run_repo
+                    .update_run_status(&tenant_id, &run.id, &WorkflowRunStatus::Failed)
+                    .await?;
+                return Err(SparkServiceError::Repository(format!(
+                    "Action dispatch failed: {e}"
+                )));
+            }
+        }
+        run_repo
+            .update_run_status(&tenant_id, &run.id, &WorkflowRunStatus::Completed)
+            .await?;
         Ok(())
     }
 }

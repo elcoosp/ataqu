@@ -46,14 +46,15 @@ pub struct UpdateContactRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateDealRequest {
-    pub title: String,
-    pub amount: Decimal,
     pub contact_id: Uuid,
+    pub title: String,
     pub pipeline_stage_id: Uuid,
+    pub amount: Decimal,
     pub owner_id: Option<Uuid>,
     pub probability: Option<i32>,
     pub variant_id: Option<Uuid>,
     pub quantity: Option<i64>,
+    pub establishment_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

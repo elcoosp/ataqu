@@ -1,3 +1,4 @@
+#![allow(clippy::question_mark)]
 use crate::cinq_contact_repo::CrossFieldRateLimiter;
 use crate::entities::deal;
 use crate::entities::deal::Entity as DealEntity;
@@ -62,9 +63,7 @@ impl DealRepository {
         search: &str,
         limit: u64,
     ) -> Result<Vec<deal::Model>, &'static str> {
-        if let Err(e) = self.rate_limiter.check_and_consume(tenant_id).await {
-            return Err(e);
-        }
+        self.rate_limiter.check_and_consume(tenant_id).await?;
         let sql = r#"
             SELECT *
             FROM collab_crm.deals
@@ -95,6 +94,7 @@ impl DealRepository {
     }
 
     // Create deal
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_deal(
         &self,
         tenant_id: Uuid,

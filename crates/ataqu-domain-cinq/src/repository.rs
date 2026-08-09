@@ -146,3 +146,22 @@ pub trait ActivityRepository: Send + Sync {
 
     async fn count_all_activities(&self, tenant_id: &TenantId) -> CinqRepositoryResult<u64>;
 }
+
+#[async_trait]
+pub trait EstablishmentRepository: Send + Sync {
+    async fn save_establishment(
+        &self,
+        est: &crate::establishment::Establishment,
+    ) -> CinqRepositoryResult<()>;
+    async fn find_establishment_by_id(
+        &self,
+        tenant_id: &TenantId,
+        id: Uuid,
+    ) -> CinqRepositoryResult<Option<crate::establishment::Establishment>>;
+    async fn list_establishments(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> CinqRepositoryResult<Vec<crate::establishment::Establishment>>;
+}

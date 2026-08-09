@@ -1,3 +1,5 @@
+use chrono::{DateTime, Utc};
+use std::net::IpAddr;
 // AEGIS application service – orchestrates auth flows.
 // Uses domain repository trait (AuthRepository) and domain command structs.
 
@@ -17,6 +19,7 @@ use ataqu_domain_aegis::mfa::{generate_otpauth_url, generate_secret, verify_totp
 use ataqu_domain_aegis::{
     AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
     CreateUserCommand as DomainCreateUserCommand, User, UserCreated,
+    repository::{AuditLogEntry, AuditRepositoryTrait},
 };
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use ataqu_security::Email;
@@ -113,7 +116,7 @@ impl RealAegisDomain {
     ) -> Result<(UserCreated, User), AuthError> {
         if !cmd
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .contains('@')
         {
             return Err(AuthError::Validation("Invalid email format".to_string()));
@@ -260,16 +263,21 @@ pub struct AegisService {
     repo: Arc<dyn AuthRepository + Send + Sync>,
     outbox: Arc<dyn crate::outbox::Outbox + Send + Sync>,
     domain: Arc<RealAegisDomain>,
+    audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
+
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
     config: AegisConfig,
 }
 
 impl AegisService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         repo: Arc<dyn AuthRepository + Send + Sync>,
         outbox: Arc<dyn crate::outbox::Outbox + Send + Sync>,
         domain: Arc<RealAegisDomain>,
+        audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
+
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
         config: AegisConfig,
@@ -278,13 +286,14 @@ impl AegisService {
             repo,
             outbox,
             domain,
+            audit_repo,
             id_gen,
             clock,
             config,
         }
     }
 
-    #[instrument(skip(self, cmd), fields(email = %cmd.email))]
+    #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
     pub async fn create_user(
         &self,
         cmd: DomainCreateUserCommand,
@@ -319,7 +328,8 @@ impl AegisService {
         })
     }
 
-    #[instrument(skip(self, cmd), fields(email = %cmd.email))]
+    #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
+    #[allow(clippy::collapsible_if)]
     pub async fn authenticate(
         &self,
         cmd: DomainAuthenticateCommand,
@@ -331,14 +341,14 @@ impl AegisService {
             .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
 
-        if let Some(tenant_id) = cmd.tenant_id {
-            if user.tenant_id != tenant_id {
-                return Err(AegisServiceError::AuthenticationFailed);
-            }
+        if let Some(tenant_id) = cmd.tenant_id
+            && user.tenant_id != tenant_id
+        {
+            return Err(AegisServiceError::AuthenticationFailed);
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
         let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config)?;
@@ -410,7 +420,7 @@ impl AegisService {
         }
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -453,6 +463,7 @@ impl AegisService {
 
     pub async fn update_user_role(
         &self,
+        tenant_id: TenantId,
         user_id: Uuid,
         role: String,
         expected_version: i32,
@@ -462,6 +473,10 @@ impl AegisService {
             .find_by_id(user_id)
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::NotFound("User not found".into()));
+        }
         if user.version != expected_version {
             return Err(AegisServiceError::Conflict(format!(
                 "Version mismatch: expected {}, found {}",
@@ -474,12 +489,21 @@ impl AegisService {
         Ok(())
     }
 
-    pub async fn deactivate_user(&self, user_id: Uuid) -> Result<(), AegisServiceError> {
+    pub async fn deactivate_user(
+        &self,
+        tenant_id: TenantId,
+        user_id: Uuid,
+    ) -> Result<(), AegisServiceError> {
         let mut user = self
             .repo
             .find_by_id(user_id)
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
+
+        if user.tenant_id != tenant_id {
+            return Err(AegisServiceError::NotFound("User not found".into()));
+        }
+
         ataqu_domain_aegis::auth::deactivate_user(&mut user, self.clock.as_ref());
         user.version += 1; // [VULN-001] Increment version to invalidate old tokens
         self.repo.save_user(&user).await?;
@@ -592,10 +616,10 @@ impl AegisService {
         let api_keys = self.repo.find_api_keys_by_prefix_global(prefix).await?;
 
         for api_key in api_keys {
-            if let Some(expires_at) = api_key.expires_at {
-                if expires_at < self.clock.now() {
-                    continue;
-                }
+            if let Some(expires_at) = api_key.expires_at
+                && expires_at < self.clock.now()
+            {
+                continue;
             }
 
             // Verify the key against the stored Argon2 hash
@@ -636,8 +660,9 @@ impl AegisService {
 
     /// Note: SSO exchange is not tenant-scoped. If multiple tenants have users with the
     /// same email, the first match is returned. This is a known limitation.
-    /// SECURITY NOTE: SSO exchange is not tenant-scoped. If multiple tenants have users with the
-    /// same email, the first match is returned. This is a known limitation.
+    /// [VULN-003] SECURITY NOTE: SSO exchange is not tenant-scoped. If multiple tenants have users with the
+    /// same email, the first match is returned. This is a known limitation. A proper fix requires
+    /// tenant context in the SSO flow.
     pub async fn sso_exchange(
         &self,
         email: Email,
@@ -656,7 +681,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let (access, refresh) = generate_token_pair(&user, &email_str, &self.config)?;
         Ok(AuthenticateResponse {
@@ -715,7 +740,7 @@ impl AegisService {
 
         let email_str = user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -794,6 +819,85 @@ impl AegisService {
         // Here we bump the user version, which could be checked in JWT validation.
         // For now, we rely on the short TTL of access tokens.
 
+        Ok(())
+    }
+
+    /// Get audit logs for a tenant with pagination and filters.
+    pub async fn get_audit_logs(
+        &self,
+        tenant_id: TenantId,
+        limit: i64,
+        offset: i64,
+        action_filter: Option<String>,
+        app_filter: Option<String>,
+        from_date: Option<DateTime<Utc>>,
+        to_date: Option<DateTime<Utc>>,
+    ) -> Result<Vec<AuditLogEntry>, AegisServiceError> {
+        self.audit_repo
+            .list_logs(
+                tenant_id,
+                limit,
+                offset,
+                action_filter.as_deref(),
+                app_filter.as_deref(),
+                from_date,
+                to_date,
+            )
+            .await
+            .map_err(|e| AegisServiceError::Internal(e))
+    }
+
+    /// Get the permission matrix for a tenant.
+    pub async fn get_permission_matrix(
+        &self,
+        tenant_id: TenantId,
+    ) -> Result<Vec<serde_json::Value>, AegisServiceError> {
+        let entries = self
+            .audit_repo
+            .get_permission_matrix(tenant_id)
+            .await
+            .map_err(|e| AegisServiceError::Internal(e))?;
+        let mut result = Vec::new();
+        for entry in entries {
+            result.push(serde_json::json!({
+                "user_id": entry.user_id,
+                "user_name": entry.user_name,
+                "user_email": entry.user_email,
+                "roles": entry.role_per_app,
+            }));
+        }
+        Ok(result)
+    }
+
+    /// Internal helper to log an audit entry.
+    async fn log_audit(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        action: &str,
+        app: &str,
+        entity_type: Option<&str>,
+        entity_id: Option<Uuid>,
+        old_value: Option<serde_json::Value>,
+        new_value: Option<serde_json::Value>,
+        ip_address: Option<IpAddr>,
+        user_agent: Option<&str>,
+    ) -> Result<(), AegisServiceError> {
+        self.audit_repo
+            .append_log(
+                tenant_id,
+                user_id,
+                action,
+                app,
+                entity_type,
+                entity_id,
+                old_value,
+                new_value,
+                ip_address,
+                user_agent,
+            )
+            .await
+            .map_err(|e| AegisServiceError::Internal(e))?;
         Ok(())
     }
 }

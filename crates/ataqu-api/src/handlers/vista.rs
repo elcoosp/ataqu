@@ -195,6 +195,61 @@ pub async fn get_data_points_handler(
     Ok(Json(resp))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DrillDownRequest {
+    pub metric: String,
+    pub dimension: String,
+    pub value: String,
+    pub limit: Option<u64>,
+}
+
+pub async fn drill_down(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<DrillDownRequest>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let results = state
+        .vista_service
+        .get_drill_down_data(
+            auth.tenant_id,
+            payload.metric,
+            payload.dimension,
+            payload.value,
+            payload.limit.unwrap_or(1000),
+        )
+        .await
+        .map_err(|e| match e {
+            ataqu_application::vista_service::VistaServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
+    Ok(Json(results))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CrossAppQuery {
+    pub view: String,
+}
+
+pub async fn get_cross_app_dashboard(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    axum::extract::Query(query): axum::extract::Query<CrossAppQuery>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let results = state
+        .vista_service
+        .get_cross_app_dashboard(auth.tenant_id, query.view)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::vista_service::VistaServiceError::Validation(msg) => {
+                ApiResponseError::validation(&msg)
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
+    Ok(Json(results))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/kpis", axum::routing::get(get_kpis))
@@ -210,4 +265,6 @@ pub fn routes() -> Router<AppState> {
             "/data-points/:metric",
             axum::routing::get(get_data_points_handler),
         )
+        .route("/drill-down", axum::routing::post(drill_down))
+        .route("/cross-app", axum::routing::get(get_cross_app_dashboard))
 }

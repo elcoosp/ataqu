@@ -27,6 +27,7 @@ ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
 ataqu-domain-dial = { path = "../ataqu-domain-dial" }
 ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-gdpr = { path = "../ataqu-domain-gdpr" }
+ataqu-domain-vault = { path = "../ataqu-domain-vault" }
 ataqu-security = { path = "../ataqu-security" }
 
 axum = { version = "0.8.9", features = ["ws", "multipart"] }

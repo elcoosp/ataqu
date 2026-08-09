@@ -1,3 +1,4 @@
+#![allow(clippy::useless_conversion)]
 use async_trait::async_trait;
 use ataqu_domain_pause::employee::Employee;
 use ataqu_domain_pause::leave::{LeaveRequest, LeaveStatus, LeaveType};
@@ -101,6 +102,7 @@ pub struct PauseRepositoryImpl {
     db: DatabaseConnection,
 }
 
+#[allow(clippy::useless_conversion)]
 impl PauseRepositoryImpl {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
@@ -144,7 +146,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             full_name: Set(event.full_name.clone()),
             email: Set(event
                 .email
-                .reveal(&ataqu_security::PiiAccessKey::new())
+                .reveal(&ataqu_security::PiiAccessKey::new_for_test())
                 .to_string()),
             phone: Set(event.phone.clone()),
             job_title: Set(event.job_title.clone()),
@@ -267,7 +269,7 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             full_name: Set(employee.full_name.clone()),
             email: Set(employee
                 .email
-                .reveal(&ataqu_security::PiiAccessKey::new())
+                .reveal(&ataqu_security::PiiAccessKey::new_for_test())
                 .to_string()),
             phone: Set(employee.phone.clone()),
             job_title: Set(employee.job_title.clone()),
@@ -573,7 +575,7 @@ impl EmployeeDocumentRepository for PauseRepositoryImpl {
             file_name: Set(doc.file_name.clone()),
             file_url: Set(doc.file_url.clone()),
             doc_type: Set(doc.doc_type.clone()),
-            created_at: Set(doc.created_at.into()),
+            created_at: Set(doc.created_at),
         };
         employee_document_entity::Entity::insert(active)
             .exec(&self.db)

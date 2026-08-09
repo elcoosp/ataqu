@@ -22,6 +22,7 @@ pub struct CreateFormCommand {
     pub description: Option<String>,
     pub questions: Vec<ataqu_domain_sond::question::QuestionInput>,
     pub branding: serde_json::Value,
+    pub mode: Option<form_domain::FormMode>,
 }
 
 #[derive(Debug, Clone)]
@@ -47,6 +48,12 @@ pub enum SondServiceError {
 }
 
 pub type SondResult<T> = Result<T, SondServiceError>;
+
+#[derive(Debug, Clone)]
+pub struct ConversationalStepResult {
+    pub is_complete: bool,
+    pub next_question_id: Option<Uuid>,
+}
 
 pub struct SondService {
     repo: Arc<dyn SondRepository + Send + Sync>,
@@ -77,6 +84,7 @@ impl SondService {
             description: cmd.description,
             questions: cmd.questions.clone(),
             branding: cmd.branding.clone(),
+            mode: cmd.mode,
         };
         let event =
             form_domain::create_form(domain_cmd, self.id_gen.as_ref(), self.clock.as_ref())?;
@@ -92,6 +100,7 @@ impl SondService {
             description: event.description,
             questions,
             branding: event.branding,
+            mode: event.mode,
             created_at: event.created_at,
             updated_at: event.created_at,
             version: 0,
@@ -149,6 +158,9 @@ impl SondService {
                 .into_iter()
                 .map(|qi| qi.into_question(self.id_gen.as_ref()))
                 .collect();
+        }
+        if let Some(mode) = event.mode {
+            form.mode = mode;
         }
         form.updated_at = event.updated_at;
         form.version += 1;
@@ -243,9 +255,42 @@ impl SondService {
         self.outbox
             .append("collab_ops", "ResponseSubmitted", response.id, &payload)
             .await
-            .map_err(|e| SondServiceError::Repository(e))?;
+            .map_err(SondServiceError::Repository)?;
 
         Ok(response)
+    }
+
+    pub async fn submit_conversational_answer(
+        &self,
+        tenant_id: TenantId,
+        form_id: Uuid,
+        question_id: Uuid,
+        answer: ataqu_domain_sond::response::AnswerInput,
+    ) -> SondResult<ConversationalStepResult> {
+        let form = self.get_form(tenant_id, form_id).await?;
+
+        form_domain::validate_conversational_step(&form, question_id, &answer)
+            .map_err(SondServiceError::Validation)?;
+
+        let q_index = form
+            .questions
+            .iter()
+            .position(|q| q.id == question_id)
+            .ok_or_else(|| {
+                SondServiceError::Validation(format!("Question {} not found", question_id))
+            })?;
+
+        let is_complete = q_index == form.questions.len() - 1;
+        let next_question_id = if is_complete {
+            None
+        } else {
+            Some(form.questions[q_index + 1].id)
+        };
+
+        Ok(ConversationalStepResult {
+            is_complete,
+            next_question_id,
+        })
     }
 
     pub async fn get_response(&self, response_id: Uuid) -> SondResult<Response> {
