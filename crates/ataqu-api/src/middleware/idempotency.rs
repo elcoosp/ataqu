@@ -10,7 +10,7 @@ use uuid::Uuid;
 pub const IDEMPOTENCY_KEY_HEADER: &str = "Idempotency-Key";
 
 lazy_static! {
-    static ref IDEMPOTENCY_CACHE: Cache<Uuid, (StatusCode, axum::http::HeaderMap, Vec<u8>)> =
+    pub static ref IDEMPOTENCY_CACHE: Cache<Uuid, (StatusCode, axum::http::HeaderMap, Vec<u8>)> =
         Cache::builder()
             .max_capacity(10_000)
             .time_to_live(std::time::Duration::from_secs(7 * 24 * 60 * 60))

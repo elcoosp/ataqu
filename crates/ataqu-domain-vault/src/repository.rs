@@ -30,6 +30,12 @@ pub trait VaultRepository: Send + Sync {
         tenant_id: &TenantId,
         id: &Uuid,
     ) -> Result<Option<Variant>, RepositoryError>;
+
+    async fn find_variant_by_sku(
+        &self,
+        tenant_id: &TenantId,
+        sku: &str,
+    ) -> Result<Option<Variant>, RepositoryError>;
     async fn list_variants(
         &self,
         tenant_id: &TenantId,

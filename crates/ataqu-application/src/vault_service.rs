@@ -323,6 +323,17 @@ impl VaultService {
             .ok_or(VaultServiceError::VariantNotFound)
     }
 
+    pub async fn find_variant_by_sku(
+        &self,
+        tenant_id: TenantId,
+        sku: String,
+    ) -> VaultResult<Option<Variant>> {
+        self.repo
+            .find_variant_by_sku(&tenant_id, &sku)
+            .await
+            .map_err(VaultServiceError::Repository)
+    }
+
     pub async fn update_variant(&self, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.id).await?;
 

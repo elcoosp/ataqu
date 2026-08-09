@@ -295,6 +295,9 @@ impl SondService {
         Ok(response)
     }
 
+    /// Validates a single answer in a conversational form flow.
+    /// This is a stateless validation endpoint. The frontend is responsible for
+    /// collecting all answers and submitting them via `submit_response` at the end.
     pub async fn submit_conversational_answer(
         &self,
         tenant_id: TenantId,

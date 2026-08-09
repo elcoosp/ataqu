@@ -282,6 +282,20 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(model.map(variant_model_to_domain))
     }
 
+    async fn find_variant_by_sku(
+        &self,
+        tenant_id: &TenantId,
+        sku: &str,
+    ) -> Result<Option<Variant>, RepositoryError> {
+        let model = variant_entity::Entity::find()
+            .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(variant_entity::Column::Sku.eq(sku))
+            .one(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(model.map(variant_model_to_domain))
+    }
+
     async fn count_variants(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError> {
         variant_entity::Entity::find()
             .filter(variant_entity::Column::TenantId.eq(tenant_id.as_uuid()))

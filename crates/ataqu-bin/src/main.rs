@@ -540,7 +540,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Shopify worker
     let shopify_repo = Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()));
-    let shopify_service = Arc::new(ShopifyService::new(shopify_repo));
+    let shopify_service = Arc::new(ShopifyService::new(shopify_repo, vault_service.clone()));
     let shopify_http_client = reqwest::Client::new();
     tokio::spawn(async move {
         loop {
