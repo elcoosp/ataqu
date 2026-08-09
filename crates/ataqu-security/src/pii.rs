@@ -8,12 +8,18 @@ pub struct PiiAccessKey(());
 impl PiiAccessKey {
     /// Creates a new PiiAccessKey.
     pub fn new() -> Self {
-        Self::default()
+        Self(())
     }
 
     /// Creates a new PiiAccessKey for testing purposes.
     pub fn new_for_test() -> Self {
-        Self::default()
+        Self(())
+    }
+}
+
+impl Default for PiiAccessKey {
+    fn default() -> Self {
+        Self(())
     }
 }
 
@@ -127,12 +133,5 @@ mod tests {
     #[cfg(feature = "infra-pii-access")]
     fn key_construction_gated() {
         let _key = PiiAccessKey::new();
-    }
-}
-
-#[cfg(feature = "infra-pii-access")]
-impl Default for PiiAccessKey {
-    fn default() -> Self {
-        Self::new()
     }
 }
