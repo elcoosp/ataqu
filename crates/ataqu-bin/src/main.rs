@@ -462,7 +462,7 @@ async fn main() -> anyhow::Result<()> {
             std::path::PathBuf::from("/tmp/ataqu_email_spill"),
             10 * 1024 * 1024,
         );
-        tokio::spawn(async move {
+            tokio::spawn(async move {
         loop {
             let vista = vista_service_for_outbox.clone();
             let spark = spark_service.clone();
@@ -696,7 +696,7 @@ async fn main() -> anyhow::Result<()> {
                 tokio::time::sleep(Duration::from_secs(5)).await;
             }
         }
-    }););
+    });););
 
     let tempo_service_for_reminder = tempo_service.clone();
     let aegis_service_for_noshow = aegis_service.clone();
