@@ -191,5 +191,14 @@ pub fn create_router(state: AppState) -> Router {
     use crate::handlers::*;
     Router::new()
         .nest("/api/v1/dial", dial::routes())
+        .route(
+            "/api/v1/onboarding/status",
+            get(handlers::onboarding::get_status),
+        )
+        .route(
+            "/api/v1/onboarding/task-complete",
+            post(handlers::onboarding::complete_task),
+        )
+        .route("/api/v1/changelog", get(handlers::changelog::get_changelog))
         .with_state(state)
 }
