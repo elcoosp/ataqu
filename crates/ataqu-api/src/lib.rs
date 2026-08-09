@@ -64,6 +64,7 @@ pub struct AppState {
     pub rate_limiter: RateLimiter,
     pub metrics_handle: PrometheusHandle,
     pub sso_states: SsoStates,
+    pub sso_config: ataqu_domain_aegis::sso::SsoConfig,
     pub http_client: reqwest::Client,
     pub health_service: Arc<ataqu_application::health_service::HealthService>,
     pub health_cache: Arc<moka::sync::Cache<String, serde_json::Value>>,

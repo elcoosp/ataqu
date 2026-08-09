@@ -232,23 +232,8 @@ impl VistaService {
     pub async fn execute_raw_sql(
         &self,
         _tenant_id: TenantId,
-        sql: &str,
+        _sql: &str,
     ) -> VistaResult<Vec<serde_json::Value>> {
-        let trimmed_sql = sql.trim_start();
-        let upper_sql = trimmed_sql.to_uppercase();
-        if !upper_sql.starts_with("SELECT") && !upper_sql.starts_with("WITH") {
-            return Err(VistaServiceError::Validation(
-                "Only read-only SQL (SELECT or WITH) is permitted".to_string(),
-            ));
-        }
-        if sql.contains(';') {
-            return Err(VistaServiceError::Validation(
-                "Multiple statements are not permitted".to_string(),
-            ));
-        }
-
-        // To prevent SQL injection and cross-tenant data leakage, we disable raw SQL execution.
-        // Only predefined, parameterized queries should be allowed in the future.
         Err(VistaServiceError::Validation(
             "Raw SQL execution is disabled for security reasons".to_string(),
         ))

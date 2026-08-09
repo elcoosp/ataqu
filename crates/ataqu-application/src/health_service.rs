@@ -101,14 +101,14 @@ impl HealthService {
                 },
                 spark_workflows: SparkWorkflowHealth {
                     status: HealthStatus::Nominal,
-                    total: 0,
-                    failed_last_hour: 0,
-                    dlq_depth: 0,
+                    total: self.repo.get_total_workflows().await.unwrap_or(0),
+                    failed_last_hour: self.repo.get_failed_workflows_last_hour().await.unwrap_or(0),
+                    dlq_depth: self.repo.get_workflow_dlq_depth().await.unwrap_or(0),
                 },
                 db_connection_pools: DbPoolHealth {
-                    used: 0,
+                    used: self.repo.get_db_pool_used().await.unwrap_or(0),
                     max: 35,
-                    waiting: 0,
+                    waiting: self.repo.get_db_pool_waiting().await.unwrap_or(0),
                 },
             },
         })

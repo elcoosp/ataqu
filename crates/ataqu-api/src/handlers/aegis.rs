@@ -188,14 +188,7 @@ pub async fn sso_login(
         _ => return Err(ApiResponseError::validation("Invalid provider")),
     };
 
-    let config = ataqu_domain_aegis::sso::SsoConfig {
-        google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
-        google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
-        google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
-        microsoft_client_id: std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default(),
-        microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
-        microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
-    };
+    let config = state.sso_config.clone();
 
     let sso_state = uuid::Uuid::new_v4().to_string();
     let provider_str = match provider {
@@ -246,14 +239,7 @@ pub async fn sso_callback(
         .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
     state.sso_states.invalidate(&req.state);
 
-    let config = ataqu_domain_aegis::sso::SsoConfig {
-        google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
-        google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
-        google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
-        microsoft_client_id: std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default(),
-        microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
-        microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
-    };
+    let config = state.sso_config.clone();
 
     let client = state.http_client.clone();
     let provider_str = provider_str.as_str().to_string();

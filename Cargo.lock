@@ -468,6 +468,7 @@ dependencies = [
  "dashmap",
  "dotenvy",
  "lettre",
+ "libc",
  "metrics-exporter-prometheus",
  "moka",
  "reqwest",

@@ -5,7 +5,6 @@ use axum::middleware::Next;
 use axum::response::Response;
 use lazy_static::lazy_static;
 use moka::sync::Cache;
-use uuid::Uuid;
 
 pub const IDEMPOTENCY_KEY_HEADER: &str = "Idempotency-Key";
 
