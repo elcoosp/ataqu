@@ -17,12 +17,6 @@ pub struct CrossFieldRateLimiter {
     max_requests: usize,
 }
 
-impl Default for CrossFieldRateLimiter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl CrossFieldRateLimiter {
     pub fn new() -> Self {
         Self {
