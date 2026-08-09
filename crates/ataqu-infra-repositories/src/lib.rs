@@ -1,4 +1,5 @@
 pub mod aegis_repo;
+pub mod user_preferences_repo;
 pub mod email_tracking_repo;
 pub mod audit_repo;
 pub mod batch;

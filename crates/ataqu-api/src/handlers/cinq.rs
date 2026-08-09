@@ -1042,6 +1042,7 @@ pub fn routes() -> Router<AppState> {
             get(get_task).put(update_task).delete(delete_task),
         )
         .route("/contacts/:id/tasks", get(list_contact_tasks))
+        .route("/contacts/:id/tracking", get(super::email_tracking::get_contact_tracking))
         .route("/search", get(search_contacts))
         .route("/search/custom", get(search_by_custom_field))
         .route("/search/custom/cross", get(search_custom_fields_cross))

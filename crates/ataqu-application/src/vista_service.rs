@@ -3,8 +3,7 @@
 use std::sync::Arc;
 use uuid::Uuid;
 
-use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
-use sea_orm::DbBackend;
+use sea_orm::{ConnectionTrait, DatabaseConnection};
 
 use ataqu_domain_vista::aggregation::{AggregatedView, process_aggregation_event};
 use ataqu_domain_vista::analytics::prepare_data_point;
@@ -260,25 +259,39 @@ impl VistaService {
             ));
         }
 
+        // Map metric to actual table and column.
+        // For MVP, we support revenue (deals) and contacts_created (contacts).
+        let (schema, table, _column, date_col) = match metric.as_str() {
+            "revenue" => ("collab_crm", "deals", "amount", "created_at"),
+            "contacts_created" => ("collab_crm", "contacts", "id", "created_at"),
+            "products_created" => ("vault", "products", "id", "created_at"),
+            _ => return Err(VistaServiceError::Validation(format!("Unsupported metric: {}", metric))),
+        };
+
+        // Build SQL: SELECT * FROM {schema}.{table} WHERE tenant_id = $1 AND date_trunc('month', {date_col}) = $2::date LIMIT $3
+        // Use dimension as the grouping.
+        // For simplicity, we use value as a date string or a specific filter.
         let sql = format!(
             r#"
             SELECT *
-            FROM core.analytics_data_points
+            FROM {}.{}
             WHERE tenant_id = $1
-              AND metric_name = $2
-              AND (timestamp::text LIKE $3 OR metric_name LIKE $3)
-            ORDER BY timestamp DESC
-            LIMIT $4
-            "#
+              AND date_trunc('month', {}) = $2::date
+            ORDER BY {} DESC
+            LIMIT $3
+            "#,
+            schema, table, date_col, date_col
         );
-        let pattern = format!("%{}%", value);
-        let stmt = Statement::from_sql_and_values(
-            DbBackend::Postgres,
+        // Parse value as date.
+        let date = chrono::NaiveDate::parse_from_str(&value, "%Y-%m")
+            .or_else(|_| chrono::NaiveDate::parse_from_str(&value, "%Y-%m-%d"))
+            .map_err(|_| VistaServiceError::Validation("Invalid date format, use YYYY-MM".to_string()))?;
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
             &sql,
             [
                 tenant_id.as_uuid().into(),
-                metric.clone().into(),
-                pattern.into(),
+                date.into(),
                 (limit as i64).into(),
             ],
         );
@@ -315,4 +328,57 @@ impl VistaService {
             .await
             .map_err(VistaServiceError::Repository)
     }
+
+    pub async fn get_combined_dashboard(
+        &self,
+        tenant_id: TenantId,
+        primary_metric: String,
+        secondary_metric: String,
+        from_date: chrono::DateTime<chrono::Utc>,
+        to_date: chrono::DateTime<chrono::Utc>,
+        _group_by: String,
+    ) -> VistaResult<Vec<serde_json::Value>> {
+        // Map primary and secondary to views.
+        // We support: revenue_inventory, support_sales
+        let view_name = match (primary_metric.as_str(), secondary_metric.as_str()) {
+            ("revenue", "inventory") => "cross_app_revenue_inventory",
+            ("support", "sales") => "cross_app_support_sales",
+            _ => return Err(VistaServiceError::Validation("Unsupported combination".to_string())),
+        };
+
+        let sql = format!(
+            r#"
+            SELECT *
+            FROM vista.{}
+            WHERE tenant_id = $1
+              AND day BETWEEN $2 AND $3
+            ORDER BY day ASC
+            "#,
+            view_name
+        );
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            &sql,
+            [
+                tenant_id.as_uuid().into(),
+                from_date.into(),
+                to_date.into(),
+            ],
+        );
+
+        let rows = self.db.query_all_raw(stmt).await
+            .map_err(|e| VistaServiceError::Repository(e.to_string()))?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            let mut obj = serde_json::Map::new();
+            for col_name in row.column_names() {
+                let val: Option<String> = row.try_get("", &col_name).ok();
+                obj.insert(col_name, serde_json::json!(val));
+            }
+            results.push(serde_json::Value::Object(obj));
+        }
+        Ok(results)
+    }
+
 }

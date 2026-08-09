@@ -2,6 +2,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use sea_orm::{DatabaseConnection, DbBackend, DbErr, FromQueryResult, Statement};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use ataqu_infra_repositories::user_preferences_repo::UserPreferencesRepository;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromQueryResult)]
 pub struct ChangelogEntry {
@@ -40,16 +41,26 @@ impl ChangelogService {
         user_id: Uuid,
         limit: i64,
     ) -> Result<Vec<ChangelogEntry>, DbErr> {
+                let prefs_repo = UserPreferencesRepository::new(self.db.clone());
+        let last_read = prefs_repo.get_last_read_changelog(user_id).await.unwrap_or(None);
+        let cutoff = last_read.unwrap_or(chrono::DateTime::from_timestamp(0, 0).unwrap());
         let stmt = Statement::from_sql_and_values(
             DbBackend::Postgres,
             "SELECT c.id, c.version, c.date, c.title, c.description, c.category, c.breaking_change, c.created_at
              FROM core.changelog c
-             JOIN core.users u ON u.id = $1
-             WHERE c.created_at > u.last_login_at
+             WHERE c.created_at > $1
              ORDER BY c.date DESC, c.id DESC LIMIT $2",
-            [user_id.into(), limit.into()],
+            [cutoff.into(), limit.into()],
         );
 
         ChangelogEntry::find_by_statement(stmt).all(&self.db).await
     }
+
+    pub async fn mark_read(&self, user_id: Uuid) -> Result<(), DbErr> {
+                let prefs_repo = UserPreferencesRepository::new(self.db.clone());
+        let now = Utc::now();
+        prefs_repo.update_last_read_changelog(user_id, now).await.map_err(|e| DbErr::Custom(e.to_string()))?;
+        Ok(())
+    }
+
 }

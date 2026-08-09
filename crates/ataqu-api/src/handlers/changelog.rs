@@ -50,3 +50,17 @@ pub async fn get_unread_changelog(
             .into_response(),
     }
 }
+
+pub async fn mark_changelog_read(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> impl IntoResponse {
+    match state.changelog_service.mark_read(auth.user_id).await {
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({ "status": "ok" }))).into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}

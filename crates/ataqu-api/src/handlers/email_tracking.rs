@@ -1,5 +1,9 @@
-use axum::{extract::State, response::Json};
+use axum::{
+    extract::{Path, Query, State},
+    response::Json,
+};
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -8,16 +12,22 @@ use crate::middleware::AuthContext;
 use ataqu_contracts::cinq::TrackEmailRequest;
 use base64::{Engine as _, engine::general_purpose};
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, Serialize)]
 pub struct TrackEmailResponse {
     pub status: String,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct PublicTrackEmailRequest {
     pub contact_id: Uuid,
     pub event_type: String,
     pub tenant_id: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TrackingQueryParams {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
 }
 
 pub async fn track_email_public(
@@ -101,4 +111,26 @@ pub async fn track_email(
             "Email tracking service unavailable",
         )),
     }
+}
+
+pub async fn get_contact_tracking(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(contact_id): Path<Uuid>,
+    Query(params): Query<TrackingQueryParams>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let (events, total) = state
+        .cinq_service
+        .get_tracking_events_for_contact(auth.tenant_id, contact_id, limit, offset)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let resp = serde_json::json!({
+        "items": events,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    });
+    Ok(Json(resp))
 }

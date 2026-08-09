@@ -250,6 +250,37 @@ pub async fn get_cross_app_dashboard(
     Ok(Json(results))
 }
 
+
+
+#[derive(Debug, Deserialize)]
+pub struct CombineRequest {
+    pub primary: String,
+    pub secondary: String,
+    pub from_date: chrono::DateTime<chrono::Utc>,
+    pub to_date: chrono::DateTime<chrono::Utc>,
+    pub group_by: Option<String>,
+}
+
+pub async fn combine_data(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<CombineRequest>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let group_by = req.group_by.unwrap_or_else(|| "day".to_string());
+    let data = state
+        .vista_service
+        .get_combined_dashboard(
+            auth.tenant_id,
+            req.primary,
+            req.secondary,
+            req.from_date,
+            req.to_date,
+            group_by,
+        )
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(data))
+}
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/kpis", axum::routing::get(get_kpis))
@@ -267,4 +298,5 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/drill-down", axum::routing::post(drill_down))
         .route("/cross-app", axum::routing::get(get_cross_app_dashboard))
+        .route("/combine", axum::routing::post(combine_data))
 }
