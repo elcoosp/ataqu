@@ -540,6 +540,13 @@ async fn main() -> anyhow::Result<()> {
         pools.ops.clone(),
     ));
     let pause_service = Arc::new(PauseService::new(
+        pause_idempotency.clone(),
+        pause_employee_repo,
+        pause_leave_repo,
+        pause_doc_repo,
+        pause_outbox,
+        clock.clone(),
+    ));
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
     let idempotency_guard = pause_idempotency.clone();
 
@@ -605,7 +612,7 @@ async fn main() -> anyhow::Result<()> {
     let audit_repo = Arc::new(AuditRepository::new(pools.core.clone()));
 
     // S3 stub
-    let s3_service = Arc::new(ataqu_api::stubs::S3Service);
+    let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
 
     // Idempotency guard
     let idempotency_guard = pause_idempotency.clone();
