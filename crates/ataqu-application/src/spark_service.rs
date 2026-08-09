@@ -63,6 +63,7 @@ pub struct SparkService {
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
+    audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
 }
 
 impl SparkService {
@@ -72,6 +73,7 @@ impl SparkService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
+        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
     ) -> Self {
         Self {
             repo,
@@ -80,6 +82,7 @@ impl SparkService {
             outbox,
             id_gen,
             clock,
+            audit_repo,
         }
     }
 
@@ -118,6 +121,21 @@ impl SparkService {
             .append("collab_crm", "WorkflowCreated", workflow.id, &payload)
             .await
             .map_err(SparkServiceError::Repository)?;
+
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(
+                ataqu_kernel::TenantId::new(workflow.tenant_id),
+                Uuid::nil(),
+                "create_workflow",
+                "spark",
+                Some("workflow"),
+                Some(workflow.id),
+                None,
+                Some(serde_json::json!({"name": workflow.name})),
+                None,
+                None,
+            ).await.ok();
+        }
 
         Ok(workflow)
     }

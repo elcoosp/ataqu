@@ -135,6 +135,7 @@ async fn main() -> anyhow::Result<()> {
         dial_outbox,
         id_gen.clone(),
         clock.clone(),
+        Some(audit_repo.clone()),
     ));
 
     // PIVOT
@@ -157,6 +158,7 @@ async fn main() -> anyhow::Result<()> {
         pivot_outbox,
         id_gen.clone(),
         clock.clone(),
+        Some(audit_repo.clone()),
     ));
 
     // SOND
@@ -436,6 +438,7 @@ async fn main() -> anyhow::Result<()> {
         spark_outbox,
         id_gen.clone(),
         clock.clone(),
+        Some(audit_repo.clone()),
     ));
 
     // TEMPO
@@ -449,6 +452,7 @@ async fn main() -> anyhow::Result<()> {
         tempo_outbox,
         id_gen.clone(),
         clock.clone(),
+        Some(audit_repo.clone()),
     ));
 
     // PAUSE

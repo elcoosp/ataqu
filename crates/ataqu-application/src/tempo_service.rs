@@ -81,6 +81,7 @@ pub struct TempoService {
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
+    audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
 }
 
 impl TempoService {
@@ -89,12 +90,14 @@ impl TempoService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
+        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
     ) -> Self {
         Self {
             repo,
             outbox,
             id_gen,
             clock,
+            audit_repo,
         }
     }
 
@@ -207,6 +210,21 @@ impl TempoService {
                 .map_err(|e| {
                     TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
                 })?;
+        }
+
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(
+                booking.tenant_id,
+                Uuid::nil(),
+                "create_booking",
+                "tempo",
+                Some("booking"),
+                Some(booking.id.0),
+                None,
+                Some(serde_json::json!({"event_type_id": booking.event_type_id.0, "starts_at": booking.starts_at})),
+                None,
+                None,
+            ).await.ok();
         }
 
         Ok(booking)

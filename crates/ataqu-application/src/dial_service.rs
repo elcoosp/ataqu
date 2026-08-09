@@ -66,6 +66,7 @@ pub struct DialService {
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
+    audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
 }
 
 impl DialService {
@@ -75,6 +76,7 @@ impl DialService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
+        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
     ) -> Self {
         Self {
             repo,
@@ -82,6 +84,7 @@ impl DialService {
             outbox,
             id_gen,
             clock,
+            audit_repo,
         }
     }
 
@@ -122,6 +125,21 @@ impl DialService {
             .append("dial", "ChannelCreated", channel.id.as_uuid(), &payload)
             .await
             .map_err(DialServiceError::Repository)?;
+
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(
+                channel.tenant_id,
+                cmd.created_by,
+                "create_channel",
+                "dial",
+                Some("channel"),
+                Some(channel.id.as_uuid()),
+                None,
+                Some(serde_json::json!({"name": channel.name, "channel_type": format!("{:?}", channel.channel_type)})),
+                None,
+                None,
+            ).await.ok();
+        }
 
         Ok(channel)
     }
