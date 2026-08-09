@@ -1,5 +1,3 @@
-// allowed: pre-existing clippy warnings blocking TASK-078 build
-
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 

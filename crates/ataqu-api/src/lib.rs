@@ -31,14 +31,7 @@ pub mod handlers;
 pub mod middleware;
 pub mod serializers;
 
-// Stubs for missing dependencies
-pub mod stubs {
-    pub struct S3Service;
-    pub trait AuditRepositoryTrait {}
-    pub struct DummyAuditRepo;
-    impl AuditRepositoryTrait for DummyAuditRepo {}
-}
-pub use stubs::*;
+pub use ataqu_infra_storage::s3_service::S3Service;
 
 // Type aliases matching the handler expectations
 pub type WsRegistry =

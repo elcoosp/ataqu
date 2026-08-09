@@ -1,19 +1,4 @@
-#![allow(
-    clippy::never_loop,
-    clippy::collapsible_if,
-    clippy::redundant_pattern_matching,
-    clippy::new_without_default,
-    clippy::needless_return,
-    clippy::question_mark,
-    clippy::too_many_arguments,
-    clippy::useless_conversion,
-    clippy::redundant_closure,
-    clippy::needless_borrows_for_generic_args,
-    clippy::map_clone,
-    clippy::explicit_counter_loop,
-    clippy::unwrap_or_default,
-    unused_imports
-)]
+
 
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
@@ -73,7 +58,7 @@ impl ShopifyRepository for InlineShopifyRepo {
             .query_all_raw(sea_orm::Statement::from_sql_and_values(
                 sea_orm::DbBackend::Postgres,
                 sql,
-                Vec::<sea_orm::Value>::new(),
+                vec![],
             ))
             .await
             .map_err(|e| e.to_string())?;
@@ -470,7 +455,7 @@ async fn main() -> anyhow::Result<()> {
                         _ => self.http_client.get(new_url),
                     };
 
-                    req = req.header("host", &host);
+                    req = req.header("host", host.as_str());
 
                     for (k, v) in headers {
                         if k.eq_ignore_ascii_case("host") {

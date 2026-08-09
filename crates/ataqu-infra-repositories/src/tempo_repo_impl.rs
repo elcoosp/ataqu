@@ -1,4 +1,4 @@
-#![allow(clippy::useless_conversion)]
+
 use async_trait::async_trait;
 use ataqu_domain_tempo::availability::AvailabilitySlot;
 use ataqu_domain_tempo::event_type::EventType;
@@ -96,7 +96,6 @@ pub struct TempoRepositoryImpl {
     db: DatabaseConnection,
 }
 
-#[allow(clippy::useless_conversion)]
 impl TempoRepositoryImpl {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }

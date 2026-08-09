@@ -11,7 +11,6 @@ pub struct GdprTable {
     pub tenant_id_column: String,
 }
 
-#[allow(clippy::new_without_default)]
 impl GdprRegistry {
     pub fn new() -> Self {
         Self {

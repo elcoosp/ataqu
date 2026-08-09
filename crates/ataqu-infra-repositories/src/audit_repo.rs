@@ -21,7 +21,7 @@ impl AuditRepository {
         }
     }
 
-    #[allow(clippy::let_and_return)]
+    
     async fn partition_exists(&self, date: DateTime<Utc>) -> bool {
         let year = date.format("%Y").to_string();
         let month = date.format("%m").to_string();

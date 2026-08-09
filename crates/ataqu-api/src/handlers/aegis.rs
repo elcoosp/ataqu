@@ -22,6 +22,7 @@ pub struct CreateUserRequest {
     pub name: Option<String>,
 }
 
+#[allow(dead_code)]
 fn get_client_ip(headers: &axum::http::HeaderMap) -> Option<std::net::IpAddr> {
     if let Some(forwarded) = headers.get("x-forwarded-for") {
         if let Ok(forwarded_str) = forwarded.to_str() {
@@ -33,6 +34,7 @@ fn get_client_ip(headers: &axum::http::HeaderMap) -> Option<std::net::IpAddr> {
     None
 }
 
+#[allow(dead_code)]
 fn get_user_agent(headers: &axum::http::HeaderMap) -> Option<String> {
     headers
         .get("user-agent")
@@ -232,16 +234,19 @@ pub struct SsoCallbackRequest {
     pub state: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 struct OAuthTokenResponse {
     access_token: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 struct GoogleUserInfo {
     email: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 struct MicrosoftUserInfo {
     mail: Option<String>,
