@@ -900,7 +900,7 @@ impl CinqService {
         Ok(())
     }
 
-pub async fn create_establishment(
+    pub async fn create_establishment(
         &self,
         cmd: CreateEstablishmentCommand,
     ) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
@@ -950,9 +950,9 @@ pub async fn create_establishment(
             .ok_or_else(|| {
                 CinqServiceError::EstablishmentNotFound("Establishment not found".to_string())
             })
-||||||| 25452af
+    }
 
-/// Processes a TEMPO booking creation event and creates a CINQ activity for the contact.
+    /// Processes a TEMPO booking creation event and creates a CINQ activity for the contact.
     pub async fn process_tempo_booking_event(
         &self,
         event_payload: &serde_json::Value,
@@ -1014,3 +1014,5 @@ pub async fn create_establishment(
 
         self.create_activity(cmd).await?;
         Ok(())
+    }
+}

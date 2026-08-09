@@ -28,16 +28,10 @@ ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-vista = { path = "../ataqu-domain-vista" }
 once_cell = "1.19"
 ataqu-domain-aegis = { path = "../ataqu-domain-aegis" }
-<<<<<<< HEAD
 tokio = { version = "1.52", features = ["sync", "rt", "fs", "io-util", "macros", "rt-multi-thread"] }
-||||||| 25452af
-tokio = { version = "1.52", features = ["sync", "rt", "fs", "io-util", "macros", "rt-multi-thread"] }
-=======
-tokio = { version = "1.52", features = ["sync", "rt", "fs", "io-util", "macros", "rt-multi-thread"] }
->>>>>>> origin/main
 serde = { version = "1.0", features = ["derive"] }
 anyhow = "1.0"
 sha2 = "0.10"
 
 [dev-dependencies]
-tokio = { version = "1.52", features = ["sync", "rt", "fs", "io-util", "macros", "rt-multi-thread"] }
+tokio = { version = "1.52", features = ["macros", "rt-multi-thread"] }

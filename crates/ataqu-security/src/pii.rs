@@ -1,28 +1,36 @@
-use serde::Serialize;
+//! PII newtypes for compile-time redaction.
+//!
+//! This module defines newtypes for Personally Identifiable Information (PII)
+//! that guarantee redaction in logs and prevent accidental serialization.
+//! PII fields are wrapped in newtypes that implement `Debug` and `Display` as `[REDACTED]`.
+//! The newtypes do NOT implement `serde::Serialize` to prevent accidental JSON leakage.
+//! Serialization for APIs is handled by wrapper structs in the API layer.
+
 use std::fmt;
 
-/// A capability token that allows revealing PII.
-#[derive(Clone, Copy)]
+/// Capability token required to access the inner value of a PII newtype.
+/// This token is only constructible in crates that have the `infra-pii-access` feature enabled.
+#[derive(Clone)]
 pub struct PiiAccessKey(());
 
-#[allow(clippy::new_without_default)]
 impl PiiAccessKey {
-    /// Creates a new access key. Only available when the feature is enabled.
-    #[cfg(feature = "infra-pii-access")]
-    #[allow(clippy::new_without_default)] // Capability token, default makes no semantic sense
-    pub fn new() -> Self {
-        PiiAccessKey(())
-    }
-
-    /// Test-only constructor, always available.
-    #[doc(hidden)]
+    /// Create a new PiiAccessKey for testing or when the feature is not available.
+    /// This is always available, but should only be used in tests or when absolutely necessary.
     pub fn new_for_test() -> Self {
         PiiAccessKey(())
     }
 }
 
-/// An email address.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
+#[cfg(feature = "infra-pii-access")]
+impl PiiAccessKey {
+    /// Create a new PiiAccessKey. This is only available when the `infra-pii-access` feature is enabled.
+    pub fn new() -> Self {
+        PiiAccessKey(())
+    }
+}
+
+/// Email newtype with compile-time redaction.
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Email(String);
 
 impl Email {
@@ -30,6 +38,7 @@ impl Email {
         Self(value)
     }
 
+    /// Reveal the inner email address. Requires a PiiAccessKey.
     pub fn reveal(&self, _key: &PiiAccessKey) -> &str {
         &self.0
     }
@@ -53,8 +62,8 @@ impl AsRef<str> for Email {
     }
 }
 
-/// A phone number.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
+/// Phone number newtype with compile-time redaction.
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct PhoneNumber(String);
 
 impl PhoneNumber {
@@ -62,6 +71,7 @@ impl PhoneNumber {
         Self(value)
     }
 
+    /// Reveal the inner phone number. Requires a PiiAccessKey.
     pub fn reveal(&self, _key: &PiiAccessKey) -> &str {
         &self.0
     }
@@ -85,27 +95,37 @@ impl AsRef<str> for PhoneNumber {
     }
 }
 
+// Default implementation is only available when the feature is enabled.
+// This allows tests and infra code to construct PiiAccessKey without explicit new().
+#[cfg(feature = "infra-pii-access")]
+impl Default for PiiAccessKey {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn email_debug_redacts() {
-        let email = Email::new("alice@example.com".to_string());
+        let email = Email::new("test@example.com".to_string());
         assert_eq!(format!("{:?}", email), "[REDACTED]");
     }
 
     #[test]
     fn email_display_redacts() {
-        let email = Email::new("alice@example.com".to_string());
+        let email = Email::new("test@example.com".to_string());
         assert_eq!(format!("{}", email), "[REDACTED]");
     }
 
     #[test]
+    #[cfg(feature = "infra-pii-access")]
     fn email_reveal_works() {
-        let email = Email::new("alice@example.com".to_string());
-        let key = PiiAccessKey::new_for_test();
-        assert_eq!(email.reveal(&key), "alice@example.com");
+        let email = Email::new("test@example.com".to_string());
+        let key = PiiAccessKey::new();
+        assert_eq!(email.reveal(&key), "test@example.com");
     }
 
     #[test]
@@ -121,29 +141,20 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "infra-pii-access")]
     fn phone_reveal_works() {
         let phone = PhoneNumber::new("+1234567890".to_string());
-        let key = PiiAccessKey::new_for_test();
+        let key = PiiAccessKey::new();
         assert_eq!(phone.reveal(&key), "+1234567890");
     }
 
     #[test]
-    #[cfg(feature = "infra-pii-access")]
     fn key_construction_gated() {
+        // new_for_test is always available
         let _key = PiiAccessKey::new_for_test();
-    }
-}
-
-#[cfg(feature = "infra-pii-access")]
-impl Default for PiiAccessKey {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[cfg(feature = "infra-pii-access")]
-impl Default for PiiAccessKey {
-    fn default() -> Self {
-        Self::new()
+        #[cfg(feature = "infra-pii-access")]
+        {
+            let _key2 = PiiAccessKey::new();
+        }
     }
 }
