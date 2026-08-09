@@ -170,6 +170,7 @@ async fn main() -> anyhow::Result<()> {
         sond_outbox,
         id_gen.clone(),
         clock.clone(),
+        Some(audit_repo.clone()),
     ));
 
     // VAULT
@@ -183,6 +184,7 @@ async fn main() -> anyhow::Result<()> {
         vault_outbox,
         id_gen.clone(),
         clock.clone(),
+        Some(audit_repo.clone()),
     ));
 
     // VISTA

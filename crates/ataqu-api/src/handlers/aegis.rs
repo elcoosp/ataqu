@@ -181,9 +181,10 @@ pub async fn sso_login(
     State(state): State<AppState>,
     Json(req): Json<SsoLoginRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
+    use ataqu_domain_aegis::sso::SsoProvider;
     let provider = match req.provider.as_str() {
-        "google" => ataqu_domain_aegis::sso::SsoProvider::Google,
-        "microsoft" => ataqu_domain_aegis::sso::SsoProvider::Microsoft,
+        "google" => SsoProvider::Google,
+        "microsoft" => SsoProvider::Microsoft,
         _ => return Err(ApiResponseError::validation("Invalid provider")),
     };
 
@@ -197,9 +198,13 @@ pub async fn sso_login(
     };
 
     let sso_state = uuid::Uuid::new_v4().to_string();
+    let provider_str = match provider {
+        SsoProvider::Google => "Google",
+        SsoProvider::Microsoft => "Microsoft",
+    };
     state
         .sso_states
-        .insert(sso_state.clone(), format!("{:?}", provider));
+        .insert(sso_state.clone(), provider_str.to_string());
     let redirect = ataqu_domain_aegis::sso::build_authorization_url(&provider, &config, &sso_state);
 
     Ok(Json(serde_json::json!({
