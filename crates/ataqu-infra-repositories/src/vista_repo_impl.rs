@@ -298,16 +298,76 @@ impl VistaRepository for VistaRepositoryImpl {
         Ok(())
     }
 
-    async fn execute_raw_sql(
+    async fn get_raw_data_points(
         &self,
         tenant_id: &TenantId,
-        sql: &str,
+        metric: &str,
+        dimension: &str,
+        value: &str,
+        limit: u64,
     ) -> Result<Vec<serde_json::Value>, String> {
+        let sql = r#"
+            SELECT id, tenant_id, metric_name, value, timestamp
+            FROM vista.data_points
+            WHERE tenant_id = $1 AND metric_name = $2
+            ORDER BY timestamp DESC
+            LIMIT $3
+        "#;
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             sql,
+            [
+                tenant_id.as_uuid().into(),
+                metric.into(),
+                (limit as i64).into(),
+            ],
+        );
+
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            let ts: chrono::DateTime<chrono::Utc> =
+                row.try_get("", "timestamp").map_err(|e| e.to_string())?;
+            let val: f64 = row.try_get("", "value").map_err(|e| e.to_string())?;
+            results.push(serde_json::json!({
+                "id": row.try_get::<uuid::Uuid>("", "id").ok(),
+                "tenant_id": row.try_get::<uuid::Uuid>("", "tenant_id").ok(),
+                "metric_name": row.try_get::<String>("", "metric_name").ok(),
+                "value": val,
+                "timestamp": ts,
+                "dimension": dimension,
+                "dimension_value": value
+            }));
+        }
+        Ok(results)
+    }
+
+    async fn get_cross_app_view(
+        &self,
+        tenant_id: &TenantId,
+        view_name: &str,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        let valid_views = ["cross_app_revenue_inventory", "cross_app_support_sales"];
+        if !valid_views.contains(&view_name) {
+            return Err(format!("Invalid cross-app view name: {}", view_name));
+        }
+
+        let sql = format!(
+            r#"SELECT * FROM vista.{} WHERE tenant_id = $1 ORDER BY day DESC LIMIT 100"#,
+            view_name
+        );
+
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            &sql,
             [tenant_id.as_uuid().into()],
         );
+
         let rows = self
             .db
             .query_all_raw(stmt)
@@ -324,5 +384,23 @@ impl VistaRepository for VistaRepositoryImpl {
             results.push(serde_json::Value::Object(obj));
         }
         Ok(results)
+    }
+
+    async fn refresh_materialized_views(&self) -> Result<(), String> {
+        let sql1 = "REFRESH MATERIALIZED VIEW vista.cross_app_revenue_inventory";
+        let sql2 = "REFRESH MATERIALIZED VIEW vista.cross_app_support_sales";
+
+        let stmt1 = sea_orm::Statement::from_sql_and_values(sea_orm::DbBackend::Postgres, sql1, []);
+        let stmt2 = sea_orm::Statement::from_sql_and_values(sea_orm::DbBackend::Postgres, sql2, []);
+
+        self.db
+            .execute_raw(stmt1)
+            .await
+            .map_err(|e| e.to_string())?;
+        self.db
+            .execute_raw(stmt2)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
     }
 }

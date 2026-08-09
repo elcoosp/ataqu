@@ -255,7 +255,6 @@ pub async fn sso_callback(
     let _provider = state
         .sso_states
         .get(&req.state)
-        .map(|p| p.clone())
         .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
     state.sso_states.invalidate(&req.state);
 

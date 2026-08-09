@@ -29,5 +29,3 @@ pub use auth::{
     CreateUserCommand, MfaSetupCompleted, SetupMfaCommand, User, UserCreated, authenticate,
     create_user, setup_mfa,
 };
-
-pub mod repository;

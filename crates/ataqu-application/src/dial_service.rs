@@ -121,7 +121,7 @@ impl DialService {
         self.outbox
             .append("dial", "ChannelCreated", channel.id.as_uuid(), &payload)
             .await
-            .map_err(|e| DialServiceError::Repository(e))?;
+            .map_err(DialServiceError::Repository)?;
 
         Ok(channel)
     }
@@ -321,7 +321,7 @@ impl DialService {
         self.outbox
             .append("dial", "MessageSent", message.id.as_uuid(), &payload)
             .await
-            .map_err(|e| DialServiceError::Repository(e))?;
+            .map_err(DialServiceError::Repository)?;
 
         Ok(message)
     }
@@ -467,7 +467,7 @@ impl DialService {
             .await?;
 
         let mut wtr = csv::Writer::from_writer(vec![]);
-        wtr.write_record(&[
+        wtr.write_record([
             "message_id",
             "author_id",
             "content",
@@ -478,7 +478,7 @@ impl DialService {
         .map_err(|e| DialServiceError::Repository(e.to_string()))?;
 
         for msg in messages {
-            wtr.write_record(&[
+            wtr.write_record([
                 msg.id.as_uuid().to_string(),
                 msg.author_id.as_uuid().to_string(),
                 msg.content,

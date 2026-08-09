@@ -24,9 +24,20 @@ pub trait VistaRepository: Send + Sync {
     ) -> Result<Option<crate::Dashboard>, String>;
     async fn delete_dashboard(&self, tenant_id: &TenantId, id: uuid::Uuid) -> Result<(), String>;
 
-    async fn execute_raw_sql(
+    async fn get_raw_data_points(
         &self,
         tenant_id: &TenantId,
-        sql: &str,
+        metric: &str,
+        dimension: &str,
+        value: &str,
+        limit: u64,
     ) -> Result<Vec<serde_json::Value>, String>;
+
+    async fn get_cross_app_view(
+        &self,
+        tenant_id: &TenantId,
+        view_name: &str,
+    ) -> Result<Vec<serde_json::Value>, String>;
+
+    async fn refresh_materialized_views(&self) -> Result<(), String>;
 }

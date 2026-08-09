@@ -253,4 +253,42 @@ impl VistaService {
             "Raw SQL execution is disabled for security reasons".to_string(),
         ))
     }
+
+    pub async fn get_drill_down_data(
+        &self,
+        tenant_id: TenantId,
+        metric: String,
+        dimension: String,
+        value: String,
+        limit: u64,
+    ) -> VistaResult<Vec<serde_json::Value>> {
+        if limit > 1000 {
+            return Err(VistaServiceError::Validation(
+                "Limit exceeds maximum allowed value of 1000".to_string(),
+            ));
+        }
+
+        self.repo
+            .get_raw_data_points(&tenant_id, &metric, &dimension, &value, limit)
+            .await
+            .map_err(VistaServiceError::Repository)
+    }
+
+    pub async fn get_cross_app_dashboard(
+        &self,
+        tenant_id: TenantId,
+        view_name: String,
+    ) -> VistaResult<Vec<serde_json::Value>> {
+        self.repo
+            .get_cross_app_view(&tenant_id, &view_name)
+            .await
+            .map_err(VistaServiceError::Repository)
+    }
+
+    pub async fn refresh_materialized_views(&self) -> VistaResult<()> {
+        self.repo
+            .refresh_materialized_views()
+            .await
+            .map_err(VistaServiceError::Repository)
+    }
 }

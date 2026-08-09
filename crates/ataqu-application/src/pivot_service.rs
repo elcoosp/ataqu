@@ -118,7 +118,7 @@ impl PivotService {
         self.outbox
             .append("collab_ops", "DatabaseCreated", event.id, &payload)
             .await
-            .map_err(|e| PivotServiceError::Repository(e))?;
+            .map_err(PivotServiceError::Repository)?;
 
         Ok(event)
     }
@@ -164,7 +164,7 @@ impl PivotService {
         self.outbox
             .append("collab_ops", "DocumentCreated", event.id, &payload)
             .await
-            .map_err(|e| PivotServiceError::Repository(e))?;
+            .map_err(PivotServiceError::Repository)?;
 
         Ok(event)
     }
@@ -275,7 +275,7 @@ impl PivotService {
         self.outbox
             .append("collab_ops", "BlockCreated", block.id, &payload)
             .await
-            .map_err(|e| PivotServiceError::Repository(e))?;
+            .map_err(PivotServiceError::Repository)?;
 
         Ok(block)
     }
@@ -321,7 +321,7 @@ impl PivotService {
             document_id: block_event.document_id,
             block_type,
             created_at: block_event.created_at,
-            updated_at: self.clock.now().into(),
+            updated_at: self.clock.now(),
             version: block_event.version + 1,
         };
         self.block_repo

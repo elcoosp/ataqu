@@ -28,10 +28,7 @@ impl RateLimiter {
 
     pub fn check(&self, key: &str) -> bool {
         let now = Instant::now();
-        let mut entry = self
-            .requests
-            .entry(key.to_string())
-            .or_insert_with(Vec::new);
+        let mut entry = self.requests.entry(key.to_string()).or_default();
         entry.retain(|t| now.duration_since(*t) < self.window);
         if entry.len() >= self.max_requests {
             false
