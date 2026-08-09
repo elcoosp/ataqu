@@ -29,6 +29,7 @@ pub mod error;
 pub mod handlers;
 pub mod middleware;
 pub mod serializers;
+pub mod extractors;
 
 pub use ataqu_infra_storage::s3_service::S3Service;
 
@@ -170,9 +171,7 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
-        .layer(axum::middleware::from_fn(
-            crate::middleware::idempotency::idempotency_middleware,
-        ))
+        // Idempotency is now handled by the IdempotencyContext extractor
         .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
         ))
@@ -216,9 +215,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/health/status",
             axum::routing::get(handlers::health::get_health_status),
         )
-        .layer(axum::middleware::from_fn(
-            crate::middleware::idempotency::idempotency_middleware,
-        ))
+        // Idempotency is now handled by the IdempotencyContext extractor
         .layer(axum::middleware::from_fn(
             crate::middleware::csrf::csrf_middleware,
         ))

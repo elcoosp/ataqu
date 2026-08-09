@@ -36,6 +36,9 @@ impl ApiResponseError {
     pub fn internal(msg: &str) -> Self {
         Self::Internal(msg.to_string())
     }
+    pub fn is_validation(&self) -> bool {
+        matches!(self, Self::Validation(_) | Self::Conflict(_))
+    }
 }
 
 impl IntoResponse for ApiResponseError {

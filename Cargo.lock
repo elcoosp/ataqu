@@ -373,6 +373,7 @@ dependencies = [
  "dashmap",
  "dotenvy",
  "futures",
+ "http 1.5.0",
  "jsonwebtoken",
  "lazy_static",
  "metrics",
