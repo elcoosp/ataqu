@@ -1,3 +1,4 @@
+// ===== FILE: ataqu-api/src/lib.rs =====
 
 //! Ataqu API layer – Axum handlers, middleware, and shared state.
 
@@ -40,55 +41,12 @@ pub mod stubs {
 }
 pub use stubs::*;
 
-<<<<<<< HEAD
-use crate::middleware::rate_limit::RateLimiter;
-use axum::Router;
-use axum::extract::State;
-use metrics_exporter_prometheus::PrometheusHandle;
-use std::sync::Arc;
-use uuid::Uuid;
-
-use ataqu_application::aegis_service::AegisService;
-use ataqu_application::cinq_service::CinqService;
-use ataqu_application::dial_service::DialService;
-use ataqu_application::pause_service::PauseService;
-use ataqu_application::pivot_service::PivotService;
-use ataqu_application::sond_service::SondService;
-use ataqu_application::spark_service::SparkService;
-use ataqu_application::tempo_service::TempoService;
-use ataqu_application::vault_service::VaultService;
-use ataqu_application::vista_service::VistaService;
-use ataqu_kernel::{Clock, IdGenerator};
-||||||| 25452af
-use crate::middleware::rate_limit::RateLimiter;
-use axum::Router;
-use axum::extract::State;
-use metrics_exporter_prometheus::PrometheusHandle;
-use std::sync::Arc;
-use uuid::Uuid;
-
-use ataqu_application::aegis_service::AegisService;
-use ataqu_application::cinq_service::CinqService;
-use ataqu_application::dial_service::DialService;
-use ataqu_application::pause_service::PauseService;
-use ataqu_application::pivot_service::PivotService;
-use ataqu_application::sond_service::SondService;
-use ataqu_application::spark_service::SparkService;
-use ataqu_application::tempo_service::TempoService;
-use ataqu_application::vault_service::VaultService;
-use ataqu_application::vista_service::VistaService;
-use ataqu_kernel::{Clock, IdGenerator};
-use ataqu_infra_storage::s3_service::S3Service;
-use ataqu_domain_aegis::repository::AuditRepositoryTrait;
-use ataqu_application::pause_service::IdempotencyPort;
-=======
 // Type aliases matching the handler expectations
 pub type WsRegistry =
     Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, tokio::sync::mpsc::UnboundedSender<String>>>>>;
 pub type ConnIndex = Arc<DashMap<usize, Uuid>>;
 pub type PresenceCounts = Arc<DashMap<Uuid, i32>>;
 pub type SsoStates = Arc<Cache<String, String>>;
->>>>>>> origin/main
 
 /// Application state shared across handlers.
 #[derive(Clone)]
@@ -124,17 +82,10 @@ pub struct AppState {
     pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
 }
 
-<<<<<<< HEAD
-#[allow(dead_code)]
-async fn force_attachment_middleware(req: Request, next: Next) -> Response {
-||||||| 25452af
-async fn force_attachment_middleware(req: Request, next: Next) -> Response {
-=======
 async fn force_attachment_middleware(
     req: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> axum::response::Response {
->>>>>>> origin/main
     let is_upload = req.uri().path().starts_with("/uploads/");
     let mut resp = next.run(req).await;
     if is_upload {
@@ -144,17 +95,10 @@ async fn force_attachment_middleware(
     resp
 }
 
-<<<<<<< HEAD
-#[allow(dead_code)]
-async fn security_headers_middleware(req: Request, next: Next) -> Response {
-||||||| 25452af
-async fn security_headers_middleware(req: Request, next: Next) -> Response {
-=======
 async fn security_headers_middleware(
     req: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> axum::response::Response {
->>>>>>> origin/main
     let mut resp = next.run(req).await;
     let headers = resp.headers_mut();
     headers.insert("x-content-type-options", "nosniff".parse().unwrap());
@@ -170,17 +114,10 @@ async fn security_headers_middleware(
     resp
 }
 
-<<<<<<< HEAD
-#[allow(dead_code)]
-async fn request_id_middleware(mut req: Request, next: Next) -> Response {
-||||||| 25452af
-async fn request_id_middleware(mut req: Request, next: Next) -> Response {
-=======
 async fn request_id_middleware(
     mut req: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> axum::response::Response {
->>>>>>> origin/main
     let request_id = Uuid::now_v7().to_string();
     req.extensions_mut().insert(request_id.clone());
     let method = req.method().to_string();
@@ -238,80 +175,6 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 }
 
 pub fn create_router(state: AppState) -> Router {
-<<<<<<< HEAD
-    use handlers::aegis::routes as aegis_routes;
-    use handlers::cinq::routes as cinq_routes;
-    use handlers::dial::routes as dial_routes;
-    use handlers::pause::routes as pause_routes;
-    use handlers::pivot::routes as pivot_routes;
-    use handlers::sond::routes as sond_routes;
-    use handlers::spark::routes as spark_routes;
-    use handlers::tempo::routes as tempo_routes;
-    use handlers::vault::routes as vault_routes;
-    use handlers::vista::routes as vista_routes;
-
-    let public_routes = Router::new()
-        .nest("/api/sond", handlers::sond::public_routes())
-        .nest("/api/tempo", handlers::tempo::public_routes())
-        .nest("/api/cinq", handlers::cinq::public_routes())
-        .nest("/api/spark", handlers::spark::public_routes())
-        .nest("/api/aegis", handlers::aegis::public_routes())
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        .layer(axum::middleware::from_fn_with_state(
-            state.rate_limiter.clone(),
-            crate::middleware::rate_limit::rate_limit_middleware,
-        ));
-
-    let private_routes = Router::new()
-        .nest("/api/aegis", aegis_routes())
-        .nest("/api/cinq", cinq_routes())
-        .nest("/api/dial", dial_routes())
-        .nest("/api/pause", pause_routes())
-        .nest("/api/pivot", pivot_routes())
-        .nest("/api/sond", sond_routes())
-        .nest("/api/spark", spark_routes())
-        .nest("/api/tempo", tempo_routes())
-        .nest("/api/vault", vault_routes())
-        .nest("/api/vista", vista_routes())
-        .nest("/api/gdpr", handlers::gdpr::routes())
-        .route(
-            "/api/search",
-            axum::routing::get(handlers::search::unified_search),
-        )
-        .route("/metrics", axum::routing::get(metrics_handler))
-        .route("/admin/health", axum::routing::get(health_check))
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        .layer(axum::middleware::from_fn_with_state(
-            state.rate_limiter.clone(),
-            crate::middleware::rate_limit::rate_limit_middleware,
-        ))
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            crate::middleware::auth::auth_middleware,
-        ));
-
-    let track_router = Router::new()
-        .route(
-            "/track",
-            axum::routing::get(handlers::email_tracking::track_email_public),
-        )
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        .with_state(state.clone());
-
-    let default_router = Router::new()
-        // .layer(axum::middleware::from_fn(...)) // removed for now
-        .route("/health", axum::routing::get(health_check))
-        .route("/ready", axum::routing::get(readiness_check))
-        .merge(public_routes)
-        .merge(private_routes)
-        .with_state(state);
-
-||||||| 25452af
     use handlers::aegis::routes as aegis_routes;
     use handlers::cinq::routes as cinq_routes;
     use handlers::dial::routes as dial_routes;
@@ -388,15 +251,6 @@ pub fn create_router(state: AppState) -> Router {
         .layer(axum::middleware::from_fn(force_attachment_middleware))
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
-        .merge(public_routes)
-        .merge(private_routes)
-        .with_state(state);
-
-=======
-    use crate::handlers::*;
->>>>>>> origin/main
-    Router::new()
-        .nest("/api/v1/dial", dial::routes())
         .route(
             "/api/v1/onboarding/status",
             get(handlers::onboarding::get_status),
@@ -406,5 +260,9 @@ pub fn create_router(state: AppState) -> Router {
             post(handlers::onboarding::complete_task),
         )
         .route("/api/v1/changelog", get(handlers::changelog::get_changelog))
-        .with_state(state)
+        .merge(public_routes)
+        .merge(private_routes)
+        .with_state(state);
+
+    default_router
 }

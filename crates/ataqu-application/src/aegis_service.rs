@@ -842,7 +842,7 @@ impl AegisService {
                 to_date,
             )
             .await
-            .map_err(|e| AegisServiceError::Internal(e))
+            .map_err(AegisServiceError::Internal)
     }
 
     /// Get the permission matrix for a tenant.
@@ -854,7 +854,7 @@ impl AegisService {
             .audit_repo
             .get_permission_matrix(tenant_id)
             .await
-            .map_err(|e| AegisServiceError::Internal(e))?;
+            .map_err(AegisServiceError::Internal)?;
         let mut result = Vec::new();
         for entry in entries {
             result.push(serde_json::json!({
@@ -895,7 +895,7 @@ impl AegisService {
                 user_agent,
             )
             .await
-            .map_err(|e| AegisServiceError::Internal(e))?;
+            .map_err(AegisServiceError::Internal)?;
         Ok(())
     }
 }
