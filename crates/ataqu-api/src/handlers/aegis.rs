@@ -239,9 +239,10 @@ pub async fn sso_callback(
     State(state): State<AppState>,
     Json(req): Json<SsoCallbackRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
-    let _provider = state
+    let provider_str = state
         .sso_states
         .get(&req.state)
+        .map(|v| v.clone())
         .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
     state.sso_states.invalidate(&req.state);
 
@@ -255,7 +256,7 @@ pub async fn sso_callback(
     };
 
     let client = state.http_client.clone();
-    let provider_str = state.sso_states.get(&req.state).map(|v| v.clone()).unwrap_or_default();
+    let provider_str = provider_str.as_str().to_string();
     let email_str = if provider_str == "Google" {
         let token_resp = client
             .post("https://oauth2.googleapis.com/token")
@@ -527,7 +528,7 @@ pub async fn delete_api_key(
 ) -> ApiResult<StatusCode> {
     state
         .aegis_service
-        .delete_api_key(auth.tenant_id, id)
+        .delete_api_key(auth.tenant_id, auth.user_id, id)
         .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::NO_CONTENT)

@@ -90,6 +90,11 @@ impl DialService {
 
     // -- Channel methods --
     pub async fn create_channel(&self, cmd: CreateChannelCommand) -> DialResult<Channel> {
+        if cmd.channel_type == ChannelType::DirectMessage && cmd.participants.len() != 2 {
+            return Err(DialServiceError::Validation(
+                "Direct message channels must have exactly 2 participants".to_string(),
+            ));
+        }
         let participants: Vec<UserId> = cmd.participants.into_iter().map(UserId::new).collect();
         let domain_cmd = DomainCreateChannel {
             tenant_id: cmd.tenant_id,

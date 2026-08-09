@@ -48,6 +48,21 @@ pub async fn ws_handler(
     let user_id = uuid::Uuid::parse_str(&token_data.claims.sub)
         .map_err(|_| ApiResponseError::unauthorized("Invalid user ID in token"))?;
 
+    let user = state
+        .aegis_service
+        .find_user_by_id(user_id)
+        .await
+        .map_err(|_| ApiResponseError::unauthorized("Invalid user"))?
+        .ok_or_else(|| ApiResponseError::unauthorized("User not found"))?;
+
+    if !user.is_active {
+        return Err(ApiResponseError::unauthorized("User is not active"));
+    }
+
+    if token_data.claims.token_version != user.version {
+        return Err(ApiResponseError::unauthorized("Token version mismatch"));
+    }
+
     let auth = crate::middleware::AuthContext {
         user_id,
         tenant_id: ataqu_kernel::TenantId::new(token_data.claims.tenant_id),
@@ -100,6 +115,16 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     while let Some(Ok(msg)) = ws_receiver.next().await {
         match msg {
             Message::Text(text) => {
+                if text.len() > 4096 {
+                    let _ = tx.send(
+                        serde_json::json!({
+                            "type": "error",
+                            "message": "Message too large (max 4096 bytes)"
+                        })
+                        .to_string(),
+                    );
+                    continue;
+                }
                 if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text)
                     && let Some(action) = parsed.get("action").and_then(|v| v.as_str()) {
                         match action {

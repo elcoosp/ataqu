@@ -264,6 +264,7 @@ impl PivotService {
 
     // -- Blocks --
     pub async fn create_block(&self, cmd: CreateBlockCommand) -> PivotResult<Block> {
+        self.get_document(cmd.tenant_id, cmd.document_id).await?;
         let domain_cmd = block_domain::CreateBlockCommand {
             tenant_id: cmd.tenant_id,
             document_id: cmd.document_id,
@@ -358,6 +359,14 @@ impl PivotService {
 
     // -- Relations --
     pub async fn create_relation(&self, cmd: CreateRelationCommand) -> PivotResult<Relation> {
+        self.block_repo
+            .get_block_by_id(&cmd.tenant_id, cmd.from_block_id)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+        self.block_repo
+            .get_block_by_id(&cmd.tenant_id, cmd.to_block_id)
+            .await
+            .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
         let rel = Relation {
             from_block_id: cmd.from_block_id,
             to_block_id: cmd.to_block_id,
@@ -378,6 +387,17 @@ impl PivotService {
             to_block_id: event.relation.to_block_id,
             relation_type: event.relation.relation_type,
         };
+
+        let payload = serde_json::json!({
+            "from_block_id": relation.from_block_id,
+            "to_block_id": relation.to_block_id,
+            "relation_type": relation.relation_type,
+        });
+        self.outbox
+            .append("collab_ops", "RelationCreated", relation.from_block_id, &payload)
+            .await
+            .map_err(PivotServiceError::Repository)?;
+
         Ok(relation)
     }
 
@@ -444,6 +464,17 @@ impl PivotService {
             .save_template(&template)
             .await
             .map_err(|e| PivotServiceError::Repository(e.to_string()))?;
+
+        let payload = serde_json::json!({
+            "template_id": template.id,
+            "tenant_id": template.tenant_id.as_uuid(),
+            "name": template.name,
+        });
+        self.outbox
+            .append("collab_ops", "TemplateCreated", template.id, &payload)
+            .await
+            .map_err(PivotServiceError::Repository)?;
+
         Ok(template)
     }
 

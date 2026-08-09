@@ -128,6 +128,16 @@ impl SondService {
             ).await.ok();
         }
 
+        let payload = serde_json::json!({
+            "form_id": form.id,
+            "tenant_id": form.tenant_id.as_uuid(),
+            "title": form.title,
+        });
+        self.outbox
+            .append("collab_ops", "FormCreated", form.id, &payload)
+            .await
+            .map_err(SondServiceError::Repository)?;
+
         Ok(form)
     }
 
@@ -203,6 +213,16 @@ impl SondService {
                 None,
             ).await.ok();
         }
+
+        let payload = serde_json::json!({
+            "form_id": form.id,
+            "tenant_id": form.tenant_id.as_uuid(),
+            "title": form.title,
+        });
+        self.outbox
+            .append("collab_ops", "FormCreated", form.id, &payload)
+            .await
+            .map_err(SondServiceError::Repository)?;
 
         Ok(form)
     }

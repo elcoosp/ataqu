@@ -405,6 +405,19 @@ impl TempoService {
             .save_event_type(&event_type)
             .await
             .map_err(TempoServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "event_type_id": event_type.id.0,
+            "tenant_id": event_type.tenant_id.as_uuid(),
+            "name": event_type.name,
+        });
+        self.outbox
+            .append("collab_ops", "EventTypeCreated", event_type.id.0, &payload)
+            .await
+            .map_err(|e| {
+                TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
+
         Ok(event_type)
     }
 
@@ -511,6 +524,19 @@ impl TempoService {
             .save_availability_slot(&slot)
             .await
             .map_err(TempoServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "slot_id": slot.id,
+            "tenant_id": slot.tenant_id.as_uuid(),
+            "event_type_id": slot.event_type_id,
+        });
+        self.outbox
+            .append("collab_ops", "AvailabilitySlotCreated", slot.id, &payload)
+            .await
+            .map_err(|e| {
+                TempoServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
+
         Ok(slot)
     }
 

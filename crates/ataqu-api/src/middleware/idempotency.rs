@@ -10,7 +10,7 @@ use uuid::Uuid;
 pub const IDEMPOTENCY_KEY_HEADER: &str = "Idempotency-Key";
 
 lazy_static! {
-    pub static ref IDEMPOTENCY_CACHE: Cache<Uuid, (StatusCode, axum::http::HeaderMap, Vec<u8>)> =
+    pub static ref IDEMPOTENCY_CACHE: Cache<String, (StatusCode, axum::http::HeaderMap, Vec<u8>)> =
         Cache::builder()
             .max_capacity(10_000)
             .time_to_live(std::time::Duration::from_secs(7 * 24 * 60 * 60))
@@ -30,14 +30,20 @@ pub async fn idempotency_middleware(
         return Ok(next.run(req).await);
     }
 
-    let key = req
+    let tenant_id = req
+        .extensions()
+        .get::<crate::middleware::AuthContext>()
+        .map(|a| a.tenant_id.as_uuid().to_string())
+        .unwrap_or_else(|| "global".to_string());
+
+    let key_str = req
         .headers()
         .get(IDEMPOTENCY_KEY_HEADER)
         .and_then(|v| v.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok());
+        .map(|s| format!("{}:{}", tenant_id, s));
 
-    if let Some(key) = key {
-        if let Some(cached) = IDEMPOTENCY_CACHE.get(&key) {
+    if let Some(key) = &key_str {
+        if let Some(cached) = IDEMPOTENCY_CACHE.get(key) {
             let mut resp = Response::builder().status(cached.0);
             for (k, v) in &cached.1 {
                 resp = resp.header(k.clone(), v.clone());
@@ -48,12 +54,12 @@ pub async fn idempotency_middleware(
 
     let resp = next.run(req).await;
 
-    if let Some(key) = key {
+    if let Some(key) = &key_str {
         if resp.status().is_success() {
             let status = resp.status();
             let headers = resp.headers().clone();
-            let body = to_bytes(resp.into_body(), usize::MAX).await.unwrap_or_default();
-            IDEMPOTENCY_CACHE.insert(key, (status, headers.clone(), body.to_vec()));
+            let body = to_bytes(resp.into_body(), 1024 * 1024).await.unwrap_or_default();
+            IDEMPOTENCY_CACHE.insert(key.clone(), (status, headers.clone(), body.to_vec()));
 
             let mut new_resp = Response::builder().status(status);
             for (k, v) in &headers {

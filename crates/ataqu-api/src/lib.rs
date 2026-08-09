@@ -171,7 +171,6 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
-        .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
         ))
@@ -181,9 +180,23 @@ pub fn create_router(state: AppState) -> Router {
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
-        ));
+        ))
+        .layer(axum::middleware::from_fn(request_id_middleware));
 
     let private_routes = Router::new()
+        .route(
+            "/api/v1/onboarding/status",
+            get(handlers::onboarding::get_status),
+        )
+        .route(
+            "/api/v1/onboarding/task-complete",
+            post(handlers::onboarding::complete_task),
+        )
+        .route("/api/v1/changelog", get(handlers::changelog::get_changelog))
+        .route(
+            "/api/v1/changelog/unread",
+            get(handlers::changelog::get_unread_changelog),
+        )
         .nest("/api/aegis", aegis_routes())
         .nest("/api/cinq", cinq_routes())
         .nest("/api/dial", dial_routes())
@@ -200,12 +213,10 @@ pub fn create_router(state: AppState) -> Router {
             axum::routing::get(handlers::search::unified_search),
         )
         .route("/metrics", axum::routing::get(metrics_handler))
-        .route("/admin/health", axum::routing::get(health_check))
         .route(
             "/api/v1/health/status",
             axum::routing::get(handlers::health::get_health_status),
         )
-        .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
         ))
@@ -220,26 +231,15 @@ pub fn create_router(state: AppState) -> Router {
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             crate::middleware::auth::auth_middleware,
-        ));
+        ))
+        .layer(axum::middleware::from_fn(request_id_middleware));
 
     
 
     Router::new()
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
-        .route(
-            "/api/v1/onboarding/status",
-            get(handlers::onboarding::get_status),
-        )
-        .route(
-            "/api/v1/onboarding/task-complete",
-            post(handlers::onboarding::complete_task),
-        )
-        .route("/api/v1/changelog", get(handlers::changelog::get_changelog))
-        .route(
-            "/api/v1/changelog/unread",
-            get(handlers::changelog::get_unread_changelog),
-        )
+        .route("/admin/health", axum::routing::get(health_check))
         .merge(public_routes)
         .merge(private_routes)
         .with_state(state)

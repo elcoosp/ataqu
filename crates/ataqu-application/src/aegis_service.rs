@@ -105,6 +105,44 @@ struct JwtClaims {
     token_version: i32,
 }
 
+fn generate_reset_token(
+    user: &User,
+    email_str: &str,
+    config: &AegisConfig,
+) -> Result<String, AegisServiceError> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as usize;
+    let claims = JwtClaims {
+        sub: user.id.to_string(),
+        tenant_id: user.tenant_id.as_uuid(),
+        email: email_str.to_string(),
+        roles: vec![],
+        exp: now + 3600,
+        iat: now,
+        token_type: "reset_password".to_string(),
+        token_version: user.version,
+    };
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(&config.jwt_secret),
+    )
+    .map_err(|e| AegisServiceError::Internal(e.to_string()))
+}
+
+fn constant_time_eq(a: &str, b: &str) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut result = 0;
+    for (x, y) in a.bytes().zip(b.bytes()) {
+        result |= x ^ y;
+    }
+    result == 0
+}
+
 pub struct RealAegisDomain;
 
 impl RealAegisDomain {
@@ -416,6 +454,9 @@ impl AegisService {
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
         }
+        if claims.token_version != user.version {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
         let email_str = user
             .email
             .reveal(&ataqu_security::PiiAccessKey::new_for_test())
@@ -617,8 +658,13 @@ impl AegisService {
     pub async fn delete_api_key(
         &self,
         tenant_id: ataqu_kernel::TenantId,
+        user_id: Uuid,
         id: Uuid,
     ) -> Result<(), AegisServiceError> {
+        let keys = self.repo.list_api_keys(tenant_id.as_uuid(), user_id).await?;
+        if !keys.iter().any(|k| k.id == id) {
+            return Err(AegisServiceError::NotFound("API key not found".to_string()));
+        }
         self.repo
             .delete_api_key(tenant_id.as_uuid(), id)
             .await
@@ -650,7 +696,7 @@ impl AegisService {
             let mut hasher = Sha256::new();
             hasher.update(key.as_bytes());
             let hash_str = format!("{:x}", hasher.finalize());
-            if hash_str != api_key.key_hash {
+            if !constant_time_eq(&hash_str, &api_key.key_hash) {
                 continue;
             }
 
@@ -764,10 +810,12 @@ impl AegisService {
             .email
             .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string();
+        let reset_token = generate_reset_token(&user, &email_str, &self.config)?;
         let payload = serde_json::json!({
             "user_id": user.id,
             "tenant_id": user.tenant_id.as_uuid(),
             "email": email_str,
+            "token": reset_token,
         });
         self.outbox
             .append("core", "PasswordResetRequested", user.id, &payload)

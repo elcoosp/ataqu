@@ -711,6 +711,18 @@ impl CinqService {
             updated_at: event.created_at,
         };
         self.activity_repo.save_activity(&activity).await?;
+
+        let payload = serde_json::json!({
+            "activity_id": activity.id,
+            "tenant_id": activity.tenant_id.as_uuid(),
+            "contact_id": activity.contact_id,
+            "activity_type": format!("{:?}", activity.activity_type),
+        });
+        self.outbox
+            .append(CINQ_SCHEMA, "ActivityCreated", activity.id, &payload)
+            .await
+            .map_err(CinqServiceError::Repository)?;
+
         Ok(activity)
     }
 
@@ -777,6 +789,17 @@ impl CinqService {
             version: 0,
         };
         self.stage_repo.save_pipeline_stage(&stage).await?;
+
+        let payload = serde_json::json!({
+            "stage_id": stage.id,
+            "tenant_id": stage.tenant_id.as_uuid(),
+            "name": stage.name,
+        });
+        self.outbox
+            .append(CINQ_SCHEMA, "PipelineStageCreated", stage.id, &payload)
+            .await
+            .map_err(CinqServiceError::Repository)?;
+
         Ok(stage)
     }
 
@@ -870,6 +893,17 @@ impl CinqService {
             version: 0,
         };
         self.task_repo.save_task(&task).await?;
+
+        let payload = serde_json::json!({
+            "task_id": task.id,
+            "tenant_id": task.tenant_id.as_uuid(),
+            "title": task.title,
+        });
+        self.outbox
+            .append(CINQ_SCHEMA, "TaskCreated", task.id, &payload)
+            .await
+            .map_err(CinqServiceError::Repository)?;
+
         Ok(task)
     }
 
@@ -973,6 +1007,17 @@ impl CinqService {
             updated_at: event.created_at,
         };
         self.establishment_repo.save_establishment(&est).await?;
+
+        let payload = serde_json::json!({
+            "establishment_id": est.id,
+            "tenant_id": est.tenant_id.as_uuid(),
+            "company_name": est.company_name,
+        });
+        self.outbox
+            .append(CINQ_SCHEMA, "EstablishmentCreated", est.id, &payload)
+            .await
+            .map_err(CinqServiceError::Repository)?;
+
         Ok(est)
     }
 

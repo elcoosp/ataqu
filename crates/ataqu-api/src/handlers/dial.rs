@@ -226,6 +226,20 @@ pub async fn update_channel(
         .update_channel(auth.tenant_id, auth.user_id, id, payload.name, if_match)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+
+    let key = (auth.tenant_id.as_uuid(), id);
+    let broadcast = serde_json::json!({
+        "type": "channel_updated",
+        "channel_id": id,
+        "name": channel.name,
+    })
+    .to_string();
+    if let Some(subscribers) = state.ws_registry.get(&key) {
+        for entry in subscribers.iter() {
+            let _ = entry.value().send(broadcast.clone());
+        }
+    }
+
     Ok(Json(channel.into()))
 }
 

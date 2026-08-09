@@ -590,6 +590,19 @@ impl VaultService {
             .save_warehouse(&warehouse)
             .await
             .map_err(VaultServiceError::Repository)?;
+
+        let payload = serde_json::json!({
+            "warehouse_id": warehouse.id,
+            "tenant_id": warehouse.tenant_id.as_uuid(),
+            "name": warehouse.name,
+        });
+        self.outbox
+            .append(VAULT_SCHEMA, "WarehouseCreated", warehouse.id, &payload)
+            .await
+            .map_err(|e| {
+                VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
+            })?;
+
         Ok(warehouse)
     }
 
