@@ -559,14 +559,10 @@ impl AegisService {
             user_id,
             name: created.name.clone(),
             key_hash: {
-                use argon2::Argon2;
-                use argon2::password_hash::{PasswordHasher, SaltString};
-                let salt = SaltString::generate(&mut rand::thread_rng());
-                let argon2 = Argon2::default();
-                argon2
-                    .hash_password(created.key.as_bytes(), &salt)
-                    .unwrap()
-                    .to_string()
+                use sha2::{Digest, Sha256};
+                let mut hasher = Sha256::new();
+                hasher.update(created.key.as_bytes());
+                format!("{:x}", hasher.finalize())
             },
             prefix: created.prefix.clone(),
             scopes,
@@ -620,13 +616,12 @@ impl AegisService {
                 continue;
             }
 
-            // Verify the key against the stored Argon2 hash
-            let parsed_hash = PasswordHash::new(&api_key.key_hash)
-                .map_err(|_| AegisServiceError::AuthenticationFailed)?;
-            if argon2::Argon2::default()
-                .verify_password(key.as_bytes(), &parsed_hash)
-                .is_err()
-            {
+            // Verify the key against the stored SHA256 hash
+            use sha2::{Digest, Sha256};
+            let mut hasher = Sha256::new();
+            hasher.update(key.as_bytes());
+            let hash_str = format!("{:x}", hasher.finalize());
+            if hash_str != api_key.key_hash {
                 continue;
             }
 

@@ -260,13 +260,13 @@ impl TempoService {
         }
 
         match (&booking.status, &cmd.status) {
-            (BookingStatus::Cancelled, _) | (_, BookingStatus::Cancelled) => {
-                // Allow cancellation, but prevent updating a cancelled booking
-                if booking.status == BookingStatus::Cancelled {
-                    return Err(TempoServiceError::Validation(
-                        "Cannot update a cancelled booking".to_string(),
-                    ));
-                }
+            (BookingStatus::Cancelled, _) => {
+                return Err(TempoServiceError::Validation(
+                    "Cannot update a cancelled booking".to_string(),
+                ));
+            }
+            (_, BookingStatus::Cancelled) => {
+                // Allow cancellation from any active state
             }
             (BookingStatus::Completed, _) => {
                 return Err(TempoServiceError::Validation(

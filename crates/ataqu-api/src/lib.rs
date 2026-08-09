@@ -116,7 +116,7 @@ async fn request_id_middleware(
     let matched_path = req
         .extensions()
         .get::<axum::extract::MatchedPath>()
-        .map(|p| p.as_str().split('/').take(3).collect::<Vec<_>>().join("/"))
+        .map(|p| p.as_str().to_string())
         .unwrap_or_else(|| "unknown".to_string());
     let mut resp = next.run(req).await;
     resp.headers_mut()

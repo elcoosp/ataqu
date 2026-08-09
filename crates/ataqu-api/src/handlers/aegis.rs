@@ -232,19 +232,16 @@ pub struct SsoCallbackRequest {
     pub state: String,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 struct OAuthTokenResponse {
     access_token: String,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 struct GoogleUserInfo {
     email: String,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 struct MicrosoftUserInfo {
     mail: Option<String>,
@@ -261,7 +258,7 @@ pub async fn sso_callback(
         .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
     state.sso_states.invalidate(&req.state);
 
-    let _config = ataqu_domain_aegis::sso::SsoConfig {
+    let config = ataqu_domain_aegis::sso::SsoConfig {
         google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
         google_client_secret: std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
         google_redirect_uri: std::env::var("GOOGLE_REDIRECT_URI").unwrap_or_default(),
@@ -270,8 +267,66 @@ pub async fn sso_callback(
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
 
-    let _client = state.http_client.clone();
-    let email_str = "".to_string(); // FIXME: provider parsing
+    let client = state.http_client.clone();
+    let provider_str = state.sso_states.get(&req.state).map(|v| v.clone()).unwrap_or_default();
+    let email_str = if provider_str.contains("Google") {
+        let token_resp = client
+            .post("https://oauth2.googleapis.com/token")
+            .form(&[
+                ("code", req.code.as_str()),
+                ("client_id", config.google_client_id.as_str()),
+                ("client_secret", config.google_client_secret.as_str()),
+                ("redirect_uri", config.google_redirect_uri.as_str()),
+                ("grant_type", "authorization_code"),
+            ])
+            .send()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO token exchange failed"))?
+            .json::<OAuthTokenResponse>()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO token parse failed"))?;
+
+        let user_info = client
+            .get("https://www.googleapis.com/oauth2/v3/userinfo")
+            .bearer_auth(token_resp.access_token)
+            .send()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO user info fetch failed"))?
+            .json::<GoogleUserInfo>()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO user info parse failed"))?;
+        user_info.email
+    } else if provider_str.contains("Microsoft") {
+        let token_resp = client
+            .post("https://login.microsoftonline.com/common/oauth2/v2.0/token")
+            .form(&[
+                ("code", req.code.as_str()),
+                ("client_id", config.microsoft_client_id.as_str()),
+                ("client_secret", config.microsoft_client_secret.as_str()),
+                ("redirect_uri", config.microsoft_redirect_uri.as_str()),
+                ("grant_type", "authorization_code"),
+                ("scope", "https://graph.microsoft.com/User.Read"),
+            ])
+            .send()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO token exchange failed"))?
+            .json::<OAuthTokenResponse>()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO token parse failed"))?;
+
+        let user_info = client
+            .get("https://graph.microsoft.com/oidc/userinfo")
+            .bearer_auth(token_resp.access_token)
+            .send()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO user info fetch failed"))?
+            .json::<MicrosoftUserInfo>()
+            .await
+            .map_err(|_| ApiResponseError::internal("SSO user info parse failed"))?;
+        user_info.mail.or(user_info.user_principal_name).unwrap_or_default()
+    } else {
+        return Err(ApiResponseError::unauthorized("Invalid SSO provider"));
+    };
 
     let email = Email::new(email_str);
     let resp = state

@@ -696,28 +696,27 @@ pub struct UploadFileRequest {
     pub filename: String,
 }
 
-/*
-pub async fn upload_file( // commented out temporarily
-//     State(state): State<AppState>,
-//     auth: AuthContext,
-//     Path(channel_id): Path<Uuid>,
-//     Json(_payload): Json<UploadFileRequest>,
-// ) -> ApiResult<Json<serde_json::Value>> {
-//     let tenant_id = auth.tenant_id.as_uuid();
-//     let file_id = Uuid::new_v4();
-//     let key = format!("dial/{}/{}/{}", tenant_id, channel_id, file_id);
-//     let url = state
-//         .s3_service
-//         .generate_upload_url(&key)
-//         .await
-//         .map_err(|_| ApiResponseError::internal("Failed to generate upload URL"))?;
-//     Ok(Json(serde_json::json!({
-//         "file_id": file_id,
-//         "upload_url": url,
-//         "key": key,
-//     })))
+pub async fn upload_file(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(channel_id): Path<Uuid>,
+    Json(payload): Json<UploadFileRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let tenant_id = auth.tenant_id.as_uuid();
+    let file_id = Uuid::new_v4();
+    let key = format!("dial/{}/{}/{}", tenant_id, channel_id, file_id);
+    let url = state
+        .s3_service
+        .generate_upload_url(&key)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to generate upload URL"))?;
+    Ok(Json(serde_json::json!({
+        "file_id": file_id,
+        "upload_url": url,
+        "key": key,
+        "filename": payload.filename,
+    })))
 }
-*/
 
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
@@ -753,5 +752,6 @@ pub fn routes() -> Router<AppState> {
         .route("/mentions/:id/read", post(mark_mention_read))
         .route("/presence/online", get(get_online_users))
         .route("/search", get(search_messages))
+        .route("/channels/:id/files", post(upload_file))
         .nest("/ws", super::dial_ws::routes())
 }

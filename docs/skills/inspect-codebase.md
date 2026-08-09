@@ -1,0 +1,1 @@
+inspect codebase dump.txt for any bug illogical thing, feature gap, unimplemented or semi implemented feature noops, stubs placeholder, wrong naming, incorrect file locations i want complete report here is my feature spec and architecture doc, MY CURRENT CODE COMPILE, DOCS MAY HAVE CODE INTENTIONS THAT DON'T COMPILE SO DO ONLY WHAT YOU ARE SURE ABOUT

@@ -57,9 +57,11 @@ impl ShopifyService {
                         let sku = variant.get("sku").and_then(|s| s.as_str());
                         let inventory = variant.get("inventory_quantity").and_then(|i| i.as_i64());
 
-                        if let (Some(_sku), Some(_inv)) = (sku, inventory) {
-                            tracing::info!("Updating VAULT inventory from Shopify");
-                            // In a real scenario, this would call vault_service to update stock by SKU
+                        if let (Some(sku), Some(inv)) = (sku, inventory) {
+                            tracing::info!(sku = %sku, inventory = %inv, "Updating VAULT inventory from Shopify");
+                            // TODO: In a full implementation, we would resolve the tenant_id from the integration
+                            // and call vault_service to update stock by SKU.
+                            // Since this worker doesn't have access to VaultService, we log it.
                         }
                     }
                 }

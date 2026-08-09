@@ -529,11 +529,8 @@ impl DialService {
                 msg.author_id.as_uuid(),
                 msg.content
             );
-            let line = if line.len() > 200 {
-                &line[..200]
-            } else {
-                &line
-            };
+            let line: String = line.chars().take(200).collect();
+            let line = line.as_str();
             if y < 50.0 {
                 break; // one page only
             }

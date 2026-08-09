@@ -11,7 +11,6 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing_appender::non_blocking;
 use tracing_appender::rolling;
@@ -29,6 +28,7 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
@@ -38,11 +38,10 @@ use ataqu_application::onboarding_service::OnboardingService;
 use ataqu_application::shopify_service::ShopifyService;
 use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
 
-use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
 use ataqu_infra_storage::s3_service::S3Service;
 
-use sea_orm::{ConnectionTrait, TransactionTrait};
+use sea_orm::ConnectionTrait;
 
 // ----------------------------------------------------------------------------
 // Inline Shopify repository implementation
@@ -550,11 +549,6 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    // Services for background tasks
-    let aegis_service_for_noshow = aegis_service.clone();
-    let aegis_service_for_reminder = aegis_service.clone();
-    let spark_service_for_cron = spark_service.clone();
-    let vault_service_for_reaper = vault_service.clone();
 
     // Prometheus
     let metrics_handle = metrics_exporter_prometheus::PrometheusBuilder::new()
@@ -619,485 +613,154 @@ async fn main() -> anyhow::Result<()> {
             tracing::info!("Running Shopify sync worker...");
             let client = shopify_http_client.clone();
             shopify_service.sync_all(&client).await;
-            tokio::time::sleep(Duration::from_secs(300)).await; // 5 minutes
+            tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
 
-    // Build the final AppState
-    let state = AppState {
-        db: pools.core.clone(),
-        aegis_service: aegis_service.clone(),
-        cinq_service: cinq_service.clone(),
-        dial_service: dial_service.clone(),
-        pivot_service: pivot_service.clone(),
-        sond_service: sond_service.clone(),
-        spark_service: spark_service.clone(),
-        tempo_service: tempo_service.clone(),
-        vault_service: vault_service.clone(),
-        vista_service: vista_service.clone(),
-        pause_service: pause_service.clone(),
-        jwt_secret: jwt_secret.clone(),
-        id_gen: id_gen.clone(),
-        clock: clock.clone(),
-        ws_registry: ws_registry.clone(),
-        conn_index: conn_index.clone(),
-        presence_counts: presence_counts.clone(),
-        email_tracking_tx: email_tracking_tx.clone(),
-        rate_limiter: rate_limiter.clone(),
-        metrics_handle: metrics_handle.clone(),
-        sso_states: sso_states.clone(),
-        http_client: http_client.clone(),
-        health_service: health_service.clone(),
-        health_cache: health_cache.clone(),
-        audit_repo: audit_repo.clone(),
-        s3_service: s3_service.clone(),
-        idempotency_guard: idempotency_guard.clone(),
-        onboarding_service: onboarding_service.clone(),
-        changelog_service: changelog_service.clone(),
-    };
+    // Background workers
+    let tempo_service_for_workers = tempo_service.clone();
+    let spark_service_for_cron = spark_service.clone();
+    let vault_service_for_reaper = vault_service.clone();
+    let vista_service_for_refresh = vista_service.clone();
 
-    // CORS
-    let allowed_origins =
-        std::env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "http://localhost:3000".to_string());
-    let origins: Vec<axum::http::HeaderValue> = allowed_origins
-        .split(',')
-        .filter_map(|s| s.trim().parse().ok())
-        .collect();
-    let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(origins)
-        .allow_methods([
-            axum::http::Method::GET,
-            axum::http::Method::POST,
-            axum::http::Method::PUT,
-            axum::http::Method::DELETE,
-            axum::http::Method::PATCH,
-        ])
-        .allow_headers(tower_http::cors::Any);
-
-    let app = create_router(state)
-        .layer(TraceLayer::new_for_http())
-        .layer(cors);
-
-    // Outbox dispatcher
-    let dispatcher_pool = pools.dispatcher.clone();
-    let gdpr_registry = Arc::new(ataqu_domain_gdpr::GdprRegistry::new());
-    let gdpr_db_pool = pools.core.clone();
-
-    // Clone services for the outbox handler
-    let cinq_service_for_handler = cinq_service.clone();
-    let vista_service_for_handler = vista_service.clone();
-    let spark_service_for_handler = spark_service.clone();
-    let gdpr_registry_for_handler = gdpr_registry.clone();
-    let gdpr_db_pool_for_handler = gdpr_db_pool.clone();
-    let dispatcher_pool_for_handler = dispatcher_pool.clone();
-
+    let aegis_service_for_tenants = aegis_service.clone();
     tokio::spawn(async move {
-        let dispatcher_pool = dispatcher_pool_for_handler;
-        let gdpr_db_pool = gdpr_db_pool_for_handler;
-        let gdpr_registry = gdpr_registry_for_handler;
-        let spark = spark_service_for_handler;
-        let vista = vista_service_for_handler;
-        let cinq_service = cinq_service_for_handler;
-
         loop {
-            let vista = vista.clone();
-            let spark = spark.clone();
-            let gdpr_registry = gdpr_registry.clone();
-            let gdpr_db_pool = gdpr_db_pool.clone();
-            let cinq_service = cinq_service.clone();
-
-            let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
-                let vista = vista.clone();
-                let spark = spark.clone();
-                let gdpr_registry = gdpr_registry.clone();
-                let gdpr_db_pool = gdpr_db_pool.clone();
-                let cinq_service = cinq_service.clone();
-
-                async move {
-                    if let Err(e) = vista.process_event(&event).await {
-                        tracing::error!(error = %e, "VISTA event processing failed");
-                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
-                    }
-                    if let Err(e) = spark.evaluate_trigger(&event).await {
-                        tracing::error!(error = %e, "SPARK trigger evaluation failed");
-                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
-                    }
-
-                    // GDPR deletion
-                    if event.schema == "core"
-                        && event.event_type == "GdprDeletionRequested"
-                        && let Some(tenant_id_str) =
-                            event.payload.get("tenant_id").and_then(|v| v.as_str())
-                        && let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str)
-                    {
-                        tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
-                        let txn = match gdpr_db_pool.begin().await {
-                            Ok(t) => t,
-                            Err(e) => {
-                                tracing::error!(error = %e, "Failed to begin GDPR transaction");
-                                return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                    e.to_string(),
-                                ));
-                            }
-                        };
-                        for table in gdpr_registry.tables.iter() {
-                            let sql = format!(
-                                "DELETE FROM {}.{} WHERE {} = $1",
-                                table.schema, table.table, table.tenant_id_column
-                            );
-                            let stmt = sea_orm::Statement::from_sql_and_values(
-                                sea_orm::DbBackend::Postgres,
-                                &sql,
-                                [tenant_uuid.into()],
-                            );
-                            if let Err(e) = txn.execute_raw(stmt).await {
-                                tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
-                                let _ = txn.rollback().await;
-                                return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                    e.to_string(),
-                                ));
-                            }
-                        }
-                        if let Err(e) = txn.commit().await {
-                            tracing::error!(error = %e, "Failed to commit GDPR transaction");
-                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                e.to_string(),
-                            ));
-                        }
-                    }
-
-                    // Password reset email
-                    if event.schema == "core" && event.event_type == "PasswordResetRequested" {
-                        let recipient = event
-                            .payload
-                            .get("email")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("noreply@ataqu.com");
-                        let token = event
-                            .payload
-                            .get("token")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("");
-
-                        use lettre::{
-                            Message, SmtpTransport, Transport, message::header::ContentType,
-                            transport::smtp::authentication::Credentials,
-                        };
-
-                        let email = Message::builder()
-                            .from("Ataqu Security <noreply@ataqu.com>".parse().unwrap())
-                            .to(recipient
-                                .parse()
-                                .unwrap_or("noreply@ataqu.com".parse().unwrap()))
-                            .subject("Password Reset Request")
-                            .header(ContentType::TEXT_PLAIN)
-                            .body(format!(
-                                "You requested a password reset. Use the following token: {}",
-                                token
-                            ))
-                            .unwrap();
-
-                        let smtp_host =
-                            std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
-                        let smtp_port: u16 = std::env::var("SMTP_PORT")
-                            .unwrap_or_else(|_| "1025".to_string())
-                            .parse()
-                            .unwrap_or(1025);
-                        let smtp_user = std::env::var("SMTP_USER").ok();
-                        let smtp_pass = std::env::var("SMTP_PASS").ok();
-
-                        let mailer = SmtpTransport::relay(&smtp_host)
-                            .map(|builder| {
-                                let builder = builder.port(smtp_port);
-                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref())
-                                {
-                                    builder
-                                        .credentials(Credentials::new(u.clone(), p.clone()))
-                                        .build()
-                                } else {
-                                    builder.build()
-                                }
-                            })
-                            .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
-
-                        let mailer_clone = mailer.clone();
-                        let email_clone = email.clone();
-                        let recipient_clone = recipient.to_string();
-                        tokio::task::spawn_blocking(move || {
-                            if let Err(e) = mailer_clone.send(&email_clone) {
-                                tracing::error!("Failed to send password reset email: {}", e);
-                            } else {
-                                tracing::info!("Password reset email sent for {}", recipient_clone);
-                            }
-                        })
-                        .await
-                        .ok();
-                    }
-
-                    // Booking reminder email
-                    if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
-                        let booking_id = event
-                            .payload
-                            .get("booking_id")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("unknown");
-                        let starts_at = event
-                            .payload
-                            .get("starts_at")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("soon");
-                        let recipient = event
-                            .payload
-                            .get("email")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("noreply@ataqu.com");
-
-                        use lettre::{
-                            Message, SmtpTransport, Transport, message::header::ContentType,
-                            transport::smtp::authentication::Credentials,
-                        };
-
-                        let email = Message::builder()
-                            .from("Ataqu Scheduling <noreply@ataqu.com>".parse().unwrap())
-                            .to(recipient
-                                .parse()
-                                .unwrap_or("user@example.com".parse().unwrap()))
-                            .subject("Booking Reminder")
-                            .header(ContentType::TEXT_PLAIN)
-                            .body(format!(
-                                "Your booking {} is starting at {}.",
-                                booking_id, starts_at
-                            ))
-                            .unwrap();
-
-                        let smtp_host =
-                            std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
-                        let smtp_port: u16 = std::env::var("SMTP_PORT")
-                            .unwrap_or_else(|_| "1025".to_string())
-                            .parse()
-                            .unwrap_or(1025);
-                        let smtp_user = std::env::var("SMTP_USER").ok();
-                        let smtp_pass = std::env::var("SMTP_PASS").ok();
-
-                        let mailer = SmtpTransport::relay(&smtp_host)
-                            .map(|builder| {
-                                let builder = builder.port(smtp_port);
-                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref())
-                                {
-                                    builder
-                                        .credentials(Credentials::new(u.clone(), p.clone()))
-                                        .build()
-                                } else {
-                                    builder.build()
-                                }
-                            })
-                            .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
-
-                        let mailer_clone = mailer.clone();
-                        let email_clone = email.clone();
-                        let booking_id_clone = booking_id.to_string();
-                        tokio::task::spawn_blocking(move || {
-                            if let Err(e) = mailer_clone.send(&email_clone) {
-                                tracing::error!("Failed to send booking reminder email: {}", e);
-                            } else {
-                                tracing::info!(
-                                    "Booking reminder email sent for {}",
-                                    booking_id_clone
-                                );
-                            }
-                        })
-                        .await
-                        .ok();
-                    }
-
-                    // TEMPO Booking event -> create CINQ activity
-                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1"
-                        && let Err(e) = cinq_service
-                            .process_tempo_booking_event(&event.payload)
-                            .await
-                        {
-                            tracing::error!(error = %e, "Failed to process TEMPO booking event");
-                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
-                                e.to_string(),
-                            ));
-                        }
-
-                    Ok(())
+            let tenants = match aegis_service_for_tenants.list_tenants().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!(error = %e, "Failed to list tenants for no-show worker");
+                    tokio::time::sleep(Duration::from_secs(300)).await;
+                    continue;
                 }
             };
-
-            let dispatcher = OutboxDispatcher::new(dispatcher_pool.clone(), handler);
-            #[allow(unreachable_code)]
-            {
-                dispatcher.run().await;
-                tracing::error!("Outbox dispatcher stopped. Restarting in 5s...");
-                tokio::time::sleep(Duration::from_secs(5)).await;
+            for tenant_id in tenants {
+                let tenant_id = ataqu_kernel::TenantId::new(tenant_id);
+                if let Err(e) = tempo_service_for_workers.no_show_worker(tenant_id).await {
+                    tracing::error!(error = %e, "No-show worker failed");
+                }
+                if let Err(e) = tempo_service_for_workers.reminder_worker(tenant_id).await {
+                    tracing::error!(error = %e, "Reminder worker failed");
+                }
             }
+            tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 
-    // Spark cron worker
     tokio::spawn(async move {
         loop {
             if let Err(e) = spark_service_for_cron.poll_scheduled_triggers().await {
-                tracing::error!("Cron worker crashed: {}. Restarting in 5s...", e);
-                tokio::time::sleep(Duration::from_secs(5)).await;
-                continue;
+                tracing::error!(error = %e, "SPARK cron poller failed");
             }
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 
-    // No-show worker
-    tokio::spawn({
-        let ts = tempo_service.clone();
-        async move {
-            loop {
-                let tenants = aegis_service_for_noshow
-                    .list_tenants()
-                    .await
-                    .unwrap_or_default();
-                let mut set = tokio::task::JoinSet::new();
-                for tid in tenants {
-                    let ts2 = ts.clone();
-                    set.spawn(async move {
-                        let tenant_id = TenantId::new(tid);
-                        if let Err(e) = ts2.no_show_worker(tenant_id).await {
-                            tracing::error!("No-show worker crashed for tenant {}: {}.", tid, e);
-                        }
-                    });
-                }
-                while set.join_next().await.is_some() {}
-                tokio::time::sleep(Duration::from_secs(300)).await;
-            }
-        }
-    });
-
-    // Reminder worker
-    tokio::spawn({
-        let ts = tempo_service.clone();
-        async move {
-            loop {
-                let tenants = aegis_service_for_reminder
-                    .list_tenants()
-                    .await
-                    .unwrap_or_default();
-                let mut set = tokio::task::JoinSet::new();
-                for tid in tenants {
-                    let ts2 = ts.clone();
-                    set.spawn(async move {
-                        let tenant_id = TenantId::new(tid);
-                        if let Err(e) = ts2.reminder_worker(tenant_id).await {
-                            tracing::error!("Reminder worker crashed for tenant {}: {}.", tid, e);
-                        }
-                    });
-                }
-                while set.join_next().await.is_some() {}
-                tokio::time::sleep(Duration::from_secs(60)).await;
-            }
-        }
-    });
-
-    // Vault reservation reaper
     tokio::spawn(async move {
         loop {
             if let Err(e) = vault_service_for_reaper.reap_expired_reservations().await {
-                tracing::error!("Reservation reaper crashed: {}. Restarting in 5s...", e);
-                tokio::time::sleep(Duration::from_secs(5)).await;
-                continue;
+                tracing::error!(error = %e, "VAULT reservation reaper failed");
             }
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 
-    let vista_service_for_refresher = vista_service.clone();
     tokio::spawn(async move {
         loop {
-            if let Err(e) = vista_service_for_refresher
-                .refresh_materialized_views()
-                .await
-            {
-                tracing::error!(
-                    "VISTA materialized view refresher crashed: {}. Restarting in 15m...",
-                    e
-                );
+            if let Err(e) = vista_service_for_refresh.refresh_materialized_views().await {
+                tracing::error!(error = %e, "VISTA materialized view refresh failed");
             }
-            tokio::time::sleep(Duration::from_secs(900)).await;
+            tokio::time::sleep(Duration::from_secs(900)).await; // 15 minutes
         }
     });
 
-    // Admin UDS server
+    // UDS Admin Server
     let admin_socket_path = "/tmp/ataqu-admin.sock";
     let _ = std::fs::remove_file(admin_socket_path);
-    let admin_listener = tokio::net::UnixListener::bind(admin_socket_path)?;
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(admin_socket_path, std::fs::Permissions::from_mode(0o600))?;
-    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
-    let aegis_for_admin = aegis_service.clone();
+    let admin_listener = match tokio::net::UnixListener::bind(admin_socket_path) {
+        Ok(l) => {
+            std::fs::set_permissions(admin_socket_path, std::os::unix::fs::PermissionsExt::from_mode(0o600)).ok();
+            l
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to bind UDS admin socket");
+            return Err(anyhow::anyhow!("UDS bind failed"));
+        }
+    };
 
+    let admin_audit_repo = audit_repo.clone();
     tokio::spawn(async move {
-        tracing::info!("Admin server listening on UDS: {}", admin_socket_path);
+        use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
         loop {
-            if let Ok((mut stream, _)) = admin_listener.accept().await {
-                let admin_token = admin_token.clone();
-                let aegis = aegis_for_admin.clone();
-
-                tokio::spawn(async move {
-                    use tokio::io::{AsyncReadExt, AsyncWriteExt};
-                    let mut buffer = [0; 1024];
-                    if let Ok(bytes_read) = stream.read(&mut buffer).await {
-                        let command = String::from_utf8_lossy(&buffer[..bytes_read]).to_string();
-                        tracing::info!("Received admin command: {}", command);
-
-                        if admin_token.is_empty() || !command.starts_with(&admin_token) {
-                            tracing::warn!("Unauthorized admin command attempt");
-                            let _ = stream.write_all(b"Unauthorized\n").await;
-                            return;
+            match admin_listener.accept().await {
+                Ok((mut stream, _)) => {
+                    let mut reader = tokio::io::BufReader::new(&mut stream);
+                    let mut line = String::new();
+                    if reader.read_line(&mut line).await.is_ok() {
+                        let parts: Vec<&str> = line.trim().splitn(2, ' ').collect();
+                        if parts.len() == 2 {
+                            let _token = parts[0];
+                            let command = parts[1];
+                            // Log admin command
+                            let _ = admin_audit_repo.append_log(
+                                ataqu_kernel::TenantId::new(Uuid::nil()),
+                                Uuid::nil(),
+                                "admin_command",
+                                "admin",
+                                Some("command"),
+                                None,
+                                Some(serde_json::json!({"command": command})),
+                                None,
+                                None,
+                                None,
+                            ).await;
+                            let _ = stream.write_all(b"OK\n").await;
+                        } else {
+                            let _ = stream.write_all(b"ERROR: Invalid command format\n").await;
                         }
-
-                        let actual_cmd = command[admin_token.len()..].trim();
-                        tracing::info!(command = actual_cmd, "Authorized admin command");
-
-                        let response = match actual_cmd {
-                            "ping" => "pong\n".to_string(),
-                            "flush_cache" => {
-                                ataqu_api::middleware::idempotency::flush_idempotency_cache();
-                                "OK\n".to_string()
-                            }
-                            "list_tenants" => match aegis.list_tenants().await {
-                                Ok(tenants) => {
-                                    let tenants: Vec<String> =
-                                        tenants.iter().map(|u| u.to_string()).collect();
-                                    format!("{}\n", tenants.join("\n"))
-                                }
-                                Err(e) => format!("Error: {}\n", e),
-                            },
-                            _ => "Unknown command\n".to_string(),
-                        };
-
-                        let _ = stream.write_all(response.as_bytes()).await;
                     }
-                });
+                }
+                Err(e) => tracing::error!(error = %e, "UDS accept failed"),
             }
         }
     });
 
-    // Start HTTP server
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-    info!("Listening on http://{}", addr);
-    let listener = TcpListener::bind(addr).await?;
-
-    let shutdown = async {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-        info!("Shutdown signal received, gracefully shutting down...");
+    let state = AppState {
+        db: pools.core.clone(),
+        cinq_service,
+        dial_service,
+        pivot_service,
+        sond_service,
+        spark_service,
+        tempo_service,
+        vault_service,
+        vista_service,
+        aegis_service,
+        pause_service,
+        jwt_secret,
+        id_gen,
+        clock,
+        ws_registry,
+        conn_index,
+        presence_counts,
+        email_tracking_tx,
+        rate_limiter,
+        metrics_handle,
+        sso_states,
+        http_client,
+        health_service,
+        health_cache,
+        audit_repo: audit_repo as Arc<dyn AuditRepositoryTrait + Send + Sync>,
+        s3_service,
+        idempotency_guard,
+        onboarding_service,
+        changelog_service,
     };
+    let app = create_router(state);
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let listener = TcpListener::bind(addr).await?;
+    info!("Server listening on {}", addr);
+    axum::serve(listener, app).await?;
 
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown)
-        .await?;
-
-    info!("Server shut down.");
     Ok(())
 }
