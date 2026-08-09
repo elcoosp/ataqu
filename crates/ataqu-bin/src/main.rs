@@ -674,6 +674,16 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    let onboarding_service_for_inactivity = onboarding_service.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = onboarding_service_for_inactivity.check_inactivity().await {
+                tracing::error!(error = %e, "Onboarding inactivity check failed");
+            }
+            tokio::time::sleep(Duration::from_secs(86400)).await; // 24 hours
+        }
+    });
+
     // UDS Admin Server
     let admin_socket_path = "/tmp/ataqu-admin.sock";
     let _ = std::fs::remove_file(admin_socket_path);

@@ -714,14 +714,12 @@ pub async fn import_csv(
     headers: axum::http::HeaderMap,
     body: String,
 ) -> ApiResult<Json<ImportCsvResultDetailed>> {
-    // Enforce Idempotency-Key for CSV imports
-    let _command_id = headers
-        .get("Idempotency-Key")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| uuid::Uuid::parse_str(s).ok())
-        .ok_or_else(|| {
-            ApiResponseError::Validation("Idempotency-Key header required".to_string())
-        })?;
+    // Idempotency is handled by the global middleware, but we enforce the header here
+    if headers.get("Idempotency-Key").is_none() {
+        return Err(ApiResponseError::Validation(
+            "Idempotency-Key header required".to_string(),
+        ));
+    }
     if body.len() > 5 * 1024 * 1024 {
         return Err(ApiResponseError::validation("CSV file too large (max 5MB)"));
     }

@@ -74,19 +74,6 @@ pub struct AppState {
     pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
 }
 
-async fn force_attachment_middleware(
-    req: axum::extract::Request,
-    next: axum::middleware::Next,
-) -> axum::response::Response {
-    let is_upload = req.uri().path().starts_with("/uploads/");
-    let mut resp = next.run(req).await;
-    if is_upload {
-        let headers = resp.headers_mut();
-        headers.insert("content-disposition", "attachment".parse().unwrap());
-    }
-    resp
-}
-
 async fn security_headers_middleware(
     req: axum::extract::Request,
     next: axum::middleware::Next,
@@ -214,6 +201,10 @@ pub fn create_router(state: AppState) -> Router {
         )
         .route("/metrics", axum::routing::get(metrics_handler))
         .route("/admin/health", axum::routing::get(health_check))
+        .route(
+            "/api/v1/health/status",
+            axum::routing::get(handlers::health::get_health_status),
+        )
         .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(axum::middleware::from_fn(
             crate::middleware::idempotency::idempotency_middleware,
@@ -234,7 +225,6 @@ pub fn create_router(state: AppState) -> Router {
     
 
     Router::new()
-        .layer(axum::middleware::from_fn(force_attachment_middleware))
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
         .route(

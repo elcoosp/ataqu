@@ -64,6 +64,20 @@ impl OnboardingService {
         })
     }
 
+    pub async fn check_inactivity(&self) -> Result<(), DbErr> {
+        let stmt = Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT tenant_id FROM core.onboarding_progress WHERE last_active_at < NOW() - INTERVAL '7 days'",
+            [],
+        );
+        let rows = self.db.query_all_raw(stmt).await?;
+        for row in rows {
+            let tenant_id: Uuid = row.try_get("", "tenant_id").unwrap_or_default();
+            tracing::info!(tenant_id = %tenant_id, "Tenant inactive for 7 days");
+        }
+        Ok(())
+    }
+
     pub async fn complete_task(
         &self,
         tenant_id: Uuid,

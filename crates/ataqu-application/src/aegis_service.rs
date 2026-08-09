@@ -481,9 +481,24 @@ impl AegisService {
                 expected_version, user.version
             )));
         }
-        user.role = role;
+        let old_role = user.role.clone();
+        user.role = role.clone();
         user.version += 1;
         self.repo.save_user(&user).await?;
+
+        self.log_audit(
+            user_id,
+            tenant_id,
+            "role_change",
+            "aegis",
+            Some("user"),
+            Some(user_id),
+            Some(serde_json::json!({ "role": old_role })),
+            Some(serde_json::json!({ "role": role })),
+            None,
+            None,
+        ).await.ok();
+
         Ok(())
     }
 
@@ -502,9 +517,23 @@ impl AegisService {
             return Err(AegisServiceError::NotFound("User not found".into()));
         }
 
+        let was_active = user.is_active;
         ataqu_domain_aegis::auth::deactivate_user(&mut user, self.clock.as_ref());
         user.version += 1; // [VULN-001] Increment version to invalidate old tokens
         self.repo.save_user(&user).await?;
+
+        self.log_audit(
+            user_id,
+            tenant_id,
+            "deactivate",
+            "aegis",
+            Some("user"),
+            Some(user_id),
+            Some(serde_json::json!({ "is_active": was_active })),
+            Some(serde_json::json!({ "is_active": user.is_active })),
+            None,
+            None,
+        ).await.ok();
 
         let payload = serde_json::json!({
             "user_id": user.id,

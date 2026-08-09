@@ -1,3 +1,4 @@
+use axum::body::to_bytes;
 use axum::extract::Request;
 use axum::http::StatusCode;
 use axum::middleware::Next;
@@ -20,7 +21,7 @@ pub fn flush_idempotency_cache() {
     IDEMPOTENCY_CACHE.invalidate_all();
 }
 
-/// Basic idempotency middleware using Moka cache.
+/// Idempotency middleware using Moka cache.
 pub async fn idempotency_middleware(
     req: Request,
     next: Next,
@@ -45,5 +46,22 @@ pub async fn idempotency_middleware(
         }
     }
 
-    Ok(next.run(req).await)
+    let resp = next.run(req).await;
+
+    if let Some(key) = key {
+        if resp.status().is_success() {
+            let status = resp.status();
+            let headers = resp.headers().clone();
+            let body = to_bytes(resp.into_body(), usize::MAX).await.unwrap_or_default();
+            IDEMPOTENCY_CACHE.insert(key, (status, headers.clone(), body.to_vec()));
+
+            let mut new_resp = Response::builder().status(status);
+            for (k, v) in &headers {
+                new_resp = new_resp.header(k.clone(), v.clone());
+            }
+            return Ok(new_resp.body(axum::body::Body::from(body)).unwrap());
+        }
+    }
+
+    Ok(resp)
 }
