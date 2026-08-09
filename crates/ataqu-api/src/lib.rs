@@ -33,7 +33,7 @@ use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
 
 // Type aliases to simplify complex types
-pub type WsRegistry = Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, UnboundedSender<String>>>>;
+pub type WsRegistry = Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, UnboundedSender<String>>>>>;
 pub type ConnIndex = Arc<DashMap<usize, Uuid>>;
 pub type PresenceCounts = Arc<DashMap<(Uuid, Uuid), i32>>;
 pub type SsoStates = Arc<Cache<String, String>>;
