@@ -269,7 +269,7 @@ pub async fn sso_callback(
 
     let client = state.http_client.clone();
     let provider_str = state.sso_states.get(&req.state).map(|v| v.clone()).unwrap_or_default();
-    let email_str = if provider_str.contains("Google") {
+    let email_str = if provider_str == "Google" {
         let token_resp = client
             .post("https://oauth2.googleapis.com/token")
             .form(&[
@@ -296,7 +296,7 @@ pub async fn sso_callback(
             .await
             .map_err(|_| ApiResponseError::internal("SSO user info parse failed"))?;
         user_info.email
-    } else if provider_str.contains("Microsoft") {
+    } else if provider_str == "Microsoft" {
         let token_resp = client
             .post("https://login.microsoftonline.com/common/oauth2/v2.0/token")
             .form(&[
@@ -345,6 +345,23 @@ pub async fn sso_callback(
 #[derive(Debug, Deserialize)]
 pub struct UpdateRoleRequest {
     pub role: String,
+}
+
+pub async fn get_permission_matrix(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let matrix = state
+        .aegis_service
+        .get_permission_matrix(auth.tenant_id)
+        .await
+        .map_err(map_aegis_error)?;
+    Ok(Json(matrix))
 }
 
 pub async fn list_users(
@@ -566,7 +583,7 @@ pub async fn reset_password(
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {
-    use axum::routing::{delete, patch, post};
+    use axum::routing::{delete, get, patch, post};
     axum::Router::new()
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))
@@ -578,6 +595,7 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/mfa/verify", post(mfa_verify))
         .route("/api-keys", post(create_api_key).get(list_api_keys))
         .route("/api-keys/:id", delete(delete_api_key))
+        .route("/permission-matrix", get(get_permission_matrix))
 }
 
 pub fn public_routes() -> axum::Router<crate::AppState> {
