@@ -36,13 +36,9 @@ use ataqu_application::changelog_service::ChangelogService;
 use ataqu_application::health_service::HealthService;
 use ataqu_application::onboarding_service::OnboardingService;
 use ataqu_application::shopify_service::ShopifyService;
-use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
-
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
-
-use sea_orm::ConnectionTrait;
 
 // ----------------------------------------------------------------------------
 // Main
@@ -92,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
         aegis_repo,
         aegis_outbox,
         aegis_domain,
-        audit_repo,
+        audit_repo.clone(),
         id_gen.clone(),
         clock.clone(),
         aegis_config,
@@ -123,6 +119,7 @@ async fn main() -> anyhow::Result<()> {
         cinq_outbox,
         id_gen.clone(),
         clock.clone(),
+        Some(audit_repo.clone()),
     ));
 
     // DIAL

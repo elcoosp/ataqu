@@ -137,6 +137,7 @@ pub struct CinqService {
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
+    audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
 }
 
 const CINQ_SCHEMA: &str = "collab_crm";
@@ -163,6 +164,7 @@ impl CinqService {
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
+        audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
     ) -> Self {
         Self {
             contact_repo,
@@ -174,6 +176,7 @@ impl CinqService {
             outbox,
             id_gen,
             clock,
+            audit_repo,
         }
     }
 
@@ -203,6 +206,22 @@ impl CinqService {
             version: 0,
         };
         self.contact_repo.save_contact(&contact).await?;
+
+        // Audit log
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(
+                contact.tenant_id,
+                Uuid::nil(), // System user for now, or should be passed in
+                "create_contact",
+                "cinq",
+                Some("contact"),
+                Some(contact.id),
+                None,
+                Some(serde_json::json!({"name": contact.name})),
+                None,
+                None,
+            ).await.ok();
+        }
 
         let payload = serde_json::json!({
             "contact_id": contact.id,

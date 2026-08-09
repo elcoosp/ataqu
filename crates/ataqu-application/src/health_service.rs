@@ -26,8 +26,25 @@ pub struct ComponentHealth {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct SparkWorkflowHealth {
+    pub status: HealthStatus,
+    pub total: i64,
+    pub failed_last_hour: i64,
+    pub dlq_depth: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DbPoolHealth {
+    pub used: i64,
+    pub max: i64,
+    pub waiting: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct Components {
     pub outbox: ComponentHealth,
+    pub spark_workflows: SparkWorkflowHealth,
+    pub db_connection_pools: DbPoolHealth,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -81,6 +98,17 @@ impl HealthService {
                     lag_seconds,
                     pending_events,
                     last_dispatched_at: None,
+                },
+                spark_workflows: SparkWorkflowHealth {
+                    status: HealthStatus::Nominal,
+                    total: 0,
+                    failed_last_hour: 0,
+                    dlq_depth: 0,
+                },
+                db_connection_pools: DbPoolHealth {
+                    used: 0,
+                    max: 35,
+                    waiting: 0,
                 },
             },
         })
