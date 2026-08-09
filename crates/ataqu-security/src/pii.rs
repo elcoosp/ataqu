@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::fmt;
 
 /// A capability token that allows revealing PII.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct PiiAccessKey(());
 
 impl PiiAccessKey {
@@ -13,12 +13,6 @@ impl PiiAccessKey {
 
     /// Creates a new PiiAccessKey for testing purposes.
     pub fn new_for_test() -> Self {
-        Self(())
-    }
-}
-
-impl Default for PiiAccessKey {
-    fn default() -> Self {
         Self(())
     }
 }
