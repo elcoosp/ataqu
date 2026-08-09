@@ -22,24 +22,6 @@ pub struct CreateUserRequest {
     pub name: Option<String>,
 }
 
-#[allow(dead_code)]
-fn get_client_ip(headers: &axum::http::HeaderMap) -> Option<std::net::IpAddr> {
-    if let Some(forwarded) = headers.get("x-forwarded-for")
-        && let Ok(forwarded_str) = forwarded.to_str()
-            && let Some(ip) = forwarded_str.split(',').next() {
-                return ip.trim().parse().ok();
-            }
-    None
-}
-
-#[allow(dead_code)]
-fn get_user_agent(headers: &axum::http::HeaderMap) -> Option<String> {
-    headers
-        .get("user-agent")
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.to_string())
-}
-
 pub async fn create_user(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -375,7 +357,7 @@ pub async fn list_users(
     }
     let users = state
         .aegis_service
-        .list_users(auth.tenant_id.as_uuid())
+        .list_users(auth.tenant_id)
         .await
         .map_err(map_aegis_error)?;
     let resp = users

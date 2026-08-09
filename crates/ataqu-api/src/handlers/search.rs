@@ -95,7 +95,7 @@ pub async fn unified_search(
 
     let users = state
         .aegis_service
-        .list_users(auth.tenant_id.as_uuid())
+        .list_users(auth.tenant_id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let user_matches: Vec<_> = users

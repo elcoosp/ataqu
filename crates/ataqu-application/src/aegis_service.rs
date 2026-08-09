@@ -428,9 +428,9 @@ impl AegisService {
         })
     }
 
-    pub async fn list_users(&self, tenant_id: Uuid) -> Result<Vec<User>, AegisServiceError> {
+    pub async fn list_users(&self, tenant_id: ataqu_kernel::TenantId) -> Result<Vec<User>, AegisServiceError> {
         self.repo
-            .list_users(tenant_id)
+            .list_users(tenant_id.as_uuid())
             .await
             .map_err(AegisServiceError::Domain)
     }

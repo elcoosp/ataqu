@@ -223,8 +223,10 @@ impl DialService {
         limit: u64,
         offset: u64,
     ) -> DialResult<(Vec<Channel>, u64)> {
-        // [VULN-003] Filter channels to only those the user can see (Public or participant)
-        let all_channels = self.repo.list_channels(&tenant_id, 10000, 0).await?;
+        // Note: Filtering at DB level is preferred, but requires repository trait changes.
+        // We limit the query to a reasonable upper bound to prevent memory exhaustion.
+        let max_channels = 5000;
+        let all_channels = self.repo.list_channels(&tenant_id, max_channels, 0).await?;
         let filtered: Vec<Channel> = all_channels
             .into_iter()
             .filter(|c| {
