@@ -1,14 +1,21 @@
 #![allow(unused_imports)]
 
-use axum::{Router, extract::State, response::IntoResponse, Json};
-use std::sync::Arc;
+//! Ataqu API layer – Axum handlers, middleware, and shared state.
+
+use axum::{
+    Router,
+    extract::State,
+    response::{IntoResponse, Json},
+    routing::{get, post, put, delete},
+};
 use dashmap::DashMap;
 use moka::sync::Cache;
-use tokio::sync::mpsc::UnboundedSender;
 use metrics_exporter_prometheus::PrometheusHandle;
 use sea_orm::DatabaseConnection;
+use std::sync::Arc;
+use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
-use ataqu_kernel::{IdGenerator, Clock};
+
 use ataqu_application::{
     aegis_service::AegisService,
     cinq_service::CinqService,
@@ -23,13 +30,16 @@ use ataqu_application::{
 };
 use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
-use crate::middleware::rate_limit::RateLimiter;
+use ataqu_kernel::{Clock, IdGenerator};
 
 pub mod error;
 pub mod handlers;
 pub mod middleware;
+pub mod serializers;
 
-// Stubs for missing services (to be implemented later)
+// ----------------------------------------------------------------------
+// Stubs for missing dependencies (to be replaced with real implementations)
+// ----------------------------------------------------------------------
 pub mod stubs {
     pub struct HealthService;
     pub struct OnboardingService;
@@ -41,7 +51,9 @@ pub mod stubs {
 }
 pub use stubs::*;
 
-/// Application state shared across handlers.
+// ----------------------------------------------------------------------
+// Application State
+// ----------------------------------------------------------------------
 #[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
@@ -58,15 +70,16 @@ pub struct AppState {
     pub jwt_secret: Arc<Vec<u8>>,
     pub id_gen: Arc<dyn IdGenerator + Send + Sync>,
     pub clock: Arc<dyn Clock + Send + Sync>,
-    // Simplified placeholders for complex types (will be refined later)
-    pub ws_registry: Arc<()>,
-    pub conn_index: Arc<()>,
-    pub presence_counts: Arc<()>,
-    pub email_tracking_tx: UnboundedSender<()>,
-    pub rate_limiter: RateLimiter,
+    // WebSocket and presence infrastructure
+    pub ws_registry: Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, tokio::sync::mpsc::UnboundedSender<String>>>>,
+    pub conn_index: Arc<DashMap<usize, Uuid>>,
+    pub presence_counts: Arc<DashMap<(Uuid, Uuid), i32>>,
+    pub email_tracking_tx: UnboundedSender<TrackingEvent>,
+    pub rate_limiter: middleware::rate_limit::RateLimiter,
     pub metrics_handle: PrometheusHandle,
-    pub sso_states: Arc<()>,
+    pub sso_states: Arc<Cache<String, String>>,
     pub http_client: reqwest::Client,
+    // Stubs for new features
     pub health_service: Arc<HealthService>,
     pub health_cache: Arc<Cache<(), ()>>,
     pub audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
@@ -76,9 +89,13 @@ pub struct AppState {
     pub changelog_service: Arc<ChangelogService>,
 }
 
+// ----------------------------------------------------------------------
+// Router builder
+// ----------------------------------------------------------------------
 pub fn create_router(state: AppState) -> Router {
     use crate::handlers::*;
     Router::new()
         .nest("/api/v1/dial", dial::routes())
+        // Add other routes as needed
         .with_state(state)
 }
