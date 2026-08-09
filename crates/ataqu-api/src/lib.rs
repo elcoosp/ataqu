@@ -2,18 +2,13 @@
 
 //! Ataqu API layer – Axum handlers, middleware, and shared state.
 
-use axum::{
-    Router,
-    extract::State,
-    response::{IntoResponse, Json},
-    routing::{get, post, put, delete},
-};
+use axum::{Router, extract::State, response::IntoResponse, routing::{get, post}};
 use dashmap::DashMap;
 use moka::sync::Cache;
 use metrics_exporter_prometheus::PrometheusHandle;
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::mpsc::Sender;
 use uuid::Uuid;
 
 use ataqu_application::{
@@ -31,16 +26,13 @@ use ataqu_application::{
 use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
-use tokio::sync::mpsc::Sender;
 
 pub mod error;
 pub mod handlers;
 pub mod middleware;
 pub mod serializers;
 
-// ----------------------------------------------------------------------
-// Stubs for missing dependencies (to be replaced with real implementations)
-// ----------------------------------------------------------------------
+// Stubs for missing dependencies
 pub mod stubs {
     pub struct HealthService;
     pub struct OnboardingService;
@@ -52,30 +44,13 @@ pub mod stubs {
 }
 pub use stubs::*;
 
-// ----------------------------------------------------------------------
-// Type aliases for complex WebSocket / presence structures
-// ----------------------------------------------------------------------
-/// A map from connection id to sender for a specific channel.
-type ChannelSubscribers = Arc<DashMap<usize, UnboundedSender<String>>>;
+// Type aliases matching the handler expectations
+pub type WsRegistry = Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, tokio::sync::mpsc::UnboundedSender<String>>>>>;
+pub type ConnIndex = Arc<DashMap<usize, Uuid>>;
+pub type PresenceCounts = Arc<DashMap<Uuid, i32>>;
+pub type SsoStates = Arc<Cache<String, String>>;
 
-/// Registry: channel_id -> subscriber map.
-type WsRegistry = Arc<DashMap<(Uuid, Uuid), ChannelSubscribers>>;
-
-/// Connection index: connection_id -> channel_id (or some mapping)
-type ConnIndex = Arc<DashMap<usize, Uuid>>;
-
-/// Presence counts: user_id -> count (for online status)
-type PresenceCounts = Arc<DashMap<Uuid, i32>>;
-
-/// SSO state cache: state -> provider data
-type SsoStates = Arc<Cache<String, String>>;
-
-/// Email tracking channel
-type EmailTrackingTx = UnboundedSender<TrackingEvent>;
-
-// ----------------------------------------------------------------------
-// Application State
-// ----------------------------------------------------------------------
+/// Application state shared across handlers.
 #[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
@@ -92,16 +67,14 @@ pub struct AppState {
     pub jwt_secret: Arc<Vec<u8>>,
     pub id_gen: Arc<dyn IdGenerator + Send + Sync>,
     pub clock: Arc<dyn Clock + Send + Sync>,
-    // WebSocket and presence infrastructure
     pub ws_registry: WsRegistry,
     pub conn_index: ConnIndex,
     pub presence_counts: PresenceCounts,
-    pub email_tracking_tx: EmailTrackingTx,
+    pub email_tracking_tx: Sender<TrackingEvent>,
     pub rate_limiter: middleware::rate_limit::RateLimiter,
     pub metrics_handle: PrometheusHandle,
     pub sso_states: SsoStates,
     pub http_client: reqwest::Client,
-    // Stubs for new features
     pub health_service: Arc<HealthService>,
     pub health_cache: Arc<Cache<(), ()>>,
     pub audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync>,
@@ -111,13 +84,9 @@ pub struct AppState {
     pub changelog_service: Arc<ChangelogService>,
 }
 
-// ----------------------------------------------------------------------
-// Router builder
-// ----------------------------------------------------------------------
 pub fn create_router(state: AppState) -> Router {
     use crate::handlers::*;
     Router::new()
         .nest("/api/v1/dial", dial::routes())
-        // Add other routes as needed
         .with_state(state)
 }
