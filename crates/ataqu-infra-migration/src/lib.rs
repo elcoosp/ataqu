@@ -58,7 +58,7 @@ pub mod m_vista_tables;
 // NEW STUBS
 pub mod m20250101_000011_create_audit_and_permissions;
 pub mod m20250101_000012_create_vista_views;
-pub mod m20250101_000013_create_shopify_integrations;
+
 pub mod m20250101_000014_create_onboarding_and_changelog;
 pub mod m20250101_000015_create_establishments;
 pub mod m20250101_000016_create_workflow_runs;
@@ -120,3 +120,5 @@ impl MigratorTrait for Migrator {
         ]
     }
 }
+
+pub mod m20250101_000013_create_shopify_integrations;
