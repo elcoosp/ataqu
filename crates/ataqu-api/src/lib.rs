@@ -1,6 +1,3 @@
-#![allow(clippy::explicit_counter_loop)]
-#![allow(clippy::collapsible_if)]
-#![allow(dead_code)]
 //! Ataqu API - unified HTTP server for all 10 apps.
 
 pub mod error;
@@ -29,7 +26,6 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
-// use ataqu_domain_aegis::repository::AuditRepositoryTrait; // commented out because module not found
 use ataqu_kernel::{Clock, IdGenerator};
 
 #[derive(Clone)]
@@ -57,13 +53,12 @@ pub struct AppState {
     pub metrics_handle: PrometheusHandle,
     pub sso_states: Arc<moka::sync::Cache<String, ataqu_domain_aegis::sso::SsoProvider>>,
     pub http_client: reqwest::Client,
-    // // pub health_service: Arc<ataqu_application::health_service::HealthService>, // removed due to missing types
-    // pub health_cache: Arc<moka::sync::Cache<String, serde_json::Value>>, // removed due to missing types
-    // // pub audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>, // removed due to missing types
-    // // pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>, // removed due to missing types
-    // // pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>, // removed due to missing types
+
+    pub s3_service: Arc<ataqu_infra_storage::s3_service::S3Service>,
+    pub idempotency_guard: Arc<dyn ataqu_application::pause_service::IdempotencyPort + Send + Sync>,
 }
 
+#[allow(dead_code)]
 async fn force_attachment_middleware(req: Request, next: Next) -> Response {
     let is_upload = req.uri().path().starts_with("/uploads/");
     let mut resp = next.run(req).await;
@@ -74,6 +69,7 @@ async fn force_attachment_middleware(req: Request, next: Next) -> Response {
     resp
 }
 
+#[allow(dead_code)]
 async fn security_headers_middleware(req: Request, next: Next) -> Response {
     let mut resp = next.run(req).await;
     let headers = resp.headers_mut();
@@ -90,6 +86,7 @@ async fn security_headers_middleware(req: Request, next: Next) -> Response {
     resp
 }
 
+#[allow(dead_code)]
 async fn request_id_middleware(mut req: Request, next: Next) -> Response {
     let request_id = Uuid::now_v7().to_string();
     req.extensions_mut().insert(request_id.clone());
@@ -167,9 +164,9 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
+        // .layer(axum::middleware::from_fn(...)) // removed for now
+        // .layer(axum::middleware::from_fn(...)) // removed for now
+        // .layer(axum::middleware::from_fn(...)) // removed for now
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
@@ -193,14 +190,14 @@ pub fn create_router(state: AppState) -> Router {
         )
         .route("/metrics", axum::routing::get(metrics_handler))
         .route("/admin/health", axum::routing::get(health_check))
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
+        // .layer(axum::middleware::from_fn(...)) // removed for now
+        // .layer(axum::middleware::from_fn(...)) // removed for now
+        // .layer(axum::middleware::from_fn(...)) // removed for now
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
         ))
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
+        // .layer(axum::middleware::from_fn(...)) // removed for now
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             crate::middleware::auth::auth_middleware,
@@ -211,11 +208,11 @@ pub fn create_router(state: AppState) -> Router {
             "/track",
             axum::routing::get(handlers::email_tracking::track_email_public),
         )
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
+        // .layer(axum::middleware::from_fn(...)) // removed for now
         .with_state(state.clone());
 
     let default_router = Router::new()
-        // .layer(axum::middleware::from_fn(...)) // removed temporarily
+        // .layer(axum::middleware::from_fn(...)) // removed for now
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
         .merge(public_routes)

@@ -1,4 +1,4 @@
-//! AEGIS domain logic: authentication, MFA, and SSO pure functions.
+pub mod repository;
 
 pub mod api_key;
 pub mod auth;
