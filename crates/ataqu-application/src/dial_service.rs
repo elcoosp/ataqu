@@ -514,14 +514,20 @@ impl DialService {
             .list_messages(tenant_id, channel_id, requester_id, 100000, 0)
             .await?;
 
-        // Build the content stream
-        let mut content_lines = Vec::new();
-        content_lines.push(b"BT\n".to_vec());
-        content_lines.push(b"/F1 12 Tf\n".to_vec());
+        fn escape_pdf_text(s: &str) -> String {
+            s.replace("\\", "\\\\")
+                .replace("(", "\\(")
+                .replace(")", "\\)")
+        }
+
+        let mut pages_content = Vec::new();
+        let mut current_page_lines = Vec::new();
+        current_page_lines.push(b"BT\n".to_vec());
+        current_page_lines.push(b"/F1 12 Tf\n".to_vec());
         let mut y = 750.0;
         let title = format!("Channel export: {}", channel_id);
-        content_lines.push(format!("1 0 0 1 50 {} Tm\n", y).into_bytes());
-        content_lines.push(format!("({}) Tj\n", escape_pdf_text(&title)).into_bytes());
+        current_page_lines.push(format!("1 0 0 1 50 {} Tm\n", y).into_bytes());
+        current_page_lines.push(format!("({}) Tj\n", escape_pdf_text(&title)).into_bytes());
         y -= 25.0;
 
         for msg in messages {
@@ -533,78 +539,71 @@ impl DialService {
             );
             let line: String = line.chars().take(200).collect();
             let line = line.as_str();
+
             if y < 50.0 {
-                break; // one page only
+                current_page_lines.push(b"ET\n".to_vec());
+                pages_content.push(current_page_lines.concat());
+
+                current_page_lines = Vec::new();
+                current_page_lines.push(b"BT\n".to_vec());
+                current_page_lines.push(b"/F1 12 Tf\n".to_vec());
+                y = 750.0;
             }
-            content_lines.push(format!("1 0 0 1 50 {} Tm\n", y).into_bytes());
-            content_lines.push(format!("({}) Tj\n", escape_pdf_text(line)).into_bytes());
+            current_page_lines.push(format!("1 0 0 1 50 {} Tm\n", y).into_bytes());
+            current_page_lines.push(format!("({}) Tj\n", escape_pdf_text(line)).into_bytes());
             y -= 15.0;
         }
-        content_lines.push(b"ET\n".to_vec());
-        let content_stream = content_lines.concat();
-        let content_len = content_stream.len();
 
-        // Escape parentheses for PDF strings
-        fn escape_pdf_text(s: &str) -> String {
-            s.replace("\\", "\\\\")
-                .replace("(", "\\(")
-                .replace(")", "\\)")
-        }
+        current_page_lines.push(b"ET\n".to_vec());
+        pages_content.push(current_page_lines.concat());
 
-        // Fixed object numbers:
-        // 1: Content stream
-        // 2: Page
-        // 3: Pages
-        // 4: Catalog
-        let content_obj = 1;
-        let page_obj = 2;
-        let pages_obj = 3;
-        let catalog_obj = 4;
-
-        // Build object bodies as Vec<u8>
-        let content_body = format!(
-            "<< /Length {} >>\nstream\n{}endstream\n",
-            content_len,
-            String::from_utf8_lossy(&content_stream)
-        )
-        .into_bytes();
-
-        let page_body = format!(
-                "<< /Type /Page /Parent {} 0 R /MediaBox [0 0 612 792] /Contents {} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\n",
-                pages_obj, content_obj
-            ).into_bytes();
-
-        let pages_body =
-            format!("<< /Type /Pages /Kids [{} 0 R] /Count 1 >>\n", page_obj).into_bytes();
-
-        let catalog_body = format!("<< /Type /Catalog /Pages {} 0 R >>\n", pages_obj).into_bytes();
-
-        // Assemble the PDF
         let mut buffer = Vec::new();
         buffer.extend_from_slice(b"%PDF-1.4\n");
 
-        // Write objects in order: 1..4
-        let objects = [
-            (content_obj, content_body),
-            (page_obj, page_body),
-            (pages_obj, pages_body),
-            (catalog_obj, catalog_body),
-        ];
-
         let mut object_offsets = Vec::new();
-        for (num, body) in objects.iter() {
-            let offset = buffer.len();
-            object_offsets.push(offset);
-            buffer.extend_from_slice(format!("{} 0 obj\n", num).as_bytes());
-            buffer.extend_from_slice(body);
-            buffer.extend_from_slice(b"\nendobj\n");
+        let num_pages = pages_content.len();
+        let total_objects = 1 + 1 + num_pages * 2; // pages, catalog, (content, page) * num_pages
+
+        // Object 1: Pages
+        object_offsets.push(buffer.len());
+        buffer.extend_from_slice(b"1 0 obj\n");
+        let mut kids = String::new();
+        for i in 0..num_pages {
+            kids.push_str(&format!("{} 0 R ", 3 + (i * 2) + 1));
+        }
+        buffer.extend_from_slice(format!("<< /Type /Pages /Kids [{}] /Count {} >>\n", kids, num_pages).as_bytes());
+        buffer.extend_from_slice(b"endobj\n");
+
+        // Object 2: Catalog
+        object_offsets.push(buffer.len());
+        buffer.extend_from_slice(b"2 0 obj\n");
+        buffer.extend_from_slice(b"<< /Type /Catalog /Pages 1 0 R >>\n");
+        buffer.extend_from_slice(b"endobj\n");
+
+        // Objects 3...: Content and Page objects
+        for (i, page_content) in pages_content.iter().enumerate() {
+            let content_obj_num = 3 + (i * 2);
+            let page_obj_num = content_obj_num + 1;
+
+            // Content object
+            object_offsets.push(buffer.len());
+            buffer.extend_from_slice(format!("{} 0 obj\n", content_obj_num).as_bytes());
+            buffer.extend_from_slice(format!("<< /Length {} >>\n", page_content.len()).as_bytes());
+            buffer.extend_from_slice(b"stream\n");
+            buffer.extend_from_slice(page_content);
+            buffer.extend_from_slice(b"endstream\n");
+            buffer.extend_from_slice(b"endobj\n");
+
+            // Page object
+            object_offsets.push(buffer.len());
+            buffer.extend_from_slice(format!("{} 0 obj\n", page_obj_num).as_bytes());
+            buffer.extend_from_slice(format!("<< /Type /Page /Parent 1 0 R /MediaBox [0 0 612 792] /Contents {} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\n", content_obj_num).as_bytes());
+            buffer.extend_from_slice(b"endobj\n");
         }
 
-        let total_objects = 5; // objects 0..4
         let xref_offset = buffer.len();
-
         buffer.extend_from_slice(b"xref\n");
-        buffer.extend_from_slice(format!("0 {}\n", total_objects).as_bytes());
+        buffer.extend_from_slice(format!("0 {}\n", total_objects + 1).as_bytes());
         buffer.extend_from_slice(b"0000000000 65535 f \n");
         for offset in object_offsets {
             buffer.extend_from_slice(format!("{:010} 00000 n \n", offset).as_bytes());
@@ -612,8 +611,8 @@ impl DialService {
 
         buffer.extend_from_slice(
             format!(
-                "trailer\n<< /Size {} /Root {} 0 R >>\nstartxref\n{}\n%%EOF\n",
-                total_objects, catalog_obj, xref_offset
+                "trailer\n<< /Size {} /Root 2 0 R >>\nstartxref\n{}\n%%EOF\n",
+                total_objects + 1, xref_offset
             )
             .as_bytes(),
         );
@@ -775,7 +774,9 @@ impl DialService {
         offset: u64,
     ) -> DialResult<Vec<Message>> {
         // [VULN-002] Filter messages to only those in channels the user can access
-        let all_channels = self.repo.list_channels(&tenant_id, 10000, 0).await?;
+        // Bound the query to prevent memory exhaustion
+        let max_channels = 5000;
+        let all_channels = self.repo.list_channels(&tenant_id, max_channels, 0).await?;
         let user_channels: std::collections::HashSet<ChannelId> = all_channels
             .into_iter()
             .filter(|c| {
