@@ -210,6 +210,10 @@ impl VaultService {
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
             })?;
 
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(product.tenant_id, Uuid::nil(), "update_product", "vault", Some("product"), Some(product.id), None, Some(serde_json::json!({"name": product.name, "sku": product.sku})), None, None).await.ok();
+        }
+
         Ok(product)
     }
 
@@ -217,7 +221,11 @@ impl VaultService {
         self.repo
             .delete_product(&tenant_id, &id)
             .await
-            .map_err(VaultServiceError::Repository)
+            .map_err(VaultServiceError::Repository)?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_product", "vault", Some("product"), Some(id), None, None, None, None).await.ok();
+        }
+        Ok(())
     }
 
     pub async fn get_product(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<Product> {
@@ -364,6 +372,10 @@ impl VaultService {
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
             })?;
 
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(new_variant.tenant_id, Uuid::nil(), "update_variant", "vault", Some("variant"), Some(new_variant.id), None, Some(serde_json::json!({"sku": new_variant.sku, "price": new_variant.price})), None, None).await.ok();
+        }
+
         Ok(new_variant)
     }
 
@@ -371,7 +383,11 @@ impl VaultService {
         self.repo
             .delete_variant(&tenant_id, &id)
             .await
-            .map_err(VaultServiceError::Repository)
+            .map_err(VaultServiceError::Repository)?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_variant", "vault", Some("variant"), Some(id), None, None, None, None).await.ok();
+        }
+        Ok(())
     }
 
     pub async fn list_variants(
@@ -603,6 +619,9 @@ impl VaultService {
             .update_warehouse(&warehouse)
             .await
             .map_err(VaultServiceError::Repository)?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(warehouse.tenant_id, Uuid::nil(), "update_warehouse", "vault", Some("warehouse"), Some(warehouse.id), None, Some(serde_json::json!({"name": warehouse.name})), None, None).await.ok();
+        }
         Ok(warehouse)
     }
 
@@ -610,7 +629,11 @@ impl VaultService {
         self.repo
             .delete_warehouse(&tenant_id, &id)
             .await
-            .map_err(VaultServiceError::Repository)
+            .map_err(VaultServiceError::Repository)?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_warehouse", "vault", Some("warehouse"), Some(id), None, None, None, None).await.ok();
+        }
+        Ok(())
     }
 
     pub async fn reserve_stock(

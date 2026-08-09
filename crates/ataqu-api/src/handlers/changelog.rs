@@ -6,7 +6,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::AppState;
+use crate::{AppState, middleware::AuthContext};
 
 #[derive(Deserialize)]
 pub struct ChangelogQuery {
@@ -23,6 +23,21 @@ pub async fn get_changelog(
     Query(query): Query<ChangelogQuery>,
 ) -> impl IntoResponse {
     match state.changelog_service.list_entries(query.limit).await {
+        Ok(entries) => (StatusCode::OK, Json(entries)).into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+pub async fn get_unread_changelog(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(query): Query<ChangelogQuery>,
+) -> impl IntoResponse {
+    match state.changelog_service.list_unread_entries(auth.user_id, query.limit).await {
         Ok(entries) => (StatusCode::OK, Json(entries)).into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,

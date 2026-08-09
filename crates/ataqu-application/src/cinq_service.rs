@@ -285,11 +285,17 @@ impl CinqService {
         contact.updated_at = event.updated_at;
         contact.version = event.version;
         self.contact_repo.save_contact(&contact).await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(contact.tenant_id, Uuid::nil(), "update_contact", "cinq", Some("contact"), Some(contact.id), None, Some(serde_json::json!({"name": contact.name})), None, None).await.ok();
+        }
         Ok(contact)
     }
 
     pub async fn delete_contact(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.contact_repo.delete_contact(&tenant_id, id).await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_contact", "cinq", Some("contact"), Some(id), None, None, None, None).await.ok();
+        }
         Ok(())
     }
 
@@ -632,6 +638,9 @@ impl CinqService {
         deal.updated_at = event.updated_at;
         deal.version = event.version;
         self.deal_repo.save_deal(&deal).await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(deal.tenant_id, Uuid::nil(), "update_deal", "cinq", Some("deal"), Some(deal.id), None, Some(serde_json::json!({"title": deal.title, "status": format!("{:?}", deal.status)})), None, None).await.ok();
+        }
 
         if let Some(DealStatus::Won) = event.status {
             let payload = serde_json::json!({
@@ -654,6 +663,9 @@ impl CinqService {
 
     pub async fn delete_deal(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.deal_repo.delete_deal(&tenant_id, id).await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_deal", "cinq", Some("deal"), Some(id), None, None, None, None).await.ok();
+        }
         Ok(())
     }
 
@@ -820,6 +832,9 @@ impl CinqService {
         }
         stage.version += 1;
         self.stage_repo.save_pipeline_stage(&stage).await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(stage.tenant_id, Uuid::nil(), "update_pipeline_stage", "cinq", Some("pipeline_stage"), Some(stage.id), None, Some(serde_json::json!({"name": stage.name})), None, None).await.ok();
+        }
         Ok(stage)
     }
 
@@ -827,6 +842,9 @@ impl CinqService {
         self.stage_repo
             .delete_pipeline_stage(&tenant_id, id)
             .await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_pipeline_stage", "cinq", Some("pipeline_stage"), Some(id), None, None, None, None).await.ok();
+        }
         Ok(())
     }
 
@@ -917,11 +935,17 @@ impl CinqService {
         task.updated_at = event.updated_at;
         task.version = event.version;
         self.task_repo.save_task(&task).await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(task.tenant_id, Uuid::nil(), "update_task", "cinq", Some("task"), Some(task.id), None, Some(serde_json::json!({"title": task.title, "status": format!("{:?}", task.status)})), None, None).await.ok();
+        }
         Ok(task)
     }
 
     pub async fn delete_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         self.task_repo.delete_task(&tenant_id, id).await?;
+        if let Some(audit_repo) = &self.audit_repo {
+            audit_repo.append_log(tenant_id, Uuid::nil(), "delete_task", "cinq", Some("task"), Some(id), None, None, None, None).await.ok();
+        }
         Ok(())
     }
 

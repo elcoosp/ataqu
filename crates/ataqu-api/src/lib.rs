@@ -236,6 +236,10 @@ pub fn create_router(state: AppState) -> Router {
             post(handlers::onboarding::complete_task),
         )
         .route("/api/v1/changelog", get(handlers::changelog::get_changelog))
+        .route(
+            "/api/v1/changelog/unread",
+            get(handlers::changelog::get_unread_changelog),
+        )
         .merge(public_routes)
         .merge(private_routes)
         .with_state(state)
