@@ -126,8 +126,8 @@ pub async fn get_form(
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     let etag = format!("\"{}\"", form.version);
-    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH)
+        && if_none_match
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
@@ -136,7 +136,6 @@ pub async fn get_form(
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
             return Ok((StatusCode::NOT_MODIFIED, h, Json(FormResponse::from(form))));
         }
-    }
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
     Ok((StatusCode::OK, resp_headers, Json(FormResponse::from(form))))

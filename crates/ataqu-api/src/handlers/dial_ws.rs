@@ -67,15 +67,14 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
         .entry(auth.user_id)
         .or_insert_with(|| std::sync::atomic::AtomicUsize::new(0));
     let prev_count = count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-    if prev_count == 0 {
-        if let Err(e) = state
+    if prev_count == 0
+        && let Err(e) = state
             .dial_service
             .set_online(auth.tenant_id, auth.user_id)
             .await
         {
             tracing::error!("Failed to set presence: {}", e);
         }
-    }
 
     struct AbortOnDrop(Option<tokio::task::JoinHandle<()>>);
     impl Drop for AbortOnDrop {
@@ -101,8 +100,8 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     while let Some(Ok(msg)) = ws_receiver.next().await {
         match msg {
             Message::Text(text) => {
-                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text) {
-                    if let Some(action) = parsed.get("action").and_then(|v| v.as_str()) {
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text)
+                    && let Some(action) = parsed.get("action").and_then(|v| v.as_str()) {
                         match action {
                             "subscribe" => {
                                 if let Some(channel_id) = parsed
@@ -239,7 +238,6 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                             _ => {}
                         }
                     }
-                }
             }
             Message::Close(_) => break,
             _ => {}

@@ -169,8 +169,8 @@ pub async fn get_contact(
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
 
     let etag = format!("\"{}\"", contact.version);
-    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH)
+        && if_none_match
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
@@ -183,7 +183,6 @@ pub async fn get_contact(
                 Json(ContactResponse::from(contact)),
             ));
         }
-    }
 
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
@@ -209,11 +208,10 @@ pub async fn update_contact(
             ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
         })?;
 
-    if let Some(ref email) = payload.email {
-        if !email.contains('@') {
+    if let Some(ref email) = payload.email
+        && !email.contains('@') {
             return Err(ApiResponseError::validation("Invalid email format"));
         }
-    }
     let cmd = UpdateContactCommand {
         id,
         tenant_id: auth.tenant_id,
@@ -354,8 +352,8 @@ pub async fn get_deal(
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
     let etag = format!("\"{}\"", deal.version);
-    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH)
+        && if_none_match
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
@@ -364,7 +362,6 @@ pub async fn get_deal(
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
             return Ok((StatusCode::NOT_MODIFIED, h, Json(DealResponse::from(deal))));
         }
-    }
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
     Ok((StatusCode::OK, resp_headers, Json(DealResponse::from(deal))))
@@ -880,8 +877,8 @@ pub async fn get_task(
             _ => ApiResponseError::internal("An unexpected error occurred"),
         })?;
     let etag = format!("\"{}\"", task.version);
-    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH)
+        && if_none_match
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
@@ -890,7 +887,6 @@ pub async fn get_task(
             h.insert(axum::http::header::ETAG, etag.parse().unwrap());
             return Ok((StatusCode::NOT_MODIFIED, h, Json(TaskResponse::from(task))));
         }
-    }
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
     Ok((StatusCode::OK, resp_headers, Json(TaskResponse::from(task))))

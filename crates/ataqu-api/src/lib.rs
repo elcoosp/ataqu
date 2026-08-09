@@ -231,7 +231,9 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::auth::auth_middleware,
         ));
 
-    let default_router = Router::new()
+    
+
+    Router::new()
         .layer(axum::middleware::from_fn(force_attachment_middleware))
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))
@@ -246,7 +248,5 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/v1/changelog", get(handlers::changelog::get_changelog))
         .merge(public_routes)
         .merge(private_routes)
-        .with_state(state);
-
-    default_router
+        .with_state(state)
 }

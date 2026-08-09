@@ -173,7 +173,7 @@ impl TempoRepository for TempoRepositoryImpl {
                 description: m.description,
                 duration_minutes: m.duration_minutes,
                 is_active: m.is_active,
-                created_at: m.created_at.into(),
+                created_at: m.created_at,
                 updated_at: m.updated_at,
                 version: m.version,
             })
@@ -200,7 +200,7 @@ impl TempoRepository for TempoRepositoryImpl {
             description: m.description,
             duration_minutes: m.duration_minutes,
             is_active: m.is_active,
-            created_at: m.created_at.into(),
+            created_at: m.created_at,
             updated_at: m.updated_at,
             version: m.version,
         }))
@@ -226,7 +226,7 @@ impl TempoRepository for TempoRepositoryImpl {
             description: m.description,
             duration_minutes: m.duration_minutes,
             is_active: m.is_active,
-            created_at: m.created_at.into(),
+            created_at: m.created_at,
             updated_at: m.updated_at,
             version: m.version,
         }))
@@ -516,8 +516,8 @@ impl TempoRepository for TempoRepositoryImpl {
                 id: m.id,
                 tenant_id: TenantId::new(m.tenant_id),
                 event_type_id: m.event_type_id,
-                start_time: m.start_time.into(),
-                end_time: m.end_time.into(),
+                start_time: m.start_time,
+                end_time: m.end_time,
                 is_booked: m.is_booked,
             })
             .collect())

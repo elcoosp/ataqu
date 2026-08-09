@@ -181,15 +181,14 @@ pub async fn get_doc(
     let mut resp_headers = axum::http::HeaderMap::new();
     resp_headers.insert(axum::http::header::ETAG, etag.parse().unwrap());
 
-    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH) {
-        if if_none_match
+    if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH)
+        && if_none_match
             .to_str()
             .map(|s| s == etag.as_str())
             .unwrap_or(false)
         {
             return Ok((StatusCode::NOT_MODIFIED, resp_headers).into_response());
         }
-    }
     Ok((
         StatusCode::OK,
         resp_headers,

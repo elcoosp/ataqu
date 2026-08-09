@@ -532,8 +532,8 @@ async fn main() -> anyhow::Result<()> {
         pause_outbox,
         clock.clone(),
     ));
-    let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
-    let idempotency_guard = pause_idempotency.clone();
+    let _s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
+    let _idempotency_guard = pause_idempotency.clone();
 
     // Email tracking writer
     let (email_writer, email_tracking_tx) =
@@ -909,8 +909,8 @@ async fn main() -> anyhow::Result<()> {
                     }
 
                     // TEMPO Booking event -> create CINQ activity
-                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
-                        if let Err(e) = cinq_service
+                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1"
+                        && let Err(e) = cinq_service
                             .process_tempo_booking_event(&event.payload)
                             .await
                         {
@@ -919,7 +919,6 @@ async fn main() -> anyhow::Result<()> {
                                 e.to_string(),
                             ));
                         }
-                    }
 
                     Ok(())
                 }

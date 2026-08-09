@@ -24,13 +24,11 @@ pub struct CreateUserRequest {
 
 #[allow(dead_code)]
 fn get_client_ip(headers: &axum::http::HeaderMap) -> Option<std::net::IpAddr> {
-    if let Some(forwarded) = headers.get("x-forwarded-for") {
-        if let Ok(forwarded_str) = forwarded.to_str() {
-            if let Some(ip) = forwarded_str.split(',').next() {
+    if let Some(forwarded) = headers.get("x-forwarded-for")
+        && let Ok(forwarded_str) = forwarded.to_str()
+            && let Some(ip) = forwarded_str.split(',').next() {
                 return ip.trim().parse().ok();
             }
-        }
-    }
     None
 }
 

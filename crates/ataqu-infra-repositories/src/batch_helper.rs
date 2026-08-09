@@ -44,15 +44,14 @@ where
                 ))
                 .await?;
                 for item in chunk {
-                    if let Ok(val) = serde_json::to_value(item) {
-                        if let Some(id) = val
+                    if let Ok(val) = serde_json::to_value(item)
+                        && let Some(id) = val
                             .get("id")
                             .and_then(|v| v.as_str())
                             .and_then(|s| uuid::Uuid::parse_str(s).ok())
                         {
                             successes.push(id);
                         }
-                    }
                 }
             }
             Err(e) => {
@@ -80,15 +79,14 @@ where
                                 [],
                             ))
                             .await?;
-                            if let Ok(val) = serde_json::to_value(item) {
-                                if let Some(id) = val
+                            if let Ok(val) = serde_json::to_value(item)
+                                && let Some(id) = val
                                     .get("id")
                                     .and_then(|v| v.as_str())
                                     .and_then(|s| uuid::Uuid::parse_str(s).ok())
                                 {
                                     successes.push(id);
                                 }
-                            }
                         }
                         Err(e) => {
                             txn.execute_raw(Statement::from_sql_and_values(

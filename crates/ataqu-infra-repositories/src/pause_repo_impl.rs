@@ -608,7 +608,7 @@ impl EmployeeDocumentRepository for PauseRepositoryImpl {
                 file_name: m.file_name,
                 file_url: m.file_url,
                 doc_type: m.doc_type,
-                created_at: m.created_at.into(),
+                created_at: m.created_at,
             })
             .collect())
     }
