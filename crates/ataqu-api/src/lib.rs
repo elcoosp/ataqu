@@ -2,28 +2,27 @@
 
 //! Ataqu API layer – Axum handlers, middleware, and shared state.
 
-use axum::{Router, extract::State, response::IntoResponse, routing::{get, post}};
+use axum::{
+    Router,
+    extract::State,
+    response::IntoResponse,
+    routing::{get, post},
+};
 use dashmap::DashMap;
-use moka::sync::Cache;
 use metrics_exporter_prometheus::PrometheusHandle;
+use moka::sync::Cache;
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use uuid::Uuid;
 
+use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_application::{
-    aegis_service::AegisService,
-    cinq_service::CinqService,
-    dial_service::DialService,
-    pause_service::PauseService,
-    pivot_service::PivotService,
-    sond_service::SondService,
-    spark_service::SparkService,
-    tempo_service::TempoService,
-    vault_service::VaultService,
+    aegis_service::AegisService, cinq_service::CinqService, dial_service::DialService,
+    pause_service::PauseService, pivot_service::PivotService, sond_service::SondService,
+    spark_service::SparkService, tempo_service::TempoService, vault_service::VaultService,
     vista_service::VistaService,
 };
-use ataqu_application::pause_service::IdempotencyPort;
 use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
 
@@ -45,7 +44,8 @@ pub mod stubs {
 pub use stubs::*;
 
 // Type aliases matching the handler expectations
-pub type WsRegistry = Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, tokio::sync::mpsc::UnboundedSender<String>>>>>;
+pub type WsRegistry =
+    Arc<DashMap<(Uuid, Uuid), Arc<DashMap<usize, tokio::sync::mpsc::UnboundedSender<String>>>>>;
 pub type ConnIndex = Arc<DashMap<usize, Uuid>>;
 pub type PresenceCounts = Arc<DashMap<Uuid, i32>>;
 pub type SsoStates = Arc<Cache<String, String>>;

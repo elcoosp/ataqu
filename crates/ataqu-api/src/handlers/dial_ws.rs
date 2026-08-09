@@ -1,12 +1,12 @@
 //! WebSocket handler for DIAL – placeholder returning 501.
 
-use axum::{
-    extract::{ws::WebSocketUpgrade, State},
-    response::{IntoResponse, Response},
-    http::StatusCode,
-};
 use crate::AppState;
 use crate::middleware::AuthContext;
+use axum::{
+    extract::{State, ws::WebSocketUpgrade},
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 
 pub async fn ws_handler(
     _ws: WebSocketUpgrade,

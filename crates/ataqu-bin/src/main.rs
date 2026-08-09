@@ -28,10 +28,10 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
+use ataqu_api::stubs::*;
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
 use sea_orm::{ConnectionTrait, TransactionTrait};
-use ataqu_api::stubs::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -486,30 +486,26 @@ async fn main() -> anyhow::Result<()> {
             rate_limiter_cleanup.cleanup();
         }
     });
-    let vista_service_for_outbox = vista_service.clone();
+    let _vista_service_for_outbox = vista_service.clone();
     let tempo_service_for_noshow = tempo_service.clone();
     let aegis_service_for_admin = aegis_service.clone();
     let vault_service_for_reaper = vault_service.clone();
 
     // Health Stubs
-    let health_service =
-        Arc::new(HealthService);
+    let health_service = Arc::new(HealthService);
     let health_cache = Arc::new(moka::sync::Cache::<(), ()>::builder().build());
 
     // Audit Stub
-    let audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync> =
-        Arc::new(DummyAuditRepo);
+    let audit_repo: Arc<dyn AuditRepositoryTrait + Send + Sync> = Arc::new(DummyAuditRepo);
 
     // S3 Stub
-    let s3_service =
-        Arc::new(S3Service);
+    let s3_service = Arc::new(S3Service);
 
     // Idempotency Stub
     let idempotency_guard = pause_idempotency.clone();
 
     // Onboarding & Changelog Stubs
-    let onboarding_service =
-        Arc::new(OnboardingService);
+    let onboarding_service = Arc::new(OnboardingService);
     let changelog_service = Arc::new(ChangelogService);
 
     let state = AppState {

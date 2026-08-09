@@ -197,7 +197,9 @@ pub async fn sso_login(
     };
 
     let sso_state = uuid::Uuid::new_v4().to_string();
-    state.sso_states.insert(sso_state.clone(), format!("{:?}", provider));
+    state
+        .sso_states
+        .insert(sso_state.clone(), format!("{:?}", provider));
     let redirect = ataqu_domain_aegis::sso::build_authorization_url(&provider, &config, &sso_state);
 
     Ok(Json(serde_json::json!({
