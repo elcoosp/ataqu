@@ -587,7 +587,8 @@ async fn main() -> anyhow::Result<()> {
             let spark = spark_service.clone();
             let gdpr_registry = gdpr_registry.clone();
             let gdpr_db_pool = gdpr_db_pool.clone();
-            let handler = move |event: ataqu_infra_outbox::OutboxEvent| {
+    let cinq_service = cinq_service.clone();
+            let handler = |event: ataqu_infra_outbox::OutboxEvent| {
                 let vista = vista.clone();
                 let spark = spark.clone();
                 let gdpr_registry = gdpr_registry.clone();
