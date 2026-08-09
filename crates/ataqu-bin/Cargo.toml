@@ -13,6 +13,7 @@ path = "src/bin/migrator.rs"
 
 [dependencies]
 ataqu-api = { path = "../ataqu-api" }
+ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 ataqu-application = { path = "../ataqu-application" }
 ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-infra-outbox = { path = "../ataqu-infra-outbox" }

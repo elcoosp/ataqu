@@ -1,3 +1,4 @@
+#![allow(clippy::collapsible_if)]
 use std::sync::Arc;
 
 use ataqu_domain_spark::repository::{

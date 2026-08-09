@@ -1,3 +1,4 @@
+
 // allowed: pre-existing clippy warnings blocking TASK-078 build
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::new_without_default)]

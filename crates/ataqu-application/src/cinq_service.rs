@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 //! CINQ CRM orchestration service – uses domain repositories and outbox.
 use std::collections::HashMap;
 use std::sync::Arc;

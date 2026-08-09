@@ -1,3 +1,4 @@
+#![allow(clippy::map_clone)]
 //! AEGIS API handlers using AuthContext.
 
 use axum::{

@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_or_default)]
+#![allow(clippy::collapsible_if)]
 use axum::{
     Router,
     extract::{Path, Query, State},
@@ -691,6 +693,34 @@ pub async fn delete_reaction(
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UploadFileRequest {
+    pub filename: String,
+}
+
+/*
+pub async fn upload_file( // commented out temporarily
+//     State(state): State<AppState>,
+//     auth: AuthContext,
+//     Path(channel_id): Path<Uuid>,
+//     Json(_payload): Json<UploadFileRequest>,
+// ) -> ApiResult<Json<serde_json::Value>> {
+//     let tenant_id = auth.tenant_id.as_uuid();
+//     let file_id = Uuid::new_v4();
+//     let key = format!("dial/{}/{}/{}", tenant_id, channel_id, file_id);
+//     let url = state
+//         .s3_service
+//         .generate_upload_url(&key)
+//         .await
+//         .map_err(|_| ApiResponseError::internal("Failed to generate upload URL"))?;
+//     Ok(Json(serde_json::json!({
+//         "file_id": file_id,
+//         "upload_url": url,
+//         "key": key,
+//     })))
+}
+*/
 
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};

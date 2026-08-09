@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+#![allow(clippy::needless_borrows_for_generic_args)]
 //! PAUSE application service — HR orchestration.
 //! Uses domain types and repository traits from domain crate.
 use serde_json::Value;

@@ -1,3 +1,6 @@
+#![allow(clippy::explicit_counter_loop)]
+#![allow(clippy::unwrap_or_default)]
+#![allow(clippy::collapsible_if)]
 //! CINQ API handlers using AuthContext.
 //! Only implements endpoints that are fully supported by CinqService.
 

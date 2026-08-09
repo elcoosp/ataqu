@@ -164,3 +164,9 @@ impl ContactRepository {
         model.insert(&self.db).await
     }
 }
+
+impl Default for CrossFieldRateLimiter {
+    fn default() -> Self {
+        Self::new()
+    }
+}

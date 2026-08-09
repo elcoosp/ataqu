@@ -4,3 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aws-sdk-s3 = { version = "1.50.0", features = ["rustls"] }
+aws-config = { version = "1.5.0", features = ["rustls"] }
+aws-credential-types = "1.2.0"
+tokio = { version = "1.52", features = ["sync", "rt", "time"] }
+thiserror = "2.0.18"
+tracing = "0.1"
+uuid = { version = "1.24.0", features = ["v4", "v7"] }
+[dev-dependencies]
+tokio = { version = "1.52", features = ["rt", "macros", "rt-multi-thread"] }

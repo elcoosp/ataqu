@@ -10,7 +10,7 @@ pub fn generate_secret() -> String {
     use rand::RngCore;
     let mut bytes = [0u8; 20];
     rand::thread_rng().fill_bytes(&mut bytes);
-    base32::encode(Alphabet::Rfc4648 { padding: false }, &bytes)
+    base32::encode(Alphabet::RFC4648 { padding: false }, &bytes)
 }
 
 pub fn generate_otpauth_url(secret: &str, email: &str) -> String {
@@ -22,7 +22,7 @@ pub fn generate_otpauth_url(secret: &str, email: &str) -> String {
 
 #[allow(clippy::collapsible_if)]
 pub fn verify_totp(secret: &str, code: &str) -> bool {
-    let decoded = match decode(Alphabet::Rfc4648 { padding: false }, secret) {
+    let decoded = match decode(Alphabet::RFC4648 { padding: false }, secret) {
         Some(bytes) => bytes,
         None => return false,
     };

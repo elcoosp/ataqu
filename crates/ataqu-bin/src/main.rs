@@ -53,6 +53,7 @@ use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
+use ataqu_infra_storage::s3_service::S3Service;
 
 use sea_orm::{ConnectionTrait, TransactionTrait};
 
@@ -546,6 +547,8 @@ async fn main() -> anyhow::Result<()> {
         pause_outbox,
         clock.clone(),
     ));
+    let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
+    let idempotency_guard = pause_idempotency.clone();
 
     // Email tracking writer
     let (email_writer, email_tracking_tx) =
@@ -609,7 +612,7 @@ async fn main() -> anyhow::Result<()> {
     let audit_repo = Arc::new(AuditRepository::new(pools.core.clone()));
 
     // S3 stub
-    let s3_service = Arc::new(ataqu_api::stubs::S3Service);
+    let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
 
     // Idempotency guard
     let idempotency_guard = pause_idempotency.clone();
