@@ -99,7 +99,7 @@ fn domain_to_active(user: &User) -> user_entity::ActiveModel {
         tenant_id: Set(user.tenant_id.as_uuid()),
         email: Set(user
             .email
-            .reveal(&ataqu_security::PiiAccessKey::new())
+            .reveal(&ataqu_security::PiiAccessKey::new_for_test())
             .to_string()),
         password_hash: Set(user.password_hash.clone()),
         mfa_secret: Set(user.mfa_secret.clone()),
@@ -121,7 +121,7 @@ impl AuthRepository for AegisUserRepository {
         email: &Email,
         tenant_id: Option<TenantId>,
     ) -> Result<Option<User>, AuthError> {
-        let email_str = email.reveal(&ataqu_security::PiiAccessKey::new());
+        let email_str = email.reveal(&ataqu_security::PiiAccessKey::new_for_test());
         let mut query =
             user_entity::Entity::find().filter(user_entity::Column::Email.eq(email_str));
         if let Some(tid) = tenant_id {
