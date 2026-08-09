@@ -42,7 +42,6 @@ use ataqu_infra_pools::Pools;
 // use S3Service;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 use ataqu_api::stubs::*;
-use ataqu_api::stubs::*;
 
 
 #[tokio::main]
@@ -463,11 +462,241 @@ async fn main() -> anyhow::Result<()> {
             std::path::PathBuf::from("/tmp/ataqu_email_spill"),
             10 * 1024 * 1024,
         );
-    tokio::spawn(async move {
-        if let Err(e) = email_writer.run().await {
-            tracing::error!("Email tracking writer crashed: {}", e);
+        tokio::spawn(async move {
+        loop {
+            let vista = vista_service_for_outbox.clone();
+            let spark = spark_service.clone();
+            let gdpr_registry = gdpr_registry.clone();
+            let gdpr_db_pool = gdpr_db_pool.clone();
+            let cinq_service_clone = cinq_service.clone();
+
+            let handler = |event: ataqu_infra_outbox::OutboxEvent| {
+                let vista = vista.clone();
+                let spark = spark.clone();
+                let gdpr_registry = gdpr_registry.clone();
+                let gdpr_db_pool = gdpr_db_pool.clone();
+                let cinq_service_clone = cinq_service_clone.clone();
+
+                async move {
+                    if let Err(e) = vista.process_event(&event).await {
+                        tracing::error!(error = %e, "VISTA event processing failed");
+                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
+                    }
+                    if let Err(e) = spark.evaluate_trigger(&event).await {
+                        tracing::error!(error = %e, "SPARK trigger evaluation failed");
+                        return Err(ataqu_infra_outbox::DispatcherError::Handler(e.to_string()));
+                    }
+
+                    if event.schema == "core" && event.event_type == "GdprDeletionRequested" {
+                        if let Some(tenant_id_str) =
+                            event.payload.get("tenant_id").and_then(|v| v.as_str())
+                        {
+                            if let Ok(tenant_uuid) = Uuid::parse_str(tenant_id_str) {
+                                tracing::info!(tenant_id = %tenant_uuid, "Processing GDPR deletion");
+                                let txn = match gdpr_db_pool.begin().await {
+                                    Ok(t) => t,
+                                    Err(e) => {
+                                        tracing::error!(error = %e, "Failed to begin GDPR transaction");
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                            e.to_string(),
+                                        ));
+                                    }
+                                };
+                                for table in gdpr_registry.tables.iter() {
+                                    let sql = format!(
+                                        "DELETE FROM {}.{} WHERE {} = $1",
+                                        table.schema, table.table, table.tenant_id_column
+                                    );
+                                    let stmt = sea_orm::Statement::from_sql_and_values(
+                                        sea_orm::DbBackend::Postgres,
+                                        &sql,
+                                        [tenant_uuid.into()],
+                                    );
+                                    if let Err(e) = txn.execute_raw(stmt).await {
+                                        tracing::error!(table = %table.table, error = %e, "Failed to delete data for GDPR");
+                                        let _ = txn.rollback().await;
+                                        return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                            e.to_string(),
+                                        ));
+                                    }
+                                }
+                                if let Err(e) = txn.commit().await {
+                                    tracing::error!(error = %e, "Failed to commit GDPR transaction");
+                                    return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                        e.to_string(),
+                                    ));
+                                }
+                            }
+                        }
+                    }
+
+                    if event.schema == "core" && event.event_type == "PasswordResetRequested" {
+                        let recipient = event
+                            .payload
+                            .get("email")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("noreply@ataqu.com");
+                        let token = event
+                            .payload
+                            .get("token")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+
+                        use lettre::{
+                            Message, SmtpTransport, Transport, message::header::ContentType,
+                            transport::smtp::authentication::Credentials,
+                        };
+
+                        let email = Message::builder()
+                            .from("Ataqu Security <noreply@ataqu.com>".parse().unwrap())
+                            .to(recipient
+                                .parse()
+                                .unwrap_or("noreply@ataqu.com".parse().unwrap()))
+                            .subject("Password Reset Request")
+                            .header(ContentType::TEXT_PLAIN)
+                            .body(format!(
+                                "You requested a password reset. Use the following token: {}",
+                                token
+                            ))
+                            .unwrap();
+
+                        let smtp_host =
+                            std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
+                        let smtp_port: u16 = std::env::var("SMTP_PORT")
+                            .unwrap_or_else(|_| "1025".to_string())
+                            .parse()
+                            .unwrap_or(1025);
+                        let smtp_user = std::env::var("SMTP_USER").ok();
+                        let smtp_pass = std::env::var("SMTP_PASS").ok();
+
+                        let mailer = SmtpTransport::relay(&smtp_host)
+                            .map(|builder| {
+                                let builder = builder.port(smtp_port);
+                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref())
+                                {
+                                    builder
+                                        .credentials(Credentials::new(u.clone(), p.clone()))
+                                        .build()
+                                } else {
+                                    builder.build()
+                                }
+                            })
+                            .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
+
+                        let mailer_clone = mailer.clone();
+                        let email_clone = email.clone();
+                        let recipient_clone = recipient.to_string();
+                        tokio::task::spawn_blocking(move || {
+                            if let Err(e) = mailer_clone.send(&email_clone) {
+                                tracing::error!("Failed to send password reset email: {}", e);
+                            } else {
+                                tracing::info!("Password reset email sent for {}", recipient_clone);
+                            }
+                        })
+                        .await
+                        .ok();
+                    }
+
+                    if event.schema == "collab_ops" && event.event_type == "SendBookingReminder" {
+                        let booking_id = event
+                            .payload
+                            .get("booking_id")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown");
+                        let starts_at = event
+                            .payload
+                            .get("starts_at")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("soon");
+                        let recipient = event
+                            .payload
+                            .get("email")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("noreply@ataqu.com");
+
+                        use lettre::{
+                            Message, SmtpTransport, Transport, message::header::ContentType,
+                            transport::smtp::authentication::Credentials,
+                        };
+
+                        let email = Message::builder()
+                            .from("Ataqu Scheduling <noreply@ataqu.com>".parse().unwrap())
+                            .to(recipient
+                                .parse()
+                                .unwrap_or("user@example.com".parse().unwrap()))
+                            .subject("Booking Reminder")
+                            .header(ContentType::TEXT_PLAIN)
+                            .body(format!(
+                                "Your booking {} is starting at {}.",
+                                booking_id, starts_at
+                            ))
+                            .unwrap();
+
+                        let smtp_host =
+                            std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
+                        let smtp_port: u16 = std::env::var("SMTP_PORT")
+                            .unwrap_or_else(|_| "1025".to_string())
+                            .parse()
+                            .unwrap_or(1025);
+                        let smtp_user = std::env::var("SMTP_USER").ok();
+                        let smtp_pass = std::env::var("SMTP_PASS").ok();
+
+                        let mailer = SmtpTransport::relay(&smtp_host)
+                            .map(|builder| {
+                                let builder = builder.port(smtp_port);
+                                if let (Some(u), Some(p)) = (smtp_user.as_ref(), smtp_pass.as_ref())
+                                {
+                                    builder
+                                        .credentials(Credentials::new(u.clone(), p.clone()))
+                                        .build()
+                                } else {
+                                    builder.build()
+                                }
+                            })
+                            .unwrap_or_else(|_| SmtpTransport::unencrypted_localhost());
+
+                        let mailer_clone = mailer.clone();
+                        let email_clone = email.clone();
+                        let booking_id_clone = booking_id.to_string();
+                        tokio::task::spawn_blocking(move || {
+                            if let Err(e) = mailer_clone.send(&email_clone) {
+                                tracing::error!("Failed to send booking reminder email: {}", e);
+                            } else {
+                                tracing::info!(
+                                    "Booking reminder email sent for {}",
+                                    booking_id_clone
+                                );
+                            }
+                        })
+                        .await
+                        .ok();
+                    }
+
+                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
+                        if let Err(e) = cinq_service_clone
+                            .process_tempo_booking_event(&event.payload)
+                            .await
+                        {
+                            tracing::error!(error = %e, "Failed to process TEMPO booking event");
+                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                e.to_string(),
+                            ));
+                        }
+                    }
+
+                    Ok(())
+                }
+            };
+
+            let dispatcher = OutboxDispatcher::new(dispatcher_pool.clone(), handler);
+            #[allow(unreachable_code)]
+            {
+                dispatcher.run().await;
+                tracing::error!("Outbox dispatcher stopped. Restarting in 5s...");
+                tokio::time::sleep(Duration::from_secs(5)).await;
+            }
         }
-    });
+    }););
 
     let tempo_service_for_reminder = tempo_service.clone();
     let aegis_service_for_noshow = aegis_service.clone();
