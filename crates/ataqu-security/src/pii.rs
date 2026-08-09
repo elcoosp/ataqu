@@ -132,3 +132,10 @@ mod tests {
         let _key = PiiAccessKey::new_for_test();
     }
 }
+
+#[cfg(feature = "infra-pii-access")]
+impl Default for PiiAccessKey {
+    fn default() -> Self {
+        Self::new()
+    }
+}
