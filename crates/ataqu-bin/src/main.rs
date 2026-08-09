@@ -25,11 +25,100 @@ use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
 use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
+
+use ataqu_application::changelog_service::ChangelogService;
+use ataqu_application::health_service::HealthService;
+use ataqu_application::onboarding_service::OnboardingService;
+use ataqu_application::shopify_service::ShopifyService;
+use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
+use ataqu_application::health_service::HealthService;
+use ataqu_application::onboarding_service::OnboardingService;
+use ataqu_application::changelog_service::ChangelogService;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
+use ataqu_application::pause_service::IdempotencyPort;
+use ataqu_infra_storage::s3_service::S3Service;
+
 use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
 use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
 
 use ataqu_infra_outbox::OutboxDispatcher;
 use ataqu_infra_pools::Pools;
+
+struct InlineShopifyRepo {
+    db: sea_orm::DatabaseConnection,
+}
+
+#[async_trait::async_trait]
+impl ShopifyRepository for InlineShopifyRepo {
+    async fn list_active_integrations(&self) -> Result<Vec<ShopifyIntegration>, String> {
+        let sql = "SELECT id, tenant_id, shop_domain, access_token, last_synced_at, created_at FROM vault.shopify_integrations";
+        let res = self
+            .db
+            .query_all_raw(sea_orm::Statement::from_sql_and_values(
+                sea_orm::DbBackend::Postgres,
+                sql,
+                Vec::<sea_orm::Value>::new(),
+            ))
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let mut ints = Vec::new();
+        for row in res {
+            let id: Uuid = row.try_get("", "id").map_err(|e| e.to_string())?;
+            let tenant_id: Uuid = row.try_get("", "tenant_id").map_err(|e| e.to_string())?;
+            let shop_domain: String = row.try_get("", "shop_domain").map_err(|e| e.to_string())?;
+            let access_token: String =
+                row.try_get("", "access_token").map_err(|e| e.to_string())?;
+            let last_synced_at: Option<chrono::DateTime<chrono::Utc>> = row
+                .try_get("", "last_synced_at")
+                .map_err(|e| e.to_string())?;
+            let created_at: chrono::DateTime<chrono::Utc> =
+                row.try_get("", "created_at").map_err(|e| e.to_string())?;
+
+            ints.push(ShopifyIntegration {
+                id,
+                tenant_id: TenantId::new(tenant_id),
+                shop_domain,
+                access_token,
+                last_synced_at,
+                created_at,
+            });
+        }
+        Ok(ints)
+    }
+
+    async fn update_last_synced(
+        &self,
+        integration_id: Uuid,
+        synced_at: chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), String> {
+        let sql = "UPDATE vault.shopify_integrations SET last_synced_at = $1 WHERE id = $2";
+        self.db
+            .execute_raw(sea_orm::Statement::from_sql_and_values(
+                sea_orm::DbBackend::Postgres,
+                sql,
+                vec![synced_at.into(), integration_id.into()],
+            ))
+            .await
+            .map_err(|e| e.to_string())?;
+        
+                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
+                        if let Err(e) = cinq_service
+                            .process_tempo_booking_event(&event.payload)
+                            .await
+                        {
+                            tracing::error!(error = %e, "Failed to process TEMPO booking event");
+                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                e.to_string(),
+                            ));
+                        }
+                    }
+
+
+                    Ok(())
+    }
+}
+
 
 use sea_orm::{ConnectionTrait, TransactionTrait};
 
@@ -387,7 +476,21 @@ async fn main() -> anyhow::Result<()> {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
                 }
             }
-            Ok(())
+            
+                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
+                        if let Err(e) = cinq_service
+                            .process_tempo_booking_event(&event.payload)
+                            .await
+                        {
+                            tracing::error!(error = %e, "Failed to process TEMPO booking event");
+                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                e.to_string(),
+                            ));
+                        }
+                    }
+
+
+                    Ok(())
         }
     }
 
@@ -487,6 +590,46 @@ async fn main() -> anyhow::Result<()> {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
             rate_limiter_cleanup.cleanup();
+
+    // Health Stubs
+    let health_repo =
+        Arc::new(ataqu_infra_repositories::health_repo::HealthRepository::new(pools.core.clone()));
+    let health_service = Arc::new(HealthService::new(health_repo, clock.clone()));
+    let health_cache = Arc::new(
+        moka::sync::Cache::<String, serde_json::Value>::builder()
+            .time_to_live(Duration::from_secs(5))
+            .build(),
+    );
+
+    // Audit Stub
+    let audit_repo: Arc<dyn ataqu_api::stubs::AuditRepositoryTrait + Send + Sync> =
+        Arc::new(ataqu_api::stubs::DummyAuditRepo);
+
+    // S3 Stub
+    let s3_service = Arc::new(ataqu_api::stubs::S3Service);
+
+    // Idempotency Stub
+    let idempotency_guard = pause_idempotency.clone();
+
+    // Onboarding & Changelog Stubs
+    let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone()));
+    let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
+
+    // Shopify Worker
+    let shopify_repo = Arc::new(InlineShopifyRepo {
+        db: pools.vault.clone(),
+    });
+    let shopify_service = Arc::new(ShopifyService::new(shopify_repo));
+    let shopify_http_client = reqwest::Client::new();
+    tokio::spawn(async move {
+        loop {
+            tracing::info!("Running Shopify sync worker...");
+            let client = shopify_http_client.clone();
+            shopify_service.sync_all(&client).await;
+            tokio::time::sleep(Duration::from_secs(300)).await; // 5 minutes
+        }
+    });
+
         }
     });
 
@@ -521,6 +664,13 @@ async fn main() -> anyhow::Result<()> {
         metrics_handle: metrics_handle.clone(),
         sso_states: sso_states.clone(),
         http_client: http_client.clone(),
+        health_service: health_service.clone(),
+        health_cache: health_cache.clone(),
+        audit_repo: audit_repo.clone(),
+        s3_service: s3_service.clone(),
+        idempotency_guard: idempotency_guard.clone(),
+        onboarding_service: onboarding_service.clone(),
+        changelog_service: changelog_service.clone(),
         health_cache: health_cache.clone(),
         idempotency_guard: pause_idempotency.clone(),
     };
@@ -755,6 +905,20 @@ async fn main() -> anyhow::Result<()> {
                         .ok();
                     }
 
+                    
+                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
+                        if let Err(e) = cinq_service
+                            .process_tempo_booking_event(&event.payload)
+                            .await
+                        {
+                            tracing::error!(error = %e, "Failed to process TEMPO booking event");
+                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                e.to_string(),
+                            ));
+                        }
+                    }
+
+
                     Ok(())
                 }
             };
@@ -908,5 +1072,19 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     info!("Server shut down.");
-    Ok(())
+    
+                    if event.schema == "collab_ops" && event.event_type == "TempoBookingCreatedV1" {
+                        if let Err(e) = cinq_service
+                            .process_tempo_booking_event(&event.payload)
+                            .await
+                        {
+                            tracing::error!(error = %e, "Failed to process TEMPO booking event");
+                            return Err(ataqu_infra_outbox::DispatcherError::Handler(
+                                e.to_string(),
+                            ));
+                        }
+                    }
+
+
+                    Ok(())
 }

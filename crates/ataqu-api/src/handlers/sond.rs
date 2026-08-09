@@ -22,6 +22,7 @@ pub struct CreateFormRequest {
     pub questions: Vec<QuestionInput>,
     #[serde(default)]
     pub branding: serde_json::Value,
+    pub mode: Option<ataqu_domain_sond::form::FormMode>,
 }
 
 #[derive(Debug, Serialize)]
@@ -30,6 +31,7 @@ pub struct FormResponse {
     pub title: String,
     pub description: Option<String>,
     pub questions: Vec<Value>,
+    pub mode: ataqu_domain_sond::form::FormMode,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -59,6 +61,7 @@ impl From<ataqu_application::sond_service::Form> for FormResponse {
             title: f.title,
             description: f.description,
             questions,
+            mode: f.mode,
             created_at: f.created_at,
         }
     }
@@ -75,6 +78,7 @@ pub async fn create_form(
         description: payload.description,
         questions: payload.questions,
         branding: payload.branding,
+        mode: payload.mode,
     };
     let form = state
         .sond_service
@@ -143,6 +147,7 @@ pub struct UpdateFormRequest {
     pub title: Option<String>,
     pub description: Option<String>,
     pub questions: Option<Vec<ataqu_domain_sond::question::QuestionInput>>,
+    pub mode: Option<ataqu_domain_sond::form::FormMode>,
 }
 
 pub async fn update_form(
@@ -165,6 +170,7 @@ pub async fn update_form(
         title: payload.title,
         description: payload.description,
         questions: payload.questions,
+        mode: payload.mode,
         expected_version: if_match,
     };
 
@@ -283,8 +289,64 @@ pub struct PaginationParams {
     pub offset: Option<u64>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct StepSubmitRequest {
+    pub question_id: Uuid,
+    pub answer: AnswerInput,
+}
+
+#[derive(Debug, Serialize)]
+pub struct StepSubmitResponse {
+    pub is_complete: bool,
+    pub next_question_id: Option<Uuid>,
+}
+
+pub async fn submit_form_step(
+    State(state): State<AppState>,
+    Path(form_id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
+    Json(payload): Json<StepSubmitRequest>,
+) -> ApiResult<Json<StepSubmitResponse>> {
+    let ip = headers
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.split(',').next())
+        .unwrap_or("unknown");
+    let rate_key = format!("sond_submit_step:{}:{}", form_id, ip);
+    if !state.rate_limiter.check(&rate_key) {
+        return Err(ApiResponseError::RateLimited);
+    }
+
+    let form = state
+        .sond_service
+        .get_form_public(form_id)
+        .await
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+
+    let result = state
+        .sond_service
+        .submit_conversational_answer(form.tenant_id, form_id, payload.question_id, payload.answer)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::sond_service::SondServiceError::Validation(msg) => {
+                ApiResponseError::Validation(msg)
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
+
+    Ok(Json(StepSubmitResponse {
+        is_complete: result.is_complete,
+        next_question_id: result.next_question_id,
+    }))
+}
+
 pub fn public_routes() -> Router<AppState> {
-    Router::new().route("/forms/:id/submit", axum::routing::post(submit_form))
+    Router::new()
+        .route("/forms/:id/submit", axum::routing::post(submit_form))
+        .route(
+            "/forms/:id/submit/step",
+            axum::routing::post(submit_form_step),
+        )
 }
 
 pub fn routes() -> Router<AppState> {
