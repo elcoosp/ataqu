@@ -72,6 +72,8 @@ pub struct AppState {
     pub s3_service: Arc<S3Service>,
     pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>,
     pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
+    pub audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+
 }
 
 async fn security_headers_middleware(

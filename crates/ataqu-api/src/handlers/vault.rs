@@ -829,6 +829,41 @@ pub async fn shopify_sync(
     Ok(StatusCode::ACCEPTED)
 }
 
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BulkDeleteIdsRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub async fn bulk_delete_products(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteIdsRequest>,
+) -> ApiResult<StatusCode> {
+    for id in payload.ids {
+        state
+            .vault_service
+            .delete_product(auth.tenant_id, id)
+            .await
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn bulk_delete_variants(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteIdsRequest>,
+) -> ApiResult<StatusCode> {
+    for id in payload.ids {
+        state
+            .vault_service
+            .delete_variant(auth.tenant_id, id)
+            .await
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/shopify/auth", axum::routing::get(shopify_auth_start))

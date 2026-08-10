@@ -196,7 +196,12 @@ async fn main() -> anyhow::Result<()> {
     // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.vista.clone()));
-    let vista_service = Arc::new(VistaService::new(vista_repo, pools.vista.clone(), clock.clone(), id_gen.clone()));
+    let vista_service = Arc::new(VistaService::new(
+        vista_repo,
+        pools.vista.clone(),
+        clock.clone(),
+        id_gen.clone(),
+    ));
 
     // SPARK
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
@@ -222,7 +227,11 @@ async fn main() -> anyhow::Result<()> {
 
     #[async_trait::async_trait]
     impl ActionDispatcher for AtaquActionDispatcher {
-        async fn dispatch(&self, action: &Action, tenant_id: &ataqu_kernel::TenantId) -> Result<(), String> {
+        async fn dispatch(
+            &self,
+            action: &Action,
+            tenant_id: &ataqu_kernel::TenantId,
+        ) -> Result<(), String> {
             match action {
                 Action::CreateDialChannel {
                     name,
@@ -410,14 +419,17 @@ async fn main() -> anyhow::Result<()> {
                     req.send().await.map_err(|e| e.to_string())?;
                 }
                 Action::SendEmail { to, subject, body } => {
-                    use lettre::{Message, SmtpTransport, Transport};
                     use lettre::transport::smtp::authentication::Credentials;
+                    use lettre::{Message, SmtpTransport, Transport};
                     let email = Message::builder()
-                        .to(to.parse().map_err(|e: lettre::address::AddressError| e.to_string())?)
+                        .to(to
+                            .parse()
+                            .map_err(|e: lettre::address::AddressError| e.to_string())?)
                         .subject(subject)
                         .body(body.clone())
                         .map_err(|e| e.to_string())?;
-                    let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "smtp.gmail.com".to_string());
+                    let smtp_host =
+                        std::env::var("SMTP_HOST").unwrap_or_else(|_| "smtp.gmail.com".to_string());
                     let smtp_user = std::env::var("SMTP_USER").map_err(|e| e.to_string())?;
                     let smtp_pass = std::env::var("SMTP_PASS").map_err(|e| e.to_string())?;
                     let creds = Credentials::new(smtp_user, smtp_pass);
@@ -429,13 +441,18 @@ async fn main() -> anyhow::Result<()> {
                     let email_clone = email.clone();
                     tokio::task::spawn_blocking(move || {
                         mailer_clone.send(&email_clone).map_err(|e| e.to_string())
-                    }).await
+                    })
+                    .await
                     .map_err(|e| e.to_string())?
                     .map_err(|e| e.to_string())?;
                     tracing::info!("Email sent to {}", to);
                 }
-                
-                Action::UpdateRecord { table, record_id, fields } => {
+
+                Action::UpdateRecord {
+                    table,
+                    record_id,
+                    fields,
+                } => {
                     let fields_json: serde_json::Value = serde_json::from_str(&fields)
                         .map_err(|e| format!("Invalid fields JSON: {}", e))?;
                     let record_uuid = Uuid::parse_str(&record_id)
@@ -460,7 +477,9 @@ async fn main() -> anyhow::Result<()> {
                             if let Some(name) = fields_json.get("name").and_then(|v| v.as_str()) {
                                 cmd.name = Some(name.to_string());
                             }
-                            if let Some(company) = fields_json.get("company").and_then(|v| v.as_str()) {
+                            if let Some(company) =
+                                fields_json.get("company").and_then(|v| v.as_str())
+                            {
                                 cmd.company = Some(Some(company.to_string()));
                             }
                             if let Some(email) = fields_json.get("email").and_then(|v| v.as_str()) {
@@ -472,21 +491,25 @@ async fn main() -> anyhow::Result<()> {
                             if let Some(custom) = fields_json.get("custom_fields") {
                                 cmd.custom_fields = Some(custom.clone());
                             }
-                            if let Some(lead_score) = fields_json.get("lead_score").and_then(|v| v.as_i64()) {
+                            if let Some(lead_score) =
+                                fields_json.get("lead_score").and_then(|v| v.as_i64())
+                            {
                                 cmd.lead_score = Some(lead_score as i32);
                             }
-                            let contact = self.cinq_service.get_contact(tenant_id, record_uuid)
+                            let contact = self
+                                .cinq_service
+                                .get_contact(tenant_id, record_uuid)
                                 .await
                                 .map_err(|e| e.to_string())?;
                             cmd.expected_version = contact.version;
-                            self.cinq_service.update_contact(cmd)
+                            self.cinq_service
+                                .update_contact(cmd)
                                 .await
                                 .map_err(|e| e.to_string())?;
                         }
                         "collab_crm.deals" => {
-                            
-                            use rust_decimal::prelude::FromPrimitive;
                             use rust_decimal::Decimal;
+                            use rust_decimal::prelude::FromPrimitive;
                             let mut cmd = ataqu_application::cinq_service::UpdateDealCommand {
                                 id: record_uuid,
                                 tenant_id,
@@ -505,10 +528,12 @@ async fn main() -> anyhow::Result<()> {
                             if let Some(title) = fields_json.get("title").and_then(|v| v.as_str()) {
                                 cmd.title = Some(title.to_string());
                             }
-                            if let Some(amount) = fields_json.get("amount").and_then(|v| v.as_f64()) {
+                            if let Some(amount) = fields_json.get("amount").and_then(|v| v.as_f64())
+                            {
                                 cmd.amount = Decimal::from_f64(amount);
                             }
-                            if let Some(status) = fields_json.get("status").and_then(|v| v.as_str()) {
+                            if let Some(status) = fields_json.get("status").and_then(|v| v.as_str())
+                            {
                                 cmd.status = Some(match status.to_lowercase().as_str() {
                                     "open" => ataqu_domain_cinq::deal::DealStatus::Open,
                                     "won" => ataqu_domain_cinq::deal::DealStatus::Won,
@@ -516,11 +541,14 @@ async fn main() -> anyhow::Result<()> {
                                     _ => return Err(format!("Invalid deal status: {}", status)),
                                 });
                             }
-                            let deal = self.cinq_service.get_deal(tenant_id, record_uuid)
+                            let deal = self
+                                .cinq_service
+                                .get_deal(tenant_id, record_uuid)
                                 .await
                                 .map_err(|e| e.to_string())?;
                             cmd.expected_version = deal.version;
-                            self.cinq_service.update_deal(cmd)
+                            self.cinq_service
+                                .update_deal(cmd)
                                 .await
                                 .map_err(|e| e.to_string())?;
                         }
@@ -539,11 +567,14 @@ async fn main() -> anyhow::Result<()> {
                             if let Some(sku) = fields_json.get("sku").and_then(|v| v.as_str()) {
                                 cmd.sku = Some(sku.to_string());
                             }
-                            let variant = self.vault_service.get_variant(tenant_id, record_uuid)
+                            let variant = self
+                                .vault_service
+                                .get_variant(tenant_id, record_uuid)
                                 .await
                                 .map_err(|e| e.to_string())?;
                             cmd.expected_version = variant.version;
-                            self.vault_service.update_variant(cmd)
+                            self.vault_service
+                                .update_variant(cmd)
                                 .await
                                 .map_err(|e| e.to_string())?;
                         }
@@ -553,7 +584,7 @@ async fn main() -> anyhow::Result<()> {
                     }
                 }
 
-_ => {
+                _ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
                 }
             }
@@ -673,7 +704,11 @@ _ => {
     // Health service & cache
     let health_repo =
         Arc::new(ataqu_infra_repositories::health_repo::HealthRepository::new(pools.core.clone()));
-    let health_service = Arc::new(HealthService::new(health_repo, clock.clone(), pools.clone()));
+    let health_service = Arc::new(HealthService::new(
+        health_repo,
+        clock.clone(),
+        pools.clone(),
+    ));
     let health_cache = Arc::new(
         moka::sync::Cache::<String, serde_json::Value>::builder()
             .time_to_live(Duration::from_secs(5))
@@ -687,9 +722,8 @@ _ => {
     let s3_reaper = s3_service.clone();
     let pools_clone = pools.clone();
     tokio::spawn(async move {
-        
-        use tracing::{info, error};
         use std::time::Duration;
+        use tracing::{error, info};
         let client = s3_reaper.clone();
         let db = pools_clone.core.clone();
         loop {
@@ -725,8 +759,8 @@ _ => {
 
     // Helper functions for S3 reaper
     async fn collect_valid_keys(db: &DatabaseConnection) -> Vec<String> {
-        use sea_orm::{Statement, DbBackend};
         use sea_orm::prelude::*;
+        use sea_orm::{DbBackend, Statement};
         let mut keys = Vec::new();
         // Query documents table
         let sql_docs = "SELECT url FROM collab_ops.documents WHERE url LIKE '%/uploads/%'";
@@ -741,7 +775,8 @@ _ => {
             }
         }
         // Query employee_documents table
-        let sql_emp = "SELECT file_url FROM collab_ops.employee_documents WHERE file_url LIKE '%/uploads/%'";
+        let sql_emp =
+            "SELECT file_url FROM collab_ops.employee_documents WHERE file_url LIKE '%/uploads/%'";
         let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql_emp, []);
         if let Ok(rows) = db.query_all_raw(stmt).await {
             for row in rows {
@@ -792,7 +827,10 @@ _ => {
             tokio::time::sleep(Duration::from_secs(3600)).await;
             match client.list_objects("uploads/").await {
                 Ok(keys) => {
-                    info!("S3 orphan reaper: found {} objects under uploads/", keys.len());
+                    info!(
+                        "S3 orphan reaper: found {} objects under uploads/",
+                        keys.len()
+                    );
                 }
                 Err(e) => {
                     tracing::error!("S3 orphan reaper failed: {}", e);
@@ -802,8 +840,13 @@ _ => {
     });
 
     // Onboarding & Changelog stubs
-    let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
-    let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone(), onboarding_outbox));
+    let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+        pools.core.clone(),
+    ));
+    let onboarding_service = Arc::new(OnboardingService::new(
+        pools.core.clone(),
+        onboarding_outbox,
+    ));
     let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
 
     // Single onboarding inactivity checker
@@ -889,8 +932,8 @@ _ => {
     });
 
     // UDS Admin Server (single instance)
-    let admin_socket_path = std::env::var("ATAQU_ADMIN_SOCK")
-        .unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
+    let admin_socket_path =
+        std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
     let _ = std::fs::remove_file(&admin_socket_path);
     let admin_listener = match tokio::net::UnixListener::bind(&admin_socket_path) {
         Ok(l) => {
@@ -944,35 +987,41 @@ _ => {
                                 let resp = match cmd {
                                     "health" => "OK: Server is running\n".to_string(),
                                     "flush-cache" => {
-                                        ataqu_api::middleware::idempotency::flush_idempotency_cache();
+                                        ataqu_api::middleware::idempotency::flush_idempotency_cache(
+                                        );
                                         "OK: Idempotency cache flushed\n".to_string()
                                     }
-                                    "status" => {
-                                        match health_service.get_system_health().await {
-                                            Ok(health) => {
-                                                let json = serde_json::to_string_pretty(&health).unwrap_or_default();
-                                                format!("{}\n", json)
-                                            }
-                                            Err(e) => format!("ERROR: Failed to get status: {}\n", e),
+                                    "status" => match health_service.get_system_health().await {
+                                        Ok(health) => {
+                                            let json = serde_json::to_string_pretty(&health)
+                                                .unwrap_or_default();
+                                            format!("{}\n", json)
                                         }
-                                    }
+                                        Err(e) => format!("ERROR: Failed to get status: {}\n", e),
+                                    },
                                     "audit" => {
-                                        let tenant_id = ataqu_kernel::TenantId::new(uuid::Uuid::nil());
-                                        match audit_repo.list_logs(tenant_id, 10, 0, None, None, None, None).await {
+                                        let tenant_id =
+                                            ataqu_kernel::TenantId::new(uuid::Uuid::nil());
+                                        match audit_repo
+                                            .list_logs(tenant_id, 10, 0, None, None, None, None)
+                                            .await
+                                        {
                                             Ok(logs) => {
-                                                let json = serde_json::to_string_pretty(&logs).unwrap_or_default();
+                                                let json = serde_json::to_string_pretty(&logs)
+                                                    .unwrap_or_default();
                                                 format!("{}\n", json)
                                             }
-                                            Err(e) => format!("ERROR: Failed to get audit logs: {}\n", e),
+                                            Err(e) => {
+                                                format!("ERROR: Failed to get audit logs: {}\n", e)
+                                            }
                                         }
                                     }
                                     _ => "ERROR: Unknown command\n".to_string(),
                                 };
                                 let _ = stream.write_all(resp.as_bytes()).await;
                             } else {
-                                let _ = stream
-                                    .write_all(b"ERROR: Invalid token or command\n")
-                                    .await;
+                                let _ =
+                                    stream.write_all(b"ERROR: Invalid token or command\n").await;
                             }
                         }
                     });
@@ -995,7 +1044,10 @@ _ => {
         move |evt| {
             let spark = spark.clone();
             async move {
-                spark.evaluate_trigger(&evt).await.map_err(|e| e.to_string())
+                spark
+                    .evaluate_trigger(&evt)
+                    .await
+                    .map_err(|e| e.to_string())
             }
         }
     });
@@ -1004,7 +1056,10 @@ _ => {
         move |evt| {
             let spark = spark.clone();
             async move {
-                spark.evaluate_trigger(&evt).await.map_err(|e| e.to_string())
+                spark
+                    .evaluate_trigger(&evt)
+                    .await
+                    .map_err(|e| e.to_string())
             }
         }
     });
@@ -1013,7 +1068,10 @@ _ => {
         move |evt| {
             let spark = spark.clone();
             async move {
-                spark.evaluate_trigger(&evt).await.map_err(|e| e.to_string())
+                spark
+                    .evaluate_trigger(&evt)
+                    .await
+                    .map_err(|e| e.to_string())
             }
         }
     });
@@ -1022,78 +1080,67 @@ _ => {
         let vista = vista_service.clone();
         move |evt| {
             let vista = vista.clone();
-            async move {
-                vista.process_event(&evt).await.map_err(|e| e.to_string())
-            }
+            async move { vista.process_event(&evt).await.map_err(|e| e.to_string()) }
         }
     });
     event_registry.register("collab_crm", "DealWon", {
         let vista = vista_service.clone();
         move |evt| {
             let vista = vista.clone();
-            async move {
-                vista.process_event(&evt).await.map_err(|e| e.to_string())
-            }
+            async move { vista.process_event(&evt).await.map_err(|e| e.to_string()) }
         }
     });
     event_registry.register("collab_crm", "ContactCreated", {
         let vista = vista_service.clone();
         move |evt| {
             let vista = vista.clone();
-            async move {
-                vista.process_event(&evt).await.map_err(|e| e.to_string())
-            }
+            async move { vista.process_event(&evt).await.map_err(|e| e.to_string()) }
         }
     });
     event_registry.register("vault", "ProductCreated", {
         let vista = vista_service.clone();
         move |evt| {
             let vista = vista.clone();
-            async move {
-                vista.process_event(&evt).await.map_err(|e| e.to_string())
-            }
+            async move { vista.process_event(&evt).await.map_err(|e| e.to_string()) }
         }
     });
     event_registry.register("vault", "LowStockAlert", {
         let vista = vista_service.clone();
         move |evt| {
             let vista = vista.clone();
-            async move {
-                vista.process_event(&evt).await.map_err(|e| e.to_string())
-            }
+            async move { vista.process_event(&evt).await.map_err(|e| e.to_string()) }
         }
     });
     event_registry.register("collab_ops", "LeaveRequestedEvent", {
         let vista = vista_service.clone();
         move |evt| {
             let vista = vista.clone();
-            async move {
-                vista.process_event(&evt).await.map_err(|e| e.to_string())
-            }
+            async move { vista.process_event(&evt).await.map_err(|e| e.to_string()) }
         }
     });
     event_registry.register("collab_ops", "LeaveStatusChanged", {
         let vista = vista_service.clone();
         move |evt| {
             let vista = vista.clone();
-            async move {
-                vista.process_event(&evt).await.map_err(|e| e.to_string())
-            }
+            async move { vista.process_event(&evt).await.map_err(|e| e.to_string()) }
         }
     });
     event_registry.register("core", "GdprDeletionRequested", {
         use ataqu_application::gdpr::saga_starter::GdprSagaStarter;
-        let gdpr_starter = Arc::new(
-            GdprSagaStarter::new(
-                pools.core.get_postgres_connection_pool().clone(),
-                Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()))
-            )
-        );
+        let gdpr_starter = Arc::new(GdprSagaStarter::new(
+            pools.core.get_postgres_connection_pool().clone(),
+            Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+                pools.core.clone(),
+            )),
+        ));
         move |evt| {
             let starter = gdpr_starter.clone();
             async move {
                 if let Some(tenant_id) = evt.aggregate_id {
-                    starter.handle_event(tenant_id).await.map_err(|e| e.to_string())
+                    starter
+                        .handle_event(tenant_id)
+                        .await
+                        .map_err(|e| e.to_string())
                 } else {
                     Ok(())
                 }
@@ -1113,15 +1160,15 @@ _ => {
 
     // Spawn Outbox Dispatcher
     use ataqu_infra_outbox::OutboxDispatcher;
-    let dispatcher = OutboxDispatcher::new(
-        pools.dispatcher.clone(),
-        move |event| {
-            let registry = event_registry.clone();
-            async move {
-                registry.dispatch(event).await.map_err(|e| ataqu_infra_outbox::DispatcherError::Handler(e))
-            }
+    let dispatcher = OutboxDispatcher::new(pools.dispatcher.clone(), move |event| {
+        let registry = event_registry.clone();
+        async move {
+            registry
+                .dispatch(event)
+                .await
+                .map_err(|e| ataqu_infra_outbox::DispatcherError::Handler(e))
         }
-    )
+    })
     .with_poll_interval(std::time::Duration::from_secs(5));
 
     tokio::spawn(async move {
@@ -1161,6 +1208,7 @@ _ => {
         s3_service,
         onboarding_service,
         changelog_service,
+        audit_repo: audit_repo.clone(),
     };
 
     let app = create_router(app_state);

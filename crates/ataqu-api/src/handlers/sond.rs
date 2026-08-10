@@ -348,6 +348,26 @@ pub fn public_routes() -> Router<AppState> {
         )
 }
 
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BulkDeleteIdsRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub async fn bulk_delete_submissions(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteIdsRequest>,
+) -> ApiResult<StatusCode> {
+    for id in payload.ids {
+        state
+            .sond_service
+            .delete_submission(auth.tenant_id, id)
+            .await
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form).get(list_forms))
