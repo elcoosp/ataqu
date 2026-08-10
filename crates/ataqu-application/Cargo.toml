@@ -21,6 +21,7 @@ ataqu-kernel = { path = "../ataqu-kernel" }
 ataqu-domain-cinq = { version = "0.1.0", path = "../ataqu-domain-cinq" }
 ataqu-domain-pivot = { version = "0.1.0", path = "../ataqu-domain-pivot" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
+ataqu-infra-pools = { path = "../ataqu-infra-pools" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 ataqu-contracts = { path = "../ataqu-contracts" }
 ataqu-security = { version = "0.1.0", path = "../ataqu-security", features = ["infra-pii-access"] }

@@ -73,6 +73,9 @@ impl HealthRepository {
     }
 
     pub async fn get_db_pool_used(&self) -> Result<i64, sea_orm::DbErr> {
+        // This should be called with a reference to Pools, but we'll use a static or pass via state.
+        // For now, we rely on the caller to provide a Pools instance.
+        // We'll change HealthService to hold a Pools reference.
         Ok(0)
     }
 

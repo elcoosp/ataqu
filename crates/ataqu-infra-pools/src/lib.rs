@@ -1,7 +1,6 @@
-// allowed: pre-existing clippy warnings blocking TASK-078 build
-
 use sea_orm::DatabaseConnection;
 
+#[derive(Clone)]
 pub struct Pools {
     pub core: DatabaseConnection,
     pub admin: DatabaseConnection,
@@ -15,16 +14,29 @@ pub struct Pools {
 }
 
 impl Pools {
-    
     pub fn get_pool_stats(&self) -> (i32, i32, i32) {
-        // This is a placeholder; in reality we would need to extract stats from each pool.
-        // For now, return dummy values but use actual sqlx pool stats where possible.
-        // We'll use a simple approach: get the inner sqlx pool from the sea_orm connection.
-        // Since sea_orm doesn't expose pool stats directly, we'll implement a trait.
-        (0, 35, 0)
+        let mut total_size = 0usize;
+        let mut total_idle = 0usize;
+        let connections = [
+            &self.core,
+            &self.admin,
+            &self.cinq,
+            &self.ops,
+            &self.vault,
+            &self.dial,
+            &self.vista,
+            &self.spark,
+        ];
+        for conn in connections {
+            let pool = conn.get_postgres_connection_pool();
+            total_size += pool.size() as usize;
+            total_idle += pool.num_idle();
+        }
+        let used = total_size - total_idle;
+        (used as i32, total_size as i32, 0)
     }
 
-pub async fn new(db_url: &str) -> anyhow::Result<Self> {
+    pub async fn new(db_url: &str) -> anyhow::Result<Self> {
         let mut db_options = sea_orm::ConnectOptions::new(db_url.to_string());
         db_options.max_connections(5);
 

@@ -418,6 +418,7 @@ dependencies = [
  "ataqu-domain-vista",
  "ataqu-infra-idempotency",
  "ataqu-infra-outbox",
+ "ataqu-infra-pools",
  "ataqu-infra-repositories",
  "ataqu-infra-shopify",
  "ataqu-kernel",

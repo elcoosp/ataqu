@@ -1,5 +1,6 @@
 use ataqu_infra_repositories::health_repo::HealthRepository;
 use ataqu_kernel::Clock;
+use ataqu_infra_pools::Pools;
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::Serialize;
 use std::sync::Arc;
@@ -67,11 +68,12 @@ fn classify(lag_seconds: f64, pending_events: i64) -> HealthStatus {
 pub struct HealthService {
     repo: Arc<HealthRepository>,
     clock: Arc<dyn Clock + Send + Sync>,
+    pools: Arc<Pools>,
 }
 
 impl HealthService {
-    pub fn new(repo: Arc<HealthRepository>, clock: Arc<dyn Clock + Send + Sync>) -> Self {
-        Self { repo, clock }
+    pub fn new(repo: Arc<HealthRepository>, clock: Arc<dyn Clock + Send + Sync>, pools: Arc<Pools>) -> Self {
+        Self { repo, clock, pools }
     }
 
     pub async fn get_system_health(&self) -> Result<SystemHealth, String> {

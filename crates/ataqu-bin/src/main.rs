@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
     let db_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:5433/ataqu".to_string());
 
-    let pools = Pools::new(&db_url).await?;
+    let pools = std::sync::Arc::new(Pools::new(&db_url).await?);
 
     let id_gen = Arc::new(SystemIdGenerator);
     let clock = Arc::new(SystemClock);
@@ -526,7 +526,7 @@ async fn main() -> anyhow::Result<()> {
     // Health service & cache
     let health_repo =
         Arc::new(ataqu_infra_repositories::health_repo::HealthRepository::new(pools.core.clone()));
-    let health_service = Arc::new(HealthService::new(health_repo, clock.clone()));
+    let health_service = Arc::new(HealthService::new(health_repo, clock.clone(), pools.clone()));
     let health_cache = Arc::new(
         moka::sync::Cache::<String, serde_json::Value>::builder()
             .time_to_live(Duration::from_secs(5))
