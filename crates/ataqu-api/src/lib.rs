@@ -171,7 +171,19 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
-        // Idempotency is now handled by the IdempotencyContext extractor
+        // Idempotency: enforced for POST, PUT, PATCH
+        .layer(axum::middleware::from_fn(
+            |req: axum::extract::Request, next: axum::middleware::Next| async {
+                if req.method() == axum::http::Method::POST
+                    || req.method() == axum::http::Method::PUT
+                    || req.method() == axum::http::Method::PATCH
+                {
+                    crate::middleware::idempotency::idempotency_middleware(req, next).await
+                } else {
+                    Ok(next.run(req).await)
+                }
+            }
+        ))
         .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
         ))
@@ -180,7 +192,6 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::rate_limit::rate_limit_middleware,
         ))
         .layer(axum::middleware::from_fn(request_id_middleware));
-
     let private_routes = Router::new()
         .route(
             "/api/v1/onboarding/status",
