@@ -604,6 +604,31 @@ pub async fn list_documents(
     Ok(Json(list))
 }
 
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BulkDeleteIdsRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub async fn bulk_deactivate_employees(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteIdsRequest>,
+) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
+    }
+    for id in payload.ids {
+        state
+            .pause_service
+            .deactivate_employee(&auth.tenant_id, id)
+            .await
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, patch, post, put};
     Router::new()
@@ -612,6 +637,7 @@ pub fn routes() -> Router<AppState> {
         .route("/employees/:id", put(update_employee))
         // Note: update_employee now requires If-Match header
         .route("/employees/:id/deactivate", post(deactivate_employee))
+        .route("/employees/bulk-deactivate", post(bulk_deactivate_employees))
         .route(
             "/leave-requests",
             post(request_leave).get(list_leave_requests),

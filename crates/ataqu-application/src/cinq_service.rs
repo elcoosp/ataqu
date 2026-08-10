@@ -170,7 +170,7 @@ impl CinqService {
         audit_repo: Option<
             Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
         >,
-    
+
     ) -> Self {
         Self {
             db,
@@ -1219,5 +1219,12 @@ impl CinqService {
             rx.recv().await.map(|item| (item, rx))
         });
         Ok(Box::pin(stream) as futures::stream::BoxStream<'static, Result<Vec<u8>, std::io::Error>>)
+    }
+
+    pub async fn bulk_delete_deals(&self, tenant_id: TenantId, ids: Vec<Uuid>) -> CinqResult<()> {
+        for id in ids {
+            self.deal_repo.delete_deal(&tenant_id, id).await?;
+        }
+        Ok(())
     }
 }

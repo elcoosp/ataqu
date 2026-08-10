@@ -139,6 +139,17 @@ impl SondRepository for SondRepositoryImpl {
         Ok(())
     }
 
+    async fn delete_submission(&self, tenant_id: TenantId, submission_id: Uuid) -> Result<(), SondError> {
+        use response_entity as entity;
+        entity::Entity::delete_many()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(entity::Column::Id.eq(submission_id))
+            .exec(&self.db)
+            .await
+            .map_err(|e| SondError::Repository(e.to_string()))?;
+        Ok(())
+    }
+
     async fn count_forms(&self, _tenant_id: &TenantId) -> Result<u64, SondError> {
         Ok(0)
     }

@@ -99,4 +99,13 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
         }
         Ok(ints)
     }
+
+    async fn delete_integration(&self, integration_id: Uuid) -> Result<(), String> {
+        use crate::entities::shopify as entity;
+        entity::Entity::delete_by_id(integration_id)
+            .exec(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
 }

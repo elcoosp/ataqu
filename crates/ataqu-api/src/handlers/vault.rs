@@ -736,7 +736,7 @@ pub async fn shopify_webhook(
 
     // Verify HMAC signature if header present
     if let Some(sig) = signature_header {
-        use sha2::{Sha256, Digest};
+        use sha2::Sha256;
         let secret = integration.access_token.as_bytes(); // Shopify uses the access token as secret for webhooks
         let mut mac = <hmac::Hmac::<Sha256> as hmac::Mac>::new_from_slice(secret)
             .map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;

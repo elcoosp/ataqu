@@ -1019,6 +1019,24 @@ pub fn public_routes() -> Router<AppState> {
     )
 }
 
+
+pub async fn bulk_delete_deals(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteDealsRequest>,
+) -> ApiResult<StatusCode> {
+    state
+        .cinq_service
+        .bulk_delete_deals(auth.tenant_id, payload.ids)
+        .await
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BulkDeleteDealsRequest {
+    pub ids: Vec<Uuid>,
+}
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
@@ -1028,7 +1046,9 @@ pub fn routes() -> Router<AppState> {
             get(get_contact).put(update_contact).delete(delete_contact),
         )
         .route("/contacts/bulk-delete", post(bulk_delete_contacts))
+        .route("/deals/bulk-delete", post(bulk_delete_deals))
         .route("/deals", post(create_deal).get(list_deals))
+        .route("/deals/bulk-delete", post(bulk_delete_deals))
         .route(
             "/deals/:id",
             get(get_deal).put(update_deal).delete(delete_deal),

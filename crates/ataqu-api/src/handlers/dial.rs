@@ -732,6 +732,28 @@ pub async fn upload_file(
     })))
 }
 
+
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BulkDeleteIdsRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub async fn bulk_delete_messages(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteIdsRequest>,
+) -> ApiResult<StatusCode> {
+    let is_moderator = auth.has_role("admin");
+    for id in payload.ids {
+        state
+            .dial_service
+            .delete_message(auth.tenant_id, id, auth.user_id, is_moderator)
+            .await
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
@@ -751,6 +773,7 @@ pub fn routes() -> Router<AppState> {
             axum::routing::get(export_channel_pdf),
         )
         .route("/messages/:id", put(edit_message).delete(delete_message))
+        .route("/messages/bulk-delete", post(bulk_delete_messages))
         .route(
             "/messages/:id/reactions",
             post(add_reaction).get(list_reactions),

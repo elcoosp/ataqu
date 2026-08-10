@@ -241,6 +241,12 @@ impl SondService {
             .await
             .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
+    pub async fn delete_submission(&self, tenant_id: TenantId, submission_id: Uuid) -> SondResult<()> {
+        self.repo
+            .delete_submission(tenant_id, submission_id)
+            .await
+            .map_err(|e| SondServiceError::Repository(e.to_string()))
+    }
 
     pub async fn list_forms(
         &self,

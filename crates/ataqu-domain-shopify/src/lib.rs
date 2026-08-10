@@ -110,4 +110,5 @@ pub trait ShopifyRepository: Send + Sync {
     ) -> Result<(), String>;
     async fn save_integration(&self, integration: &ShopifyIntegration) -> Result<(), String>;
     async fn list_integrations(&self, tenant_id: &TenantId) -> Result<Vec<ShopifyIntegration>, String>;
+    async fn delete_integration(&self, integration_id: Uuid) -> Result<(), String>;
 }
