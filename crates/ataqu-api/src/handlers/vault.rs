@@ -1,3 +1,5 @@
+use ataqu_domain_vault::shopify::ShopifyIntegration;
+use ataqu_kernel::TenantId;
 use axum::{
     Router,
     extract::{Path, Query, State},
@@ -15,8 +17,6 @@ use ataqu_application::vault_service::{
     BulkStockAdjustCommand, CreateProductCommand, CreateVariantCommand, UpdateProductCommand,
     UpdateStockCommand, UpdateVariantCommand, UpdateWarehouseCommand,
 };
-use ataqu_domain_vault::shopify::ShopifyIntegration;
-use ataqu_kernel::TenantId;
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -640,7 +640,8 @@ pub struct ShopifyOAuthCallback {
     pub state: Option<String>,
 }
 
-pub async fn shopify_auth_start(State(_state): State<AppState>,
+pub async fn shopify_auth_start(
+    State(_state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<serde_json::Value>> {
     if !auth.has_role("admin") {
@@ -648,7 +649,6 @@ pub async fn shopify_auth_start(State(_state): State<AppState>,
             "Admin access required".to_string(),
         ));
     }
-    // Generate state with tenant and user info for OAuth
     let state_str = format!("{}_{}", auth.tenant_id.as_uuid(), auth.user_id);
     let redirect_uri = std::env::var("SHOPIFY_REDIRECT_URI")
         .unwrap_or_else(|_| "https://api.ataqu.com/api/v1/vault/shopify/callback".to_string());
@@ -665,7 +665,7 @@ pub async fn shopify_auth_start(State(_state): State<AppState>,
 }
 
 pub async fn shopify_callback(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(query): Query<ShopifyOAuthCallback>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let client = reqwest::Client::new();
@@ -690,23 +690,20 @@ pub async fn shopify_callback(
     // Parse state to get tenant_id
     let state_str = query.state.unwrap_or_default();
     let state_parts: Vec<&str> = state_str.split('_').collect();
-    if state_parts.len() < 1 {
+    if state_parts.is_empty() {
         return Err(ApiResponseError::validation("Invalid state"));
     }
     let tenant_id = Uuid::parse_str(state_parts[0]).map_err(|_| ApiResponseError::validation("Invalid tenant"))?;
 
-    use ataqu_domain_vault::shopify::ShopifyIntegration;
-    use ataqu_kernel::TenantId;
     let integration = ShopifyIntegration {
         id: Uuid::new_v4(),
         tenant_id: TenantId::new(tenant_id),
-        shop_domain: query.shop,
+        shop_domain: query.shop.clone(),
         access_token: access_token.to_string(),
         last_synced_at: None,
         created_at: chrono::Utc::now(),
     };
 
-    // Save integration using the ShopifyService's repo
     state.shopify_service.repo.save_integration(&integration).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
@@ -715,9 +712,10 @@ pub async fn shopify_callback(
         "shop": query.shop,
         "message": "Shopify integration saved successfully"
     })))
+}
 
-
-pub async fn shopify_webhook(State(_state): State<AppState>,
+pub async fn shopify_webhook(
+    State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     __body: String,
 ) -> ApiResult<StatusCode> {
@@ -728,24 +726,19 @@ pub async fn shopify_webhook(State(_state): State<AppState>,
         return Ok(StatusCode::BAD_REQUEST);
     }
 
-    // Find integration by shop_domain
     let integrations = state.shopify_service.repo.list_active_integrations().await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let integration = integrations.iter().find(|i| i.shop_domain == shop_domain)
+    let _integration = integrations.iter().find(|i| i.shop_domain == shop_domain)
         .ok_or_else(|| ApiResponseError::not_found("Shopify integration not found"))?;
 
-    // Parse the body
-    let payload: serde_json::Value = serde_json::from_str(&__body)
+    let _payload: serde_json::Value = serde_json::from_str(&__body)
         .map_err(|_| ApiResponseError::validation("Invalid JSON payload"))?;
 
-    // Handle different topics
     match topic {
         "products/update" | "products/create" => {
-            // Process product update
             tracing::info!("Processing product webhook for shop: {}", shop_domain);
         }
         "inventory_levels/update" => {
-            // Process inventory update
             tracing::info!("Processing inventory webhook for shop: {}", shop_domain);
         }
         _ => {
@@ -754,15 +747,15 @@ pub async fn shopify_webhook(State(_state): State<AppState>,
     }
 
     Ok(StatusCode::OK)
+}
 
-
-pub async fn shopify_sync(State(_state): State<AppState>,
+pub async fn shopify_sync(
+    State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
         return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
     }
-    // Fetch integration for tenant
     let integrations = state.shopify_service.repo.list_integrations(&auth.tenant_id).await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let integration = integrations.first().ok_or_else(|| ApiResponseError::not_found("Shopify not connected"))?;
@@ -775,7 +768,7 @@ pub async fn shopify_sync(State(_state): State<AppState>,
     });
 
     Ok(StatusCode::ACCEPTED)
-
+}
 
 pub fn routes() -> Router<AppState> {
     Router::new()

@@ -714,62 +714,6 @@ pub async fn update_permission(
 }
 
 
-
-#[derive(Debug, Deserialize)]
-pub struct UpdatePermissionRequest {
-    pub role: String, // "admin", "editor", "viewer", "none"
-}
-
-pub async fn update_permission(
-    State(state): State<AppState>,
-    auth: AuthContext,
-    Path((user_id, app)): Path<(Uuid, String)>,
-    Json(req): Json<UpdatePermissionRequest>,
-) -> ApiResult<StatusCode> {
-    if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
-    }
-
-    // Validate app
-    const VALID_APPS: &[&str] = &["aegis", "cinq", "dial", "pause", "pivot", "sond", "spark", "tempo", "vault", "vista"];
-    if !VALID_APPS.contains(&app.as_str()) {
-        return Err(ApiResponseError::validation("Invalid app"));
-    }
-
-    state.aegis_service.update_user_permission(auth.tenant_id, user_id, app, req.role).await
-        .map_err(map_aegis_error)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-
-
-#[derive(Debug, Deserialize)]
-pub struct UpdatePermissionRequest {
-    pub role: String, // "admin", "editor", "viewer", "none"
-}
-
-pub async fn update_permission(
-    State(state): State<AppState>,
-    auth: AuthContext,
-    Path((user_id, app)): Path<(Uuid, String)>,
-    Json(req): Json<UpdatePermissionRequest>,
-) -> ApiResult<StatusCode> {
-    if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
-    }
-
-    // Validate app
-    const VALID_APPS: &[&str] = &["aegis", "cinq", "dial", "pause", "pivot", "sond", "spark", "tempo", "vault", "vista"];
-    if !VALID_APPS.contains(&app.as_str()) {
-        return Err(ApiResponseError::validation("Invalid app"));
-    }
-
-    state.aegis_service.update_user_permission(auth.tenant_id, user_id, app, req.role).await
-        .map_err(map_aegis_error)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::{delete, get, patch, post};
     axum::Router::new()

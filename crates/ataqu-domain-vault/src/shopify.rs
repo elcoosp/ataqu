@@ -21,6 +21,8 @@ pub trait ShopifyRepository: Send + Sync {
         integration_id: Uuid,
         synced_at: DateTime<Utc>,
     ) -> Result<(), String>;
+    async fn save_integration(&self, integration: &ShopifyIntegration) -> Result<(), String>;
+    async fn list_integrations(&self, tenant_id: &TenantId) -> Result<Vec<ShopifyIntegration>, String>;
 }
 
 #[cfg(test)]

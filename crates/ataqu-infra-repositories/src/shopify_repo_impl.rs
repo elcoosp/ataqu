@@ -60,6 +60,8 @@ impl ShopifyRepositoryImpl {
 }
 
 #[async_trait]
+
+
 impl ShopifyRepository for ShopifyRepositoryImpl {
     async fn list_active_integrations(&self) -> Result<Vec<ShopifyIntegration>, String> {
         use crate::entities::shopify as entity;
@@ -87,7 +89,6 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
         synced_at: chrono::DateTime<Utc>,
     ) -> Result<(), String> {
         use crate::entities::shopify as entity;
-        // Use Entity::update() with the active model.
         let mut active: entity::ActiveModel = entity::Entity::find_by_id(integration_id)
             .one(&self.db)
             .await
@@ -101,4 +102,44 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
             .map_err(|e| e.to_string())?;
         Ok(())
     }
+
+    async fn save_integration(&self, integration: &ShopifyIntegration) -> Result<(), String> {
+        use crate::entities::shopify as entity;
+        let active = entity::ActiveModel {
+            id: Set(integration.id),
+            tenant_id: Set(integration.tenant_id.as_uuid()),
+            shop_domain: Set(integration.shop_domain.clone()),
+            access_token: Set(integration.access_token.clone()),
+            last_synced_at: Set(integration.last_synced_at),
+            created_at: Set(integration.created_at),
+        };
+        entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    async fn list_integrations(&self, tenant_id: &TenantId) -> Result<Vec<ShopifyIntegration>, String> {
+        use crate::entities::shopify as entity;
+        let models = entity::Entity::find()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .all(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+        let mut ints = Vec::new();
+        for m in models {
+            ints.push(ShopifyIntegration {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                shop_domain: m.shop_domain,
+                access_token: m.access_token,
+                last_synced_at: m.last_synced_at,
+                created_at: m.created_at,
+            });
+        }
+        Ok(ints)
+    }
 }
+
+
