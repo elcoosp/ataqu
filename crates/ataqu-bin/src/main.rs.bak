@@ -221,6 +221,7 @@ async fn main() -> anyhow::Result<()> {
         dial_service: Arc<DialService>,
         cinq_service: Arc<CinqService>,
         vault_service: Arc<VaultService>,
+        http_client: reqwest::Client,
         system_user_id: Uuid,
     }
 
@@ -600,6 +601,10 @@ async fn main() -> anyhow::Result<()> {
         dial_service: dial_service.clone(),
         cinq_service: cinq_service.clone(),
         vault_service: vault_service.clone(),
+        http_client: reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new()),
         system_user_id,
     });
 
@@ -1124,6 +1129,9 @@ async fn main() -> anyhow::Result<()> {
         use ataqu_application::gdpr::saga_starter::GdprSagaStarter;
         let gdpr_starter = Arc::new(GdprSagaStarter::new(
             pools.core.get_postgres_connection_pool().clone(),
+            Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
+                pools.core.clone(),
+            )),
         ));
         move |evt| {
             let starter = gdpr_starter.clone();

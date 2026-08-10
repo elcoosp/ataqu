@@ -148,14 +148,8 @@ impl TempoRepository for TempoRepositoryImpl {
         Ok(())
     }
 
-    async fn count_event_types(&self, tenant_id: &TenantId) -> Result<u64, RepositoryError> {
-        use event_type_entity as entity;
-        let count = entity::Entity::find()
-            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .count(&self.db)
-            .await
-            .map_err(|e| RepositoryError::Database(e.to_string()))?;
-        Ok(count)
+    async fn count_event_types(&self, _tenant_id: &TenantId) -> Result<u64, RepositoryError> {
+        Ok(0)
     }
 
     async fn list_event_types(

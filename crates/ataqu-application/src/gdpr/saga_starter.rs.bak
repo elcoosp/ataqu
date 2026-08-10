@@ -6,11 +6,12 @@ use uuid::Uuid;
 
 pub struct GdprSagaStarter {
     db: PgPool,
+    outbox: Arc<dyn Outbox + Send + Sync>,
 }
 
 impl GdprSagaStarter {
-    pub fn new(db: PgPool) -> Self {
-        Self { db }
+    pub fn new(db: PgPool, outbox: Arc<dyn Outbox + Send + Sync>) -> Self {
+        Self { db, outbox }
     }
 
     pub async fn handle_event(&self, tenant_id: Uuid) -> Result<(), String> {

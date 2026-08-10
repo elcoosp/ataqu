@@ -21,7 +21,7 @@ pub type Result<T> = std::result::Result<T, S3Error>;
 pub struct S3Service {
     client: Client,
     bucket: String,
-    _region: String,
+    region: String,
 }
 
 impl S3Service {
@@ -37,7 +37,7 @@ impl S3Service {
         Ok(S3Service {
             client,
             bucket,
-            _region: region,
+            region,
         })
     }
 

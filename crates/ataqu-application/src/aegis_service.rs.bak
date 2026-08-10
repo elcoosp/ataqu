@@ -15,7 +15,7 @@ use thiserror::Error;
 use tracing::{info, instrument};
 use uuid::Uuid;
 
-use ataqu_domain_aegis::mfa::verify_totp;
+use ataqu_domain_aegis::mfa::{generate_otpauth_url, verify_totp};
 use ataqu_domain_aegis::{
     AuthError, AuthRepository, AuthenticateCommand as DomainAuthenticateCommand,
     CreateUserCommand as DomainCreateUserCommand, User, UserCreated,

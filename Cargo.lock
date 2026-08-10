@@ -477,6 +477,7 @@ dependencies = [
  "ataqu-infra-repositories",
  "ataqu-kernel",
  "ataqu-security",
+ "base32",
  "base64 0.22.1",
  "chrono",
  "chrono-tz",

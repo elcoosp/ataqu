@@ -31,8 +31,6 @@ impl HealthService {
         let outbox_status = classify(lag_seconds, pending_events);
         let now: DateTime<Utc> = self.clock.now().into();
 
-        let (used, max, waiting) = self.pools.get_pool_stats();
-
         Ok(SystemHealth {
             status: outbox_status,
             timestamp: now.to_rfc3339_opts(SecondsFormat::Secs, true),
@@ -54,9 +52,9 @@ impl HealthService {
                     dlq_depth: self.repo.get_workflow_dlq_depth().await.unwrap_or(0),
                 },
                 db_connection_pools: DbPoolHealth {
-                    used: used as i64,
-                    max: max as i64,
-                    waiting: waiting as i64,
+                    used: self.repo.get_db_pool_used().await.unwrap_or(0),
+                    max: 35,
+                    waiting: self.repo.get_db_pool_waiting().await.unwrap_or(0),
                 },
             },
         })
