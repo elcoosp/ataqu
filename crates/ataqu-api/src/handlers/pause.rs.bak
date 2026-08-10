@@ -644,12 +644,16 @@ pub async fn bulk_approve_leave_requests(
         return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
     }
     for id in payload.ids {
-        // For simplicity, ignore version in bulk; use latest version.
-        let request = state.pause_service.find_leave_request(&auth.tenant_id, id).await
-            .map_err(|_| ApiResponseError::not_found("Leave request not found"))?;
+        let headers = axum::http::HeaderMap::new(); // we don't have ETag for bulk
+        let if_match = headers.get(axum::http::header::IF_MATCH)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+            .unwrap_or(0);
+        // For simplicity, we ignore version in bulk; we could fetch and use latest version.
+        // We'll use a dummy version 0 and let the service handle.
         state
             .pause_service
-            .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, request.version)
+            .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, 0)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }
@@ -665,11 +669,9 @@ pub async fn bulk_cancel_leave_requests(
         return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
     }
     for id in payload.ids {
-        let request = state.pause_service.find_leave_request(&auth.tenant_id, id).await
-            .map_err(|_| ApiResponseError::not_found("Leave request not found"))?;
         state
             .pause_service
-            .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, request.version)
+            .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, 0)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }

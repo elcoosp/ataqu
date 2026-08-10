@@ -159,10 +159,24 @@ impl DialRepositoryImpl {
 impl DialRepository for DialRepositoryImpl {
     async fn get_reaction(
         &self,
-        _tenant_id: &TenantId,
-        _reaction_id: &Uuid,
+        tenant_id: &TenantId,
+        reaction_id: &Uuid,
     ) -> Result<Option<ataqu_domain_dial::chat::Reaction>, DialError> {
-        Ok(None)
+        use reaction::Entity as ReactionEntity;
+        let model = entity::Entity::find()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(entity::Column::Id.eq(*reaction_id))
+            .one(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(model.map(|m| ataqu_domain_dial::chat::Reaction {
+            id: m.id,
+            tenant_id: TenantId::new(m.tenant_id),
+            message_id: ataqu_domain_dial::chat::MessageId::new(m.message_id),
+            user_id: ataqu_domain_dial::chat::UserId::new(m.user_id),
+            emoji: m.emoji,
+            created_at: m.created_at.into(),
+        }))
     }
 
     async fn save_channel(&self, channel: &Channel) -> Result<(), DialError> {

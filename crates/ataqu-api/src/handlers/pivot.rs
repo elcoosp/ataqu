@@ -616,11 +616,33 @@ pub async fn apply_template(
     ))
 }
 
+
+#[derive(Debug, serde::Deserialize)]
+pub struct BulkDeleteIdsRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub async fn bulk_delete_documents(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<BulkDeleteIdsRequest>,
+) -> ApiResult<StatusCode> {
+    for id in payload.ids {
+        state
+            .pivot_service
+            .delete_document(auth.tenant_id, id)
+            .await
+            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
         .route("/databases/:id", axum::routing::delete(delete_db))
         .route("/docs", axum::routing::post(create_doc).get(list_docs))
+        .route("/docs/bulk-delete", axum::routing::post(bulk_delete_documents))
         .route("/docs/:id/versions", axum::routing::get(list_doc_versions))
         .route(
             "/docs/:id",

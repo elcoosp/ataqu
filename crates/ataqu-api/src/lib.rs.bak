@@ -219,7 +219,6 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/tempo", tempo_routes())
         .nest("/api/vault", vault_routes())
         .nest("/api/vista", vista_routes())
-        .nest("/api/migration", migration_routes())
         .nest("/api/gdpr", handlers::gdpr::routes())
         .route(
             "/api/search",

@@ -162,6 +162,7 @@ impl DialRepository for DialRepositoryImpl {
         _tenant_id: &TenantId,
         _reaction_id: &Uuid,
     ) -> Result<Option<ataqu_domain_dial::chat::Reaction>, DialError> {
+        // TODO: Implement proper DB fetch once reaction entity is generated in SeaORM
         Ok(None)
     }
 
