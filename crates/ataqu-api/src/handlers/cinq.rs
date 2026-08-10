@@ -763,23 +763,30 @@ pub async fn export_csv(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<impl axum::response::IntoResponse> {
-    let data = state
+    let stream = state
         .cinq_service
-        .export_contacts(auth.tenant_id)
+        .export_contacts_stream(auth.tenant_id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
-    Ok((
-        StatusCode::OK,
-        [
-            (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
-            (
-                axum::http::header::CONTENT_DISPOSITION,
-                "attachment; filename=\"contacts.csv\"".to_string(),
-            ),
-        ],
-        data,
-    ))
+    use axum::body::Body;
+    use futures::StreamExt;
+
+    // Convert Result<Vec<u8>, std::io::Error> to Result<Bytes, axum::Error>
+    let body = Body::from_stream(stream.map(|res| {
+        res.map(|chunk| axum::body::Bytes::from(chunk))
+            .map_err(|e| axum::Error::new(e))
+    }));
+
+    let headers = [
+        (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
+        (
+            axum::http::header::CONTENT_DISPOSITION,
+            "attachment; filename=\"contacts.csv\"".to_string(),
+        ),
+    ];
+
+    Ok((StatusCode::OK, headers, body))
 }
 
 #[derive(Debug, Deserialize)]

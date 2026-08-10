@@ -1157,4 +1157,67 @@ impl CinqService {
         let total = events.len() as u64; // not accurate, but better than nothing
         Ok((events, total))
     }
+
+    /// Export contacts as a stream of CSV chunks (one chunk per page), avoiding OOM for large datasets.
+    pub async fn export_contacts_stream(
+        &self,
+        tenant_id: TenantId,
+    ) -> CinqResult<futures::stream::BoxStream<'static, Result<Vec<u8>, std::io::Error>>> {
+        use futures::stream::{self, StreamExt};
+        use tokio::sync::mpsc;
+
+        let (tx, rx) = mpsc::channel(10);
+        let repo = self.contact_repo.clone();
+
+        tokio::spawn(async move {
+            let page_size = 1000u64;
+            let mut offset = 0u64;
+            let mut is_first = true;
+
+            loop {
+                let contacts = match repo.list_contacts(&tenant_id, page_size, offset).await {
+                    Ok(c) => c,
+                    Err(e) => {
+                        let _ = tx.send(Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))).await;
+                        break;
+                    }
+                };
+                if contacts.is_empty() {
+                    break;
+                }
+
+                // Build CSV for this page
+                let mut wtr = csv::WriterBuilder::new()
+                    .has_headers(is_first)
+                    .from_writer(Vec::new());
+                for c in contacts {
+                    let record = vec![
+                        c.id.to_string(),
+                        c.name.clone(),
+                        c.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
+                        c.phone.as_ref().map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string()).unwrap_or_default(),
+                        c.created_at.to_rfc3339(),
+                    ];
+                    if let Err(e) = wtr.write_record(&record) {
+                        let _ = tx.send(Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))).await;
+                        break;
+                    }
+                }
+                let data = wtr.into_inner().unwrap_or_default();
+                if !data.is_empty() {
+                    if let Err(_e) = tx.send(Ok(data)).await {
+                        break;
+                    }
+                }
+
+                is_first = false;
+                offset += page_size;
+            }
+        });
+
+        let stream = stream::unfold(rx, |mut rx| async {
+            rx.recv().await.map(|item| (item, rx))
+        });
+        Ok(Box::pin(stream) as futures::stream::BoxStream<'static, Result<Vec<u8>, std::io::Error>>)
+    }
 }
