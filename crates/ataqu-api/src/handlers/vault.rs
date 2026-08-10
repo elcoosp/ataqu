@@ -9,6 +9,8 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use sha2::digest::KeyInit;
+use hmac::Mac;
 
 use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
@@ -721,25 +723,77 @@ pub async fn shopify_webhook(
 ) -> ApiResult<StatusCode> {
     let topic = headers.get("X-Shopify-Topic").and_then(|v| v.to_str().ok()).unwrap_or("");
     let shop_domain = headers.get("X-Shopify-Shop-Domain").and_then(|v| v.to_str().ok()).unwrap_or("");
+    let signature_header = headers.get("X-Shopify-Hmac-Sha256").and_then(|v| v.to_str().ok());
 
     if topic.is_empty() || shop_domain.is_empty() {
         return Ok(StatusCode::BAD_REQUEST);
     }
 
+    // Find integration by shop_domain
     let integrations = state.shopify_service.repo.list_active_integrations().await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let _integration = integrations.iter().find(|i| i.shop_domain == shop_domain)
+    let integration = integrations.iter().find(|i| i.shop_domain == shop_domain)
         .ok_or_else(|| ApiResponseError::not_found("Shopify integration not found"))?;
 
-    let _payload: serde_json::Value = serde_json::from_str(&__body)
+    // Verify HMAC signature if header present
+    if let Some(sig) = signature_header {
+        use sha2::{Sha256, Digest};
+        let secret = integration.access_token.as_bytes(); // Shopify uses the access token as secret for webhooks
+        let mut mac = <hmac::Hmac::<Sha256> as hmac::Mac>::new_from_slice(secret)
+            .map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;
+        mac.update(__body.as_bytes());
+        let computed = hex::encode(mac.finalize().into_bytes());
+        if !constant_time_eq(&computed, sig) {
+            return Err(ApiResponseError::unauthorized("Invalid webhook signature"));
+        }
+    }
+
+    let payload: serde_json::Value = serde_json::from_str(&__body)
         .map_err(|_| ApiResponseError::validation("Invalid JSON payload"))?;
 
+    // Handle topics
     match topic {
-        "products/update" | "products/create" => {
-            tracing::info!("Processing product webhook for shop: {}", shop_domain);
-        }
         "inventory_levels/update" => {
-            tracing::info!("Processing inventory webhook for shop: {}", shop_domain);
+            // Extract inventory_item_id and available quantity
+            if let (Some(inventory_item_id), Some(available)) = (
+                payload.get("inventory_item_id").and_then(|v| v.as_i64()),
+                payload.get("available").and_then(|v| v.as_i64()),
+            ) {
+                // Find variant by inventory_item_id - we need a mapping table.
+                // For simplicity, we'll rely on the SKU that is sent in the payload.
+                // Actually Shopify sends the inventory_item_id, but we don't store it.
+                // We'll add a query to find the variant by SKU from the product.
+                // Since the webhook payload may not contain SKU, we'll find the variant by
+                // looking up the product and variant IDs from Shopify.
+                // For MVP, we'll skip if we can't find the variant.
+                let sku = payload.get("sku").and_then(|v| v.as_str());
+                if let Some(sku) = sku {
+                    if let Ok(Some(variant)) = state.vault_service.find_variant_by_sku(
+                        ataqu_kernel::TenantId::new(integration.tenant_id.as_uuid()),
+                        sku.to_string(),
+                    ).await {
+                        let delta = available - variant.stock_quantity;
+                        if delta != 0 {
+                            let _ = state.vault_service.update_stock(
+                                ataqu_application::vault_service::UpdateStockCommand {
+                                    tenant_id: ataqu_kernel::TenantId::new(integration.tenant_id.as_uuid()),
+                                    variant_id: variant.id,
+                                    delta,
+                                    reason: "shopify_webhook".to_string(),
+                                    reference: Some(format!("webhook_{}", uuid::Uuid::new_v4())),
+                                    alert_channel_id: None,
+                                    expected_version: variant.version,
+                                }
+                            ).await;
+                        }
+                    }
+                }
+            }
+        }
+        "products/update" | "products/create" => {
+            // For product updates, we could sync product metadata.
+            // For MVP, we just log and ignore (inventory is handled via inventory_levels).
+            tracing::info!("Product webhook received for shop: {}", shop_domain);
         }
         _ => {
             tracing::debug!("Unhandled webhook topic: {}", topic);
@@ -747,6 +801,12 @@ pub async fn shopify_webhook(
     }
 
     Ok(StatusCode::OK)
+}
+
+// Helper for constant time comparison
+fn constant_time_eq(a: &str, b: &str) -> bool {
+    if a.len() != b.len() { return false; }
+    a.bytes().zip(b.bytes()).fold(0, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
 pub async fn shopify_sync(

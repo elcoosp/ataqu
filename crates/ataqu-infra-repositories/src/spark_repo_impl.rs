@@ -207,8 +207,14 @@ impl SparkRepository for SparkRepositoryImpl {
         Ok(())
     }
 
-    async fn count_workflows(&self, _tenant_id: &TenantId) -> Result<u64, SparkError> {
-        Ok(0)
+    async fn count_workflows(&self, tenant_id: &TenantId) -> Result<u64, SparkError> {
+        use workflow_entity as entity;
+        let count = entity::Entity::find()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .count(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+        Ok(count)
     }
 
     async fn list_workflows(
@@ -280,13 +286,44 @@ impl SparkRepository for SparkRepositoryImpl {
 
     async fn get_workflow_lease(
         &self,
-        _tenant_id: &TenantId,
-        _workflow_id: &Uuid,
+        tenant_id: &TenantId,
+        workflow_id: &Uuid,
     ) -> Result<Option<ataqu_domain_spark::Lease>, SparkError> {
-        Ok(None)
+        use lease_entity as entity;
+        let model = entity::Entity::find()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(entity::Column::WorkflowId.eq(*workflow_id))
+            .one(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+        Ok(model.map(|m| ataqu_domain_spark::Lease {
+            id: m.id,
+            tenant_id: m.tenant_id,
+            workflow_id: m.workflow_id,
+            fence_token: m.fence_token as u64,
+            holder: m.holder,
+            expires_at: m.expires_at.map(|dt| chrono::DateTime::<chrono::Utc>::from(dt)),
+            created_at: m.created_at.into(),
+            updated_at: m.updated_at.into(),
+        }))
     }
 
-    async fn save_lease(&self, _lease: &ataqu_domain_spark::Lease) -> Result<(), SparkError> {
+    async fn save_lease(&self, lease: &ataqu_domain_spark::Lease) -> Result<(), SparkError> {
+        use lease_entity as entity;
+        let active = entity::ActiveModel {
+            id: Set(lease.id),
+            tenant_id: Set(lease.tenant_id),
+            workflow_id: Set(lease.workflow_id),
+            fence_token: Set(lease.fence_token as i64),
+            holder: Set(lease.holder.clone()),
+            expires_at: Set(lease.expires_at.map(|dt| dt.into())),
+            created_at: Set(lease.created_at.into()),
+            updated_at: Set(lease.updated_at.into()),
+        };
+        entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
         Ok(())
     }
 }

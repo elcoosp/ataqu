@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+hmac = "0.12"
+hex = "0.4"
 ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 axum = { version = "0.8.9", features = ["ws", "multipart"] }
 tower = "0.5.3"

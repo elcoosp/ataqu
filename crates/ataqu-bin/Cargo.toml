@@ -12,6 +12,7 @@ name = "migrator"
 path = "src/bin/migrator.rs"
 
 [dependencies]
+rust_decimal = "1.0"
 lettre = { version = "0.11", features = ["tokio1-native-tls", "builder", "smtp-transport"], default-features = false }
 ataqu-api = { path = "../ataqu-api" }
 ataqu-infra-storage = { path = "../ataqu-infra-storage" }

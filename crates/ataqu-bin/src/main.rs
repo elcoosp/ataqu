@@ -39,6 +39,7 @@ use ataqu_application::shopify_service::ShopifyService;
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
+use sea_orm::DatabaseConnection;
 
 // ----------------------------------------------------------------------------
 // Main
@@ -433,7 +434,126 @@ async fn main() -> anyhow::Result<()> {
                     .map_err(|e| e.to_string())?;
                     tracing::info!("Email sent to {}", to);
                 }
-                _ => {
+                
+                Action::UpdateRecord { table, record_id, fields } => {
+                    let fields_json: serde_json::Value = serde_json::from_str(&fields)
+                        .map_err(|e| format!("Invalid fields JSON: {}", e))?;
+                    let record_uuid = Uuid::parse_str(&record_id)
+                        .map_err(|e| format!("Invalid record_id: {}", e))?;
+                    let tenant_id = *tenant_id;
+
+                    match table.as_str() {
+                        "collab_crm.contacts" => {
+                            use ataqu_application::cinq_service::UpdateContactCommand;
+                            use ataqu_security::{Email, PhoneNumber};
+                            let mut cmd = UpdateContactCommand {
+                                id: record_uuid,
+                                tenant_id,
+                                name: None,
+                                company: None,
+                                email: None,
+                                phone: None,
+                                custom_fields: None,
+                                lead_score: None,
+                                expected_version: 0,
+                            };
+                            if let Some(name) = fields_json.get("name").and_then(|v| v.as_str()) {
+                                cmd.name = Some(name.to_string());
+                            }
+                            if let Some(company) = fields_json.get("company").and_then(|v| v.as_str()) {
+                                cmd.company = Some(Some(company.to_string()));
+                            }
+                            if let Some(email) = fields_json.get("email").and_then(|v| v.as_str()) {
+                                cmd.email = Some(Email::new(email.to_string()));
+                            }
+                            if let Some(phone) = fields_json.get("phone").and_then(|v| v.as_str()) {
+                                cmd.phone = Some(Some(PhoneNumber::new(phone.to_string())));
+                            }
+                            if let Some(custom) = fields_json.get("custom_fields") {
+                                cmd.custom_fields = Some(custom.clone());
+                            }
+                            if let Some(lead_score) = fields_json.get("lead_score").and_then(|v| v.as_i64()) {
+                                cmd.lead_score = Some(lead_score as i32);
+                            }
+                            let contact = self.cinq_service.get_contact(tenant_id, record_uuid)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                            cmd.expected_version = contact.version;
+                            self.cinq_service.update_contact(cmd)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                        }
+                        "collab_crm.deals" => {
+                            
+                            use rust_decimal::prelude::FromPrimitive;
+                            use rust_decimal::Decimal;
+                            let mut cmd = ataqu_application::cinq_service::UpdateDealCommand {
+                                id: record_uuid,
+                                tenant_id,
+                                contact_id: None,
+                                title: None,
+                                pipeline_stage_id: None,
+                                amount: None,
+                                status: None,
+                                owner_id: None,
+                                probability: None,
+                                variant_id: None,
+                                quantity: None,
+                                establishment_id: None,
+                                expected_version: 0,
+                            };
+                            if let Some(title) = fields_json.get("title").and_then(|v| v.as_str()) {
+                                cmd.title = Some(title.to_string());
+                            }
+                            if let Some(amount) = fields_json.get("amount").and_then(|v| v.as_f64()) {
+                                cmd.amount = Decimal::from_f64(amount);
+                            }
+                            if let Some(status) = fields_json.get("status").and_then(|v| v.as_str()) {
+                                cmd.status = Some(match status.to_lowercase().as_str() {
+                                    "open" => ataqu_domain_cinq::deal::DealStatus::Open,
+                                    "won" => ataqu_domain_cinq::deal::DealStatus::Won,
+                                    "lost" => ataqu_domain_cinq::deal::DealStatus::Lost,
+                                    _ => return Err(format!("Invalid deal status: {}", status)),
+                                });
+                            }
+                            let deal = self.cinq_service.get_deal(tenant_id, record_uuid)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                            cmd.expected_version = deal.version;
+                            self.cinq_service.update_deal(cmd)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                        }
+                        "vault.variants" => {
+                            use ataqu_application::vault_service::UpdateVariantCommand;
+                            let mut cmd = UpdateVariantCommand {
+                                tenant_id,
+                                id: record_uuid,
+                                price: None,
+                                sku: None,
+                                expected_version: 0,
+                            };
+                            if let Some(price) = fields_json.get("price").and_then(|v| v.as_i64()) {
+                                cmd.price = Some(price);
+                            }
+                            if let Some(sku) = fields_json.get("sku").and_then(|v| v.as_str()) {
+                                cmd.sku = Some(sku.to_string());
+                            }
+                            let variant = self.vault_service.get_variant(tenant_id, record_uuid)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                            cmd.expected_version = variant.version;
+                            self.vault_service.update_variant(cmd)
+                                .await
+                                .map_err(|e| e.to_string())?;
+                        }
+                        _ => {
+                            return Err(format!("Unsupported table for update: {}", table));
+                        }
+                    }
+                }
+
+_ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
                 }
             }
@@ -562,6 +682,105 @@ async fn main() -> anyhow::Result<()> {
 
     // S3 stub
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
+
+    // S3 Orphan Reaper
+    let s3_reaper = s3_service.clone();
+    let pools_clone = pools.clone();
+    tokio::spawn(async move {
+        
+        use tracing::{info, error};
+        use std::time::Duration;
+        let client = s3_reaper.clone();
+        let db = pools_clone.core.clone();
+        loop {
+            tokio::time::sleep(Duration::from_secs(3600)).await;
+            // 1. Collect valid keys from DB.
+            let valid_keys = collect_valid_keys(&db).await;
+            // 2. List all objects under "uploads/" prefix.
+            match client.list_objects("uploads/").await {
+                Ok(keys) => {
+                    let mut deleted = 0;
+                    for key in keys {
+                        if !valid_keys.contains(&key) {
+                            if let Err(e) = client.delete_object(&key).await {
+                                error!("Failed to delete {}: {}", key, e);
+                            } else {
+                                deleted += 1;
+                                info!("Deleted orphan S3 object: {}", key);
+                            }
+                        }
+                    }
+                    if deleted > 0 {
+                        info!("S3 orphan reaper: deleted {} orphan objects", deleted);
+                    } else {
+                        info!("S3 orphan reaper: no orphans found");
+                    }
+                }
+                Err(e) => {
+                    error!("S3 orphan reaper list failed: {}", e);
+                }
+            }
+        }
+    });
+
+    // Helper functions for S3 reaper
+    async fn collect_valid_keys(db: &DatabaseConnection) -> Vec<String> {
+        use sea_orm::{Statement, DbBackend};
+        use sea_orm::prelude::*;
+        let mut keys = Vec::new();
+        // Query documents table
+        let sql_docs = "SELECT url FROM collab_ops.documents WHERE url LIKE '%/uploads/%'";
+        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql_docs, []);
+        if let Ok(rows) = db.query_all_raw(stmt).await {
+            for row in rows {
+                if let Ok(url) = row.try_get::<String>("", "url") {
+                    if let Some(key) = extract_s3_key(&url) {
+                        keys.push(key);
+                    }
+                }
+            }
+        }
+        // Query employee_documents table
+        let sql_emp = "SELECT file_url FROM collab_ops.employee_documents WHERE file_url LIKE '%/uploads/%'";
+        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql_emp, []);
+        if let Ok(rows) = db.query_all_raw(stmt).await {
+            for row in rows {
+                if let Ok(url) = row.try_get::<String>("", "file_url") {
+                    if let Some(key) = extract_s3_key(&url) {
+                        keys.push(key);
+                    }
+                }
+            }
+        }
+        // Query dial.messages for file attachments
+        let sql_msg = "SELECT content FROM dial.messages WHERE content LIKE '%/uploads/%'";
+        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql_msg, []);
+        if let Ok(rows) = db.query_all_raw(stmt).await {
+            for row in rows {
+                if let Ok(content) = row.try_get::<String>("", "content") {
+                    for part in content.split_whitespace() {
+                        if let Some(key) = extract_s3_key(part) {
+                            keys.push(key);
+                        }
+                    }
+                }
+            }
+        }
+        keys.sort();
+        keys.dedup();
+        keys
+    }
+
+    fn extract_s3_key(url: &str) -> Option<String> {
+        let parts: Vec<&str> = url.split(".amazonaws.com/").collect();
+        if parts.len() == 2 {
+            return Some(parts[1].to_string());
+        }
+        if let Some(pos) = url.find("uploads/") {
+            return Some(url[pos..].to_string());
+        }
+        None
+    }
 
     // S3 Orphan Reaper
     let s3_reaper = s3_service.clone();
