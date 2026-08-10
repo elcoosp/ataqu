@@ -30,6 +30,7 @@ ataqu-domain-gdpr = { path = "../ataqu-domain-gdpr" }
 ataqu-domain-vault = { path = "../ataqu-domain-vault" }
 ataqu-security = { path = "../ataqu-security" }
 
+futures = "0.3"
 axum = { version = "0.8.9", features = ["ws", "multipart"] }
 tokio = { version = "1.52", features = ["rt", "macros", "rt-multi-thread", "signal", "net"] }
 tower = "0.5.3"

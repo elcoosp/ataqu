@@ -1,8 +1,7 @@
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
-
-#![allow(clippy::never_loop)]
+mod event_registry;
 
 use dotenvy::dotenv;
 use std::net::SocketAddr;
@@ -55,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
         .with_writer(non_blocking_file)
         .init();
 
-    info!("Starting Ataqu unified server...");
+            info!("Starting Ataqu unified server...");
 
     let db_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:5433/ataqu".to_string());
@@ -722,6 +721,152 @@ tokio::spawn(async move {
         }
     });
 
+    // ---------- START NEW CODE ----------
+    // Event Registry for Outbox
+    let mut event_registry = crate::event_registry::EventRegistry::new();
+
+    // Register SPARK triggers
+    event_registry.register("collab_crm", "DealCreated", {
+        let spark = spark_service.clone();
+        move |evt| {
+            let spark = spark.clone();
+            async move {
+                spark.evaluate_trigger(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("collab_crm", "ContactCreated", {
+        let spark = spark_service.clone();
+        move |evt| {
+            let spark = spark.clone();
+            async move {
+                spark.evaluate_trigger(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("core", "UserCreated", {
+        let spark = spark_service.clone();
+        move |evt| {
+            let spark = spark.clone();
+            async move {
+                spark.evaluate_trigger(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    // VISTA aggregation
+    event_registry.register("collab_crm", "DealCreated", {
+        let vista = vista_service.clone();
+        move |evt| {
+            let vista = vista.clone();
+            async move {
+                vista.process_event(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("collab_crm", "DealWon", {
+        let vista = vista_service.clone();
+        move |evt| {
+            let vista = vista.clone();
+            async move {
+                vista.process_event(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("collab_crm", "ContactCreated", {
+        let vista = vista_service.clone();
+        move |evt| {
+            let vista = vista.clone();
+            async move {
+                vista.process_event(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("vault", "ProductCreated", {
+        let vista = vista_service.clone();
+        move |evt| {
+            let vista = vista.clone();
+            async move {
+                vista.process_event(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("vault", "LowStockAlert", {
+        let vista = vista_service.clone();
+        move |evt| {
+            let vista = vista.clone();
+            async move {
+                vista.process_event(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("collab_ops", "LeaveRequestedEvent", {
+        let vista = vista_service.clone();
+        move |evt| {
+            let vista = vista.clone();
+            async move {
+                vista.process_event(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("collab_ops", "LeaveStatusChanged", {
+        let vista = vista_service.clone();
+        move |evt| {
+            let vista = vista.clone();
+            async move {
+                vista.process_event(&evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+    event_registry.register("core", "GdprDeletionRequested", {
+        use ataqu_application::gdpr::saga_starter::GdprSagaStarter;
+        let gdpr_starter = Arc::new(
+            GdprSagaStarter::new(
+                pools.core.get_postgres_connection_pool().clone(),
+                Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()))
+            )
+        );
+        move |evt| {
+            let starter = gdpr_starter.clone();
+            async move {
+                if let Some(tenant_id) = evt.aggregate_id {
+                    starter.handle_event(tenant_id).await.map_err(|e| e.to_string())
+                } else {
+                    Ok(())
+                }
+            }
+        }
+    });
+    event_registry.register("core", "InactivityReminder", {
+        let _onboarding = onboarding_service.clone();
+        move |evt| {
+            let _onboarding = _onboarding.clone();
+            async move {
+                // Process inactivity reminder: e.g., send email via outbox or mark
+                tracing::info!(event_id = %evt.id, "InactivityReminder event received");
+                Ok(())
+            }
+        }
+    });
+
+    // Spawn Outbox Dispatcher
+    use ataqu_infra_outbox::OutboxDispatcher;
+    let dispatcher = OutboxDispatcher::new(
+        pools.dispatcher.clone(),
+        move |event| {
+            let registry = event_registry.clone();
+            async move {
+                registry.dispatch(event).await.map_err(|e| ataqu_infra_outbox::DispatcherError::Handler(e))
+            }
+        }
+    )
+    .with_poll_interval(std::time::Duration::from_secs(5));
+
+    tokio::spawn(async move {
+        tracing::info!("Outbox dispatcher started");
+        dispatcher.run().await;
+    });
+
+    // ---------- END NEW CODE ----------
 let app_state = AppState {
 db: pools.core.clone(),
         cinq_service,
