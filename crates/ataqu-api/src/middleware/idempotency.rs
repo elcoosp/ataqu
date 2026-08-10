@@ -28,7 +28,6 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
         return Ok(next.run(req).await);
     }
 
-    // Determine tenant_id from AuthContext if present
     let tenant_id = req
         .extensions()
         .get::<crate::middleware::AuthContext>()
@@ -43,7 +42,6 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
 
     if let Some(key) = &key_str {
         if let Some(cached) = IDEMPOTENCY_CACHE.get(key) {
-            // Reconstruct response from cached
             let mut resp = Response::builder().status(cached.status);
             for (k, v) in &cached.headers {
                 if let Ok(header_name) = axum::http::HeaderName::from_bytes(k.as_bytes()) {
@@ -81,7 +79,6 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
             };
             IDEMPOTENCY_CACHE.insert(key.clone(), cached);
 
-            // Rebuild response with same status and headers
             let mut new_resp = Response::builder().status(status);
             for (k, v) in &headers {
                 new_resp = new_resp.header(k.clone(), v.clone());
