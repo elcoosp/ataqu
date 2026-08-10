@@ -1,10 +1,12 @@
 use async_trait::async_trait;
-use ataqu_domain_spark::repository::SparkRepository;
+use ataqu_domain_spark::repository::{SparkRepository, WorkflowRunRepository};
 use ataqu_domain_spark::{SparkError, Workflow};
+use ataqu_domain_spark::workflow::{WorkflowRun, WorkflowRunStatus};
 use ataqu_kernel::TenantId;
 use sea_orm::entity::prelude::*;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
+use sea_orm::IntoActiveModel;
 
 mod workflow_entity {
     use sea_orm::entity::prelude::*;
@@ -27,6 +29,30 @@ mod workflow_entity {
         pub created_at: chrono::DateTime<chrono::Utc>,
         pub updated_at: chrono::DateTime<chrono::Utc>,
         pub version: i32,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
+mod workflow_run_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "workflow_runs", schema_name = "collab_crm")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub workflow_id: Uuid,
+        pub status: String,
+        pub payload: serde_json::Value,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
     }
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -237,5 +263,110 @@ impl SparkRepository for SparkRepositoryImpl {
 
     async fn save_lease(&self, _lease: &ataqu_domain_spark::Lease) -> Result<(), SparkError> {
         Ok(())
+    }
+}
+
+// ============================================================================
+// WorkflowRunRepository Implementation
+// ============================================================================
+
+pub struct WorkflowRunRepositoryImpl {
+    db: DatabaseConnection,
+}
+
+impl WorkflowRunRepositoryImpl {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self { db }
+    }
+}
+
+#[async_trait]
+impl WorkflowRunRepository for WorkflowRunRepositoryImpl {
+    async fn create_run(&self, run: &WorkflowRun) -> Result<(), SparkError> {
+        use workflow_run_entity as entity;
+        let active = entity::ActiveModel {
+            id: Set(run.id),
+            tenant_id: Set(run.tenant_id),
+            workflow_id: Set(run.workflow_id),
+            status: Set(match &run.status {
+                WorkflowRunStatus::Running => "running",
+                WorkflowRunStatus::PendingApproval => "pending_approval",
+                WorkflowRunStatus::Approved => "approved",
+                WorkflowRunStatus::Rejected => "rejected",
+                WorkflowRunStatus::Completed => "completed",
+                WorkflowRunStatus::Failed => "failed",
+            }.to_string()),
+            payload: Set(run.payload.clone()),
+            created_at: Set(run.created_at.into()),
+            updated_at: Set(run.updated_at.into()),
+        };
+        entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn update_run_status(
+        &self,
+        tenant_id: &TenantId,
+        run_id: &Uuid,
+        status: &WorkflowRunStatus,
+    ) -> Result<(), SparkError> {
+        use workflow_run_entity as entity;
+        let status_str = match status {
+            WorkflowRunStatus::Running => "running",
+            WorkflowRunStatus::PendingApproval => "pending_approval",
+            WorkflowRunStatus::Approved => "approved",
+            WorkflowRunStatus::Rejected => "rejected",
+            WorkflowRunStatus::Completed => "completed",
+            WorkflowRunStatus::Failed => "failed",
+        };
+        let mut active = entity::Entity::find()
+            .filter(entity::Column::Id.eq(*run_id))
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?
+            .ok_or(SparkError::WorkflowNotFound)?
+            .into_active_model();
+        active.status = Set(status_str.to_string());
+        active.updated_at = Set(chrono::Utc::now());
+        entity::Entity::update(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn get_run(
+        &self,
+        tenant_id: &TenantId,
+        run_id: &Uuid,
+    ) -> Result<Option<WorkflowRun>, SparkError> {
+        use workflow_run_entity as entity;
+        let model = entity::Entity::find()
+            .filter(entity::Column::Id.eq(*run_id))
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .one(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+        Ok(model.map(|m| WorkflowRun {
+            id: m.id,
+            tenant_id: m.tenant_id,
+            workflow_id: m.workflow_id,
+            status: match m.status.as_str() {
+                "running" => WorkflowRunStatus::Running,
+                "pending_approval" => WorkflowRunStatus::PendingApproval,
+                "approved" => WorkflowRunStatus::Approved,
+                "rejected" => WorkflowRunStatus::Rejected,
+                "completed" => WorkflowRunStatus::Completed,
+                "failed" => WorkflowRunStatus::Failed,
+                _ => WorkflowRunStatus::Running,
+            },
+            payload: m.payload,
+            created_at: m.created_at.into(),
+            updated_at: m.updated_at.into(),
+        }))
     }
 }
