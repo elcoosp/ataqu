@@ -2,6 +2,9 @@ use chrono::{DateTime, Utc};
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, DbErr, FromQueryResult, Statement};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use std::sync::Arc;
+
+use crate::outbox::Outbox;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnboardingStatus {
@@ -14,11 +17,12 @@ pub struct OnboardingStatus {
 #[derive(Clone)]
 pub struct OnboardingService {
     db: DatabaseConnection,
+    outbox: Arc<dyn Outbox + Send + Sync>,
 }
 
 impl OnboardingService {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
+    pub fn new(db: DatabaseConnection, outbox: Arc<dyn Outbox + Send + Sync>) -> Self {
+        Self { db, outbox }
     }
 
     pub async fn get_status(&self, tenant_id: Uuid) -> Result<OnboardingStatus, DbErr> {
@@ -65,15 +69,24 @@ impl OnboardingService {
     }
 
     pub async fn check_inactivity(&self) -> Result<(), DbErr> {
+        use crate::outbox::Outbox;
         let stmt = Statement::from_sql_and_values(
             DbBackend::Postgres,
-            "SELECT tenant_id FROM core.onboarding_progress WHERE last_active_at < NOW() - INTERVAL '7 days'",
+            "SELECT tenant_id, last_active_at FROM core.onboarding_progress WHERE last_active_at < NOW() - INTERVAL '7 days'",
             [],
         );
         let rows = self.db.query_all_raw(stmt).await?;
         for row in rows {
             let tenant_id: Uuid = row.try_get("", "tenant_id").unwrap_or_default();
-            tracing::info!(tenant_id = %tenant_id, "Tenant inactive for 7 days");
+            let last_active_at: chrono::DateTime<chrono::Utc> = row.try_get("", "last_active_at").unwrap_or(chrono::Utc::now());
+            let payload = serde_json::json!({
+                "tenant_id": tenant_id,
+                "days_inactive": 7,
+                "last_active_at": last_active_at,
+            });
+            if let Err(e) = self.outbox.append("core", "InactivityReminder", tenant_id, &payload).await {
+                tracing::error!(error = %e, "Failed to emit InactivityReminder event");
+            }
         }
         Ok(())
     }

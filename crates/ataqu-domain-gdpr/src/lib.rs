@@ -1,157 +1,68 @@
 pub mod registry;
 pub mod saga;
 
-pub struct GdprRegistry {
-    pub tables: Vec<GdprTable>,
+use serde::{Deserialize, Serialize};
+use std::time::SystemTime;
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GdprStep {
+    DeactivateUsers,
+    AnonymizePII,
+    DeleteS3Files,
+    PurgeTables,
+    Complete,
 }
 
-pub struct GdprTable {
-    pub schema: String,
-    pub table: String,
-    pub tenant_id_column: String,
-}
+impl GdprStep {
+    pub fn next(&self) -> Option<Self> {
+        match self {
+            GdprStep::DeactivateUsers => Some(GdprStep::AnonymizePII),
+            GdprStep::AnonymizePII => Some(GdprStep::DeleteS3Files),
+            GdprStep::DeleteS3Files => Some(GdprStep::PurgeTables),
+            GdprStep::PurgeTables => Some(GdprStep::Complete),
+            GdprStep::Complete => None,
+        }
+    }
 
-impl GdprRegistry {
-    pub fn new() -> Self {
-        Self {
-            tables: vec![
-                GdprTable {
-                    schema: "collab_crm".into(),
-                    table: "contacts".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_crm".into(),
-                    table: "deals".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "employees".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "leave_requests".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "vault".into(),
-                    table: "products".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "vault".into(),
-                    table: "variants".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "dial".into(),
-                    table: "channels".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "dial".into(),
-                    table: "messages".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "dial".into(),
-                    table: "threads".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "dial".into(),
-                    table: "mentions".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "dial".into(),
-                    table: "reactions".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_crm".into(),
-                    table: "activities".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_crm".into(),
-                    table: "tasks".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_crm".into(),
-                    table: "pipeline_stages".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "documents".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "databases".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "blocks".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "forms".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "responses".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "bookings".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "event_types".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "collab_ops".into(),
-                    table: "availability_slots".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "vault".into(),
-                    table: "movements".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "vault".into(),
-                    table: "reservations".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "vault".into(),
-                    table: "warehouses".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-                GdprTable {
-                    schema: "core".into(),
-                    table: "users".into(),
-                    tenant_id_column: "tenant_id".into(),
-                },
-            ],
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            GdprStep::DeactivateUsers => "deactivate_users",
+            GdprStep::AnonymizePII => "anonymize_pii",
+            GdprStep::DeleteS3Files => "delete_s3_files",
+            GdprStep::PurgeTables => "purge_tables",
+            GdprStep::Complete => "complete",
         }
     }
 }
 
-impl Default for GdprRegistry {
-    fn default() -> Self {
-        Self::new()
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GdprSaga {
+    pub tenant_id: Uuid,
+    pub step: GdprStep,
+    pub retry_count: u32,
+    pub manifest: Vec<String>,
+    pub trace_id: Uuid,
+    pub created_at: SystemTime,
+    pub updated_at: SystemTime,
+}
+
+impl GdprSaga {
+    pub fn new(tenant_id: Uuid, trace_id: Uuid) -> Self {
+        let now = SystemTime::now();
+        Self {
+            tenant_id,
+            step: GdprStep::DeactivateUsers,
+            retry_count: 0,
+            manifest: Vec::new(),
+            trace_id,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        matches!(self.step, GdprStep::Complete)
     }
 }

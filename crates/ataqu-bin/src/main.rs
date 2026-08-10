@@ -537,7 +537,8 @@ async fn main() -> anyhow::Result<()> {
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
 
     // Onboarding & Changelog stubs
-    let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone()));
+    let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
+    let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone(), onboarding_outbox));
     let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
 
     // Single onboarding inactivity checker

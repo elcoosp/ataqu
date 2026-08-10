@@ -417,11 +417,15 @@ dependencies = [
  "async-trait",
  "ataqu-contracts",
  "ataqu-domain-aegis",
+ "ataqu-domain-changelog",
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
  "ataqu-domain-gdpr",
+ "ataqu-domain-health",
+ "ataqu-domain-onboarding",
  "ataqu-domain-pause",
  "ataqu-domain-pivot",
+ "ataqu-domain-shopify",
  "ataqu-domain-sond",
  "ataqu-domain-spark",
  "ataqu-domain-tempo",
@@ -533,6 +537,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ataqu-domain-changelog"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+]
+
+[[package]]
 name = "ataqu-domain-cinq"
 version = "0.1.0"
 dependencies = [
@@ -562,7 +574,27 @@ dependencies = [
 name = "ataqu-domain-gdpr"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
  "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "ataqu-domain-health"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+]
+
+[[package]]
+name = "ataqu-domain-onboarding"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
  "uuid",
 ]
 
@@ -585,6 +617,15 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "ataqu-kernel",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "ataqu-domain-shopify"
+version = "0.1.0"
+dependencies = [
+ "chrono",
  "serde",
  "uuid",
 ]
