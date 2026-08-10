@@ -4,6 +4,7 @@ use sea_orm_migration::prelude::*;
 
 pub mod m20250101_000001_core;
 pub mod m20250101_000024_add_inactivity_reminder;
+pub mod m20250101_000026_add_routing_rules_to_forms;
 pub mod m_aegis;
 pub mod m_aegis_add_api_keys;
 pub mod m_cinq;
@@ -123,6 +124,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000020_create_gdpr_saga_state::Migration),
                         Box::new(m20250101_000022_create_dial_tickets::Migration),
             Box::new(m20250101_000024_add_inactivity_reminder::Migration),
+                        Box::new(m20250101_000026_add_routing_rules_to_forms::Migration),
                         Box::new(m20250101_000022_create_dial_tickets::Migration),
             Box::new(m20250101_000021_create_inactivity_workflow::Migration),
 ]

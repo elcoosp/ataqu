@@ -248,6 +248,20 @@ impl SondService {
             .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
 
+    /// Update only the branding field of a form (used for routing rules).
+    pub async fn update_form_branding(
+        &self,
+        tenant_id: TenantId,
+        form_id: Uuid,
+        branding: serde_json::Value,
+    ) -> SondResult<Form> {
+        let mut form = self.get_form(tenant_id, form_id).await?;
+        form.branding = branding;
+        // We need to save the form; we'll use the repository directly to avoid version issues.
+        self.repo.save_form(&form).await?;
+        Ok(form)
+    }
+
     pub async fn list_forms(
         &self,
         tenant_id: TenantId,

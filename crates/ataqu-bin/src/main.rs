@@ -713,44 +713,6 @@ async fn main() -> anyhow::Result<()> {
     // S3 stub
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
 
-    // S3 Orphan Reaper
-    let s3_reaper = s3_service.clone();
-    let pools_clone = pools.clone();
-    tokio::spawn(async move {
-        use std::time::Duration;
-        use tracing::{error, info};
-        let client = s3_reaper.clone();
-        let db = pools_clone.core.clone();
-        loop {
-            tokio::time::sleep(Duration::from_secs(3600)).await;
-            // 1. Collect valid keys from DB.
-            let valid_keys = collect_valid_keys(&db).await;
-            // 2. List all objects under "uploads/" prefix.
-            match client.list_objects("uploads/").await {
-                Ok(keys) => {
-                    let mut deleted = 0;
-                    for key in keys {
-                        if !valid_keys.contains(&key) {
-                            if let Err(e) = client.delete_object(&key).await {
-                                error!("Failed to delete {}: {}", key, e);
-                            } else {
-                                deleted += 1;
-                                info!("Deleted orphan S3 object: {}", key);
-                            }
-                        }
-                    }
-                    if deleted > 0 {
-                        info!("S3 orphan reaper: deleted {} orphan objects", deleted);
-                    } else {
-                        info!("S3 orphan reaper: no orphans found");
-                    }
-                }
-                Err(e) => {
-                    error!("S3 orphan reaper list failed: {}", e);
-                }
-            }
-        }
-    });
 
     // Helper functions for S3 reaper
     async fn collect_valid_keys(db: &DatabaseConnection) -> Vec<String> {
@@ -812,27 +774,6 @@ async fn main() -> anyhow::Result<()> {
         None
     }
 
-    // S3 Orphan Reaper
-    let s3_reaper = s3_service.clone();
-    tokio::spawn(async move {
-        use std::time::Duration;
-        use tracing::info;
-        let client = s3_reaper.clone();
-        loop {
-            tokio::time::sleep(Duration::from_secs(3600)).await;
-            match client.list_objects("uploads/").await {
-                Ok(keys) => {
-                    info!(
-                        "S3 orphan reaper: found {} objects under uploads/",
-                        keys.len()
-                    );
-                }
-                Err(e) => {
-                    tracing::error!("S3 orphan reaper failed: {}", e);
-                }
-            }
-        }
-    });
 
     // Onboarding & Changelog stubs
     let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
