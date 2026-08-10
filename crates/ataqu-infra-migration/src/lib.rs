@@ -48,6 +48,7 @@ pub mod m_vista_tables;
 
 pub mod m20250101_000017_create_shopify_sync_logs;
 pub mod m20250101_000018_create_user_preferences;
+pub mod m20250101_000019_add_permissions_fk_and_rls;
 
 pub mod m20250101_000011_create_audit_and_permissions;
 pub mod m20250101_000012_create_vista_views;
@@ -113,6 +114,7 @@ impl MigratorTrait for Migrator {
         
             Box::new(m20250101_000017_create_shopify_sync_logs::Migration),
             Box::new(m20250101_000018_create_user_preferences::Migration),
+            Box::new(m20250101_000019_add_permissions_fk_and_rls::Migration),
 ]
     }
 }
