@@ -1,6 +1,4 @@
-use crate::outbox::Outbox;
 use sqlx::PgPool;
-use std::sync::Arc;
 use tracing::info;
 use uuid::Uuid;
 
