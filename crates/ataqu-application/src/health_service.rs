@@ -1,15 +1,9 @@
+use ataqu_domain_health::{HealthStatus, ComponentHealth, SparkWorkflowHealth, DbPoolHealth, Components, SystemHealth, classify};
 use ataqu_infra_repositories::health_repo::HealthRepository;
 use ataqu_kernel::Clock;
 use ataqu_infra_pools::Pools;
 use chrono::{DateTime, SecondsFormat, Utc};
 use std::sync::Arc;
-pub use ataqu_domain_health::{HealthStatus, ComponentHealth, SparkWorkflowHealth, DbPoolHealth, Components, SystemHealth, classify};
-
-// Constants moved to ataqu-domain-health
-
-// Types moved to ataqu-domain-health
-
-// classify is imported from ataqu-domain-health
 
 pub struct HealthService {
     repo: Arc<HealthRepository>,
@@ -66,44 +60,3 @@ impl HealthService {
         })
     }
 }
-
-    use super::*;
-
-    #[test]
-    fn classify_nominal_when_fresh() {
-        assert_eq!(classify(0.2, 0), HealthStatus::Nominal);
-    }
-
-    #[test]
-    fn classify_nominal_at_degraded_boundaries() {
-        assert_eq!(
-            classify(5.0, 1000),
-            HealthStatus::Nominal
-        );
-    }
-
-    #[test]
-    fn classify_degraded_when_lag_exceeds_five_seconds() {
-        assert_eq!(classify(5.1, 0), HealthStatus::Degraded);
-    }
-
-    #[test]
-    fn classify_degraded_when_pending_exceeds_one_thousand() {
-        assert_eq!(classify(0.0, 1_001), HealthStatus::Degraded);
-    }
-
-    #[test]
-    fn classify_critical_when_lag_exceeds_thirty_seconds() {
-        assert_eq!(classify(30.1, 0), HealthStatus::Critical);
-    }
-
-    #[test]
-    fn classify_critical_when_pending_exceeds_ten_thousand() {
-        assert_eq!(classify(0.0, 10_001), HealthStatus::Critical);
-    }
-
-    #[test]
-    fn classify_critical_takes_precedence() {
-        assert_eq!(classify(31.0, 20_000), HealthStatus::Critical);
-    }
-

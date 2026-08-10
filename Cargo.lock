@@ -400,8 +400,10 @@ dependencies = [
  "ataqu-domain-aegis",
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
+ "ataqu-domain-health",
  "ataqu-domain-pause",
  "ataqu-domain-pivot",
+ "ataqu-domain-shopify",
  "ataqu-domain-sond",
  "ataqu-domain-spark",
  "ataqu-domain-tempo",
@@ -441,6 +443,7 @@ dependencies = [
  "tower",
  "tower-http 0.7.0",
  "tracing",
+ "url",
  "urlencoding",
  "uuid",
 ]
@@ -663,6 +666,8 @@ dependencies = [
 name = "ataqu-domain-shopify"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "ataqu-kernel",
  "chrono",
  "serde",
  "uuid",
@@ -806,6 +811,7 @@ dependencies = [
  "ataqu-domain-dial",
  "ataqu-domain-pause",
  "ataqu-domain-pivot",
+ "ataqu-domain-shopify",
  "ataqu-domain-sond",
  "ataqu-domain-spark",
  "ataqu-domain-tempo",

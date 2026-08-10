@@ -1,4 +1,4 @@
-use ataqu_domain_vault::shopify::ShopifyIntegration;
+use ataqu_domain_shopify::ShopifyIntegration;
 use ataqu_kernel::TenantId;
 use axum::{
     Router,
@@ -9,7 +9,6 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use sha2::digest::KeyInit;
 use hmac::Mac;
 
 use crate::AppState;
@@ -755,7 +754,7 @@ pub async fn shopify_webhook(
     match topic {
         "inventory_levels/update" => {
             // Extract inventory_item_id and available quantity
-            if let (Some(inventory_item_id), Some(available)) = (
+            if let (Some(_inventory_item_id), Some(available)) = (
                 payload.get("inventory_item_id").and_then(|v| v.as_i64()),
                 payload.get("available").and_then(|v| v.as_i64()),
             ) {

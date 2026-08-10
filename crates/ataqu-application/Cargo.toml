@@ -34,8 +34,8 @@ ataqu-domain-tempo = { version = "0.1.0", path = "../ataqu-domain-tempo" }
 ataqu-domain-vault = { version = "0.1.0", path = "../ataqu-domain-vault" }
 ataqu-domain-vista = { version = "0.1.0", path = "../ataqu-domain-vista" }
 ataqu-domain-gdpr = { version = "0.1.0", path = "../ataqu-domain-gdpr" }
-ataqu-domain-health = { path = "../ataqu-domain-health" }
 ataqu-domain-onboarding = { path = "../ataqu-domain-onboarding" }
+ataqu-domain-health = { path = "../ataqu-domain-health" }
 ataqu-domain-changelog = { path = "../ataqu-domain-changelog" }
 ataqu-domain-shopify = { path = "../ataqu-domain-shopify" }
 ataqu-infra-outbox = { path = "../ataqu-infra-outbox" }

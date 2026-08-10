@@ -1,3 +1,5 @@
+use async_trait::async_trait;
+use ataqu_kernel::TenantId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -86,4 +88,26 @@ pub fn map_shopify_to_vault(
 
 pub fn calculate_stock_delta(current: i64, new: i64) -> i64 {
     new - current
+}
+
+#[derive(Debug, Clone)]
+pub struct ShopifyIntegration {
+    pub id: Uuid,
+    pub tenant_id: TenantId,
+    pub shop_domain: String,
+    pub access_token: String,
+    pub last_synced_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[async_trait]
+pub trait ShopifyRepository: Send + Sync {
+    async fn list_active_integrations(&self) -> Result<Vec<ShopifyIntegration>, String>;
+    async fn update_last_synced(
+        &self,
+        integration_id: Uuid,
+        synced_at: DateTime<Utc>,
+    ) -> Result<(), String>;
+    async fn save_integration(&self, integration: &ShopifyIntegration) -> Result<(), String>;
+    async fn list_integrations(&self, tenant_id: &TenantId) -> Result<Vec<ShopifyIntegration>, String>;
 }

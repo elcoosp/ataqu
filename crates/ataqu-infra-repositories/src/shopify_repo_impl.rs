@@ -1,6 +1,6 @@
 use ataqu_security::encryption::Encryptor;
 use async_trait::async_trait;
-use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
+use ataqu_domain_shopify::{ShopifyIntegration, ShopifyRepository};
 use ataqu_kernel::TenantId;
 use chrono::Utc;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};

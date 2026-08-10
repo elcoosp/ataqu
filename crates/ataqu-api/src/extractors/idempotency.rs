@@ -32,7 +32,13 @@ pub async fn acquire_idempotency(
     let outcome = IdempotencyGuard::acquire(&app_state.db, command_id, Some(Box::new(store)))
         .await
         .map_err(|e| {
-            ApiResponseError::internal(&format!("Idempotency error: {}", e))
+            use ataqu_infra_idempotency::IdempotencyError;
+            match e {
+                IdempotencyError::LockTimeout => {
+                    ApiResponseError::ServiceUnavailable("Idempotency lock timeout, please retry".to_string())
+                }
+                _ => ApiResponseError::internal(&format!("Idempotency error: {}", e)),
+            }
         })?;
 
     match outcome {

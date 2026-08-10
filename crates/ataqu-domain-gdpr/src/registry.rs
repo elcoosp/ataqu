@@ -48,6 +48,9 @@ impl GdprRegistry {
                 GdprTable { schema: "dial".into(), table: "reactions".into(), tenant_id_column: "tenant_id".into() },
                 GdprTable { schema: "dial".into(), table: "presence".into(), tenant_id_column: "tenant_id".into() },
                 GdprTable { schema: "dial".into(), table: "tickets".into(), tenant_id_column: "tenant_id".into() },
+                GdprTable { schema: "core".into(), table: "audit_logs".into(), tenant_id_column: "tenant_id".into() },
+                GdprTable { schema: "core".into(), table: "permissions".into(), tenant_id_column: "tenant_id".into() },
+                GdprTable { schema: "core".into(), table: "onboarding_progress".into(), tenant_id_column: "tenant_id".into() },
             ],
         }
     }

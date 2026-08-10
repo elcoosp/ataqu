@@ -1,5 +1,5 @@
 use crate::vault_service::VaultService;
-use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
+use ataqu_domain_shopify::{ShopifyIntegration, ShopifyRepository};
 use ataqu_kernel::TenantId;
 use chrono::Utc;
 use std::sync::Arc;

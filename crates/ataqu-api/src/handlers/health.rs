@@ -1,5 +1,5 @@
 use crate::AppState;
-use ataqu_application::health_service::{ComponentHealth, Components, HealthStatus, SystemHealth};
+use ataqu_domain_health::{ComponentHealth, Components, HealthStatus, SystemHealth};
 use axum::{Json, extract::State, response::IntoResponse};
 
 const HEALTH_CACHE_KEY: &str = "system_health";
@@ -30,13 +30,13 @@ pub async fn get_health_status(State(state): State<AppState>) -> impl IntoRespon
                         pending_events: 0,
                         last_dispatched_at: None,
                     },
-                    spark_workflows: ataqu_application::health_service::SparkWorkflowHealth {
+                    spark_workflows: ataqu_domain_health::SparkWorkflowHealth {
                         status: HealthStatus::Critical,
                         total: 0,
                         failed_last_hour: 0,
                         dlq_depth: 0,
                     },
-                    db_connection_pools: ataqu_application::health_service::DbPoolHealth {
+                    db_connection_pools: ataqu_domain_health::DbPoolHealth {
                         used: 0,
                         max: 35,
                         waiting: 0,

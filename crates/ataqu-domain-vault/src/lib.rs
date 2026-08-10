@@ -2,5 +2,5 @@
 
 pub mod inventory;
 pub mod repository;
-pub mod shopify;
+// shopify mod removed, moved to ataqu-domain-shopify
 pub mod stock;

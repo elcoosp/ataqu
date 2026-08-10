@@ -16,6 +16,8 @@ pub enum ApiResponseError {
     Conflict(String),
     #[error("Rate limited")]
     RateLimited,
+    #[error("Service unavailable: {0}")]
+    ServiceUnavailable(String),
     #[error("Internal error: {0}")]
     Internal(String),
 }
@@ -63,6 +65,11 @@ impl IntoResponse for ApiResponseError {
                 "INTERNAL_ERROR",
                 msg.as_str(),
             ),
+            Self::ServiceUnavailable(msg) => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "SERVICE_UNAVAILABLE",
+                msg.as_str(),
+            ),
         };
         let body = serde_json::json!({
             "error": {
@@ -72,7 +79,14 @@ impl IntoResponse for ApiResponseError {
             },
             "request_id": None::<String>,
         });
-        (status, axum::Json(body)).into_response()
+        let mut response = (status, axum::Json(body)).into_response();
+        if matches!(self, Self::ServiceUnavailable(_)) {
+            response.headers_mut().insert(
+                "retry-after",
+                axum::http::HeaderValue::from_static("5"),
+            );
+        }
+        response
     }
 }
 

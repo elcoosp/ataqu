@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+ataqu-domain-health = { path = "../ataqu-domain-health" }
+ataqu-domain-shopify = { path = "../ataqu-domain-shopify" }
 hmac = "0.12"
 hex = "0.4"
 ataqu-infra-storage = { path = "../ataqu-infra-storage" }
@@ -52,6 +54,7 @@ base64 = "0.22.1"
 reqwest = { version = "0.12", features = ["json"] }
 urlencoding = "2.1"
 http = "1.0"
+url = "2.5"
 
 [dev-dependencies]
 mockall = "0.15.0"
