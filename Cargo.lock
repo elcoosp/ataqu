@@ -470,7 +470,6 @@ dependencies = [
  "ataqu-infra-outbox",
  "ataqu-infra-pools",
  "ataqu-infra-repositories",
- "ataqu-infra-shopify",
  "ataqu-kernel",
  "ataqu-security",
  "base64 0.22.1",
@@ -823,25 +822,6 @@ dependencies = [
  "thiserror 2.0.19",
  "tokio",
  "tracing",
- "uuid",
-]
-
-[[package]]
-name = "ataqu-infra-sagas"
-version = "0.1.0"
-
-[[package]]
-name = "ataqu-infra-shopify"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
- "url",
  "uuid",
 ]
 

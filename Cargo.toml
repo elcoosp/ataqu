@@ -27,8 +27,6 @@ members = [
     "crates/ataqu-infra-outbox",
     "crates/ataqu-infra-pools",
     "crates/ataqu-infra-repositories",
-    "crates/ataqu-infra-sagas",
-    "crates/ataqu-infra-shopify",
     "crates/ataqu-infra-storage",
     "crates/ataqu-kernel",
     "crates/ataqu-security",

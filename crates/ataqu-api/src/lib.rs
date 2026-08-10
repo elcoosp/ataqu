@@ -192,7 +192,7 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::rate_limit::rate_limit_middleware,
         ))
         .layer(axum::middleware::from_fn(request_id_middleware));
-    let private_routes = Router::new()
+            let private_routes = Router::new()
         .route(
             "/api/v1/onboarding/status",
             get(handlers::onboarding::get_status),
@@ -226,6 +226,10 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/health/status",
             axum::routing::get(handlers::health::get_health_status),
         )
+        .route(
+            "/api/v1/onboarding/team-status",
+            get(handlers::onboarding::team_status),
+        )
         // Idempotency is now handled by the IdempotencyContext extractor
         .layer(axum::middleware::from_fn(
             crate::middleware::csrf::csrf_middleware,
@@ -240,7 +244,6 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::auth::auth_middleware,
         ))
         .layer(axum::middleware::from_fn(request_id_middleware));
-
     Router::new()
         .route("/health", axum::routing::get(health_check))
         .route("/ready", axum::routing::get(readiness_check))

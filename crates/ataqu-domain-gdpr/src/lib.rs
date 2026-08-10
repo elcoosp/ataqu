@@ -68,3 +68,59 @@ pub mod registry;
 pub mod saga;
 
 pub use registry::GdprRegistry;
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // This test ensures the registry covers all tables that have tenant_id.
+    // It uses a static list of expected tables (should be kept in sync).
+    #[test]
+    fn registry_covers_all_tables() {
+        let expected = vec![
+            "core.users",
+            "collab_crm.contacts",
+            "collab_crm.deals",
+            "collab_crm.activities",
+            "collab_crm.tasks",
+            "collab_crm.pipeline_stages",
+            "collab_crm.establishments",
+            "collab_ops.employees",
+            "collab_ops.leave_requests",
+            "collab_ops.documents",
+            "collab_ops.databases",
+            "collab_ops.blocks",
+            "collab_ops.relations",
+            "collab_ops.templates",
+            "collab_ops.document_versions",
+            "collab_ops.forms",
+            "collab_ops.responses",
+            "collab_ops.bookings",
+            "collab_ops.event_types",
+            "collab_ops.availability_slots",
+            "vault.products",
+            "vault.variants",
+            "vault.movements",
+            "vault.reservations",
+            "vault.warehouses",
+            "vault.shopify_integrations",
+            "vault.shopify_sync_logs",
+            "dial.channels",
+            "dial.messages",
+            "dial.threads",
+            "dial.mentions",
+            "dial.reactions",
+            "dial.presence",
+            "dial.tickets",
+        ];
+        let registry = GdprRegistry::new();
+        let actual: Vec<String> = registry.tables
+            .iter()
+            .map(|t| format!("{}.{}", t.schema, t.table))
+            .collect();
+        for table in expected {
+            assert!(actual.contains(&table.to_string()), "Table {} is missing from registry", table);
+        }
+    }
+}
