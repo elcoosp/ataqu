@@ -1,3 +1,4 @@
+use ataqu_security::encryption::Encryptor;
 use async_trait::async_trait;
 use ataqu_domain_vault::shopify::{ShopifyIntegration, ShopifyRepository};
 use ataqu_kernel::TenantId;
@@ -13,55 +14,9 @@ impl ShopifyRepositoryImpl {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
-
-    pub async fn save_integration(
-        &self,
-        integration: &ShopifyIntegration,
-    ) -> Result<(), String> {
-        use crate::entities::shopify as entity;
-        let active = entity::ActiveModel {
-            id: Set(integration.id),
-            tenant_id: Set(integration.tenant_id.as_uuid()),
-            shop_domain: Set(integration.shop_domain.clone()),
-            access_token: Set(integration.access_token.clone()),
-            last_synced_at: Set(integration.last_synced_at),
-            created_at: Set(integration.created_at),
-        };
-        entity::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
-        Ok(())
-    }
-
-    pub async fn list_integrations(
-        &self,
-        tenant_id: &TenantId,
-    ) -> Result<Vec<ShopifyIntegration>, String> {
-        use crate::entities::shopify as entity;
-        let models = entity::Entity::find()
-            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
-            .all(&self.db)
-            .await
-            .map_err(|e| e.to_string())?;
-        let mut ints = Vec::new();
-        for m in models {
-            ints.push(ShopifyIntegration {
-                id: m.id,
-                tenant_id: TenantId::new(m.tenant_id),
-                shop_domain: m.shop_domain,
-                access_token: m.access_token,
-                last_synced_at: m.last_synced_at,
-                created_at: m.created_at,
-            });
-        }
-        Ok(ints)
-    }
 }
 
 #[async_trait]
-
-
 impl ShopifyRepository for ShopifyRepositoryImpl {
     async fn list_active_integrations(&self) -> Result<Vec<ShopifyIntegration>, String> {
         use crate::entities::shopify as entity;
@@ -105,11 +60,13 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
 
     async fn save_integration(&self, integration: &ShopifyIntegration) -> Result<(), String> {
         use crate::entities::shopify as entity;
+        let encryptor = Encryptor::from_env();
+        let encrypted_token = encryptor.encrypt(&integration.access_token);
         let active = entity::ActiveModel {
             id: Set(integration.id),
             tenant_id: Set(integration.tenant_id.as_uuid()),
             shop_domain: Set(integration.shop_domain.clone()),
-            access_token: Set(integration.access_token.clone()),
+            access_token: Set(encrypted_token),
             last_synced_at: Set(integration.last_synced_at),
             created_at: Set(integration.created_at),
         };
@@ -122,6 +79,7 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
 
     async fn list_integrations(&self, tenant_id: &TenantId) -> Result<Vec<ShopifyIntegration>, String> {
         use crate::entities::shopify as entity;
+        let encryptor = Encryptor::from_env();
         let models = entity::Entity::find()
             .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .all(&self.db)
@@ -129,11 +87,12 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
             .map_err(|e| e.to_string())?;
         let mut ints = Vec::new();
         for m in models {
+            let decrypted_token = encryptor.decrypt(&m.access_token);
             ints.push(ShopifyIntegration {
                 id: m.id,
                 tenant_id: TenantId::new(m.tenant_id),
                 shop_domain: m.shop_domain,
-                access_token: m.access_token,
+                access_token: decrypted_token,
                 last_synced_at: m.last_synced_at,
                 created_at: m.created_at,
             });
@@ -141,5 +100,3 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
         Ok(ints)
     }
 }
-
-

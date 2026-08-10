@@ -52,6 +52,7 @@ pub mod m20250101_000019_add_permissions_fk_and_rls;
 pub mod m20250101_000020_create_gdpr_saga_state;
 pub mod m20250101_000021_create_inactivity_workflow;
 pub mod m20250101_000022_create_dial_tickets;
+pub mod m20250101_000023_add_email_tracking_unique;
 
 pub mod m20250101_000011_create_audit_and_permissions;
 pub mod m20250101_000012_create_vista_views;

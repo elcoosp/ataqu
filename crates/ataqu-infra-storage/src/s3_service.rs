@@ -17,18 +17,14 @@ pub enum S3Error {
 
 pub type Result<T> = std::result::Result<T, S3Error>;
 
-/// Service for generating presigned S3 upload URLs.
 #[derive(Clone)]
 pub struct S3Service {
     client: Client,
     bucket: String,
-    #[allow(dead_code)]
     region: String,
 }
 
 impl S3Service {
-    /// Creates a new S3 service from environment variables.
-    /// Requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET.
     pub async fn new() -> Result<Self> {
         let bucket = std::env::var("S3_BUCKET").map_err(|_| S3Error::InvalidBucket)?;
         let region = std::env::var("AWS_REGION").unwrap_or_else(|_| "us-east-1".to_string());
@@ -45,7 +41,6 @@ impl S3Service {
         })
     }
 
-    /// Generate a presigned PUT URL valid for 1 hour.
     pub async fn generate_upload_url(&self, key: &str) -> Result<String> {
         let object_key = key.strip_prefix('/').unwrap_or(key);
         let presign_config = PresigningConfig::builder()
@@ -64,6 +59,54 @@ impl S3Service {
 
         let url = presigned.uri().to_string();
         Ok(url)
+    }
+
+    
+    
+    
+    
+    
+    pub async fn list_objects(&self, prefix: &str) -> Result<Vec<String>> {
+        let mut objects = Vec::new();
+        let mut continuation_token = None;
+        loop {
+            let mut req = self.client.list_objects_v2()
+                .bucket(&self.bucket)
+                .prefix(prefix)
+                .max_keys(1000);
+            if let Some(token) = continuation_token {
+                req = req.continuation_token(token);
+            }
+            let resp = req.send().await
+                .map_err(|e| S3Error::Presign(e.to_string()))?;
+            // contents() returns a slice of objects
+            for obj in resp.contents() {
+                if let Some(key) = obj.key() {
+                    objects.push(key.to_string());
+                }
+            }
+            if let Some(token) = resp.next_continuation_token() {
+                continuation_token = Some(token.to_string());
+            } else {
+                break;
+            }
+        }
+        Ok(objects)
+    }
+
+
+
+
+
+
+    pub async fn delete_object(&self, key: &str) -> Result<()> {
+        self.client.delete_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .send()
+            .await
+            .map_err(|e| S3Error::Presign(e.to_string()))?;
+        Ok(())
     }
 }
 

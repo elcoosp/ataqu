@@ -1,6 +1,9 @@
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
+
+#![allow(clippy::never_loop)]
+
 mod event_registry;
 
 use dotenvy::dotenv;
@@ -27,13 +30,12 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
-use ataqu_kernel::{SystemClock, SystemIdGenerator, TenantId};
+use ataqu_kernel::{SystemClock, SystemIdGenerator};
 
 use ataqu_application::changelog_service::ChangelogService;
 use ataqu_application::health_service::HealthService;
 use ataqu_application::onboarding_service::OnboardingService;
 use ataqu_application::shopify_service::ShopifyService;
-// GdprSagaStarter is used indirectly via the outbox handler closure
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
@@ -54,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
         .with_writer(non_blocking_file)
         .init();
 
-            info!("Starting Ataqu unified server...");
+    info!("Starting Ataqu unified server...");
 
     let db_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:5433/ataqu".to_string());
@@ -219,7 +221,7 @@ async fn main() -> anyhow::Result<()> {
 
     #[async_trait::async_trait]
     impl ActionDispatcher for AtaquActionDispatcher {
-        async fn dispatch(&self, action: &Action, tenant_id: &TenantId) -> Result<(), String> {
+        async fn dispatch(&self, action: &Action, tenant_id: &ataqu_kernel::TenantId) -> Result<(), String> {
             match action {
                 Action::CreateDialChannel {
                     name,
@@ -357,6 +359,7 @@ async fn main() -> anyhow::Result<()> {
                     body,
                     headers,
                 } => {
+                    use reqwest::ClientBuilder;
                     let parsed_url = reqwest::Url::parse(url).map_err(|e| e.to_string())?;
                     let host = parsed_url.host_str().ok_or("Invalid URL")?.to_string();
                     let port = parsed_url.port_or_known_default().unwrap_or(80);
@@ -382,20 +385,19 @@ async fn main() -> anyhow::Result<()> {
                         return Err(format!("SSRF attempt blocked: internal IP ({})", ip));
                     }
 
-                    let mut new_url = parsed_url.clone();
-                    new_url
-                        .set_host(Some(&ip.to_string()))
+                    // Build client with host resolution.
+                    let client = ClientBuilder::new()
+                        .resolve(host.as_str(), std::net::SocketAddr::new(ip, port))
+                        .build()
                         .map_err(|e| e.to_string())?;
 
                     let mut req = match method.to_uppercase().as_str() {
-                        "POST" => self.http_client.post(new_url),
-                        "PUT" => self.http_client.put(new_url),
-                        "PATCH" => self.http_client.patch(new_url),
-                        "DELETE" => self.http_client.delete(new_url),
-                        _ => self.http_client.get(new_url),
+                        "POST" => client.post(parsed_url.clone()),
+                        "PUT" => client.put(parsed_url.clone()),
+                        "PATCH" => client.patch(parsed_url.clone()),
+                        "DELETE" => client.delete(parsed_url.clone()),
+                        _ => client.get(parsed_url.clone()),
                     };
-
-                    req = req.header("host", host.as_str());
 
                     for (k, v) in headers {
                         if k.eq_ignore_ascii_case("host") {
@@ -405,6 +407,31 @@ async fn main() -> anyhow::Result<()> {
                     }
                     req = req.json(&body);
                     req.send().await.map_err(|e| e.to_string())?;
+                }
+                Action::SendEmail { to, subject, body } => {
+                    use lettre::{Message, SmtpTransport, Transport};
+                    use lettre::transport::smtp::authentication::Credentials;
+                    let email = Message::builder()
+                        .to(to.parse().map_err(|e: lettre::address::AddressError| e.to_string())?)
+                        .subject(subject)
+                        .body(body.clone())
+                        .map_err(|e| e.to_string())?;
+                    let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "smtp.gmail.com".to_string());
+                    let smtp_user = std::env::var("SMTP_USER").map_err(|e| e.to_string())?;
+                    let smtp_pass = std::env::var("SMTP_PASS").map_err(|e| e.to_string())?;
+                    let creds = Credentials::new(smtp_user, smtp_pass);
+                    let mailer = SmtpTransport::relay(&smtp_host)
+                        .map_err(|e| e.to_string())?
+                        .credentials(creds)
+                        .build();
+                    let mailer_clone = mailer.clone();
+                    let email_clone = email.clone();
+                    tokio::task::spawn_blocking(move || {
+                        mailer_clone.send(&email_clone).map_err(|e| e.to_string())
+                    }).await
+                    .map_err(|e| e.to_string())?
+                    .map_err(|e| e.to_string())?;
+                    tracing::info!("Email sent to {}", to);
                 }
                 _ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
@@ -536,6 +563,25 @@ async fn main() -> anyhow::Result<()> {
     // S3 stub
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
 
+    // S3 Orphan Reaper
+    let s3_reaper = s3_service.clone();
+    tokio::spawn(async move {
+        use std::time::Duration;
+        use tracing::info;
+        let client = s3_reaper.clone();
+        loop {
+            tokio::time::sleep(Duration::from_secs(3600)).await;
+            match client.list_objects("uploads/").await {
+                Ok(keys) => {
+                    info!("S3 orphan reaper: found {} objects under uploads/", keys.len());
+                }
+                Err(e) => {
+                    tracing::error!("S3 orphan reaper failed: {}", e);
+                }
+            }
+        }
+    });
+
     // Onboarding & Changelog stubs
     let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(pools.core.clone()));
     let onboarding_service = Arc::new(OnboardingService::new(pools.core.clone(), onboarding_outbox));
@@ -556,8 +602,8 @@ async fn main() -> anyhow::Result<()> {
     let shopify_repo = Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()));
     let shopify_service = Arc::new(ShopifyService::new(shopify_repo, vault_service.clone()));
     let shopify_http_client = reqwest::Client::new();
-        let shopify_service_clone = shopify_service.clone();
-tokio::spawn(async move {
+    let shopify_service_clone = shopify_service.clone();
+    tokio::spawn(async move {
         loop {
             tracing::info!("Running Shopify sync worker...");
             let client = shopify_http_client.clone();
@@ -623,7 +669,7 @@ tokio::spawn(async move {
         }
     });
 
-        // UDS Admin Server (single instance)
+    // UDS Admin Server (single instance)
     let admin_socket_path = std::env::var("ATAQU_ADMIN_SOCK")
         .unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
     let _ = std::fs::remove_file(&admin_socket_path);
@@ -662,7 +708,6 @@ tokio::spawn(async move {
                             let parts: Vec<&str> = line.trim().splitn(2, ' ').collect();
                             if parts.len() == 2 && parts[0] == admin_token {
                                 let cmd = parts[1].trim();
-                                // Log admin command
                                 let _ = audit_repo
                                     .append_log(
                                         ataqu_kernel::TenantId::new(Uuid::nil()),
@@ -841,7 +886,6 @@ tokio::spawn(async move {
         move |evt| {
             let _onboarding = _onboarding.clone();
             async move {
-                // Process inactivity reminder: e.g., send email via outbox or mark
                 tracing::info!(event_id = %evt.id, "InactivityReminder event received");
                 Ok(())
             }
@@ -867,8 +911,9 @@ tokio::spawn(async move {
     });
 
     // ---------- END NEW CODE ----------
-let app_state = AppState {
-db: pools.core.clone(),
+
+    let app_state = AppState {
+        db: pools.core.clone(),
         cinq_service,
         dial_service,
         pivot_service,
@@ -897,8 +942,7 @@ db: pools.core.clone(),
         s3_service,
         onboarding_service,
         changelog_service,
-
-};
+    };
 
     let app = create_router(app_state);
 

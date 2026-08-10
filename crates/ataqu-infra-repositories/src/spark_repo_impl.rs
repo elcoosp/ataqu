@@ -4,9 +4,9 @@ use ataqu_domain_spark::{SparkError, Workflow};
 use ataqu_domain_spark::workflow::{WorkflowRun, WorkflowRunStatus};
 use ataqu_kernel::TenantId;
 use sea_orm::entity::prelude::*;
+use sea_orm::IntoActiveModel;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
-use sea_orm::IntoActiveModel;
 
 mod workflow_entity {
     use sea_orm::entity::prelude::*;
@@ -51,6 +51,31 @@ mod workflow_run_entity {
         pub workflow_id: Uuid,
         pub status: String,
         pub payload: serde_json::Value,
+        pub created_at: DateTime<Utc>,
+        pub updated_at: DateTime<Utc>,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+}
+
+mod lease_entity {
+    use chrono::{DateTime, Utc};
+    use sea_orm::entity::prelude::*;
+    use uuid::Uuid;
+
+    #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+    #[sea_orm(table_name = "leases", schema_name = "collab_crm")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: Uuid,
+        pub tenant_id: Uuid,
+        pub workflow_id: Uuid,
+        pub fence_token: i64,
+        pub holder: Option<String>,
+        pub expires_at: Option<DateTime<Utc>>,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
     }
