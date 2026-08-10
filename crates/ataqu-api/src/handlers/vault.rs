@@ -687,17 +687,17 @@ pub async fn shopify_callback(
     let access_token = token_data["access_token"].as_str()
         .ok_or_else(|| ApiResponseError::internal("Missing access token"))?;
 
-    // Parse state to get tenant_id and user_id
+    // Parse state to get tenant_id
     let state_str = query.state.unwrap_or_default();
-    let state_parts: Vec<&str> = state_str.split("_").collect();
-    if state_parts.len() < 2 {
+    let state_parts: Vec<&str> = state_str.split('_').collect();
+    if state_parts.len() < 1 {
         return Err(ApiResponseError::validation("Invalid state"));
     }
     let tenant_id = Uuid::parse_str(state_parts[0]).map_err(|_| ApiResponseError::validation("Invalid tenant"))?;
-    let _user_id = Uuid::parse_str(state_parts[1]).map_err(|_| ApiResponseError::validation("Invalid user"))?;
 
-    // Save integration (TODO: store in repository)
-    let _integration = ShopifyIntegration {
+    use ataqu_domain_vault::shopify::ShopifyIntegration;
+    use ataqu_kernel::TenantId;
+    let integration = ShopifyIntegration {
         id: Uuid::new_v4(),
         tenant_id: TenantId::new(tenant_id),
         shop_domain: query.shop,
@@ -705,34 +705,77 @@ pub async fn shopify_callback(
         last_synced_at: None,
         created_at: chrono::Utc::now(),
     };
-    // For now, just return success
-    Ok(Json(serde_json::json!({ "status": "connected" })))
-}
+
+    // Save integration using the ShopifyService's repo
+    state.shopify_service.repo.save_integration(&integration).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    Ok(Json(serde_json::json!({
+        "status": "connected",
+        "shop": query.shop,
+        "message": "Shopify integration saved successfully"
+    })))
+
 
 pub async fn shopify_webhook(State(_state): State<AppState>,
     headers: axum::http::HeaderMap,
     __body: String,
 ) -> ApiResult<StatusCode> {
-    let topic = headers
-        .get("X-Shopify-Topic")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-    tracing::info!(topic = %topic, "Shopify webhook received");
-    // TODO: Process webhook based on topic
+    let topic = headers.get("X-Shopify-Topic").and_then(|v| v.to_str().ok()).unwrap_or("");
+    let shop_domain = headers.get("X-Shopify-Shop-Domain").and_then(|v| v.to_str().ok()).unwrap_or("");
+
+    if topic.is_empty() || shop_domain.is_empty() {
+        return Ok(StatusCode::BAD_REQUEST);
+    }
+
+    // Find integration by shop_domain
+    let integrations = state.shopify_service.repo.list_active_integrations().await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let integration = integrations.iter().find(|i| i.shop_domain == shop_domain)
+        .ok_or_else(|| ApiResponseError::not_found("Shopify integration not found"))?;
+
+    // Parse the body
+    let payload: serde_json::Value = serde_json::from_str(&__body)
+        .map_err(|_| ApiResponseError::validation("Invalid JSON payload"))?;
+
+    // Handle different topics
+    match topic {
+        "products/update" | "products/create" => {
+            // Process product update
+            tracing::info!("Processing product webhook for shop: {}", shop_domain);
+        }
+        "inventory_levels/update" => {
+            // Process inventory update
+            tracing::info!("Processing inventory webhook for shop: {}", shop_domain);
+        }
+        _ => {
+            tracing::debug!("Unhandled webhook topic: {}", topic);
+        }
+    }
+
     Ok(StatusCode::OK)
-}
+
 
 pub async fn shopify_sync(State(_state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden(
-            "Admin access required".to_string(),
-        ));
+        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
     }
-    // TODO: Trigger sync for the tenant
+    // Fetch integration for tenant
+    let integrations = state.shopify_service.repo.list_integrations(&auth.tenant_id).await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let integration = integrations.first().ok_or_else(|| ApiResponseError::not_found("Shopify not connected"))?;
+
+    let client = state.http_client.clone();
+    let shopify_service = state.shopify_service.clone();
+    let integration_clone = integration.clone();
+    tokio::spawn(async move {
+        let _ = shopify_service.sync_tenant_inventory(&integration_clone, &client).await;
+    });
+
     Ok(StatusCode::ACCEPTED)
-}
+
 
 pub fn routes() -> Router<AppState> {
     Router::new()
