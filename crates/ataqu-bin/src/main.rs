@@ -642,13 +642,18 @@ tokio::spawn(async move {
     };
 
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
+    let health_service_for_admin = health_service.clone();
+    let audit_repo_for_admin = audit_repo.clone();
     tokio::spawn(async move {
         use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
+        let health_service = health_service_for_admin;
+        let audit_repo = audit_repo_for_admin;
         loop {
             match admin_listener.accept().await {
                 Ok((mut stream, _)) => {
                     let admin_token = admin_token.clone();
                     let audit_repo = audit_repo.clone();
+                    let health_service = health_service.clone();
                     tokio::spawn(async move {
                         let mut reader = tokio::io::BufReader::new(&mut stream);
                         let mut line = String::new();
@@ -672,12 +677,31 @@ tokio::spawn(async move {
                                     )
                                     .await;
                                 let resp = match cmd {
-                                    "health" => "OK: Server is running\n",
+                                    "health" => "OK: Server is running\n".to_string(),
                                     "flush-cache" => {
                                         ataqu_api::middleware::idempotency::flush_idempotency_cache();
-                                        "OK: Idempotency cache flushed\n"
+                                        "OK: Idempotency cache flushed\n".to_string()
                                     }
-                                    _ => "ERROR: Unknown command\n",
+                                    "status" => {
+                                        match health_service.get_system_health().await {
+                                            Ok(health) => {
+                                                let json = serde_json::to_string_pretty(&health).unwrap_or_default();
+                                                format!("{}\n", json)
+                                            }
+                                            Err(e) => format!("ERROR: Failed to get status: {}\n", e),
+                                        }
+                                    }
+                                    "audit" => {
+                                        let tenant_id = ataqu_kernel::TenantId::new(uuid::Uuid::nil());
+                                        match audit_repo.list_logs(tenant_id, 10, 0, None, None, None, None).await {
+                                            Ok(logs) => {
+                                                let json = serde_json::to_string_pretty(&logs).unwrap_or_default();
+                                                format!("{}\n", json)
+                                            }
+                                            Err(e) => format!("ERROR: Failed to get audit logs: {}\n", e),
+                                        }
+                                    }
+                                    _ => "ERROR: Unknown command\n".to_string(),
                                 };
                                 let _ = stream.write_all(resp.as_bytes()).await;
                             } else {
@@ -726,7 +750,7 @@ db: pools.core.clone(),
         s3_service,
         onboarding_service,
         changelog_service,
-    
+
 };
 
     let app = create_router(app_state);

@@ -48,7 +48,7 @@ pub trait AuthRepository: Send + Sync {
     ) -> Result<(), crate::AuthError>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct AuditLogEntry {
     pub id: i64,
     pub tenant_id: TenantId,
