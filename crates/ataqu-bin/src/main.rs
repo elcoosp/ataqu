@@ -34,6 +34,7 @@ use ataqu_application::changelog_service::ChangelogService;
 use ataqu_application::health_service::HealthService;
 use ataqu_application::onboarding_service::OnboardingService;
 use ataqu_application::shopify_service::ShopifyService;
+// GdprSagaStarter is used indirectly via the outbox handler closure
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;

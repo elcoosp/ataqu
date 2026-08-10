@@ -16,3 +16,4 @@ pub mod changelog_service;
 pub mod health_service;
 pub mod onboarding_service;
 pub mod shopify_service;
+pub mod gdpr;

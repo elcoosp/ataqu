@@ -270,8 +270,9 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
     }
 
     if let Some(channels) = state.conn_index.get(&connection_id) {
-        for key in channels.iter() {
-            if let Some(subscribers) = state.ws_registry.get(key) {
+        let keys: Vec<_> = channels.iter().copied().collect();
+        for key in keys {
+            if let Some(subscribers) = state.ws_registry.get(&key) {
                 subscribers.remove(&connection_id);
             }
         }

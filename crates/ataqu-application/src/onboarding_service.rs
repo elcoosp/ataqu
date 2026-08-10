@@ -1,18 +1,11 @@
 use chrono::{DateTime, Utc};
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, DbErr, FromQueryResult, Statement};
-use serde::{Deserialize, Serialize};
+// serde not needed
 use uuid::Uuid;
 use std::sync::Arc;
 
 use crate::outbox::Outbox;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OnboardingStatus {
-    pub tenant_id: Uuid,
-    pub tasks_completed: Vec<String>,
-    pub last_active_at: DateTime<Utc>,
-    pub progress_percentage: f32,
-}
+use ataqu_domain_onboarding::{OnboardingStatus, calculate_progress};
 
 #[derive(Clone)]
 pub struct OnboardingService {
@@ -57,8 +50,7 @@ impl OnboardingService {
             }
         };
 
-        let total_tasks = 5;
-        let progress_percentage = (tasks.len() as f32 / total_tasks as f32) * 100.0;
+        let progress_percentage = calculate_progress(&tasks);
 
         Ok(OnboardingStatus {
             tenant_id,
@@ -69,7 +61,7 @@ impl OnboardingService {
     }
 
     pub async fn check_inactivity(&self) -> Result<(), DbErr> {
-        use crate::outbox::Outbox;
+        // Outbox is already in scope via the import
         let stmt = Statement::from_sql_and_values(
             DbBackend::Postgres,
             "SELECT tenant_id, last_active_at FROM core.onboarding_progress WHERE last_active_at < NOW() - INTERVAL '7 days'",

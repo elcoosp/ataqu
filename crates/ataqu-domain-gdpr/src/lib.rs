@@ -1,6 +1,3 @@
-pub mod registry;
-pub mod saga;
-
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -66,3 +63,8 @@ impl GdprSaga {
         matches!(self.step, GdprStep::Complete)
     }
 }
+
+pub mod registry;
+pub mod saga;
+
+pub use registry::GdprRegistry;

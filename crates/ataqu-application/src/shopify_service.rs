@@ -4,6 +4,9 @@ use ataqu_kernel::TenantId;
 use chrono::Utc;
 use std::sync::Arc;
 use uuid::Uuid;
+// Domain types imported for use in sync logic (they are used in the methods)
+// We'll keep the import but we need to actually use them.
+// Actually, they are used in the sync_tenant_inventory method.
 
 pub struct ShopifyService {
     pub repo: Arc<dyn ShopifyRepository + Send + Sync>,

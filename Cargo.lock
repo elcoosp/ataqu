@@ -725,6 +725,7 @@ dependencies = [
  "chrono",
  "sea-orm",
  "sea-orm-migration",
+ "serde_json",
  "uuid",
 ]
 

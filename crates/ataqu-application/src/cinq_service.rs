@@ -1163,7 +1163,7 @@ impl CinqService {
         &self,
         tenant_id: TenantId,
     ) -> CinqResult<futures::stream::BoxStream<'static, Result<Vec<u8>, std::io::Error>>> {
-        use futures::stream::{self, StreamExt};
+        use futures::stream::{self};
         use tokio::sync::mpsc;
 
         let (tx, rx) = mpsc::channel(10);
