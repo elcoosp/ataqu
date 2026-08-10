@@ -77,6 +77,34 @@ impl EmailTrackingWriter {
         Ok(())
     }
 
+    async fn insert_batch(&self, events: &[TrackingEvent]) -> Result<(), anyhow::Error> {
+        if events.is_empty() {
+            return Ok(());
+        }
+        // Use a single INSERT with multiple rows to reduce round trips.
+        let mut values = Vec::new();
+        let mut params = Vec::new();
+        let mut param_idx = 1;
+        for event in events {
+            values.push(format!("(${}, ${}, ${}, ${}, ${})", param_idx, param_idx+1, param_idx+2, param_idx+3, param_idx+4));
+            params.push(event.tenant_id.into());
+            params.push(event.contact_id.into());
+            params.push(event.event_type.clone().into());
+            params.push(event.metadata.clone().into());
+            params.push(event.occurred_at.into());
+            param_idx += 5;
+        }
+        let sql = format!("INSERT INTO collab_crm.email_tracking (tenant_id, contact_id, event_type, metadata, occurred_at) VALUES {}", values.join(", "));
+        self.db_pool
+            .execute_raw(Statement::from_sql_and_values(
+                DatabaseBackend::Postgres,
+                &sql,
+                params,
+            ))
+            .await?;
+        Ok(())
+    }
+
     async fn spill_event(&mut self, event: &TrackingEvent) -> Result<(), anyhow::Error> {
         let active_path = self.spill_dir.join("tracking_spill.jsonl");
         let line = serde_json::to_string(event)? + "\n";
@@ -125,17 +153,30 @@ impl EmailTrackingWriter {
     }
 
     async fn process_file(&self, path: &Path) -> Result<(), anyhow::Error> {
-        let content = tokio::fs::read_to_string(path).await?;
-        for line in content.lines() {
+        use tokio::io::AsyncBufReadExt;
+        let file = tokio::fs::File::open(path).await?;
+        let reader = tokio::io::BufReader::new(file);
+        let mut lines = reader.lines();
+        let mut batch = Vec::with_capacity(100);
+        while let Some(line) = lines.next_line().await? {
             if line.trim().is_empty() {
                 continue;
             }
-            if let Ok(event) = serde_json::from_str::<TrackingEvent>(line) {
-                if let Err(e) = self.insert_event(&event).await {
-                    warn!("Failed to insert recovered event: {}", e);
+            if let Ok(event) = serde_json::from_str::<TrackingEvent>(&line) {
+                batch.push(event);
+                if batch.len() >= 100 {
+                    if let Err(e) = self.insert_batch(&batch).await {
+                        warn!("Failed to insert batch of recovered events: {}", e);
+                    }
+                    batch.clear();
                 }
             } else {
                 warn!("Invalid JSON line in spill file: {}", line);
+            }
+        }
+        if !batch.is_empty() {
+            if let Err(e) = self.insert_batch(&batch).await {
+                warn!("Failed to insert remaining batch of recovered events: {}", e);
             }
         }
         Ok(())
