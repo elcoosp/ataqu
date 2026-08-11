@@ -39,7 +39,7 @@ use ataqu_application::shopify_service::ShopifyService;
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
-use sea_orm::DatabaseConnection;
+// use sea_orm::DatabaseConnection;
 
 // ----------------------------------------------------------------------------
 // Main
