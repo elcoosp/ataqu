@@ -87,7 +87,7 @@ where
                 body: body_json,
             };
             // Complete guard and cache
-            guard.complete(cached.clone()).await.map_err(|e| {
+            guard.complete(cached.clone(), None).await.map_err(|e| {
                 ApiResponseError::internal(&format!("Idempotency completion failed: {}", e))
             })?;
             // Also cache in Moka

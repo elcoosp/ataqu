@@ -184,9 +184,9 @@ impl IdempotencyGuard {
     /// Complete the idempotent request with a successful response.
     /// This updates the record, commits the transaction, and returns the cached response.
     #[instrument(skip(self), fields(command_id = %self.command_id))]
-    pub async fn complete(mut self, response: CachedResponse) -> IdempotencyResult<CachedResponse> {
+    pub async fn complete(mut self, response: CachedResponse, aggregate_id: Option<Uuid>) -> IdempotencyResult<CachedResponse> {
         self.store
-            .update_completed(&mut self.txn, &self.command_id, &response)
+            .update_completed(&mut self.txn, &self.command_id, &response, aggregate_id)
             .await?;
         self.txn.commit().await?;
         debug!(command_id = %self.command_id, "Idempotent request completed");

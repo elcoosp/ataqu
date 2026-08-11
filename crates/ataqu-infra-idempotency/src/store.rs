@@ -80,6 +80,7 @@ pub trait IdempotencyStore: Send + Sync {
         txn: &mut DatabaseTransaction,
         command_id: &Uuid,
         response: &CachedResponse,
+        aggregate_id: Option<Uuid>,
     ) -> Result<(), StoreError>;
 
     /// Update record to 'failed' (no response body).
@@ -176,13 +177,13 @@ impl IdempotencyStore for SeaOrmIdempotencyStore {
         &self,
         txn: &mut DatabaseTransaction,
         command_id: &Uuid,
-        aggregate_id: Option<Uuid>,
+        _aggregate_id: Option<Uuid>,
     ) -> Result<(), StoreError> {
         let sql = r#"
             INSERT INTO core.idempotency_records (command_id, status, aggregate_id, created_at)
             VALUES ($1, 'in_progress', $2, NOW())
         "#;
-        let agg_val = aggregate_id
+        let agg_val = _aggregate_id
             .map(|id| Value::Bytes(Some(id.as_bytes().to_vec())))
             .unwrap_or(Value::Bytes(None));
         let stmt = Statement::from_sql_and_values(
@@ -199,6 +200,7 @@ impl IdempotencyStore for SeaOrmIdempotencyStore {
         txn: &mut DatabaseTransaction,
         command_id: &Uuid,
         response: &CachedResponse,
+        _aggregate_id: Option<Uuid>,
     ) -> Result<(), StoreError> {
         let sql = r#"
             UPDATE core.idempotency_records
@@ -206,6 +208,7 @@ impl IdempotencyStore for SeaOrmIdempotencyStore {
                 response_status = $2,
                 response_body = $3,
                 response_headers = $4,
+                aggregate_id = COALESCE($5, aggregate_id),
                 completed_at = NOW()
             WHERE command_id = $1
         "#;

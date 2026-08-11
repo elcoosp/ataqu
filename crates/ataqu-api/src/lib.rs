@@ -182,6 +182,10 @@ pub fn create_router(state: AppState) -> Router {
         ))
         .layer(axum::middleware::from_fn(request_id_middleware));
     let private_routes = Router::new()
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            crate::middleware::audit::audit_middleware,
+        ))
         .route(
             "/api/v1/onboarding/status",
             get(handlers::onboarding::get_status),

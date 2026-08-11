@@ -93,7 +93,7 @@ impl IdempotencyPort for RealIdempotency {
             body: response_body,
         };
         store
-            .update_completed(&mut txn, command_id, &response)
+            .update_completed(&mut txn, command_id, &response, None)
             .await
             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
         txn.commit()

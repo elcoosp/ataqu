@@ -566,7 +566,11 @@ async fn main() -> anyhow::Result<()> {
         let system_user_id = std::env::var("SYSTEM_USER_ID")
         .ok()
         .and_then(|s| Uuid::parse_str(&s).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+        .unwrap_or_else(|| {
+            tracing::warn!("SYSTEM_USER_ID not set, using default");
+            Uuid::parse_str("00000000-0000-0000-0000-000000000001")
+                .expect("Hardcoded UUID is invalid")
+        });
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }

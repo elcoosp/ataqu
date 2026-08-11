@@ -142,6 +142,7 @@ impl EmailTrackingWriter {
         }
 
         let active = self.spill_dir.join("tracking_spill.jsonl");
+        let mut total_recovered_size = 0;
         if active.exists() {
             let ts = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
             let id = Uuid::new_v4();
@@ -153,22 +154,29 @@ impl EmailTrackingWriter {
         }
 
         for file in &files_to_process {
-            self.process_file(file).await?;
+            let processed = self.process_file(file).await?;
+            total_recovered_size += processed;
         }
 
         for file in &files_to_process {
             tokio::fs::remove_file(file).await?;
         }
+
+        // Reset spill size after successful recovery
+        self.total_spill_size = self.total_spill_size.saturating_sub(total_recovered_size);
+
         Ok(())
     }
 
-    async fn process_file(&self, path: &Path) -> Result<(), anyhow::Error> {
+    async fn process_file(&self, path: &Path) -> Result<u64, anyhow::Error> {
         use tokio::io::AsyncBufReadExt;
         let file = tokio::fs::File::open(path).await?;
         let reader = tokio::io::BufReader::new(file);
         let mut lines = reader.lines();
         let mut batch = Vec::with_capacity(100);
+        let mut total_bytes = 0;
         while let Some(line) = lines.next_line().await? {
+            total_bytes += line.len() + 1; // +1 for newline
             if line.trim().is_empty() {
                 continue;
             }
@@ -192,6 +200,6 @@ impl EmailTrackingWriter {
                 e
             );
         }
-        Ok(())
+        Ok(total_bytes as u64)
     }
 }

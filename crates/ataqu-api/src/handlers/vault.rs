@@ -7,7 +7,7 @@ use axum::{
     response::{IntoResponse, Json},
 };
 use chrono::{DateTime, Utc};
-use hmac::Mac;
+// use hmac::Mac; // removed, not used
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -725,7 +725,7 @@ pub async fn shopify_callback(
 pub async fn shopify_webhook(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    __body: String,
+    body: String, // raw body as string
 ) -> ApiResult<StatusCode> {
     let topic = headers
         .get("X-Shopify-Topic")
@@ -755,20 +755,22 @@ pub async fn shopify_webhook(
         .find(|i| i.shop_domain == shop_domain)
         .ok_or_else(|| ApiResponseError::not_found("Shopify integration not found"))?;
 
-    // Verify HMAC signature if header present
+    // Verify HMAC signature if header present – use app client secret
     if let Some(sig) = signature_header {
-        use sha2::Sha256;
-        let secret = integration.access_token.as_bytes(); // Shopify uses the access token as secret for webhooks
-        let mut mac = <hmac::Hmac<Sha256> as hmac::Mac>::new_from_slice(secret)
-            .map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;
-        mac.update(__body.as_bytes());
+        use sha2::{Sha256, digest::Mac};
+        let client_secret = std::env::var("SHOPIFY_CLIENT_SECRET")
+            .map_err(|_| ApiResponseError::internal("SHOPIFY_CLIENT_SECRET not set"))?;
+        let mut mac = <hmac::Hmac<Sha256> as hmac::Mac>::new_from_slice(
+            client_secret.as_bytes()
+        ).map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;
+        mac.update(body.as_bytes());
         let computed = hex::encode(mac.finalize().into_bytes());
         if !constant_time_eq(&computed, sig) {
             return Err(ApiResponseError::unauthorized("Invalid webhook signature"));
         }
     }
 
-    let payload: serde_json::Value = serde_json::from_str(&__body)
+    let payload: serde_json::Value = serde_json::from_str(&body)
         .map_err(|_| ApiResponseError::validation("Invalid JSON payload"))?;
 
     // Handle topics
