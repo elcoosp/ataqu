@@ -1,7 +1,4 @@
-use axum::{
-    extract::State,
-    response::Json,
-};
+use axum::{extract::State, response::Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -12,7 +9,7 @@ use crate::middleware::AuthContext;
 
 #[derive(Debug, Deserialize)]
 pub struct ParseRequest {
-    pub file: String, // base64 encoded content
+    pub file: String,   // base64 encoded content
     pub format: String, // "csv" or "json"
 }
 
@@ -22,6 +19,7 @@ pub struct ParseResponse {
     pub sample: Vec<HashMap<String, String>>,
 }
 
+#[allow(unused_variables)]
 pub async fn parse_file(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -39,14 +37,18 @@ pub async fn parse_file(
     let sample_rows = match req.format.as_str() {
         "csv" => {
             let mut reader = csv::Reader::from_reader(&decoded[..]);
-            let headers = reader.headers()
+            let headers = reader
+                .headers()
                 .map_err(|_| ApiResponseError::validation("Invalid CSV"))?
                 .clone();
             let columns: Vec<String> = headers.iter().map(|s| s.to_string()).collect();
             let mut samples = Vec::new();
             for (i, record) in reader.records().enumerate() {
-                if i >= 3 { break; }
-                let record = record.map_err(|_| ApiResponseError::validation("Invalid CSV record"))?;
+                if i >= 3 {
+                    break;
+                }
+                let record =
+                    record.map_err(|_| ApiResponseError::validation("Invalid CSV record"))?;
                 let mut map = HashMap::new();
                 for (idx, field) in record.iter().enumerate() {
                     if let Some(col) = columns.get(idx) {
@@ -55,7 +57,10 @@ pub async fn parse_file(
                 }
                 samples.push(map);
             }
-            ParseResponse { columns, sample: samples }
+            ParseResponse {
+                columns,
+                sample: samples,
+            }
         }
         "json" => {
             let data: Vec<HashMap<String, String>> = serde_json::from_slice(&decoded)
@@ -65,9 +70,12 @@ pub async fn parse_file(
             } else {
                 vec![]
             };
-            ParseResponse { columns, sample: data.into_iter().take(3).collect() }
+            ParseResponse {
+                columns,
+                sample: data.into_iter().take(3).collect(),
+            }
         }
-        _ => return Err(ApiResponseError::validation("Unsupported format"))
+        _ => return Err(ApiResponseError::validation("Unsupported format")),
     };
 
     Ok(Json(sample_rows))
@@ -75,11 +83,12 @@ pub async fn parse_file(
 
 #[derive(Debug, Deserialize)]
 pub struct ImportRequest {
-    pub target_app: String, // "cinq", "vault", "pause"
+    pub target_app: String,               // "cinq", "vault", "pause"
     pub mapping: HashMap<String, String>, // source_column -> target_field
     pub data: Vec<HashMap<String, String>>,
 }
 
+#[allow(unused_variables)]
 pub async fn import_data(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -113,7 +122,11 @@ pub async fn import_data(
                     name,
                     company: None,
                     email: Email::new(email_str),
-                    phone: if phone_str.is_empty() { None } else { Some(PhoneNumber::new(phone_str)) },
+                    phone: if phone_str.is_empty() {
+                        None
+                    } else {
+                        Some(PhoneNumber::new(phone_str))
+                    },
                     custom_fields: serde_json::Value::Object(custom),
                     lead_score: None,
                 };
@@ -129,7 +142,12 @@ pub async fn import_data(
                 let name = row.get("name").cloned().unwrap_or_default();
                 let description = row.get("description").cloned().unwrap_or_default();
                 let sku = row.get("sku").cloned().unwrap_or_default();
-                let cmd = CreateProductCommand { tenant_id, name, description, sku };
+                let cmd = CreateProductCommand {
+                    tenant_id,
+                    name,
+                    description,
+                    sku,
+                };
                 match state.vault_service.create_product(cmd).await {
                     Ok(_) => imported += 1,
                     Err(_) => failed += 1,
@@ -145,7 +163,8 @@ pub async fn import_data(
                 let email_str = row.get("email").cloned().unwrap_or_default();
                 let job_title = row.get("job_title").cloned().unwrap_or_default();
                 let hire_date_str = row.get("hire_date").cloned().unwrap_or_default();
-                let hire_date = NaiveDate::parse_from_str(&hire_date_str, "%Y-%m-%d").unwrap_or(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap());
+                let hire_date = NaiveDate::parse_from_str(&hire_date_str, "%Y-%m-%d")
+                    .unwrap_or(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap());
                 let cmd = CreateEmployeeCommand {
                     tenant_id,
                     full_name,
@@ -155,16 +174,28 @@ pub async fn import_data(
                     department: None,
                     hire_date,
                 };
-                match state.pause_service.create_employee(&tenant_id, cmd, &*state.id_gen, &*state.clock, Uuid::new_v4()).await {
+                match state
+                    .pause_service
+                    .create_employee(
+                        &tenant_id,
+                        cmd,
+                        &*state.id_gen,
+                        &*state.clock,
+                        Uuid::new_v4(),
+                    )
+                    .await
+                {
                     Ok(_) => imported += 1,
                     Err(_) => failed += 1,
                 }
             }
         }
-        _ => return Err(ApiResponseError::validation("Unsupported target app"))
+        _ => return Err(ApiResponseError::validation("Unsupported target app")),
     }
 
-    Ok(Json(serde_json::json!({ "imported": imported, "failed": failed })))
+    Ok(Json(
+        serde_json::json!({ "imported": imported, "failed": failed }),
+    ))
 }
 
 pub fn routes() -> axum::Router<crate::AppState> {

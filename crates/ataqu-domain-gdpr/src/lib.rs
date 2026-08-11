@@ -69,7 +69,6 @@ pub mod saga;
 
 pub use registry::GdprRegistry;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,12 +114,17 @@ mod tests {
             "dial.tickets",
         ];
         let registry = GdprRegistry::new();
-        let actual: Vec<String> = registry.tables
+        let actual: Vec<String> = registry
+            .tables
             .iter()
             .map(|t| format!("{}.{}", t.schema, t.table))
             .collect();
         for table in expected {
-            assert!(actual.contains(&table.to_string()), "Table {} is missing from registry", table);
+            assert!(
+                actual.contains(&table.to_string()),
+                "Table {} is missing from registry",
+                table
+            );
         }
     }
 }

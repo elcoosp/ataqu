@@ -480,7 +480,6 @@ pub fn public_routes() -> Router<AppState> {
         )
 }
 
-
 #[derive(Debug, serde::Deserialize)]
 pub struct BulkBookingRequest {
     pub ids: Vec<Uuid>,
@@ -492,7 +491,10 @@ pub async fn bulk_cancel_bookings(
     Json(payload): Json<BulkBookingRequest>,
 ) -> ApiResult<StatusCode> {
     for id in payload.ids {
-        let booking = state.tempo_service.get_booking(auth.tenant_id, id).await
+        let booking = state
+            .tempo_service
+            .get_booking(auth.tenant_id, id)
+            .await
             .map_err(|_| ApiResponseError::not_found("Booking not found"))?;
         let cmd = ataqu_application::tempo_service::UpdateBookingStatusCommand {
             tenant_id: auth.tenant_id,
@@ -512,7 +514,10 @@ pub async fn bulk_cancel_bookings(
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/bookings", axum::routing::post(create_booking))
-        .route("/bookings/bulk-cancel", axum::routing::post(bulk_cancel_bookings))
+        .route(
+            "/bookings/bulk-cancel",
+            axum::routing::post(bulk_cancel_bookings),
+        )
         .route("/bookings", axum::routing::get(list_bookings))
         .route("/bookings/:id", axum::routing::get(get_booking))
         .route("/bookings/:id/cancel", axum::routing::post(cancel_booking))

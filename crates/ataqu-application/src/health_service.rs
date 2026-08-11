@@ -1,7 +1,10 @@
-use ataqu_domain_health::{HealthStatus, ComponentHealth, SparkWorkflowHealth, DbPoolHealth, Components, SystemHealth, classify};
+use ataqu_domain_health::{
+    ComponentHealth, Components, DbPoolHealth, HealthStatus, SparkWorkflowHealth, SystemHealth,
+    classify,
+};
+use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::health_repo::HealthRepository;
 use ataqu_kernel::Clock;
-use ataqu_infra_pools::Pools;
 use chrono::{DateTime, SecondsFormat, Utc};
 use std::sync::Arc;
 
@@ -12,7 +15,11 @@ pub struct HealthService {
 }
 
 impl HealthService {
-    pub fn new(repo: Arc<HealthRepository>, clock: Arc<dyn Clock + Send + Sync>, pools: Arc<Pools>) -> Self {
+    pub fn new(
+        repo: Arc<HealthRepository>,
+        clock: Arc<dyn Clock + Send + Sync>,
+        pools: Arc<Pools>,
+    ) -> Self {
         Self { repo, clock, pools }
     }
 

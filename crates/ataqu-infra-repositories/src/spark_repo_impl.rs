@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 use ataqu_domain_spark::repository::{SparkRepository, WorkflowRunRepository};
-use ataqu_domain_spark::{SparkError, Workflow};
 use ataqu_domain_spark::workflow::{WorkflowRun, WorkflowRunStatus};
+use ataqu_domain_spark::{SparkError, Workflow};
 use ataqu_kernel::TenantId;
-use sea_orm::entity::prelude::*;
 use sea_orm::IntoActiveModel;
+use sea_orm::entity::prelude::*;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
 use uuid::Uuid;
 
@@ -302,9 +302,9 @@ impl SparkRepository for SparkRepositoryImpl {
             workflow_id: m.workflow_id,
             fence_token: m.fence_token as u64,
             holder: m.holder,
-            expires_at: m.expires_at.map(|dt| chrono::DateTime::<chrono::Utc>::from(dt)),
-            created_at: m.created_at.into(),
-            updated_at: m.updated_at.into(),
+            expires_at: m.expires_at.map(|dt| dt),
+            created_at: m.created_at,
+            updated_at: m.updated_at,
         }))
     }
 
@@ -316,9 +316,9 @@ impl SparkRepository for SparkRepositoryImpl {
             workflow_id: Set(lease.workflow_id),
             fence_token: Set(lease.fence_token as i64),
             holder: Set(lease.holder.clone()),
-            expires_at: Set(lease.expires_at.map(|dt| dt.into())),
-            created_at: Set(lease.created_at.into()),
-            updated_at: Set(lease.updated_at.into()),
+            expires_at: Set(lease.expires_at.map(|dt| dt)),
+            created_at: Set(lease.created_at),
+            updated_at: Set(lease.updated_at),
         };
         entity::Entity::insert(active)
             .exec(&self.db)
@@ -357,7 +357,8 @@ impl WorkflowRunRepository for WorkflowRunRepositoryImpl {
                 WorkflowRunStatus::Rejected => "rejected",
                 WorkflowRunStatus::Completed => "completed",
                 WorkflowRunStatus::Failed => "failed",
-            }.to_string()),
+            }
+            .to_string()),
             payload: Set(run.payload.clone()),
             created_at: Set(run.created_at.into()),
             updated_at: Set(run.updated_at.into()),

@@ -76,7 +76,8 @@ impl ShopifyService {
                     if let Some(variants) = product.get("variants").and_then(|v| v.as_array()) {
                         for variant in variants {
                             let sku = variant.get("sku").and_then(|s| s.as_str());
-                            let inventory = variant.get("inventory_quantity").and_then(|i| i.as_i64());
+                            let inventory =
+                                variant.get("inventory_quantity").and_then(|i| i.as_i64());
 
                             if let (Some(sku), Some(inv)) = (sku, inventory) {
                                 let tenant_id = TenantId::new(integration.tenant_id.as_uuid());
@@ -96,7 +97,10 @@ impl ShopifyService {
                                                         variant_id: variant.id,
                                                         delta,
                                                         reason: "shopify_sync".to_string(),
-                                                        reference: Some(format!("shopify_sync_{}", Uuid::new_v4())),
+                                                        reference: Some(format!(
+                                                            "shopify_sync_{}",
+                                                            Uuid::new_v4()
+                                                        )),
                                                         alert_channel_id: None,
                                                         expected_version: variant.version,
                                                     },
@@ -123,16 +127,16 @@ impl ShopifyService {
             }
 
             // Check for next page link
-            if let Some(link_header) = link_header_value.as_ref() {
-                if let Ok(link_str) = link_header.to_str() {
-                    // Parse next page URL
-                    if let Some(next) = link_str.split(',').find(|s| s.contains("rel=\"next\"")) {
-                        if let Some(url_start) = next.find('<') {
-                            let url_end = next.find('>').unwrap_or(next.len());
-                            page_url = next[url_start+1..url_end].to_string();
-                            continue;
-                        }
-                    }
+            if let Some(link_header) = link_header_value.as_ref()
+                && let Ok(link_str) = link_header.to_str()
+            {
+                // Parse next page URL
+                if let Some(next) = link_str.split(',').find(|s| s.contains("rel=\"next\""))
+                    && let Some(url_start) = next.find('<')
+                {
+                    let url_end = next.find('>').unwrap_or(next.len());
+                    page_url = next[url_start + 1..url_end].to_string();
+                    continue;
                 }
             }
             break;

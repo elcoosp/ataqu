@@ -117,17 +117,16 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000014_create_onboarding_and_changelog::Migration),
             Box::new(m20250101_000015_create_establishments::Migration),
             Box::new(m20250101_000016_create_workflow_runs::Migration),
-        
             Box::new(m20250101_000017_create_shopify_sync_logs::Migration),
             Box::new(m20250101_000018_create_user_preferences::Migration),
             Box::new(m20250101_000019_add_permissions_fk_and_rls::Migration),
             Box::new(m20250101_000020_create_gdpr_saga_state::Migration),
-                        Box::new(m20250101_000022_create_dial_tickets::Migration),
+            Box::new(m20250101_000022_create_dial_tickets::Migration),
             Box::new(m20250101_000024_add_inactivity_reminder::Migration),
-                        Box::new(m20250101_000026_add_routing_rules_to_forms::Migration),
-                        Box::new(m20250101_000022_create_dial_tickets::Migration),
+            Box::new(m20250101_000026_add_routing_rules_to_forms::Migration),
+            Box::new(m20250101_000022_create_dial_tickets::Migration),
             Box::new(m20250101_000021_create_inactivity_workflow::Migration),
-]
+        ]
     }
 }
 

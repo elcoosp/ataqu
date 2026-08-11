@@ -61,23 +61,22 @@ impl S3Service {
         Ok(url)
     }
 
-    
-    
-    
-    
-    
     pub async fn list_objects(&self, prefix: &str) -> Result<Vec<String>> {
         let mut objects = Vec::new();
         let mut continuation_token = None;
         loop {
-            let mut req = self.client.list_objects_v2()
+            let mut req = self
+                .client
+                .list_objects_v2()
                 .bucket(&self.bucket)
                 .prefix(prefix)
                 .max_keys(1000);
             if let Some(token) = continuation_token {
                 req = req.continuation_token(token);
             }
-            let resp = req.send().await
+            let resp = req
+                .send()
+                .await
                 .map_err(|e| S3Error::Presign(e.to_string()))?;
             // contents() returns a slice of objects
             for obj in resp.contents() {
@@ -94,13 +93,9 @@ impl S3Service {
         Ok(objects)
     }
 
-
-
-
-
-
     pub async fn delete_object(&self, key: &str) -> Result<()> {
-        self.client.delete_object()
+        self.client
+            .delete_object()
             .bucket(&self.bucket)
             .key(key)
             .send()

@@ -81,10 +81,9 @@ impl IntoResponse for ApiResponseError {
         });
         let mut response = (status, axum::Json(body)).into_response();
         if matches!(self, Self::ServiceUnavailable(_)) {
-            response.headers_mut().insert(
-                "retry-after",
-                axum::http::HeaderValue::from_static("5"),
-            );
+            response
+                .headers_mut()
+                .insert("retry-after", axum::http::HeaderValue::from_static("5"));
         }
         response
     }

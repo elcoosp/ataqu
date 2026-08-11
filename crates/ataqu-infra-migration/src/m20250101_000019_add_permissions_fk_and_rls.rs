@@ -22,15 +22,17 @@ impl MigrationTrait for Migration {
                     FOREIGN KEY (user_id) REFERENCES core.users(id) ON DELETE CASCADE;
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Enable RLS on core.outbox if not already enabled
         db.execute_unprepared(
             r#"
             ALTER TABLE core.outbox ENABLE ROW LEVEL SECURITY;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Create RLS policies if they don't exist
         db.execute_unprepared(
@@ -48,8 +50,9 @@ impl MigrationTrait for Migration {
                     WITH CHECK (schema = 'core');
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         db.execute_unprepared(
             r#"
@@ -66,8 +69,9 @@ impl MigrationTrait for Migration {
                     WITH CHECK (schema = 'collab_crm');
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         db.execute_unprepared(
             r#"
@@ -84,8 +88,9 @@ impl MigrationTrait for Migration {
                     WITH CHECK (schema = 'collab_ops');
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         db.execute_unprepared(
             r#"
@@ -102,8 +107,9 @@ impl MigrationTrait for Migration {
                     WITH CHECK (schema = 'vault');
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         db.execute_unprepared(
             r#"
@@ -120,8 +126,9 @@ impl MigrationTrait for Migration {
                     WITH CHECK (schema = 'dial');
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         db.execute_unprepared(
             r#"
@@ -138,16 +145,18 @@ impl MigrationTrait for Migration {
                     WITH CHECK (schema = 'vista');
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Grant sequence usage
         db.execute_unprepared(
             r#"
             GRANT USAGE, SELECT ON SEQUENCE core.outbox_id_seq
             TO core_role, cinq_role, ops_role, vault_role, dial_role, vista_role;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Grant column-level UPDATE privileges to dispatcher_role
         db.execute_unprepared(
@@ -155,8 +164,9 @@ impl MigrationTrait for Migration {
             GRANT SELECT ON core.outbox TO dispatcher_role;
             GRANT UPDATE (status, attempts, locked_until, completed_at, vista_consumed_at)
             ON core.outbox TO dispatcher_role;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Create dispatcher SELECT policy
         db.execute_unprepared(
@@ -174,8 +184,9 @@ impl MigrationTrait for Migration {
                     USING (true);
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         // Create dispatcher UPDATE policy
         db.execute_unprepared(
@@ -193,23 +204,35 @@ impl MigrationTrait for Migration {
                     USING (true);
                 END IF;
             END $$;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
 
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_dispatcher_update ON core.outbox;").await?;
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_dispatcher_select ON core.outbox;").await?;
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_vista_insert ON core.outbox;").await?;
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_dial_insert ON core.outbox;").await?;
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_vault_insert ON core.outbox;").await?;
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_ops_insert ON core.outbox;").await?;
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_cinq_insert ON core.outbox;").await?;
-        db.execute_unprepared("DROP POLICY IF EXISTS outbox_core_insert ON core.outbox;").await?;
-        db.execute_unprepared("ALTER TABLE core.permissions DROP CONSTRAINT IF EXISTS fk_permissions_user;").await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_dispatcher_update ON core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_dispatcher_select ON core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_vista_insert ON core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_dial_insert ON core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_vault_insert ON core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_ops_insert ON core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_cinq_insert ON core.outbox;")
+            .await?;
+        db.execute_unprepared("DROP POLICY IF EXISTS outbox_core_insert ON core.outbox;")
+            .await?;
+        db.execute_unprepared(
+            "ALTER TABLE core.permissions DROP CONSTRAINT IF EXISTS fk_permissions_user;",
+        )
+        .await?;
         Ok(())
     }
 }

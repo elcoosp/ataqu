@@ -50,8 +50,8 @@ impl UserPreferencesRepository {
         user_id: Uuid,
         time: chrono::DateTime<chrono::Utc>,
     ) -> Result<(), String> {
-        use user_preferences_entity as entity;
         use sea_orm::{ActiveModelTrait, Set};
+        use user_preferences_entity as entity;
         let existing = entity::Entity::find()
             .filter(entity::Column::UserId.eq(user_id))
             .one(&self.db)

@@ -1,7 +1,7 @@
 //! CINQ CRM orchestration service – uses domain repositories and outbox.
+use sea_orm::DatabaseConnection;
 use std::collections::HashMap;
 use std::sync::Arc;
-use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
 use ataqu_domain_cinq::activity::{
@@ -170,7 +170,6 @@ impl CinqService {
         audit_repo: Option<
             Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
         >,
-
     ) -> Self {
         Self {
             db,
@@ -1137,19 +1136,20 @@ impl CinqService {
             })
     }
 
-
-
-
     pub async fn get_tracking_events_for_contact(
         &self,
         tenant_id: TenantId,
         contact_id: Uuid,
         limit: u64,
         offset: u64,
-    ) -> CinqResult<(Vec<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>, u64)> {
+    ) -> CinqResult<(
+        Vec<ataqu_infra_repositories::email_tracking_writer::TrackingEvent>,
+        u64,
+    )> {
         use ataqu_infra_repositories::email_tracking_repo::EmailTrackingRepository;
         let repo = EmailTrackingRepository::new(self.db.clone());
-        let events = repo.get_tracking_events_for_contact(&tenant_id, contact_id, limit, offset)
+        let events = repo
+            .get_tracking_events_for_contact(&tenant_id, contact_id, limit, offset)
             .await
             .map_err(|e| CinqServiceError::Repository(e.to_string()))?;
         // Total count - we need a separate count query; for now we return events len as total (approximate)
@@ -1178,7 +1178,7 @@ impl CinqService {
                 let contacts = match repo.list_contacts(&tenant_id, page_size, offset).await {
                     Ok(c) => c,
                     Err(e) => {
-                        let _ = tx.send(Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))).await;
+                        let _ = tx.send(Err(std::io::Error::other(e.to_string()))).await;
                         break;
                     }
                 };
@@ -1194,20 +1194,25 @@ impl CinqService {
                     let record = vec![
                         c.id.to_string(),
                         c.name.clone(),
-                        c.email.reveal(&ataqu_security::PiiAccessKey::new()).to_string(),
-                        c.phone.as_ref().map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string()).unwrap_or_default(),
+                        c.email
+                            .reveal(&ataqu_security::PiiAccessKey::new())
+                            .to_string(),
+                        c.phone
+                            .as_ref()
+                            .map(|p| p.reveal(&ataqu_security::PiiAccessKey::new()).to_string())
+                            .unwrap_or_default(),
                         c.created_at.to_rfc3339(),
                     ];
                     if let Err(e) = wtr.write_record(&record) {
-                        let _ = tx.send(Err(std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))).await;
+                        let _ = tx.send(Err(std::io::Error::other(e.to_string()))).await;
                         break;
                     }
                 }
                 let data = wtr.into_inner().unwrap_or_default();
-                if !data.is_empty() {
-                    if let Err(_e) = tx.send(Ok(data)).await {
-                        break;
-                    }
+                if !data.is_empty()
+                    && let Err(_e) = tx.send(Ok(data)).await
+                {
+                    break;
                 }
 
                 is_first = false;
@@ -1218,7 +1223,11 @@ impl CinqService {
         let stream = stream::unfold(rx, |mut rx| async {
             rx.recv().await.map(|item| (item, rx))
         });
-        Ok(Box::pin(stream) as futures::stream::BoxStream<'static, Result<Vec<u8>, std::io::Error>>)
+        Ok(Box::pin(stream)
+            as futures::stream::BoxStream<
+                'static,
+                Result<Vec<u8>, std::io::Error>,
+            >)
     }
 
     pub async fn bulk_delete_deals(&self, tenant_id: TenantId, ids: Vec<Uuid>) -> CinqResult<()> {

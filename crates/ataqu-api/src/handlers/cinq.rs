@@ -773,10 +773,9 @@ pub async fn export_csv(
     use futures::StreamExt;
 
     // Convert Result<Vec<u8>, std::io::Error> to Result<Bytes, axum::Error>
-    let body = Body::from_stream(stream.map(|res| {
-        res.map(|chunk| axum::body::Bytes::from(chunk))
-            .map_err(|e| axum::Error::new(e))
-    }));
+    let body = Body::from_stream(
+        stream.map(|res| res.map(axum::body::Bytes::from).map_err(axum::Error::new)),
+    );
 
     let headers = [
         (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
@@ -1019,7 +1018,6 @@ pub fn public_routes() -> Router<AppState> {
     )
 }
 
-
 pub async fn bulk_delete_deals(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -1069,7 +1067,10 @@ pub fn routes() -> Router<AppState> {
             get(get_task).put(update_task).delete(delete_task),
         )
         .route("/contacts/:id/tasks", get(list_contact_tasks))
-        .route("/contacts/:id/tracking", get(super::email_tracking::get_contact_tracking))
+        .route(
+            "/contacts/:id/tracking",
+            get(super::email_tracking::get_contact_tracking),
+        )
         .route("/search", get(search_contacts))
         .route("/search/custom", get(search_by_custom_field))
         .route("/search/custom/cross", get(search_custom_fields_cross))

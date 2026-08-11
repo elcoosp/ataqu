@@ -250,8 +250,6 @@ pub async fn get_cross_app_dashboard(
     Ok(Json(results))
 }
 
-
-
 #[derive(Debug, Deserialize)]
 pub struct CombineRequest {
     pub primary: String,

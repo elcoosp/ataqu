@@ -452,9 +452,9 @@ async fn main() -> anyhow::Result<()> {
                     record_id,
                     fields,
                 } => {
-                    let fields_json: serde_json::Value = serde_json::from_str(&fields)
+                    let fields_json: serde_json::Value = serde_json::from_str(fields)
                         .map_err(|e| format!("Invalid fields JSON: {}", e))?;
-                    let record_uuid = Uuid::parse_str(&record_id)
+                    let record_uuid = Uuid::parse_str(record_id)
                         .map_err(|e| format!("Invalid record_id: {}", e))?;
                     let tenant_id = *tenant_id;
 
@@ -712,7 +712,6 @@ async fn main() -> anyhow::Result<()> {
 
     // S3 stub
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
-
 
     // Onboarding & Changelog stubs
     let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -1038,7 +1037,7 @@ async fn main() -> anyhow::Result<()> {
             registry
                 .dispatch(event)
                 .await
-                .map_err(|e| ataqu_infra_outbox::DispatcherError::Handler(e))
+                .map_err(ataqu_infra_outbox::DispatcherError::Handler)
         }
     })
     .with_poll_interval(std::time::Duration::from_secs(5));

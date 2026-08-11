@@ -1,7 +1,7 @@
-use ataqu_security::encryption::Encryptor;
 use async_trait::async_trait;
 use ataqu_domain_shopify::{ShopifyIntegration, ShopifyRepository};
 use ataqu_kernel::TenantId;
+use ataqu_security::encryption::Encryptor;
 use chrono::Utc;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
@@ -77,7 +77,10 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
         Ok(())
     }
 
-    async fn list_integrations(&self, tenant_id: &TenantId) -> Result<Vec<ShopifyIntegration>, String> {
+    async fn list_integrations(
+        &self,
+        tenant_id: &TenantId,
+    ) -> Result<Vec<ShopifyIntegration>, String> {
         use crate::entities::shopify as entity;
         let encryptor = Encryptor::from_env();
         let models = entity::Entity::find()
@@ -87,7 +90,13 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
             .map_err(|e| e.to_string())?;
         let mut ints = Vec::new();
         for m in models {
-            let decrypted_token = encryptor.decrypt(&m.access_token);
+            let decrypted_token = match encryptor.decrypt(&m.access_token) {
+                Ok(token) => token,
+                Err(e) => {
+                    tracing::error!("Failed to decrypt token for integration {}: {}", m.id, e);
+                    "".to_string()
+                }
+            };
             ints.push(ShopifyIntegration {
                 id: m.id,
                 tenant_id: TenantId::new(m.tenant_id),

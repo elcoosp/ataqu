@@ -1,13 +1,11 @@
 use ataqu_infra_outbox::OutboxEvent;
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::Arc;
 
 pub type EventHandler = Arc<
-    dyn Fn(OutboxEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>>
-        + Send
-        + Sync,
+    dyn Fn(OutboxEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync,
 >;
 
 #[derive(Clone)]
@@ -33,7 +31,7 @@ impl EventRegistry {
                 Box::pin(handler(evt))
             },
         );
-        self.handlers.entry(key).or_insert_with(Vec::new).push(wrapped);
+        self.handlers.entry(key).or_default().push(wrapped);
     }
 
     pub async fn dispatch(&self, event: OutboxEvent) -> Result<(), String> {

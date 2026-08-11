@@ -12,14 +12,12 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, Statu
 
     if let Some(origin) = origin {
         let host = headers.get("host").and_then(|v| v.to_str().ok());
-        if let Some(host) = host {
-            if let Ok(origin_url) = Url::parse(origin) {
-                if let Some(origin_host) = origin_url.host_str() {
-                    if origin_host == host || origin_host.ends_with(&format!(".{}", host)) {
-                        return Ok(next.run(req).await);
-                    }
-                }
-            }
+        if let Some(host) = host
+            && let Ok(origin_url) = Url::parse(origin)
+            && let Some(origin_host) = origin_url.host_str()
+            && (origin_host == host || origin_host.ends_with(&format!(".{}", host)))
+        {
+            return Ok(next.run(req).await);
         }
         return Err(StatusCode::FORBIDDEN);
     }

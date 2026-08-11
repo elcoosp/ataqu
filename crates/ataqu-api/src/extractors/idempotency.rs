@@ -1,12 +1,14 @@
 use crate::{AppState, error::ApiResponseError, middleware::idempotency::IDEMPOTENCY_CACHE};
-use axum::http::HeaderMap;
-use ataqu_infra_idempotency::{IdempotencyGuard, AcquireOutcome, CachedResponse, SeaOrmIdempotencyStore};
-use uuid::Uuid;
-use sea_orm::DatabaseTransaction;
-use std::future::Future;
-use serde::Serialize;
+use ataqu_infra_idempotency::{
+    AcquireOutcome, CachedResponse, IdempotencyGuard, SeaOrmIdempotencyStore,
+};
 use axum::Json;
+use axum::http::HeaderMap;
 use axum::response::{IntoResponse, Response};
+use sea_orm::DatabaseTransaction;
+use serde::Serialize;
+use std::future::Future;
+use uuid::Uuid;
 
 /// Acquire idempotency lock and return (command_id, optional guard, optional cached response)
 pub async fn acquire_idempotency(
@@ -34,9 +36,9 @@ pub async fn acquire_idempotency(
         .map_err(|e| {
             use ataqu_infra_idempotency::IdempotencyError;
             match e {
-                IdempotencyError::LockTimeout => {
-                    ApiResponseError::ServiceUnavailable("Idempotency lock timeout, please retry".to_string())
-                }
+                IdempotencyError::LockTimeout => ApiResponseError::ServiceUnavailable(
+                    "Idempotency lock timeout, please retry".to_string(),
+                ),
                 _ => ApiResponseError::internal(&format!("Idempotency error: {}", e)),
             }
         })?;
@@ -47,9 +49,7 @@ pub async fn acquire_idempotency(
             IDEMPOTENCY_CACHE.insert(command_id.to_string(), cached.clone());
             Ok((command_id, None, Some(cached)))
         }
-        AcquireOutcome::Proceed(guard) => {
-            Ok((command_id, Some(guard), None))
-        }
+        AcquireOutcome::Proceed(guard) => Ok((command_id, Some(guard), None)),
     }
 }
 
@@ -73,9 +73,13 @@ where
             let status = response.status();
             let body_bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
                 .await
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to read response body: {}", e)))?;
-            let body_json: serde_json::Value = serde_json::from_slice(&body_bytes)
-                .map_err(|e| ApiResponseError::internal(&format!("Failed to parse response body: {}", e)))?;
+                .map_err(|e| {
+                    ApiResponseError::internal(&format!("Failed to read response body: {}", e))
+                })?;
+            let body_json: serde_json::Value =
+                serde_json::from_slice(&body_bytes).map_err(|e| {
+                    ApiResponseError::internal(&format!("Failed to parse response body: {}", e))
+                })?;
             let headers = std::collections::HashMap::new(); // We can extract headers if needed
             let cached = CachedResponse {
                 status: status.as_u16(),
@@ -83,9 +87,9 @@ where
                 body: body_json,
             };
             // Complete guard and cache
-            guard.complete(cached.clone())
-                .await
-                .map_err(|e| ApiResponseError::internal(&format!("Idempotency completion failed: {}", e)))?;
+            guard.complete(cached.clone()).await.map_err(|e| {
+                ApiResponseError::internal(&format!("Idempotency completion failed: {}", e))
+            })?;
             // Also cache in Moka
             IDEMPOTENCY_CACHE.insert(command_id.to_string(), cached);
             // Rebuild response
@@ -97,16 +101,16 @@ where
         }
         Err(e) if e.is_validation() => {
             // Mark as failed and return error
-            guard.fail()
-                .await
-                .map_err(|e| ApiResponseError::internal(&format!("Idempotency failure update failed: {}", e)))?;
+            guard.fail().await.map_err(|e| {
+                ApiResponseError::internal(&format!("Idempotency failure update failed: {}", e))
+            })?;
             Err(e)
         }
         Err(e) => {
             // Abort transaction (rollback)
-            guard.abort()
-                .await
-                .map_err(|e| ApiResponseError::internal(&format!("Idempotency abort failed: {}", e)))?;
+            guard.abort().await.map_err(|e| {
+                ApiResponseError::internal(&format!("Idempotency abort failed: {}", e))
+            })?;
             Err(e)
         }
     }

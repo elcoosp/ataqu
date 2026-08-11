@@ -7,9 +7,9 @@ use axum::{
     response::{IntoResponse, Json},
 };
 use chrono::{DateTime, Utc};
+use hmac::Mac;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use hmac::Mac;
 
 use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
@@ -653,7 +653,8 @@ pub async fn shopify_auth_start(
     let state_str = format!("{}_{}", auth.tenant_id.as_uuid(), auth.user_id);
     let redirect_uri = std::env::var("SHOPIFY_REDIRECT_URI")
         .unwrap_or_else(|_| "https://api.ataqu.com/api/v1/vault/shopify/callback".to_string());
-    let shop = std::env::var("SHOPIFY_SHOP").unwrap_or_else(|_| "your-shop.myshopify.com".to_string());
+    let shop =
+        std::env::var("SHOPIFY_SHOP").unwrap_or_else(|_| "your-shop.myshopify.com".to_string());
     let client_id = std::env::var("SHOPIFY_CLIENT_ID").unwrap_or_default();
     let url = format!(
         "https://{}/admin/oauth/authorize?client_id={}&scope=read_products,write_products,read_inventory,write_inventory&redirect_uri={}&state={}",
@@ -685,7 +686,8 @@ pub async fn shopify_callback(
         .json()
         .await
         .map_err(|_| ApiResponseError::internal("Invalid token response"))?;
-    let access_token = token_data["access_token"].as_str()
+    let access_token = token_data["access_token"]
+        .as_str()
         .ok_or_else(|| ApiResponseError::internal("Missing access token"))?;
 
     // Parse state to get tenant_id
@@ -694,7 +696,8 @@ pub async fn shopify_callback(
     if state_parts.is_empty() {
         return Err(ApiResponseError::validation("Invalid state"));
     }
-    let tenant_id = Uuid::parse_str(state_parts[0]).map_err(|_| ApiResponseError::validation("Invalid tenant"))?;
+    let tenant_id = Uuid::parse_str(state_parts[0])
+        .map_err(|_| ApiResponseError::validation("Invalid tenant"))?;
 
     let integration = ShopifyIntegration {
         id: Uuid::new_v4(),
@@ -705,7 +708,11 @@ pub async fn shopify_callback(
         created_at: chrono::Utc::now(),
     };
 
-    state.shopify_service.repo.save_integration(&integration).await
+    state
+        .shopify_service
+        .repo
+        .save_integration(&integration)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
     Ok(Json(serde_json::json!({
@@ -720,25 +727,39 @@ pub async fn shopify_webhook(
     headers: axum::http::HeaderMap,
     __body: String,
 ) -> ApiResult<StatusCode> {
-    let topic = headers.get("X-Shopify-Topic").and_then(|v| v.to_str().ok()).unwrap_or("");
-    let shop_domain = headers.get("X-Shopify-Shop-Domain").and_then(|v| v.to_str().ok()).unwrap_or("");
-    let signature_header = headers.get("X-Shopify-Hmac-Sha256").and_then(|v| v.to_str().ok());
+    let topic = headers
+        .get("X-Shopify-Topic")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    let shop_domain = headers
+        .get("X-Shopify-Shop-Domain")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    let signature_header = headers
+        .get("X-Shopify-Hmac-Sha256")
+        .and_then(|v| v.to_str().ok());
 
     if topic.is_empty() || shop_domain.is_empty() {
         return Ok(StatusCode::BAD_REQUEST);
     }
 
     // Find integration by shop_domain
-    let integrations = state.shopify_service.repo.list_active_integrations().await
+    let integrations = state
+        .shopify_service
+        .repo
+        .list_active_integrations()
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let integration = integrations.iter().find(|i| i.shop_domain == shop_domain)
+    let integration = integrations
+        .iter()
+        .find(|i| i.shop_domain == shop_domain)
         .ok_or_else(|| ApiResponseError::not_found("Shopify integration not found"))?;
 
     // Verify HMAC signature if header present
     if let Some(sig) = signature_header {
         use sha2::Sha256;
         let secret = integration.access_token.as_bytes(); // Shopify uses the access token as secret for webhooks
-        let mut mac = <hmac::Hmac::<Sha256> as hmac::Mac>::new_from_slice(secret)
+        let mut mac = <hmac::Hmac<Sha256> as hmac::Mac>::new_from_slice(secret)
             .map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;
         mac.update(__body.as_bytes());
         let computed = hex::encode(mac.finalize().into_bytes());
@@ -766,25 +787,31 @@ pub async fn shopify_webhook(
                 // looking up the product and variant IDs from Shopify.
                 // For MVP, we'll skip if we can't find the variant.
                 let sku = payload.get("sku").and_then(|v| v.as_str());
-                if let Some(sku) = sku {
-                    if let Ok(Some(variant)) = state.vault_service.find_variant_by_sku(
-                        ataqu_kernel::TenantId::new(integration.tenant_id.as_uuid()),
-                        sku.to_string(),
-                    ).await {
-                        let delta = available - variant.stock_quantity;
-                        if delta != 0 {
-                            let _ = state.vault_service.update_stock(
-                                ataqu_application::vault_service::UpdateStockCommand {
-                                    tenant_id: ataqu_kernel::TenantId::new(integration.tenant_id.as_uuid()),
-                                    variant_id: variant.id,
-                                    delta,
-                                    reason: "shopify_webhook".to_string(),
-                                    reference: Some(format!("webhook_{}", uuid::Uuid::new_v4())),
-                                    alert_channel_id: None,
-                                    expected_version: variant.version,
-                                }
-                            ).await;
-                        }
+                if let Some(sku) = sku
+                    && let Ok(Some(variant)) = state
+                        .vault_service
+                        .find_variant_by_sku(
+                            ataqu_kernel::TenantId::new(integration.tenant_id.as_uuid()),
+                            sku.to_string(),
+                        )
+                        .await
+                {
+                    let delta = available - variant.stock_quantity;
+                    if delta != 0 {
+                        let _ = state
+                            .vault_service
+                            .update_stock(ataqu_application::vault_service::UpdateStockCommand {
+                                tenant_id: ataqu_kernel::TenantId::new(
+                                    integration.tenant_id.as_uuid(),
+                                ),
+                                variant_id: variant.id,
+                                delta,
+                                reason: "shopify_webhook".to_string(),
+                                reference: Some(format!("webhook_{}", uuid::Uuid::new_v4())),
+                                alert_channel_id: None,
+                                expected_version: variant.version,
+                            })
+                            .await;
                     }
                 }
             }
@@ -804,8 +831,13 @@ pub async fn shopify_webhook(
 
 // Helper for constant time comparison
 fn constant_time_eq(a: &str, b: &str) -> bool {
-    if a.len() != b.len() { return false; }
-    a.bytes().zip(b.bytes()).fold(0, |acc, (x, y)| acc | (x ^ y)) == 0
+    if a.len() != b.len() {
+        return false;
+    }
+    a.bytes()
+        .zip(b.bytes())
+        .fold(0, |acc, (x, y)| acc | (x ^ y))
+        == 0
 }
 
 pub async fn shopify_sync(
@@ -813,22 +845,31 @@ pub async fn shopify_sync(
     auth: AuthContext,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
-    let integrations = state.shopify_service.repo.list_integrations(&auth.tenant_id).await
+    let integrations = state
+        .shopify_service
+        .repo
+        .list_integrations(&auth.tenant_id)
+        .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let integration = integrations.first().ok_or_else(|| ApiResponseError::not_found("Shopify not connected"))?;
+    let integration = integrations
+        .first()
+        .ok_or_else(|| ApiResponseError::not_found("Shopify not connected"))?;
 
     let client = state.http_client.clone();
     let shopify_service = state.shopify_service.clone();
     let integration_clone = integration.clone();
     tokio::spawn(async move {
-        let _ = shopify_service.sync_tenant_inventory(&integration_clone, &client).await;
+        let _ = shopify_service
+            .sync_tenant_inventory(&integration_clone, &client)
+            .await;
     });
 
     Ok(StatusCode::ACCEPTED)
 }
-
 
 #[derive(Debug, serde::Deserialize)]
 pub struct BulkDeleteIdsRequest {

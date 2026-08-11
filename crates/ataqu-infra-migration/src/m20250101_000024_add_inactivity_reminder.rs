@@ -11,8 +11,9 @@ impl MigrationTrait for Migration {
             r#"
             ALTER TABLE core.onboarding_progress
             ADD COLUMN IF NOT EXISTS inactivity_reminder_sent_at TIMESTAMPTZ;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         Ok(())
     }
 

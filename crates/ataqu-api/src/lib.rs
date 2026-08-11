@@ -16,7 +16,7 @@ use tokio::sync::mpsc::Sender;
 use uuid::Uuid;
 
 use crate::middleware::rate_limit::RateLimiter;
-use ataqu_application::{ 
+use ataqu_application::{
     aegis_service::AegisService, cinq_service::CinqService, dial_service::DialService,
     pause_service::PauseService, pivot_service::PivotService, sond_service::SondService,
     spark_service::SparkService, tempo_service::TempoService, vault_service::VaultService,
@@ -26,10 +26,10 @@ use ataqu_infra_repositories::email_tracking_writer::TrackingEvent;
 use ataqu_kernel::{Clock, IdGenerator};
 
 pub mod error;
+pub mod extractors;
 pub mod handlers;
 pub mod middleware;
 pub mod serializers;
-pub mod extractors;
 
 pub use ataqu_infra_storage::s3_service::S3Service;
 
@@ -73,7 +73,6 @@ pub struct AppState {
     pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>,
     pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
     pub audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
-
 }
 
 async fn security_headers_middleware(
@@ -159,6 +158,7 @@ pub fn create_router(state: AppState) -> Router {
     use handlers::aegis::routes as aegis_routes;
     use handlers::cinq::routes as cinq_routes;
     use handlers::dial::routes as dial_routes;
+    use handlers::migration::routes as migration_routes;
     use handlers::pause::routes as pause_routes;
     use handlers::pivot::routes as pivot_routes;
     use handlers::sond::routes as sond_routes;
@@ -166,7 +166,6 @@ pub fn create_router(state: AppState) -> Router {
     use handlers::tempo::routes as tempo_routes;
     use handlers::vault::routes as vault_routes;
     use handlers::vista::routes as vista_routes;
-    use handlers::migration::routes as migration_routes;
 
     let public_routes = Router::new()
         .nest("/api/sond", handlers::sond::public_routes())
@@ -185,7 +184,7 @@ pub fn create_router(state: AppState) -> Router {
                 } else {
                     Ok(next.run(req).await)
                 }
-            }
+            },
         ))
         .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
@@ -195,7 +194,7 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::rate_limit::rate_limit_middleware,
         ))
         .layer(axum::middleware::from_fn(request_id_middleware));
-            let private_routes = Router::new()
+    let private_routes = Router::new()
         .route(
             "/api/v1/onboarding/status",
             get(handlers::onboarding::get_status),

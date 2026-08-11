@@ -304,8 +304,8 @@ impl AuthRepository for AegisUserRepository {
         app: String,
         role: String,
     ) -> Result<(), AuthError> {
-        use sea_orm::Statement;
         use sea_orm::DbBackend;
+        use sea_orm::Statement;
         let sql = r#"
             INSERT INTO core.permissions (tenant_id, user_id, app, role, created_at, updated_at)
             VALUES ($1, $2, $3, $4, NOW(), NOW())
@@ -328,5 +328,4 @@ impl AuthRepository for AegisUserRepository {
             .map_err(|e| AuthError::Database(e.to_string()))?;
         Ok(())
     }
-
 }

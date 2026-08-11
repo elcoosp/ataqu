@@ -142,7 +142,11 @@ impl SondRepository for SondRepositoryImpl {
         Ok(())
     }
 
-    async fn delete_submission(&self, tenant_id: TenantId, submission_id: Uuid) -> Result<(), SondError> {
+    async fn delete_submission(
+        &self,
+        tenant_id: TenantId,
+        submission_id: Uuid,
+    ) -> Result<(), SondError> {
         use response_entity as entity;
         entity::Entity::delete_many()
             .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))

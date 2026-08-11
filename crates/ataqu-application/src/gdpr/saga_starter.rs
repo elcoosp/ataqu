@@ -14,7 +14,7 @@ impl GdprSagaStarter {
     pub async fn handle_event(&self, tenant_id: Uuid) -> Result<(), String> {
         info!(tenant_id = %tenant_id, "Starting GDPR saga");
         let exists: Option<bool> = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM core.gdpr_saga_state WHERE tenant_id = $1)"
+            "SELECT EXISTS(SELECT 1 FROM core.gdpr_saga_state WHERE tenant_id = $1)",
         )
         .bind(tenant_id)
         .fetch_one(&self.db)

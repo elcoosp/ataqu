@@ -146,10 +146,6 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
     result == 0
 }
 
-
-
-
-
 pub struct RealAegisDomain;
 
 impl RealAegisDomain {
@@ -229,8 +225,12 @@ impl RealAegisDomain {
         Ok(updated_user)
     }
 
-
-    pub fn verify_mfa(&self, user: &User, code: &str, clock: &dyn Clock) -> Result<bool, AegisServiceError> {
+    pub fn verify_mfa(
+        &self,
+        user: &User,
+        code: &str,
+        clock: &dyn Clock,
+    ) -> Result<bool, AegisServiceError> {
         let secret = user
             .mfa_secret
             .as_deref()
@@ -401,7 +401,8 @@ impl AegisService {
             .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
         let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
-        let (access, refresh) = generate_token_pair(&updated_user, &email_str, &self.config, self.clock.as_ref())?;
+        let (access, refresh) =
+            generate_token_pair(&updated_user, &email_str, &self.config, self.clock.as_ref())?;
         self.repo.save_user(&updated_user).await?;
         Ok(AuthenticateResponse {
             access_token: access,
@@ -486,7 +487,8 @@ impl AegisService {
             .email
             .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
-        let (access, refresh) = generate_token_pair(&user, &email_str, &self.config, self.clock.as_ref())?;
+        let (access, refresh) =
+            generate_token_pair(&user, &email_str, &self.config, self.clock.as_ref())?;
         Ok(AuthenticateResponse {
             access_token: access,
             refresh_token: refresh,
@@ -771,13 +773,13 @@ impl AegisService {
         email: Email,
         tenant_id: ataqu_kernel::TenantId,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
-        let user =
-            self.repo
-                .find_by_email(&email, Some(tenant_id))
-                .await?
-                .ok_or(AegisServiceError::NotFound(
-                    "User not found in this tenant. Please sign up first.".to_string(),
-                ))?;
+        let user = self
+            .repo
+            .find_by_email(&email, Some(tenant_id))
+            .await?
+            .ok_or(AegisServiceError::NotFound(
+                "User not found in this tenant. Please sign up first.".to_string(),
+            ))?;
 
         if !user.is_active {
             return Err(AegisServiceError::AuthenticationFailed);
@@ -787,7 +789,8 @@ impl AegisService {
             .email
             .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
-        let (access, refresh) = generate_token_pair(&user, &email_str, &self.config, self.clock.as_ref())?;
+        let (access, refresh) =
+            generate_token_pair(&user, &email_str, &self.config, self.clock.as_ref())?;
         Ok(AuthenticateResponse {
             access_token: access,
             refresh_token: refresh,
@@ -846,7 +849,8 @@ impl AegisService {
             .email
             .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
-        let reset_token = generate_reset_token(&user, &email_str, &self.config, self.clock.as_ref())?;
+        let reset_token =
+            generate_reset_token(&user, &email_str, &self.config, self.clock.as_ref())?;
         let payload = serde_json::json!({
             "user_id": user.id,
             "tenant_id": user.tenant_id.as_uuid(),
@@ -995,13 +999,21 @@ impl AegisService {
         role: String,
     ) -> Result<(), AegisServiceError> {
         // Validate app and role
-        const VALID_APPS: &[&str] = &["aegis", "cinq", "dial", "pause", "pivot", "sond", "spark", "tempo", "vault", "vista"];
+        const VALID_APPS: &[&str] = &[
+            "aegis", "cinq", "dial", "pause", "pivot", "sond", "spark", "tempo", "vault", "vista",
+        ];
         if !VALID_APPS.contains(&app.as_str()) {
-            return Err(AegisServiceError::Validation(format!("Invalid app: {}", app)));
+            return Err(AegisServiceError::Validation(format!(
+                "Invalid app: {}",
+                app
+            )));
         }
         const VALID_ROLES: &[&str] = &["admin", "editor", "viewer", "none"];
         if !VALID_ROLES.contains(&role.as_str()) {
-            return Err(AegisServiceError::Validation(format!("Invalid role: {}", role)));
+            return Err(AegisServiceError::Validation(format!(
+                "Invalid role: {}",
+                role
+            )));
         }
 
         // Check user exists and belongs to tenant
@@ -1011,14 +1023,18 @@ impl AegisService {
             .await?
             .ok_or(AegisServiceError::NotFound("User not found".into()))?;
         if user.tenant_id != tenant_id {
-            return Err(AegisServiceError::NotFound("User not found in this tenant".into()));
+            return Err(AegisServiceError::NotFound(
+                "User not found in this tenant".into(),
+            ));
         }
 
         // Prepare audit log payload before moving values
         let audit_payload = serde_json::json!({ "app": app.clone(), "role": role.clone() });
 
         // Upsert permission
-        self.repo.upsert_permission(tenant_id, user_id, app, role).await?;
+        self.repo
+            .upsert_permission(tenant_id, user_id, app, role)
+            .await?;
 
         // Audit log
         self.audit_repo
@@ -1035,9 +1051,8 @@ impl AegisService {
                 None,
             )
             .await
-            .map_err(|e| AegisServiceError::Internal(e))?;
+            .map_err(AegisServiceError::Internal)?;
 
         Ok(())
     }
-
 }

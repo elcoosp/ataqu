@@ -1,8 +1,7 @@
 use sqlx::{PgPool, Row};
 
-
 use std::time::Duration;
-use tracing::{info, error, warn};
+use tracing::{error, info, warn};
 
 pub async fn run_cron_worker(pool: PgPool) {
     info!("Cron worker started");
@@ -24,9 +23,10 @@ async fn poll_tasks(pool: &PgPool) -> Result<(), sqlx::Error> {
         ORDER BY scheduled_for
         FOR UPDATE SKIP LOCKED
         LIMIT 10
-        "#
+        "#,
     )
-    .fetch_all(&mut *txn).await?;
+    .fetch_all(&mut *txn)
+    .await?;
 
     for row in rows {
         let id: uuid::Uuid = row.try_get("id")?;
@@ -59,44 +59,43 @@ async fn poll_tasks(pool: &PgPool) -> Result<(), sqlx::Error> {
                     payload.get("channel_id").and_then(|v| v.as_str()),
                     payload.get("message").and_then(|v| v.as_str()),
                     payload.get("user_id").and_then(|v| v.as_str()),
+                ) && let (Ok(channel_id), Ok(user_id)) = (
+                    uuid::Uuid::parse_str(channel_id_str),
+                    uuid::Uuid::parse_str(user_id_str),
                 ) {
-                    if let (Ok(channel_id), Ok(user_id)) = (
-                        uuid::Uuid::parse_str(channel_id_str),
-                        uuid::Uuid::parse_str(user_id_str),
-                    ) {
-                        let event_payload = serde_json::json!({
-                            "type": "reminder",
-                            "tenant_id": tenant_id,
-                            "channel_id": channel_id,
-                            "user_id": user_id,
-                            "message": message,
-                        });
-                        let outbox_sql = r#"
+                    let event_payload = serde_json::json!({
+                        "type": "reminder",
+                        "tenant_id": tenant_id,
+                        "channel_id": channel_id,
+                        "user_id": user_id,
+                        "message": message,
+                    });
+                    let outbox_sql = r#"
                             INSERT INTO core.outbox (schema, event_type, aggregate_id, payload, status, priority)
                             VALUES ('dial', 'ReminderEvent', $1, $2, 'pending', 'normal')
                         "#;
-                        sqlx::query(outbox_sql)
-                            .bind(channel_id)
-                            .bind(&event_payload)
-                            .execute(&mut *txn)
-                            .await?;
-                        tracing::info!("Reminder event enqueued for channel {}", channel_id);
-                    }
+                    sqlx::query(outbox_sql)
+                        .bind(channel_id)
+                        .bind(&event_payload)
+                        .execute(&mut *txn)
+                        .await?;
+                    tracing::info!("Reminder event enqueued for channel {}", channel_id);
                 }
             }
             "cleanup" => {
                 // Perform cleanup tasks: delete old audit logs, etc.
                 if let Some(table) = payload.get("table").and_then(|v| v.as_str()) {
-                    let days = payload.get("older_than_days").and_then(|v| v.as_i64()).unwrap_or(30);
+                    let days = payload
+                        .get("older_than_days")
+                        .and_then(|v| v.as_i64())
+                        .unwrap_or(30);
                     if table == "core.audit_logs" {
                         let delete_sql = format!(
                             "DELETE FROM {} WHERE created_at < NOW() - INTERVAL '{} days'",
                             table, days
                         );
                         let sql_static: &'static str = Box::leak(delete_sql.into_boxed_str());
-                        sqlx::query(sql_static)
-                            .execute(&mut *txn)
-                            .await?;
+                        sqlx::query(sql_static).execute(&mut *txn).await?;
                         tracing::info!("Cleaned up {} older than {} days", table, days);
                     }
                 }
@@ -106,11 +105,10 @@ async fn poll_tasks(pool: &PgPool) -> Result<(), sqlx::Error> {
             }
         }
         // Mark as completed
-        sqlx::query(
-            "UPDATE core.scheduled_tasks SET status = 'completed' WHERE id = $1"
-        )
-        .bind(id)
-        .execute(&mut *txn).await?;
+        sqlx::query("UPDATE core.scheduled_tasks SET status = 'completed' WHERE id = $1")
+            .bind(id)
+            .execute(&mut *txn)
+            .await?;
     }
 
     txn.commit().await?;

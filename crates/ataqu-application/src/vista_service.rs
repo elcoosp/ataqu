@@ -265,7 +265,12 @@ impl VistaService {
             "revenue" => ("collab_crm", "deals", "amount", "created_at"),
             "contacts_created" => ("collab_crm", "contacts", "id", "created_at"),
             "products_created" => ("vault", "products", "id", "created_at"),
-            _ => return Err(VistaServiceError::Validation(format!("Unsupported metric: {}", metric))),
+            _ => {
+                return Err(VistaServiceError::Validation(format!(
+                    "Unsupported metric: {}",
+                    metric
+                )));
+            }
         };
 
         // Build SQL: SELECT * FROM {schema}.{table} WHERE tenant_id = $1 AND date_trunc('month', {date_col}) = $2::date LIMIT $3
@@ -285,7 +290,9 @@ impl VistaService {
         // Parse value as date.
         let date = chrono::NaiveDate::parse_from_str(&value, "%Y-%m")
             .or_else(|_| chrono::NaiveDate::parse_from_str(&value, "%Y-%m-%d"))
-            .map_err(|_| VistaServiceError::Validation("Invalid date format, use YYYY-MM".to_string()))?;
+            .map_err(|_| {
+                VistaServiceError::Validation("Invalid date format, use YYYY-MM".to_string())
+            })?;
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             &sql,
@@ -296,7 +303,10 @@ impl VistaService {
             ],
         );
 
-        let rows = self.db.query_all_raw(stmt).await
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
             .map_err(|e| VistaServiceError::Repository(e.to_string()))?;
 
         let mut results = Vec::new();
@@ -343,7 +353,11 @@ impl VistaService {
         let view_name = match (primary_metric.as_str(), secondary_metric.as_str()) {
             ("revenue", "inventory") => "cross_app_revenue_inventory",
             ("support", "sales") => "cross_app_support_sales",
-            _ => return Err(VistaServiceError::Validation("Unsupported combination".to_string())),
+            _ => {
+                return Err(VistaServiceError::Validation(
+                    "Unsupported combination".to_string(),
+                ));
+            }
         };
 
         let sql = format!(
@@ -359,14 +373,13 @@ impl VistaService {
         let stmt = sea_orm::Statement::from_sql_and_values(
             sea_orm::DbBackend::Postgres,
             &sql,
-            [
-                tenant_id.as_uuid().into(),
-                from_date.into(),
-                to_date.into(),
-            ],
+            [tenant_id.as_uuid().into(), from_date.into(), to_date.into()],
         );
 
-        let rows = self.db.query_all_raw(stmt).await
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
             .map_err(|e| VistaServiceError::Repository(e.to_string()))?;
 
         let mut results = Vec::new();
@@ -380,5 +393,4 @@ impl VistaService {
         }
         Ok(results)
     }
-
 }

@@ -1,8 +1,8 @@
+use ataqu_domain_changelog::ChangelogEntry;
+use ataqu_infra_repositories::user_preferences_repo::UserPreferencesRepository;
 use chrono::{DateTime, NaiveDate, Utc};
 use sea_orm::{DatabaseConnection, DbBackend, DbErr, FromQueryResult, Statement};
 use uuid::Uuid;
-use ataqu_infra_repositories::user_preferences_repo::UserPreferencesRepository;
-use ataqu_domain_changelog::ChangelogEntry;
 
 // SeaORM query result type for database operations.
 #[derive(Debug, Clone, FromQueryResult)]
@@ -48,7 +48,9 @@ impl ChangelogService {
             "SELECT id, version, date, title, description, category, breaking_change, created_at FROM core.changelog ORDER BY date DESC, id DESC LIMIT $1",
             [limit.into()],
         );
-        let results: Vec<ChangelogQueryResult> = ChangelogQueryResult::find_by_statement(stmt).all(&self.db).await?;
+        let results: Vec<ChangelogQueryResult> = ChangelogQueryResult::find_by_statement(stmt)
+            .all(&self.db)
+            .await?;
         Ok(results.into_iter().map(Into::into).collect())
     }
 
@@ -58,7 +60,10 @@ impl ChangelogService {
         limit: i64,
     ) -> Result<Vec<ChangelogEntry>, DbErr> {
         let prefs_repo = UserPreferencesRepository::new(self.db.clone());
-        let last_read = prefs_repo.get_last_read_changelog(user_id).await.unwrap_or(None);
+        let last_read = prefs_repo
+            .get_last_read_changelog(user_id)
+            .await
+            .unwrap_or(None);
         let cutoff = last_read.unwrap_or(chrono::DateTime::from_timestamp(0, 0).unwrap());
         let stmt = Statement::from_sql_and_values(
             DbBackend::Postgres,
@@ -68,14 +73,19 @@ impl ChangelogService {
              ORDER BY c.date DESC, c.id DESC LIMIT $2",
             [cutoff.into(), limit.into()],
         );
-        let results: Vec<ChangelogQueryResult> = ChangelogQueryResult::find_by_statement(stmt).all(&self.db).await?;
+        let results: Vec<ChangelogQueryResult> = ChangelogQueryResult::find_by_statement(stmt)
+            .all(&self.db)
+            .await?;
         Ok(results.into_iter().map(Into::into).collect())
     }
 
     pub async fn mark_read(&self, user_id: Uuid) -> Result<(), DbErr> {
         let prefs_repo = UserPreferencesRepository::new(self.db.clone());
         let now = Utc::now();
-        prefs_repo.update_last_read_changelog(user_id, now).await.map_err(|e| DbErr::Custom(e.to_string()))?;
+        prefs_repo
+            .update_last_read_changelog(user_id, now)
+            .await
+            .map_err(|e| DbErr::Custom(e.to_string()))?;
         Ok(())
     }
 }

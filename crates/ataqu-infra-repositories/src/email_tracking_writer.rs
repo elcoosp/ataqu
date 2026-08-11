@@ -86,7 +86,14 @@ impl EmailTrackingWriter {
         let mut params = Vec::new();
         let mut param_idx = 1;
         for event in events {
-            values.push(format!("(${}, ${}, ${}, ${}, ${})", param_idx, param_idx+1, param_idx+2, param_idx+3, param_idx+4));
+            values.push(format!(
+                "(${}, ${}, ${}, ${}, ${})",
+                param_idx,
+                param_idx + 1,
+                param_idx + 2,
+                param_idx + 3,
+                param_idx + 4
+            ));
             params.push(event.tenant_id.into());
             params.push(event.contact_id.into());
             params.push(event.event_type.clone().into());
@@ -94,7 +101,10 @@ impl EmailTrackingWriter {
             params.push(event.occurred_at.into());
             param_idx += 5;
         }
-        let sql = format!("INSERT INTO collab_crm.email_tracking (tenant_id, contact_id, event_type, metadata, occurred_at) VALUES {}", values.join(", "));
+        let sql = format!(
+            "INSERT INTO collab_crm.email_tracking (tenant_id, contact_id, event_type, metadata, occurred_at) VALUES {}",
+            values.join(", ")
+        );
         self.db_pool
             .execute_raw(Statement::from_sql_and_values(
                 DatabaseBackend::Postgres,
@@ -174,10 +184,13 @@ impl EmailTrackingWriter {
                 warn!("Invalid JSON line in spill file: {}", line);
             }
         }
-        if !batch.is_empty() {
-            if let Err(e) = self.insert_batch(&batch).await {
-                warn!("Failed to insert remaining batch of recovered events: {}", e);
-            }
+        if !batch.is_empty()
+            && let Err(e) = self.insert_batch(&batch).await
+        {
+            warn!(
+                "Failed to insert remaining batch of recovered events: {}",
+                e
+            );
         }
         Ok(())
     }

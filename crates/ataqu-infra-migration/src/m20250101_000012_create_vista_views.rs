@@ -10,21 +10,21 @@ impl MigrationName for Migration {
 
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
-    
-    
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
         // Check if dial.tickets exists before creating the view.
         // If it doesn't exist, we'll skip the support_sales view creation.
         let check_sql = "SELECT to_regclass('dial.tickets')";
-        let stmt = sea_orm::Statement::from_sql_and_values(
-            sea_orm::DbBackend::Postgres,
-            check_sql,
-            [],
-        );
+        let stmt =
+            sea_orm::Statement::from_sql_and_values(sea_orm::DbBackend::Postgres, check_sql, []);
         let rows = db.query_all_raw(stmt).await?;
-        let tickets_exists = !rows.is_empty() && rows[0].try_get::<Option<String>>("", "to_regclass").ok().flatten().is_some();
+        let tickets_exists = !rows.is_empty()
+            && rows[0]
+                .try_get::<Option<String>>("", "to_regclass")
+                .ok()
+                .flatten()
+                .is_some();
 
         let revenue_inventory = r#"
             CREATE MATERIALIZED VIEW IF NOT EXISTS vista.cross_app_revenue_inventory AS
@@ -71,8 +71,6 @@ impl MigrationTrait for Migration {
 
         Ok(())
     }
-
-
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager

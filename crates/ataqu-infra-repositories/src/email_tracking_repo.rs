@@ -2,8 +2,8 @@
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
 
-use crate::entities::email_tracking as tracking_entity;
 use crate::email_tracking_writer::TrackingEvent;
+use crate::entities::email_tracking as tracking_entity;
 use ataqu_domain_cinq::error::CinqDomainError;
 use ataqu_kernel::TenantId;
 

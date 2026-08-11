@@ -1,10 +1,10 @@
+use sea_orm_migration::MigratorTrait;
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
-use sea_orm_migration::MigratorTrait;
 
 fn print_help() {
     eprintln!("Usage: ataqu-admin <command> [args]");
-    eprintln!("");
+    eprintln!();
     eprintln!("Commands:");
     eprintln!("  health           - Check server health");
     eprintln!("  flush-cache      - Flush idempotency cache");
@@ -31,13 +31,14 @@ fn main() {
     }
 
     if command == "migrate" {
-        let db_url = std::env::var("DATABASE_URL")
-            .expect("DATABASE_URL must be set");
+        let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let runtime = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
         runtime.block_on(async {
-            let db = sea_orm::Database::connect(&db_url).await
+            let db = sea_orm::Database::connect(&db_url)
+                .await
                 .expect("Failed to connect to database");
-            ataqu_infra_migration::Migrator::up(&db, None).await
+            ataqu_infra_migration::Migrator::up(&db, None)
+                .await
                 .expect("Migration failed");
             println!("Migrations applied successfully.");
         });

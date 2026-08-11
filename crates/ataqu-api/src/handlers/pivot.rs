@@ -616,7 +616,6 @@ pub async fn apply_template(
     ))
 }
 
-
 #[derive(Debug, serde::Deserialize)]
 pub struct BulkDeleteIdsRequest {
     pub ids: Vec<Uuid>,
@@ -642,7 +641,10 @@ pub fn routes() -> Router<AppState> {
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
         .route("/databases/:id", axum::routing::delete(delete_db))
         .route("/docs", axum::routing::post(create_doc).get(list_docs))
-        .route("/docs/bulk-delete", axum::routing::post(bulk_delete_documents))
+        .route(
+            "/docs/bulk-delete",
+            axum::routing::post(bulk_delete_documents),
+        )
         .route("/docs/:id/versions", axum::routing::get(list_doc_versions))
         .route(
             "/docs/:id",

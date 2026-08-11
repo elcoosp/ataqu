@@ -732,8 +732,6 @@ pub async fn upload_file(
     })))
 }
 
-
-
 #[derive(Debug, serde::Deserialize)]
 pub struct BulkDeleteIdsRequest {
     pub ids: Vec<Uuid>,

@@ -1,11 +1,11 @@
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::outbox::Outbox;
-use ataqu_domain_gdpr::{GdprSaga, GdprStep, saga::transition_saga};
 use ataqu_domain_gdpr::GdprRegistry;
+use ataqu_domain_gdpr::{GdprSaga, GdprStep, saga::transition_saga};
 
 pub struct GdprSagaRunner {
     db: PgPool,
@@ -35,16 +35,18 @@ impl GdprSagaRunner {
             WHERE step != 'complete'
             ORDER BY created_at ASC
             LIMIT 5
-            "#
+            "#,
         )
         .fetch_all(&self.db)
         .await
         .map_err(|e| format!("Failed to fetch sagas: {}", e))?;
 
         for row in rows {
-            let tenant_id: Uuid = row.try_get("tenant_id")
+            let tenant_id: Uuid = row
+                .try_get("tenant_id")
                 .map_err(|e| format!("Failed to parse tenant_id: {}", e))?;
-            let step_str: String = row.try_get("step")
+            let step_str: String = row
+                .try_get("step")
                 .map_err(|e| format!("Failed to parse step: {}", e))?;
             let step = match step_str.as_str() {
                 "deactivate_users" => GdprStep::DeactivateUsers,
@@ -54,17 +56,21 @@ impl GdprSagaRunner {
                 "complete" => GdprStep::Complete,
                 _ => continue,
             };
-            let retry_count: i32 = row.try_get("retry_count")
+            let retry_count: i32 = row
+                .try_get("retry_count")
                 .map_err(|e| format!("Failed to parse retry_count: {}", e))?;
-            let manifest_str: serde_json::Value = row.try_get("manifest")
+            let manifest_str: serde_json::Value = row
+                .try_get("manifest")
                 .map_err(|e| format!("Failed to parse manifest: {}", e))?;
-            let manifest: Vec<String> = serde_json::from_value(manifest_str)
-                .unwrap_or_default();
-            let trace_id: Uuid = row.try_get("trace_id")
+            let manifest: Vec<String> = serde_json::from_value(manifest_str).unwrap_or_default();
+            let trace_id: Uuid = row
+                .try_get("trace_id")
                 .map_err(|e| format!("Failed to parse trace_id: {}", e))?;
-            let created_at: chrono::DateTime<chrono::Utc> = row.try_get("created_at")
+            let created_at: chrono::DateTime<chrono::Utc> = row
+                .try_get("created_at")
                 .map_err(|e| format!("Failed to parse created_at: {}", e))?;
-            let updated_at: chrono::DateTime<chrono::Utc> = row.try_get("updated_at")
+            let updated_at: chrono::DateTime<chrono::Utc> = row
+                .try_get("updated_at")
                 .map_err(|e| format!("Failed to parse updated_at: {}", e))?;
 
             let mut saga = GdprSaga {
@@ -118,26 +124,20 @@ impl GdprSagaRunner {
 
     async fn execute_step(&self, saga: &GdprSaga) -> Result<(), String> {
         match saga.step {
-            GdprStep::DeactivateUsers => {
-                self.deactivate_users(saga.tenant_id).await
-            }
-            GdprStep::AnonymizePII => {
-                self.anonymize_pii(saga.tenant_id).await
-            }
+            GdprStep::DeactivateUsers => self.deactivate_users(saga.tenant_id).await,
+            GdprStep::AnonymizePII => self.anonymize_pii(saga.tenant_id).await,
             GdprStep::DeleteS3Files => {
                 info!(tenant_id = %saga.tenant_id, "Skipping S3 file deletion (not implemented)");
                 Ok(())
             }
-            GdprStep::PurgeTables => {
-                self.purge_tables(saga.tenant_id).await
-            }
+            GdprStep::PurgeTables => self.purge_tables(saga.tenant_id).await,
             GdprStep::Complete => Ok(()),
         }
     }
 
     async fn deactivate_users(&self, tenant_id: Uuid) -> Result<(), String> {
         sqlx::query(
-            "UPDATE core.users SET is_active = false, version = version + 1 WHERE tenant_id = $1"
+            "UPDATE core.users SET is_active = false, version = version + 1 WHERE tenant_id = $1",
         )
         .bind(tenant_id)
         .execute(&self.db)
@@ -170,7 +170,12 @@ impl GdprSagaRunner {
                 .bind(tenant_id)
                 .execute(&self.db)
                 .await
-                .map_err(|e| format!("Failed to purge table {}.{}: {}", table.schema, table.table, e))?;
+                .map_err(|e| {
+                    format!(
+                        "Failed to purge table {}.{}: {}",
+                        table.schema, table.table, e
+                    )
+                })?;
         }
         Ok(())
     }

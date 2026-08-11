@@ -604,7 +604,6 @@ pub async fn list_documents(
     Ok(Json(list))
 }
 
-
 #[derive(Debug, serde::Deserialize)]
 pub struct BulkDeleteIdsRequest {
     pub ids: Vec<Uuid>,
@@ -641,15 +640,26 @@ pub async fn bulk_approve_leave_requests(
     Json(payload): Json<BulkLeaveRequest>,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") && !auth.has_role("manager") {
-        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
     }
     for id in payload.ids {
         // For simplicity, ignore version in bulk; use latest version.
-        let request = state.pause_service.find_leave_request(&auth.tenant_id, id).await
+        let request = state
+            .pause_service
+            .find_leave_request(&auth.tenant_id, id)
+            .await
             .map_err(|_| ApiResponseError::not_found("Leave request not found"))?;
         state
             .pause_service
-            .approve_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, request.version)
+            .approve_leave(
+                &auth.tenant_id,
+                id,
+                auth.user_id,
+                &*state.clock,
+                request.version,
+            )
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }
@@ -662,14 +672,25 @@ pub async fn bulk_cancel_leave_requests(
     Json(payload): Json<BulkLeaveRequest>,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") && !auth.has_role("manager") {
-        return Err(ApiResponseError::Forbidden("Manager or Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
     }
     for id in payload.ids {
-        let request = state.pause_service.find_leave_request(&auth.tenant_id, id).await
+        let request = state
+            .pause_service
+            .find_leave_request(&auth.tenant_id, id)
+            .await
             .map_err(|_| ApiResponseError::not_found("Leave request not found"))?;
         state
             .pause_service
-            .cancel_leave(&auth.tenant_id, id, auth.user_id, &*state.clock, request.version)
+            .cancel_leave(
+                &auth.tenant_id,
+                id,
+                auth.user_id,
+                &*state.clock,
+                request.version,
+            )
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }
@@ -684,7 +705,10 @@ pub fn routes() -> Router<AppState> {
         .route("/employees/:id", put(update_employee))
         // Note: update_employee now requires If-Match header
         .route("/employees/:id/deactivate", post(deactivate_employee))
-        .route("/employees/bulk-deactivate", post(bulk_deactivate_employees))
+        .route(
+            "/employees/bulk-deactivate",
+            post(bulk_deactivate_employees),
+        )
         .route(
             "/leave-requests",
             post(request_leave).get(list_leave_requests),

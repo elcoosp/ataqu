@@ -349,7 +349,6 @@ pub fn public_routes() -> Router<AppState> {
         )
 }
 
-
 #[derive(Debug, serde::Deserialize)]
 pub struct BulkDeleteIdsRequest {
     pub ids: Vec<Uuid>,

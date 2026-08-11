@@ -11,16 +11,18 @@ impl MigrationTrait for Migration {
             r#"
             ALTER TABLE collab_ops.forms
             ADD COLUMN IF NOT EXISTS routing_rules JSONB;
-            "#
-        ).await?;
+            "#,
+        )
+        .await?;
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
         conn.execute_unprepared(
-            "ALTER TABLE collab_ops.forms DROP COLUMN IF EXISTS routing_rules;"
-        ).await?;
+            "ALTER TABLE collab_ops.forms DROP COLUMN IF EXISTS routing_rules;",
+        )
+        .await?;
         Ok(())
     }
 }

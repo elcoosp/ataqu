@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, DbErr, FromQueryResult, Statement};
 // serde not needed
-use uuid::Uuid;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::outbox::Outbox;
 use ataqu_domain_onboarding::{OnboardingStatus, calculate_progress};
@@ -70,13 +70,19 @@ impl OnboardingService {
         let rows = self.db.query_all_raw(stmt).await?;
         for row in rows {
             let tenant_id: Uuid = row.try_get("", "tenant_id").unwrap_or_default();
-            let last_active_at: chrono::DateTime<chrono::Utc> = row.try_get("", "last_active_at").unwrap_or(chrono::Utc::now());
+            let last_active_at: chrono::DateTime<chrono::Utc> = row
+                .try_get("", "last_active_at")
+                .unwrap_or(chrono::Utc::now());
             let payload = serde_json::json!({
                 "tenant_id": tenant_id,
                 "days_inactive": 7,
                 "last_active_at": last_active_at,
             });
-            if let Err(e) = self.outbox.append("core", "InactivityReminder", tenant_id, &payload).await {
+            if let Err(e) = self
+                .outbox
+                .append("core", "InactivityReminder", tenant_id, &payload)
+                .await
+            {
                 tracing::error!(error = %e, "Failed to emit InactivityReminder event");
             }
         }

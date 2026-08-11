@@ -55,9 +55,9 @@ pub async fn complete_task(
 }
 
 // New endpoint: team status
+use ataqu_security::PiiAccessKey;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use ataqu_security::PiiAccessKey;
 
 #[derive(Serialize)]
 pub struct TeamStatusUser {
@@ -103,7 +103,7 @@ pub async fn team_status(
             user_id: u.id,
             name: u.name,
             email: u.email.reveal(&PiiAccessKey::new()).to_string(),
-            last_login_at: u.last_login_at.map(|t| DateTime::<Utc>::from(t)),
+            last_login_at: u.last_login_at.map(DateTime::<Utc>::from),
             role: u.role,
             is_active: u.is_active,
         })

@@ -247,9 +247,11 @@ pub async fn sso_callback(
 
     let state_data: serde_json::Value = serde_json::from_str(&state_data_str)
         .map_err(|_| ApiResponseError::unauthorized("Invalid SSO state data"))?;
-    let provider_str = state_data["provider"].as_str()
+    let provider_str = state_data["provider"]
+        .as_str()
         .ok_or_else(|| ApiResponseError::unauthorized("Missing provider in SSO state"))?;
-    let tenant_id = state_data["tenant_id"].as_str()
+    let tenant_id = state_data["tenant_id"]
+        .as_str()
         .and_then(|s| uuid::Uuid::parse_str(s).ok())
         .ok_or_else(|| ApiResponseError::unauthorized("Missing tenant in SSO state"))?;
 
@@ -629,8 +631,6 @@ pub async fn get_audit_log(
     Ok(Json(resp))
 }
 
-
-
 pub async fn export_audit_log(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -660,29 +660,54 @@ pub async fn export_audit_log(
     // Export as CSV
     use csv::Writer;
     let mut wtr = Writer::from_writer(vec![]);
-    wtr.write_record(["id", "user_id", "action", "app", "entity_type", "entity_id", "old_value", "new_value", "ip_address", "user_agent", "created_at"])
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    wtr.write_record([
+        "id",
+        "user_id",
+        "action",
+        "app",
+        "entity_type",
+        "entity_id",
+        "old_value",
+        "new_value",
+        "ip_address",
+        "user_agent",
+        "created_at",
+    ])
+    .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     for l in &logs {
-        wtr.write_record(&[
+        wtr.write_record([
             &l.id.to_string(),
             &l.user_id.to_string(),
             &l.action,
             &l.app,
             l.entity_type.as_deref().unwrap_or(""),
             &l.entity_id.map(|id| id.to_string()).unwrap_or_default(),
-            &l.old_value.as_ref().map(|v| v.to_string()).unwrap_or_default(),
-            &l.new_value.as_ref().map(|v| v.to_string()).unwrap_or_default(),
+            &l.old_value
+                .as_ref()
+                .map(|v| v.to_string())
+                .unwrap_or_default(),
+            &l.new_value
+                .as_ref()
+                .map(|v| v.to_string())
+                .unwrap_or_default(),
             &l.ip_address.map(|ip| ip.to_string()).unwrap_or_default(),
             l.user_agent.as_deref().unwrap_or(""),
             &l.created_at.to_rfc3339(),
-        ]).map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    }
-    let data = String::from_utf8(wtr.into_inner().map_err(|e| ApiResponseError::internal(&e.to_string()))?)
+        ])
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    }
+    let data = String::from_utf8(
+        wtr.into_inner()
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?,
+    )
+    .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
     let headers = [
         (axum::http::header::CONTENT_TYPE, "text/csv".to_string()),
-        (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"audit_log.csv\"".to_string()),
+        (
+            axum::http::header::CONTENT_DISPOSITION,
+            "attachment; filename=\"audit_log.csv\"".to_string(),
+        ),
     ];
     Ok((StatusCode::OK, headers, data))
 }
@@ -699,20 +724,26 @@ pub async fn update_permission(
     Json(req): Json<UpdatePermissionRequest>,
 ) -> ApiResult<StatusCode> {
     if !auth.has_role("admin") {
-        return Err(ApiResponseError::Forbidden("Admin access required".to_string()));
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
     }
 
     // Validate app
-    const VALID_APPS: &[&str] = &["aegis", "cinq", "dial", "pause", "pivot", "sond", "spark", "tempo", "vault", "vista"];
+    const VALID_APPS: &[&str] = &[
+        "aegis", "cinq", "dial", "pause", "pivot", "sond", "spark", "tempo", "vault", "vista",
+    ];
     if !VALID_APPS.contains(&app.as_str()) {
         return Err(ApiResponseError::validation("Invalid app"));
     }
 
-    state.aegis_service.update_user_permission(auth.tenant_id, user_id, app, req.role).await
+    state
+        .aegis_service
+        .update_user_permission(auth.tenant_id, user_id, app, req.role)
+        .await
         .map_err(map_aegis_error)?;
     Ok(StatusCode::NO_CONTENT)
 }
-
 
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::{delete, get, patch, post};
@@ -729,7 +760,8 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/permission-matrix", get(get_permission_matrix))
         .route("/permissions/:user_id/:app", patch(update_permission))
         .route("/permissions/:user_id/:app", patch(update_permission))
-        .route("/permissions/:user_id/:app", patch(update_permission))}
+        .route("/permissions/:user_id/:app", patch(update_permission))
+}
 
 pub fn public_routes() -> axum::Router<crate::AppState> {
     use axum::routing::post;

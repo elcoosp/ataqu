@@ -71,5 +71,4 @@ impl HealthRepository {
             .and_then(|r| r.try_get_by_index::<i64>(0).ok())
             .unwrap_or(0))
     }
-
 }
