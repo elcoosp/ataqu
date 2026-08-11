@@ -57,6 +57,7 @@ pub trait PendingApprovalRepository: Send + Sync {
     async fn approve(&self, id: Uuid, approved_by: Uuid) -> Result<(), String>;
     async fn reject(&self, id: Uuid, approved_by: Uuid) -> Result<(), String>;
     async fn find_by_run_id(&self, tenant_id: TenantId, run_id: Uuid) -> Result<Option<PendingApproval>, String>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<PendingApproval>, String>;
 }
 
 pub struct SeaOrmPendingApprovalRepo {
@@ -166,6 +167,32 @@ impl PendingApprovalRepository for SeaOrmPendingApprovalRepo {
         let model = entity::Entity::find()
             .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .filter(entity::Column::RunId.eq(run_id))
+            .one(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if let Some(m) = model {
+            Ok(Some(PendingApproval {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                workflow_id: m.workflow_id,
+                run_id: m.run_id,
+                approver_role: m.approver_role,
+                status: m.status,
+                payload: m.payload,
+                approved_by: m.approved_by,
+                approved_at: m.approved_at,
+                created_at: m.created_at,
+                updated_at: m.updated_at,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<PendingApproval>, String> {
+        use pending_approval_entity as entity;
+        let model = entity::Entity::find_by_id(id)
             .one(&self.db)
             .await
             .map_err(|e| e.to_string())?;

@@ -19,3 +19,4 @@ pub mod shopify_service;
 pub mod import_worker;
 pub mod tempo_refresh_worker;
 pub mod audit;
+pub mod approval_worker;
