@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use chrono::{DateTime, Utc};
 use std::net::IpAddr;
 // AEGIS application service – orchestrates auth flows.

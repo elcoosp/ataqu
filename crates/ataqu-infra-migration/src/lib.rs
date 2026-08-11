@@ -138,6 +138,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000031_create_file_references::Migration),
             Box::new(m20250101_000032_seed_changelog::Migration),
             Box::new(m20250101_000033_populate_permissions::Migration),
+            Box::new(m20250101_000034_create_pending_approvals::Migration),
         ]
     }
 }
@@ -145,3 +146,4 @@ impl MigratorTrait for Migrator {
 pub mod m20250101_000013_create_shopify_integrations;
 mod m20250101_000032_seed_changelog;
 mod m20250101_000033_populate_permissions;
+mod m20250101_000034_create_pending_approvals;

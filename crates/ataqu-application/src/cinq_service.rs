@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 //! CINQ CRM orchestration service – uses domain repositories and outbox.
 use sea_orm::DatabaseConnection;
 use std::collections::HashMap;

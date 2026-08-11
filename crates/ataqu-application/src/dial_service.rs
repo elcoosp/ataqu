@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 // DIAL application service – orchestrates chat operations using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;

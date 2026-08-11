@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 //! SOND application service – orchestrates forms and responses using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
@@ -348,6 +349,11 @@ impl SondService {
                 None
             }
         });
+        // Evaluate routing rules
+        if let Some(rules) = &form.routing_rules {
+            self.evaluate_routing_rules(&form, &response, rules, &email, &name).await;
+        }
+
         let payload = serde_json::json!({
             "response_id": response.id,
             "tenant_id": response.tenant_id.as_uuid(),
@@ -362,6 +368,150 @@ impl SondService {
             .map_err(SondServiceError::Repository)?;
 
         Ok(response)
+    }
+
+    /// Evaluate routing rules and dispatch actions.
+    async fn evaluate_routing_rules(&self, form: &Form, response: &Response, rules: &serde_json::Value, email: &Option<String>, name: &Option<String>) {
+
+        // Simple routing rule format: { "conditions": [...], "actions": [...] }
+        // Each condition: { "field": "question_id", "operator": "eq|neq|contains", "value": "..." }
+        // Each action: { "type": "notify|create_lead|webhook", "target": "..." }
+
+        let rules_array = match rules.as_array() {
+            Some(arr) => arr,
+            None => {
+                tracing::warn!("Routing rules must be an array, got {:?}", rules);
+                return;
+            }
+        };
+
+        // Build answer map for quick lookup
+        let answer_map: std::collections::HashMap<_, _> = response
+            .answers
+            .iter()
+            .map(|a| (a.question_id, &a.value))
+            .collect();
+
+        for rule in rules_array {
+            let conditions = rule.get("conditions").and_then(|v| v.as_array()).map(|v| v.as_slice()).unwrap_or(&[]);
+            let actions = rule.get("actions").and_then(|v| v.as_array()).map(|v| v.as_slice()).unwrap_or(&[]);
+
+            // Evaluate conditions
+            let all_match = conditions.iter().all(|cond| {
+                let field = cond.get("field").and_then(|v| v.as_str()).unwrap_or("");
+                let operator = cond.get("operator").and_then(|v| v.as_str()).unwrap_or("eq");
+                let value = cond.get("value");
+
+                // Parse field as question_id UUID
+                let q_id = match uuid::Uuid::parse_str(field) {
+                    Ok(id) => id,
+                    Err(_) => {
+                        tracing::warn!("Invalid question_id in routing rule: {}", field);
+                        return false;
+                    }
+                };
+
+                let answer = match answer_map.get(&q_id) {
+                    Some(a) => a,
+                    None => {
+                        tracing::warn!("Question {} not answered, skipping routing rule", q_id);
+                        return false;
+                    }
+                };
+
+                let answer_str = match answer {
+                    ataqu_domain_sond::response::AnswerValue::Text(s) => s,
+                    ataqu_domain_sond::response::AnswerValue::Choice(s) => s,
+                    ataqu_domain_sond::response::AnswerValue::Email(s) => s,
+                    ataqu_domain_sond::response::AnswerValue::Phone(s) => s,
+                    _ => {
+                        tracing::warn!("Unsupported answer type for routing: {:?}", answer);
+                        return false;
+                    }
+                };
+
+                let val_str = value.and_then(|v| v.as_str()).unwrap_or("");
+
+                match operator {
+                    "eq" => answer_str == val_str,
+                    "neq" => answer_str != val_str,
+                    "contains" => answer_str.contains(val_str),
+                    "not_contains" => !answer_str.contains(val_str),
+                    _ => {
+                        tracing::warn!("Unknown operator in routing rule: {}", operator);
+                        false
+                    }
+                }
+            });
+
+            if all_match {
+                // Execute actions
+                for action in actions {
+                    let action_type = action.get("type").and_then(|v| v.as_str()).unwrap_or("");
+                    match action_type {
+                        "notify" => {
+                            let target = action.get("target").and_then(|v| v.as_str()).unwrap_or("");
+                            let payload = serde_json::json!({
+                                "tenant_id": form.tenant_id.as_uuid(),
+                                "form_id": form.id,
+                                "response_id": response.id,
+                                "message": format!("New form response from {}: {}",
+                                    name.as_deref().unwrap_or("Unknown"),
+                                    target),
+                            });
+                            if let Err(e) = self.outbox.append(
+                                "dial",
+                                "FormRoutingNotification",
+                                response.id,
+                                &payload,
+                            ).await {
+                                tracing::error!("Failed to send routing notification: {}", e);
+                            }
+                        }
+                        "create_lead" => {
+                            let payload = serde_json::json!({
+                                "tenant_id": form.tenant_id.as_uuid(),
+                                "name": name.as_deref().unwrap_or("Form Lead"),
+                                "email": email.as_deref().unwrap_or(""),
+                                "source": format!("sond_form_{}", form.id),
+                                "form_id": form.id,
+                                "response_id": response.id,
+                            });
+                            if let Err(e) = self.outbox.append(
+                                "collab_crm",
+                                "CreateLeadFromForm",
+                                response.id,
+                                &payload,
+                            ).await {
+                                tracing::error!("Failed to create lead from form: {}", e);
+                            }
+                        }
+                        "webhook" => {
+                            let url = action.get("url").and_then(|v| v.as_str()).unwrap_or("");
+                            if !url.is_empty() {
+                                let payload = serde_json::json!({
+                                    "tenant_id": form.tenant_id.as_uuid(),
+                                    "form_id": form.id,
+                                    "response_id": response.id,
+                                    "answers": response.answers,
+                                });
+                                if let Err(e) = self.outbox.append(
+                                    "spark",
+                                    "WebhookTrigger",
+                                    response.id,
+                                    &payload,
+                                ).await {
+                                    tracing::error!("Failed to trigger webhook from form: {}", e);
+                                }
+                            }
+                        }
+                        _ => {
+                            tracing::warn!("Unknown action type in routing rule: {}", action_type);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// Validates a single answer in a conversational form flow.

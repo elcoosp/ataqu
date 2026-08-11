@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use ataqu_domain_health::{
     classify_outbox,
     ComponentHealth,

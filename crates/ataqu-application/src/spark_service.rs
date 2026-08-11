@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use std::sync::Arc;
 
 use ataqu_domain_spark::repository::{
@@ -5,6 +6,7 @@ use ataqu_domain_spark::repository::{
 };
 use ataqu_domain_spark::{Action, Condition, SparkError, Trigger, Workflow, evaluate_conditions};
 use ataqu_infra_outbox::OutboxEvent;
+use ataqu_infra_repositories::pending_approval_repo::{PendingApprovalRepository};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use uuid::Uuid;
 
@@ -59,6 +61,7 @@ pub type SparkResult<T> = Result<T, SparkServiceError>;
 pub struct SparkService {
     repo: Arc<dyn SparkRepository + Send + Sync>,
     run_repo: Option<Arc<dyn WorkflowRunRepository + Send + Sync>>,
+    approval_repo: Option<Arc<dyn PendingApprovalRepository + Send + Sync>>,
     dispatcher: Arc<dyn ActionDispatcher + Send + Sync>,
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
@@ -80,12 +83,21 @@ impl SparkService {
         Self {
             repo,
             run_repo: None,
+            approval_repo: None,
             dispatcher,
             outbox,
             id_gen,
             clock,
             audit_repo,
         }
+    }
+
+    pub fn with_approval_repo(
+        mut self,
+        approval_repo: Arc<dyn PendingApprovalRepository + Send + Sync>,
+    ) -> Self {
+        self.approval_repo = Some(approval_repo);
+        self
     }
 
     /// Attach the workflow-run repository so runs can be tracked and paused for approval.
@@ -307,6 +319,20 @@ impl SparkService {
                 "Workflow run {run_id} is not pending approval"
             )));
         }
+
+        // Find the pending approval record
+        if let Some(approval_repo) = self.approval_repo.as_ref() {
+            let approval = approval_repo.find_by_run_id(tenant_id, run_id)
+                .await
+                .map_err(|e| SparkServiceError::Repository(e))?;
+            if let Some(approval) = approval {
+                // Mark as approved
+                approval_repo.approve(approval.id, Uuid::nil()) // TODO: use actual user_id
+                    .await
+                    .map_err(|e| SparkServiceError::Repository(e))?;
+            }
+        }
+
         let workflow = self
             .repo
             .get_workflow(&tenant_id, &run.workflow_id)

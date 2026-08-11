@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 //! VISTA application service – orchestrates analytics using real repositories.
 
 use std::sync::Arc;

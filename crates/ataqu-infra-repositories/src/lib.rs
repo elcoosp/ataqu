@@ -21,3 +21,5 @@ pub mod user_preferences_repo;
 pub mod vault_repo_impl;
 pub mod vista_repo_impl;
 pub mod vault_transaction_repo;
+pub mod shopify_sync_log_repo;
+pub mod pending_approval_repo;

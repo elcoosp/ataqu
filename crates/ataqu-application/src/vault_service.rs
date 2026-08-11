@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 //! VAULT application service – orchestrates products and variants using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;

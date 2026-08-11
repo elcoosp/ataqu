@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use ataqu_domain_changelog::ChangelogEntry;
 use ataqu_infra_repositories::user_preferences_repo::UserPreferencesRepository;
 use chrono::{DateTime, NaiveDate, Utc};

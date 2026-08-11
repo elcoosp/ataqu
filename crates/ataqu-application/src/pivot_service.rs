@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 //! PIVOT application service – orchestrates docs, blocks, relations using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;

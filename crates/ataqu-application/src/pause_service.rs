@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 //! PAUSE application service — HR orchestration.
 //! Uses domain types and repository traits from domain crate.
 use serde_json::Value;

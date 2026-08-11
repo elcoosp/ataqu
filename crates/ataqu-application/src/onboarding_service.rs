@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use chrono::{DateTime, Utc};
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, DbErr, FromQueryResult, Statement};
 // serde not needed

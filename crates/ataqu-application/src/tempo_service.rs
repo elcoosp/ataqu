@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 //! TEMPO application service – orchestrates scheduling using domain repositories.
 use chrono::{DateTime, Utc};
 use std::sync::Arc;
