@@ -1,7 +1,6 @@
 //! Async CSV import worker – processes import jobs from the outbox.
 use crate::outbox::Outbox;
 use ataqu_infra_outbox::OutboxEvent;
-use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tracing::info;
 use serde_json::Value;
