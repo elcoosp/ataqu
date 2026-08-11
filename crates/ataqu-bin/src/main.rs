@@ -1,7 +1,9 @@
+#![allow(clippy::never_loop)]
+
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
-#![allow(clippy::never_loop)]
+use ataqu_security::Email;
 mod event_registry;
 use dotenvy::dotenv;
 use std::net::SocketAddr;
@@ -869,6 +871,122 @@ async fn main() -> anyhow::Result<()> {
     // ---------- START NEW CODE ----------
     // Event Registry for Outbox
     let mut event_registry = crate::event_registry::EventRegistry::new();
+
+        // SOND routing: CreateLeadFromForm -> create CINQ contact
+    event_registry.register("collab_crm", "CreateLeadFromForm", {
+        let cinq = cinq_service.clone();
+        move |evt| {
+            let cinq = cinq.clone();
+            async move {
+                let payload = &evt.payload;
+                let tenant_id = payload.get("tenant_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .ok_or("Missing tenant_id")?;
+                let name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let email_str = payload.get("email").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let source = payload.get("source").and_then(|v| v.as_str()).unwrap_or("").to_string();
+
+                if name.is_empty() || email_str.is_empty() {
+                    tracing::warn!("CreateLeadFromForm: missing name or email, skipping");
+                    return Ok(());
+                }
+
+                let email = ataqu_security::Email::new(email_str);
+                let cmd = ataqu_application::cinq_service::CreateContactCommand {
+                    tenant_id: ataqu_kernel::TenantId::new(tenant_id),
+                    name,
+                    company: None,
+                    email,
+                    phone: None,
+                    custom_fields: serde_json::json!({ "source": source }),
+                    lead_score: None,
+                };
+                // Use system user ID (uuid::Uuid::nil() or a configured system user)
+                let system_user_id = system_user_id;
+                cinq.create_contact(system_user_id, cmd).await
+                    .map_err(|e| format!("Failed to create contact: {}", e))?;
+                tracing::info!("Created lead from form response {}", evt.aggregate_id.unwrap_or_default());
+                Ok(())
+            }
+        }
+    });
+
+    // SOND routing: FormRoutingNotification -> send DIAL message
+    event_registry.register("dial", "FormRoutingNotification", {
+        let dial = dial_service.clone();
+        move |evt| {
+            let dial = dial.clone();
+            async move {
+                let payload = &evt.payload;
+                let tenant_id = payload.get("tenant_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .ok_or("Missing tenant_id")?;
+                let message = payload.get("message").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let target = payload.get("target").and_then(|v| v.as_str()).unwrap_or("").to_string();
+
+                if message.is_empty() || target.is_empty() {
+                    tracing::warn!("FormRoutingNotification: missing message or target, skipping");
+                    return Ok(());
+                }
+
+                // Try to parse target as channel_id (UUID)
+                if let Ok(channel_id) = uuid::Uuid::parse_str(&target) {
+                    // Send to a channel
+                    let system_user_id = system_user_id;
+                    let cmd = ataqu_application::dial_service::SendMessageCommand {
+                        tenant_id: ataqu_kernel::TenantId::new(tenant_id),
+                        channel_id,
+                        thread_id: None,
+                        author_id: system_user_id,
+                        content: message,
+                    };
+                    dial.send_message(cmd).await
+                        .map_err(|e| format!("Failed to send notification: {}", e))?;
+                } else if let Ok(user_id) = uuid::Uuid::parse_str(&target) {
+                    // Send as a DM to a user (we would need to find their channel or use a DM channel)
+                    // For simplicity, we'll just log for now.
+                    tracing::warn!("FormRoutingNotification: DM to user {} not implemented, target: {}", user_id, target);
+                } else {
+                    tracing::warn!("FormRoutingNotification: invalid target (must be UUID)");
+                }
+                Ok(())
+            }
+        }
+    });
+
+    // SOND routing: WebhookTrigger -> execute webhook
+    event_registry.register("spark", "WebhookTrigger", {
+        let client = http_client.clone();
+        move |evt| {
+            let client = client.clone();
+            async move {
+                let payload = &evt.payload;
+                let url = payload.get("url").and_then(|v| v.as_str()).ok_or("Missing url")?;
+                let method = payload.get("method").and_then(|v| v.as_str()).unwrap_or("POST");
+                let answers = payload.get("answers").cloned().unwrap_or(serde_json::json!({}));
+
+                // Simple webhook execution with timeout and no retry
+                let request = match method.to_uppercase().as_str() {
+                    "POST" => client.post(url).json(&answers),
+                    "PUT" => client.put(url).json(&answers),
+                    "PATCH" => client.patch(url).json(&answers),
+                    "DELETE" => client.delete(url),
+                    _ => client.get(url).query(&answers),
+                };
+                let resp = request.send().await
+                    .map_err(|e| format!("Webhook request failed: {}", e))?;
+                if resp.status().is_success() {
+                    tracing::info!("Webhook triggered for response {}", evt.aggregate_id.unwrap_or_default());
+                } else {
+                    tracing::warn!("Webhook returned error: {}", resp.status());
+                }
+                Ok(())
+            }
+        }
+    });
+
     // Register SPARK triggers
     event_registry.register("collab_crm", "DealCreated", {
         let spark = spark_service.clone();
