@@ -1,4 +1,5 @@
 use axum::{
+    body::Body,
     extract::{Request, State},
     http::StatusCode,
     middleware::Next,
@@ -88,6 +89,10 @@ pub async fn rate_limit_middleware(
     if limiter.check(&key) {
         Ok(next.run(req).await)
     } else {
-        Err(StatusCode::TOO_MANY_REQUESTS)
+        Ok(axum::response::Response::builder()
+            .status(StatusCode::TOO_MANY_REQUESTS)
+            .header("Retry-After", "60")
+            .body(Body::from("Rate limit exceeded"))
+            .unwrap())
     }
 }

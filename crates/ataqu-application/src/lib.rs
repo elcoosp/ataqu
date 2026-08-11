@@ -17,3 +17,5 @@ pub mod gdpr;
 pub mod health_service;
 pub mod onboarding_service;
 pub mod shopify_service;
+pub mod import_worker;
+pub mod tempo_refresh_worker;

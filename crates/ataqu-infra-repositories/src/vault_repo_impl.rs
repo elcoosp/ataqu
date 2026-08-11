@@ -268,6 +268,8 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 
+
+
     async fn get_variant(
         &self,
         tenant_id: &TenantId,

@@ -479,7 +479,6 @@ impl VaultService {
     /// expose transaction support, so this is a known limitation.
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
-
         if variant.version != cmd.expected_version {
             return Err(VaultServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",
@@ -488,8 +487,7 @@ impl VaultService {
         }
 
         let new_variant = variant.adjust_stock(cmd.delta, self.clock.as_ref())?;
-        self.repo
-            .save_variant(&new_variant)
+        self.repo.save_variant(&new_variant)
             .await
             .map_err(VaultServiceError::Repository)?;
 
@@ -504,8 +502,7 @@ impl VaultService {
             self.id_gen.as_ref(),
             self.clock.as_ref(),
         );
-        self.repo
-            .save_movement(&movement)
+        self.repo.save_movement(&movement)
             .await
             .map_err(VaultServiceError::Repository)?;
 
@@ -517,12 +514,7 @@ impl VaultService {
             "reason": movement.reason.clone(),
         });
         self.outbox
-            .append(
-                VAULT_SCHEMA,
-                "StockAdjusted",
-                new_variant.id,
-                &stock_payload,
-            )
+            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
             .await
             .map_err(|e| {
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
@@ -551,6 +543,9 @@ impl VaultService {
 
         Ok(new_variant)
     }
+
+
+
 
     pub async fn bulk_adjust_stock(
         &self,
