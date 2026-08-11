@@ -82,7 +82,7 @@ impl SondService {
         }
     }
 
-    pub async fn create_form(&self, user_id: Uuid, cmd: CreateFormCommand) -> SondResult<Form> {
+    pub async fn create_form(&self, _user_id: Uuid, cmd: CreateFormCommand) -> SondResult<Form> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -165,7 +165,7 @@ impl SondService {
             .ok_or(SondServiceError::FormNotFound)
     }
 
-    pub async fn update_form(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form(&self, _user_id: Uuid, tenant_id: TenantId,
         cmd: ataqu_domain_sond::form::UpdateFormCommand,) -> SondResult<Form> {
         // TODO: Add audit log call using log_audit()
 
@@ -244,7 +244,7 @@ impl SondService {
         Ok(form)
     }
 
-    pub async fn delete_form(&self, user_id: Uuid, tenant_id: TenantId, form_id: Uuid) -> SondResult<()> {
+    pub async fn delete_form(&self, _user_id: Uuid, tenant_id: TenantId, form_id: Uuid) -> SondResult<()> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -254,7 +254,7 @@ impl SondService {
             .await
             .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
-    pub async fn delete_submission(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn delete_submission(&self, _user_id: Uuid, tenant_id: TenantId,
         submission_id: Uuid,) -> SondResult<()> {
         // TODO: Add audit log call using log_audit()
 
@@ -267,7 +267,7 @@ impl SondService {
     }
 
     /// Update only the branding field of a form.
-    pub async fn update_form_branding(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form_branding(&self, _user_id: Uuid, tenant_id: TenantId,
         form_id: Uuid,
         branding: serde_json::Value,) -> SondResult<Form> {
         // TODO: Add audit log call using log_audit()
@@ -282,7 +282,7 @@ impl SondService {
     }
 
     /// Update the routing rules of a form.
-    pub async fn update_form_routing(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form_routing(&self, _user_id: Uuid, tenant_id: TenantId,
         form_id: Uuid,
         rules: serde_json::Value,) -> SondResult<Form> {
         // TODO: Add audit log call using log_audit()

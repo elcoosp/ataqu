@@ -129,7 +129,7 @@ impl VaultService {
         }
     }
 
-    pub async fn create_product(&self, user_id: Uuid, cmd: CreateProductCommand) -> VaultResult<Product> {
+    pub async fn create_product(&self, _user_id: Uuid, cmd: CreateProductCommand) -> VaultResult<Product> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -187,7 +187,7 @@ impl VaultService {
         Ok(product)
     }
 
-    pub async fn update_product(&self, user_id: Uuid, cmd: UpdateProductCommand) -> VaultResult<Product> {
+    pub async fn update_product(&self, _user_id: Uuid, cmd: UpdateProductCommand) -> VaultResult<Product> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -252,7 +252,7 @@ impl VaultService {
         Ok(product)
     }
 
-    pub async fn delete_product(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+    pub async fn delete_product(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -308,7 +308,7 @@ impl VaultService {
         Ok((products, total))
     }
 
-    pub async fn create_variant(&self, user_id: Uuid, cmd: CreateVariantCommand) -> VaultResult<Variant> {
+    pub async fn create_variant(&self, _user_id: Uuid, cmd: CreateVariantCommand) -> VaultResult<Variant> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -401,7 +401,7 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn update_variant(&self, user_id: Uuid, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
+    pub async fn update_variant(&self, _user_id: Uuid, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let variant = self.get_variant(cmd.tenant_id, cmd.id).await?;
@@ -456,7 +456,7 @@ impl VaultService {
         Ok(new_variant)
     }
 
-    pub async fn delete_variant(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+    pub async fn delete_variant(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
@@ -502,7 +502,7 @@ impl VaultService {
         Ok((variants, total))
     }
 
-    pub async fn update_stock(&self, user_id: Uuid, cmd: UpdateStockCommand) -> VaultResult<Variant> {
+    pub async fn update_stock(&self, _user_id: Uuid, cmd: UpdateStockCommand) -> VaultResult<Variant> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -667,7 +667,7 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn create_warehouse(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn create_warehouse(&self, _user_id: Uuid, tenant_id: TenantId,
         name: String,
         location: Option<String>,) -> VaultResult<Warehouse> {
         // TODO: Add audit log call using crate::audit::log_audit
@@ -709,7 +709,7 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn update_warehouse(&self, user_id: Uuid, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
+    pub async fn update_warehouse(&self, _user_id: Uuid, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let mut warehouse = self
@@ -760,7 +760,7 @@ impl VaultService {
         Ok(warehouse)
     }
 
-    pub async fn delete_warehouse(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+    pub async fn delete_warehouse(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
@@ -789,7 +789,7 @@ impl VaultService {
         Ok(())
     }
 
-    pub async fn reserve_stock(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn reserve_stock(&self, _user_id: Uuid, tenant_id: TenantId,
         variant_id: Uuid,
         quantity: i64,
         expected_version: i32,) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {

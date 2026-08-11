@@ -91,7 +91,7 @@ impl DialService {
     }
 
     // -- Channel methods --
-    pub async fn create_channel(&self, user_id: Uuid, cmd: CreateChannelCommand) -> DialResult<Channel> {
+    pub async fn create_channel(&self, _user_id: Uuid, cmd: CreateChannelCommand) -> DialResult<Channel> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -435,7 +435,7 @@ impl DialService {
         self.get_message(tenant_id, message_id).await
     }
 
-    pub async fn delete_message(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn delete_message(&self, _user_id: Uuid, tenant_id: TenantId,
         message_id: Uuid,
         deleter_id: Uuid,
         is_moderator: bool,) -> DialResult<()> {

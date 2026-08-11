@@ -186,7 +186,7 @@ impl CinqService {
         }
     }
 
-    pub async fn create_contact(&self, user_id: Uuid, cmd: CreateContactCommand) -> CinqResult<Contact> {
+    pub async fn create_contact(&self, _user_id: Uuid, cmd: CreateContactCommand) -> CinqResult<Contact> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -251,7 +251,7 @@ impl CinqService {
         Ok(contact)
     }
 
-    pub async fn update_contact(&self, user_id: Uuid, cmd: UpdateContactCommand) -> CinqResult<Contact> {
+    pub async fn update_contact(&self, _user_id: Uuid, cmd: UpdateContactCommand) -> CinqResult<Contact> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -322,7 +322,7 @@ impl CinqService {
         Ok(contact)
     }
 
-    pub async fn delete_contact(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+    pub async fn delete_contact(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -564,7 +564,7 @@ impl CinqService {
         Ok(data)
     }
 
-    pub async fn create_deal(&self, user_id: Uuid, cmd: CreateDealCommand) -> CinqResult<Deal> {
+    pub async fn create_deal(&self, _user_id: Uuid, cmd: CreateDealCommand) -> CinqResult<Deal> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -625,7 +625,7 @@ impl CinqService {
         Ok(deal)
     }
 
-    pub async fn update_deal(&self, user_id: Uuid, cmd: UpdateDealCommand) -> CinqResult<Deal> {
+    pub async fn update_deal(&self, _user_id: Uuid, cmd: UpdateDealCommand) -> CinqResult<Deal> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -715,7 +715,7 @@ impl CinqService {
         Ok(deal)
     }
 
-    pub async fn delete_deal(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+    pub async fn delete_deal(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -761,7 +761,7 @@ impl CinqService {
         Ok((deals, total))
     }
 
-    pub async fn create_activity(&self, user_id: Uuid, cmd: CreateActivityCommand) -> CinqResult<Activity> {
+    pub async fn create_activity(&self, _user_id: Uuid, cmd: CreateActivityCommand) -> CinqResult<Activity> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
@@ -843,7 +843,7 @@ impl CinqService {
         Ok((activities, total))
     }
 
-    pub async fn create_pipeline_stage(&self, user_id: Uuid, cmd: CreatePipelineStageCommand,) -> CinqResult<PipelineStage> {
+    pub async fn create_pipeline_stage(&self, _user_id: Uuid, cmd: CreatePipelineStageCommand,) -> CinqResult<PipelineStage> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let domain_cmd = DomainCreateStage {
@@ -900,7 +900,7 @@ impl CinqService {
             .ok_or(CinqServiceError::PipelineStageNotFound)
     }
 
-    pub async fn update_pipeline_stage(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_pipeline_stage(&self, _user_id: Uuid, tenant_id: TenantId,
         id: Uuid,
         name: Option<String>,
         order: Option<i32>,
@@ -955,7 +955,7 @@ impl CinqService {
         Ok(stage)
     }
 
-    pub async fn delete_pipeline_stage(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+    pub async fn delete_pipeline_stage(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         self.stage_repo
@@ -983,7 +983,7 @@ impl CinqService {
         Ok(())
     }
 
-    pub async fn create_task(&self, user_id: Uuid, cmd: ataqu_domain_cinq::task::CreateTaskCommand,) -> CinqResult<ataqu_domain_cinq::task::Task> {
+    pub async fn create_task(&self, _user_id: Uuid, cmd: ataqu_domain_cinq::task::CreateTaskCommand,) -> CinqResult<ataqu_domain_cinq::task::Task> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let event =
@@ -1053,7 +1053,7 @@ impl CinqService {
             .await?)
     }
 
-    pub async fn update_task(&self, user_id: Uuid, cmd: ataqu_domain_cinq::task::UpdateTaskCommand,) -> CinqResult<ataqu_domain_cinq::task::Task> {
+    pub async fn update_task(&self, _user_id: Uuid, cmd: ataqu_domain_cinq::task::UpdateTaskCommand,) -> CinqResult<ataqu_domain_cinq::task::Task> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let mut task = self.get_task(cmd.tenant_id, cmd.id).await?;
@@ -1089,7 +1089,7 @@ impl CinqService {
         Ok(task)
     }
 
-    pub async fn delete_task(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+    pub async fn delete_task(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -1115,7 +1115,7 @@ impl CinqService {
         Ok(())
     }
 
-    pub async fn create_establishment(&self, user_id: Uuid, cmd: CreateEstablishmentCommand,) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
+    pub async fn create_establishment(&self, _user_id: Uuid, cmd: CreateEstablishmentCommand,) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         use ataqu_domain_cinq::establishment::{

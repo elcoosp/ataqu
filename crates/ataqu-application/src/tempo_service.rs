@@ -103,7 +103,7 @@ impl TempoService {
         }
     }
 
-    pub async fn create_booking(&self, user_id: Uuid, cmd: CreateBookingCommand) -> TempoResult<Booking> {
+    pub async fn create_booking(&self, _user_id: Uuid, cmd: CreateBookingCommand) -> TempoResult<Booking> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -282,7 +282,7 @@ impl TempoService {
         Ok((bookings, total))
     }
 
-    pub async fn update_booking_status(&self, user_id: Uuid, cmd: UpdateBookingStatusCommand,) -> TempoResult<Booking> {
+    pub async fn update_booking_status(&self, _user_id: Uuid, cmd: UpdateBookingStatusCommand,) -> TempoResult<Booking> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -412,7 +412,7 @@ impl TempoService {
         Ok(sent)
     }
 
-    pub async fn create_event_type(&self, user_id: Uuid, cmd: CreateEventTypeCommand) -> TempoResult<EventType> {
+    pub async fn create_event_type(&self, _user_id: Uuid, cmd: CreateEventTypeCommand) -> TempoResult<EventType> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using crate::audit::log_audit
@@ -488,7 +488,7 @@ impl TempoService {
             ))
     }
 
-    pub async fn update_event_type(&self, user_id: Uuid, cmd: UpdateEventTypeCommand,
+    pub async fn update_event_type(&self, _user_id: Uuid, cmd: UpdateEventTypeCommand,
         expected_version: i32,) -> TempoResult<EventType> {
         // TODO: Add audit log call using log_audit()
 
@@ -532,7 +532,7 @@ impl TempoService {
         Ok(event_type)
     }
 
-    pub async fn delete_event_type(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> TempoResult<()> {
+    pub async fn delete_event_type(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> TempoResult<()> {
         // TODO: Add audit log call using log_audit()
 
         // TODO: Add audit log call using log_audit()
@@ -545,7 +545,7 @@ impl TempoService {
             .map_err(TempoServiceError::Repository)
     }
 
-    pub async fn create_availability_slot(&self, user_id: Uuid, cmd: CreateAvailabilitySlotCommand,) -> TempoResult<AvailabilitySlot> {
+    pub async fn create_availability_slot(&self, _user_id: Uuid, cmd: CreateAvailabilitySlotCommand,) -> TempoResult<AvailabilitySlot> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let domain_cmd = availability_domain::CreateAvailabilitySlotCommand {
@@ -588,7 +588,7 @@ impl TempoService {
             .map_err(TempoServiceError::Repository)
     }
 
-    pub async fn delete_availability_slot(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn delete_availability_slot(&self, _user_id: Uuid, tenant_id: TenantId,
         slot_id: Uuid,) -> TempoResult<()> {
         // TODO: Add audit log call using crate::audit::log_audit
 
