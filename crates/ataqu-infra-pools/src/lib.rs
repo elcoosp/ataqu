@@ -15,8 +15,8 @@ pub struct Pools {
 
 impl Pools {
     pub fn get_pool_stats(&self) -> (i32, i32, i32) {
-        let mut total_size = 0usize;
-        let mut total_idle = 0usize;
+        let mut total_size = 0;
+        let mut total_idle = 0;
         let connections = [
             &self.core,
             &self.admin,
@@ -29,11 +29,14 @@ impl Pools {
         ];
         for conn in connections {
             let pool = conn.get_postgres_connection_pool();
-            total_size += pool.size() as usize;
-            total_idle += pool.num_idle();
+            total_size += pool.size() as i32;
+            total_idle += pool.num_idle() as i32;
         }
         let used = total_size - total_idle;
-        (used as i32, total_size as i32, 0)
+        // Waiting is not exposed by sqlx; we approximate as 0 for now.
+        // In future, we could add instrumentation.
+        let waiting = 0;
+        (used, total_size, waiting)
     }
 
     pub async fn new(db_url: &str) -> anyhow::Result<Self> {
