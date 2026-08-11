@@ -87,6 +87,8 @@ async fn main() -> anyhow::Result<()> {
     let audit_repo = Arc::new(ataqu_infra_repositories::audit_repo::AuditRepository::new(
         pools.core.clone(),
     ));
+    // Clone the outbox for use in GDPR runner (since aegis_outbox is moved into AegisService)
+    let core_outbox_for_gdpr = aegis_outbox.clone();
     let aegis_service = Arc::new(AegisService::new(
         aegis_repo,
         aegis_outbox,
@@ -1048,6 +1050,23 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // ---------- END NEW CODE ----------
+
+    // Spawn GDPR saga runner
+    use ataqu_application::gdpr::saga_runner::GdprSagaRunner;
+    let gdpr_runner = GdprSagaRunner::new(
+        pools.core.get_postgres_connection_pool().clone(),
+        core_outbox_for_gdpr.clone(),
+    );
+    tokio::spawn(async move {
+        gdpr_runner.run().await;
+    });
+
+    // Spawn scheduled tasks cron worker
+    use ataqu_infra_cron::worker::run_cron_worker;
+    let cron_pool = pools.core.get_postgres_connection_pool().clone();
+    tokio::spawn(async move {
+        run_cron_worker(cron_pool).await;
+    });
 
     let app_state = AppState {
         db: pools.core.clone(),
