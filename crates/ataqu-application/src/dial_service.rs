@@ -12,6 +12,7 @@ use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::PresenceStore;
 use ataqu_domain_dial::repository::DialRepository;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::audit::log_audit;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_dial::chat::{Channel, Message, Reaction};
@@ -92,6 +93,8 @@ impl DialService {
 
     // -- Channel methods --
     pub async fn create_channel(&self, cmd: CreateChannelCommand) -> DialResult<Channel> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         if cmd.channel_type == ChannelType::DirectMessage && cmd.participants.len() != 2 {
             return Err(DialServiceError::Validation(
                 "Direct message channels must have exactly 2 participants".to_string(),
@@ -157,6 +160,8 @@ impl DialService {
         user_id: Uuid,
         channel_id: Uuid,
     ) -> DialResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let channel = self
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
@@ -183,6 +188,8 @@ impl DialService {
         name: Option<String>,
         expected_version: i32,
     ) -> DialResult<Channel> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut channel = self
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
@@ -430,6 +437,8 @@ impl DialService {
         deleter_id: Uuid,
         is_moderator: bool,
     ) -> DialResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let message = self
             .repo
             .get_message(&tenant_id, &MessageId::new(message_id))
@@ -893,6 +902,8 @@ impl DialService {
         message_id: Uuid,
         reaction_id: Uuid,
     ) -> DialResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let reaction = self
             .repo
             .get_reaction(&tenant_id, &reaction_id)

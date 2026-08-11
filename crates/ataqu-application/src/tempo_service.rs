@@ -8,6 +8,7 @@ use ataqu_domain_tempo::availability::{self as availability_domain, Availability
 use ataqu_domain_tempo::repository::TempoRepository;
 use ataqu_domain_tempo::schedule::{self as tempo_domain, BookingId, EventTypeId};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::audit::log_audit;
 
 // Re-export domain types for API
 pub use ataqu_domain_tempo::event_type::EventType;
@@ -104,6 +105,8 @@ impl TempoService {
     }
 
     pub async fn create_booking(&self, cmd: CreateBookingCommand) -> TempoResult<Booking> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         if cmd.duration_minutes <= 0 {
             return Err(TempoServiceError::Validation(
                 "Duration must be positive".to_string(),
@@ -282,6 +285,8 @@ impl TempoService {
         &self,
         cmd: UpdateBookingStatusCommand,
     ) -> TempoResult<Booking> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let booking_id = BookingId(cmd.booking_id);
         let booking = self
             .repo
@@ -408,6 +413,8 @@ impl TempoService {
     }
 
     pub async fn create_event_type(&self, cmd: CreateEventTypeCommand) -> TempoResult<EventType> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let domain_cmd = ataqu_domain_tempo::CreateEventTypeCommand {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
@@ -484,6 +491,8 @@ impl TempoService {
         cmd: UpdateEventTypeCommand,
         expected_version: i32,
     ) -> TempoResult<EventType> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut event_type = self
             .repo
             .find_event_type_by_id(&cmd.tenant_id, cmd.id)
@@ -523,6 +532,8 @@ impl TempoService {
     }
 
     pub async fn delete_event_type(&self, tenant_id: TenantId, id: Uuid) -> TempoResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.repo
             .delete_event_type(&tenant_id, id)
             .await
@@ -533,6 +544,8 @@ impl TempoService {
         &self,
         cmd: CreateAvailabilitySlotCommand,
     ) -> TempoResult<AvailabilitySlot> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let domain_cmd = availability_domain::CreateAvailabilitySlotCommand {
             tenant_id: cmd.tenant_id,
             event_type_id: cmd.event_type_id,
@@ -576,6 +589,8 @@ impl TempoService {
         tenant_id: TenantId,
         slot_id: Uuid,
     ) -> TempoResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.repo
             .delete_availability_slot(&tenant_id, slot_id)
             .await

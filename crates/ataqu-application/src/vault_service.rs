@@ -9,6 +9,7 @@ use crate::outbox::Outbox;
 use ataqu_infra_repositories::vault_transaction_repo::VaultTransactionRepository;
 use sea_orm::DatabaseConnection;
 use ataqu_domain_aegis::repository::AuditRepositoryTrait;
+use crate::audit::log_audit;
 
 pub use ataqu_domain_vault::inventory::Product;
 pub use ataqu_domain_vault::inventory::Variant;
@@ -130,6 +131,8 @@ impl VaultService {
     }
 
     pub async fn create_product(&self, cmd: CreateProductCommand) -> VaultResult<Product> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         if cmd.name.trim().is_empty() {
             return Err(VaultServiceError::Validation(
                 "Name cannot be empty".to_string(),
@@ -184,6 +187,8 @@ impl VaultService {
     }
 
     pub async fn update_product(&self, cmd: UpdateProductCommand) -> VaultResult<Product> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut product = self.get_product(cmd.tenant_id, cmd.id).await?;
 
         if product.version != cmd.expected_version {
@@ -245,6 +250,8 @@ impl VaultService {
     }
 
     pub async fn delete_product(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.repo
             .delete_product(&tenant_id, &id)
             .await
@@ -297,6 +304,8 @@ impl VaultService {
     }
 
     pub async fn create_variant(&self, cmd: CreateVariantCommand) -> VaultResult<Variant> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         if cmd.sku.trim().is_empty() {
             return Err(VaultServiceError::Validation(
                 "SKU cannot be empty".to_string(),
@@ -384,6 +393,8 @@ impl VaultService {
     }
 
     pub async fn update_variant(&self, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let variant = self.get_variant(cmd.tenant_id, cmd.id).await?;
 
         if variant.version != cmd.expected_version {
@@ -435,6 +446,8 @@ impl VaultService {
     }
 
     pub async fn delete_variant(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.repo
             .delete_variant(&tenant_id, &id)
             .await
@@ -479,6 +492,8 @@ impl VaultService {
     }
 
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         use sea_orm::TransactionTrait;
         let mut txn = self.db.begin()
             .await
@@ -643,6 +658,8 @@ impl VaultService {
         name: String,
         location: Option<String>,
     ) -> VaultResult<Warehouse> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let warehouse = Warehouse {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,
@@ -679,6 +696,8 @@ impl VaultService {
     }
 
     pub async fn update_warehouse(&self, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut warehouse = self
             .repo
             .get_warehouse_by_id(&cmd.tenant_id, cmd.id)
@@ -726,6 +745,8 @@ impl VaultService {
     }
 
     pub async fn delete_warehouse(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.repo
             .delete_warehouse(&tenant_id, &id)
             .await
@@ -757,6 +778,8 @@ impl VaultService {
         quantity: i64,
         expected_version: i32,
     ) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let variant = self.get_variant(tenant_id, variant_id).await?;
         if variant.version != expected_version {
             return Err(VaultServiceError::Validation(format!(

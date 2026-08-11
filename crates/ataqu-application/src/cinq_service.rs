@@ -27,6 +27,7 @@ use ataqu_security::{Email, PhoneNumber};
 use rust_decimal::Decimal;
 
 use crate::outbox::Outbox;
+use crate::audit::log_audit;
 
 #[derive(Debug, Clone)]
 pub struct CreateContactCommand {
@@ -187,6 +188,8 @@ impl CinqService {
     }
 
     pub async fn create_contact(&self, cmd: CreateContactCommand) -> CinqResult<Contact> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let domain_cmd = DomainCreateContact {
             tenant_id: cmd.tenant_id,
             name: cmd.name.clone(),
@@ -248,6 +251,8 @@ impl CinqService {
     }
 
     pub async fn update_contact(&self, cmd: UpdateContactCommand) -> CinqResult<Contact> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut contact = self
             .contact_repo
             .find_contact_by_id(&cmd.tenant_id, cmd.id)
@@ -315,6 +320,8 @@ impl CinqService {
     }
 
     pub async fn delete_contact(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.contact_repo.delete_contact(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
             audit_repo
@@ -553,6 +560,8 @@ impl CinqService {
     }
 
     pub async fn create_deal(&self, cmd: CreateDealCommand) -> CinqResult<Deal> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
         if let Some(est_id) = cmd.establishment_id {
             let _ = self.get_establishment(cmd.tenant_id, est_id).await?;
@@ -610,6 +619,8 @@ impl CinqService {
     }
 
     pub async fn update_deal(&self, cmd: UpdateDealCommand) -> CinqResult<Deal> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut deal = self
             .deal_repo
             .find_deal_by_id(&cmd.tenant_id, cmd.id)
@@ -696,6 +707,8 @@ impl CinqService {
     }
 
     pub async fn delete_deal(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.deal_repo.delete_deal(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
             audit_repo
@@ -736,6 +749,8 @@ impl CinqService {
     }
 
     pub async fn create_activity(&self, cmd: CreateActivityCommand) -> CinqResult<Activity> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
         let domain_cmd = DomainCreateActivity {
             tenant_id: cmd.tenant_id,
@@ -817,6 +832,8 @@ impl CinqService {
         &self,
         cmd: CreatePipelineStageCommand,
     ) -> CinqResult<PipelineStage> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let domain_cmd = DomainCreateStage {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
@@ -877,6 +894,8 @@ impl CinqService {
         order: Option<i32>,
         expected_version: i32,
     ) -> CinqResult<PipelineStage> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut stage = self
             .stage_repo
             .find_pipeline_stage_by_id(&tenant_id, id)
@@ -924,6 +943,8 @@ impl CinqService {
     }
 
     pub async fn delete_pipeline_stage(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.stage_repo
             .delete_pipeline_stage(&tenant_id, id)
             .await?;
@@ -951,6 +972,8 @@ impl CinqService {
         &self,
         cmd: ataqu_domain_cinq::task::CreateTaskCommand,
     ) -> CinqResult<ataqu_domain_cinq::task::Task> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let event =
             ataqu_domain_cinq::task::create_task(cmd, self.id_gen.as_ref(), self.clock.as_ref())
                 .map_err(CinqServiceError::Domain)?;
@@ -1020,6 +1043,8 @@ impl CinqService {
         &self,
         cmd: ataqu_domain_cinq::task::UpdateTaskCommand,
     ) -> CinqResult<ataqu_domain_cinq::task::Task> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut task = self.get_task(cmd.tenant_id, cmd.id).await?;
 
         if task.version != cmd.expected_version {
@@ -1052,6 +1077,8 @@ impl CinqService {
     }
 
     pub async fn delete_task(&self, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.task_repo.delete_task(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
             audit_repo
@@ -1077,6 +1104,8 @@ impl CinqService {
         &self,
         cmd: CreateEstablishmentCommand,
     ) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         use ataqu_domain_cinq::establishment::{
             CreateEstablishmentCommand as DomainCreate, create_establishment as domain_create,
         };

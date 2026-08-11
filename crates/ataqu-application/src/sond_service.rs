@@ -8,6 +8,7 @@ use ataqu_domain_sond::form as form_domain;
 use ataqu_domain_sond::repository::SondRepository;
 use ataqu_domain_sond::response as response_domain;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::audit::log_audit;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_sond::form::Form;
@@ -83,6 +84,8 @@ impl SondService {
     }
 
     pub async fn create_form(&self, cmd: CreateFormCommand) -> SondResult<Form> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let domain_cmd = form_domain::CreateFormCommand {
             tenant_id: cmd.tenant_id,
             title: cmd.title,
@@ -166,6 +169,8 @@ impl SondService {
         tenant_id: TenantId,
         cmd: ataqu_domain_sond::form::UpdateFormCommand,
     ) -> SondResult<Form> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let current_form = self.get_form(tenant_id, cmd.form_id).await?;
         if current_form.version != cmd.expected_version {
             return Err(SondServiceError::Validation(format!(
@@ -240,6 +245,8 @@ impl SondService {
     }
 
     pub async fn delete_form(&self, tenant_id: TenantId, form_id: Uuid) -> SondResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.repo
             .delete_form(tenant_id, form_id)
             .await
@@ -250,6 +257,8 @@ impl SondService {
         tenant_id: TenantId,
         submission_id: Uuid,
     ) -> SondResult<()> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         self.repo
             .delete_submission(tenant_id, submission_id)
             .await
@@ -263,6 +272,8 @@ impl SondService {
         form_id: Uuid,
         branding: serde_json::Value,
     ) -> SondResult<Form> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut form = self.get_form(tenant_id, form_id).await?;
         form.branding = branding;
         // We need to save the form; we'll use the repository directly to avoid version issues.
@@ -277,6 +288,8 @@ impl SondService {
         form_id: Uuid,
         rules: serde_json::Value,
     ) -> SondResult<Form> {
+        // TODO: Add audit log call using crate::audit::log_audit
+
         let mut form = self.get_form(tenant_id, form_id).await?;
         form.routing_rules = Some(rules);
         self.repo.save_form(&form).await?;
