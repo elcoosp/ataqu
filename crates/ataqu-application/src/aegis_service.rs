@@ -349,6 +349,7 @@ impl AegisService {
         &self,
         cmd: DomainCreateUserCommand,
     ) -> Result<CreateUserResponse, AegisServiceError> {
+    let tenant_id = cmd.tenant_id;
         info!("Creating user");
         let (event, user) = self
             .domain
@@ -364,6 +365,44 @@ impl AegisService {
             }
             Err(e) => return Err(AegisServiceError::Domain(e)),
         }
+
+        // Set default permissions for the new user (viewer on all apps)
+        let default_permissions: Vec<(&str, &str)> = vec![
+            ("aegis", "viewer"),
+            ("cinq", "viewer"),
+            ("dial", "viewer"),
+            ("vault", "viewer"),
+            ("pause", "viewer"),
+            ("pivot", "viewer"),
+            ("sond", "viewer"),
+            ("spark", "viewer"),
+            ("tempo", "viewer"),
+            ("vista", "viewer"),
+        ];
+        for (app, role) in default_permissions {
+            if let Err(e) = self.repo.upsert_permission(tenant_id, user.id, app.to_string(), role.to_string()).await {
+                // Log error but continue; we don't want to fail user creation if permission assignment fails.
+                tracing::warn!(error = %e, "Failed to set default permission for user {} on app {}", user.id, app);
+            }
+        }
+
+        // Audit log the user creation
+        self.audit_repo
+            .append_log(
+                tenant_id,
+                user.id, // The new user is the actor for this event (or we could use system user, but we'll use the new user)
+                "create_user",
+                "aegis",
+                Some("user"),
+                Some(user.id),
+                None,
+                Some(serde_json::json!({"email": user.email.reveal(&ataqu_security::PiiAccessKey::new())})),
+                None,
+                None,
+            )
+            .await
+            .ok();
+
         let payload = serde_json::json!({
             "user_id": event.user_id,
             "tenant_id": user.tenant_id.as_uuid(),
