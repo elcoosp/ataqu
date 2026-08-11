@@ -1,5 +1,5 @@
 //! Email tracking repository.
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
 
 use crate::email_tracking_writer::TrackingEvent;
@@ -44,5 +44,19 @@ impl EmailTrackingRepository {
             })
             .collect();
         Ok(events)
+    }
+
+    pub async fn count_tracking_events_for_contact(
+        &self,
+        tenant_id: &TenantId,
+        contact_id: Uuid,
+    ) -> Result<u64, CinqDomainError> {
+        let count = tracking_entity::Entity::find()
+            .filter(tracking_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(tracking_entity::Column::ContactId.eq(contact_id))
+            .count(&self.db)
+            .await
+            .map_err(|e| CinqDomainError::Validation(e.to_string()))?;
+        Ok(count)
     }
 }

@@ -4,7 +4,7 @@ pub mod cinq_contact_repo;
 pub mod cinq_csv_import;
 pub mod cinq_deal_repo;
 pub mod cinq_repo_impl;
-pub mod dial_repo;
+// pub mod dial_repo; // removed - module file deleted
 pub mod dial_repo_impl;
 pub mod email_tracking_repo;
 pub mod email_tracking_writer;

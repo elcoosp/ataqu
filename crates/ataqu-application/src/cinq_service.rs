@@ -1164,9 +1164,11 @@ impl CinqService {
             .get_tracking_events_for_contact(&tenant_id, contact_id, limit, offset)
             .await
             .map_err(|e| CinqServiceError::Repository(e.to_string()))?;
-        // Total count - we need a separate count query; for now we return events len as total (approximate)
-        // We should implement count in repo, but for now use a simple workaround.
-        let total = events.len() as u64; // not accurate, but better than nothing
+        // Accurate total count
+        let total = repo
+            .count_tracking_events_for_contact(&tenant_id, contact_id)
+            .await
+            .map_err(|e| CinqServiceError::Repository(e.to_string()))?;
         Ok((events, total))
     }
 

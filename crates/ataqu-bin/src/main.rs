@@ -573,6 +573,11 @@ async fn main() -> anyhow::Result<()> {
             Uuid::parse_str("00000000-0000-0000-0000-000000000001")
                 .expect("Hardcoded UUID is invalid")
         });
+        // Validate that the system user ID is not nil and is valid
+        if system_user_id.is_nil() {
+            tracing::warn!("SYSTEM_USER_ID is nil, using default");
+            // Keep default
+        }
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }
