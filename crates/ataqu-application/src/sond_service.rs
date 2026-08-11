@@ -106,6 +106,7 @@ impl SondService {
             questions,
             branding: event.branding,
             mode: event.mode,
+            routing_rules: event.routing_rules,
             created_at: event.created_at,
             updated_at: event.created_at,
             version: 0,
@@ -196,6 +197,9 @@ impl SondService {
         if let Some(mode) = event.mode {
             form.mode = mode;
         }
+        if let Some(rules) = event.routing_rules {
+            form.routing_rules = Some(rules);
+        }
         form.updated_at = event.updated_at;
         form.version += 1;
 
@@ -209,7 +213,7 @@ impl SondService {
                 .append_log(
                     form.tenant_id,
                     Uuid::nil(),
-                    "create_form",
+                    "update_form",
                     "sond",
                     Some("form"),
                     Some(form.id),
@@ -228,7 +232,7 @@ impl SondService {
             "title": form.title,
         });
         self.outbox
-            .append("collab_ops", "FormCreated", form.id, &payload)
+            .append("collab_ops", "FormUpdated", form.id, &payload)
             .await
             .map_err(SondServiceError::Repository)?;
 
@@ -248,7 +252,7 @@ impl SondService {
             .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
 
-    /// Update only the branding field of a form (used for routing rules).
+    /// Update only the branding field of a form.
     pub async fn update_form_branding(
         &self,
         tenant_id: TenantId,
@@ -258,6 +262,19 @@ impl SondService {
         let mut form = self.get_form(tenant_id, form_id).await?;
         form.branding = branding;
         // We need to save the form; we'll use the repository directly to avoid version issues.
+        self.repo.save_form(&form).await?;
+        Ok(form)
+    }
+
+    /// Update the routing rules of a form.
+    pub async fn update_form_routing(
+        &self,
+        tenant_id: TenantId,
+        form_id: Uuid,
+        rules: serde_json::Value,
+    ) -> SondResult<Form> {
+        let mut form = self.get_form(tenant_id, form_id).await?;
+        form.routing_rules = Some(rules);
         self.repo.save_form(&form).await?;
         Ok(form)
     }

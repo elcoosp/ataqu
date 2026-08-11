@@ -22,6 +22,7 @@ pub struct Form {
     pub questions: Vec<Question>,
     pub branding: serde_json::Value,
     pub mode: FormMode,
+    pub routing_rules: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
@@ -48,6 +49,7 @@ pub struct FormCreated {
     pub question_count: usize,
     pub branding: serde_json::Value,
     pub mode: FormMode,
+    pub routing_rules: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -59,6 +61,7 @@ pub struct UpdateFormCommand {
     pub description: Option<String>,
     pub questions: Option<Vec<QuestionInput>>,
     pub mode: Option<FormMode>,
+    pub routing_rules: Option<serde_json::Value>,
     pub expected_version: i32,
 }
 
@@ -71,6 +74,7 @@ pub struct FormUpdated {
     pub description: Option<String>,
     pub question_count: usize,
     pub mode: Option<FormMode>,
+    pub routing_rules: Option<serde_json::Value>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -110,6 +114,7 @@ pub fn create_form(
         question_count: questions.len(),
         branding: cmd.branding,
         mode,
+        routing_rules: None,
         created_at,
     };
     Ok(event)
@@ -150,6 +155,7 @@ pub fn update_form(
         description: cmd.description,
         question_count: new_question_count,
         mode: cmd.mode,
+        routing_rules: cmd.routing_rules,
         updated_at,
     })
 }
@@ -278,6 +284,7 @@ mod tests {
             questions: vec![],
             branding: serde_json::json!({}),
             mode: FormMode::Standard,
+            routing_rules: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             version: 0,
@@ -288,6 +295,7 @@ mod tests {
             description: Some("New desc".to_string()),
             questions: None,
             mode: None,
+            routing_rules: None,
             expected_version: 0,
         };
         let result = update_form(cmd, &form, &id_gen, &clock);

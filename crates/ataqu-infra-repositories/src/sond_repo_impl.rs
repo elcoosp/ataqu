@@ -24,6 +24,7 @@ mod form_entity {
         pub description: Option<String>,
         pub questions: serde_json::Value,
         pub branding: serde_json::Value,
+        pub routing_rules: Option<serde_json::Value>,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
         pub version: i32,
@@ -76,6 +77,7 @@ fn map_form_model_to_domain(m: form_entity::Model) -> Form {
         description: m.description,
         questions: serde_json::from_value(m.questions).unwrap_or_default(),
         branding: m.branding,
+        routing_rules: m.routing_rules,
         created_at: m.created_at,
         updated_at: m.updated_at,
         version: m.version,
@@ -95,6 +97,7 @@ impl SondRepository for SondRepositoryImpl {
                 serde_json::to_value(&form.questions).unwrap_or(serde_json::Value::Array(vec![]))
             ),
             branding: Set(form.branding.clone()),
+            routing_rules: Set(form.routing_rules.clone()),
             created_at: Set(form.created_at),
             updated_at: Set(form.updated_at),
             version: Set(form.version),

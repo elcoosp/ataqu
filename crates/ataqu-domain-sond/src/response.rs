@@ -345,6 +345,7 @@ mod tests {
             questions: vec![sample_question(q1, "Name", QuestionType::Text, true)],
             branding: serde_json::json!({}),
             mode: crate::form::FormMode::Standard,
+            routing_rules: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             version: 0,

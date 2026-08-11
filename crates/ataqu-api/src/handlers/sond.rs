@@ -170,6 +170,7 @@ pub async fn update_form(
         description: payload.description,
         questions: payload.questions,
         mode: payload.mode,
+        routing_rules: None,
         expected_version: if_match,
     };
 

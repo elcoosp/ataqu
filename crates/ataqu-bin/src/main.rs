@@ -714,67 +714,6 @@ async fn main() -> anyhow::Result<()> {
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
 
 
-    // Helper functions for S3 reaper
-    async fn collect_valid_keys(db: &DatabaseConnection) -> Vec<String> {
-        use sea_orm::prelude::*;
-        use sea_orm::{DbBackend, Statement};
-        let mut keys = Vec::new();
-        // Query documents table
-        let sql_docs = "SELECT url FROM collab_ops.documents WHERE url LIKE '%/uploads/%'";
-        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql_docs, []);
-        if let Ok(rows) = db.query_all_raw(stmt).await {
-            for row in rows {
-                if let Ok(url) = row.try_get::<String>("", "url") {
-                    if let Some(key) = extract_s3_key(&url) {
-                        keys.push(key);
-                    }
-                }
-            }
-        }
-        // Query employee_documents table
-        let sql_emp =
-            "SELECT file_url FROM collab_ops.employee_documents WHERE file_url LIKE '%/uploads/%'";
-        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql_emp, []);
-        if let Ok(rows) = db.query_all_raw(stmt).await {
-            for row in rows {
-                if let Ok(url) = row.try_get::<String>("", "file_url") {
-                    if let Some(key) = extract_s3_key(&url) {
-                        keys.push(key);
-                    }
-                }
-            }
-        }
-        // Query dial.messages for file attachments
-        let sql_msg = "SELECT content FROM dial.messages WHERE content LIKE '%/uploads/%'";
-        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql_msg, []);
-        if let Ok(rows) = db.query_all_raw(stmt).await {
-            for row in rows {
-                if let Ok(content) = row.try_get::<String>("", "content") {
-                    for part in content.split_whitespace() {
-                        if let Some(key) = extract_s3_key(part) {
-                            keys.push(key);
-                        }
-                    }
-                }
-            }
-        }
-        keys.sort();
-        keys.dedup();
-        keys
-    }
-
-    fn extract_s3_key(url: &str) -> Option<String> {
-        let parts: Vec<&str> = url.split(".amazonaws.com/").collect();
-        if parts.len() == 2 {
-            return Some(parts[1].to_string());
-        }
-        if let Some(pos) = url.find("uploads/") {
-            return Some(url[pos..].to_string());
-        }
-        None
-    }
-
-
     // Onboarding & Changelog stubs
     let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.core.clone(),
