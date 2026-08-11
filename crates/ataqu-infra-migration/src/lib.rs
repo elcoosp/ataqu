@@ -136,8 +136,12 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000029_add_shopify_unique_constraint::Migration),
             Box::new(m20250101_000030_add_scope_to_shopify_integrations::Migration),
             Box::new(m20250101_000031_create_file_references::Migration),
+            Box::new(m20250101_000032_seed_changelog::Migration),
+            Box::new(m20250101_000033_populate_permissions::Migration),
         ]
     }
 }
 
 pub mod m20250101_000013_create_shopify_integrations;
+mod m20250101_000032_seed_changelog;
+mod m20250101_000033_populate_permissions;

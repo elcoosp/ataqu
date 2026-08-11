@@ -160,7 +160,7 @@ pub fn validate_contact_name(name: &str) -> CinqResult<()> {
 
 pub fn validate_contact_phone(phone: &Option<PhoneNumber>) -> CinqResult<()> {
     if let Some(p) = phone
-        && p.as_ref().len() < 7
+        && p.len() < 7
     {
         return Err(CinqDomainError::InvalidPhone);
     }

@@ -103,10 +103,8 @@ impl PivotService {
     }
 
     // -- Databases --
-    pub async fn create_database(&self, _user_id: Uuid, cmd: CreateDatabaseCommand) -> PivotResult<Database> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn create_database(&self, user_id: Uuid, cmd: CreateDatabaseCommand) -> PivotResult<Database> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let domain_cmd = DomainCreateDatabase {
             tenant_id: cmd.tenant_id,
@@ -144,10 +142,8 @@ impl PivotService {
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
-    pub async fn delete_database(&self, _user_id: Uuid, tenant_id: TenantId, db_id: Uuid) -> PivotResult<()> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn delete_database(&self, user_id: Uuid, tenant_id: TenantId, db_id: Uuid) -> PivotResult<()> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         self.db_repo
             .delete_database(&tenant_id, db_id)
@@ -156,10 +152,8 @@ impl PivotService {
     }
 
     // -- Documents --
-    pub async fn create_document(&self, _user_id: Uuid, cmd: CreateDocumentCommand) -> PivotResult<Document> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn create_document(&self, user_id: Uuid, cmd: CreateDocumentCommand) -> PivotResult<Document> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let domain_cmd = DomainCreateDocument {
             tenant_id: cmd.tenant_id,
@@ -214,14 +208,12 @@ impl PivotService {
             })
     }
 
-    pub async fn update_document(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_document(&self, user_id: Uuid, tenant_id: TenantId,
         doc_id: Uuid,
         title: Option<String>,
         content: Option<String>,
         expected_version: i32,) -> PivotResult<Document> {
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let mut doc = self.get_document(tenant_id, doc_id).await?;
 
@@ -261,10 +253,8 @@ impl PivotService {
         Ok(doc)
     }
 
-    pub async fn delete_document(&self, _user_id: Uuid, tenant_id: TenantId, doc_id: Uuid) -> PivotResult<()> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn delete_document(&self, user_id: Uuid, tenant_id: TenantId, doc_id: Uuid) -> PivotResult<()> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         self.doc_repo
             .delete_document(&tenant_id, doc_id)
@@ -278,7 +268,6 @@ impl PivotService {
         limit: u64,
         offset: u64,
     ) -> PivotResult<Vec<Document>> {
-        // TODO: Add audit log call using log_audit()
 
         self.doc_repo
             .list_documents(&tenant_id, limit, offset)
@@ -287,8 +276,7 @@ impl PivotService {
     }
 
     // -- Blocks --
-    pub async fn create_block(&self, _user_id: Uuid, cmd: CreateBlockCommand) -> PivotResult<Block> {
-        // TODO: Add audit log call using crate::audit::log_audit
+    pub async fn create_block(&self, user_id: Uuid, cmd: CreateBlockCommand) -> PivotResult<Block> {
 
         self.get_document(cmd.tenant_id, cmd.document_id).await?;
         let domain_cmd = block_domain::CreateBlockCommand {
@@ -330,7 +318,6 @@ impl PivotService {
         tenant_id: TenantId,
         doc_id: Uuid,
     ) -> PivotResult<Vec<Block>> {
-        // TODO: Add audit log call using log_audit()
 
         self.block_repo
             .get_blocks_for_document(&tenant_id, doc_id)
@@ -338,11 +325,10 @@ impl PivotService {
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
-    pub async fn update_block(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_block(&self, user_id: Uuid, tenant_id: TenantId,
         block_id: Uuid,
         block_type: BlockType,
         expected_version: i32,) -> PivotResult<Block> {
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let block_event = self
             .block_repo
@@ -377,12 +363,9 @@ impl PivotService {
         Ok(updated_block)
     }
 
-    pub async fn delete_block(&self, _user_id: Uuid, tenant_id: TenantId, block_id: Uuid) -> PivotResult<()> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn delete_block(&self, user_id: Uuid, tenant_id: TenantId, block_id: Uuid) -> PivotResult<()> {
 
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         self.block_repo
             .delete_block(&tenant_id, block_id)
@@ -391,8 +374,7 @@ impl PivotService {
     }
 
     // -- Relations --
-    pub async fn create_relation(&self, _user_id: Uuid, cmd: CreateRelationCommand) -> PivotResult<Relation> {
-        // TODO: Add audit log call using crate::audit::log_audit
+    pub async fn create_relation(&self, user_id: Uuid, cmd: CreateRelationCommand) -> PivotResult<Relation> {
 
         self.block_repo
             .get_block_by_id(&cmd.tenant_id, cmd.from_block_id)
@@ -481,7 +463,6 @@ impl PivotService {
         doc_id: Uuid,
         limit: u64,
     ) -> PivotResult<Vec<ataqu_domain_pivot::document::DocumentVersion>> {
-        // TODO: Add audit log call using log_audit()
 
         self.doc_repo
             .list_document_versions(&tenant_id, doc_id, limit)
@@ -489,10 +470,9 @@ impl PivotService {
             .map_err(|e| PivotServiceError::Repository(e.to_string()))
     }
 
-    pub async fn create_template(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn create_template(&self, user_id: Uuid, tenant_id: TenantId,
         name: String,
         content: String,) -> PivotResult<ataqu_domain_pivot::document::Template> {
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let template = ataqu_domain_pivot::document::Template {
             id: self.id_gen.new_uuid_v7(),

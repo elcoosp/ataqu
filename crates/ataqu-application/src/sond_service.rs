@@ -82,10 +82,8 @@ impl SondService {
         }
     }
 
-    pub async fn create_form(&self, _user_id: Uuid, cmd: CreateFormCommand) -> SondResult<Form> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn create_form(&self, user_id: Uuid, cmd: CreateFormCommand) -> SondResult<Form> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let domain_cmd = form_domain::CreateFormCommand {
             tenant_id: cmd.tenant_id,
@@ -165,11 +163,9 @@ impl SondService {
             .ok_or(SondServiceError::FormNotFound)
     }
 
-    pub async fn update_form(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form(&self, user_id: Uuid, tenant_id: TenantId,
         cmd: ataqu_domain_sond::form::UpdateFormCommand,) -> SondResult<Form> {
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let current_form = self.get_form(tenant_id, cmd.form_id).await?;
         if current_form.version != cmd.expected_version {
@@ -244,21 +240,17 @@ impl SondService {
         Ok(form)
     }
 
-    pub async fn delete_form(&self, _user_id: Uuid, tenant_id: TenantId, form_id: Uuid) -> SondResult<()> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn delete_form(&self, user_id: Uuid, tenant_id: TenantId, form_id: Uuid) -> SondResult<()> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
             .delete_form(tenant_id, form_id)
             .await
             .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
-    pub async fn delete_submission(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn delete_submission(&self, user_id: Uuid, tenant_id: TenantId,
         submission_id: Uuid,) -> SondResult<()> {
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
             .delete_submission(tenant_id, submission_id)
@@ -267,12 +259,10 @@ impl SondService {
     }
 
     /// Update only the branding field of a form.
-    pub async fn update_form_branding(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form_branding(&self, user_id: Uuid, tenant_id: TenantId,
         form_id: Uuid,
         branding: serde_json::Value,) -> SondResult<Form> {
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let mut form = self.get_form(tenant_id, form_id).await?;
         form.branding = branding;
@@ -282,12 +272,10 @@ impl SondService {
     }
 
     /// Update the routing rules of a form.
-    pub async fn update_form_routing(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form_routing(&self, user_id: Uuid, tenant_id: TenantId,
         form_id: Uuid,
         rules: serde_json::Value,) -> SondResult<Form> {
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let mut form = self.get_form(tenant_id, form_id).await?;
         form.routing_rules = Some(rules);

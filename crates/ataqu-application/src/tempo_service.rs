@@ -103,10 +103,8 @@ impl TempoService {
         }
     }
 
-    pub async fn create_booking(&self, _user_id: Uuid, cmd: CreateBookingCommand) -> TempoResult<Booking> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn create_booking(&self, user_id: Uuid, cmd: CreateBookingCommand) -> TempoResult<Booking> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         if cmd.duration_minutes <= 0 {
             return Err(TempoServiceError::Validation(
@@ -239,7 +237,7 @@ impl TempoService {
         if let Some(audit_repo) = &self.audit_repo {
             audit_repo.append_log(
                 booking.tenant_id,
-                Uuid::nil(),
+                user_id,
                 "create_booking",
                 "tempo",
                 Some("booking"),
@@ -282,10 +280,8 @@ impl TempoService {
         Ok((bookings, total))
     }
 
-    pub async fn update_booking_status(&self, _user_id: Uuid, cmd: UpdateBookingStatusCommand,) -> TempoResult<Booking> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn update_booking_status(&self, user_id: Uuid, cmd: UpdateBookingStatusCommand,) -> TempoResult<Booking> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let booking_id = BookingId(cmd.booking_id);
         let booking = self
@@ -412,10 +408,8 @@ impl TempoService {
         Ok(sent)
     }
 
-    pub async fn create_event_type(&self, _user_id: Uuid, cmd: CreateEventTypeCommand) -> TempoResult<EventType> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn create_event_type(&self, user_id: Uuid, cmd: CreateEventTypeCommand) -> TempoResult<EventType> {
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let domain_cmd = ataqu_domain_tempo::CreateEventTypeCommand {
             tenant_id: cmd.tenant_id,
@@ -488,11 +482,9 @@ impl TempoService {
             ))
     }
 
-    pub async fn update_event_type(&self, _user_id: Uuid, cmd: UpdateEventTypeCommand,
+    pub async fn update_event_type(&self, user_id: Uuid, cmd: UpdateEventTypeCommand,
         expected_version: i32,) -> TempoResult<EventType> {
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         let mut event_type = self
             .repo
@@ -532,12 +524,9 @@ impl TempoService {
         Ok(event_type)
     }
 
-    pub async fn delete_event_type(&self, _user_id: Uuid, tenant_id: TenantId, id: Uuid) -> TempoResult<()> {
-        // TODO: Add audit log call using log_audit()
+    pub async fn delete_event_type(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> TempoResult<()> {
 
-        // TODO: Add audit log call using log_audit()
 
-        // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
             .delete_event_type(&tenant_id, id)
@@ -545,8 +534,7 @@ impl TempoService {
             .map_err(TempoServiceError::Repository)
     }
 
-    pub async fn create_availability_slot(&self, _user_id: Uuid, cmd: CreateAvailabilitySlotCommand,) -> TempoResult<AvailabilitySlot> {
-        // TODO: Add audit log call using crate::audit::log_audit
+    pub async fn create_availability_slot(&self, user_id: Uuid, cmd: CreateAvailabilitySlotCommand,) -> TempoResult<AvailabilitySlot> {
 
         let domain_cmd = availability_domain::CreateAvailabilitySlotCommand {
             tenant_id: cmd.tenant_id,
@@ -580,7 +568,6 @@ impl TempoService {
         tenant_id: TenantId,
         event_type_id: Uuid,
     ) -> TempoResult<Vec<AvailabilitySlot>> {
-        // TODO: Add audit log call using log_audit()
 
         self.repo
             .list_availability_slots(&tenant_id, &EventTypeId(event_type_id))
@@ -588,9 +575,8 @@ impl TempoService {
             .map_err(TempoServiceError::Repository)
     }
 
-    pub async fn delete_availability_slot(&self, _user_id: Uuid, tenant_id: TenantId,
+    pub async fn delete_availability_slot(&self, user_id: Uuid, tenant_id: TenantId,
         slot_id: Uuid,) -> TempoResult<()> {
-        // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
             .delete_availability_slot(&tenant_id, slot_id)

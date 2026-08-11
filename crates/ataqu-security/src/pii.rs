@@ -56,6 +56,16 @@ impl PhoneNumber {
     pub fn reveal(&self, _key: &PiiAccessKey) -> &str {
         &self.0
     }
+
+    /// Returns the length of the phone number string.
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Returns true if the phone number string is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
 
 impl fmt::Debug for PhoneNumber {
