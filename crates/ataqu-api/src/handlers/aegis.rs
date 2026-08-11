@@ -1,3 +1,4 @@
+// TODO: Audit logging - pass user_id to service methods
 // TODO: Add user_id parameter to all service mutation calls
 //! AEGIS API handlers using AuthContext.
 
@@ -41,7 +42,7 @@ pub async fn create_user(
         password: req.password,
         name: req.name,
     };
-    match state.aegis_service.create_user(cmd).await {
+    match state.aegis_service.create_user(cmd).await // TODO: add user_id as first argument {
         Ok(resp) => Ok((
             StatusCode::CREATED,
             Json(serde_json::json!({
@@ -82,7 +83,7 @@ pub async fn login(
         totp_code: req.totp_code,
         tenant_id: None,
     };
-    match state.aegis_service.authenticate(cmd).await {
+    match state.aegis_service.authenticate(cmd).await // TODO: add user_id as first argument {
         Ok(resp) => Ok(Json(LoginResponse {
             access_token: resp.access_token,
             refresh_token: resp.refresh_token,

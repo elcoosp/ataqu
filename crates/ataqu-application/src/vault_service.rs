@@ -130,7 +130,9 @@ impl VaultService {
         }
     }
 
-    pub async fn create_product(&self, cmd: CreateProductCommand) -> VaultResult<Product> {
+    pub async fn create_product(&self, user_id: Uuid, cmd: CreateProductCommand) -> VaultResult<Product> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         if cmd.name.trim().is_empty() {
@@ -186,7 +188,9 @@ impl VaultService {
         Ok(product)
     }
 
-    pub async fn update_product(&self, cmd: UpdateProductCommand) -> VaultResult<Product> {
+    pub async fn update_product(&self, user_id: Uuid, cmd: UpdateProductCommand) -> VaultResult<Product> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         let mut product = self.get_product(cmd.tenant_id, cmd.id).await?;
@@ -249,7 +253,9 @@ impl VaultService {
         Ok(product)
     }
 
-    pub async fn delete_product(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+    pub async fn delete_product(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
@@ -303,7 +309,9 @@ impl VaultService {
         Ok((products, total))
     }
 
-    pub async fn create_variant(&self, cmd: CreateVariantCommand) -> VaultResult<Variant> {
+    pub async fn create_variant(&self, user_id: Uuid, cmd: CreateVariantCommand) -> VaultResult<Variant> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         if cmd.sku.trim().is_empty() {
@@ -386,13 +394,15 @@ impl VaultService {
         tenant_id: TenantId,
         sku: String,
     ) -> VaultResult<Option<Variant>> {
+        // TODO: Add audit log call using log_audit()
+
         self.repo
             .find_variant_by_sku(&tenant_id, &sku)
             .await
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn update_variant(&self, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
+    pub async fn update_variant(&self, user_id: Uuid, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let variant = self.get_variant(cmd.tenant_id, cmd.id).await?;
@@ -434,7 +444,9 @@ impl VaultService {
                     Some("variant"),
                     Some(new_variant.id),
                     None,
-                    Some(serde_json::json!({"sku": new_variant.sku, "price": new_variant.price})),
+                    Some(serde_json::json!({
+        // TODO: Add audit log call using log_audit()
+"sku": new_variant.sku, "price": new_variant.price})),
                     None,
                     None,
                 )
@@ -445,7 +457,7 @@ impl VaultService {
         Ok(new_variant)
     }
 
-    pub async fn delete_variant(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+    pub async fn delete_variant(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
@@ -491,7 +503,9 @@ impl VaultService {
         Ok((variants, total))
     }
 
-    pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
+    pub async fn update_stock(&self, user_id: Uuid, cmd: UpdateStockCommand) -> VaultResult<Variant> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         use sea_orm::TransactionTrait;
@@ -646,18 +660,17 @@ impl VaultService {
         tenant_id: TenantId,
         threshold: i64,
     ) -> VaultResult<Vec<Variant>> {
+        // TODO: Add audit log call using log_audit()
+
         self.repo
             .find_low_stock_variants(&tenant_id, threshold)
             .await
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn create_warehouse(
-        &self,
-        tenant_id: TenantId,
+    pub async fn create_warehouse(&self, user_id: Uuid, tenant_id: TenantId,
         name: String,
-        location: Option<String>,
-    ) -> VaultResult<Warehouse> {
+        location: Option<String>,) -> VaultResult<Warehouse> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let warehouse = Warehouse {
@@ -682,6 +695,8 @@ impl VaultService {
             .append(VAULT_SCHEMA, "WarehouseCreated", warehouse.id, &payload)
             .await
             .map_err(|e| {
+        // TODO: Add audit log call using log_audit()
+
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
             })?;
 
@@ -695,7 +710,7 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn update_warehouse(&self, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
+    pub async fn update_warehouse(&self, user_id: Uuid, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let mut warehouse = self
@@ -734,7 +749,9 @@ impl VaultService {
                     Some("warehouse"),
                     Some(warehouse.id),
                     None,
-                    Some(serde_json::json!({"name": warehouse.name})),
+                    Some(serde_json::json!({
+        // TODO: Add audit log call using log_audit()
+"name": warehouse.name})),
                     None,
                     None,
                 )
@@ -744,7 +761,7 @@ impl VaultService {
         Ok(warehouse)
     }
 
-    pub async fn delete_warehouse(&self, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
+    pub async fn delete_warehouse(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         self.repo
@@ -752,6 +769,8 @@ impl VaultService {
             .await
             .map_err(VaultServiceError::Repository)?;
         if let Some(audit_repo) = &self.audit_repo {
+        // TODO: Add audit log call using log_audit()
+
             audit_repo
                 .append_log(
                     tenant_id,
@@ -771,13 +790,10 @@ impl VaultService {
         Ok(())
     }
 
-    pub async fn reserve_stock(
-        &self,
-        tenant_id: TenantId,
+    pub async fn reserve_stock(&self, user_id: Uuid, tenant_id: TenantId,
         variant_id: Uuid,
         quantity: i64,
-        expected_version: i32,
-    ) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {
+        expected_version: i32,) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {
         // TODO: Add audit log call using crate::audit::log_audit
 
         let variant = self.get_variant(tenant_id, variant_id).await?;

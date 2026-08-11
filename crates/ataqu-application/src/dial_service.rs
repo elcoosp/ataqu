@@ -92,7 +92,9 @@ impl DialService {
     }
 
     // -- Channel methods --
-    pub async fn create_channel(&self, cmd: CreateChannelCommand) -> DialResult<Channel> {
+    pub async fn create_channel(&self, user_id: Uuid, cmd: CreateChannelCommand) -> DialResult<Channel> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         if cmd.channel_type == ChannelType::DirectMessage && cmd.participants.len() != 2 {
@@ -160,6 +162,8 @@ impl DialService {
         user_id: Uuid,
         channel_id: Uuid,
     ) -> DialResult<()> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         let channel = self
@@ -188,6 +192,8 @@ impl DialService {
         name: Option<String>,
         expected_version: i32,
     ) -> DialResult<Channel> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         let mut channel = self
@@ -430,13 +436,12 @@ impl DialService {
         self.get_message(tenant_id, message_id).await
     }
 
-    pub async fn delete_message(
-        &self,
-        tenant_id: TenantId,
+    pub async fn delete_message(&self, user_id: Uuid, tenant_id: TenantId,
         message_id: Uuid,
         deleter_id: Uuid,
-        is_moderator: bool,
-    ) -> DialResult<()> {
+        is_moderator: bool,) -> DialResult<()> {
+        // TODO: Add audit log call using log_audit()
+
         // TODO: Add audit log call using crate::audit::log_audit
 
         let message = self
@@ -889,6 +894,8 @@ impl DialService {
         tenant_id: TenantId,
         message_id: Uuid,
     ) -> DialResult<Vec<Reaction>> {
+        // TODO: Add audit log call using log_audit()
+
         self.repo
             .list_reactions_for_message(&tenant_id, &MessageId::new(message_id))
             .await
