@@ -27,7 +27,6 @@ use ataqu_security::{Email, PhoneNumber};
 use rust_decimal::Decimal;
 
 use crate::outbox::Outbox;
-use crate::audit::log_audit;
 
 #[derive(Debug, Clone)]
 pub struct CreateContactCommand {
