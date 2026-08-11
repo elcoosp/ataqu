@@ -1,7 +1,6 @@
-#![allow(unused_variables)]
 //! PAUSE application service — HR orchestration.
 //! Uses domain types and repository traits from domain crate.
-use serde_json::Value;
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -11,7 +10,9 @@ pub use ataqu_domain_pause::{
 };
 
 use crate::outbox::Outbox;
+use ataqu_infra_idempotency::{AcquireOutcome, CachedResponse, IdempotencyGuard, SeaOrmIdempotencyStore};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use sea_orm::DatabaseConnection;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PauseServiceError {
@@ -31,40 +32,8 @@ pub enum PauseServiceError {
 
 pub const PAUSE_SCHEMA: &str = "collab_ops";
 
-#[async_trait::async_trait]
-pub trait IdempotencyPort: Send + Sync {
-    async fn acquire(&self, command_id: &Uuid)
-    -> Result<IdempotencyGuardHandle, PauseServiceError>;
-    async fn commit(
-        &self,
-        command_id: &Uuid,
-        response_body: Value,
-    ) -> Result<(), PauseServiceError>;
-    async fn rollback(&self, command_id: &Uuid) -> Result<(), PauseServiceError>;
-}
-
-pub struct IdempotencyGuardHandle {
-    cached_response: Option<Value>,
-}
-impl IdempotencyGuardHandle {
-    pub fn new(cached_response: Option<Value>) -> Self {
-        Self { cached_response }
-    }
-    pub fn is_cached(&self) -> bool {
-        self.cached_response.is_some()
-    }
-    pub fn get_cached<T: serde::de::DeserializeOwned>(&self) -> Result<T, PauseServiceError> {
-        let value = self
-            .cached_response
-            .as_ref()
-            .ok_or_else(|| PauseServiceError::Idempotency("no cached response".into()))?;
-        serde_json::from_value(value.clone())
-            .map_err(|e| PauseServiceError::Idempotency(format!("cache deserialization: {e}")))
-    }
-}
-
 pub struct PauseService {
-    idempotency: Arc<dyn IdempotencyPort>,
+    db: DatabaseConnection,
     employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
     leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
     document_repo:
@@ -75,7 +44,7 @@ pub struct PauseService {
 
 impl PauseService {
     pub fn new(
-        idempotency: Arc<dyn IdempotencyPort>,
+        db: DatabaseConnection,
         employee_repo: Arc<dyn ataqu_domain_pause::repository::EmployeeRepositoryPort>,
         leave_request_repo: Arc<dyn ataqu_domain_pause::repository::LeaveRequestRepositoryPort>,
         document_repo: Arc<
@@ -85,7 +54,7 @@ impl PauseService {
         clock: Arc<dyn Clock>,
     ) -> Self {
         Self {
-            idempotency,
+            db,
             employee_repo,
             leave_request_repo,
             document_repo,
@@ -102,45 +71,69 @@ impl PauseService {
         clock: &dyn Clock,
         command_id: Uuid,
     ) -> Result<Uuid, PauseServiceError> {
-        let guard = self.idempotency.acquire(&command_id).await?;
-        if guard.is_cached() {
-            return guard.get_cached::<Uuid>();
-        }
-        let result = async {
-            let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock)?;
-            self.employee_repo.insert(tenant_id, &event).await?;
-            let payload = serde_json::json!({
-                "employee_id": event.employee_id,
-                "tenant_id": event.tenant_id,
-                "full_name": event.full_name,
-                "job_title": event.job_title,
-                "department": event.department,
-                "hire_date": event.hire_date,
-                "created_at": event.created_at,
-            });
-            self.outbox
-                .append(
-                    PAUSE_SCHEMA,
-                    "EmployeeCreatedEvent",
-                    event.employee_id,
-                    &payload,
-                )
-                .await
-                .map_err(PauseServiceError::Outbox)?;
-            Ok(event.employee_id)
-        }
-        .await;
+        let store = SeaOrmIdempotencyStore::new();
+        let outcome = IdempotencyGuard::acquire(&self.db, command_id, Some(Box::new(store)))
+            .await
+            .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
 
-        match result {
-            Ok(id) => {
-                self.idempotency
-                    .commit(&command_id, serde_json::to_value(id).unwrap())
-                    .await?;
-                Ok(id)
+        match outcome {
+            AcquireOutcome::Completed(cached) => {
+                // Return cached response
+                let value: Uuid = serde_json::from_value(cached.body)
+                    .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                Ok(value)
             }
-            Err(e) => {
-                let _ = self.idempotency.rollback(&command_id).await;
-                Err(e)
+            AcquireOutcome::Proceed(guard) => {
+                // Execute the operation inside the guard transaction
+                let result = async {
+                    let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock)?;
+                    self.employee_repo.insert(tenant_id, &event).await?;
+                    let payload = serde_json::json!({
+                        "employee_id": event.employee_id,
+                        "tenant_id": event.tenant_id,
+                        "full_name": event.full_name,
+                        "job_title": event.job_title,
+                        "department": event.department,
+                        "hire_date": event.hire_date,
+                        "created_at": event.created_at,
+                    });
+                    self.outbox
+                        .append(
+                            PAUSE_SCHEMA,
+                            "EmployeeCreatedEvent",
+                            event.employee_id,
+                            &payload,
+                        )
+                        .await
+                        .map_err(PauseServiceError::Outbox)?;
+                    Ok(event.employee_id)
+                }.await;
+
+                match result {
+                    Ok(id) => {
+                        let response_body = serde_json::to_value(id).unwrap();
+                        let response = CachedResponse {
+                            status: 200,
+                            headers: HashMap::new(),
+                            body: response_body,
+                        };
+                        guard.complete(response, None)
+                            .await
+                            .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                        Ok(id)
+                    }
+                    Err(e) => {
+                        // Check if it's a validation error (should be failed status)
+                        if matches!(e, PauseServiceError::Validation(_)) {
+                            guard.fail().await
+                                .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                        } else {
+                            guard.abort().await
+                                .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                        }
+                        Err(e)
+                    }
+                }
             }
         }
     }
@@ -153,41 +146,65 @@ impl PauseService {
         clock: &dyn Clock,
         command_id: Uuid,
     ) -> Result<Uuid, PauseServiceError> {
-        let guard = self.idempotency.acquire(&command_id).await?;
-        if guard.is_cached() {
-            return guard.get_cached::<Uuid>();
-        }
-        let result = async {
-            let event = ataqu_domain_pause::leave::request_leave(command, id_gen, clock);
-            self.leave_request_repo.insert(tenant_id, &event).await?;
-            let payload = serde_json::to_value(&event)
-                .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
-            self.outbox
-                .append(
-                    PAUSE_SCHEMA,
-                    "LeaveRequestedEvent",
-                    event.leave_request_id,
-                    &payload,
-                )
-                .await
-                .map_err(PauseServiceError::Outbox)?;
-            Ok(event.leave_request_id)
-        }
-        .await;
+        let store = SeaOrmIdempotencyStore::new();
+        let outcome = IdempotencyGuard::acquire(&self.db, command_id, Some(Box::new(store)))
+            .await
+            .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
 
-        match result {
-            Ok(id) => {
-                self.idempotency
-                    .commit(&command_id, serde_json::to_value(id).unwrap())
-                    .await?;
-                Ok(id)
+        match outcome {
+            AcquireOutcome::Completed(cached) => {
+                let value: Uuid = serde_json::from_value(cached.body)
+                    .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                Ok(value)
             }
-            Err(e) => {
-                let _ = self.idempotency.rollback(&command_id).await;
-                Err(e)
+            AcquireOutcome::Proceed(guard) => {
+                let result = async {
+                    let event = ataqu_domain_pause::leave::request_leave(command, id_gen, clock);
+                    self.leave_request_repo.insert(tenant_id, &event).await?;
+                    let payload = serde_json::to_value(&event)
+                        .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+                    self.outbox
+                        .append(
+                            PAUSE_SCHEMA,
+                            "LeaveRequestedEvent",
+                            event.leave_request_id,
+                            &payload,
+                        )
+                        .await
+                        .map_err(PauseServiceError::Outbox)?;
+                    Ok(event.leave_request_id)
+                }.await;
+
+                match result {
+                    Ok(id) => {
+                        let response_body = serde_json::to_value(id).unwrap();
+                        let response = CachedResponse {
+                            status: 200,
+                            headers: HashMap::new(),
+                            body: response_body,
+                        };
+                        guard.complete(response, None)
+                            .await
+                            .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                        Ok(id)
+                    }
+                    Err(e) => {
+                        if matches!(e, PauseServiceError::Validation(_)) {
+                            guard.fail().await
+                                .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                        } else {
+                            guard.abort().await
+                                .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
+                        }
+                        Err(e)
+                    }
+                }
             }
         }
     }
+
+    // ... rest of the service methods remain unchanged, only with the new struct fields.
+    // We'll keep the existing methods but they will work with the new fields.
 
     pub async fn find_employee(
         &self,

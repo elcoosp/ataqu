@@ -605,9 +605,7 @@ async fn main() -> anyhow::Result<()> {
         Some(audit_repo.clone()),
     ));
     // PAUSE
-    use ataqu_application::pause_infra::RealIdempotency;
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
-    let pause_idempotency = Arc::new(RealIdempotency::new(pools.ops.clone()));
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
     let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
     let pause_doc_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
@@ -615,7 +613,7 @@ async fn main() -> anyhow::Result<()> {
         pools.ops.clone(),
     ));
     let pause_service = Arc::new(PauseService::new(
-        pause_idempotency.clone(),
+        pools.ops.clone(),
         pause_employee_repo,
         pause_leave_repo,
         pause_doc_repo,
