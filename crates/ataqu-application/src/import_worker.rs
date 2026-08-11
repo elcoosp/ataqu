@@ -7,13 +7,12 @@ use tracing::info;
 use serde_json::Value;
 
 pub struct ImportWorker {
-    db: DatabaseConnection,
     outbox: Arc<dyn Outbox>,
 }
 
 impl ImportWorker {
-    pub fn new(db: DatabaseConnection, outbox: Arc<dyn Outbox>) -> Self {
-        Self { db, outbox }
+    pub fn new(outbox: Arc<dyn Outbox>) -> Self {
+        Self { outbox }
     }
 
     pub async fn handle_event(&self, event: OutboxEvent) -> Result<(), String> {

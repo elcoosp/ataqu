@@ -8,11 +8,13 @@ use uuid::Uuid;
 
 pub struct ShopifyRepositoryImpl {
     db: DatabaseConnection,
+    encryptor: Encryptor,
 }
 
 impl ShopifyRepositoryImpl {
     pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
+        let encryptor = Encryptor::from_env();
+        Self { db, encryptor }
     }
 }
 
@@ -30,7 +32,7 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
                 id: m.id,
                 tenant_id: TenantId::new(m.tenant_id),
                 shop_domain: m.shop_domain,
-                access_token: m.access_token,
+                access_token: self.encryptor.decrypt(&m.access_token).unwrap_or_default(),
                 last_synced_at: m.last_synced_at,
                 created_at: m.created_at,
             });

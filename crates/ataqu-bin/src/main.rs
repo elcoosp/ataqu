@@ -563,7 +563,10 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
     }
-    let system_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+        let system_user_id = std::env::var("SYSTEM_USER_ID")
+        .ok()
+        .and_then(|s| Uuid::parse_str(&s).ok())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }
@@ -981,9 +984,7 @@ async fn main() -> anyhow::Result<()> {
     });
     // Import worker handler
     event_registry.register("core", "ImportJob", {
-        let import_worker = Arc::new(ataqu_application::import_worker::ImportWorker::new(
-            pools.core.clone(),
-            core_outbox_for_gdpr.clone(),
+        let import_worker = Arc::new(ataqu_application::import_worker::ImportWorker::new(core_outbox_for_gdpr.clone(),
         ));
         move |evt| {
             let worker = import_worker.clone();

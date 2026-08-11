@@ -2,6 +2,7 @@ use sea_orm::{ConnectionTrait, DatabaseTransaction, DbBackend, DbErr, RuntimeErr
 use std::future::Future;
 use uuid::Uuid;
 
+
 pub trait Identifiable {
     fn id(&self) -> Uuid;
 }
