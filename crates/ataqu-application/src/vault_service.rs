@@ -1,3 +1,4 @@
+
 //! VAULT application service – orchestrates products and variants using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
@@ -471,14 +472,12 @@ impl VaultService {
         Ok((variants, total))
     }
 
-    /// Note: This operation should be wrapped in a DB transaction to ensure atomicity
-    /// between the variant save and the movement save. The current repo trait doesn't
-    /// expose transaction support, so this is a known limitation.
     /// NOTE: This operation should be wrapped in a DB transaction to ensure atomicity
     /// between the variant save and the movement save. The current repo trait doesn't
     /// expose transaction support, so this is a known limitation.
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
+
         if variant.version != cmd.expected_version {
             return Err(VaultServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",
@@ -487,9 +486,10 @@ impl VaultService {
         }
 
         let new_variant = variant.adjust_stock(cmd.delta, self.clock.as_ref())?;
-        self.repo.save_variant(&new_variant)
+        self.repo
+            .save_variant(&new_variant)
             .await
-            .map_err(VaultServiceError::Repository)?;
+            .map_err(|e| VaultServiceError::Repository(e))?;
 
         let movement = ataqu_domain_vault::stock::create_movement(
             ataqu_domain_vault::stock::CreateMovementCommand {
@@ -502,9 +502,10 @@ impl VaultService {
             self.id_gen.as_ref(),
             self.clock.as_ref(),
         );
-        self.repo.save_movement(&movement)
+        self.repo
+            .save_movement(&movement)
             .await
-            .map_err(VaultServiceError::Repository)?;
+            .map_err(|e| VaultServiceError::Repository(e))?;
 
         let stock_payload = serde_json::json!({
             "variant_id": new_variant.id,
@@ -514,7 +515,12 @@ impl VaultService {
             "reason": movement.reason.clone(),
         });
         self.outbox
-            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .append(
+                VAULT_SCHEMA,
+                "StockAdjusted",
+                new_variant.id,
+                &stock_payload,
+            )
             .await
             .map_err(|e| {
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
@@ -544,9 +550,6 @@ impl VaultService {
         Ok(new_variant)
     }
 
-
-
-
     pub async fn bulk_adjust_stock(
         &self,
         cmd: BulkStockAdjustCommand,
@@ -564,7 +567,7 @@ impl VaultService {
             self.repo
                 .save_variant(&new_variant)
                 .await
-                .map_err(VaultServiceError::Repository)?;
+                .map_err(|e| VaultServiceError::Repository(e))?;
 
             let movement = ataqu_domain_vault::stock::create_movement(
                 ataqu_domain_vault::stock::CreateMovementCommand {
@@ -580,7 +583,7 @@ impl VaultService {
             self.repo
                 .save_movement(&movement)
                 .await
-                .map_err(VaultServiceError::Repository)?;
+                .map_err(|e| VaultServiceError::Repository(e))?;
 
             let stock_payload = serde_json::json!({
                 "variant_id": new_variant.id,
@@ -693,8 +696,6 @@ impl VaultService {
             warehouse.location = loc;
         }
 
-        warehouse.version += 1;
-        warehouse.version += 1;
         warehouse.version += 1;
         self.repo
             .update_warehouse(&warehouse)
