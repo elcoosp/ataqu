@@ -844,6 +844,8 @@ dependencies = [
  "aws-config",
  "aws-credential-types",
  "aws-sdk-s3",
+ "chrono",
+ "sea-orm",
  "thiserror 2.0.19",
  "tokio",
  "tracing",

@@ -39,6 +39,11 @@ use ataqu_application::shopify_service::ShopifyService;
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
+
+use ataqu_infra_storage::orphan_reaper;
+use ataqu_application::tempo_refresh_worker;
+use ataqu_application::import_worker;
+
 // use sea_orm::DatabaseConnection;
 
 // ----------------------------------------------------------------------------
@@ -1030,6 +1035,20 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
+    // Import worker handler
+    event_registry.register("core", "ImportJob", {
+        let import_worker = Arc::new(ataqu_application::import_worker::ImportWorker::new(
+            pools.core.clone(),
+            core_outbox_for_gdpr.clone(),
+        ));
+        move |evt| {
+            let worker = import_worker.clone();
+            async move {
+                worker.handle_event(evt).await.map_err(|e| e.to_string())
+            }
+        }
+    });
+
 
     // Spawn Outbox Dispatcher
     use ataqu_infra_outbox::OutboxDispatcher;
@@ -1067,6 +1086,42 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         run_cron_worker(cron_pool).await;
     });
+    // Spawn S3 orphan reaper (every hour)
+    let s3_reaper = s3_service.clone();
+    let db_reaper = pools.core.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await {
+                tracing::error!(error = %e, "S3 orphan reaper failed");
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+        }
+    });
+    // Spawn S3 orphan reaper (every hour)
+    let s3_reaper = s3_service.clone();
+    let db_reaper = pools.core.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await {
+                tracing::error!(error = %e, "S3 orphan reaper failed");
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+        }
+    });
+
+    // Spawn Tempo OAuth refresh worker (every 15 minutes)
+    let tempo_db = pools.ops.clone();
+    let tempo_client = http_client.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = ataqu_application::tempo_refresh_worker::refresh_expiring_tokens(tempo_db.clone(), tempo_client.clone()).await {
+                tracing::error!(error = %e, "Tempo refresh worker failed");
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(900)).await;
+        }
+    });
+
+
 
     let app_state = AppState {
         db: pools.core.clone(),

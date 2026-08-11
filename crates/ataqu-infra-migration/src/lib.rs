@@ -9,6 +9,7 @@ pub mod m20250101_000027_add_company_to_contacts;
 pub mod m20250101_000028_add_mode_to_forms;
 pub mod m20250101_000029_add_shopify_unique_constraint;
 pub mod m20250101_000030_add_scope_to_shopify_integrations;
+pub mod m20250101_000031_create_file_references;
 pub mod m_aegis;
 pub mod m_aegis_add_api_keys;
 pub mod m_cinq;
@@ -134,6 +135,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000028_add_mode_to_forms::Migration),
             Box::new(m20250101_000029_add_shopify_unique_constraint::Migration),
             Box::new(m20250101_000030_add_scope_to_shopify_integrations::Migration),
+            Box::new(m20250101_000031_create_file_references::Migration),
         ]
     }
 }
