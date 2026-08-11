@@ -22,3 +22,4 @@ pub mod tempo_repo_impl;
 pub mod user_preferences_repo;
 pub mod vault_repo_impl;
 pub mod vista_repo_impl;
+pub mod vault_transaction_repo;

@@ -24,6 +24,11 @@ pub struct S3Service {
     _region: String,
 }
 
+pub struct ListObjectsResult {
+    pub keys: Vec<String>,
+    pub next_continuation_token: Option<String>,
+}
+
 impl S3Service {
     pub async fn new() -> Result<Self> {
         let bucket = std::env::var("S3_BUCKET").map_err(|_| S3Error::InvalidBucket)?;
@@ -78,7 +83,6 @@ impl S3Service {
                 .send()
                 .await
                 .map_err(|e| S3Error::Presign(e.to_string()))?;
-            // contents() returns a slice of objects
             for obj in resp.contents() {
                 if let Some(key) = obj.key() {
                     objects.push(key.to_string());
@@ -91,6 +95,30 @@ impl S3Service {
             }
         }
         Ok(objects)
+    }
+
+    pub async fn list_objects_with_token(
+        &self,
+        prefix: &str,
+        continuation_token: Option<&str>,
+    ) -> Result<ListObjectsResult> {
+        let mut req = self.client.list_objects_v2()
+            .bucket(&self.bucket)
+            .prefix(prefix)
+            .max_keys(1000);
+        if let Some(token) = continuation_token {
+            req = req.continuation_token(token);
+        }
+        let resp = req.send().await
+            .map_err(|e| S3Error::Presign(e.to_string()))?;
+        let mut keys = Vec::new();
+        for obj in resp.contents() {
+            if let Some(key) = obj.key() {
+                keys.push(key.to_string());
+            }
+        }
+        let next_token = resp.next_continuation_token().map(|t| t.to_string());
+        Ok(ListObjectsResult { keys, next_continuation_token: next_token })
     }
 
     pub async fn delete_object(&self, key: &str) -> Result<()> {

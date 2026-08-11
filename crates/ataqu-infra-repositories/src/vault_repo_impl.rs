@@ -557,3 +557,40 @@ impl VaultRepository for VaultRepositoryImpl {
         Ok(())
     }
 }
+
+#[async_trait]
+impl crate::vault_transaction_repo::VaultTransactionRepository for VaultRepositoryImpl {
+    async fn save_variant_txn(
+        &self,
+        txn: &mut sea_orm::DatabaseTransaction,
+        variant: &Variant,
+    ) -> Result<(), RepositoryError> {
+        let active = variant_domain_to_active(variant);
+        variant_entity::Entity::insert(active)
+            .exec(txn)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn save_movement_txn(
+        &self,
+        txn: &mut sea_orm::DatabaseTransaction,
+        movement: &StockMovement,
+    ) -> Result<(), RepositoryError> {
+        let active = stock_movement_entity::ActiveModel {
+            id: Set(movement.id),
+            tenant_id: Set(movement.tenant_id.as_uuid()),
+            variant_id: Set(movement.variant_id),
+            quantity: Set(movement.quantity),
+            reason: Set(movement.reason.clone()),
+            reference: Set(movement.reference.clone()),
+            timestamp: Set(movement.timestamp.into()),
+        };
+        stock_movement_entity::Entity::insert(active)
+            .exec(txn)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        Ok(())
+    }
+}

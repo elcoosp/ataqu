@@ -1,4 +1,3 @@
-
 //! VAULT application service – orchestrates products and variants using domain repositories.
 use std::sync::Arc;
 use uuid::Uuid;
@@ -7,6 +6,9 @@ use ataqu_domain_vault::repository::VaultRepository;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 use crate::outbox::Outbox;
+use ataqu_infra_repositories::vault_transaction_repo::VaultTransactionRepository;
+use sea_orm::DatabaseConnection;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 
 pub use ataqu_domain_vault::inventory::Product;
 pub use ataqu_domain_vault::inventory::Variant;
@@ -98,24 +100,28 @@ const VAULT_SCHEMA: &str = "vault";
 
 pub struct VaultService {
     repo: Arc<dyn VaultRepository + Send + Sync>,
+    txn_repo: Arc<dyn VaultTransactionRepository + Send + Sync>,
+    db: DatabaseConnection,
     outbox: Arc<dyn Outbox + Send + Sync>,
     id_gen: Arc<dyn IdGenerator>,
     clock: Arc<dyn Clock>,
-    audit_repo: Option<Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>>,
+    audit_repo: Option<Arc<dyn AuditRepositoryTrait + Send + Sync>>,
 }
 
 impl VaultService {
     pub fn new(
         repo: Arc<dyn VaultRepository + Send + Sync>,
+        txn_repo: Arc<dyn VaultTransactionRepository + Send + Sync>,
+        db: DatabaseConnection,
         outbox: Arc<dyn Outbox + Send + Sync>,
         id_gen: Arc<dyn IdGenerator>,
         clock: Arc<dyn Clock>,
-        audit_repo: Option<
-            Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
-        >,
+        audit_repo: Option<Arc<dyn AuditRepositoryTrait + Send + Sync>>,
     ) -> Self {
         Self {
             repo,
+            txn_repo,
+            db,
             outbox,
             id_gen,
             clock,
@@ -472,12 +478,13 @@ impl VaultService {
         Ok((variants, total))
     }
 
-    /// NOTE: This operation should be wrapped in a DB transaction to ensure atomicity
-    /// between the variant save and the movement save. The current repo trait doesn't
-    /// expose transaction support, so this is a known limitation.
     pub async fn update_stock(&self, cmd: UpdateStockCommand) -> VaultResult<Variant> {
-        let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
+        use sea_orm::TransactionTrait;
+        let mut txn = self.db.begin()
+            .await
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e.to_string())))?;
 
+        let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
         if variant.version != cmd.expected_version {
             return Err(VaultServiceError::Validation(format!(
                 "Version mismatch: expected {}, found {}",
@@ -486,10 +493,9 @@ impl VaultService {
         }
 
         let new_variant = variant.adjust_stock(cmd.delta, self.clock.as_ref())?;
-        self.repo
-            .save_variant(&new_variant)
+        self.txn_repo.save_variant_txn(&mut txn, &new_variant)
             .await
-            .map_err(|e| VaultServiceError::Repository(e))?;
+            .map_err(VaultServiceError::Repository)?;
 
         let movement = ataqu_domain_vault::stock::create_movement(
             ataqu_domain_vault::stock::CreateMovementCommand {
@@ -502,10 +508,13 @@ impl VaultService {
             self.id_gen.as_ref(),
             self.clock.as_ref(),
         );
-        self.repo
-            .save_movement(&movement)
+        self.txn_repo.save_movement_txn(&mut txn, &movement)
             .await
-            .map_err(|e| VaultServiceError::Repository(e))?;
+            .map_err(VaultServiceError::Repository)?;
+
+        txn.commit()
+            .await
+            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e.to_string())))?;
 
         let stock_payload = serde_json::json!({
             "variant_id": new_variant.id,
@@ -515,12 +524,7 @@ impl VaultService {
             "reason": movement.reason.clone(),
         });
         self.outbox
-            .append(
-                VAULT_SCHEMA,
-                "StockAdjusted",
-                new_variant.id,
-                &stock_payload,
-            )
+            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
             .await
             .map_err(|e| {
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))

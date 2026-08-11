@@ -1,11 +1,8 @@
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
-
 #![allow(clippy::never_loop)]
-
 mod event_registry;
-
 use dotenvy::dotenv;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -16,7 +13,6 @@ use tracing_appender::non_blocking;
 use tracing_appender::rolling;
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
-
 use ataqu_api::{AppState, create_router};
 use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
 use ataqu_application::cinq_service::CinqService;
@@ -31,7 +27,6 @@ use ataqu_application::vista_service::VistaService;
 use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
 use ataqu_kernel::{SystemClock, SystemIdGenerator};
-
 use ataqu_application::changelog_service::ChangelogService;
 use ataqu_application::health_service::HealthService;
 use ataqu_application::onboarding_service::OnboardingService;
@@ -39,39 +34,29 @@ use ataqu_application::shopify_service::ShopifyService;
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
-
 use ataqu_infra_storage::orphan_reaper;
 use ataqu_application::tempo_refresh_worker;
 use ataqu_application::import_worker;
-
 // use sea_orm::DatabaseConnection;
-
 // ----------------------------------------------------------------------------
 // Main
 // ----------------------------------------------------------------------------
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
-
     let file_appender = rolling::daily("./logs", "ataqu.log");
     let (non_blocking_file, _guard) = non_blocking(file_appender);
-
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .with_target(true)
         .with_writer(non_blocking_file)
         .init();
-
     info!("Starting Ataqu unified server...");
-
     let db_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:5433/ataqu".to_string());
-
     let pools = std::sync::Arc::new(Pools::new(&db_url).await?);
-
     let id_gen = Arc::new(SystemIdGenerator);
     let clock = Arc::new(SystemClock);
-
     let jwt_secret_raw = std::env::var("JWT_SECRET")
         .expect("JWT_SECRET must be set")
         .into_bytes();
@@ -81,7 +66,6 @@ async fn main() -> anyhow::Result<()> {
         access_token_ttl: Duration::from_secs(900),
         refresh_token_ttl: Duration::from_secs(604800),
     };
-
     // AEGIS
     use ataqu_infra_repositories::aegis_repo::AegisUserRepository;
     let aegis_repo = Arc::new(AegisUserRepository::new(pools.core.clone()));
@@ -103,7 +87,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
         aegis_config,
     ));
-
     // CINQ
     use ataqu_infra_repositories::cinq_repo_impl::{
         CinqActivityRepository, CinqContactRepository, CinqDealRepository,
@@ -115,7 +98,6 @@ async fn main() -> anyhow::Result<()> {
     let task_repo = Arc::new(CinqTaskRepository::new(pools.cinq.clone()));
     let stage_repo = Arc::new(CinqPipelineStageRepository::new(pools.cinq.clone()));
     let establishment_repo = Arc::new(CinqEstablishmentRepository::new(pools.cinq.clone()));
-
     let cinq_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.cinq.clone(),
     ));
@@ -132,7 +114,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
         Some(audit_repo.clone()),
     ));
-
     // DIAL
     use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
     let dial_repo = Arc::new(DialRepositoryImpl::new(pools.dial.clone()));
@@ -148,7 +129,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
         Some(audit_repo.clone()),
     ));
-
     // PIVOT
     use ataqu_infra_repositories::pivot_repo_impl::{
         PivotBlockRepository, PivotDatabaseRepository, PivotDocumentRepository,
@@ -171,7 +151,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
         Some(audit_repo.clone()),
     ));
-
     // SOND
     use ataqu_infra_repositories::sond_repo_impl::SondRepositoryImpl;
     let sond_repo = Arc::new(SondRepositoryImpl::new(pools.ops.clone()));
@@ -189,17 +168,19 @@ async fn main() -> anyhow::Result<()> {
     // VAULT
     use ataqu_infra_repositories::vault_repo_impl::VaultRepositoryImpl;
     let vault_repo = Arc::new(VaultRepositoryImpl::new(pools.vault.clone()));
+    let vault_txn_repo = vault_repo.clone();
     let vault_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.vault.clone(),
     ));
     let vault_service = Arc::new(VaultService::new(
         vault_repo,
+        vault_txn_repo,
+        pools.vault.clone(),
         vault_outbox,
         id_gen.clone(),
         clock.clone(),
         Some(audit_repo.clone()),
     ));
-
     // VISTA
     use ataqu_infra_repositories::vista_repo_impl::VistaRepositoryImpl;
     let vista_repo = Arc::new(VistaRepositoryImpl::new(pools.vista.clone()));
@@ -209,11 +190,9 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
         id_gen.clone(),
     ));
-
     // SPARK
     use ataqu_infra_repositories::spark_repo_impl::SparkRepositoryImpl;
     let spark_repo = Arc::new(SparkRepositoryImpl::new(pools.spark.clone()));
-
     // Action dispatcher for SPARK
     use ataqu_application::cinq_service::{CreateActivityCommand, CreateContactCommand};
     use ataqu_application::dial_service::{CreateChannelCommand, SendMessageCommand};
@@ -223,14 +202,12 @@ async fn main() -> anyhow::Result<()> {
     use ataqu_domain_dial::chat::ChannelType;
     use ataqu_domain_spark::Action;
     use ataqu_security::{Email, PhoneNumber};
-
     struct AtaquActionDispatcher {
         dial_service: Arc<DialService>,
         cinq_service: Arc<CinqService>,
         vault_service: Arc<VaultService>,
         system_user_id: Uuid,
     }
-
     #[async_trait::async_trait]
     impl ActionDispatcher for AtaquActionDispatcher {
         async fn dispatch(
@@ -379,13 +356,11 @@ async fn main() -> anyhow::Result<()> {
                     let parsed_url = reqwest::Url::parse(url).map_err(|e| e.to_string())?;
                     let host = parsed_url.host_str().ok_or("Invalid URL")?.to_string();
                     let port = parsed_url.port_or_known_default().unwrap_or(80);
-
                     let mut addrs = tokio::net::lookup_host((host.as_str(), port))
                         .await
                         .map_err(|e| e.to_string())?;
                     let addr = addrs.next().ok_or("DNS resolution failed")?;
                     let ip = addr.ip();
-
                     let is_blocked = match ip {
                         std::net::IpAddr::V4(v4) => {
                             v4.is_loopback()
@@ -400,13 +375,11 @@ async fn main() -> anyhow::Result<()> {
                     if is_blocked {
                         return Err(format!("SSRF attempt blocked: internal IP ({})", ip));
                     }
-
                     // Build client with host resolution.
                     let client = ClientBuilder::new()
                         .resolve(host.as_str(), std::net::SocketAddr::new(ip, port))
                         .build()
                         .map_err(|e| e.to_string())?;
-
                     let mut req = match method.to_uppercase().as_str() {
                         "POST" => client.post(parsed_url.clone()),
                         "PUT" => client.put(parsed_url.clone()),
@@ -414,7 +387,6 @@ async fn main() -> anyhow::Result<()> {
                         "DELETE" => client.delete(parsed_url.clone()),
                         _ => client.get(parsed_url.clone()),
                     };
-
                     for (k, v) in headers {
                         if k.eq_ignore_ascii_case("host") {
                             continue;
@@ -453,7 +425,6 @@ async fn main() -> anyhow::Result<()> {
                     .map_err(|e| e.to_string())?;
                     tracing::info!("Email sent to {}", to);
                 }
-
                 Action::UpdateRecord {
                     table,
                     record_id,
@@ -464,7 +435,6 @@ async fn main() -> anyhow::Result<()> {
                     let record_uuid = Uuid::parse_str(record_id)
                         .map_err(|e| format!("Invalid record_id: {}", e))?;
                     let tenant_id = *tenant_id;
-
                     match table.as_str() {
                         "collab_crm.contacts" => {
                             use ataqu_application::cinq_service::UpdateContactCommand;
@@ -589,7 +559,6 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
                 }
-
                 _ => {
                     tracing::warn!("Action type not yet implemented natively: {:?}", action);
                 }
@@ -597,19 +566,16 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
     }
-
     let system_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }
-
     let action_dispatcher = Arc::new(AtaquActionDispatcher {
         dial_service: dial_service.clone(),
         cinq_service: cinq_service.clone(),
         vault_service: vault_service.clone(),
         system_user_id,
     });
-
     let spark_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.core.clone(),
     ));
@@ -621,7 +587,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
         Some(audit_repo.clone()),
     ));
-
     // TEMPO
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.ops.clone()));
@@ -635,7 +600,6 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
         Some(audit_repo.clone()),
     ));
-
     // PAUSE
     use ataqu_application::pause_infra::RealIdempotency;
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
@@ -666,12 +630,10 @@ async fn main() -> anyhow::Result<()> {
             tracing::error!("Email tracking writer crashed: {}", e);
         }
     });
-
     // Prometheus
     let metrics_handle = metrics_exporter_prometheus::PrometheusBuilder::new()
         .install_recorder()
         .expect("failed to install Prometheus recorder");
-
     // WebSocket state
     use dashmap::DashMap;
     let ws_registry = Arc::new(DashMap::new());
@@ -693,7 +655,6 @@ async fn main() -> anyhow::Result<()> {
         microsoft_client_secret: std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default(),
         microsoft_redirect_uri: std::env::var("MICROSOFT_REDIRECT_URI").unwrap_or_default(),
     };
-
     // Cleanup task for rate limiter
     let rate_limiter_cleanup = rate_limiter.clone();
     tokio::spawn(async move {
@@ -702,7 +663,6 @@ async fn main() -> anyhow::Result<()> {
             rate_limiter_cleanup.cleanup();
         }
     });
-
     // Health service & cache
     let health_repo =
         Arc::new(ataqu_infra_repositories::health_repo::HealthRepository::new(pools.core.clone()));
@@ -716,10 +676,8 @@ async fn main() -> anyhow::Result<()> {
             .time_to_live(Duration::from_secs(5))
             .build(),
     );
-
     // S3 stub
     let s3_service = Arc::new(S3Service::new().await.expect("Failed to create S3Service"));
-
     // Onboarding & Changelog stubs
     let onboarding_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.core.clone(),
@@ -729,7 +687,6 @@ async fn main() -> anyhow::Result<()> {
         onboarding_outbox,
     ));
     let changelog_service = Arc::new(ChangelogService::new(pools.core.clone()));
-
     // Single onboarding inactivity checker
     let onboarding_service_for_inactivity = onboarding_service.clone();
     tokio::spawn(async move {
@@ -740,7 +697,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(86400)).await;
         }
     });
-
     // Shopify worker
     let shopify_repo = Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()));
     let shopify_service = Arc::new(ShopifyService::new(shopify_repo, vault_service.clone()));
@@ -754,13 +710,11 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
-
     // Background workers
     let tempo_service_for_workers = tempo_service.clone();
     let spark_service_for_cron = spark_service.clone();
     let vault_service_for_reaper = vault_service.clone();
     let vista_service_for_refresh = vista_service.clone();
-
     let aegis_service_for_tenants = aegis_service.clone();
     tokio::spawn(async move {
         loop {
@@ -784,7 +738,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
-
     tokio::spawn(async move {
         loop {
             if let Err(e) = spark_service_for_cron.poll_scheduled_triggers().await {
@@ -793,7 +746,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
-
     tokio::spawn(async move {
         loop {
             if let Err(e) = vault_service_for_reaper.reap_expired_reservations().await {
@@ -802,7 +754,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
-
     tokio::spawn(async move {
         loop {
             if let Err(e) = vista_service_for_refresh.refresh_materialized_views().await {
@@ -811,7 +762,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(900)).await; // 15 minutes
         }
     });
-
     // UDS Admin Server (single instance)
     let admin_socket_path =
         std::env::var("ATAQU_ADMIN_SOCK").unwrap_or_else(|_| "/tmp/ataqu-admin.sock".to_string());
@@ -830,7 +780,6 @@ async fn main() -> anyhow::Result<()> {
             return Err(anyhow::anyhow!("Failed to bind admin UDS"));
         }
     };
-
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
     let health_service_for_admin = health_service.clone();
     let audit_repo_for_admin = audit_repo.clone();
@@ -914,11 +863,9 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
-
     // ---------- START NEW CODE ----------
     // Event Registry for Outbox
     let mut event_registry = crate::event_registry::EventRegistry::new();
-
     // Register SPARK triggers
     event_registry.register("collab_crm", "DealCreated", {
         let spark = spark_service.clone();
@@ -1048,8 +995,6 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
-
-
     // Spawn Outbox Dispatcher
     use ataqu_infra_outbox::OutboxDispatcher;
     let dispatcher = OutboxDispatcher::new(pools.dispatcher.clone(), move |event| {
@@ -1062,14 +1007,11 @@ async fn main() -> anyhow::Result<()> {
         }
     })
     .with_poll_interval(std::time::Duration::from_secs(5));
-
     tokio::spawn(async move {
         tracing::info!("Outbox dispatcher started");
         dispatcher.run().await;
     });
-
     // ---------- END NEW CODE ----------
-
     // Spawn GDPR saga runner
     use ataqu_application::gdpr::saga_runner::GdprSagaRunner;
     let gdpr_runner = GdprSagaRunner::new(
@@ -1079,7 +1021,6 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         gdpr_runner.run().await;
     });
-
     // Spawn scheduled tasks cron worker
     use ataqu_infra_cron::worker::run_cron_worker;
     let cron_pool = pools.core.get_postgres_connection_pool().clone();
@@ -1108,7 +1049,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
         }
     });
-
     // Spawn Tempo OAuth refresh worker (every 15 minutes)
     let tempo_db = pools.ops.clone();
     let tempo_client = http_client.clone();
@@ -1120,9 +1060,6 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(std::time::Duration::from_secs(900)).await;
         }
     });
-
-
-
     let app_state = AppState {
         db: pools.core.clone(),
         cinq_service,
@@ -1155,13 +1092,10 @@ async fn main() -> anyhow::Result<()> {
         changelog_service,
         audit_repo: audit_repo.clone(),
     };
-
     let app = create_router(app_state);
-
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = TcpListener::bind(addr).await?;
     info!("Server listening on {}", addr);
     axum::serve(listener, app).await?;
-
     Ok(())
 }

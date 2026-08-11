@@ -7,13 +7,13 @@ use tracing::info;
 use serde_json::Value;
 
 pub struct ImportWorker {
-    _db: DatabaseConnection,
+    db: DatabaseConnection,
     outbox: Arc<dyn Outbox>,
 }
 
 impl ImportWorker {
     pub fn new(db: DatabaseConnection, outbox: Arc<dyn Outbox>) -> Self {
-        Self { _db: db, outbox }
+        Self { db, outbox }
     }
 
     pub async fn handle_event(&self, event: OutboxEvent) -> Result<(), String> {
@@ -45,6 +45,7 @@ impl ImportWorker {
             .and_then(|s| s.parse::<uuid::Uuid>().ok())
             .unwrap_or(uuid::Uuid::nil());
 
+        // Download file
         let response = reqwest::get(&file_url)
             .await
             .map_err(|e| format!("Failed to download file: {}", e))?;
@@ -52,16 +53,18 @@ impl ImportWorker {
             .await
             .map_err(|e| format!("Failed to read CSV: {}", e))?;
 
+        // Parse CSV
         let mut reader = csv::Reader::from_reader(csv_content.as_bytes());
-        let headers = reader.headers()
+        let _headers = reader.headers()
             .map_err(|e| format!("Invalid CSV headers: {}", e))?
             .clone();
+
         let mut rows = Vec::new();
         for result in reader.records() {
             let record = result.map_err(|e| format!("CSV row error: {}", e))?;
             let mut row = serde_json::Map::new();
             for (i, field) in record.iter().enumerate() {
-                if let Some(header) = headers.get(i) {
+                if let Some(header) = _headers.get(i) {
                     row.insert(header.to_string(), serde_json::Value::String(field.to_string()));
                 }
             }
