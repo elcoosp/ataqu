@@ -11,6 +11,7 @@ pub use ataqu_domain_pause::{
 
 use crate::outbox::Outbox;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::audit::log_audit;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PauseServiceError {

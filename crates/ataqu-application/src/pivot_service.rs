@@ -14,6 +14,7 @@ use ataqu_domain_pivot::repository::{
     BlockRepository, DatabaseRepository, DocumentRepository, RelationRepository,
 };
 use ataqu_kernel::{Clock, IdGenerator, RepositoryError, TenantId};
+use crate::audit::log_audit;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_pivot::block::Block;

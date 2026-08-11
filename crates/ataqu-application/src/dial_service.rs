@@ -12,6 +12,7 @@ use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::PresenceStore;
 use ataqu_domain_dial::repository::DialRepository;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use crate::audit::log_audit;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_dial::chat::{Channel, Message, Reaction};

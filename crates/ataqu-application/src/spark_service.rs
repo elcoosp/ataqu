@@ -9,6 +9,7 @@ use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use uuid::Uuid;
 
 use crate::outbox::Outbox;
+use crate::audit::log_audit;
 
 #[async_trait::async_trait]
 pub trait ActionDispatcher: Send + Sync {
