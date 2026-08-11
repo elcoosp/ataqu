@@ -77,7 +77,7 @@ pub async fn create_product(
     };
     let product = state
         .vault_service
-        .create_product(cmd)
+        .create_product(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -169,7 +169,7 @@ pub async fn update_product(
     };
     let product = state
         .vault_service
-        .update_product(cmd)
+        .update_product(auth.user_id, cmd)
         .await
         .map_err(|e| match e {
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
@@ -187,7 +187,7 @@ pub async fn delete_product(
 ) -> ApiResult<StatusCode> {
     state
         .vault_service
-        .delete_product(auth.tenant_id, id)
+        .delete_product(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -244,7 +244,7 @@ pub async fn create_variant(
     };
     let variant = state
         .vault_service
-        .create_variant(cmd)
+        .create_variant(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -341,7 +341,7 @@ pub async fn update_variant(
     };
     let variant = state
         .vault_service
-        .update_variant(cmd)
+        .update_variant(auth.user_id, cmd)
         .await
         .map_err(|e| match e {
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
@@ -359,7 +359,7 @@ pub async fn delete_variant(
 ) -> ApiResult<StatusCode> {
     state
         .vault_service
-        .delete_variant(auth.tenant_id, id)
+        .delete_variant(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -399,7 +399,7 @@ pub async fn update_stock(
     };
     let variant = state
         .vault_service
-        .update_stock(cmd)
+        .update_stock(auth.user_id, cmd)
         .await
         .map_err(|e| match e {
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
@@ -514,7 +514,7 @@ pub async fn reserve_stock(
         })?;
     let (variant, reservation) = state
         .vault_service
-        .reserve_stock(auth.tenant_id, id, payload.quantity, if_match)
+        .reserve_stock(auth.user_id, auth.tenant_id, id, payload.quantity, if_match)
         .await
         .map_err(|e| match e {
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
@@ -556,7 +556,7 @@ pub async fn create_warehouse(
 ) -> ApiResult<Json<serde_json::Value>> {
     let warehouse = state
         .vault_service
-        .create_warehouse(auth.tenant_id, payload.name, payload.location)
+        .create_warehouse(auth.user_id, auth.tenant_id, payload.name, payload.location)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({ "id": warehouse.id })))
@@ -607,7 +607,7 @@ pub async fn update_warehouse(
     };
     let warehouse = state
         .vault_service
-        .update_warehouse(cmd)
+        .update_warehouse(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({
@@ -624,7 +624,7 @@ pub async fn delete_warehouse(
 ) -> ApiResult<StatusCode> {
     state
         .vault_service
-        .delete_warehouse(auth.tenant_id, id)
+        .delete_warehouse(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -800,7 +800,7 @@ pub async fn shopify_webhook(
                     if delta != 0 {
                         let _ = state
                             .vault_service
-                            .update_stock(ataqu_application::vault_service::UpdateStockCommand {
+                            .update_stock(Uuid::nil(), ataqu_application::vault_service::UpdateStockCommand {
                                 tenant_id: ataqu_kernel::TenantId::new(
                                     integration.tenant_id.as_uuid(),
                                 ),
@@ -884,7 +884,7 @@ pub async fn bulk_delete_products(
     for id in payload.ids {
         state
             .vault_service
-            .delete_product(auth.tenant_id, id)
+            .delete_product(auth.user_id, auth.tenant_id, id)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }
@@ -899,7 +899,7 @@ pub async fn bulk_delete_variants(
     for id in payload.ids {
         state
             .vault_service
-            .delete_variant(auth.tenant_id, id)
+            .delete_variant(auth.user_id, auth.tenant_id, id)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }

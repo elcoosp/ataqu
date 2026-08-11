@@ -92,6 +92,7 @@ impl ShopifyService {
                                             if let Err(e) = self
                                                 .vault_service
                                                 .update_stock(
+                                                    uuid::Uuid::nil(),
                                                     crate::vault_service::UpdateStockCommand {
                                                         tenant_id,
                                                         variant_id: variant.id,

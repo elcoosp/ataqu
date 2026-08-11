@@ -1,11 +1,16 @@
 use ataqu_domain_health::{
-    ComponentHealth, Components, DbPoolHealth, HealthStatus, SparkWorkflowHealth, SystemHealth,
-    classify,
+    classify_outbox,
+    ComponentHealth,
+    Components,
+    DbPoolHealth,
+    HealthStatus,
+    SparkWorkflowHealth,
+    SystemHealth,
 };
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::health_repo::HealthRepository;
 use ataqu_kernel::Clock;
-use chrono::{DateTime, SecondsFormat, Utc};
+use chrono::{DateTime, Utc};
 use std::sync::Arc;
 
 pub struct HealthService {
@@ -35,14 +40,14 @@ impl HealthService {
             .await
             .map_err(|e| e.to_string())?;
 
-        let outbox_status = classify(lag_seconds, pending_events);
+        let outbox_status = classify_outbox(lag_seconds, pending_events);
         let now: DateTime<Utc> = self.clock.now().into();
 
         let (used, max, waiting) = self.pools.get_pool_stats();
 
         Ok(SystemHealth {
             status: outbox_status,
-            timestamp: now.to_rfc3339_opts(SecondsFormat::Secs, true),
+            timestamp: now,
             components: Components {
                 outbox: ComponentHealth {
                     status: outbox_status,

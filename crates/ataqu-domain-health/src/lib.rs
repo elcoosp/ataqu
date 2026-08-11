@@ -1,3 +1,6 @@
+//! Domain models for system health observability (ADR-034).
+
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -13,7 +16,7 @@ pub struct ComponentHealth {
     pub status: HealthStatus,
     pub lag_seconds: f64,
     pub pending_events: i64,
-    pub last_dispatched_at: Option<String>,
+    pub last_dispatched_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -41,19 +44,20 @@ pub struct Components {
 #[derive(Debug, Clone, Serialize)]
 pub struct SystemHealth {
     pub status: HealthStatus,
-    pub timestamp: String,
+    pub timestamp: DateTime<Utc>,
     pub components: Components,
 }
 
-const DEGRADED_LAG_SECONDS: f64 = 5.0;
-const CRITICAL_LAG_SECONDS: f64 = 30.0;
-const DEGRADED_PENDING_EVENTS: i64 = 1_000;
-const CRITICAL_PENDING_EVENTS: i64 = 10_000;
+/// Pure function to classify health based on outbox metrics.
+pub fn classify_outbox(lag_seconds: f64, pending_events: i64) -> HealthStatus {
+    const DEGRADED_LAG: f64 = 5.0;
+    const CRITICAL_LAG: f64 = 30.0;
+    const DEGRADED_PENDING: i64 = 1_000;
+    const CRITICAL_PENDING: i64 = 10_000;
 
-pub fn classify(lag_seconds: f64, pending_events: i64) -> HealthStatus {
-    if lag_seconds > CRITICAL_LAG_SECONDS || pending_events > CRITICAL_PENDING_EVENTS {
+    if lag_seconds > CRITICAL_LAG || pending_events > CRITICAL_PENDING {
         HealthStatus::Critical
-    } else if lag_seconds > DEGRADED_LAG_SECONDS || pending_events > DEGRADED_PENDING_EVENTS {
+    } else if lag_seconds > DEGRADED_LAG || pending_events > DEGRADED_PENDING {
         HealthStatus::Degraded
     } else {
         HealthStatus::Nominal

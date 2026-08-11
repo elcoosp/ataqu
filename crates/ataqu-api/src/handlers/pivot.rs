@@ -52,7 +52,7 @@ pub async fn create_db(
     };
     let db = state
         .pivot_service
-        .create_database(cmd)
+        .create_database(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(db.into())))
@@ -77,7 +77,7 @@ pub async fn delete_db(
 ) -> ApiResult<StatusCode> {
     state
         .pivot_service
-        .delete_database(auth.tenant_id, id)
+        .delete_database(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -131,7 +131,7 @@ pub async fn create_doc(
     };
     let doc = state
         .pivot_service
-        .create_document(cmd)
+        .create_document(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -216,7 +216,7 @@ pub async fn update_doc(
 
     let doc = state
         .pivot_service
-        .update_document(auth.tenant_id, id, payload.title, payload.content, if_match)
+        .update_document(auth.user_id, auth.tenant_id, id, payload.title, payload.content, if_match)
         .await
         .map_err(|e| match e {
             ataqu_application::pivot_service::PivotServiceError::Validation(msg)
@@ -239,7 +239,7 @@ pub async fn delete_doc(
 ) -> ApiResult<StatusCode> {
     state
         .pivot_service
-        .delete_document(auth.tenant_id, id)
+        .delete_document(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -312,7 +312,7 @@ pub async fn create_block(
     };
     let block = state
         .pivot_service
-        .create_block(cmd)
+        .create_block(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(block.into())))
@@ -416,7 +416,7 @@ pub async fn update_block(
 
     let block = state
         .pivot_service
-        .update_block(auth.tenant_id, id, block_type, if_match)
+        .update_block(auth.user_id, auth.tenant_id, id, block_type, if_match)
         .await
         .map_err(|e| match e {
             ataqu_application::pivot_service::PivotServiceError::Validation(msg)
@@ -439,7 +439,7 @@ pub async fn delete_block(
 ) -> ApiResult<StatusCode> {
     state
         .pivot_service
-        .delete_block(auth.tenant_id, id)
+        .delete_block(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -482,7 +482,7 @@ pub async fn create_relation(
     };
     let rel = state
         .pivot_service
-        .create_relation(cmd)
+        .create_relation(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(rel.into())))
@@ -562,7 +562,7 @@ pub async fn create_template(
 ) -> ApiResult<Json<serde_json::Value>> {
     let template = state
         .pivot_service
-        .create_template(auth.tenant_id, payload.name, payload.content)
+        .create_template(auth.user_id, auth.tenant_id, payload.name, payload.content)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(serde_json::json!({ "id": template.id })))
@@ -631,7 +631,7 @@ pub async fn bulk_delete_documents(
     for id in payload.ids {
         state
             .pivot_service
-            .delete_document(auth.tenant_id, id)
+            .delete_document(auth.user_id, auth.tenant_id, id)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }

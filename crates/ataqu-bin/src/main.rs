@@ -34,9 +34,6 @@ use ataqu_application::shopify_service::ShopifyService;
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
-use ataqu_infra_storage::orphan_reaper;
-use ataqu_application::tempo_refresh_worker;
-use ataqu_application::import_worker;
 // use sea_orm::DatabaseConnection;
 // ----------------------------------------------------------------------------
 // Main
@@ -228,7 +225,7 @@ async fn main() -> anyhow::Result<()> {
                         _ => ChannelType::Public,
                     };
                     self.dial_service
-                        .create_channel(CreateChannelCommand {
+                        .create_channel(self.system_user_id, CreateChannelCommand {
                             tenant_id: *tenant_id,
                             name: name.clone(),
                             channel_type: ct,
@@ -255,7 +252,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 Action::CreateCinqContact { name, email, phone } => {
                     self.cinq_service
-                        .create_contact(CreateContactCommand {
+                        .create_contact(self.system_user_id, CreateContactCommand {
                             tenant_id: *tenant_id,
                             name: name.clone(),
                             company: None,
@@ -280,7 +277,7 @@ async fn main() -> anyhow::Result<()> {
                         _ => ActivityType::Note,
                     };
                     self.cinq_service
-                        .create_activity(CreateActivityCommand {
+                        .create_activity(self.system_user_id, CreateActivityCommand {
                             tenant_id: *tenant_id,
                             contact_id: *contact_id,
                             deal_id: None,
@@ -302,7 +299,7 @@ async fn main() -> anyhow::Result<()> {
                         .await
                         .map_err(|e| e.to_string())?;
                     self.vault_service
-                        .update_stock(UpdateStockCommand {
+                        .update_stock(self.system_user_id, UpdateStockCommand {
                             tenant_id: *tenant_id,
                             variant_id: *variant_id,
                             delta: *delta,
@@ -324,7 +321,7 @@ async fn main() -> anyhow::Result<()> {
                         .await
                         .map_err(|e| e.to_string())?;
                     self.vault_service
-                        .reserve_stock(*tenant_id, *variant_id, *quantity, variant.version)
+                        .reserve_stock(self.system_user_id, *tenant_id, *variant_id, *quantity, variant.version)
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -334,7 +331,7 @@ async fn main() -> anyhow::Result<()> {
                     source,
                 } => {
                     self.cinq_service
-                        .create_contact(CreateContactCommand {
+                        .create_contact(self.system_user_id, CreateContactCommand {
                             tenant_id: *tenant_id,
                             name: name.clone(),
                             company: None,
@@ -479,7 +476,7 @@ async fn main() -> anyhow::Result<()> {
                                 .map_err(|e| e.to_string())?;
                             cmd.expected_version = contact.version;
                             self.cinq_service
-                                .update_contact(cmd)
+                                .update_contact(self.system_user_id, cmd)
                                 .await
                                 .map_err(|e| e.to_string())?;
                         }
@@ -524,7 +521,7 @@ async fn main() -> anyhow::Result<()> {
                                 .map_err(|e| e.to_string())?;
                             cmd.expected_version = deal.version;
                             self.cinq_service
-                                .update_deal(cmd)
+                                .update_deal(self.system_user_id, cmd)
                                 .await
                                 .map_err(|e| e.to_string())?;
                         }
@@ -550,7 +547,7 @@ async fn main() -> anyhow::Result<()> {
                                 .map_err(|e| e.to_string())?;
                             cmd.expected_version = variant.version;
                             self.vault_service
-                                .update_variant(cmd)
+                                .update_variant(self.system_user_id, cmd)
                                 .await
                                 .map_err(|e| e.to_string())?;
                         }

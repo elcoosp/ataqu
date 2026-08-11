@@ -121,7 +121,7 @@ pub async fn create_contact(
     };
     let contact = state
         .cinq_service
-        .create_contact(cmd)
+        .create_contact(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -228,7 +228,7 @@ pub async fn update_contact(
     };
     let contact = state
         .cinq_service
-        .update_contact(cmd)
+        .update_contact(auth.user_id, cmd)
         .await
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
@@ -251,7 +251,7 @@ pub async fn delete_contact(
 ) -> ApiResult<StatusCode> {
     state
         .cinq_service
-        .delete_contact(auth.tenant_id, id)
+        .delete_contact(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
@@ -311,7 +311,7 @@ pub async fn create_deal(
     };
     let deal = state
         .cinq_service
-        .create_deal(cmd)
+        .create_deal(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -420,7 +420,7 @@ pub async fn update_deal(
     };
     let deal = state
         .cinq_service
-        .update_deal(cmd)
+        .update_deal(auth.user_id, cmd)
         .await
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
@@ -443,7 +443,7 @@ pub async fn delete_deal(
 ) -> ApiResult<StatusCode> {
     state
         .cinq_service
-        .delete_deal(auth.tenant_id, id)
+        .delete_deal(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
@@ -487,7 +487,7 @@ pub async fn create_pipeline_stage(
     };
     let stage = state
         .cinq_service
-        .create_pipeline_stage(cmd)
+        .create_pipeline_stage(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
@@ -516,7 +516,7 @@ pub async fn update_pipeline_stage(
         })?;
     let stage = state
         .cinq_service
-        .update_pipeline_stage(auth.tenant_id, id, payload.name, payload.order, if_match)
+        .update_pipeline_stage(auth.user_id, auth.tenant_id, id, payload.name, payload.order, if_match)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(PipelineStageResponse {
@@ -533,7 +533,7 @@ pub async fn delete_pipeline_stage(
 ) -> ApiResult<StatusCode> {
     state
         .cinq_service
-        .delete_pipeline_stage(auth.tenant_id, id)
+        .delete_pipeline_stage(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -562,7 +562,7 @@ pub async fn create_activity(
     };
     let activity = state
         .cinq_service
-        .create_activity(cmd)
+        .create_activity(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((
@@ -850,7 +850,7 @@ pub async fn create_task(
     };
     let task = state
         .cinq_service
-        .create_task(cmd)
+        .create_task(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -952,7 +952,7 @@ pub async fn update_task(
     };
     let task = state
         .cinq_service
-        .update_task(cmd)
+        .update_task(auth.user_id, cmd)
         .await
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
@@ -975,7 +975,7 @@ pub async fn delete_task(
 ) -> ApiResult<StatusCode> {
     state
         .cinq_service
-        .delete_task(auth.tenant_id, id)
+        .delete_task(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|e| match e {
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {

@@ -9,7 +9,6 @@ use crate::outbox::Outbox;
 use ataqu_infra_repositories::vault_transaction_repo::VaultTransactionRepository;
 use sea_orm::DatabaseConnection;
 use ataqu_domain_aegis::repository::AuditRepositoryTrait;
-use crate::audit::log_audit;
 
 pub use ataqu_domain_vault::inventory::Product;
 pub use ataqu_domain_vault::inventory::Variant;

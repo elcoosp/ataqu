@@ -84,7 +84,7 @@ pub async fn create_form(
     };
     let form = state
         .sond_service
-        .create_form(cmd)
+        .create_form(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -178,7 +178,7 @@ pub async fn update_form(
 
     let updated_form = state
         .sond_service
-        .update_form(auth.tenant_id, cmd)
+        .update_form(auth.user_id, auth.tenant_id, cmd)
         .await
         .map_err(|e| match e {
             ataqu_application::sond_service::SondServiceError::FormNotFound => {
@@ -201,7 +201,7 @@ pub async fn delete_form(
 ) -> ApiResult<StatusCode> {
     state
         .sond_service
-        .delete_form(auth.tenant_id, id)
+        .delete_form(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -364,7 +364,7 @@ pub async fn bulk_delete_submissions(
     for id in payload.ids {
         state
             .sond_service
-            .delete_submission(auth.tenant_id, id)
+            .delete_submission(auth.user_id, auth.tenant_id, id)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }

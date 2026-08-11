@@ -6,7 +6,7 @@ const HEALTH_CACHE_KEY: &str = "system_health";
 
 pub async fn get_health_status(State(state): State<AppState>) -> impl IntoResponse {
     let cache = state.health_cache.clone();
-    let service = state.health_service.clone();
+    let service = state.health_service.clone( );
 
     if let Some(cached) = cache.get(&HEALTH_CACHE_KEY.to_string()) {
         return Json(cached.clone());
@@ -22,7 +22,7 @@ pub async fn get_health_status(State(state): State<AppState>) -> impl IntoRespon
             tracing::error!(error = %error, "Failed to collect system health");
             let fallback = SystemHealth {
                 status: HealthStatus::Critical,
-                timestamp: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+                timestamp: chrono::Utc::now(),
                 components: Components {
                     outbox: ComponentHealth {
                         status: HealthStatus::Critical,

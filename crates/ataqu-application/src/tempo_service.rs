@@ -8,7 +8,6 @@ use ataqu_domain_tempo::availability::{self as availability_domain, Availability
 use ataqu_domain_tempo::repository::TempoRepository;
 use ataqu_domain_tempo::schedule::{self as tempo_domain, BookingId, EventTypeId};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use crate::audit::log_audit;
 
 // Re-export domain types for API
 pub use ataqu_domain_tempo::event_type::EventType;
@@ -681,6 +680,6 @@ impl TempoService {
             timezone,
             contact_id: None, // Contact will be linked by the consumer
         };
-        self.create_booking(cmd).await
+        self.create_booking(uuid::Uuid::nil(), cmd).await
     }
 }

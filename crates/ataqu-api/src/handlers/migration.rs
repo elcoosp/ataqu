@@ -130,7 +130,7 @@ pub async fn import_data(
                     custom_fields: serde_json::Value::Object(custom),
                     lead_score: None,
                 };
-                match state.cinq_service.create_contact(cmd).await {
+                match state.cinq_service.create_contact(Uuid::nil(), cmd).await {
                     Ok(_) => imported += 1,
                     Err(_) => failed += 1,
                 }
@@ -148,7 +148,7 @@ pub async fn import_data(
                     description,
                     sku,
                 };
-                match state.vault_service.create_product(cmd).await {
+                match state.vault_service.create_product(Uuid::nil(), cmd).await {
                     Ok(_) => imported += 1,
                     Err(_) => failed += 1,
                 }

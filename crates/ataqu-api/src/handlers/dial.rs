@@ -103,7 +103,7 @@ pub async fn create_channel(
     };
     let channel = state
         .dial_service
-        .create_channel(cmd)
+        .create_channel(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     let mut headers = axum::http::HeaderMap::new();
@@ -434,7 +434,7 @@ pub async fn delete_message(
         .ok();
     state
         .dial_service
-        .delete_message(auth.tenant_id, message_id, auth.user_id, is_moderator)
+        .delete_message(auth.user_id, auth.tenant_id, message_id, auth.user_id, is_moderator)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 
@@ -748,7 +748,7 @@ pub async fn bulk_delete_messages(
     for id in payload.ids {
         state
             .dial_service
-            .delete_message(auth.tenant_id, id, auth.user_id, is_moderator)
+            .delete_message(auth.user_id, auth.tenant_id, id, auth.user_id, is_moderator)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }

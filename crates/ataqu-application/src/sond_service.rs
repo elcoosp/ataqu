@@ -8,7 +8,6 @@ use ataqu_domain_sond::form as form_domain;
 use ataqu_domain_sond::repository::SondRepository;
 use ataqu_domain_sond::response as response_domain;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
-use crate::audit::log_audit;
 
 // Re-export domain types for API layer
 pub use ataqu_domain_sond::form::Form;

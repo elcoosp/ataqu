@@ -75,7 +75,7 @@ pub async fn create_booking(
     };
     let booking = state
         .tempo_service
-        .create_booking(cmd)
+        .create_booking(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(booking.into())))
@@ -133,7 +133,7 @@ pub async fn cancel_booking(
     };
     let booking = state
         .tempo_service
-        .update_booking_status(cmd)
+        .update_booking_status(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(booking.into()))
@@ -196,7 +196,7 @@ pub async fn confirm_booking(
     };
     let booking = state
         .tempo_service
-        .update_booking_status(cmd)
+        .update_booking_status(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(booking.into()))
@@ -247,7 +247,7 @@ pub async fn create_event_type(
     };
     let event_type = state
         .tempo_service
-        .create_event_type(cmd)
+        .create_event_type(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(event_type.into())))
@@ -314,7 +314,7 @@ pub async fn update_event_type(
     };
     let event_type = state
         .tempo_service
-        .update_event_type(cmd, if_match)
+        .update_event_type(auth.user_id, cmd, if_match)
         .await
         .map_err(|e| match e {
             ataqu_application::tempo_service::TempoServiceError::EventTypeNotFound => {
@@ -332,7 +332,7 @@ pub async fn delete_event_type(
 ) -> ApiResult<StatusCode> {
     state
         .tempo_service
-        .delete_event_type(auth.tenant_id, id)
+        .delete_event_type(auth.user_id, auth.tenant_id, id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -379,7 +379,7 @@ pub async fn create_availability_slot(
     };
     let slot = state
         .tempo_service
-        .create_availability_slot(cmd)
+        .create_availability_slot(auth.user_id, cmd)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok((StatusCode::CREATED, Json(slot.into())))
@@ -405,7 +405,7 @@ pub async fn delete_availability_slot(
 ) -> ApiResult<StatusCode> {
     state
         .tempo_service
-        .delete_availability_slot(auth.tenant_id, slot_id)
+        .delete_availability_slot(auth.user_id, auth.tenant_id, slot_id)
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(StatusCode::NO_CONTENT)
@@ -506,7 +506,7 @@ pub async fn bulk_cancel_bookings(
         };
         state
             .tempo_service
-            .update_booking_status(cmd)
+            .update_booking_status(auth.user_id, cmd)
             .await
             .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     }
