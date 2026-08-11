@@ -759,8 +759,6 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/api-keys/:id", delete(delete_api_key))
         .route("/permission-matrix", get(get_permission_matrix))
         .route("/permissions/:user_id/:app", patch(update_permission))
-        .route("/permissions/:user_id/:app", patch(update_permission))
-        .route("/permissions/:user_id/:app", patch(update_permission))
 }
 
 pub fn public_routes() -> axum::Router<crate::AppState> {

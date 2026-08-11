@@ -173,19 +173,6 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
-        // Idempotency: enforced for POST, PUT, PATCH
-        .layer(axum::middleware::from_fn(
-            |req: axum::extract::Request, next: axum::middleware::Next| async {
-                if req.method() == axum::http::Method::POST
-                    || req.method() == axum::http::Method::PUT
-                    || req.method() == axum::http::Method::PATCH
-                {
-                    crate::middleware::idempotency::idempotency_middleware(req, next).await
-                } else {
-                    Ok(next.run(req).await)
-                }
-            },
-        ))
         .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
         ))
@@ -253,5 +240,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/admin/health", axum::routing::get(health_check))
         .merge(public_routes)
         .merge(private_routes)
+        .layer(axum::middleware::from_fn(
+            crate::middleware::idempotency::idempotency_middleware,
+        ))
         .with_state(state)
 }
