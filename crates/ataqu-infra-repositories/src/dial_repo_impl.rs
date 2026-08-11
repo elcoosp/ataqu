@@ -185,6 +185,19 @@ impl DialRepository for DialRepositoryImpl {
             .exec(&self.db)
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
+        // Insert participants
+        for participant in &channel.participants {
+            let stmt = sea_orm::Statement::from_sql_and_values(
+                sea_orm::DbBackend::Postgres,
+                "INSERT INTO dial.channel_participants (channel_id, user_id, joined_at) VALUES ($1, $2, NOW())",
+                vec![
+                    channel.id.as_uuid().into(),
+                    participant.as_uuid().into(),
+                ],
+            );
+            self.db.execute_raw(stmt).await
+                .map_err(|e| DialError::Repository(e.to_string()))?;
+        }
         Ok(())
     }
 
@@ -224,7 +237,21 @@ impl DialRepository for DialRepositoryImpl {
             .map_err(|e| DialError::Repository(e.to_string()))?
             .ok_or_else(|| DialError::Repository("Channel not found".to_string()))?;
         let mut channel = channel_model_to_domain(model);
-        channel.participants = Vec::new();
+        // Load participants
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "SELECT user_id FROM dial.channel_participants WHERE channel_id = $1",
+            vec![channel_id.as_uuid().into()],
+        );
+        let rows = self.db.query_all_raw(stmt).await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        let mut participants = Vec::new();
+        for row in rows {
+            let user_id: uuid::Uuid = row.try_get("", "user_id")
+                .map_err(|e| DialError::Repository(e.to_string()))?;
+            participants.push(UserId::new(user_id));
+        }
+        channel.participants = participants;
         Ok(channel)
     }
 
