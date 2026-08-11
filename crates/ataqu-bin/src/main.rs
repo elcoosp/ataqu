@@ -607,17 +607,7 @@ async fn main() -> anyhow::Result<()> {
     ));
     // PAUSE
 
-    // Approval worker for SPARK workflows
-    let approval_repo = Arc::new(ataqu_infra_repositories::pending_approval_repo::SeaOrmPendingApprovalRepo::new(pools.core.clone()));
-    let approval_worker = Arc::new(ataqu_application::approval_worker::ApprovalWorker::new(
-        approval_repo,
-        spark_service.clone(),
-    ));
-    let worker = approval_worker.clone();
-    tokio::spawn(async move {
-        worker.run().await;
-    });
-    tracing::info!("Approval worker started");
+    // Approval worker is not needed for MVP; approvals are handled by API endpoints.
     use ataqu_infra_repositories::pause_repo_impl::PauseRepositoryImpl;
     let pause_employee_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
     let pause_leave_repo = Arc::new(PauseRepositoryImpl::new(pools.ops.clone()));
