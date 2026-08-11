@@ -112,6 +112,9 @@ mod tests {
             "dial.reactions",
             "dial.presence",
             "dial.tickets",
+            "core.file_references",
+            "core.scheduled_tasks",
+            "collab_crm.pending_approvals",
         ];
         let registry = GdprRegistry::new();
         let actual: Vec<String> = registry

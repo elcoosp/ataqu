@@ -199,6 +199,21 @@ impl GdprRegistry {
                     table: "onboarding_progress".into(),
                     tenant_id_column: "tenant_id".into(),
                 },
+                GdprTable {
+                    schema: "core".into(),
+                    table: "file_references".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "core".into(),
+                    table: "scheduled_tasks".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
+                GdprTable {
+                    schema: "collab_crm".into(),
+                    table: "pending_approvals".into(),
+                    tenant_id_column: "tenant_id".into(),
+                },
             ],
         }
     }
