@@ -8,18 +8,70 @@ import { Button, Card, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
+/**
+ * Helper function to handle S3 presigned URL upload flow.
+ * 1. Fetches presigned URL from backend.
+ * 2. Uploads file directly to S3.
+ * 3. Returns the final S3 object URL.
+ */
+async function uploadFileToS3(file: File): Promise<string> {
+  // 1. Fetch presigned URL from backend
+  // Note: Assuming an endpoint /api/v1/pause/presigned-url exists
+  const response = await fetch('/api/v1/pause/presigned-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file_name: file.name, content_type: file.type }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get presigned URL');
+  }
+
+  const { upload_url, file_url } = await response.json();
+
+  // 2. Upload file to S3
+  const uploadResponse = await fetch(upload_url, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': file.type,
+    },
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error('Failed to upload file to S3');
+  }
+
+  return file_url;
+}
+
 export function EmployeeDetail({ id }: { id: string }) {
   const { data: employee, isLoading } = useGetEmployee(id);
   const { data: documents, isLoading: docsLoading } = useListEmployeeDocuments(id);
 
   const uploadMutation = useUploadDocument({
     onSuccess: () => toast.success('Document uploaded.'),
-    onError: () => toast.error('Failed to upload document.'),
+    onError: (err) => toast.error(err.message || 'Failed to upload document.'),
   });
 
   if (isLoading || !employee) {
     return <Skeleton className="h-64 w-full" />;
   }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const fileUrl = await uploadFileToS3(file);
+      uploadMutation.mutate({
+        employeeId: id,
+        data: { file_name: file.name, file_url: fileUrl, doc_type: 'contract' },
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Upload failed');
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -71,18 +123,13 @@ export function EmployeeDetail({ id }: { id: string }) {
                 <input
                   type="file"
                   className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    uploadMutation.mutate({
-                      employeeId: id,
-                      data: { file_name: file.name, file_url: 's3://...', doc_type: 'contract' },
-                    });
-                  }}
+                  onChange={handleFileChange}
+                  disabled={uploadMutation.isPending}
                 />
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild disabled={uploadMutation.isPending}>
                   <span>
-                    <Upload className="h-4 w-4 mr-2" /> Upload Document
+                    <Upload className="h-4 w-4 mr-2" />{' '}
+                    {uploadMutation.isPending ? 'Uploading...' : 'Upload Document'}
                   </span>
                 </Button>
               </label>

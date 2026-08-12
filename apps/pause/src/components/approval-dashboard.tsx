@@ -5,21 +5,79 @@ import {
   useRejectLeaveRequest,
 } from '@ataqu/api-client';
 import { Badge, Button, DataTable } from '@ataqu/ui';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface OptimisticContext {
+  previousRequests?: LeaveRequest[];
+}
+
 export function ApprovalDashboard() {
+  const queryClient = useQueryClient();
   const { data: requests, isLoading } = useListLeaveRequests();
 
   const approveMutation = useApproveLeaveRequest({
-    onSuccess: () => toast.success('Leave approved.'),
-    onError: () => toast.error('Failed to approve leave.'),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['pause', 'leave-requests'] });
+      const previousRequests = queryClient.getQueryData<LeaveRequest[]>([
+        'pause',
+        'leave-requests',
+      ]);
+      if (previousRequests) {
+        queryClient.setQueryData<LeaveRequest[]>(
+          ['pause', 'leave-requests'],
+          previousRequests.map((req) =>
+            req.id === id ? { ...req, status: 'approved' as const } : req
+          )
+        );
+      }
+      return { previousRequests };
+    },
+    onError: (_err, _id, context) => {
+      if ((context as OptimisticContext)?.previousRequests) {
+        queryClient.setQueryData(['pause', 'leave-requests'], context.previousRequests);
+      }
+      toast.error('Failed to approve leave.');
+    },
+    onSuccess: () => {
+      toast.success('Leave approved.');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pause', 'leave-requests'] });
+    },
   });
 
   const rejectMutation = useRejectLeaveRequest({
-    onSuccess: () => toast.success('Leave rejected.'),
-    onError: () => toast.error('Failed to reject leave.'),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['pause', 'leave-requests'] });
+      const previousRequests = queryClient.getQueryData<LeaveRequest[]>([
+        'pause',
+        'leave-requests',
+      ]);
+      if (previousRequests) {
+        queryClient.setQueryData<LeaveRequest[]>(
+          ['pause', 'leave-requests'],
+          previousRequests.map((req) =>
+            req.id === id ? { ...req, status: 'rejected' as const } : req
+          )
+        );
+      }
+      return { previousRequests };
+    },
+    onError: (_err, _id, context) => {
+      if ((context as OptimisticContext)?.previousRequests) {
+        queryClient.setQueryData(['pause', 'leave-requests'], context.previousRequests);
+      }
+      toast.error('Failed to reject leave.');
+    },
+    onSuccess: () => {
+      toast.success('Leave rejected.');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pause', 'leave-requests'] });
+    },
   });
 
   const columns: ColumnDef<LeaveRequest>[] = [
