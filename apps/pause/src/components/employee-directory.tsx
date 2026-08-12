@@ -15,11 +15,11 @@ export function EmployeeDirectory({ onAddEmployee }: { onAddEmployee: () => void
 
   const { data: employees, isLoading } = useListEmployees(
     { limit: 100, offset: 0 },
-    { enabled: !isSearching }
+    { queryKey: ['pause', 'employees', 'list', { limit: 100, offset: 0 }], enabled: !isSearching }
   );
   const { data: searchResults, isLoading: isSearchLoading } = useSearchEmployees(
     { q: debouncedSearch },
-    { queryKey: ['pause', 'employees', 'search', { q: debouncedSearch }], enabled: isSearching }
+    { queryKey: ['pause', 'employees', 'search', debouncedSearch], enabled: isSearching }
   );
 
   const list = isSearching ? searchResults : employees;

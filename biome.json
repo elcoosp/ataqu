@@ -39,5 +39,11 @@
       "cssModules": false,
       "tailwindDirectives": true
     }
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/routeTree.gen.ts"
+    ]
   }
 }
