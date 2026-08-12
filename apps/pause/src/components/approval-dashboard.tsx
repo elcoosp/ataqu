@@ -36,8 +36,9 @@ export function ApprovalDashboard() {
       return { previousRequests };
     },
     onError: (_err: Error, _id: string, context: unknown) => {
-      if ((context as OptimisticContext)?.previousRequests) {
-        queryClient.setQueryData(['pause', 'leave-requests'], context.previousRequests);
+      const ctx = context as OptimisticContext | undefined;
+      if (ctx?.previousRequests) {
+        queryClient.setQueryData(['pause', 'leave-requests'], ctx.previousRequests);
       }
       toast.error('Failed to approve leave.');
     },
@@ -67,8 +68,9 @@ export function ApprovalDashboard() {
       return { previousRequests };
     },
     onError: (_err: Error, _id: string, context: unknown) => {
-      if ((context as OptimisticContext)?.previousRequests) {
-        queryClient.setQueryData(['pause', 'leave-requests'], context.previousRequests);
+      const ctx = context as OptimisticContext | undefined;
+      if (ctx?.previousRequests) {
+        queryClient.setQueryData(['pause', 'leave-requests'], ctx.previousRequests);
       }
       toast.error('Failed to reject leave.');
     },
