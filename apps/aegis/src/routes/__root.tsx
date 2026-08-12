@@ -1,5 +1,8 @@
 // apps/aegis/src/routes/__root.tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
+
+import { Shell } from "@ataqu/ui";
+import { Shell } from '@ataqu/ui';
+
 import { createRootRoute, Outlet } from '@tanstack/react-router';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

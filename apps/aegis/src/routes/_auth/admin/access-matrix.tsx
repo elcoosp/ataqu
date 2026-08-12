@@ -1,4 +1,6 @@
 // apps/aegis/src/routes/_auth/admin/access-matrix.tsx
+
+import { Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ataqu/ui";
 import { createFileRoute } from '@tanstack/react-router';
 import { toast } from "sonner";
 

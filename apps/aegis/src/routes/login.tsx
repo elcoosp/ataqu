@@ -1,3 +1,4 @@
+import { Button } from "@ataqu/ui";
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 
 import { useEffect } from 'react';

@@ -1,10 +1,11 @@
 // apps/aegis/src/components/create-role-dialog.tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from "@ataqu/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ataqu/ui';
+import { Button, Input, Label } from '@ataqu/ui';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { toast } from "sonner";
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
+import { toast } from 'sonner';
 import { api } from '@ataqu/api-client';
 
 interface CreateRoleDialogProps {
@@ -12,18 +13,23 @@ interface CreateRoleDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface RoleFormData {
+  name: string;
+  permissions: string[];
+}
+
 export function CreateRoleDialog({ open, onOpenChange }: CreateRoleDialogProps) {
   const queryClient = useQueryClient();
-  const { register, handleSubmit, control, reset } = useForm<{ name: string; permissions: string[] }>({
+  const { register, handleSubmit, control, reset } = useForm<RoleFormData>({
     defaultValues: { permissions: [] },
   });
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<{ permissions: string[] }>({
     control,
-    name: 'permissions' as const,
+    name: 'permissions',
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { name: string; permissions: string[] }) =>
+    mutationFn: (data: RoleFormData) =>
       api.post('/aegis/roles', data, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['aegis', 'roles'] });
@@ -53,7 +59,7 @@ export function CreateRoleDialog({ open, onOpenChange }: CreateRoleDialogProps) 
               {fields.map((field, index) => (
                 <div key={field.id} className="flex gap-2">
                   <Input
-                    {...register(`permissions.${index}`)}
+                    {...register(`permissions.${index}` as const)}
                     placeholder="e.g., users:read"
                   />
                   <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>

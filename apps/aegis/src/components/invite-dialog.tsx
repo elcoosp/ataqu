@@ -1,10 +1,11 @@
 // apps/aegis/src/components/invite-dialog.tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from "@ataqu/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ataqu/ui';
+import { Button, Input, Label } from '@ataqu/ui';
 import { useForm } from 'react-hook-form';
-import { toast } from "sonner";
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
+import { toast } from 'sonner';
 import { api } from '@ataqu/api-client';
 
 interface InviteDialogProps {
@@ -12,14 +13,19 @@ interface InviteDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface InviteFormData {
+  email: string;
+  role: string;
+}
+
 export function InviteDialog({ open, onOpenChange }: InviteDialogProps) {
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset } = useForm<{ email: string; role: string }>({
+  const { register, handleSubmit, reset } = useForm<InviteFormData>({
     defaultValues: { role: 'member' },
   });
 
   const inviteMutation = useMutation({
-    mutationFn: (data: { email: string; role: string }) =>
+    mutationFn: (data: InviteFormData) =>
       api.post('/aegis/users/invite', data, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['aegis', 'users'] });
@@ -50,9 +56,9 @@ export function InviteDialog({ open, onOpenChange }: InviteDialogProps) {
               {...register('role')}
               className="w-full p-2 border border-border rounded bg-background"
             >
-              <option value="admin">Admin</option>
-              <option value="member">Member</option>
-              <option value="viewer">Viewer</option>
+              <option value="admin"><Trans>Admin</Trans></option>
+              <option value="member"><Trans>Member</Trans></option>
+              <option value="viewer"><Trans>Viewer</Trans></option>
             </select>
           </div>
           <div className="flex justify-end gap-2">
