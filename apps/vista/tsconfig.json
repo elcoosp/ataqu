@@ -2,6 +2,13 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
+      "@ataqu/ui": ["./src/shims.d.ts"],
+      "@ataqu/api-client": ["./src/shims.d.ts"],
+      "@ataqu/shared-hooks": ["./src/shims.d.ts"],
+      "@ataqu/shared-i18n": ["./src/shims.d.ts"],
+      "@ataqu/shared-stores": ["./src/shims.d.ts"],
+      "@tanstack/react-router": ["./src/shims.d.ts"],
+      "@tanstack/react-query": ["./src/shims.d.ts"],
       "@/*": ["./src/*"]
     },
     "types": ["vite/client", "node"],
