@@ -8,11 +8,12 @@ export function TaskList({ dealId }: { dealId?: UUID }) {
   const queryClient = useQueryClient();
   const { data, isLoading } = useListTasks({ limit: 100 });
 
+  // useListTasks returns TaskResponse[] directly, not { items: [] }
+  const tasks = data || [];
+
   const updateTask = useUpdateTask();
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
-
-  const tasks = data?.items || [];
 
   return (
     <div className="space-y-2">

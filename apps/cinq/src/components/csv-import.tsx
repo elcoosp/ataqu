@@ -14,9 +14,10 @@ export function CsvImport() {
   const [previewData, setPreviewData] = useState<Record<string, string>[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    setFile(file);
-    Papa.parse(file, {
+    const firstFile = acceptedFiles[0];
+    if (!firstFile) return;
+    setFile(firstFile);
+    Papa.parse(firstFile, {
       header: true,
       preview: 5,
       complete: (results) => {

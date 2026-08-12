@@ -58,8 +58,8 @@ export function registerCinqActions() {
       id: 'cinq-export-contacts',
       name: 'Export Contacts CSV',
       action: () => {
-        api.get('/cinq/csv/export', { responseType: 'blob' }).then((blob: Blob) => {
-          const url = URL.createObjectURL(blob);
+        api.get('/cinq/csv/export', { responseType: 'blob' }).then((blob) => {
+          const url = URL.createObjectURL(blob as Blob);
           const a = document.createElement('a');
           a.href = url;
           a.download = 'contacts.csv';
@@ -72,8 +72,8 @@ export function registerCinqActions() {
       id: 'cinq-export-deals',
       name: 'Export Deals CSV',
       action: () => {
-        api.get('/cinq/deals/export', { responseType: 'blob' }).then((blob: Blob) => {
-          const url = URL.createObjectURL(blob);
+        api.get('/cinq/deals/export', { responseType: 'blob' }).then((blob) => {
+          const url = URL.createObjectURL(blob as Blob);
           const a = document.createElement('a');
           a.href = url;
           a.download = 'deals.csv';

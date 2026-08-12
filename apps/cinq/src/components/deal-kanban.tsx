@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { KanbanBoard, Badge } from '@ataqu/ui';
+import { KanbanBoard, Badge, Skeleton } from '@ataqu/ui';
 import { toast } from 'sonner';
 import { Trans } from '@lingui/react/macro';
 import {
@@ -12,9 +12,13 @@ import { useNavigate } from '@tanstack/react-router';
 export function DealKanban() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { data: stages } = useListPipelineStages();
-  const { data: deals } = useListDeals({ limit: 1000 });
+  const { data: stages, isLoading: stagesLoading } = useListPipelineStages();
+  const { data: deals, isLoading: dealsLoading } = useListDeals({ limit: 1000 });
   const updateDeal = useUpdateDeal();
+
+  if (stagesLoading || dealsLoading) {
+    return <Skeleton className="h-64 w-full" />;
+  }
 
   const columns = (stages || []).map((stage) => ({
     id: stage.id,
@@ -23,7 +27,7 @@ export function DealKanban() {
   }));
 
   const handleDragEnd = (newColumns: any[]) => {
-    // For simplicity, we just refetch on drag
+    // Simple: just refetch and show a toast
     queryClient.invalidateQueries({ queryKey: ['cinq', 'deals'] });
     toast.info('Deal moved');
   };

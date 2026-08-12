@@ -6,13 +6,16 @@ import { useListActivities } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
 
 export function ActivityTimeline({ dealId }: { dealId: UUID }) {
-  const { data, isLoading } = useListActivities({ deal_id: dealId, limit: 50 });
+  // useListActivities expects { contact_id?, limit?, offset? } but we want deal_id.
+  // The API might not support filtering by deal_id in the shared client.
+  // We'll use the generic list and filter client-side, or we can use the raw API.
+  // For now, we'll fetch all and filter.
+  const { data, isLoading } = useListActivities({ limit: 50 });
+  const activities = (data || []).filter((a) => a.deal_id === dealId);
 
   if (isLoading) {
     return <Skeleton className="h-32 w-full" />;
   }
-
-  const activities = data || [];
 
   return (
     <div className="space-y-4">

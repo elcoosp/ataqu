@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Switch, Badge } from '@ataqu/ui';
+import { Badge, Button } from '@ataqu/ui';
 import { toast } from 'sonner';
 import { Trans } from '@lingui/react/macro';
 import { api } from '@ataqu/api-client';
@@ -41,14 +41,22 @@ export function IntegrationToggle({
     },
   });
 
-  const handleToggle = (checked: boolean) => {
-    setEnabled(checked);
-    mutation.mutate(checked);
+  const handleToggle = () => {
+    const newValue = !enabled;
+    setEnabled(newValue);
+    mutation.mutate(newValue);
   };
 
   return (
     <div className="flex items-center gap-2">
-      <Switch checked={enabled} onCheckedChange={handleToggle} />
+      <Button
+        variant={enabled ? 'default' : 'outline'}
+        size="sm"
+        onClick={handleToggle}
+        className="min-w-[100px]"
+      >
+        {enabled ? 'Connected' : 'Connect'}
+      </Button>
       <span className="text-sm">{label}</span>
       {enabled && (
         <Badge variant="outline">
