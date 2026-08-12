@@ -3,7 +3,7 @@
 
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
 import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, Skeleton } from "@ataqu/ui";
-import { toast } from "sonner";
+import { toast } from "sonner";;
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
