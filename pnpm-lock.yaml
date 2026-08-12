@@ -1087,11 +1087,18 @@ importers:
 
   packages/shared-stores:
     dependencies:
+      '@ataqu/types':
+        specifier: workspace:*
+        version: link:../types
       zustand:
         specifier: ^4.5.2
         version: 4.5.7(@types/react@19.2.18)(immer@11.1.15)(react@19.2.7)
 
-  packages/shared-utils: {}
+  packages/shared-utils:
+    dependencies:
+      '@ataqu/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/tailwind-config:
     dependencies:

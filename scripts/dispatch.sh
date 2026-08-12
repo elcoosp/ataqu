@@ -250,6 +250,21 @@ $(cat "$REPO_ROOT/$doc")
   done
 fi
 
+# 6. Inject frontend guide for any task touching frontend apps
+if [ -n "$APPS" ]; then
+  GUIDE_FILE="$REPO_ROOT/docs/frontend-guide.md"
+  if [ -f "$GUIDE_FILE" ]; then
+    CONTEXT+="
+# ====================================================================
+#                   FRONTEND DEVELOPMENT GUIDE
+# ====================================================================
+$(cat "$GUIDE_FILE")
+"
+  else
+    echo "WARNING: frontend-guide.md not found at $GUIDE_FILE – skipping"
+  fi
+fi
+
 # ---------- Inject Skills for tasks 021-030 (Repo & Migration) ----------
 SKILLS_CONTEXT=""
 if [[ "$TASK_ID" =~ ^TASK-0(2[1-9]|30)$ ]]; then
@@ -341,6 +356,9 @@ fi
 if [ "$TASK_ID" = "TASK-000" ]; then
   echo "🎨 Injected design documents (UI/UX, brand, visual identity)"
   echo "🧩 Injected full backend API surface (all handlers, services, domains) for API client generation"
+fi
+if [ -n "$APPS" ] && [ -f "$REPO_ROOT/docs/frontend-guide.md" ]; then
+  echo "📘 Injected frontend development guide"
 fi
 echo ""
 echo "✅ Prompt ready. Paste it into your conversation with the agent."

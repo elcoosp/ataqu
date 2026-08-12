@@ -1,3 +1,4 @@
+import { UUID } from '@ataqu/types';
 import { api } from './client';
 import type {
   Document,

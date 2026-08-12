@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.2",
+    "@ataqu/types": "workspace:*"
   },
   "exports": {
     ".": {
