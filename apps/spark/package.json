@@ -27,7 +27,8 @@
     "react-dom": "^19.2.7",
     "zustand": "^4.5.2",
     "@xyflow/react": "^12.11.2",
-    "lucide-react": "^0.460.0"
+    "lucide-react": "^0.460.0",
+    "croner": "^9.0.0"
   },
   "devDependencies": {
     "@ataqu/test-utils": "workspace:*",

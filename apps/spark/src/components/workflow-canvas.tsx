@@ -10,34 +10,98 @@ import {
   type Connection,
   type Node,
   type Edge,
+  type NodeTypes,
+  Handle,
+  Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-const nodeStyles: Record<string, string> = {
-  trigger: 'border-l-4 border-l-green-500',
-  action: 'border-l-4 border-l-blue-500',
-  condition: 'border-l-4 border-l-amber-500',
+// ---- Custom node renderers ----
+function TriggerNode({ data }: { data: Record<string, unknown> }) {
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-green-500 min-w-[200px] shadow-md">
+      <Handle type="source" position={Position.Bottom} className="!bg-green-500 !w-3 !h-3" />
+      <div className="text-xs font-semibold text-green-500 uppercase tracking-wider mb-1">
+        {String(data.subtype || 'Trigger')}
+      </div>
+      <div className="font-medium text-foreground text-sm">{String(data.label || 'Trigger')}</div>
+      {data.description && (
+        <div className="text-xs text-muted-foreground mt-1">{String(data.description)}</div>
+      )}
+    </div>
+  );
+}
+
+function ActionNode({ data }: { data: Record<string, unknown> }) {
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-blue-500 min-w-[200px] shadow-md">
+      <Handle type="target" position={Position.Top} className="!bg-blue-500 !w-3 !h-3" />
+      <Handle type="source" position={Position.Bottom} className="!bg-blue-500 !w-3 !h-3" />
+      <div className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">
+        {String(data.subtype || 'Action')}
+      </div>
+      <div className="font-medium text-foreground text-sm">{String(data.label || 'Action')}</div>
+      {data.description && (
+        <div className="text-xs text-muted-foreground mt-1">{String(data.description)}</div>
+      )}
+    </div>
+  );
+}
+
+function ConditionNode({ data }: { data: Record<string, unknown> }) {
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-amber-500 min-w-[200px] shadow-md">
+      <Handle type="target" position={Position.Top} className="!bg-amber-500 !w-3 !h-3" />
+      <Handle type="source" position={Position.Bottom} className="!bg-amber-500 !w-3 !h-3" id="true" style={{ left: '30%' }} />
+      <Handle type="source" position={Position.Bottom} className="!bg-red-500 !w-3 !h-3" id="false" style={{ left: '70%' }} />
+      <div className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-1">
+        {String(data.subtype || 'Condition')}
+      </div>
+      <div className="font-medium text-foreground text-sm">{String(data.label || 'Condition')}</div>
+      {data.description && (
+        <div className="text-xs text-muted-foreground mt-1">{String(data.description)}</div>
+      )}
+      <div className="flex gap-4 mt-2 text-xs">
+        <span className="text-green-500">✓ True</span>
+        <span className="text-red-500">✗ False</span>
+      </div>
+    </div>
+  );
+}
+
+const nodeTypes: NodeTypes = {
+  trigger: TriggerNode,
+  action: ActionNode,
+  condition: ConditionNode,
 };
 
 interface WorkflowCanvasProps {
-  onNodeSelect: (node: Node | null) => void;
-  nodes: Node[];
-  edges: Edge[];
-  onNodesChange: (nodes: Node[]) => void;
-  onEdgesChange: (edges: Edge[]) => void;
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
+  onNodesChange?: (nodes: Node[]) => void;
+  onEdgesChange?: (edges: Edge[]) => void;
+  onNodeSelect?: (node: Node | null) => void;
 }
 
-export function WorkflowCanvas({ onNodeSelect, nodes, edges, onNodesChange, onEdgesChange }: WorkflowCanvasProps) {
+export function WorkflowCanvas({
+  initialNodes = [],
+  initialEdges = [],
+  onNodesChange,
+  onEdgesChange,
+  onNodeSelect,
+}: WorkflowCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [rfNodes, setNodes, onRfNodesChange] = useNodesState(nodes);
-  const [rfEdges, setEdges, onRfEdgesChange] = useEdgesState(edges);
+  const [nodes, setNodes, onNodesChangeRf] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChangeRf] = useEdgesState(initialEdges);
 
   const handleConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge(params, eds));
-      onEdgesChange(rfEdges);
+      setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#F59E0B', strokeWidth: 2 } }, eds));
+      if (onEdgesChange) {
+        setTimeout(() => onEdgesChange(edges), 0);
+      }
     },
-    [setEdges, rfEdges, onEdgesChange]
+    [setEdges, edges, onEdgesChange]
   );
 
   const handleDrop = useCallback(
@@ -45,21 +109,34 @@ export function WorkflowCanvas({ onNodeSelect, nodes, edges, onNodesChange, onEd
       event.preventDefault();
       const raw = event.dataTransfer.getData('application/reactflow');
       if (!raw) return;
-      const { nodeType, nodeId } = JSON.parse(raw);
+
+      const nodeDef = JSON.parse(raw) as { id: string; label: string; category: string };
       const bounds = wrapperRef.current?.getBoundingClientRect();
       if (!bounds) return;
-      const position = { x: event.clientX - bounds.left - 100, y: event.clientY - bounds.top - 20 };
+
+      const position = {
+        x: event.clientX - bounds.left - 100,
+        y: event.clientY - bounds.top - 20,
+      };
+
       const newNode: Node = {
         id: crypto.randomUUID(),
-        type: 'default',
+        type: nodeDef.category,
         position,
-        data: { label: nodeId, nodeType },
-        className: `bg-card border-border text-foreground rounded-lg p-4 shadow-md ${nodeStyles[nodeType] || ''}`,
+        data: {
+          label: nodeDef.label,
+          subtype: nodeDef.id,
+          category: nodeDef.category,
+          config: {},
+        },
       };
+
       setNodes((nds) => [...nds, newNode]);
-      onNodesChange(rfNodes);
+      if (onNodesChange) {
+        setTimeout(() => onNodesChange([...nodes, newNode]), 0);
+      }
     },
-    [setNodes, rfNodes, onNodesChange]
+    [setNodes, nodes, onNodesChange]
   );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -68,20 +145,35 @@ export function WorkflowCanvas({ onNodeSelect, nodes, edges, onNodesChange, onEd
   }, []);
 
   return (
-    <div ref={wrapperRef} className="h-full w-full bg-background" data-tour="canvas" onDrop={handleDrop} onDragOver={handleDragOver}>
+    <div
+      ref={wrapperRef}
+      className="h-full w-full bg-background"
+      data-tour="canvas"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+    >
       <ReactFlow
-        nodes={rfNodes}
-        edges={rfEdges}
-        onNodesChange={(changes) => { onRfNodesChange(changes); onNodesChange(rfNodes); }}
-        onEdgesChange={(changes) => { onRfEdgesChange(changes); onEdgesChange(rfEdges); }}
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={(changes) => {
+          onNodesChangeRf(changes);
+          if (onNodesChange) setTimeout(() => onNodesChange(nodes), 0);
+        }}
+        onEdgesChange={(changes) => {
+          onEdgesChangeRf(changes);
+          if (onEdgesChange) setTimeout(() => onEdgesChange(edges), 0);
+        }}
         onConnect={handleConnect}
-        onNodeClick={(_evt, node) => onNodeSelect(node)}
-        onPaneClick={() => onNodeSelect(null)}
+        onNodeClick={(_evt, node) => onNodeSelect?.(node)}
+        onPaneClick={() => onNodeSelect?.(null)}
+        nodeTypes={nodeTypes}
         fitView
+        minZoom={0.3}
+        maxZoom={2}
         style={{ background: 'transparent' }}
       >
-        <Controls />
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="rgba(255,255,255,0.1)" />
+        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="rgba(255,255,255,0.08)" />
+        <Controls className="bg-card border-border rounded-lg" />
       </ReactFlow>
     </div>
   );
