@@ -116,6 +116,12 @@ export const useDialWebSocket = () => {
 
   // Return send function
   const send = useCallback((data: unknown) => {
+    const sendStatus = useCallback(
+      (status: 'online' | 'away' | 'offline') => {
+        send({ type: 'presence', status });
+      },
+      [send]
+    );
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
     } else {

@@ -112,7 +112,7 @@ export function TicketList() {
                   updateStatus.mutate({ id: ticket.id, status: newStatus });
                 }}
               >
-                {ticket.status === 'closed' ? 'Reopen' : 'Close'}
+                {ticket.status === 'closed' ? t`Reopen` : t`Close`}
               </Button>
             </TableCell>
           </TableRow>

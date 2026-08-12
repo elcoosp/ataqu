@@ -5,6 +5,8 @@ export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected';
 export type PresenceStatus = 'online' | 'away' | 'offline';
 
 interface DialState {
+  status: 'online' | 'away' | 'offline';
+  setStatus: (status: 'online' | 'away' | 'offline') => void;
   activeChannelId: string | null;
   connectionState: ConnectionState;
   presenceMap: Record<string, PresenceStatus>;
@@ -23,6 +25,7 @@ export const useDialStore = create<DialState>()(
       connectionState: 'disconnected',
       presenceMap: {},
       focusMode: false,
+      status: 'online',
       setActiveChannel: (channelId) => set({ activeChannelId: channelId }),
       setConnectionState: (state) => set({ connectionState: state }),
       setPresence: (userId, status) =>
@@ -35,10 +38,12 @@ export const useDialStore = create<DialState>()(
           return { presenceMap: rest };
         }),
       toggleFocusMode: () => set((s) => ({ focusMode: !s.focusMode })),
+      setStatus: (status) => set({ status }),
     }),
     {
       name: 'dial-storage',
       partialize: (state) => ({
+        status: state.status,
         focusMode: state.focusMode,
         // Do not persist connection state or presence
       }),

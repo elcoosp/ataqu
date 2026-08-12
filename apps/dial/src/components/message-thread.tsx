@@ -64,6 +64,31 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 
   return (
     <div className="flex flex-col h-full">
+      <div className="p-2 border-b border-border flex items-center gap-2">
+        <input
+          data-search-input
+          type="text"
+          placeholder={t`Search messages...`}
+          className="flex-1 px-3 py-1 text-sm bg-background border border-input rounded-md"
+          onChange={(e) => {
+            // We'll implement search via API and filter messages
+          }}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.open(`/api/dial/channels/${channelId}/export`)}
+        >
+          {t`Export CSV`}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.open(`/api/dial/channels/${channelId}/export/pdf`)}
+        >
+          {t`Export PDF`}
+        </Button>
+      </div>
       <div ref={containerRef} className="flex-1 overflow-y-auto">
         <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
           {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -99,11 +124,50 @@ export function MessageThread({ channelId }: MessageThreadProps) {
                     </span>
                   </div>
                   <div className="mt-1 text-sm whitespace-pre-wrap break-words">
-                    {message.content}
+                    {message.content.split(' ').map((word, i) => {
+                      if (word.startsWith('@')) {
+                        return (
+                          <span
+                            key={i}
+                            className="bg-primary/20 text-primary-foreground px-0.5 rounded"
+                          >
+                            {word}
+                          </span>
+                        );
+                      }
+                      return word + ' ';
+                    })}
                   </div>
                   {/* Reactions */}
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {/* We need to fetch reactions separately; for now, we'll show a placeholder */}
+                    {(() => {
+                      const { data: reactions } = useListReactions(message.id);
+                      return reactions?.map((r) => (
+                        <span
+                          key={r.id}
+                          className="text-xs bg-muted/30 px-1.5 py-0.5 rounded cursor-pointer hover:bg-muted/50"
+                          onClick={() => {
+                            // Toggle reaction: if user already reacted, delete it
+                            const userReaction = reactions.find(
+                              (r) => r.user_id === 'current-user-id' && r.emoji === r.emoji
+                            );
+                            if (userReaction) {
+                              deleteReactionMutation.mutate({
+                                messageId: message.id,
+                                reactionId: userReaction.id,
+                              });
+                            } else {
+                              addReactionMutation.mutate({
+                                messageId: message.id,
+                                data: { emoji: r.emoji },
+                              });
+                            }
+                          }}
+                        >
+                          {r.emoji}
+                        </span>
+                      ));
+                    })()}
                   </div>
                   {/* Action buttons: reaction, reply */}
                   <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -67,6 +67,12 @@ export function ChannelList() {
     if (channel.type === 'private') icon = <Lock className="h-4 w-4" />;
     if (channel.type === 'direct_message') icon = <Users className="h-4 w-4" />;
 
+    const presenceDot =
+      channel.type === 'direct_message' ? (
+        <span
+          className={`w-2 h-2 rounded-full mr-1 ${(channel as any).participants?.some((p: string) => useDialStore.getState().presenceMap[p] === 'online') ? 'bg-success' : 'bg-muted'}`}
+        />
+      ) : null;
     return (
       <Link
         key={channel.id}
@@ -79,6 +85,7 @@ export function ChannelList() {
         activeProps={{ className: 'bg-card text-foreground' }}
       >
         <span className="mr-2">{icon}</span>
+        {presenceDot}
         <span className="flex-1 truncate text-sm font-medium">{channel.name}</span>
         {(channel.unread_count ?? 0) > 0 && (
           <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">

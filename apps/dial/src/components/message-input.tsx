@@ -1,10 +1,12 @@
 import { useSendMessage } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
-import { Button } from '@ataqu/ui';
 import { t } from '@lingui/macro';
-import { Loader2, Paperclip, Send } from 'lucide-react';
+import { Button } from '@ataqu/ui';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { FileUpload } from './file-upload';
 
 interface MessageInputProps {
   channelId: string;
@@ -17,26 +19,67 @@ export function MessageInput({ channelId, placeholder = t`Type a message...` }: 
   const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { resetKey } = useIdempotency();
+  const queryClient = useQueryClient();
   const sendMessage = useSendMessage();
+
+  const mutation = useMutation({
+    mutationFn: async (data: { content: string }) => {
+      return await sendMessage.mutateAsync({
+        channelId,
+        data,
+      });
+    },
+    onMutate: async (variables) => {
+      // Optimistic update: add message to cache
+      const queryKey = ['dial', 'messages', channelId, { limit: 50, offset: 0 }];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey) as { messages: any[]; total: number };
+      const optimisticMessage = {
+        id: 'optimistic-' + Date.now(),
+        content: variables.content,
+        author_id: 'current-user-id', // will be replaced later
+        sent_at: new Date().toISOString(),
+        channel_id: channelId,
+        thread_id: null,
+        edited_at: null,
+        deleted_at: null,
+      };
+      queryClient.setQueryData(queryKey, {
+        ...previous,
+        messages: [optimisticMessage, ...(previous?.messages || [])],
+        total: (previous?.total || 0) + 1,
+      });
+      return { previous, optimisticId: optimisticMessage.id };
+    },
+    onError: (error, variables, context) => {
+      // Rollback: remove optimistic message
+      const queryKey = ['dial', 'messages', channelId, { limit: 50, offset: 0 }];
+      const previous = context?.previous;
+      if (previous) {
+        queryClient.setQueryData(queryKey, previous);
+      } else {
+        // If we don't have previous state, just refetch
+        queryClient.invalidateQueries({ queryKey });
+      }
+      toast.error(t`Failed to send message`);
+    },
+    onSuccess: () => {
+      // Invalidate to get the real message
+      queryClient.invalidateQueries({ queryKey: ['dial', 'messages', channelId] });
+      toast.success(t`Message sent`);
+    },
+    onSettled: () => {
+      setIsSending(false);
+      resetKey();
+    },
+  });
 
   const handleSend = async () => {
     if (!content.trim() || isSending) return;
     const trimmed = content.trim();
     setIsSending(true);
-    try {
-      await sendMessage.mutateAsync({
-        channelId,
-        data: { content: trimmed },
-      });
-      setContent('');
-      resetKey();
-      toast.success(t`Message sent`);
-    } catch (error) {
-      console.error('Failed to send message', error);
-      toast.error(t`Failed to send message`);
-    } finally {
-      setIsSending(false);
-    }
+    setContent('');
+    mutation.mutate({ content: trimmed });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -69,15 +112,7 @@ export function MessageInput({ channelId, placeholder = t`Type a message...` }: 
           {content.length}/4000
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-9 w-9 rounded-full"
-        onClick={() => document.getElementById('file-input')?.click()}
-      >
-        <Paperclip className="h-4 w-4" />
-      </Button>
-      <input id="file-input" type="file" className="hidden" multiple />
+      <FileUpload channelId={channelId} />
       <Button
         size="sm"
         className="h-9"

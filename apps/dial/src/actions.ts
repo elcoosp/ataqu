@@ -1,6 +1,9 @@
 import { type ChannelSummary, useListChannels } from '@ataqu/api-client';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { useDialStore } from '@/stores/dial-store';
+import { t } from '@lingui/macro';
+import { useDialWebSocket } from '@/hooks/use-dial-websocket';
 
 export interface CommandAction {
   id: string;
@@ -70,7 +73,8 @@ export function useDialActions() {
       title: 'Set Status: Online',
       onSelect: () => {
         // Update presence via WebSocket
-        window.dispatchEvent(new CustomEvent('setPresence', { detail: { status: 'online' } }));
+        const { sendStatus } = useDialWebSocket();
+        sendStatus('online');
       },
     },
     {

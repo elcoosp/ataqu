@@ -1,4 +1,4 @@
-import { useListThreadMessages } from '@ataqu/api-client';
+import { useListThreadMessages, useSendMessage } from '@ataqu/api-client';
 import { Button, Sheet, SheetContent, SheetHeader, SheetTitle } from '@ataqu/ui';
 import { t } from '@lingui/macro';
 import { X } from 'lucide-react';
@@ -12,7 +12,11 @@ interface ThreadSidebarProps {
 export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const { data: messages } = useListThreadMessages(threadId!, { limit: 100, offset: 0 });
+  const { data: messages, isLoading } = useListThreadMessages(
+    threadId!,
+    { limit: 100, offset: 0 },
+    { enabled: !!threadId }
+  );
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -41,6 +45,7 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
         </SheetHeader>
         <div className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto space-y-2 p-2">
+            {isLoading && <div className="text-center text-muted-foreground">{t`Loading...`}</div>}
             {messages?.map((msg) => (
               <div key={msg.id} className="text-sm">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">

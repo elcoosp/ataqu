@@ -1,4 +1,5 @@
-import { Button, Popover, PopoverContent, PopoverTrigger } from '@ataqu/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@ataqu/ui';
+import { Button } from '@ataqu/ui';
 import { Smile } from 'lucide-react';
 
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
