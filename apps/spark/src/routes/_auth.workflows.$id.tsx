@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { Play, Save, Trash2, ArrowLeft } from 'lucide-react';
 import { Button, Input, OnboardTour } from '@ataqu/ui';
 import { toast } from 'sonner';
@@ -39,7 +40,6 @@ function workflowToNodes(wf: Workflow): SparkNode[] {
   const nodes: SparkNode[] = [];
   let yPos = 0;
 
-  // Trigger node
   const triggerLabel = wf.trigger.type === 'event'
     ? wf.trigger.event_type
     : wf.trigger.type === 'schedule'
@@ -59,7 +59,6 @@ function workflowToNodes(wf: Workflow): SparkNode[] {
   });
   yPos += 120;
 
-  // Condition nodes
   wf.conditions.forEach((cond, i) => {
     nodes.push({
       id: `condition-${i}`,
@@ -75,7 +74,6 @@ function workflowToNodes(wf: Workflow): SparkNode[] {
     yPos += 120;
   });
 
-  // Action nodes
   wf.actions.forEach((action, i) => {
     nodes.push({
       id: `action-${i}`,
@@ -211,7 +209,6 @@ function WorkflowDetail() {
   const [showTestModal, setShowTestModal] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Deserialize workflow into canvas when loaded
   useEffect(() => {
     if (workflow && !initialized) {
       setWorkflowName(workflow.name);
@@ -231,24 +228,24 @@ function WorkflowDetail() {
   const handleSave = useCallback(() => {
     const req = nodesToWorkflowRequest(nodes, workflowName);
     if (!req.name?.trim()) {
-      toast.error(String(<Trans>Workflow name is required.</Trans>));
+      toast.error(t`Workflow name is required.`);
       return;
     }
 
     if (isNew) {
       createMutation.mutate(req as CreateWorkflowRequest, {
         onSuccess: (created) => {
-          toast.success(String(<Trans>Workflow saved.</Trans>));
+          toast.success(t`Workflow saved.`);
           navigate({ to: '/workflows/$id', params: { id: created.id } });
         },
-        onError: () => toast.error(String(<Trans>Failed to create workflow.</Trans>)),
+        onError: () => toast.error(t`Failed to create workflow.`),
       });
     } else if (workflow) {
       updateMutation.mutate(
         { id: workflow.id, data: { name: req.name, is_active: workflow.is_active }, version: workflow.version },
         {
-          onSuccess: () => toast.success(String(<Trans>Workflow saved.</Trans>)),
-          onError: () => toast.error(String(<Trans>Failed to save workflow.</Trans>)),
+          onSuccess: () => toast.success(t`Workflow saved.`),
+          onError: () => toast.error(t`Failed to save workflow.`),
         }
       );
     }
@@ -258,10 +255,10 @@ function WorkflowDetail() {
     if (!workflow) return;
     deleteMutation.mutate(workflow.id, {
       onSuccess: () => {
-        toast.success(String(<Trans>Workflow deleted.</Trans>));
+        toast.success(t`Workflow deleted.`);
         navigate({ to: '/' });
       },
-      onError: () => toast.error(String(<Trans>Failed to delete workflow.</Trans>)),
+      onError: () => toast.error(t`Failed to delete workflow.`),
     });
   }, [workflow, deleteMutation, navigate]);
 
@@ -285,7 +282,7 @@ function WorkflowDetail() {
           <Input
             value={workflowName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWorkflowName(e.target.value)}
-            placeholder={String(<Trans>Workflow name</Trans>)}
+            placeholder={t`Workflow name`}
             className="max-w-md font-heading font-bold text-lg border-none shadow-none focus-visible:ring-0 px-0 h-auto"
           />
         </div>

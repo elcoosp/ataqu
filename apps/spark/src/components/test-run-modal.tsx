@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { Button, Label } from '@ataqu/ui';
 import { Play, X, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,16 +24,16 @@ export function TestRunModal({ workflowId, onClose }: TestRunModalProps) {
         { id: workflowId, data: { payload: parsed } },
         {
           onSuccess: () => {
-            toast.success(String(<Trans>Test run completed.</Trans>));
+            toast.success(t`Test run completed.`);
             onClose();
           },
           onError: () => {
-            toast.error(String(<Trans>Test run failed.</Trans>));
+            toast.error(t`Test run failed.`);
           },
         }
       );
     } catch {
-      setJsonError(String(<Trans>Invalid JSON</Trans>));
+      setJsonError(t`Invalid JSON`);
     }
   };
 

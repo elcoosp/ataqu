@@ -1,10 +1,11 @@
 import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { Link } from '@tanstack/react-router';
 import { Zap, Play } from 'lucide-react';
 import { Button } from '@ataqu/ui';
 import { toast } from 'sonner';
 import type { Workflow } from '@ataqu/api-client';
-import { useToggleWorkflow, useDeleteWorkflow } from '../api/spark-api';
+import { useToggleWorkflow } from '../api/spark-api';
 import { EmptyState } from './empty-state';
 import { Switch } from './ui-switch';
 
@@ -67,7 +68,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 
           <div className="flex items-center gap-3 ml-4">
             <Link to="/workflows/$id" params={{ id: wf.id }}>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={String(<Trans>Edit workflow</Trans>)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t`Edit workflow`}>
                 <Play className="h-4 w-4" />
               </Button>
             </Link>
@@ -83,17 +84,17 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
                     onSuccess: () => {
                       toast.success(
                         checked
-                          ? String(<Trans>Workflow enabled.</Trans>)
-                          : String(<Trans>Workflow disabled.</Trans>)
+                          ? t`Workflow enabled.`
+                          : t`Workflow disabled.`
                       );
                     },
                     onError: () => {
-                      toast.error(String(<Trans>Failed to toggle workflow.</Trans>));
+                      toast.error(t`Failed to toggle workflow.`);
                     },
                   }
                 )
               }
-              aria-label={wf.is_active ? String(<Trans>Disable workflow</Trans>) : String(<Trans>Enable workflow</Trans>)}
+              aria-label={wf.is_active ? t`Disable workflow` : t`Enable workflow`}
             />
           </div>
         </div>

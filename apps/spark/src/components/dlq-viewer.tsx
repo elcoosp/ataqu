@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { AlertTriangle, RotateCcw, Trash2 } from 'lucide-react';
 import { Button, Skeleton } from '@ataqu/ui';
 import { toast } from 'sonner';
@@ -79,8 +80,8 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
                 variant="outline"
                 onClick={() =>
                   replayMutation.mutate(entry.id, {
-                    onSuccess: () => toast.success(String(<Trans>Event replayed.</Trans>)),
-                    onError: () => toast.error(String(<Trans>Failed to replay event.</Trans>)),
+                    onSuccess: () => toast.success(t`Event replayed.`),
+                    onError: () => toast.error(t`Failed to replay event.`),
                   })
                 }
                 disabled={replayMutation.isPending}
@@ -97,10 +98,10 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
                     onClick={() => {
                       deleteMutation.mutate(entry.id, {
                         onSuccess: () => {
-                          toast.success(String(<Trans>DLQ entry deleted.</Trans>));
+                          toast.success(t`DLQ entry deleted.`);
                           setConfirmId(null);
                         },
-                        onError: () => toast.error(String(<Trans>Failed to delete entry.</Trans>)),
+                        onError: () => toast.error(t`Failed to delete entry.`),
                       });
                     }}
                   >

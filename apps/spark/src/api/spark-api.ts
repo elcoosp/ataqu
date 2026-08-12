@@ -1,3 +1,14 @@
+/**
+ * SPARK API wrapper.
+ *
+ * NOTE: The generated @ataqu/api-client/src/spark.ts is currently a stub
+ * (only exports createWorkflow and executeWorkflow). Until the backend
+ * exposes full CRUD + runs + DLQ endpoints and the API client is regenerated,
+ * this file calls api.get/post/put/delete directly with typed paths.
+ *
+ * Once the API client is complete, replace all raw calls below with
+ * imports from @ataqu/api-client.
+ */
 import { api } from '@ataqu/api-client';
 import type {
   Workflow,

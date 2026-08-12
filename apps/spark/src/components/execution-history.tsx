@@ -1,4 +1,5 @@
 import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { History, ChevronRight } from 'lucide-react';
 import { Button, Skeleton } from '@ataqu/ui';
 import { toast } from 'sonner';
@@ -87,8 +88,8 @@ export function ExecutionHistory({ runs, isLoading, onSelectRun }: ExecutionHist
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   approveMutation.mutate(run.id, {
-                    onSuccess: () => toast.success(String(<Trans>Run approved.</Trans>)),
-                    onError: () => toast.error(String(<Trans>Failed to approve run.</Trans>)),
+                    onSuccess: () => toast.success(t`Run approved.`),
+                    onError: () => toast.error(t`Failed to approve run.`),
                   });
                 }}
               >
