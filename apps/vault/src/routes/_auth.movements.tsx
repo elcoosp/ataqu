@@ -6,7 +6,6 @@ import { EmptyState } from '../components/empty-state';
 import { HistoryIcon } from '../components/icons';
 import { MovementHistory } from '../components/movement-history';
 
-// @ts-expect-error - routeTree.gen.ts is generated at build time by TanStack Router plugin
 export const Route = createFileRoute('/_auth/movements')({
   component: MovementsPage,
 });
