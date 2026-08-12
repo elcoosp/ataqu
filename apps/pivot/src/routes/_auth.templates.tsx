@@ -4,7 +4,7 @@ import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input } from '@ataqu/ui';
-import { Trans } from '@lingui/react/macro';
+import { Trans, t } from '@lingui/react/macro';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -59,14 +59,14 @@ function TemplatesPage() {
       {showCreator && (
         <div className="border border-border rounded p-4 space-y-3">
           <Input
-            placeholder="Template name"
+            placeholder={t`Template name`}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <textarea
             className="w-full p-2 border border-border rounded bg-background"
             rows={6}
-            placeholder="Template content (markdown)"
+            placeholder={t`Template content (markdown)`}
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />

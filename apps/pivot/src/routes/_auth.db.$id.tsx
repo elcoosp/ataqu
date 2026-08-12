@@ -23,6 +23,15 @@ function DatabaseDetail() {
   if (error) toast.error(handleApiError(error));
   if (!data) return <div><Trans>Loading…</Trans></div>;
 
+  // Example columns – in real app these come from schema
+  const columns = [
+    { name: 'Name', type: 'text' as const },
+    { name: 'Amount', type: 'number' as const },
+    { name: 'Date', type: 'date' as const },
+    { name: 'Status', type: 'select' as const },
+    { name: 'Deal', type: 'relation' as const },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -31,7 +40,7 @@ function DatabaseDetail() {
         </Button>
         <h1 className="text-2xl font-heading">{data.name}</h1>
       </div>
-      <DatabaseGrid databaseId={id} />
+      <DatabaseGrid databaseId={id} columns={columns} />
     </div>
   );
 }

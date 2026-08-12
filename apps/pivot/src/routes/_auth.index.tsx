@@ -4,7 +4,7 @@ import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button } from '@ataqu/ui';
-import { Trans } from '@lingui/react/macro';
+import { Trans, t } from '@lingui/react/macro';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Document } from '@/types';
