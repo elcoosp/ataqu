@@ -50,7 +50,7 @@ export function ContextSidebar({ channelId }: ContextSidebarProps) {
           <Badge variant="default" className="mb-2">
             Linked to CINQ
           </Badge>
-          <Link to={`/deals/${cinqContext.deal_id}`} className="block text-sm hover:underline">
+          <Link to={'/dashboard'} className="block text-sm hover:underline">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               <span className="font-medium">{cinqContext.name}</span>

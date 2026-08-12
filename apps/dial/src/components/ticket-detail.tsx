@@ -5,7 +5,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
-import { getTicket, listTicketMessages, replyToTicket, updateTicketStatus, type Ticket } from '@/api/tickets';
+import {
+  getTicket,
+  listTicketMessages,
+  replyToTicket,
+  updateTicketStatus,
+  type Ticket,
+} from '@/api/tickets';
 
 export function TicketDetail() {
   const { id } = useParams({ from: '/_auth/tickets/$id' });

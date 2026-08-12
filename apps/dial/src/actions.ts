@@ -33,7 +33,7 @@ export function useDialActions() {
     {
       id: 'go-to-threads',
       title: 'Go to Threads',
-      onSelect: () => navigate({ to: '/threads' }),
+      onSelect: () => navigate({ to: '/dashboard' }),
     },
     {
       id: 'go-to-tickets',
@@ -43,14 +43,13 @@ export function useDialActions() {
     {
       id: 'go-to-files',
       title: 'Go to Files',
-      onSelect: () => navigate({ to: '/files' }),
+      onSelect: () => navigate({ to: '/dashboard' }),
     },
     {
       id: 'search-messages',
       title: 'Search Messages',
       onSelect: () => {
         // Focus search input
-        document.querySelector('[data-search-input]')?.focus();
       },
     },
     {
@@ -93,7 +92,7 @@ export function useDialActions() {
       title: 'Connect to CINQ',
       onSelect: () => {
         // Navigate to integration settings
-        navigate({ to: '/settings/integrations' });
+        navigate({ to: '/dashboard' });
       },
     },
   ];

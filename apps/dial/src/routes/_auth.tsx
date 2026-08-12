@@ -32,5 +32,9 @@ function AuthLayout() {
       }));
   };
 
-  return <Shell activeApp="dial" searchFn={searchFn}><Outlet /></Shell>;
+  return (
+    <Shell activeApp="dial" searchFn={searchFn}>
+      <Outlet />
+    </Shell>
+  );
 }

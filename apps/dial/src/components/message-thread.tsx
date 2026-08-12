@@ -17,7 +17,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
   const { data: messagesData, isLoading } = useListMessages(channelId, { limit: 50, offset: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const allMessages = (messagesData?.messages ?? []).filter((m: any) => m != null);
+  const allMessages = (messagesData?.messages ?? []).filter((m) => m != null);
 
   // Virtualization
   const virtualizer = useVirtualizer({
@@ -64,6 +64,10 @@ export function MessageThread({ channelId }: MessageThreadProps) {
       <div ref={containerRef} className="flex-1 overflow-y-auto">
         <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
           {virtualizer.getVirtualItems().map((virtualRow) => {
+            const message = allMessages[virtualRow.index];
+            if (!message) return null;
+            const message = allMessages[virtualRow.index];
+            if (!message) return null;
             const message = allMessages[virtualRow.index];
             const isOwn = message.author_id === 'current-user-id'; // TODO: get from auth
             return (
