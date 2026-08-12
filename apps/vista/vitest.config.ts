@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config';
 import { defineViteConfig } from '@ataqu/vite-preset';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   ...defineViteConfig({ appName: 'vista' }),
