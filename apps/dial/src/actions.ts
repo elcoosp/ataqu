@@ -1,4 +1,4 @@
-import { useListChannels, type ChannelSummary } from '@ataqu/api-client';
+import { type ChannelSummary, useListChannels } from '@ataqu/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import { useDialStore } from '@/stores/dial-store';
 

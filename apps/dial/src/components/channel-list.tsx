@@ -1,11 +1,11 @@
-import { useListChannels, type ChannelSummary } from '@ataqu/api-client';
+import { type ChannelSummary, useListChannels } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
-import { t } from '@lingui/macro';
 import { Button, cn, Input, Skeleton } from '@ataqu/ui';
+import { t } from '@lingui/macro';
+import { Link } from '@tanstack/react-router';
+import { Hash, Lock, Plus, Search, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useDialStore } from '@/stores/dial-store';
-import { Link } from '@tanstack/react-router';
-import { Hash, Lock, Users, Plus, Search } from 'lucide-react';
 
 export function ChannelList() {
   const { activeChannelId } = useDialStore();
@@ -19,8 +19,11 @@ export function ChannelList() {
     return channels.filter((c) => c.name.toLowerCase().includes(debouncedSearch.toLowerCase()));
   }, [channels, debouncedSearch]);
 
+  // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
   const publicChannels = filteredChannels.filter((c) => (c as any).type === 'public');
+  // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
   const privateChannels = filteredChannels.filter((c) => (c as any).type === 'private');
+  // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
   const dmChannels = filteredChannels.filter((c) => (c as any).type === 'direct_message');
 
   const handleCreateChannel = () => {
@@ -53,7 +56,9 @@ export function ChannelList() {
   const renderChannel = (channel: ChannelSummary) => {
     const isActive = activeChannelId === channel.id;
     let icon = <Hash className="h-4 w-4" />;
+    // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
     if ((channel as any).type === 'private') icon = <Lock className="h-4 w-4" />;
+    // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
     if ((channel as any).type === 'direct_message') icon = <Users className="h-4 w-4" />;
 
     return (
@@ -69,11 +74,14 @@ export function ChannelList() {
       >
         <span className="mr-2">{icon}</span>
         <span className="flex-1 truncate text-sm font-medium">{channel.name}</span>
-        {((channel as any).unread_count ?? 0) > 0 && (
-          <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-            {(channel as any).unread_count}
-          </span>
-        )}
+        {
+          // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
+          ((channel as any).unread_count ?? 0) > 0 && (
+            <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+              {(channel as any).unread_count}
+            </span>
+          )
+        }
       </Link>
     );
   };

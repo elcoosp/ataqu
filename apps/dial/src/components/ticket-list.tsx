@@ -10,11 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from '@ataqu/ui';
+import { Trans, t } from '@lingui/macro';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
-import { Trans } from '@lingui/macro';
-import { listTickets, updateTicketStatus, type Ticket } from '@/api/tickets';
+import { toast } from 'sonner';
+import { listTickets, type Ticket, updateTicketStatus } from '@/api/tickets';
 
 export function TicketList() {
   const queryClient = useQueryClient();
@@ -28,6 +29,10 @@ export function TicketList() {
       updateTicketStatus(id, status as Ticket['status']),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      toast.success(t`Status updated`);
+    },
+    onError: () => {
+      toast.error(t`Failed to update status`);
     },
   });
 

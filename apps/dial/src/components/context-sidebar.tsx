@@ -1,9 +1,9 @@
 import { useGetChannel } from '@ataqu/api-client';
 import { Badge, Skeleton } from '@ataqu/ui';
+import { t } from '@lingui/macro';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { DollarSign, User } from 'lucide-react';
-import { t } from '@lingui/macro';
 import { getCinqContext } from '@/api/cinq-context';
 
 interface ContextSidebarProps {

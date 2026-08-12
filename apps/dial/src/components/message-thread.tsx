@@ -1,8 +1,8 @@
 import { useAddReaction, useListMessages } from '@ataqu/api-client';
 import { Avatar, AvatarFallback, Button, cn, Skeleton } from '@ataqu/ui';
+import { t } from '@lingui/macro';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { formatDistanceToNow } from 'date-fns';
-import { t } from '@lingui/macro';
 import { Reply } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { MessageInput } from './message-input';

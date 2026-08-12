@@ -1,16 +1,17 @@
 import { useIdempotency } from '@ataqu/shared-hooks';
-import { t } from '@lingui/macro';
 import { Badge, Button, cn, Skeleton } from '@ataqu/ui';
+import { t } from '@lingui/macro';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   getTicket,
   listTicketMessages,
   replyToTicket,
-  updateTicketStatus,
   type Ticket,
+  updateTicketStatus,
 } from '@/api/tickets';
 
 export function TicketDetail() {
@@ -35,6 +36,10 @@ export function TicketDetail() {
       queryClient.invalidateQueries({ queryKey: ['ticket-messages', id] });
       setReply('');
       resetKey();
+      toast.success(t`Reply sent`);
+    },
+    onError: () => {
+      toast.error(t`Failed to send reply`);
     },
   });
 
@@ -42,6 +47,10 @@ export function TicketDetail() {
     mutationFn: (status: string) => updateTicketStatus(id, status as Ticket['status']),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+      toast.success(t`Status updated`);
+    },
+    onError: () => {
+      toast.error(t`Failed to update status`);
     },
   });
 
@@ -49,7 +58,7 @@ export function TicketDetail() {
     return <Skeleton className="h-40 w-full" />;
   }
 
-  if (!ticket) return <div>Ticket not found</div>;
+  if (!ticket) return <div>{t`Ticket not found`}</div>;
 
   return (
     <div className="flex flex-col h-full">
@@ -63,12 +72,12 @@ export function TicketDetail() {
               size="sm"
               onClick={() => updateStatus.mutate(ticket.status === 'closed' ? 'open' : 'closed')}
             >
-              {ticket.status === 'closed' ? 'Reopen' : 'Close'}
+              {ticket.status === 'closed' ? t`Reopen` : t`Close`}
             </Button>
           </div>
         </div>
         <div className="text-sm text-muted-foreground mt-1">
-          Customer: {ticket.customer_email} · Priority: {ticket.priority}
+          {t`Customer`}: {ticket.customer_email} · {t`Priority`}: {ticket.priority}
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -84,7 +93,7 @@ export function TicketDetail() {
               )}
             >
               <div className="text-xs text-muted-foreground flex items-center gap-2">
-                <span>{msg.from_customer ? ticket.customer_email : 'Support'}</span>
+                <span>{msg.from_customer ? ticket.customer_email : t`Support`}</span>
                 <span>{formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}</span>
               </div>
               <div className="mt-1 whitespace-pre-wrap">{msg.content}</div>
@@ -104,7 +113,7 @@ export function TicketDetail() {
             onClick={() => replyMutation.mutate(reply)}
             disabled={!reply.trim() || replyMutation.isPending}
           >
-            Reply
+            {t`Reply`}
           </Button>
         </div>
       </div>

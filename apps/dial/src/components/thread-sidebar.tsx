@@ -1,7 +1,7 @@
 import { useListThreadMessages } from '@ataqu/api-client';
 import { Button, Sheet, SheetContent, SheetHeader, SheetTitle } from '@ataqu/ui';
-import { X } from 'lucide-react';
 import { t } from '@lingui/macro';
+import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { MessageInput } from './message-input';
 
