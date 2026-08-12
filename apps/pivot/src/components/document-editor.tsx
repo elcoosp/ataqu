@@ -51,18 +51,18 @@ export function DocumentEditor({ id, initialDoc, onDelete, onDuplicate }: Docume
     setSaveStatus('saving');
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      updateMutation.mutate(
-        { id, data: { title, content, version } },
-        { headers: { 'Idempotency-Key': getKey() } }
-      );
+      updateMutation.mutate({
+        id,
+        data: { title, content },
+      });
     }, 500);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [title, content, version, initialDoc, updateMutation, id, getKey]);
+  }, [title, content, initialDoc, updateMutation, id]);
 
   const handleDelete = () => {
-    deleteMutation.mutate(id, { headers: { 'Idempotency-Key': getKey() } });
+    deleteMutation.mutate(id);
   };
 
   const handleExport = () => {

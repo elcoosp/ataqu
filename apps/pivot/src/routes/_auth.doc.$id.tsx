@@ -17,7 +17,6 @@ export const Route = createFileRoute('/_auth/doc/$id')({
 function DocumentDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { getKey } = useIdempotency();
   const { data, error, refetch } = useGetDocument(id);
   const deleteMutation = useDeleteDocument({
     onSuccess: () => {
@@ -37,15 +36,15 @@ function DocumentDetail() {
   if (error) toast.error(handleApiError(error));
 
   const handleDelete = () => {
-    deleteMutation.mutate(id, { headers: { 'Idempotency-Key': getKey() } });
+    deleteMutation.mutate(id);
   };
 
   const handleDuplicate = () => {
     if (data) {
-      createMutation.mutate(
-        { title: `${data.title} (copy)`, content: data.content },
-        { headers: { 'Idempotency-Key': getKey() } }
-      );
+      createMutation.mutate({
+        title: `${data.title} (copy)`,
+        content: data.content,
+      });
     }
   };
 

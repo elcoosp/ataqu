@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useListTemplates, useCreateTemplate } from '@ataqu/api-client';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input, EmptyState } from '@ataqu/ui';
@@ -16,8 +17,22 @@ export const Route = createFileRoute('/_auth/templates')({
 
 function TemplatesPage() {
   const { getKey } = useIdempotency();
-  const { data, refetch, error } = useListTemplates();
-  const createMutation = useCreateTemplate({
+  const { data, refetch, error } = useQuery<Template[]>({
+    queryKey: ['templates'],
+    queryFn: () => api.get('/templates'),
+  });
+
+  if (error) toast.error(handleApiError(error));
+
+  const [showCreator, setShowCreator] = useState(false);
+  const [name, setName] = useState('');
+  const [content, setContent] = useState('');
+
+  const createMutation = useMutation({
+    mutationFn: (data: { name: string; content: string }) =>
+      api.post<Template>('/templates', data, {
+        headers: { 'Idempotency-Key': getKey() },
+      }),
     onSuccess: () => {
       toast.success(<Trans>Template created.</Trans>);
       setShowCreator(false);
@@ -28,18 +43,9 @@ function TemplatesPage() {
     onError: (err) => toast.error(handleApiError(err)),
   });
 
-  if (error) toast.error(handleApiError(error));
-
-  const [showCreator, setShowCreator] = useState(false);
-  const [name, setName] = useState('');
-  const [content, setContent] = useState('');
-
   const handleCreate = () => {
     if (!name.trim()) return toast.error(<Trans>Name is required.</Trans>);
-    createMutation.mutate(
-      { name, content },
-      { headers: { 'Idempotency-Key': getKey() } }
-    );
+    createMutation.mutate({ name, content });
   };
 
   return (

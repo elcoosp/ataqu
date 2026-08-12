@@ -27,10 +27,7 @@ function DocumentList() {
   if (error) toast.error(handleApiError(error));
 
   const handleCreate = () => {
-    createMutation.mutate(
-      { title: 'Untitled', content: '' },
-      { headers: { 'Idempotency-Key': getKey() } }
-    );
+    createMutation.mutate({ title: 'Untitled', content: '' });
   };
 
   return (
