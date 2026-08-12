@@ -4,14 +4,20 @@ import { Skeleton, Badge } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { useGetContactTracking } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
-import type { EmailTrackingEvent } from '@ataqu/api-client'; // assuming exported
+
+interface TrackingEvent {
+  id: UUID;
+  event_type: string;
+  created_at: string;
+  // other fields not needed
+}
 
 export function EmailTrackingTab({ contactId }: { contactId: UUID }) {
   const { data, isLoading } = useGetContactTracking(contactId, { limit: 50 });
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
 
-  const events = data?.items || [];
+  const events = (data?.items as TrackingEvent[]) || [];
 
   return (
     <div className="overflow-x-auto">
@@ -24,7 +30,7 @@ export function EmailTrackingTab({ contactId }: { contactId: UUID }) {
           </tr>
         </thead>
         <tbody>
-          {events.map((e: EmailTrackingEvent) => (
+          {events.map((e) => (
             <tr key={e.id} className="border-b border-gray-700/50">
               <td className="py-2 px-3">{e.event_type}</td>
               <td className="py-2 px-3">{format(new Date(e.created_at), 'PPp')}</td>

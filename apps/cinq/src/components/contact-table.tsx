@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Input, DataTable, Skeleton } from '@ataqu/ui';
+import { useQuery } from '@tanstack/react-query';
+import { Input, Skeleton } from '@ataqu/ui';
 import { Search } from 'lucide-react';
 import { Trans } from '@lingui/react/macro';
-import { useListContacts, useSearchContacts } from '@ataqu/api-client';
+import { listContacts, searchContacts } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
 import type { ContactResponse } from '@ataqu/api-client';
 
@@ -12,36 +13,40 @@ export function ContactTable() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: allData, isLoading: allLoading } = useListContacts({ limit: 1000 });
-  const { data: searchData, isLoading: searchLoading } = useSearchContacts(
-    { q: debouncedSearch, limit: 50 },
-    { enabled: debouncedSearch.length > 0 }
-  );
+  const {
+    data: allData,
+    isLoading: allLoading,
+    error: allError,
+  } = useQuery({
+    queryKey: ['cinq', 'contacts', 'list'],
+    queryFn: () => listContacts({ limit: 1000 }),
+    enabled: debouncedSearch.length === 0,
+  });
+
+  const {
+    data: searchData,
+    isLoading: searchLoading,
+    error: searchError,
+  } = useQuery({
+    queryKey: ['cinq', 'contacts', 'search', debouncedSearch],
+    queryFn: () => searchContacts({ q: debouncedSearch, limit: 50 }),
+    enabled: debouncedSearch.length > 0,
+  });
 
   const contacts = debouncedSearch.length > 0 ? (searchData || []) : (allData || []);
   const isLoading = debouncedSearch.length > 0 ? searchLoading : allLoading;
-
-  const columns = useMemo(
-    () => [
-      { accessorKey: 'name', header: 'Name' },
-      { accessorKey: 'email', header: 'Email' },
-      { accessorKey: 'phone', header: 'Phone' },
-      { accessorKey: 'company', header: 'Company' },
-      {
-        accessorKey: 'custom_fields',
-        header: 'Custom',
-        cell: ({ row }: { row: { original: ContactResponse } }) => {
-          const fields = row.original.custom_fields || {};
-          const entries = Object.entries(fields).slice(0, 2);
-          return <span>{entries.map(([k, v]) => `${k}: ${v}`).join(', ')}</span>;
-        },
-      },
-    ],
-    []
-  );
+  const error = debouncedSearch.length > 0 ? searchError : allError;
 
   if (isLoading) {
     return <Skeleton className="h-64 w-full" />;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-400">
+        <Trans>Error loading contacts</Trans>
+      </div>
+    );
   }
 
   return (
@@ -58,16 +63,45 @@ export function ContactTable() {
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={contacts}
-        onRowClick={(row) => navigate({ to: `/contacts/${row.id}` })}
-        emptyState={
-          <div className="text-center py-8 text-gray-400">
-            <Trans>No contacts yet. Create one to get started.</Trans>
-          </div>
-        }
-      />
+      {contacts.length === 0 ? (
+        <div className="text-center py-8 text-gray-400">
+          <Trans>No contacts yet. Create one to get started.</Trans>
+        </div>
+      ) : (
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-700/40 rounded-lg">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-deep-night/90 z-10 border-b border-gray-700">
+              <tr>
+                <th className="text-left py-2 px-3 font-medium text-gray-400">Name</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400">Email</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400">Phone</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400">Company</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400">Custom</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contacts.map((contact) => (
+                <tr
+                  key={contact.id}
+                  className="border-b border-gray-700/50 hover:bg-white/5 cursor-pointer transition-colors"
+                  onClick={() => navigate({ to: `/contacts/${contact.id}` })}
+                >
+                  <td className="py-2 px-3">{contact.name}</td>
+                  <td className="py-2 px-3">{contact.email}</td>
+                  <td className="py-2 px-3">{contact.phone}</td>
+                  <td className="py-2 px-3">{contact.company}</td>
+                  <td className="py-2 px-3">
+                    {Object.entries(contact.custom_fields || {})
+                      .slice(0, 2)
+                      .map(([k, v]) => `${k}: ${v}`)
+                      .join(', ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,14 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Card, CardContent, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
-import { useListActivities } from '@ataqu/api-client';
+import { listActivities } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
 import type { ActivityResponse } from '@ataqu/api-client';
 
 export function ActivityTimeline({ dealId }: { dealId: UUID }) {
-  const { data, isLoading } = useListActivities({ limit: 50 });
+  const { data, isLoading } = useQuery({
+    queryKey: ['cinq', 'activities', 'list'],
+    queryFn: () => listActivities({ limit: 50 }),
+  });
+
   const activities = useMemo(
-    () => (data || []).filter((a) => a.deal_id === dealId),
+    () => (data || []).filter((a: ActivityResponse) => a.deal_id === dealId),
     [data, dealId]
   );
 

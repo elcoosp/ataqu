@@ -1,15 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
-import { useListTasks, useUpdateTask } from '@ataqu/api-client';
+import { listTasks, updateTask } from '@ataqu/api-client';
 import type { TaskResponse } from '@ataqu/api-client';
 
 export function TaskList() {
   const queryClient = useQueryClient();
-  const { data, isLoading } = useListTasks({ limit: 100 });
+  const { data, isLoading } = useQuery({
+    queryKey: ['cinq', 'tasks', 'list'],
+    queryFn: () => listTasks({ limit: 100 }),
+  });
   const tasks = data || [];
 
-  const updateTask = useUpdateTask();
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { status: string } }) =>
+      updateTask(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cinq', 'tasks'] });
+    },
+  });
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
 
@@ -25,7 +34,7 @@ export function TaskList() {
               checked={task.status === 'completed'}
               onChange={(e) => {
                 const checked = e.target.checked;
-                updateTask.mutate({
+                updateTaskMutation.mutate({
                   id: task.id,
                   data: { status: checked ? 'completed' : 'pending' },
                 });

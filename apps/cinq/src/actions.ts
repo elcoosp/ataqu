@@ -1,6 +1,5 @@
-import { useNavigate } from '@tanstack/react-router';
 import { api } from '@ataqu/api-client';
-import type { UUID } from '@ataqu/types';
+import type { NavigateFunction } from '@tanstack/react-router';
 
 export interface CinqAction {
   id: string;
@@ -9,60 +8,55 @@ export interface CinqAction {
   action: () => void;
 }
 
-export function getCinqActions(): CinqAction[] {
-  // We cannot use hooks outside of React, so we need to return a factory
-  // that takes the navigate function.
-  // We'll return an array of action definitions that can be used by the command palette.
-  // The actual registration will happen in the Shell via a prop.
-  // For now, we'll define the actions as plain objects.
+export function getCinqActions(navigate: NavigateFunction): CinqAction[] {
   return [
     {
       id: 'cinq-create-contact',
       name: 'Create Contact',
       shortcut: 'C',
-      action: () => {}, // placeholder, will be overridden
+      action: () => navigate({ to: '/contacts' }),
     },
     {
       id: 'cinq-create-deal',
       name: 'Create Deal',
       shortcut: 'D',
-      action: () => {},
+      action: () => navigate({ to: '/deals' }),
     },
     {
       id: 'cinq-go-contacts',
       name: 'Go to Contacts',
-      action: () => {},
+      action: () => navigate({ to: '/contacts' }),
     },
     {
       id: 'cinq-go-deals',
       name: 'Go to Deals',
-      action: () => {},
+      action: () => navigate({ to: '/deals' }),
     },
     {
       id: 'cinq-go-tasks',
       name: 'Go to Tasks',
-      action: () => {},
+      action: () => navigate({ to: '/tasks' }),
     },
     {
       id: 'cinq-go-import',
       name: 'Go to Import',
-      action: () => {},
+      action: () => navigate({ to: '/import' }),
     },
     {
       id: 'cinq-import-csv',
       name: 'Import CSV',
-      action: () => {},
+      action: () => navigate({ to: '/import' }),
     },
     {
       id: 'cinq-search-contacts',
       name: 'Search Contacts',
       shortcut: 'F',
-      action: () => {},
+      action: () => navigate({ to: '/contacts' }),
     },
     {
       id: 'cinq-search-deals',
       name: 'Search Deals',
-      action: () => {},
+      action: () => navigate({ to: '/deals' }),
     },
     {
       id: 'cinq-export-contacts',
@@ -93,31 +87,4 @@ export function getCinqActions(): CinqAction[] {
       },
     },
   ];
-}
-
-// We'll expose a registration function that takes a navigate function and registers actions.
-// The Shell component will call this with navigate.
-import { registerActions } from '@ataqu/ui/command-palette';
-
-export function registerCinqActions(navigate: ReturnType<typeof useNavigate>) {
-  const actions = getCinqActions();
-  // Override the placeholder actions with real navigation
-  const actionMap: Record<string, () => void> = {
-    'cinq-create-contact': () => navigate({ to: '/contacts' }),
-    'cinq-create-deal': () => navigate({ to: '/deals' }),
-    'cinq-go-contacts': () => navigate({ to: '/contacts' }),
-    'cinq-go-deals': () => navigate({ to: '/deals' }),
-    'cinq-go-tasks': () => navigate({ to: '/tasks' }),
-    'cinq-go-import': () => navigate({ to: '/import' }),
-    'cinq-import-csv': () => navigate({ to: '/import' }),
-    'cinq-search-contacts': () => navigate({ to: '/contacts' }),
-    'cinq-search-deals': () => navigate({ to: '/deals' }),
-  };
-
-  const registered = actions.map((action) => ({
-    ...action,
-    action: actionMap[action.id] || action.action,
-  }));
-
-  registerActions(registered);
 }

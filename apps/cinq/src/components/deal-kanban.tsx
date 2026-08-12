@@ -1,33 +1,38 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { KanbanBoard, Badge, Skeleton } from '@ataqu/ui';
 import { toast } from 'sonner';
-import { useListDeals, useListPipelineStages, useUpdateDeal } from '@ataqu/api-client';
+import { listDeals, listPipelineStages } from '@ataqu/api-client';
 import { useNavigate } from '@tanstack/react-router';
-import type { DealResponse } from '@ataqu/api-client';
+import type { DealResponse, PipelineStageResponse } from '@ataqu/api-client';
 
 export function DealKanban() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { data: stages, isLoading: stagesLoading } = useListPipelineStages();
-  const { data: deals, isLoading: dealsLoading } = useListDeals({ limit: 1000 });
-  const updateDeal = useUpdateDeal();
+
+  const { data: stages, isLoading: stagesLoading } = useQuery({
+    queryKey: ['cinq', 'pipelineStages'],
+    queryFn: listPipelineStages,
+  });
+
+  const { data: deals, isLoading: dealsLoading } = useQuery({
+    queryKey: ['cinq', 'deals', 'list'],
+    queryFn: () => listDeals({ limit: 1000 }),
+  });
 
   if (stagesLoading || dealsLoading) {
     return <Skeleton className="h-64 w-full" />;
   }
 
-  const columns = (stages || []).map((stage) => ({
+  const columns = (stages || []).map((stage: PipelineStageResponse) => ({
     id: stage.id,
     title: stage.name,
-    items: (deals || []).filter((d) => d.pipeline_stage_id === stage.id),
+    items: (deals || []).filter((d: DealResponse) => d.pipeline_stage_id === stage.id),
   }));
 
   const handleDragEnd = (newColumns: any[]) => {
-    // Find the deal that moved and update its stage
-    // We need to compare old and new columns to find the moved item.
-    // For simplicity, we can just refetch and show a toast.
+    // Invalidate deals to refetch, or we could update the cache
     queryClient.invalidateQueries({ queryKey: ['cinq', 'deals'] });
-    toast.info('Deal moved');
+    toast.info('Deal moved (refresh to see changes)');
   };
 
   const renderItem = (deal: DealResponse) => (
