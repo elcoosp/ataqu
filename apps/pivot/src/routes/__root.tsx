@@ -28,7 +28,7 @@ function RootComponent() {
     if (!q || q.length < 2) return [];
     try {
       const results = await api.get('/search', { params: { q, limit: 10 } });
-      return results.map((item: any) => ({
+      return (results as any[]).map((item: any) => ({
         id: item.id,
         title: item.title || item.name,
         url: item.type === 'document' ? `/doc/${item.id}` : `/db/${item.id}`,
