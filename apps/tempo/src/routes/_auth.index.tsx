@@ -2,6 +2,7 @@ import { Button, Shell } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { EventTypeForm } from '@/components/event-type-form';
 import { RescheduleModal } from '@/components/reschedule-modal';
 import { UpcomingMeetings } from '@/components/upcoming-meetings';

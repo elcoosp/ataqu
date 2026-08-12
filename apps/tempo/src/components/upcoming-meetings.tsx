@@ -1,5 +1,4 @@
 import { useCancelBooking, useListBookings } from '@ataqu/api-client';
-import { useIdempotency } from '@ataqu/shared-hooks';
 import { Badge, Button, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -38,7 +37,6 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
     offset: 0,
   });
   const cancelMutation = useCancelBooking();
-  const { getKey } = useIdempotency();
 
   // Send meeting joined signal for the first upcoming meeting
   const firstBooking = bookingsData?.items?.[0];

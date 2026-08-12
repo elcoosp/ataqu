@@ -1,5 +1,4 @@
 import { usePublicCreateBooking } from '@ataqu/api-client';
-import { useIdempotency } from '@ataqu/shared-hooks';
 import { useAuthStore } from '@ataqu/shared-stores';
 import { Button, Input, Label } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
@@ -9,7 +8,6 @@ import { useTimezone } from '@/hooks/use-timezone';
 import { toast } from '@/hooks/use-toast';
 
 export function GuestForm() {
-  const { getKey } = useIdempotency();
   const timezone = useTimezone();
   const { tenantId } = useAuthStore();
   const { eventType, selectedSlot, setGuestDetails, setBookingId, setCurrentScreen } =
