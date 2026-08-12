@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans } from '@lingui/react/macro';
-import { Button, Textarea } from '@ataqu/ui';
+import { Button } from '@ataqu/ui';
 import { useExecuteWorkflow } from '../api/hooks';
 
 interface TestRunModalProps {
@@ -33,10 +33,10 @@ export function TestRunModal({ workflowId, onClose }: TestRunModalProps) {
       <div className="ataqu-glass w-full max-w-md rounded-lg p-6">
         <h2 className="text-lg font-heading font-bold text-foreground mb-4"><Trans>Test Run</Trans></h2>
         <label className="text-sm text-muted-foreground block mb-1"><Trans>Payload (JSON)</Trans></label>
-        <Textarea
+        <textarea
           className="font-mono text-sm h-32 mb-4"
           value={payload}
-          onChange={(e) => setPayload(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPayload(e.target.value)}
         />
         {result === 'success' && <p className="text-sm text-green-500 mb-2"><Trans>Test run completed.</Trans></p>}
         {result === 'failed' && <p className="text-sm text-red-500 mb-2"><Trans>Test run failed.</Trans></p>}

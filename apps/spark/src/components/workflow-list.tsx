@@ -1,7 +1,8 @@
 import { Trans } from '@lingui/react/macro';
 import { Link } from '@tanstack/react-router';
 import { Zap } from 'lucide-react';
-import { EmptyState, Button } from '@ataqu/ui';
+import { Button } from '@ataqu/ui';
+import { EmptyState } from './empty-state';
 import type { Workflow } from '@ataqu/api-client';
 import { useToggleWorkflow } from '../api/hooks';
 

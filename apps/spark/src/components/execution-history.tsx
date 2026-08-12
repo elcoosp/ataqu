@@ -1,6 +1,6 @@
 import { Trans } from '@lingui/react/macro';
 import { History } from 'lucide-react';
-import { EmptyState } from '@ataqu/ui';
+import { EmptyState } from './empty-state';
 import type { WorkflowRun } from '@ataqu/api-client';
 
 interface ExecutionHistoryProps {

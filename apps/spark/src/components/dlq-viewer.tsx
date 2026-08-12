@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Trans } from '@lingui/react/macro';
 import { AlertTriangle } from 'lucide-react';
-import { EmptyState, Button } from '@ataqu/ui';
+import { Button } from '@ataqu/ui';
+import { EmptyState } from './empty-state';
 import { useReplayDLQ, useDeleteDLQ, type DLQEntry } from '../api/hooks';
 
 interface DLQViewerProps {
