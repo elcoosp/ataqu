@@ -1,0 +1,80 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { useListTemplates, useCreateTemplate } from '@/api';
+import { useIdempotency } from '@ataqu/shared-hooks';
+import { Button, EmptyState, Input, Textarea } from '@ataqu/ui';
+import { Trans } from '@lingui/react/macro';
+import { FileText, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { useState } from 'react';
+
+export const Route = createFileRoute('/_auth/templates')({
+  component: TemplatesPage,
+});
+
+function TemplatesPage() {
+  const { data: templates, refetch } = useListTemplates();
+  const { mutate: createTemplate } = useCreateTemplate();
+  const { getKey } = useIdempotency();
+  const [showCreator, setShowCreator] = useState(false);
+  const [name, setName] = useState('');
+  const [content, setContent] = useState('');
+
+  const handleCreate = () => {
+    if (!name.trim()) return toast.error(<Trans>Name is required.</Trans>);
+    createTemplate(
+      { data: { name, content }, headers: { 'Idempotency-Key': getKey() } },
+      {
+        onSuccess: () => {
+          toast.success(<Trans>Template created.</Trans>);
+          setShowCreator(false);
+          setName('');
+          setContent('');
+          refetch();
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-heading"><Trans>Templates</Trans></h1>
+        <Button size="sm" onClick={() => setShowCreator(true)}>
+          <Plus className="h-4 w-4 mr-1" />
+          <Trans>Create Template</Trans>
+        </Button>
+      </div>
+
+      {showCreator && (
+        <div className="border border-border rounded p-4 space-y-3">
+          <Input placeholder="Template name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Textarea placeholder="Template content (markdown)" value={content} onChange={(e) => setContent(e.target.value)} rows={6} />
+          <div className="flex gap-2">
+            <Button onClick={handleCreate}><Trans>Save</Trans></Button>
+            <Button variant="outline" onClick={() => setShowCreator(false)}><Trans>Cancel</Trans></Button>
+          </div>
+        </div>
+      )}
+
+      {templates?.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title={<Trans>No templates</Trans>}
+          description={<Trans>Create a template to reuse document structures.</Trans>}
+          ctaLabel={<Trans>Create Template</Trans>}
+          onCta={() => setShowCreator(true)}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates?.map((t: any) => (
+            <div key={t.id} className="border border-border rounded p-4">
+              <h3 className="font-medium">{t.name}</h3>
+              <p className="text-sm text-muted-foreground truncate">{t.content}</p>
+              <p className="text-xs text-muted-foreground mt-2">{new Date(t.created_at).toLocaleDateString()}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

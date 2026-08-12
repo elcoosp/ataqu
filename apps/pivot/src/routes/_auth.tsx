@@ -1,13 +1,17 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
+import { Outlet, createFileRoute } from '@tanstack/react-router';
+import { useAuthStore } from '@ataqu/shared-stores';
+import { Navigate } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_auth')({
-  beforeLoad: () => {
-    const token = localStorage.getItem('auth-storage')
-      ? JSON.parse(localStorage.getItem('auth-storage')!).state?.token
-      : null;
+  beforeLoad: ({ location }) => {
+    const { token } = useAuthStore.getState();
     if (!token) {
-      throw redirect({ to: '/login' });
+      throw new Navigate({ to: '/login', search: { redirect: location.href } });
     }
   },
-  component: () => <Outlet />,
+  component: AuthWrapper,
 });
+
+function AuthWrapper() {
+  return <Outlet />;
+}
