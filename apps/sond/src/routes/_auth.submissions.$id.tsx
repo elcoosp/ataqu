@@ -62,11 +62,7 @@ function SubmissionsRoute() {
 					: [];
 				updateFormMutation.mutate({
 					id,
-					data: {
-						routing_rules: rules as Parameters<
-							typeof updateFormMutation.mutate
-						>[0]["data"]["routing_rules"],
-					},
+					data: { routing_rules: rules },
 				});
 			}
 		},
@@ -95,11 +91,7 @@ function SubmissionsRoute() {
 					: [];
 				updateFormMutation.mutate({
 					id,
-					data: {
-						routing_rules: rules as Parameters<
-							typeof updateFormMutation.mutate
-						>[0]["data"]["routing_rules"],
-					},
+					data: { routing_rules: rules },
 				});
 			}
 		},

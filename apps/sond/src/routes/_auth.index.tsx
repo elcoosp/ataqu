@@ -64,7 +64,9 @@ function FormsIndex() {
 						</p>
 						<Button
 							className="mt-6"
-							onClick={() => navigate({ to: "/builder/new" })}
+							onClick={() =>
+								navigate({ to: "/builder/$id", params: { id: "new" } })
+							}
 						>
 							<Trans>Create Form</Trans>
 						</Button>
@@ -82,7 +84,7 @@ function FormsIndex() {
 						<Trans>Forms</Trans>
 					</h1>
 					<Button asChild>
-						<Link to="/builder/new">
+						<Link to="/builder/$id" params={{ id: "new" }}>
 							<Plus className="mr-2 h-4 w-4" />
 							<Trans>Create Form</Trans>
 						</Link>

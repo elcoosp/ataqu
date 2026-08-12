@@ -48,6 +48,7 @@ function FormBuilderRoute() {
 		isExisting ? id : "00000000-0000-0000-0000-000000000000",
 		{ enabled: isExisting, queryKey: ["sond", "form", id] },
 	);
+
 	const createMutation = useCreateForm({
 		onSuccess: (data) => {
 			toast.success(t`Form created`);
@@ -55,6 +56,7 @@ function FormBuilderRoute() {
 		},
 		onError: (err) => toast.error(handleApiError(err)),
 	});
+
 	const updateMutation = useUpdateForm({
 		onSuccess: (data) => {
 			setLocalForm((prev) =>
