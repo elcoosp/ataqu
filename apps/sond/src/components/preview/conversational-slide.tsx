@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Input } from '@ataqu/ui';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import type { SondQuestion } from '../builder/types';
 
 interface Props {

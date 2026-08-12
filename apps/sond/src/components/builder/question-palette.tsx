@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Type, Mail, CheckSquare, List, Calendar, Star, Phone } from 'lucide-react';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import type { FormQuestion } from '@ataqu/api-client';
 
 const questionTypes: { type: FormQuestion['type']; labelKey: string; icon: typeof Type }[] = [

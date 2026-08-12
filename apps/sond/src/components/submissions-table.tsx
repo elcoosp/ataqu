@@ -1,6 +1,6 @@
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@ataqu/ui';
 import { Download } from 'lucide-react';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import type { Submission, AnswerInput } from '@ataqu/api-client';
 
 interface Props {

@@ -1,5 +1,6 @@
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider, Switch } from '@ataqu/ui';
-import { Trans, t } from '@lingui/core/macro';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@ataqu/ui';
+import { Switch } from '../ui/switch';
+import { Trans, t } from '@lingui/macro';
 import type { FormMode } from './types';
 
 interface Props {
@@ -27,7 +28,7 @@ export function ConversationalToggle({ mode, onChange }: Props) {
       </div>
       <Switch
         checked={mode === 'conversational'}
-        onCheckedChange={(checked) => onChange(checked ? 'conversational' : 'standard')}
+        onCheckedChange={(checked: boolean) => onChange(checked ? 'conversational' : 'standard')}
       />
     </div>
   );

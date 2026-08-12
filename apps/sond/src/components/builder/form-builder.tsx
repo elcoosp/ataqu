@@ -3,7 +3,7 @@ import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/c
 import { Button, cn } from '@ataqu/ui';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import { QuestionPalette } from './question-palette';
 import { QuestionConfigPanel } from './question-config-panel';
 import { ConditionalLogicModal } from './conditional-logic-modal';
@@ -99,7 +99,9 @@ export function FormBuilder({ questions, onUpdate }: Props) {
       if (oldIndex === -1 || newIndex === -1) return;
       const newQuestions = [...questions];
       const [moved] = newQuestions.splice(oldIndex, 1);
-      newQuestions.splice(newIndex, 0, moved);
+      if (moved) {
+        newQuestions.splice(newIndex, 0, moved);
+      }
       onUpdate(newQuestions);
     }
   };

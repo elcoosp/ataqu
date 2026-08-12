@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button } from '@ataqu/ui';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import { ConversationalSlide } from './conversational-slide';
 import { isQuestionVisible } from './visibility';
 import { useFormPreviewStore } from '../../stores/form-preview-store';

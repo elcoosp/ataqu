@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger, Shell } from '@ataqu/ui';
 import { Eye, Upload, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { FormBuilder } from '../components/builder/form-builder';
@@ -34,7 +34,7 @@ function FormBuilderRoute() {
   const { getKey } = useIdempotency();
 
   const isExisting = id !== 'new';
-  const { data: fetchedForm, isLoading } = useGetForm(isExisting ? id : '', { enabled: isExisting });
+  const { data: fetchedForm, isLoading } = useGetForm(isExisting ? id : '00000000-0000-0000-0000-000000000000', { enabled: isExisting, queryKey: ['sond', 'form', id] });
   const createMutation = useCreateForm({
     onSuccess: (data) => {
       toast.success(t`Form created`);

@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@ataqu/ui';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import type { SondQuestion } from './types';
 import type { FormQuestion } from '@ataqu/api-client';
 
@@ -33,11 +33,13 @@ export function ConditionalLogicModal({ open, question, questions, onSave, onClo
   const [value, setValue] = useState('');
 
   useEffect(() => {
-    if (open && question?.conditions?.length) {
+    if (open && question?.conditions && question.conditions.length > 0) {
       const c = question.conditions[0];
-      setConditionQuestionId(c.question_id);
-      setOperator(c.operator);
-      setValue(String(c.value ?? ''));
+      if (c) {
+        setConditionQuestionId(c.question_id);
+        setOperator(c.operator);
+        setValue(String(c.value ?? ''));
+      }
     } else {
       setConditionQuestionId('');
       setOperator('equals');

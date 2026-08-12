@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Button, Card, Shell } from '@ataqu/ui';
 import { ClipboardList, Plus } from 'lucide-react';
-import { Trans, t } from '@lingui/core/macro';
-import { EmptyState } from '@ataqu/shared-ui/empty-state';
+import { Trans, t } from '@lingui/macro';
+import { EmptyState } from '../components/ui/empty-state';
 import { useListForms } from '@ataqu/api-client';
 import type { Form } from '@ataqu/api-client';
 

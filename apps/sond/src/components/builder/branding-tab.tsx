@@ -1,5 +1,5 @@
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ataqu/ui';
-import { Trans } from '@lingui/core/macro';
+import { Trans } from '@lingui/macro';
 import type { SondBranding } from './types';
 
 interface Props {

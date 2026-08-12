@@ -1,5 +1,6 @@
-import { Input, Button, Switch } from '@ataqu/ui';
-import { Trans, t } from '@lingui/core/macro';
+import { Input, Button } from '@ataqu/ui';
+import { Switch } from '../ui/switch';
+import { Trans, t } from '@lingui/macro';
 import type { SondQuestion } from './types';
 
 interface Props {
@@ -32,7 +33,7 @@ export function QuestionConfigPanel({ question, onUpdate, onAddCondition }: Prop
 
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium"><Trans>Required</Trans></label>
-        <Switch checked={question.required} onCheckedChange={(checked) => onUpdate({ required: checked })} />
+        <Switch checked={question.required} onCheckedChange={(checked: boolean) => onUpdate({ required: checked })} />
       </div>
 
       {isChoiceType && (

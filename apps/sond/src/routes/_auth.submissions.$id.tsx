@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { Inbox } from 'lucide-react';
 import { Shell } from '@ataqu/ui';
 import { toast } from 'sonner';
-import { Trans, t } from '@lingui/core/macro';
+import { Trans, t } from '@lingui/macro';
 import { handleApiError } from '@ataqu/shared-utils';
 import { SubmissionsTable } from '../components/submissions-table';
 import { IntegrationToggle } from '../components/integration-toggle';
