@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { LeaveRequestForm } from '../leave-request-form';
 
 const mutate = vi.fn();
 vi.mock('@lingui/macro', () => ({
-  Trans: ({ children }: any) => children,
+  Trans: ({ children }: { children?: ReactNode }) => children,
   t: (str: string) => str,
 }));
 

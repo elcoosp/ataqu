@@ -1,8 +1,13 @@
 // @vitest-environment happy-dom
 import { render, screen } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { EmployeeDirectory } from '../employee-directory';
+
+vi.mock('@lingui/macro', () => ({
+  Trans: ({ children }: { children?: ReactNode }) => children,
+  t: (str: string) => str,
+}));
 
 vi.mock('@ataqu/api-client', () => ({
   useListEmployees: () => ({
@@ -14,11 +19,6 @@ vi.mock('@ataqu/api-client', () => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => () => {},
-}));
-
-vi.mock('@lingui/macro', () => ({
-  Trans: ({ children }: any) => children,
-  t: (str: string) => str,
 }));
 
 vi.mock('@ataqu/shared-hooks', () => ({

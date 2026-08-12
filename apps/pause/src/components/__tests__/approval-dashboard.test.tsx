@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { render, screen } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApprovalDashboard } from '../approval-dashboard';
 
@@ -14,7 +14,7 @@ interface MockLeaveRequest {
 }
 
 vi.mock('@lingui/macro', () => ({
-  Trans: ({ children }: any) => children,
+  Trans: ({ children }: { children?: ReactNode }) => children,
   t: (str: string) => str,
 }));
 
