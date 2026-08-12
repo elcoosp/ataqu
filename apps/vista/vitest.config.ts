@@ -3,6 +3,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   ...defineViteConfig({ appName: 'vista' }),
+  esbuild: {
+    target: 'esnext',
+  },
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
