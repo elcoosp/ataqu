@@ -1,5 +1,5 @@
 import { useCreateLeaveRequest } from '@ataqu/api-client';
-import { Button, Input, Label, Textarea } from '@ataqu/ui';
+import { Button, Input, Label } from '@ataqu/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -20,13 +20,15 @@ const schema = z
 interface LeaveRequestFormProps {
   employeeId: string;
   onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function LeaveRequestForm({ employeeId, onSuccess }: LeaveRequestFormProps) {
+export function LeaveRequestForm({ employeeId, onSuccess, onClose }: LeaveRequestFormProps) {
   const mutation = useCreateLeaveRequest({
     onSuccess: () => {
       toast.success('Leave requested.');
       onSuccess?.();
+      onClose?.();
     },
     onError: () => toast.error('Failed to request leave.'),
   });
@@ -35,7 +37,7 @@ export function LeaveRequestForm({ employeeId, onSuccess }: LeaveRequestFormProp
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
   });
 
@@ -61,16 +63,24 @@ export function LeaveRequestForm({ employeeId, onSuccess }: LeaveRequestFormProp
       <div>
         <Label htmlFor="start_date">Start Date</Label>
         <Input id="start_date" type="date" {...register('start_date')} />
-        {errors.start_date && <p className="text-red-500 text-sm">{errors.start_date.message}</p>}
+        {errors.start_date && (
+          <p className="text-red-500 text-sm">{errors.start_date.message?.toString()}</p>
+        )}
       </div>
       <div>
         <Label htmlFor="end_date">End Date</Label>
         <Input id="end_date" type="date" {...register('end_date')} />
-        {errors.end_date && <p className="text-red-500 text-sm">{errors.end_date.message}</p>}
+        {errors.end_date && (
+          <p className="text-red-500 text-sm">{errors.end_date.message?.toString()}</p>
+        )}
       </div>
       <div>
         <Label htmlFor="reason">Reason</Label>
-        <Textarea id="reason" {...register('reason')} />
+        <textarea
+          id="reason"
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+          {...register('reason')}
+        />
       </div>
       <Button type="submit" data-tour="request-leave" disabled={mutation.isPending}>
         Request Leave
