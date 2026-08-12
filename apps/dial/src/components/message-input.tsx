@@ -2,6 +2,7 @@ import { useSendMessage } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { Button } from '@ataqu/ui';
 import { Loader2, Paperclip, Send } from 'lucide-react';
+import { t } from '@lingui/macro';
 import { useEffect, useRef, useState } from 'react';
 
 interface MessageInputProps {
