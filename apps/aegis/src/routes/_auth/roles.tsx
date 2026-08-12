@@ -127,9 +127,9 @@ function CreateRoleDialog({
   const { register, handleSubmit, control, reset } = useForm<{ name: string; permissions: string[] }>({
     defaultValues: { permissions: [] },
   });
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<{ permissions: string[] }>({
     control,
-    name: 'permissions',
+    name: 'permissions' as const,
   });
 
   const handleClose = () => {

@@ -2,7 +2,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, EmptyState, Skeleton, useToast, Dialog, DialogAction, DialogCancel, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@ataqu/ui';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, EmptyState, Skeleton, toast, Dialog, DialogAction, DialogCancel, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@ataqu/ui';
 import { api } from '@ataqu/api-client';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -11,7 +11,7 @@ import { Key, Plus, Copy, Check } from 'lucide-react';
 export const Route = createFileRoute('/_auth/api-keys')({
   component: () => {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const { toast } = toast();
     const [openCreate, setOpenCreate] = useState(false);
     const [newKey, setNewKey] = useState<{ id: string; key: string } | null>(null);
 

@@ -2,7 +2,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label, Skeleton, useToast } from '@ataqu/ui';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label, Skeleton, toast } from '@ataqu/ui';
 import { api } from '@ataqu/api-client';
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
@@ -11,7 +11,7 @@ import QRCode from 'qrcode.react';
 export const Route = createFileRoute('/_auth/settings')({
   component: () => {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const { toast } = toast();
     const [mfaSecret, setMfaSecret] = useState<string | null>(null);
     const [mfaQrUrl, setMfaQrUrl] = useState<string | null>(null);
     const [mfaVerificationCode, setMfaVerificationCode] = useState('');

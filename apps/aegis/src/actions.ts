@@ -1,7 +1,4 @@
 // apps/aegis/src/actions.ts
-// Register AEGIS-specific actions with the global command palette.
-
-import type { CommandAction } from '@ataqu/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from './stores/auth-store';
 
@@ -9,7 +6,7 @@ export function registerAegisActions(
   openInviteModal: () => void,
   openCreateApiKeyModal: () => void,
   openCreateRoleModal: () => void
-): CommandAction[] {
+) {
   return [
     {
       id: 'aegis-invite-user',
