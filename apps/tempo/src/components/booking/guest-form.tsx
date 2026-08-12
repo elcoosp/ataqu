@@ -1,12 +1,17 @@
 import { usePublicCreateBooking } from '@ataqu/api-client';
+import { useIdempotency } from '@ataqu/shared-hooks';
+import { useAuthStore } from '@ataqu/shared-stores';
 import { Button, Input, Label } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useBookingStore } from '@/hooks/use-booking-store';
 import { useTimezone } from '@/hooks/use-timezone';
+import { toast } from '@/hooks/use-toast';
 
 export function GuestForm() {
+  const { getKey } = useIdempotency();
   const timezone = useTimezone();
+  const { tenantId } = useAuthStore();
   const { eventType, selectedSlot, setGuestDetails, setBookingId, setCurrentScreen } =
     useBookingStore();
   const createBookingMutation = usePublicCreateBooking();
@@ -17,7 +22,7 @@ export function GuestForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eventType || !selectedSlot) return;
+    if (!eventType || !selectedSlot || !tenantId) return;
     if (!name.trim() || !email.trim()) {
       setError('Name and email are required.');
       return;
@@ -25,7 +30,6 @@ export function GuestForm() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const tenantId = '00000000-0000-0000-0000-000000000000';
       const result = await createBookingMutation.mutateAsync({
         tenantId,
         data: {
@@ -38,6 +42,7 @@ export function GuestForm() {
       });
       setGuestDetails({ name: name.trim(), email: email.trim() });
       setBookingId(result.id);
+      toast.success('Meeting booked successfully.');
     } catch {
       setError('This slot is no longer available. Please select another.');
       setCurrentScreen('time-slot');
@@ -74,7 +79,7 @@ export function GuestForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <Button type="submit" disabled={isSubmitting} className="w-full min-h-[44px]">
         {isSubmitting ? <Trans>Booking...</Trans> : <Trans>Book</Trans>}
       </Button>
     </form>

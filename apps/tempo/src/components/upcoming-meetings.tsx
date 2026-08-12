@@ -1,7 +1,9 @@
 import { useCancelBooking, useListBookings } from '@ataqu/api-client';
+import { useIdempotency } from '@ataqu/shared-hooks';
 import { Badge, Button, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useMeetingJoined } from '@/hooks/use-meeting-joined';
 import { toast } from '@/hooks/use-toast';
 import { NoShowBadge } from './no-show-badge';
 
@@ -36,6 +38,11 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
     offset: 0,
   });
   const cancelMutation = useCancelBooking();
+  const { getKey } = useIdempotency();
+
+  // Send meeting joined signal for the first upcoming meeting
+  const firstBooking = bookingsData?.items?.[0];
+  useMeetingJoined(firstBooking?.id || null);
 
   const handleCancel = async (bookingId: string) => {
     try {
@@ -99,11 +106,17 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
             <Button
               variant="outline"
               size="sm"
+              className="min-h-[44px]"
               onClick={() => onReschedule(booking.id, booking.event_type_id)}
             >
               <Trans>Reschedule</Trans>
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => handleCancel(booking.id)}>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="min-h-[44px]"
+              onClick={() => handleCancel(booking.id)}
+            >
               <Trans>Cancel</Trans>
             </Button>
           </div>

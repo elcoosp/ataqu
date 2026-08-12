@@ -1,20 +1,15 @@
-import { useCallback } from 'react';
-
-type ToastVariant = 'default' | 'success' | 'error';
-
-function showToast(message: string, variant: ToastVariant) {
-  window.dispatchEvent(new CustomEvent('ataqu:toast', { detail: { message, variant } }));
-}
+import { toast as sonnerToast } from 'sonner';
 
 export const toast = {
-  success: (message: string) => showToast(message, 'success'),
-  error: (message: string) => showToast(message, 'error'),
-  info: (message: string) => showToast(message, 'default'),
+  success: (message: string) => sonnerToast.success(message),
+  error: (message: string) => sonnerToast.error(message),
+  info: (message: string) => sonnerToast.info(message),
 };
 
 export function useToast() {
-  const success = useCallback((msg: string) => toast.success(msg), []);
-  const error = useCallback((msg: string) => toast.error(msg), []);
-  const info = useCallback((msg: string) => toast.info(msg), []);
-  return { success, error, info };
+  return {
+    success: (message: string) => toast.success(message),
+    error: (message: string) => toast.error(message),
+    info: (message: string) => toast.info(message),
+  };
 }
