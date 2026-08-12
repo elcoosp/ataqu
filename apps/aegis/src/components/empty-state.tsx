@@ -1,4 +1,5 @@
 // apps/aegis/src/components/empty-state.tsx
+import { EmptyState } from "../../components/empty-state";
 import { LucideIcon } from 'lucide-react';
 import { Button } from '@ataqu/ui';
 
