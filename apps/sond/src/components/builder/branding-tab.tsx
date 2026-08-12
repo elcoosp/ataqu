@@ -7,6 +7,7 @@ import {
 	SelectValue,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/macro";
+import { useId } from "react";
 import type { SondBranding } from "./types";
 
 interface Props {
@@ -15,13 +16,18 @@ interface Props {
 }
 
 export function BrandingTab({ branding, onUpdate }: Props) {
+	const colorId = useId();
+	const logoId = useId();
+	const fontId = useId();
+
 	return (
 		<div className="space-y-6 p-4">
 			<div>
-				<label className="mb-2 block text-sm font-medium">
+				<label htmlFor={colorId} className="mb-2 block text-sm font-medium">
 					<Trans>Primary Color</Trans>
 				</label>
 				<Input
+					id={colorId}
 					type="color"
 					value={branding.primaryColor || "#f59e0b"}
 					onChange={(e) => onUpdate({ primaryColor: e.target.value })}
@@ -29,17 +35,18 @@ export function BrandingTab({ branding, onUpdate }: Props) {
 				/>
 			</div>
 			<div>
-				<label className="mb-2 block text-sm font-medium">
+				<label htmlFor={logoId} className="mb-2 block text-sm font-medium">
 					<Trans>Logo URL</Trans>
 				</label>
 				<Input
+					id={logoId}
 					value={branding.logoUrl || ""}
 					onChange={(e) => onUpdate({ logoUrl: e.target.value })}
 					placeholder="https://example.com/logo.png"
 				/>
 			</div>
 			<div>
-				<label className="mb-2 block text-sm font-medium">
+				<label htmlFor={fontId} className="mb-2 block text-sm font-medium">
 					<Trans>Font Family</Trans>
 				</label>
 				<Select
@@ -48,7 +55,7 @@ export function BrandingTab({ branding, onUpdate }: Props) {
 						onUpdate({ fontFamily: v })
 					}
 				>
-					<SelectTrigger>
+					<SelectTrigger id={fontId}>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>

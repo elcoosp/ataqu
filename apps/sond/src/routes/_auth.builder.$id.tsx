@@ -5,11 +5,11 @@ import {
 	useGetForm,
 	useUpdateForm,
 } from "@ataqu/api-client";
-import { useIdempotency } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Button,
 	Shell,
+	Skeleton,
 	Tabs,
 	TabsContent,
 	TabsList,
@@ -42,7 +42,6 @@ function FormBuilderRoute() {
 	const queryClient = useQueryClient();
 	const [previewOpen, setPreviewOpen] = useState(false);
 	const [localForm, setLocalForm] = useState<SondForm | null>(null);
-	const { getKey } = useIdempotency();
 
 	const isExisting = id !== "new";
 	const { data: fetchedForm, isLoading } = useGetForm(
@@ -106,7 +105,8 @@ function FormBuilderRoute() {
 		return (
 			<Shell activeApp="sond">
 				<div className="p-8">
-					<Trans>Creating form...</Trans>
+					<Skeleton className="h-8 w-48 mb-4" />
+					<Skeleton className="h-64 w-full rounded-lg" />
 				</div>
 			</Shell>
 		);
@@ -116,7 +116,8 @@ function FormBuilderRoute() {
 		return (
 			<Shell activeApp="sond">
 				<div className="p-8">
-					<div className="h-64 animate-pulse rounded-lg bg-muted" />
+					<Skeleton className="h-16 w-full mb-4" />
+					<Skeleton className="h-64 w-full rounded-lg" />
 				</div>
 			</Shell>
 		);
@@ -145,7 +146,7 @@ function FormBuilderRoute() {
 
 	const handleSave = useCallback(() => {
 		if (!localForm) return;
-		const { id: formId, version, questions, title, mode, branding } = localForm;
+		const { id: formId, questions, title, mode, branding } = localForm;
 		const questionsPayload = questions.map(
 			({ id: _qid, ...rest }) => rest,
 		) as unknown as UpdateFormRequest["questions"];
@@ -162,7 +163,7 @@ function FormBuilderRoute() {
 
 	const handlePublish = useCallback(() => {
 		if (!localForm) return;
-		const { id: formId, version, questions, title, mode, branding } = localForm;
+		const { id: formId, questions, title, mode, branding } = localForm;
 		const questionsPayload = questions.map(
 			({ id: _qid, ...rest }) => rest,
 		) as unknown as UpdateFormRequest["questions"];
@@ -187,7 +188,7 @@ function FormBuilderRoute() {
 					<input
 						value={localForm.title}
 						onChange={(e) => updateTitle(e.target.value)}
-						className="truncate bg-transparent text-xl font-bold focus:outline-none"
+						className="truncate bg-transparent text-xl font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						aria-label={t`Form title`}
 					/>
 					<div className="flex items-center gap-3">

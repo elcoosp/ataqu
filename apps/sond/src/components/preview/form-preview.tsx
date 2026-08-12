@@ -6,7 +6,7 @@ import {
 	DialogTitle,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/macro";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormPreviewStore } from "../../stores/form-preview-store";
 import type { SondForm, SondQuestion } from "../builder/types";
 import { ConversationalSlide } from "./conversational-slide";
@@ -22,6 +22,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 	const { mode, currentSlide, answers, setAnswer, setCurrentSlide, reset } =
 		useFormPreviewStore();
 	const [submitted, setSubmitted] = useState(false);
+	const triggerRef = useRef<HTMLElement | null>(null);
 
 	const visibleQuestions = useMemo(
 		() => form.questions.filter((q) => isQuestionVisible(q, answers)),
@@ -42,6 +43,16 @@ export function FormPreview({ form, open, onClose }: Props) {
 	const currentPageQuestions = pages[currentSlide]?.[1] || [];
 	const conversationalQuestion = visibleQuestions[currentSlide];
 
+	// Focus management: return focus to trigger on close
+	useEffect(() => {
+		if (open) {
+			triggerRef.current = document.activeElement as HTMLElement;
+		} else if (triggerRef.current) {
+			triggerRef.current.focus();
+			triggerRef.current = null;
+		}
+	}, [open]);
+
 	const handleClose = () => {
 		reset();
 		setSubmitted(false);
@@ -53,6 +64,16 @@ export function FormPreview({ form, open, onClose }: Props) {
 	const handleNextPage = () => {
 		if (currentSlide < totalPages - 1) setCurrentSlide(currentSlide + 1);
 		else handleSubmit();
+	};
+
+	const handleConversationalNext = (nextQuestionId?: string) => {
+		if (nextQuestionId) {
+			const idx = visibleQuestions.findIndex((q) => q.id === nextQuestionId);
+			if (idx !== -1) setCurrentSlide(idx);
+			else setCurrentSlide(currentSlide + 1);
+		} else {
+			setCurrentSlide(currentSlide + 1);
+		}
 	};
 
 	const renderStandard = () => (
@@ -79,6 +100,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 							}
 							onChange={(e) => setAnswer(q.id, e.target.value)}
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+							aria-label={q.label}
 						/>
 					) : q.type === "number" ? (
 						<input
@@ -95,6 +117,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 								)
 							}
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+							aria-label={q.label}
 						/>
 					) : q.type === "date" ? (
 						<input
@@ -106,9 +129,10 @@ export function FormPreview({ form, open, onClose }: Props) {
 							}
 							onChange={(e) => setAnswer(q.id, e.target.value)}
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+							aria-label={q.label}
 						/>
 					) : q.type === "choice" ? (
-						<div className="space-y-2">
+						<div className="space-y-2" role="radiogroup" aria-label={q.label}>
 							{(q.options || []).map((opt) => (
 								<label key={opt} className="flex items-center gap-2">
 									<input
@@ -122,7 +146,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 							))}
 						</div>
 					) : q.type === "multiple_choice" ? (
-						<div className="space-y-2">
+						<div className="space-y-2" role="group" aria-label={q.label}>
 							{(q.options || []).map((opt) => {
 								const arr = Array.isArray(answers[q.id])
 									? (answers[q.id] as string[])
@@ -145,7 +169,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 							})}
 						</div>
 					) : q.type === "rating" ? (
-						<div className="flex gap-2">
+						<div className="flex gap-2" role="radiogroup" aria-label={q.label}>
 							{Array.from(
 								{ length: (q.max ?? 5) - (q.min ?? 1) + 1 },
 								(_, i) => (q.min ?? 1) + i,
@@ -154,7 +178,12 @@ export function FormPreview({ form, open, onClose }: Props) {
 									key={n}
 									type="button"
 									onClick={() => setAnswer(q.id, n)}
-									className={`h-10 w-10 rounded-lg border ${answers[q.id] === n ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}
+									aria-pressed={answers[q.id] === n}
+									className={`h-10 w-10 rounded-lg border ${
+										answers[q.id] === n
+											? "border-primary bg-primary text-primary-foreground"
+											: "border-border"
+									}`}
 								>
 									{n}
 								</button>
@@ -208,6 +237,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
+									aria-hidden="true"
 								>
 									<path
 										strokeLinecap="round"
@@ -220,16 +250,21 @@ export function FormPreview({ form, open, onClose }: Props) {
 							<h3 className="mb-2 text-2xl font-bold">
 								<Trans>Thank you!</Trans>
 							</h3>
-							<p className="text-muted-foreground">
+							<p
+								className="text-muted-foreground"
+								role="status"
+								aria-live="polite"
+							>
 								<Trans>Your response has been recorded.</Trans>
 							</p>
 						</div>
 					) : mode === "conversational" && conversationalQuestion ? (
 						<ConversationalSlide
+							formId={form.id}
 							question={conversationalQuestion}
 							value={answers[conversationalQuestion.id]}
 							onChange={(v) => setAnswer(conversationalQuestion.id, v)}
-							onNext={() => setCurrentSlide(currentSlide + 1)}
+							onNext={handleConversationalNext}
 							onSubmit={handleSubmit}
 							isLast={currentSlide === visibleQuestions.length - 1}
 							total={visibleQuestions.length}

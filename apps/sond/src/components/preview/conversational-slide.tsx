@@ -1,20 +1,53 @@
-import { Button, Input } from "@ataqu/ui";
+import type { AnswerValue } from "@ataqu/api-client";
+import { useSubmitConversationalStep } from "@ataqu/api-client";
+import { handleApiError } from "@ataqu/shared-utils";
+import { Button, Input, Skeleton } from "@ataqu/ui";
 import { Trans, t } from "@lingui/macro";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { SondQuestion } from "../builder/types";
 
 interface Props {
+	formId: string;
 	question: SondQuestion;
 	value: unknown;
 	onChange: (val: unknown) => void;
-	onNext: () => void;
+	onNext: (nextQuestionId?: string) => void;
 	onSubmit: () => void;
 	isLast: boolean;
 	total: number;
 	current: number;
 }
 
+function toAnswerValue(type: string, value: unknown): AnswerValue {
+	switch (type) {
+		case "text":
+		case "email":
+		case "phone":
+			return {
+				type: type as "text" | "email" | "phone",
+				value: String(value ?? ""),
+			};
+		case "number":
+			return { type: "number", value: Number(value ?? 0) };
+		case "date":
+			return { type: "date", value: String(value ?? "") };
+		case "choice":
+			return { type: "choice", value: String(value ?? "") };
+		case "multiple_choice":
+			return {
+				type: "multiple_choice",
+				value: Array.isArray(value) ? value : [],
+			};
+		case "rating":
+			return { type: "rating", value: Number(value ?? 0) };
+		default:
+			return { type: "text", value: String(value ?? "") };
+	}
+}
+
 export function ConversationalSlide({
+	formId,
 	question,
 	value,
 	onChange,
@@ -25,6 +58,9 @@ export function ConversationalSlide({
 	current,
 }: Props) {
 	const [error, setError] = useState("");
+	const stepMutation = useSubmitConversationalStep({
+		onError: (err) => toast.error(handleApiError(err)),
+	});
 
 	const handleNext = () => {
 		if (question.required && (value == null || String(value).trim() === "")) {
@@ -32,8 +68,24 @@ export function ConversationalSlide({
 			return;
 		}
 		setError("");
-		if (isLast) onSubmit();
-		else onNext();
+
+		const answer = {
+			question_id: question.id,
+			value: toAnswerValue(question.type, value),
+		};
+
+		stepMutation.mutate(
+			{ formId, data: { question_id: question.id, answer } },
+			{
+				onSuccess: (result) => {
+					if (result.is_complete) {
+						onSubmit();
+					} else {
+						onNext(result.next_question_id);
+					}
+				},
+			},
+		);
 	};
 
 	const renderInput = () => {
@@ -54,6 +106,7 @@ export function ConversationalSlide({
 						onChange={(e) => onChange(e.target.value)}
 						className="h-12 text-lg"
 						autoFocus
+						aria-label={question.label}
 					/>
 				);
 			case "number":
@@ -66,6 +119,7 @@ export function ConversationalSlide({
 						}
 						className="h-12 text-lg"
 						autoFocus
+						aria-label={question.label}
 					/>
 				);
 			case "date":
@@ -76,11 +130,16 @@ export function ConversationalSlide({
 						onChange={(e) => onChange(e.target.value)}
 						className="h-12 text-lg"
 						autoFocus
+						aria-label={question.label}
 					/>
 				);
 			case "choice":
 				return (
-					<div className="space-y-3">
+					<div
+						className="space-y-3"
+						role="radiogroup"
+						aria-label={question.label}
+					>
 						{(question.options || []).map((opt) => (
 							<label
 								key={opt}
@@ -102,7 +161,7 @@ export function ConversationalSlide({
 			case "multiple_choice": {
 				const arr = Array.isArray(value) ? (value as string[]) : [];
 				return (
-					<div className="space-y-3">
+					<div className="space-y-3" role="group" aria-label={question.label}>
 						{(question.options || []).map((opt) => (
 							<label
 								key={opt}
@@ -130,13 +189,18 @@ export function ConversationalSlide({
 				const max = question.max ?? 5;
 				const ratingValue = typeof value === "number" ? value : 0;
 				return (
-					<div className="flex gap-2">
+					<div
+						className="flex gap-2"
+						role="radiogroup"
+						aria-label={question.label}
+					>
 						{Array.from({ length: max - min + 1 }, (_, i) => min + i).map(
 							(n) => (
 								<button
 									key={n}
 									type="button"
 									onClick={() => onChange(n)}
+									aria-pressed={ratingValue === n}
 									className={`h-12 w-12 rounded-lg border text-lg font-medium transition-colors ${
 										ratingValue === n
 											? "border-primary bg-primary text-primary-foreground"
@@ -163,7 +227,13 @@ export function ConversationalSlide({
 						Question {current} of {total}
 					</Trans>
 				</div>
-				<div className="mb-8 h-1.5 w-full rounded-full bg-muted">
+				<div
+					className="mb-8 h-1.5 w-full rounded-full bg-muted"
+					role="progressbar"
+					aria-valuenow={current}
+					aria-valuemin={1}
+					aria-valuemax={total}
+				>
 					<div
 						className="h-1.5 rounded-full bg-primary transition-all"
 						style={{ width: `${(current / total) * 100}%` }}
@@ -171,12 +241,23 @@ export function ConversationalSlide({
 				</div>
 				<h2 className="mb-6 text-2xl font-bold">{question.label}</h2>
 				{renderInput()}
-				{error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+				{error && (
+					<p className="mt-2 text-sm text-destructive" role="alert">
+						{error}
+					</p>
+				)}
 				<Button
 					onClick={handleNext}
+					disabled={stepMutation.isPending}
 					className="mt-8 h-12 w-full bg-primary text-lg text-primary-foreground hover:bg-primary/90"
 				>
-					{isLast ? <Trans>Submit</Trans> : <Trans>Next</Trans>}
+					{stepMutation.isPending ? (
+						<Skeleton className="h-5 w-20" />
+					) : isLast ? (
+						<Trans>Submit</Trans>
+					) : (
+						<Trans>Next</Trans>
+					)}
 				</Button>
 			</div>
 		</div>

@@ -5,15 +5,17 @@ import {
 	useUpdateForm,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Shell } from "@ataqu/ui";
+import { Inbox, Shell } from "@ataqu/ui";
 import { Trans, t } from "@lingui/macro";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Inbox } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { IntegrationToggle } from "../components/integration-toggle";
-import { SubmissionsTable } from "../components/submissions-table";
+import {
+	SubmissionsTable,
+	SubmissionsTableSkeleton,
+} from "../components/submissions-table";
 
 export const Route = createFileRoute("/_auth/submissions/$id")({
 	component: SubmissionsRoute,
@@ -21,12 +23,12 @@ export const Route = createFileRoute("/_auth/submissions/$id")({
 
 function SubmissionsRoute() {
 	const { id } = Route.useParams();
-	const { data: submissions = [], isLoading } = useListSubmissions(id);
+	const queryClient = useQueryClient();
+	const { data: submissions = [], isLoading, refetch } = useListSubmissions(id);
 	const { data: form } = useGetForm(id);
 	const [cinqEnabled, setCinqEnabled] = useState(false);
 	const [sparkEnabled, setSparkEnabled] = useState(false);
 
-	// Integration toggles update the form's routing_rules via useUpdateForm
 	const updateFormMutation = useUpdateForm({
 		onSuccess: () => toast.success(t`Integration updated`),
 		onError: (err) => toast.error(handleApiError(err)),
@@ -38,7 +40,7 @@ function SubmissionsRoute() {
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement("a");
 			a.href = url;
-			a.download = "submissions.csv";
+			a.download = `submissions-${id}.csv`;
 			a.click();
 			URL.revokeObjectURL(url);
 			toast.success(t`Submissions exported`);
@@ -60,7 +62,11 @@ function SubmissionsRoute() {
 					: [];
 				updateFormMutation.mutate({
 					id,
-					data: { routing_rules: rules as any },
+					data: {
+						routing_rules: rules as Parameters<
+							typeof updateFormMutation.mutate
+						>[0]["data"]["routing_rules"],
+					},
 				});
 			}
 		},
@@ -89,18 +95,27 @@ function SubmissionsRoute() {
 					: [];
 				updateFormMutation.mutate({
 					id,
-					data: { routing_rules: rules as any },
+					data: {
+						routing_rules: rules as Parameters<
+							typeof updateFormMutation.mutate
+						>[0]["data"]["routing_rules"],
+					},
 				});
 			}
 		},
 		[form, id, updateFormMutation],
 	);
 
+	const handleRefresh = useCallback(() => {
+		queryClient.invalidateQueries({ queryKey: ["sond", "submissions", id] });
+		refetch();
+	}, [queryClient, id, refetch]);
+
 	if (isLoading) {
 		return (
 			<Shell activeApp="sond">
-				<div className="p-8">
-					<div className="h-64 animate-pulse rounded-lg bg-muted" />
+				<div className="mx-auto max-w-7xl p-8">
+					<SubmissionsTableSkeleton />
 				</div>
 			</Shell>
 		);
@@ -144,6 +159,7 @@ function SubmissionsRoute() {
 					<SubmissionsTable
 						submissions={submissions}
 						onExport={() => exportMutation.mutate()}
+						onRefresh={handleRefresh}
 					/>
 				)}
 			</div>
