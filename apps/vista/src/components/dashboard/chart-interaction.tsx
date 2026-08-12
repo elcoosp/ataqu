@@ -10,9 +10,9 @@ export const withChartInteraction = (WrappedChart: React.FC<any>) => {
     const setOpen = useDrillDownStore((s) => s.setOpen);
     const { mutateAsync } = useDrillDown();
 
-    const handleDataPointClick = async (data: any) => {
+    const handleDataPointClick = async (data: unknown) => {
       const dimension = props.xAxisKey || 'category';
-      const value = data?.activePayload?.[0]?.payload?.[dimension] || 'Unknown';
+      const value = (data as any)?.activePayload?.[0]?.payload?.[dimension] || 'Unknown';
 
       setOpen(true);
       setDrillDown({ loading: true, widgetId, dimension, value: String(value), data: [] });

@@ -1,11 +1,12 @@
 import { api, useGetDashboard, useUpdateDashboard } from '@ataqu/api-client';
-import { Button, OnboardTour, Shell, Skeleton, toast } from '@ataqu/ui';
+import { Button, OnboardTour, Shell, Skeleton } from '@ataqu/ui';
 import { t } from '@lingui/macro';
 import { Trans } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useParams } from '@tanstack/react-router';
 import { ArrowLeft, Combine, Plus } from 'lucide-react';
 import React from 'react';
+import { toast } from 'sonner';
 import { DrillDownPanel } from '../components/dashboard/drill-down-panel';
 import { DashboardGrid } from '../components/dashboard-grid';
 import { ExportButtons } from '../components/export-buttons';
@@ -28,7 +29,7 @@ function DashboardDetailPage() {
   const [isCombineOpen, setIsCombineOpen] = React.useState(false);
   const { isConnected } = useVistaSSE(`/api/vista/kpis/${id}/stream`);
 
-  const config = (dashboard?.config || {}) as { widgets?: any[] };
+  const config = (dashboard?.config || {}) as { widgets?: Record<string, unknown>[] };
   const widgets = config.widgets || [
     { i: 'w1', type: 'kpi', dataSource: 'Revenue', data: [] },
     {
@@ -77,7 +78,7 @@ function DashboardDetailPage() {
     }
   };
 
-  const handleLayoutChange = async (newLayout: any[]) => {
+  const handleLayoutChange = async (newLayout: Record<string, unknown>[]) => {
     const updatedWidgets = widgets.map((w) => {
       const layoutItem = newLayout.find((l) => l.i === w.i);
       return { ...w, layout: layoutItem };

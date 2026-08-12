@@ -14,7 +14,7 @@ import React from 'react';
 
 interface FilterBarProps {
   onRefresh: () => void;
-  onFilterChange?: (filters: any) => void;
+  onFilterChange?: (filters: Record<string, string>) => void;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({ onRefresh, onFilterChange }) => {
