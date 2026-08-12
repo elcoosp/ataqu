@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { ToastViewport } from '../components/toast-viewport';
 import { WarehouseList } from '../components/warehouse-list';
 
 export const Route = createFileRoute('/_auth/warehouses')({
@@ -6,5 +7,10 @@ export const Route = createFileRoute('/_auth/warehouses')({
 });
 
 function WarehousesPage() {
-  return <WarehouseList />;
+  return (
+    <>
+      <ToastViewport />
+      <WarehouseList />
+    </>
+  );
 }

@@ -4,11 +4,11 @@ import { Badge } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { showToast } from './toast-store';
 
 export function IntegrationToggle({ entityId }: { entityId: UUID }) {
   const queryClient = useQueryClient();
-  const [enabled, setEnabled] = useState(false);
-  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [localEnabled, setLocalEnabled] = useState(false);
 
   const { data: status } = useQuery({
     queryKey: ['integrations', 'cinq', entityId],
@@ -16,7 +16,10 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
       api.get<{ enabled: boolean }>('/api/v1/integrations/status', {
         params: { sourceApp: 'cinq', targetApp: 'vault', entityId },
       }),
+    retry: false,
   });
+
+  const isChecked = status?.enabled ?? localEnabled;
 
   const toggleIntegration = useMutation({
     mutationFn: (nextEnabled: boolean) =>
@@ -26,27 +29,37 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
         entityId,
         enabled: nextEnabled,
       }),
-    onSuccess: () => {
-      setStatusMsg('VAULT connected to CINQ.');
-      queryClient.invalidateQueries({ queryKey: ['integrations', 'cinq', entityId] });
+    onSuccess: (_data, nextEnabled) => {
+      setLocalEnabled(nextEnabled);
+      void queryClient.invalidateQueries({
+        queryKey: ['integrations', 'cinq', entityId],
+      });
+
+      showToast({
+        variant: 'success',
+        title: nextEnabled ? (
+          <Trans>VAULT connected to CINQ.</Trans>
+        ) : (
+          <Trans>VAULT disconnected from CINQ.</Trans>
+        ),
+      });
     },
-    onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : 'Failed to toggle integration.';
-      setStatusMsg(message);
+    onError: () => {
+      showToast({
+        variant: 'error',
+        title: <Trans>Integration update failed.</Trans>,
+        description: <Trans>The CINQ integration was not changed. Please try again.</Trans>,
+      });
     },
   });
 
-  const isChecked = status?.enabled ?? enabled;
-
   const handleToggle = () => {
-    const next = !isChecked;
-    setEnabled(next);
-    toggleIntegration.mutate(next);
+    toggleIntegration.mutate(!isChecked);
   };
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button
           type="button"
           role="switch"
@@ -65,13 +78,12 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
         <span className="text-sm text-foreground">
           <Trans>Reserve stock automatically when CINQ deal is won.</Trans>
         </span>
-        {isChecked && (
+        {isChecked ? (
           <Badge variant="default">
             <Trans>Connected to CINQ</Trans>
           </Badge>
-        )}
+        ) : null}
       </div>
-      {statusMsg && <p className="text-xs text-muted-foreground">{statusMsg}</p>}
     </div>
   );
 }

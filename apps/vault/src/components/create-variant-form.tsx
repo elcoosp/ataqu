@@ -1,9 +1,10 @@
 import { useCreateVariant } from '@ataqu/api-client';
-import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input, Label } from '@ataqu/ui';
+import { Trans } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { showToast } from './toast-store';
 
 export function CreateVariantForm({
   productId,
@@ -16,10 +17,10 @@ export function CreateVariantForm({
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('0');
   const [initialStock, setInitialStock] = useState('0');
-  const [error, setError] = useState<string | null>(null);
 
   const parsedPrice = Number(price);
   const parsedInitialStock = Number(initialStock);
+
   const canSubmit =
     sku.trim().length > 0 &&
     Number.isFinite(parsedPrice) &&
@@ -30,14 +31,21 @@ export function CreateVariantForm({
   const createVariant = useCreateVariant({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['vault', 'variants'] });
+      showToast({
+        variant: 'success',
+        title: <Trans>Variant added.</Trans>,
+      });
       setSku('');
       setPrice('0');
       setInitialStock('0');
-      setError(null);
       onCreated?.();
     },
-    onError: (mutationError: unknown) => {
-      setError(handleApiError(mutationError));
+    onError: () => {
+      showToast({
+        variant: 'error',
+        title: <Trans>Variant creation failed.</Trans>,
+        description: <Trans>The variant was not created. Please try again.</Trans>,
+      });
     },
   });
 
@@ -57,17 +65,21 @@ export function CreateVariantForm({
     <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border bg-card p-4">
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2">
-          <Label htmlFor="create-variant-sku">SKU</Label>
+          <Label htmlFor="create-variant-sku">
+            <Trans>SKU</Trans>
+          </Label>
           <Input
             id="create-variant-sku"
             value={sku}
             onChange={(event) => setSku(event.target.value)}
-            placeholder="ACM-001-BLK"
+            placeholder={'ACM-001-BLK'}
             required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="create-variant-price">Price (cents)</Label>
+          <Label htmlFor="create-variant-price">
+            <Trans>Price (cents)</Trans>
+          </Label>
           <Input
             id="create-variant-price"
             type="number"
@@ -77,7 +89,9 @@ export function CreateVariantForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="create-variant-stock">Initial stock</Label>
+          <Label htmlFor="create-variant-stock">
+            <Trans>Initial stock</Trans>
+          </Label>
           <Input
             id="create-variant-stock"
             type="number"
@@ -87,13 +101,8 @@ export function CreateVariantForm({
           />
         </div>
       </div>
-      {error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
       <Button type="submit" disabled={!canSubmit || createVariant.isPending}>
-        {createVariant.isPending ? 'Adding...' : 'Add Variant'}
+        {createVariant.isPending ? <Trans>Adding...</Trans> : <Trans>Add Variant</Trans>}
       </Button>
     </form>
   );

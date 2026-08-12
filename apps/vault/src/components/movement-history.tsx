@@ -1,6 +1,7 @@
 import { useListMovements } from '@ataqu/api-client';
 import { formatDate } from '@ataqu/shared-utils';
 import { Skeleton } from '@ataqu/ui';
+import { Trans } from '@lingui/react/macro';
 import { EmptyState } from './empty-state';
 import { HistoryIcon } from './icons';
 
@@ -15,8 +16,8 @@ function MovementsTable({ variantId }: { variantId: string }) {
     return (
       <EmptyState
         icon={<HistoryIcon />}
-        title="Unable to load movements"
-        description="Reload the page or try again in a few seconds."
+        title={<Trans>Unable to load movements</Trans>}
+        description={<Trans>Reload the page or try again in a few seconds.</Trans>}
       />
     );
   }
@@ -27,8 +28,8 @@ function MovementsTable({ variantId }: { variantId: string }) {
     return (
       <EmptyState
         icon={<HistoryIcon />}
-        title="No movements yet"
-        description="Adjust stock to see history."
+        title={<Trans>No movements yet</Trans>}
+        description={<Trans>Adjust stock to see history.</Trans>}
       />
     );
   }
@@ -38,10 +39,18 @@ function MovementsTable({ variantId }: { variantId: string }) {
       <table className="w-full text-left text-sm">
         <thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
           <tr>
-            <th className="px-4 py-3">Date</th>
-            <th className="px-4 py-3">Change</th>
-            <th className="px-4 py-3">Reason</th>
-            <th className="px-4 py-3">Reference</th>
+            <th className="px-4 py-3">
+              <Trans>Date</Trans>
+            </th>
+            <th className="px-4 py-3">
+              <Trans>Change</Trans>
+            </th>
+            <th className="px-4 py-3">
+              <Trans>Reason</Trans>
+            </th>
+            <th className="px-4 py-3">
+              <Trans>Reference</Trans>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -72,10 +81,11 @@ export function MovementHistory({ variantId }: { variantId?: string }) {
     return (
       <EmptyState
         icon={<HistoryIcon />}
-        title="No movements yet"
-        description="Adjust stock to see history."
+        title={<Trans>No movements yet</Trans>}
+        description={<Trans>Adjust stock to see history.</Trans>}
       />
     );
   }
+
   return <MovementsTable variantId={variantId} />;
 }

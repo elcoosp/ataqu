@@ -1,11 +1,14 @@
-import { useListVariants, useReserveStock } from '@ataqu/api-client';
-import { handleApiError } from '@ataqu/shared-utils';
+import type { Variant } from '@ataqu/api-client';
+import { reserveStock, useListVariants } from '@ataqu/api-client';
+import { formatDate } from '@ataqu/shared-utils';
 import { Button, Input, Label, Skeleton } from '@ataqu/ui';
-import { useQueryClient } from '@tanstack/react-query';
+import { Trans } from '@lingui/react/macro';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { EmptyState } from './empty-state';
 import { BookmarkIcon } from './icons';
+import { showToast } from './toast-store';
 
 interface LocalReservation {
   id: string;
@@ -13,7 +16,24 @@ interface LocalReservation {
   sku: string;
   quantity: number;
   dealId: string;
+  status: 'active';
   createdAt: string;
+}
+
+interface ReserveVariables {
+  variantId: string;
+  quantity: number;
+  dealId: string;
+  tempId: string;
+}
+
+interface ReserveResponse {
+  variant: Variant;
+  reservation_id: string;
+}
+
+interface ReserveContext {
+  previousReservations: LocalReservation[];
 }
 
 export function ReservationList() {
@@ -23,11 +43,11 @@ export function ReservationList() {
   const [quantity, setQuantity] = useState('1');
   const [dealId, setDealId] = useState('');
   const [reservations, setReservations] = useState<LocalReservation[]>([]);
-  const [status, setStatus] = useState<string | null>(null);
 
   const variants = variantsQuery.data?.items ?? [];
   const selectedVariant =
     variants.find((variant) => variant.id === selectedVariantId) ?? variants[0];
+
   const parsedQuantity = Number(quantity);
   const canSubmit =
     Boolean(selectedVariant) &&
@@ -35,36 +55,67 @@ export function ReservationList() {
     parsedQuantity > 0 &&
     parsedQuantity <= (selectedVariant?.stock_quantity ?? 0);
 
-  const reserveStock = useReserveStock({
-    onSuccess: (response, variables) => {
-      const variant = variants.find((item) => item.id === variables.variantId);
+  const reserveMutation = useMutation<ReserveResponse, Error, ReserveVariables, ReserveContext>({
+    mutationFn: ({ variantId, quantity: quantityToReserve }) =>
+      reserveStock(variantId, { quantity: quantityToReserve }),
+    onMutate: async (variables) => {
+      const previousReservations = reservations;
+
       setReservations((current) => [
         {
-          id: response.reservation_id,
+          id: variables.tempId,
           variantId: variables.variantId,
-          sku: variant?.sku ?? '',
-          quantity: variables.data.quantity,
-          dealId: dealId.trim(),
+          sku: selectedVariant?.sku ?? '',
+          quantity: variables.quantity,
+          dealId: variables.dealId,
+          status: 'active',
           createdAt: new Date().toISOString(),
         },
         ...current,
       ]);
+
+      return { previousReservations };
+    },
+    onError: (_error, _variables, context) => {
+      if (context) {
+        setReservations(context.previousReservations);
+      }
+
+      showToast({
+        variant: 'error',
+        title: <Trans>Reservation failed.</Trans>,
+        description: <Trans>Stock was not reserved. Please try again.</Trans>,
+      });
+    },
+    onSuccess: (response, variables) => {
+      setReservations((current) =>
+        current.map((reservation) =>
+          reservation.id === variables.tempId
+            ? { ...reservation, id: response.reservation_id }
+            : reservation
+        )
+      );
+
+      void queryClient.invalidateQueries({ queryKey: ['vault', 'variants'] });
       setQuantity('1');
       setDealId('');
-      setStatus('Reservation created.');
-      void queryClient.invalidateQueries({ queryKey: ['vault', 'variants'] });
-    },
-    onError: (error) => {
-      setStatus(handleApiError(error));
+
+      showToast({
+        variant: 'success',
+        title: <Trans>Reservation created.</Trans>,
+      });
     },
   });
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedVariant || !canSubmit) return;
-    reserveStock.mutate({
+
+    reserveMutation.mutate({
       variantId: selectedVariant.id,
-      data: { quantity: parsedQuantity },
+      quantity: parsedQuantity,
+      dealId: dealId.trim(),
+      tempId: crypto.randomUUID(),
     });
   };
 
@@ -76,8 +127,8 @@ export function ReservationList() {
     return (
       <EmptyState
         icon={<BookmarkIcon />}
-        title="Unable to load reservations"
-        description="Reload the page or try again in a few seconds."
+        title={<Trans>Unable to load reservations</Trans>}
+        description={<Trans>Reload the page or try again in a few seconds.</Trans>}
       />
     );
   }
@@ -86,8 +137,8 @@ export function ReservationList() {
     return (
       <EmptyState
         icon={<BookmarkIcon />}
-        title="No reservations"
-        description="When CINQ deals are won, stock is reserved automatically."
+        title={<Trans>No reservations</Trans>}
+        description={<Trans>When CINQ deals are won, stock is reserved automatically.</Trans>}
       />
     );
   }
@@ -100,7 +151,9 @@ export function ReservationList() {
       >
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="reservation-variant">Variant</Label>
+            <Label htmlFor="reservation-variant">
+              <Trans>Variant</Trans>
+            </Label>
             <select
               id="reservation-variant"
               value={selectedVariant?.id ?? ''}
@@ -109,13 +162,15 @@ export function ReservationList() {
             >
               {variants.map((variant) => (
                 <option key={variant.id} value={variant.id}>
-                  {variant.sku} — {variant.stock_quantity} in stock
+                  {variant.sku} — {variant.stock_quantity}
                 </option>
               ))}
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reservation-quantity">Quantity</Label>
+            <Label htmlFor="reservation-quantity">
+              <Trans>Quantity</Trans>
+            </Label>
             <Input
               id="reservation-quantity"
               type="number"
@@ -125,40 +180,48 @@ export function ReservationList() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reservation-deal">CINQ deal ID</Label>
+            <Label htmlFor="reservation-deal">
+              <Trans>CINQ deal ID</Trans>
+            </Label>
             <Input
               id="reservation-deal"
               value={dealId}
               onChange={(event) => setDealId(event.target.value)}
-              placeholder="Optional deal UUID"
+              placeholder={'Optional deal UUID'}
             />
           </div>
         </div>
-        {status ? (
-          <p role="status" className="text-sm text-muted-foreground">
-            {status}
-          </p>
-        ) : null}
-        <Button type="submit" disabled={!canSubmit || reserveStock.isPending}>
-          {reserveStock.isPending ? 'Reserving...' : 'Reserve Stock'}
+        <Button type="submit" disabled={!canSubmit || reserveMutation.isPending}>
+          {reserveMutation.isPending ? <Trans>Reserving...</Trans> : <Trans>Reserve Stock</Trans>}
         </Button>
       </form>
 
       {reservations.length === 0 ? (
         <EmptyState
           icon={<BookmarkIcon />}
-          title="No reservations"
-          description="When CINQ deals are won, stock is reserved automatically."
+          title={<Trans>No reservations</Trans>}
+          description={<Trans>When CINQ deals are won, stock is reserved automatically.</Trans>}
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">Variant</th>
-                <th className="px-4 py-3">Quantity</th>
-                <th className="px-4 py-3">CINQ deal</th>
-                <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3">
+                  <Trans>Variant</Trans>
+                </th>
+                <th className="px-4 py-3">
+                  <Trans>Quantity</Trans>
+                </th>
+                <th className="px-4 py-3">
+                  <Trans>CINQ deal</Trans>
+                </th>
+                <th className="px-4 py-3">
+                  <Trans>Status</Trans>
+                </th>
+                <th className="px-4 py-3">
+                  <Trans>Created</Trans>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -172,7 +235,7 @@ export function ReservationList() {
                         href={`https://crm.ataqu.com/deals/${reservation.dealId}`}
                         className="text-primary hover:underline"
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noreferrer noopener"
                       >
                         {reservation.dealId}
                       </a>
@@ -180,7 +243,12 @@ export function ReservationList() {
                       '—'
                     )}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{reservation.createdAt}</td>
+                  <td className="px-4 py-3">
+                    <Trans>Active</Trans>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(reservation.createdAt)}
+                  </td>
                 </tr>
               ))}
             </tbody>

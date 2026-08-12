@@ -1,54 +1,43 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  getShopifyIntegrations,
-  getShopifySyncLogs,
-  shopifyAuthStart,
-  shopifyDisconnect,
-  shopifySync,
-} from '@/api/shopify-api';
-import { useShopifyStore } from '@/stores/shopify-store';
+import { shopifyAuthStart, shopifySync } from '@ataqu/api-client';
+import type { UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import type { ShopifyIntegration, ShopifySyncLog } from '@/api/shopify-api';
+import { disconnectShopify, getShopifyIntegrations, getShopifySyncLogs } from '@/api/shopify-api';
 
-export const useShopifyIntegrations = () => {
-  return useQuery({
+export const useShopifyIntegrations = () =>
+  useQuery<ShopifyIntegration[]>({
     queryKey: ['vault', 'shopify', 'integrations'],
     queryFn: getShopifyIntegrations,
+    retry: false,
+    staleTime: 5000,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: false,
   });
-};
 
-export const useShopifySyncLogs = () => {
-  return useQuery({
+export const useShopifySyncLogs = () =>
+  useQuery<ShopifySyncLog[]>({
     queryKey: ['vault', 'shopify', 'sync-logs'],
     queryFn: () => getShopifySyncLogs({ limit: 20 }),
+    retry: false,
+    staleTime: 5000,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: false,
   });
-};
 
-export const useShopifyAuthStart = () => {
-  return useMutation({
+export const useShopifyAuthStart = (options?: UseMutationOptions<{ url: string }, Error>) =>
+  useMutation({
     mutationFn: shopifyAuthStart,
-    onSuccess: (data) => {
-      window.location.href = data.url;
-    },
+    ...options,
   });
-};
 
-export const useShopifySync = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
+export const useShopifySync = (options?: UseMutationOptions<void, Error>) =>
+  useMutation({
     mutationFn: shopifySync,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vault', 'shopify'] });
-    },
+    ...options,
   });
-};
 
-export const useShopifyDisconnect = () => {
-  const queryClient = useQueryClient();
-  const { setConnection } = useShopifyStore();
-  return useMutation({
-    mutationFn: shopifyDisconnect,
-    onSuccess: () => {
-      setConnection(false, null);
-      queryClient.invalidateQueries({ queryKey: ['vault', 'shopify'] });
-    },
+export const useShopifyDisconnect = (options?: UseMutationOptions<void, Error>) =>
+  useMutation({
+    mutationFn: disconnectShopify,
+    ...options,
   });
-};

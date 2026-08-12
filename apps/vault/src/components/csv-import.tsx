@@ -1,8 +1,10 @@
 import { useCreateProduct } from '@ataqu/api-client';
-import { handleApiError } from '@ataqu/shared-utils';
 import { Button } from '@ataqu/ui';
+import { Trans } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
+import type { ChangeEvent } from 'react';
 import { useRef, useState } from 'react';
+import { showToast } from './toast-store';
 
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
@@ -32,10 +34,10 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
-export function CsvImport({ onImported }: { onImported?: () => void }) {
+export function CsvImport() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   const createProduct = useCreateProduct({
     onSuccess: () => {
@@ -44,13 +46,19 @@ export function CsvImport({ onImported }: { onImported?: () => void }) {
   });
 
   const handleFile = async (file: File) => {
+    setIsImporting(true);
+
     try {
       const text = await file.text();
       const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
       const headerLine = lines[0];
 
       if (!headerLine) {
-        setStatus('CSV file is empty.');
+        showToast({
+          variant: 'error',
+          title: <Trans>CSV import failed.</Trans>,
+          description: <Trans>The selected CSV file is empty.</Trans>,
+        });
         return;
       }
 
@@ -60,7 +68,11 @@ export function CsvImport({ onImported }: { onImported?: () => void }) {
       const descriptionIndex = header.indexOf('description');
 
       if (nameIndex === -1 || skuIndex === -1) {
-        setStatus('CSV must include name and sku columns.');
+        showToast({
+          variant: 'error',
+          title: <Trans>CSV import failed.</Trans>,
+          description: <Trans>The CSV must include name and sku columns.</Trans>,
+        });
         return;
       }
 
@@ -74,49 +86,53 @@ export function CsvImport({ onImported }: { onImported?: () => void }) {
 
         if (!name || !sku) continue;
 
-        await createProduct.mutateAsync({
-          name,
-          sku,
-          description,
-        });
+        await createProduct.mutateAsync({ name, sku, description });
         imported += 1;
       }
 
-      setStatus(`Imported ${imported} product${imported === 1 ? '' : 's'}.`);
-      onImported?.();
-    } catch (error) {
-      setStatus(handleApiError(error));
+      showToast({
+        variant: 'success',
+        title: <Trans>Import complete.</Trans>,
+        description: `${imported} products imported.`,
+      });
+    } catch {
+      showToast({
+        variant: 'error',
+        title: <Trans>CSV import failed.</Trans>,
+        description: <Trans>The selected file could not be imported.</Trans>,
+      });
+    } finally {
+      setIsImporting(false);
     }
   };
 
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      void handleFile(file);
+    }
+    event.target.value = '';
+  };
+
   return (
-    <div className="flex items-center gap-2">
+    <div>
       <input
         ref={inputRef}
         type="file"
         accept=".csv,text/csv"
         className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) {
-            void handleFile(file);
-          }
-          event.target.value = '';
-        }}
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleChange}
       />
       <Button
         type="button"
         variant="outline"
         onClick={() => inputRef.current?.click()}
-        disabled={createProduct.isPending}
+        disabled={isImporting}
       >
-        {createProduct.isPending ? 'Importing...' : 'Import CSV'}
+        {isImporting ? <Trans>Importing...</Trans> : <Trans>Import CSV</Trans>}
       </Button>
-      {status ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          {status}
-        </p>
-      ) : null}
     </div>
   );
 }

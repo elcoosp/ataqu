@@ -3,28 +3,35 @@ import type { UUID } from '@ataqu/types';
 import { Button, Input, Label } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { showToast } from './toast-store';
 
 export function LowStockAlertForm({ productId }: { productId: UUID }) {
   const queryClient = useQueryClient();
   const [threshold, setThreshold] = useState('5');
-  const [status, setStatus] = useState<string | null>(null);
 
   const setAlert = useMutation({
-    mutationFn: (val: number) =>
-      api.patch<void>(`/vault/products/${productId}/alerts`, { threshold: val }),
+    mutationFn: (value: number) =>
+      api.patch<void>(`/vault/products/${productId}/alerts`, { threshold: value }),
     onSuccess: () => {
-      setStatus('Low stock alert set.');
-      queryClient.invalidateQueries({ queryKey: ['vault', 'product', productId] });
+      void queryClient.invalidateQueries({ queryKey: ['vault', 'product', productId] });
+      showToast({
+        variant: 'success',
+        title: <Trans>Low stock alert set.</Trans>,
+      });
     },
-    onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : 'Failed to set alert.';
-      setStatus(message);
+    onError: () => {
+      showToast({
+        variant: 'error',
+        title: <Trans>Low stock alert update failed.</Trans>,
+        description: <Trans>The threshold was not saved. Please try again.</Trans>,
+      });
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const value = Number(threshold);
     if (Number.isFinite(value) && value >= 0) {
       setAlert.mutate(value);
@@ -32,7 +39,7 @@ export function LowStockAlertForm({ productId }: { productId: UUID }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4">
       <div className="space-y-2">
         <Label htmlFor="low-stock-threshold">
           <Trans>Low Stock Threshold</Trans>
@@ -42,14 +49,13 @@ export function LowStockAlertForm({ productId }: { productId: UUID }) {
           type="number"
           min="0"
           value={threshold}
-          onChange={(e) => setThreshold(e.target.value)}
+          onChange={(event) => setThreshold(event.target.value)}
           className="w-32"
         />
       </div>
       <Button type="submit" disabled={setAlert.isPending}>
         {setAlert.isPending ? <Trans>Setting...</Trans> : <Trans>Set Low Stock Alert</Trans>}
       </Button>
-      {status && <p className="text-sm text-muted-foreground">{status}</p>}
     </form>
   );
 }

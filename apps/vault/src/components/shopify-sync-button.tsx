@@ -1,39 +1,33 @@
-import { shopifySync } from '@ataqu/api-client';
-import { handleApiError } from '@ataqu/shared-utils';
 import { Button } from '@ataqu/ui';
-import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Trans } from '@lingui/react/macro';
+import { useShopifySync } from '@/hooks/use-shopify-sync';
+import { showToast } from './toast-store';
 
 export function ShopifySyncButton() {
-  const [message, setMessage] = useState<string | null>(null);
-
-  const syncMutation = useMutation({
-    mutationFn: async () => {
-      await shopifySync();
-    },
+  const syncMutation = useShopifySync({
     onSuccess: () => {
-      setMessage('Shopify sync started.');
+      showToast({
+        variant: 'success',
+        title: <Trans>Shopify sync started.</Trans>,
+      });
     },
-    onError: (error) => {
-      setMessage(handleApiError(error));
+    onError: () => {
+      showToast({
+        variant: 'error',
+        title: <Trans>Shopify sync failed.</Trans>,
+        description: <Trans>The sync request was not accepted. Please try again.</Trans>,
+      });
     },
   });
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => syncMutation.mutate()}
-        disabled={syncMutation.isPending}
-      >
-        {syncMutation.isPending ? 'Syncing...' : 'Sync Shopify'}
-      </Button>
-      {message ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          {message}
-        </p>
-      ) : null}
-    </div>
+    <Button
+      type="button"
+      variant="outline"
+      onClick={() => syncMutation.mutate()}
+      disabled={syncMutation.isPending}
+    >
+      {syncMutation.isPending ? <Trans>Syncing...</Trans> : <Trans>Sync Shopify</Trans>}
+    </Button>
   );
 }
