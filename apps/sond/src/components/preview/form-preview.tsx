@@ -1,12 +1,20 @@
 import {
+	type AnswerInput,
+	type AnswerValue,
+	useSubmitForm,
+} from "@ataqu/api-client";
+import { handleApiError } from "@ataqu/shared-utils";
+import {
 	Button,
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	Skeleton,
 } from "@ataqu/ui";
-import { Trans } from "@lingui/macro";
+import { Trans, t } from "@lingui/macro";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useFormPreviewStore } from "../../stores/form-preview-store";
 import type { SondForm, SondQuestion } from "../builder/types";
 import { ConversationalSlide } from "./conversational-slide";
@@ -43,7 +51,14 @@ export function FormPreview({ form, open, onClose }: Props) {
 	const currentPageQuestions = pages[currentSlide]?.[1] || [];
 	const conversationalQuestion = visibleQuestions[currentSlide];
 
-	// Focus management: return focus to trigger on close
+	const submitMutation = useSubmitForm({
+		onSuccess: () => {
+			setSubmitted(true);
+			toast.success(t`Response submitted`);
+		},
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+
 	useEffect(() => {
 		if (open) {
 			triggerRef.current = document.activeElement as HTMLElement;
@@ -59,7 +74,39 @@ export function FormPreview({ form, open, onClose }: Props) {
 		onClose();
 	};
 
-	const handleSubmit = () => setSubmitted(true);
+	const handleSubmit = () => {
+		const answerInputs: AnswerInput[] = visibleQuestions.map((q) => {
+			const rawValue = answers[q.id];
+			let value: AnswerValue;
+			switch (q.type) {
+				case "text":
+				case "email":
+				case "phone":
+					value = { type: q.type, value: String(rawValue ?? "") };
+					break;
+				case "number":
+				case "rating":
+					value = { type: q.type, value: Number(rawValue ?? 0) };
+					break;
+				case "date":
+					value = { type: "date", value: String(rawValue ?? "") };
+					break;
+				case "choice":
+					value = { type: "choice", value: String(rawValue ?? "") };
+					break;
+				case "multiple_choice":
+					value = {
+						type: "multiple_choice",
+						value: Array.isArray(rawValue) ? rawValue : [],
+					};
+					break;
+				default:
+					value = { type: "text", value: String(rawValue ?? "") };
+			}
+			return { question_id: q.id, value };
+		});
+		submitMutation.mutate({ formId: form.id, data: { answers: answerInputs } });
+	};
 
 	const handleNextPage = () => {
 		if (currentSlide < totalPages - 1) setCurrentSlide(currentSlide + 1);
@@ -201,8 +248,10 @@ export function FormPreview({ form, open, onClose }: Props) {
 						<Trans>Back</Trans>
 					</Button>
 				)}
-				<Button onClick={handleNextPage}>
-					{currentSlide === totalPages - 1 ? (
+				<Button onClick={handleNextPage} disabled={submitMutation.isPending}>
+					{submitMutation.isPending ? (
+						<Skeleton className="h-5 w-20" />
+					) : currentSlide === totalPages - 1 ? (
 						<Trans>Submit</Trans>
 					) : (
 						<Trans>Next</Trans>

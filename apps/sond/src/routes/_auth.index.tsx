@@ -1,9 +1,11 @@
-import { type Form, useListForms } from "@ataqu/api-client";
+import { type Form, useDeleteForm, useListForms } from "@ataqu/api-client";
+import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Card, Shell, Skeleton } from "@ataqu/ui";
 import { Trans, t } from "@lingui/macro";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList, Plus, Trash2 } from "lucide-react";
 import { useCallback } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/")({
 	component: FormsIndex,
@@ -11,7 +13,23 @@ export const Route = createFileRoute("/_auth/")({
 
 function FormsIndex() {
 	const navigate = useNavigate();
-	const { data: forms = [], isLoading } = useListForms();
+	const { data: forms = [], isLoading, refetch } = useListForms();
+	const deleteMutation = useDeleteForm({
+		onSuccess: () => {
+			toast.success(t`Form deleted`);
+			refetch();
+		},
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+
+	const handleDelete = useCallback(
+		(id: string, title: string) => {
+			if (window.confirm(t`Are you sure you want to delete "${title}"?`)) {
+				deleteMutation.mutate(id);
+			}
+		},
+		[deleteMutation],
+	);
 
 	const searchForms = useCallback(
 		async (q: string) => {
@@ -98,8 +116,19 @@ function FormsIndex() {
 							params={{ id: f.id }}
 							className="block"
 						>
-							<Card className="p-6 transition-shadow hover:shadow-md">
-								<h3 className="mb-2 text-lg font-bold">{f.title}</h3>
+							<Card className="p-6 transition-shadow hover:shadow-md relative">
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										handleDelete(f.id, f.title);
+									}}
+									className="absolute top-4 right-4 text-muted-foreground hover:text-destructive"
+									aria-label={t`Delete form`}
+								>
+									<Trash2 className="h-4 w-4" />
+								</button>
+								<h3 className="mb-2 text-lg font-bold pr-8">{f.title}</h3>
 								<div className="text-sm text-muted-foreground">
 									{f.mode === "conversational"
 										? t`Conversational`
