@@ -1,15 +1,15 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { Trans } from '@lingui/react/macro';
+import { useEffect } from 'react';
 
 export const Route = createFileRoute('/login')({
-  beforeLoad: () => {
-    // Redirect to AEGIS login (SSO)
-    throw redirect({ to: 'https://sso.ataqu.com/login', replace: true });
-  },
-  component: LoginPlaceholder,
+  component: LoginRedirect,
 });
 
-function LoginPlaceholder() {
+function LoginRedirect() {
+  useEffect(() => {
+    window.location.href = 'https://sso.ataqu.com/login';
+  }, []);
   return (
     <div className="flex items-center justify-center h-full">
       <p><Trans>Redirecting to login…</Trans></p>

@@ -4,7 +4,8 @@ import { api } from '@ataqu/api-client';
 import { Popover, PopoverContent, PopoverTrigger } from '@ataqu/ui';
 import { Input } from '@ataqu/ui';
 import { SearchIcon, X } from 'lucide-react';
-import { Trans, t } from '@lingui/react/macro';
+import { Trans };
+import { i18n } from '@lingui/core'; from '@lingui/react/macro';
 import { useDebounce } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { toast } from 'sonner';
@@ -23,7 +24,7 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
   const [selectedValue, setSelectedValue] = useState(value);
 
   // When value prop changes, update local state
-  useEffect(() => {
+  useEffeci18n.t(() => {
     setSelectedValue(value);
   }, [value]);
 
@@ -41,14 +42,14 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
     const label = item.title || item.name || item.id;
     const newVal = { app, entityId: item.id, label };
     setSelectedValue(newVal);
-    onSelect(newVal);
+    onSeleci18n.t(newVal);
     setOpen(false);
     setSearch('');
   };
 
   const handleClear = () => {
     setSelectedValue(null);
-    onSelect(null);
+    onSeleci18n.t(null);
     setOpen(false);
   };
 
@@ -85,7 +86,7 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t`Search ${app}…`}
+            placeholder={i18n.t`Search ${app}…`}
             className="pl-8"
             autoFocus
           />
@@ -97,7 +98,7 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
             <button
               key={item.id}
               className="w-full text-left px-2 py-1 hover:bg-accent rounded text-sm"
-              onClick={() => handleSelect(item)}
+              onClick={() => handleSeleci18n.t(item)}
             >
               {item.title || item.name || item.id}
             </button>

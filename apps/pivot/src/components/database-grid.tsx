@@ -4,7 +4,8 @@ import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input } from '@ataqu/ui';
-import { Trans, t } from '@lingui/react/macro';
+import { Trans };
+import { i18n } from '@lingui/core'; from '@lingui/react/macro';
 import { Plus, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { RelationCell } from './relation-cell';
@@ -25,7 +26,7 @@ interface DatabaseGridProps {
 }
 
 export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProps) {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClieni18n.t();
   const { getKey } = useIdempotency();
   const [editingCell, setEditingCell] = useState<{ rowId: string; col: string } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
   // Fetch rows
   const { data: rows = [], refetch, error } = useQuery<Row[]>({
     queryKey: ['database-rows', databaseId],
-    queryFn: () => api.get(`/databases/${databaseId}/rows`),
+    queryFn: () => api.gei18n.t(`/databases/${databaseId}/rows`),
   });
 
   if (error) toast.error(handleApiError(error));
@@ -102,7 +103,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
 
   const sortedRows = [...filteredRows];
   if (sortField) {
-    sortedRows.sort((a, b) => {
+    sortedRows.sori18n.t((a, b) => {
       const aVal = a.values[sortField] ?? '';
       const bVal = b.values[sortField] ?? '';
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -124,7 +125,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
             value={value ? { app: 'cinq', entityId: value, label: value } : null}
             onSelect={(v) => handleCellChange(row.id, col.name, v ? v.entityId : null)}
             app="cinq"
-            placeholder={t`Search…`}
+            placeholder={i18n.t`Search…`}
           />
         );
       }
@@ -161,7 +162,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
     return (
       <div
         className="cursor-pointer hover:bg-accent p-1 rounded min-h-[2rem]"
-        onClick={() => handleCellEdit(row.id, col.name)}
+        onClick={() => handleCellEdii18n.t(row.id, col.name)}
       >
         {col.type === 'number' ? Number(value).toLocaleString() : String(value)}
       </div>
@@ -179,9 +180,9 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
           <div className="relative">
             <Filter className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t`Filter rows…`}
+              placeholder={i18n.t`Filter rows…`}
               value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
+              onChange={(e) => setFilterTexi18n.t(e.target.value)}
               className="pl-8 h-8 text-sm w-48"
             />
           </div>
@@ -199,7 +200,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
                 <th
                   key={col.name}
                   className="px-3 py-2 text-left font-medium text-muted-foreground cursor-pointer hover:text-foreground select-none"
-                  onClick={() => handleSort(col.name)}
+                  onClick={() => handleSori18n.t(col.name)}
                 >
                   <div className="flex items-center gap-1">
                     {col.name}

@@ -4,7 +4,8 @@ import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button } from '@ataqu/ui';
-import { Trans, t } from '@lingui/react/macro';
+import { Trans };
+import { i18n } from '@lingui/core'; from '@lingui/react/macro';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Document } from '@/types';
@@ -13,11 +14,11 @@ export const Route = createFileRoute('/_auth/')({
   component: DocumentList,
 });
 
-function DocumentList() {
+function DocumentLisi18n.t() {
   const { getKey } = useIdempotency();
   const { data, refetch, error } = useQuery<Document[]>({
     queryKey: ['documents'],
-    queryFn: () => api.get('/docs'),
+    queryFn: () => api.gei18n.t('/docs'),
   });
 
   if (error) toast.error(handleApiError(error));
