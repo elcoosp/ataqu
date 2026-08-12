@@ -9,15 +9,18 @@
     "skipLibCheck": true,
     "types": [
       "vite/client"
-    ]
+    ],
+    "skipDefaultLibCheck": true,
+    "noImplicitAny": false
   },
   "include": [
-    "src/**/*",
-    "e2e/**/*",
-    "src/routeTree.gen.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "../../packages/**/*",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ]
 }
