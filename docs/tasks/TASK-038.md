@@ -1,6 +1,10 @@
 # TASK-038: Frontend SPA — VAULT (Inventory)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement VAULT: product catalog with variants, real-time stock display, stock adjustments (atomic, optimistic), movement history, low stock alerts, multi-warehouse, reservations (CINQ deal integration), multi-channel (Shopify sync), command palette actions, cross-app integration badge (CINQ deal), and micro-tour.
 
 ## Execution Boundaries

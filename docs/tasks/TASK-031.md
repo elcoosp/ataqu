@@ -1,6 +1,10 @@
 # TASK-031: Frontend SPA — AEGIS (SSO & Security)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement AEGIS: SSO login (Google/Microsoft), MFA enrollment (TOTP), user management (invite/roles), API key generation, RBAC roles, IP allowlist, and AEGIS-specific command palette actions.
 
 ## Execution Boundaries
@@ -115,6 +119,18 @@ Use `useToast` from `@ataqu/shared-hooks`. Contextual messages:
 - 8px grid spacing.
 - Focus rings: 2px amber (`ring-ring`).
 - NO loading spinners. Use skeleton loaders.
+
+### Permission Matrix (`/admin/access-matrix`)
+- High‑density TanStack Table: rows = users, columns = apps (CINQ, DIAL, PIVOT, etc.), cells = role (Admin/Edit/View/None).
+- Inline dropdowns for role changes (optimistic UI).
+- Search/Filter by user, app, role.
+- Export CSV.
+
+### Unified Audit Log (`/admin/audit`)
+- Chronological list of all actions across all apps: `[User] [Action] [App] [Timestamp] [IP]`.
+- Filter by user, app, action type, date range.
+- Export CSV/JSON.
+- Real‑time updates via SSE (new events appear instantly).
 
 ## Implementation Plan (Development Script)
 1. Create `apps/aegis/src/api/types.ts` with `User`, `Role`, `ApiKey`, `Tenant`, `LoginResponse`, `MfaSetupResponse` interfaces mapped from Rust structs.

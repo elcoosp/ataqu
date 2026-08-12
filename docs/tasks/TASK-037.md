@@ -1,6 +1,10 @@
 # TASK-037: Frontend SPA — SOND (Forms)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement SOND: visual drag-and-drop form builder, question types (text, email, choice, date), conditional logic (branching), submissions table, CSV export, branding (colors, logo), email notifications, webhooks to CINQ and SPARK (via outbox), multi-question pages, command palette actions.
 
 ## Execution Boundaries

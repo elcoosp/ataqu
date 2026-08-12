@@ -1,6 +1,10 @@
 # TASK-032: Frontend SPA — CINQ (CRM)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement CINQ: contacts list, deal Kanban pipeline with drag-and-drop, deal detail with activities, email tracking display, custom fields (JSONB), CSV import/export with column mapping, search (tsvector <50ms), tasks, native integration toggles (DIAL, SPARK), cross-app integration badges (VAULT stock), command palette actions, and micro-tour.
 
 ## Execution Boundaries

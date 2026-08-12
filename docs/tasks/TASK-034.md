@@ -1,6 +1,10 @@
 # TASK-034: Frontend SPA — PIVOT (Docs & Databases)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement PIVOT: Markdown document editor with live preview, relational database tables with inline editing and views, sub-15ms search (tsvector GIN), native relations to CINQ deals and VAULT products, templates, checklists, version history, blocks, command palette actions, and micro-tour.
 
 ## Execution Boundaries

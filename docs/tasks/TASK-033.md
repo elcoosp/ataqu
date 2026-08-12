@@ -1,6 +1,10 @@
 # TASK-033: Frontend SPA — DIAL (Chat & Support)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement DIAL: channel list, message thread with threads/replies/reactions/mentions, real-time WebSocket messaging, file sharing, search, presence, focus mode, unified support ticket inbox, CINQ integration badge, command palette actions, and micro-tour.
 
 ## Execution Boundaries

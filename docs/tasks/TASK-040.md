@@ -1,6 +1,10 @@
 # TASK-040: Frontend SPA — VISTA (Analytics)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement VISTA: configurable dashboard with drag-and-drop widgets, real-time KPIs via SSE (revenue, pipeline, stock), charts (bar/line/pie), filters (date/team/product), export (PDF/CSV/PNG), custom SQL editor, command palette actions.
 
 ## Execution Boundaries
@@ -141,6 +145,20 @@ Implement VISTA: configurable dashboard with drag-and-drop widgets, real-time KP
 - KPI cards: `bg-card`, large `font-mono` numbers.
 - SSE indicator: green dot with subtle pulse animation.
 - `data-tour` attributes on KPI card and SSE indicator.
+
+### System Health Dashboard (`/health`)
+- Shows outbox lag, pending events, last dispatch timestamp.
+- Workflow status: list of all SPARK workflows with last run, success/failure, DLQ depth.
+- Integration status: CINQ→DIAL, SOND→CINQ, VAULT→CINQ with green/yellow/red indicators.
+- Connection pool usage.
+- DLQ Viewer: expandable list of failed events with payload, error reason, replay/delete buttons.
+- Auto‑refresh every 10 seconds (SSE).
+
+### Cross‑App "Combine Data" Flow
+- Button in any VISTA dashboard: "Combine Data".
+- Modal to select primary data source (e.g., CINQ Deals) and secondary source (e.g., VAULT Stock).
+- Chart updates instantly with both datasets overlaid.
+- Export combined view as CSV/PNG.
 
 ## Implementation Plan (Development Script)
 1. Create types, API client.

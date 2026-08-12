@@ -1,6 +1,10 @@
 # TASK-039: Frontend SPA — PAUSE (HR)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement PAUSE: employee directory (searchable), leave requests (request/approve/reject), approval workflow, documents (contracts/payslips), onboarding workflow, reporting (headcount), EmployeeCreatedV1 event awareness (for CINQ projection), command palette actions.
 
 ## Execution Boundaries

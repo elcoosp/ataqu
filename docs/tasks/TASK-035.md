@@ -1,6 +1,10 @@
 # TASK-035: Frontend SPA — SPARK (Automation)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement SPARK: workflow list, visual trigger/action/condition builder using React Flow, native outbox event triggers, native actions, execution history, DLQ viewer, test run, enable/disable, scheduling, outbound webhooks, command palette actions, and micro-tour.
 
 ## Execution Boundaries

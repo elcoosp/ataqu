@@ -1,6 +1,10 @@
 # TASK-036: Frontend SPA — TEMPO (Scheduling)
 
 ## Objective
+
+## API Client Usage
+All API calls are provided by `@ataqu/api-client`. Use the generated hooks (`use*Query`, `use*Mutation`) and typed functions. Do not write custom fetch wrappers. The client is already configured with idempotency, auth, and error handling.
+
 Implement TEMPO: public booking links, calendar sync (Google/Outlook OAuth), event types (1:1, group), availability configuration, reminders (email/SMS), timezone detection, no-show workflows (WebSocket hook + worker with 15-30 min detection), CRM integration (CINQ activity creation), instant bookings, custom emails, command palette actions.
 
 ## Execution Boundaries
