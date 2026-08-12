@@ -122,7 +122,7 @@ export const Route = createFileRoute('/_auth/settings')({
               <div className="space-y-4">
                 <div className="flex justify-center">
                   {mfaQrUrl && (
-                    <QRCode.default value={mfaQrUrl} size={200} />
+                    <QRCode value={mfaQrUrl} size={200} />
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">

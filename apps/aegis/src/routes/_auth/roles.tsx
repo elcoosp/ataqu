@@ -63,12 +63,7 @@ export const Route = createFileRoute('/_auth/roles')({
             ctaLabel="Create Role"
             onCta={() => setOpenCreate(true)}
           />
-          <CreateRoleDialog
-            open={openCreate}
-            onOpenChange={setOpenCreate}
-            onSubmit={(data) => createMutation.mutate(data)}
-            isPending={createMutation.isPending}
-          />
+          <CreateRoleDialog open={openCreate} onOpenChange={setOpenCreate} />
         </div>
       );
     }
@@ -107,12 +102,7 @@ export const Route = createFileRoute('/_auth/roles')({
           </CardContent>
         </Card>
 
-        <CreateRoleDialog
-          open={openCreate}
-          onOpenChange={setOpenCreate}
-          onSubmit={(data) => createMutation.mutate(data)}
-          isPending={createMutation.isPending}
-        />
+        <CreateRoleDialog open={openCreate} onOpenChange={setOpenCreate} />
       </div>
     );
   },
