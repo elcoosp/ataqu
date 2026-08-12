@@ -30,7 +30,7 @@ export function WarehouseList() {
       showToast({
         variant: 'error',
         title: <Trans>Warehouse creation failed.</Trans>,
-        description: <Trans>The warehouse was not created. Please try again.</Trans>,
+        description: <Trans>A warehouse with this name may already exist.</Trans>,
       });
     },
   });

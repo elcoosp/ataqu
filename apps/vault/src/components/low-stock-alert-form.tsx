@@ -25,7 +25,11 @@ export function LowStockAlertForm({ productId }: { productId: UUID }) {
       showToast({
         variant: 'error',
         title: <Trans>Low stock alert update failed.</Trans>,
-        description: <Trans>The threshold was not saved. Please try again.</Trans>,
+        description: (
+          <Trans>
+            The threshold must be a non-negative number. Please check the value and try again.
+          </Trans>
+        ),
       });
     },
   });

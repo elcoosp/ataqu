@@ -44,7 +44,7 @@ export function CreateVariantForm({
       showToast({
         variant: 'error',
         title: <Trans>Variant creation failed.</Trans>,
-        description: <Trans>The variant was not created. Please try again.</Trans>,
+        description: <Trans>The SKU may already exist or the product was not found.</Trans>,
       });
     },
   });

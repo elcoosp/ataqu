@@ -1,3 +1,4 @@
+import { searchVaultActions } from '@/actions';
 import { I18nProvider } from '@ataqu/shared-i18n';
 import { OnboardTour, Shell } from '@ataqu/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -10,7 +11,7 @@ export const Route = createRootRoute({
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <OnboardTour tourId="default" steps={[]}>
-          <Shell activeApp="vault">
+          <Shell activeApp="vault" searchFn={searchVaultActions}>
             <Outlet />
           </Shell>
         </OnboardTour>

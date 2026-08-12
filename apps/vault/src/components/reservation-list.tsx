@@ -1,5 +1,5 @@
 import type { Variant } from '@ataqu/api-client';
-import { reserveStock, useListVariants } from '@ataqu/api-client';
+import { api, useListVariants } from '@ataqu/api-client';
 import { formatDate } from '@ataqu/shared-utils';
 import { Button, Input, Label, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
@@ -25,6 +25,7 @@ interface ReserveVariables {
   quantity: number;
   dealId: string;
   tempId: string;
+  expectedVersion: number;
 }
 
 interface ReserveResponse {
@@ -56,8 +57,14 @@ export function ReservationList() {
     parsedQuantity <= (selectedVariant?.stock_quantity ?? 0);
 
   const reserveMutation = useMutation<ReserveResponse, Error, ReserveVariables, ReserveContext>({
-    mutationFn: ({ variantId, quantity: quantityToReserve }) =>
-      reserveStock(variantId, { quantity: quantityToReserve }),
+    mutationFn: ({ variantId, quantity: quantityToReserve, expectedVersion }) =>
+      api.post<ReserveResponse>(
+        `/vault/variants/${variantId}/reserve`,
+        { quantity: quantityToReserve },
+        {
+          headers: { 'If-Match': `"${expectedVersion}"` },
+        }
+      ),
     onMutate: async (variables) => {
       const previousReservations = reservations;
 
@@ -84,7 +91,7 @@ export function ReservationList() {
       showToast({
         variant: 'error',
         title: <Trans>Reservation failed.</Trans>,
-        description: <Trans>Stock was not reserved. Please try again.</Trans>,
+        description: <Trans>Insufficient stock or version conflict. Stock was not reserved.</Trans>,
       });
     },
     onSuccess: (response, variables) => {
@@ -116,6 +123,7 @@ export function ReservationList() {
       quantity: parsedQuantity,
       dealId: dealId.trim(),
       tempId: crypto.randomUUID(),
+      expectedVersion: selectedVariant.version,
     });
   };
 

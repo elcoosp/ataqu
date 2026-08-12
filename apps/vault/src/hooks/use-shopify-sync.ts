@@ -4,14 +4,18 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ShopifyIntegration, ShopifySyncLog } from '@/api/shopify-api';
 import { disconnectShopify, getShopifyIntegrations, getShopifySyncLogs } from '@/api/shopify-api';
 
+/** Polling interval: 10 seconds. Bounded and cancelled on unmount by TanStack Query. */
+const SHOPIFY_POLL_INTERVAL_MS = 10_000;
+
 export const useShopifyIntegrations = () =>
   useQuery<ShopifyIntegration[]>({
     queryKey: ['vault', 'shopify', 'integrations'],
     queryFn: getShopifyIntegrations,
     retry: false,
     staleTime: 5000,
-    refetchInterval: 10000,
+    refetchInterval: SHOPIFY_POLL_INTERVAL_MS,
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
 export const useShopifySyncLogs = () =>
@@ -20,8 +24,9 @@ export const useShopifySyncLogs = () =>
     queryFn: () => getShopifySyncLogs({ limit: 20 }),
     retry: false,
     staleTime: 5000,
-    refetchInterval: 10000,
+    refetchInterval: SHOPIFY_POLL_INTERVAL_MS,
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
 export const useShopifyAuthStart = (options?: UseMutationOptions<{ url: string }, Error>) =>

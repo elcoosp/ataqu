@@ -65,7 +65,11 @@ export function CreateProductForm({ onCreated }: { onCreated?: () => void }) {
       showToast({
         variant: 'error',
         title: <Trans>Product creation failed.</Trans>,
-        description: <Trans>The product was not created. Please try again.</Trans>,
+        description: (
+          <Trans>
+            A product with this SKU may already exist, or the server encountered an error.
+          </Trans>
+        ),
       });
     },
     onSuccess: () => {

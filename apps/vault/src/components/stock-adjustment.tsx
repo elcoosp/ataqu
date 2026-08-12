@@ -1,5 +1,5 @@
 import type { Variant } from '@ataqu/api-client';
-import { updateStock } from '@ataqu/api-client';
+import { api } from '@ataqu/api-client';
 import { Button, Input, Label } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import type { QueryKey } from '@tanstack/react-query';
@@ -21,6 +21,7 @@ interface AdjustStockVariables {
     delta: number;
     reason: string;
   };
+  expectedVersion: number;
 }
 
 interface AdjustStockContext {
@@ -36,7 +37,10 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
   const canSubmit = Number.isFinite(parsedDelta) && parsedDelta !== 0;
 
   const adjustStock = useMutation<Variant, Error, AdjustStockVariables, AdjustStockContext>({
-    mutationFn: ({ variantId, data }) => updateStock(variantId, data),
+    mutationFn: ({ variantId, data, expectedVersion }) =>
+      api.put<Variant>(`/vault/variants/${variantId}/stock`, data, {
+        headers: { 'If-Match': `"${expectedVersion}"` },
+      }),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ['vault', 'variants'] });
 
@@ -100,6 +104,7 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
         delta: parsedDelta,
         reason,
       },
+      expectedVersion: variant.version,
     });
   };
 

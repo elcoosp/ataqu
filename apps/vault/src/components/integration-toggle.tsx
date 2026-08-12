@@ -48,7 +48,11 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
       showToast({
         variant: 'error',
         title: <Trans>Integration update failed.</Trans>,
-        description: <Trans>The CINQ integration was not changed. Please try again.</Trans>,
+        description: (
+          <Trans>
+            Could not toggle the CINQ integration. Check your permissions and try again.
+          </Trans>
+        ),
       });
     },
   });
