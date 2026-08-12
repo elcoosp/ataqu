@@ -2,17 +2,13 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
+import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
-
-interface Template {
-  id: string;
-  name: string;
-  content: string;
-}
+import type { Template } from '@/types';
 
 export const Route = createFileRoute('/_auth/templates')({
   component: TemplatesPage,
@@ -20,17 +16,22 @@ export const Route = createFileRoute('/_auth/templates')({
 
 function TemplatesPage() {
   const { getKey } = useIdempotency();
-  const { data, refetch } = useQuery<Template[]>({
+  const { data, refetch, error } = useQuery<Template[]>({
     queryKey: ['templates'],
     queryFn: () => api.get('/templates'),
   });
+
+  if (error) toast.error(handleApiError(error));
+
   const [showCreator, setShowCreator] = useState(false);
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
 
   const createMutation = useMutation({
     mutationFn: (data: { name: string; content: string }) =>
-      api.post('/templates', data, { headers: { 'Idempotency-Key': getKey() } }),
+      api.post<Template>('/templates', data, {
+        headers: { 'Idempotency-Key': getKey() },
+      }),
     onSuccess: () => {
       toast.success(<Trans>Template created.</Trans>);
       setShowCreator(false);
@@ -38,6 +39,7 @@ function TemplatesPage() {
       setContent('');
       refetch();
     },
+    onError: (err) => toast.error(handleApiError(err)),
   });
 
   const handleCreate = () => {
@@ -56,7 +58,11 @@ function TemplatesPage() {
       </div>
       {showCreator && (
         <div className="border border-border rounded p-4 space-y-3">
-          <Input placeholder="Template name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input
+            placeholder="Template name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
           <textarea
             className="w-full p-2 border border-border rounded bg-background"
             rows={6}
@@ -66,12 +72,14 @@ function TemplatesPage() {
           />
           <div className="flex gap-2">
             <Button onClick={handleCreate}><Trans>Save</Trans></Button>
-            <Button variant="outline" onClick={() => setShowCreator(false)}><Trans>Cancel</Trans></Button>
+            <Button variant="outline" onClick={() => setShowCreator(false)}>
+              <Trans>Cancel</Trans>
+            </Button>
           </div>
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(data || [])?.map((t) => (
+        {(data || []).map((t) => (
           <div key={t.id} className="border border-border rounded p-4">
             <h3 className="font-medium">{t.name}</h3>
             <p className="text-sm text-muted-foreground truncate">{t.content}</p>
