@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import React from 'react';
 
 interface SseIndicatorProps {
@@ -15,7 +16,7 @@ export const SseIndicator: React.FC<SseIndicatorProps> = ({ isConnected }) => {
       <span
         className={`h-2 w-2 rounded-full ${isConnected ? 'bg-success animate-pulse' : 'bg-error'}`}
       />
-      {isConnected ? 'Live' : 'Disconnected'}
+      {isConnected ? <Trans>Live</Trans> : <Trans>Disconnected</Trans>}
     </div>
   );
 };

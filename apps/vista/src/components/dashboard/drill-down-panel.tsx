@@ -1,4 +1,5 @@
 import { Button } from '@ataqu/ui';
+import { Trans, t } from '@lingui/react/macro';
 import { Download, X } from 'lucide-react';
 import React from 'react';
 import { useDrillDownStore } from '../../hooks/use-drill-down-store';
@@ -44,17 +45,21 @@ export const DrillDownPanel: React.FC = () => {
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">{value} Details</h2>
+          <h2 className="text-lg font-semibold">
+            {value} <Trans>Details</Trans>
+          </h2>
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
             <X className="h-4 w-4" />
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          Showing raw data for {dimension}: {value}
+          <Trans>
+            Showing raw data for {dimension}: {value}
+          </Trans>
         </p>
         <div className="flex justify-end">
           <Button size="sm" variant="outline" onClick={exportCsv} disabled={data.length === 0}>
-            <Download className="h-4 w-4 mr-2" /> Export CSV
+            <Download className="h-4 w-4 mr-2" /> <Trans>Export CSV</Trans>
           </Button>
         </div>
         <div className="flex-1 overflow-auto">
@@ -67,7 +72,7 @@ export const DrillDownPanel: React.FC = () => {
             <DrillDownTable data={data} />
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              No data found for this selection.
+              <Trans>No data found for this selection.</Trans>
             </div>
           )}
         </div>

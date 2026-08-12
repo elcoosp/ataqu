@@ -1,8 +1,9 @@
-import { useGetDashboard } from '@ataqu/api-client';
-import { Button, OnboardTour, Shell, Skeleton } from '@ataqu/ui';
+import { api, useGetDashboard, useUpdateDashboard } from '@ataqu/api-client';
+import { Button, OnboardTour, Shell, Skeleton, toast } from '@ataqu/ui';
+import { Trans, t } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useParams } from '@tanstack/react-router';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Combine, Plus } from 'lucide-react';
 import React from 'react';
 import { DrillDownPanel } from '../components/dashboard/drill-down-panel';
 import { DashboardGrid } from '../components/dashboard-grid';
@@ -19,12 +20,15 @@ export const Route = createFileRoute('/_auth/dashboard/$id')({
 function DashboardDetailPage() {
   const { id } = useParams({ from: '/_auth/dashboard/$id' });
   const { data: dashboard, isLoading } = useGetDashboard(id);
+  const updateDashboardMutation = useUpdateDashboard();
   const queryClient = useQueryClient();
 
   const [isWidgetPickerOpen, setWidgetPickerOpen] = React.useState(false);
+  const [isCombineOpen, setIsCombineOpen] = React.useState(false);
   const { isConnected } = useVistaSSE(`/api/vista/kpis/${id}/stream`);
 
-  const widgets = [
+  const config = (dashboard?.config || {}) as { widgets?: any[] };
+  const widgets = config.widgets || [
     { i: 'w1', type: 'kpi', dataSource: 'Revenue', data: [] },
     {
       i: 'w2',
@@ -49,13 +53,43 @@ function DashboardDetailPage() {
   const tourSteps = [
     {
       target: '[data-tour="kpi-card"]',
-      content: 'No ETL pipelines. This data is live from CINQ, right now.',
+      content: t`No ETL pipelines. This data is live from CINQ, right now.`,
     },
     {
       target: '[data-tour="sse-indicator"]',
-      content: 'When a deal closes, this updates in milliseconds. No refresh button needed.',
+      content: t`When a deal closes, this updates in milliseconds. No refresh button needed.`,
     },
   ];
+
+  const handleAddWidget = async (type: string, dataSource: string) => {
+    const newWidget = { i: `w${Date.now()}`, type, dataSource, data: [] };
+    const newWidgets = [...widgets, newWidget];
+    try {
+      await updateDashboardMutation.mutateAsync({
+        id,
+        data: { config: { ...config, widgets: newWidgets } },
+      });
+      queryClient.invalidateQueries({ queryKey: ['vista', 'dashboard', id] });
+      toast.success(t`Widget added.`);
+    } catch {
+      toast.error(t`Failed to add widget.`);
+    }
+  };
+
+  const handleLayoutChange = async (newLayout: any[]) => {
+    const updatedWidgets = widgets.map((w) => {
+      const layoutItem = newLayout.find((l) => l.i === w.i);
+      return { ...w, layout: layoutItem };
+    });
+    try {
+      await updateDashboardMutation.mutateAsync({
+        id,
+        data: { config: { ...config, widgets: updatedWidgets } },
+      });
+    } catch {
+      // Silent fail for layout saves
+    }
+  };
 
   return (
     <Shell activeApp="vista">
@@ -67,14 +101,20 @@ function DashboardDetailPage() {
               <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-xl font-heading text-white">{dashboard?.name || 'Dashboard'}</h1>
+              <h1 className="text-xl font-heading text-white">
+                {dashboard?.name || <Trans>Dashboard</Trans>}
+              </h1>
               <SseIndicator isConnected={isConnected} />
             </div>
             <div className="flex items-center gap-4">
               <ExportButtons dashboardId={id} />
+              <Button size="sm" variant="outline" onClick={() => setIsCombineOpen(true)}>
+                <Combine className="h-4 w-4 mr-2" />
+                <Trans>Combine Data</Trans>
+              </Button>
               <Button size="sm" onClick={() => setWidgetPickerOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Widget
+                <Trans>Add Widget</Trans>
               </Button>
             </div>
           </div>
@@ -85,7 +125,7 @@ function DashboardDetailPage() {
             {isLoading ? (
               <Skeleton className="h-64 w-full" />
             ) : (
-              <DashboardGrid widgets={widgets} onLayoutChange={() => {}} />
+              <DashboardGrid widgets={widgets} onLayoutChange={handleLayoutChange} />
             )}
           </div>
         </div>
@@ -93,8 +133,101 @@ function DashboardDetailPage() {
       <WidgetPicker
         isOpen={isWidgetPickerOpen}
         onClose={() => setWidgetPickerOpen(false)}
-        onAdd={() => {}}
+        onAdd={handleAddWidget}
       />
+
+      {isCombineOpen && (
+        <CombineDataModal onClose={() => setIsCombineOpen(false)} dashboardId={id} />
+      )}
     </Shell>
   );
 }
+
+const CombineDataModal: React.FC<{ onClose: () => void; dashboardId: string }> = ({
+  onClose,
+  dashboardId,
+}) => {
+  const [primary, setPrimary] = React.useState('revenue');
+  const [secondary, setSecondary] = React.useState('inventory');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const queryClient = useQueryClient();
+
+  const handleCombine = async () => {
+    setIsLoading(true);
+    try {
+      await api.post('/vista/combine', {
+        primary,
+        secondary,
+        from_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        to_date: new Date().toISOString(),
+      });
+      toast.success(t`Data combined successfully.`);
+      queryClient.invalidateQueries({ queryKey: ['vista', 'dashboard', dashboardId] });
+      onClose();
+    } catch {
+      toast.error(t`Failed to combine data.`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: modal overlay
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+    >
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
+      <div
+        className="w-[425px] bg-card border border-gray-700/40 rounded-lg p-6 flex flex-col gap-4"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold">
+          <Trans>Combine Data</Trans>
+        </h2>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="primary-source" className="text-right text-sm">
+              <Trans>Primary</Trans>
+            </label>
+            <select
+              id="primary-source"
+              value={primary}
+              onChange={(e) => setPrimary(e.target.value)}
+              className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
+            >
+              <option value="revenue">{t`Revenue`}</option>
+              <option value="support">{t`Support`}</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="secondary-source" className="text-right text-sm">
+              <Trans>Secondary</Trans>
+            </label>
+            <select
+              id="secondary-source"
+              value={secondary}
+              onChange={(e) => setSecondary(e.target.value)}
+              className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
+            >
+              <option value="inventory">{t`Inventory`}</option>
+              <option value="sales">{t`Sales`}</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
+            <Trans>Cancel</Trans>
+          </Button>
+          <Button onClick={handleCombine} disabled={isLoading}>
+            <Trans>Combine</Trans>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};

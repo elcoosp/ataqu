@@ -1,5 +1,6 @@
 import { type Dashboard, useListDashboards } from '@ataqu/api-client';
 import { Button, Card, EmptyState, Shell } from '@ataqu/ui';
+import { Trans, t } from '@lingui/react/macro';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { BarChart3, Plus } from 'lucide-react';
 import { useVistaActions } from '../actions';
@@ -22,10 +23,12 @@ function DashboardListPage() {
     <Shell activeApp="vista" searchFn={searchFn}>
       <div className="p-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-heading text-white">Dashboards</h1>
+          <h1 className="text-2xl font-heading text-white">
+            <Trans>Dashboards</Trans>
+          </h1>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Create Dashboard
+            <Trans>Create Dashboard</Trans>
           </Button>
         </div>
 
@@ -42,7 +45,7 @@ function DashboardListPage() {
                 <Card className="p-6 hover:border-amber transition-colors cursor-pointer h-full">
                   <h3 className="text-lg font-medium text-white mb-2">{d.name}</h3>
                   <p className="text-xs text-muted-foreground">
-                    Last updated: {new Date(d.updated_at).toLocaleDateString()}
+                    <Trans>Last updated: {new Date(d.updated_at).toLocaleDateString()}</Trans>
                   </p>
                 </Card>
               </Link>
@@ -51,9 +54,9 @@ function DashboardListPage() {
         ) : (
           <EmptyState
             icon={BarChart3}
-            title="No dashboards"
-            description="Dashboards are empty because you haven't connected CINQ and VAULT yet. 1 click to connect."
-            ctaLabel="Create Dashboard"
+            title={t`No dashboards`}
+            description={t`Dashboards are empty because you haven't connected CINQ and VAULT yet. 1 click to connect.`}
+            ctaLabel={t`Create Dashboard`}
           />
         )}
       </div>

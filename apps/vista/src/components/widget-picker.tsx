@@ -1,4 +1,5 @@
 import { Button } from '@ataqu/ui';
+import { Trans, t } from '@lingui/react/macro';
 import { X } from 'lucide-react';
 import React from 'react';
 
@@ -30,7 +31,9 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Add Widget</h2>
+          <h2 className="text-lg font-semibold">
+            <Trans>Add Widget</Trans>
+          </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
@@ -38,7 +41,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="widget-type" className="text-right text-sm">
-              Type
+              <Trans>Type</Trans>
             </label>
             <select
               id="widget-type"
@@ -46,16 +49,16 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
               onChange={(e) => setWidgetType(e.target.value)}
               className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
             >
-              <option value="kpi">KPI Card</option>
-              <option value="bar">Bar Chart</option>
-              <option value="line">Line Chart</option>
-              <option value="pie">Pie Chart</option>
-              <option value="table">Table</option>
+              <option value="kpi">{t`KPI Card`}</option>
+              <option value="bar">{t`Bar Chart`}</option>
+              <option value="line">{t`Line Chart`}</option>
+              <option value="pie">{t`Pie Chart`}</option>
+              <option value="table">{t`Table`}</option>
             </select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="data-source" className="text-right text-sm">
-              Data Source
+              <Trans>Data Source</Trans>
             </label>
             <select
               id="data-source"
@@ -63,16 +66,16 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
               onChange={(e) => setDataSource(e.target.value)}
               className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
             >
-              <option value="revenue">Revenue</option>
-              <option value="pipeline">Pipeline</option>
-              <option value="stock">Stock Levels</option>
-              <option value="bookings">Bookings</option>
+              <option value="revenue">{t`Revenue`}</option>
+              <option value="pipeline">{t`Pipeline`}</option>
+              <option value="stock">{t`Stock Levels`}</option>
+              <option value="bookings">{t`Bookings`}</option>
             </select>
           </div>
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
           <Button
             onClick={() => {
@@ -80,7 +83,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
               onClose();
             }}
           >
-            Add Widget
+            <Trans>Add Widget</Trans>
           </Button>
         </div>
       </div>
