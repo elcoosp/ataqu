@@ -120,19 +120,25 @@ export function EmployeeDetail({ id }: { id: string }) {
                 <p className="text-sm text-gray-400">
                   <Trans>Accrued</Trans>
                 </p>
-                <p className="text-2xl font-bold">15d</p>
+                <p className="text-2xl font-bold">
+                  <Trans>15d</Trans>
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">
                   <Trans>Used</Trans>
                 </p>
-                <p className="text-2xl font-bold">5d</p>
+                <p className="text-2xl font-bold">
+                  <Trans>5d</Trans>
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">
                   <Trans>Remaining</Trans>
                 </p>
-                <p className="text-2xl font-bold text-amber">10d</p>
+                <p className="text-2xl font-bold text-amber">
+                  <Trans>10d</Trans>
+                </p>
               </div>
             </div>
           </Card>

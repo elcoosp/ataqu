@@ -1,26 +1,29 @@
 import { AuthLayout, Button, Input } from '@ataqu/ui';
+import { Trans, t } from '@lingui/macro';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/login')({
   component: () => (
     <AuthLayout>
-      <div className="bg-deep-night/80 p-8 rounded border border-gray-700/40 w-96">
-        <h1 className="text-2xl font-heading mb-4">Login</h1>
+      <div className="w-full max-w-md p-8 bg-card rounded-lg shadow-lg border border-gray-700/40">
+        <h1 className="text-2xl font-heading mb-4">
+          <Trans>Login</Trans>
+        </h1>
         <form className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email
+              <Trans>Email</Trans>
             </label>
-            <Input id="email" type="email" placeholder="you@example.com" />
+            <Input id="email" type="email" placeholder={t`you@example.com`} />
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium mb-1">
-              Password
+              <Trans>Password</Trans>
             </label>
             <Input id="password" type="password" placeholder="••••••••" />
           </div>
           <Button type="submit" className="w-full bg-amber text-black hover:bg-amber/90">
-            Sign In
+            <Trans>Sign In</Trans>
           </Button>
         </form>
       </div>
