@@ -11,18 +11,13 @@ export function ContactTable() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
 
-  // useListContacts returns ContactResponse[] directly
-  const { data: allData, isLoading: allLoading } = useListContacts(
-    { limit: 1000 },
-    { enabled: debouncedSearch.length === 0 }
-  );
-
-  // useSearchContacts returns ContactResponse[] directly
+  // For list, we use a simple query without extra options to avoid queryKey errors
+  const { data: allData, isLoading: allLoading } = useListContacts({ limit: 1000 });
   const { data: searchData, isLoading: searchLoading } = useSearchContacts(
-    { q: debouncedSearch, limit: 50 },
-    { enabled: debouncedSearch.length > 0 }
+    { q: debouncedSearch, limit: 50 }
   );
 
+  // Only use the search data if there's a search term
   const contacts = debouncedSearch.length > 0 ? (searchData || []) : (allData || []);
   const isLoading = debouncedSearch.length > 0 ? searchLoading : allLoading;
 

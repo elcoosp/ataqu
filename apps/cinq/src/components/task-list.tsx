@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Checkbox, Badge, Skeleton } from '@ataqu/ui';
+import { Badge, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { useListTasks, useUpdateTask } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
@@ -8,7 +8,7 @@ export function TaskList({ dealId }: { dealId?: UUID }) {
   const queryClient = useQueryClient();
   const { data, isLoading } = useListTasks({ limit: 100 });
 
-  // useListTasks returns TaskResponse[] directly, not { items: [] }
+  // useListTasks returns TaskResponse[] directly
   const tasks = data || [];
 
   const updateTask = useUpdateTask();
@@ -22,14 +22,17 @@ export function TaskList({ dealId }: { dealId?: UUID }) {
       ) : (
         tasks.map((task) => (
           <div key={task.id} className="flex items-center gap-4 p-2 border-b">
-            <Checkbox
+            <input
+              type="checkbox"
               checked={task.status === 'completed'}
-              onCheckedChange={(checked) => {
+              onChange={(e) => {
+                const checked = e.target.checked;
                 updateTask.mutate({
                   id: task.id,
                   data: { status: checked ? 'completed' : 'pending' },
                 });
               }}
+              className="h-4 w-4 rounded border-gray-600 bg-transparent text-amber focus:ring-amber"
             />
             <span className={task.status === 'completed' ? 'line-through text-muted-foreground' : ''}>
               {task.title}

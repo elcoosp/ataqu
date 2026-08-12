@@ -1,11 +1,18 @@
-import { registerActions } from '@ataqu/ui/command-palette';
+// Command palette actions are registered via the shared CommandPalette component.
+// The CommandPalette component uses a searchFn prop to handle dynamic search.
+// We'll register actions by exposing them to the shell via a global registry.
+// For now, we'll keep this minimal.
+
 import { useNavigate } from '@tanstack/react-router';
 import { api } from '@ataqu/api-client';
 
-export function registerCinqActions() {
+// This is a placeholder – the actual action registration happens in main.tsx
+// via the shared command palette system. We'll just define the actions here.
+
+export const getCinqActions = () => {
   const navigate = useNavigate();
 
-  registerActions([
+  return [
     {
       id: 'cinq-create-contact',
       name: 'Create Contact',
@@ -82,5 +89,5 @@ export function registerCinqActions() {
         });
       },
     },
-  ]);
-}
+  ];
+};

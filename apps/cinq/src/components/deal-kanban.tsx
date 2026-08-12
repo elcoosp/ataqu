@@ -1,12 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { KanbanBoard, Badge, Skeleton } from '@ataqu/ui';
 import { toast } from 'sonner';
-import { Trans } from '@lingui/react/macro';
-import {
-  useListDeals,
-  useListPipelineStages,
-  useUpdateDeal,
-} from '@ataqu/api-client';
+import { useListDeals, useListPipelineStages } from '@ataqu/api-client';
 import { useNavigate } from '@tanstack/react-router';
 
 export function DealKanban() {
@@ -14,7 +9,6 @@ export function DealKanban() {
   const navigate = useNavigate();
   const { data: stages, isLoading: stagesLoading } = useListPipelineStages();
   const { data: deals, isLoading: dealsLoading } = useListDeals({ limit: 1000 });
-  const updateDeal = useUpdateDeal();
 
   if (stagesLoading || dealsLoading) {
     return <Skeleton className="h-64 w-full" />;
