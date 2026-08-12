@@ -118,7 +118,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
             value={value ? { app: 'cinq', entityId: value, label: value } : null}
             onSelect={(v) => handleCellChange(row.id, col.name, v ? v.entityId : null)}
             app="cinq"
-            placeholder={i18n.t`Search…`}
+            placeholder={i18n._('Search…')}
           />
         );
       }
@@ -147,7 +147,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
           value={value ? { app: 'cinq', entityId: value, label: value } : null}
           onSelect={(v) => handleCellChange(row.id, col.name, v ? v.entityId : null)}
           app="cinq"
-          placeholder={i18n.t`Search…`}
+          placeholder={i18n._('Search…')}
         />
       );
     }
@@ -173,7 +173,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
           <div className="relative">
             <Filter className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={i18n.t`Filter rows…`}
+              placeholder={i18n._('Filter rows…')}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="pl-8 h-8 text-sm w-48"

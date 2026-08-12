@@ -85,7 +85,7 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={placeholder || i18n.t`Search ${app}…`}
+            placeholder={placeholder || i18n._('Search ${app}…')}
             className="pl-8"
             autoFocus
           />

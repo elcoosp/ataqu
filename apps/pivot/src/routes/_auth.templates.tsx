@@ -60,14 +60,14 @@ function TemplatesPage() {
       {showCreator && (
         <div className="border border-border rounded p-4 space-y-3">
           <Input
-            placeholder={i18n.t`Template name`}
+            placeholder={i18n._('Template name')}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <textarea
             className="w-full p-2 border border-border rounded bg-background"
             rows={6}
-            placeholder={i18n.t`Template content (markdown)`}
+            placeholder={i18n._('Template content (markdown)')}
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />

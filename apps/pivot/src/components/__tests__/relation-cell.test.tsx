@@ -13,7 +13,7 @@ describe('RelationCell', () => {
         <RelationCell app="cinq" onSelect={onSelect} />
       </QueryClientProvider>
     );
-    expect(screen.getByText(/Link cinq/i)).toBeInTheDocument();
+    expect(screen.getByText(/Link cinq/i)).toBeTruthy();
   });
 
   it('renders value label when provided', () => {
@@ -24,7 +24,7 @@ describe('RelationCell', () => {
         <RelationCell app="cinq" onSelect={onSelect} value={value} />
       </QueryClientProvider>
     );
-    expect(screen.getByText('Acme Corp')).toBeInTheDocument();
+    expect(screen.getByText('Acme Corp')).toBeTruthy();
   });
 
   it('calls onSelect with null when clear clicked', () => {

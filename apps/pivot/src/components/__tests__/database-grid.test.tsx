@@ -17,8 +17,8 @@ describe('DatabaseGrid', () => {
         <DatabaseGrid databaseId="test" columns={columns} />
       </QueryClientProvider>
     );
-    expect(screen.getByText('Name')).toBeInTheDocument();
-    expect(screen.getByText('Amount')).toBeInTheDocument();
+    expect(screen.getByText('Name')).toBeTruthy();
+    expect(screen.getByText('Amount')).toBeTruthy();
   });
 
   it('renders add row button', () => {
@@ -27,7 +27,7 @@ describe('DatabaseGrid', () => {
         <DatabaseGrid databaseId="test" columns={columns} />
       </QueryClientProvider>
     );
-    expect(screen.getByText(/Add Row/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add Row/i)).toBeTruthy();
   });
 
   // More tests would require mocking API calls
