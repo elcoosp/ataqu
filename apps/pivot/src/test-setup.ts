@@ -19,10 +19,10 @@ vi.mock('lucide-react', () => ({
   Filter: () => null,
 }));
 
-// Mock @lingui/react/macro
+// Mock @lingui/react/macro for tests (Trans is a component, we just render children)
 vi.mock('@lingui/react/macro', () => ({
   Trans: ({ children }: { children: React.ReactNode }) => children,
-  t: (str: string) => str,
+  // t is not used in tests because we mock it
 }));
 
 // Mock sonner toast

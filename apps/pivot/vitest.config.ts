@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'browser',
-    provider: 'playwright', // or 'webdriverio'
+    provider: 'playwright',
     setupFiles: ['./src/test-setup.ts'],
     globals: true,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
@@ -14,6 +14,7 @@ export default defineConfig({
       enabled: true,
       name: 'chromium',
       headless: true,
+      provider: 'playwright',
     },
   },
   resolve: {
