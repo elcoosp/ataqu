@@ -1,5 +1,6 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useGetDocument, useUpdateDocument, useDeleteDocument } from '@ataqu/api-client';
+import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { Button } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
@@ -7,7 +8,16 @@ import { toast } from 'sonner';
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { FileDown, Copy, Trash2, Clock } from 'lucide-react';
+import { FileDown, Copy, Trash2 } from 'lucide-react';
+
+// Types
+interface Document {
+  id: string;
+  title: string;
+  content: string;
+  version: number;
+  created_at: string;
+}
 
 export const Route = createFileRoute('/_auth/doc/$id')({
   component: DocumentDetail,
@@ -16,15 +26,18 @@ export const Route = createFileRoute('/_auth/doc/$id')({
 function DocumentDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { data: doc, refetch } = useGetDocument(id);
-  const { mutate: updateDoc } = useUpdateDocument();
-  const { mutate: deleteDoc } = useDeleteDocument();
   const { getKey } = useIdempotency();
+  const { data, refetch } = useQuery<Document>({
+    queryKey: ['document', id],
+    queryFn: () => api.get(`/docs/${id}`),
+  });
+  const doc = data;
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [version, setVersion] = useState(0);
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle');
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (doc) {
@@ -34,48 +47,43 @@ function DocumentDetail() {
     }
   }, [doc]);
 
+  const updateMutation = useMutation({
+    mutationFn: (data: { title: string; content: string; version: number }) =>
+      api.patch(`/docs/${id}`, data, { headers: { 'Idempotency-Key': getKey() } }),
+    onSuccess: (data: Document) => {
+      setVersion(data.version);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
+    },
+    onError: () => {
+      toast.error(<Trans>Failed to save.</Trans>);
+      setSaveStatus('idle');
+    },
+  });
+
   useEffect(() => {
     if (!doc) return;
     if (title === doc.title && content === doc.content) return;
     setSaveStatus('saving');
-    clearTimeout(timerRef.current);
+    if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      updateDoc(
-        { id, data: { title, content } },
-        {
-          headers: { 'Idempotency-Key': getKey() },
-          onSuccess: (data) => {
-            setVersion(data.version);
-            setSaveStatus('saved');
-            setTimeout(() => setSaveStatus('idle'), 1500);
-          },
-          onError: () => {
-            toast.error(<Trans>Failed to save.</Trans>);
-            setSaveStatus('idle');
-          },
-        }
-      );
+      updateMutation.mutate({ title, content, version });
     }, 500);
-    return () => clearTimeout(timerRef.current);
-  }, [title, content, id, doc, updateDoc, getKey]);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [title, content, version, doc, updateMutation]);
 
-  const handleDelete = () => {
-    deleteDoc(
-      id,
-      {
-        headers: { 'Idempotency-Key': getKey() },
-        onSuccess: () => {
-          toast.success(<Trans>Document deleted.</Trans>);
-          navigate({ to: '/' });
-        },
-      }
-    );
-  };
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/docs/${id}`, { headers: { 'Idempotency-Key': getKey() } }),
+    onSuccess: () => {
+      toast.success(<Trans>Document deleted.</Trans>);
+      navigate({ to: '/' });
+    },
+  });
 
-  const handleDuplicate = () => {
-    // Would need to call createDocument with copy; stub for now
-    toast.info(<Trans>Duplicate feature coming soon.</Trans>);
-  };
+  const handleDelete = () => deleteMutation.mutate();
+  const handleDuplicate = () => toast.info(<Trans>Duplicate feature coming soon.</Trans>);
 
   const handleExport = () => {
     if (!doc) return;

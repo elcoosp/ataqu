@@ -1,7 +1,14 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useGetDatabase } from '@ataqu/api-client';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@ataqu/api-client';
 import { Button } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
+
+interface Database {
+  id: string;
+  name: string;
+  created_at: string;
+}
 
 export const Route = createFileRoute('/_auth/db/$id')({
   component: DatabaseDetail,
@@ -10,7 +17,10 @@ export const Route = createFileRoute('/_auth/db/$id')({
 function DatabaseDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { data: db } = useGetDatabase(id);
+  const { data: db } = useQuery<Database>({
+    queryKey: ['database', id],
+    queryFn: () => api.get(`/databases/${id}`),
+  });
 
   if (!db) return <div><Trans>Loading…</Trans></div>;
 
