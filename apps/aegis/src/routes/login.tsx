@@ -1,3 +1,4 @@
+import { AuthLayout } from '@ataqu/ui';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from "@ataqu/ui";
 

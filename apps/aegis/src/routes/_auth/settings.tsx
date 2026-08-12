@@ -13,7 +13,7 @@ import QRCode from 'qrcode.react';
 export const Route = createFileRoute('/_auth/settings')({
   component: () => {
     const queryClient = useQueryClient();
-    const { toast } = toast();
+    
     const [mfaSecret, setMfaSecret] = useState<string | null>(null);
     const [mfaQrUrl, setMfaQrUrl] = useState<string | null>(null);
     const [mfaVerificationCode, setMfaVerificationCode] = useState('');
@@ -122,7 +122,7 @@ export const Route = createFileRoute('/_auth/settings')({
               <div className="space-y-4">
                 <div className="flex justify-center">
                   {mfaQrUrl && (
-                    <QRCode value={mfaQrUrl} size={200} />
+                    <QRCode.default value={mfaQrUrl} size={200} />
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">

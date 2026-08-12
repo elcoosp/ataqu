@@ -16,7 +16,7 @@ import { Key, Plus, Copy, Check } from 'lucide-react';
 export const Route = createFileRoute('/_auth/api-keys')({
   component: () => {
     const queryClient = useQueryClient();
-    const { toast } = toast();
+    
     const [openCreate, setOpenCreate] = useState(false);
     const [newKey, setNewKey] = useState<{ id: string; key: string } | null>(null);
 

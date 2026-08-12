@@ -1,6 +1,7 @@
 // apps/aegis/src/routes/_auth/roles.tsx
 
 
+import { CreateRoleDialog } from '../../components/create-role-dialog';
 import { createFileRoute } from '@tanstack/react-router';
 import { toast } from "sonner";
 import { Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ataqu/ui";
@@ -118,70 +119,3 @@ export const Route = createFileRoute('/_auth/roles')({
 });
 
 // Create role dialog
-function CreateRoleDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-  isPending,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { name: string; permissions: string[] }) => void;
-  isPending: boolean;
-}) {
-  const { register, handleSubmit, control, reset } = useForm<{ name: string; permissions: string[] }>({
-    defaultValues: { permissions: [] },
-  });
-  const { fields, append, remove } = useFieldArray<{ permissions: string[] }>({
-    control,
-    name: 'permissions' as const,
-  });
-
-  const handleClose = () => {
-    reset();
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle><Trans>Create Role</Trans></DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="name"><Trans>Name</Trans></Label>
-            <Input id="name" {...register('name', { required: true })} />
-          </div>
-          <div>
-            <Label><Trans>Permissions</Trans></Label>
-            <div className="space-y-2">
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-2">
-                  <Input
-                    {...register(`permissions.${index}`)}
-                    placeholder="e.g., users:read"
-                  />
-                  <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
-                    <Trans>Remove</Trans>
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => append('')}>
-                <Trans>Add Permission</Trans>
-              </Button>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={handleClose}>
-              <Trans>Cancel</Trans>
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? <Trans>Creating...</Trans> : <Trans>Create</Trans>}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
