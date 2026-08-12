@@ -25,7 +25,9 @@
     "@tanstack/react-router": "^1.170.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.2",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@ataqu/test-utils": "workspace:*",
