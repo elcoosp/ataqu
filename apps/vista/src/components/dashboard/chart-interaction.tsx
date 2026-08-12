@@ -29,6 +29,8 @@ export const withChartInteraction = (WrappedChart: React.FC<any>) => {
       }
     };
 
+    const dimension = props.xAxisKey || 'category';
+
     return (
       <button
         type="button"

@@ -1,5 +1,6 @@
 import { Button } from '@ataqu/ui';
-import { Trans, t } from '@lingui/react/macro';
+import { t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
 import { Download, X } from 'lucide-react';
 import React from 'react';
 import { useDrillDownStore } from '../../hooks/use-drill-down-store';

@@ -1,6 +1,7 @@
 import { api, useGetDashboard, useUpdateDashboard } from '@ataqu/api-client';
 import { Button, OnboardTour, Shell, Skeleton, toast } from '@ataqu/ui';
-import { Trans, t } from '@lingui/react/macro';
+import { t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useParams } from '@tanstack/react-router';
 import { ArrowLeft, Combine, Plus } from 'lucide-react';

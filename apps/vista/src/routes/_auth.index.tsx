@@ -1,6 +1,7 @@
 import { type Dashboard, useListDashboards } from '@ataqu/api-client';
 import { Button, Card, EmptyState, Shell } from '@ataqu/ui';
-import { Trans, t } from '@lingui/react/macro';
+import { t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { BarChart3, Plus } from 'lucide-react';
 import { useVistaActions } from '../actions';

@@ -64,6 +64,7 @@ declare module '@ataqu/api-client' {
   export const api: Api;
   export const useListDashboards: () => { data?: Dashboard[]; isLoading: boolean };
   export const useCreateDashboard: () => { mutateAsync: (data: any) => Promise<Dashboard> };
+  export const useUpdateDashboard: () => { mutateAsync: (data: any) => Promise<Dashboard> };
   export const useGetDashboard: (id: string) => { data?: Dashboard; isLoading: boolean };
   export const useGetKpis: () => { data?: any };
   export const useDrillDown: () => {

@@ -1,5 +1,6 @@
 import { Button } from '@ataqu/ui';
-import { Trans, t } from '@lingui/react/macro';
+import { t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
 import { X } from 'lucide-react';
 import React from 'react';
 

@@ -1,7 +1,8 @@
 import { api } from '@ataqu/api-client';
 import { useLocalStorage } from '@ataqu/shared-hooks';
 import { Button } from '@ataqu/ui';
-import { Trans, t } from '@lingui/react/macro';
+import { t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
 import { Download, Play } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
