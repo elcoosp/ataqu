@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Input, Skeleton } from '@ataqu/ui';
 import { Search } from 'lucide-react';
-import { Trans } from '@lingui/react/macro';
+import { Trans, t } from '@lingui/macro';
 import { listContacts, searchContacts } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
 import type { ContactResponse } from '@ataqu/api-client';
@@ -55,7 +55,7 @@ export function ContactTable() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={<Trans>Search contacts...</Trans>}
+            placeholder={t`Search contacts...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
