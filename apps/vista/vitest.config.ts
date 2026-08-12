@@ -1,10 +1,21 @@
-import { defineViteConfig } from '@ataqu/vite-preset';
 import { defineConfig } from 'vitest/config';
+import { defineViteConfig } from '@ataqu/vite-preset';
+import path from 'path';
+
+const baseConfig = defineViteConfig({ appName: 'vista' });
 
 export default defineConfig({
-  ...defineViteConfig({ appName: 'vista' }),
+  ...baseConfig,
   esbuild: {
     target: 'esnext',
+  },
+  resolve: {
+    ...baseConfig.resolve,
+    alias: {
+      ...(baseConfig.resolve?.alias as Record<string, string> | undefined),
+      '@lingui/react/macro': path.resolve(__dirname, 'src/lingui-mock.tsx'),
+      '@lingui/macro': path.resolve(__dirname, 'src/lingui-mock.tsx'),
+    }
   },
   test: {
     environment: 'jsdom',
