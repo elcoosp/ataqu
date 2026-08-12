@@ -18,3 +18,4 @@ export const Route = createRootRoute({
     </QueryClientProvider>
   ),
 });
+export const routeTree = Route;

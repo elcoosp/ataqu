@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useAuthStore } from '@ataqu/shared-stores';
+import { Shell } from '@ataqu/ui';
 import { useDialActions } from '@/actions';
 import { useDialWebSocket } from '@/hooks/use-dial-websocket';
 

@@ -1,9 +1,11 @@
 import { ChannelSummary } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
 import { t } from '@lingui/macro';
-import { Button, cn, Input, Skeleton, EmptyState } from '@ataqu/ui';
+import { Button, cn, Input, Skeleton } from '@ataqu/ui';
 import { useMemo, useState } from 'react';
 import { useDialStore } from '@/stores/dial-store';
+import { useListChannels } from '@ataqu/api-client';
+import { Link } from '@tanstack/react-router';
 
 export function ChannelList() {
   const { activeChannelId } = useDialStore();
