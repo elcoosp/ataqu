@@ -6,7 +6,7 @@ import { KpiCard } from './kpi-card';
 
 const InteractiveChart = withChartInteraction(Chart);
 
-interface Widget {
+export interface Widget {
   i: string;
   type: string;
   dataSource: string;
