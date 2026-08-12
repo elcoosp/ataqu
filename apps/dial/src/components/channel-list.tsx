@@ -19,9 +19,9 @@ export function ChannelList() {
     return channels.filter((c) => c.name.toLowerCase().includes(debouncedSearch.toLowerCase()));
   }, [channels, debouncedSearch]);
 
-  const publicChannels = filteredChannels.filter((c) => c.type === 'public');
-  const privateChannels = filteredChannels.filter((c) => c.type === 'private');
-  const dmChannels = filteredChannels.filter((c) => c.type === 'direct_message');
+  const publicChannels = filteredChannels.filter((c) => (c as any).type === 'public');
+  const privateChannels = filteredChannels.filter((c) => (c as any).type === 'private');
+  const dmChannels = filteredChannels.filter((c) => (c as any).type === 'direct_message');
 
   const handleCreateChannel = () => {
     window.dispatchEvent(new CustomEvent('openCreateChannelDialog'));
@@ -53,8 +53,8 @@ export function ChannelList() {
   const renderChannel = (channel: ChannelSummary) => {
     const isActive = activeChannelId === channel.id;
     let icon = <Hash className="h-4 w-4" />;
-    if (channel.type === 'private') icon = <Lock className="h-4 w-4" />;
-    if (channel.type === 'direct_message') icon = <Users className="h-4 w-4" />;
+    if ((channel as any).type === 'private') icon = <Lock className="h-4 w-4" />;
+    if ((channel as any).type === 'direct_message') icon = <Users className="h-4 w-4" />;
 
     return (
       <Link
@@ -69,9 +69,9 @@ export function ChannelList() {
       >
         <span className="mr-2">{icon}</span>
         <span className="flex-1 truncate text-sm font-medium">{channel.name}</span>
-        {(channel.unread_count ?? 0) > 0 && (
+        {((channel as any).unread_count ?? 0) > 0 && (
           <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-            {channel.unread_count}
+            {(channel as any).unread_count}
           </span>
         )}
       </Link>

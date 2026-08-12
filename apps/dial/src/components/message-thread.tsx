@@ -38,7 +38,10 @@ export function MessageThread({ channelId }: MessageThreadProps) {
   const addReactionMutation = useAddReaction();
 
   const handleReactionToggle = (messageId: string, emoji: string) => {
-    addReactionMutation.mutate({ messageId, data: { emoji } });
+    addReactionMutation.mutate({
+      messageId,
+      data: { emoji },
+    });
   };
 
   if (isLoading) {
@@ -66,9 +69,6 @@ export function MessageThread({ channelId }: MessageThreadProps) {
           {virtualizer.getVirtualItems().map((virtualRow) => {
             const message = allMessages[virtualRow.index];
             if (!message) return null;
-            const message = allMessages[virtualRow.index];
-            if (!message) return null;
-            const message = allMessages[virtualRow.index];
             const isOwn = message.author_id === 'current-user-id'; // TODO: get from auth
             return (
               <div
@@ -113,7 +113,6 @@ export function MessageThread({ channelId }: MessageThreadProps) {
                       size="icon"
                       className="h-6 w-6"
                       onClick={() => {
-                        // Open thread sidebar with this message as parent
                         window.dispatchEvent(
                           new CustomEvent('openThread', { detail: { messageId: message.id } })
                         );
