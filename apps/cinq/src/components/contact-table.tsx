@@ -1,25 +1,44 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Input, Skeleton } from '@ataqu/ui';
+import { Input, DataTable, Skeleton } from '@ataqu/ui';
 import { Search } from 'lucide-react';
 import { Trans } from '@lingui/react/macro';
 import { useListContacts, useSearchContacts } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
+import type { ContactResponse } from '@ataqu/api-client';
 
 export function ContactTable() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
 
-  // For list, we use a simple query without extra options to avoid queryKey errors
   const { data: allData, isLoading: allLoading } = useListContacts({ limit: 1000 });
   const { data: searchData, isLoading: searchLoading } = useSearchContacts(
-    { q: debouncedSearch, limit: 50 }
+    { q: debouncedSearch, limit: 50 },
+    { enabled: debouncedSearch.length > 0 }
   );
 
-  // Only use the search data if there's a search term
   const contacts = debouncedSearch.length > 0 ? (searchData || []) : (allData || []);
   const isLoading = debouncedSearch.length > 0 ? searchLoading : allLoading;
+
+  const columns = useMemo(
+    () => [
+      { accessorKey: 'name', header: 'Name' },
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'phone', header: 'Phone' },
+      { accessorKey: 'company', header: 'Company' },
+      {
+        accessorKey: 'custom_fields',
+        header: 'Custom',
+        cell: ({ row }: { row: { original: ContactResponse } }) => {
+          const fields = row.original.custom_fields || {};
+          const entries = Object.entries(fields).slice(0, 2);
+          return <span>{entries.map(([k, v]) => `${k}: ${v}`).join(', ')}</span>;
+        },
+      },
+    ],
+    []
+  );
 
   if (isLoading) {
     return <Skeleton className="h-64 w-full" />;
@@ -39,42 +58,16 @@ export function ContactTable() {
         </div>
       </div>
 
-      {contacts.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
-          <Trans>No contacts yet. Create one to get started.</Trans>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-gray-700">
-              <tr>
-                <th className="text-left py-2 px-3">Name</th>
-                <th className="text-left py-2 px-3">Email</th>
-                <th className="text-left py-2 px-3">Phone</th>
-                <th className="text-left py-2 px-3">Company</th>
-                <th className="text-left py-2 px-3">Custom</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((contact) => (
-                <tr
-                  key={contact.id}
-                  className="border-b border-gray-700/50 hover:bg-white/5 cursor-pointer"
-                  onClick={() => navigate({ to: `/contacts/${contact.id}` })}
-                >
-                  <td className="py-2 px-3">{contact.name}</td>
-                  <td className="py-2 px-3">{contact.email}</td>
-                  <td className="py-2 px-3">{contact.phone}</td>
-                  <td className="py-2 px-3">{contact.company}</td>
-                  <td className="py-2 px-3">
-                    {Object.entries(contact.custom_fields || {}).slice(0, 2).map(([k, v]) => `${k}: ${v}`).join(', ')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={contacts}
+        onRowClick={(row) => navigate({ to: `/contacts/${row.id}` })}
+        emptyState={
+          <div className="text-center py-8 text-gray-400">
+            <Trans>No contacts yet. Create one to get started.</Trans>
+          </div>
+        }
+      />
     </div>
   );
 }

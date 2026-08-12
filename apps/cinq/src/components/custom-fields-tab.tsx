@@ -5,7 +5,7 @@ import { Trans } from '@lingui/react/macro';
 import type { ContactResponse } from '@ataqu/api-client';
 
 export function CustomFieldsTab({ contact }: { contact: ContactResponse }) {
-  const [fields, setFields] = useState(contact.custom_fields || {});
+  const [fields, setFields] = useState<Record<string, any>>(contact.custom_fields || {});
   const updateContact = useUpdateContact();
 
   const handleChange = (key: string, value: string) => {

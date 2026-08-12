@@ -41,7 +41,7 @@ function DealDetail() {
           <ActivityTimeline dealId={id} />
         </TabsContent>
         <TabsContent value="tasks">
-          <TaskList dealId={id} />
+          <TaskList />
         </TabsContent>
         <TabsContent value="tracking">
           <EmailTrackingTab contactId={deal.contact_id} />

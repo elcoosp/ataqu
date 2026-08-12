@@ -2,13 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { useListTasks, useUpdateTask } from '@ataqu/api-client';
-import type { UUID } from '@ataqu/types';
+import type { TaskResponse } from '@ataqu/api-client';
 
-export function TaskList({ dealId }: { dealId?: UUID }) {
+export function TaskList() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useListTasks({ limit: 100 });
-
-  // useListTasks returns TaskResponse[] directly
   const tasks = data || [];
 
   const updateTask = useUpdateTask();
@@ -20,7 +18,7 @@ export function TaskList({ dealId }: { dealId?: UUID }) {
       {tasks.length === 0 ? (
         <p className="text-muted-foreground"><Trans>No tasks</Trans></p>
       ) : (
-        tasks.map((task) => (
+        tasks.map((task: TaskResponse) => (
           <div key={task.id} className="flex items-center gap-4 p-2 border-b">
             <input
               type="checkbox"

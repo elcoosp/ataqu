@@ -1,15 +1,18 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Card, CardContent, Skeleton } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { useListActivities } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
+import type { ActivityResponse } from '@ataqu/api-client';
 
 export function ActivityTimeline({ dealId }: { dealId: UUID }) {
-  // useListActivities doesn't support deal_id filtering directly,
-  // so we fetch all and filter client-side
   const { data, isLoading } = useListActivities({ limit: 50 });
-  const activities = (data || []).filter((a) => a.deal_id === dealId);
+  const activities = useMemo(
+    () => (data || []).filter((a) => a.deal_id === dealId),
+    [data, dealId]
+  );
 
   if (isLoading) {
     return <Skeleton className="h-32 w-full" />;
@@ -20,7 +23,7 @@ export function ActivityTimeline({ dealId }: { dealId: UUID }) {
       {activities.length === 0 ? (
         <p className="text-muted-foreground"><Trans>No activities yet</Trans></p>
       ) : (
-        activities.map((a) => (
+        activities.map((a: ActivityResponse) => (
           <Card key={a.id}>
             <CardContent className="p-4">
               <div className="flex justify-between">

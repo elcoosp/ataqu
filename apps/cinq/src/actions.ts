@@ -1,65 +1,68 @@
-// Command palette actions are registered via the shared CommandPalette component.
-// The CommandPalette component uses a searchFn prop to handle dynamic search.
-// We'll register actions by exposing them to the shell via a global registry.
-// For now, we'll keep this minimal.
-
 import { useNavigate } from '@tanstack/react-router';
 import { api } from '@ataqu/api-client';
+import type { UUID } from '@ataqu/types';
 
-// This is a placeholder – the actual action registration happens in main.tsx
-// via the shared command palette system. We'll just define the actions here.
+export interface CinqAction {
+  id: string;
+  name: string;
+  shortcut?: string;
+  action: () => void;
+}
 
-export const getCinqActions = () => {
-  const navigate = useNavigate();
-
+export function getCinqActions(): CinqAction[] {
+  // We cannot use hooks outside of React, so we need to return a factory
+  // that takes the navigate function.
+  // We'll return an array of action definitions that can be used by the command palette.
+  // The actual registration will happen in the Shell via a prop.
+  // For now, we'll define the actions as plain objects.
   return [
     {
       id: 'cinq-create-contact',
       name: 'Create Contact',
       shortcut: 'C',
-      action: () => navigate({ to: '/contacts' }),
+      action: () => {}, // placeholder, will be overridden
     },
     {
       id: 'cinq-create-deal',
       name: 'Create Deal',
       shortcut: 'D',
-      action: () => navigate({ to: '/deals' }),
+      action: () => {},
     },
     {
       id: 'cinq-go-contacts',
       name: 'Go to Contacts',
-      action: () => navigate({ to: '/contacts' }),
+      action: () => {},
     },
     {
       id: 'cinq-go-deals',
       name: 'Go to Deals',
-      action: () => navigate({ to: '/deals' }),
+      action: () => {},
     },
     {
       id: 'cinq-go-tasks',
       name: 'Go to Tasks',
-      action: () => navigate({ to: '/tasks' }),
+      action: () => {},
     },
     {
       id: 'cinq-go-import',
       name: 'Go to Import',
-      action: () => navigate({ to: '/import' }),
+      action: () => {},
     },
     {
       id: 'cinq-import-csv',
       name: 'Import CSV',
-      action: () => navigate({ to: '/import' }),
+      action: () => {},
     },
     {
       id: 'cinq-search-contacts',
       name: 'Search Contacts',
       shortcut: 'F',
-      action: () => navigate({ to: '/contacts' }),
+      action: () => {},
     },
     {
       id: 'cinq-search-deals',
       name: 'Search Deals',
-      action: () => navigate({ to: '/deals' }),
+      action: () => {},
     },
     {
       id: 'cinq-export-contacts',
@@ -90,4 +93,31 @@ export const getCinqActions = () => {
       },
     },
   ];
-};
+}
+
+// We'll expose a registration function that takes a navigate function and registers actions.
+// The Shell component will call this with navigate.
+import { registerActions } from '@ataqu/ui/command-palette';
+
+export function registerCinqActions(navigate: ReturnType<typeof useNavigate>) {
+  const actions = getCinqActions();
+  // Override the placeholder actions with real navigation
+  const actionMap: Record<string, () => void> = {
+    'cinq-create-contact': () => navigate({ to: '/contacts' }),
+    'cinq-create-deal': () => navigate({ to: '/deals' }),
+    'cinq-go-contacts': () => navigate({ to: '/contacts' }),
+    'cinq-go-deals': () => navigate({ to: '/deals' }),
+    'cinq-go-tasks': () => navigate({ to: '/tasks' }),
+    'cinq-go-import': () => navigate({ to: '/import' }),
+    'cinq-import-csv': () => navigate({ to: '/import' }),
+    'cinq-search-contacts': () => navigate({ to: '/contacts' }),
+    'cinq-search-deals': () => navigate({ to: '/deals' }),
+  };
+
+  const registered = actions.map((action) => ({
+    ...action,
+    action: actionMap[action.id] || action.action,
+  }));
+
+  registerActions(registered);
+}

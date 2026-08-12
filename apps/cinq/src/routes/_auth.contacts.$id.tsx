@@ -35,7 +35,7 @@ function ContactDetail() {
           <ActivityTimeline dealId={id} />
         </TabsContent>
         <TabsContent value="tasks">
-          <TaskList dealId={id} />
+          <TaskList />
         </TabsContent>
         <TabsContent value="customFields">
           <CustomFieldsTab contact={contact} />
