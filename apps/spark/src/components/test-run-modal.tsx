@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Trans } from '@lingui/react/macro';
 import { Button, Label } from '@ataqu/ui';
 import { Play, X, CheckCircle2, XCircle } from 'lucide-react';
-import { useExecuteWorkflow } from '../api/spark-api';
 import { toast } from 'sonner';
+import { useExecuteWorkflow } from '../api/spark-api';
 
 interface TestRunModalProps {
   workflowId: string;
@@ -23,16 +23,16 @@ export function TestRunModal({ workflowId, onClose }: TestRunModalProps) {
         { id: workflowId, data: { payload: parsed } },
         {
           onSuccess: () => {
-            toast.success('Test run completed.');
+            toast.success(String(<Trans>Test run completed.</Trans>));
             onClose();
           },
-          onError: (err) => {
-            toast.error('Test run failed.');
+          onError: () => {
+            toast.error(String(<Trans>Test run failed.</Trans>));
           },
         }
       );
     } catch {
-      setJsonError('Invalid JSON');
+      setJsonError(String(<Trans>Invalid JSON</Trans>));
     }
   };
 

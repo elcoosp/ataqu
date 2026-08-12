@@ -16,50 +16,60 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-// ---- Custom node renderers ----
-function TriggerNode({ data }: { data: Record<string, unknown> }) {
+export interface SparkNodeData {
+  label: string;
+  subtype: string;
+  category: 'trigger' | 'action' | 'condition';
+  description?: string;
+  config?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export type SparkNode = Node<SparkNodeData>;
+
+function TriggerNode({ data }: { data: SparkNodeData }) {
   return (
     <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-green-500 min-w-[200px] shadow-md">
       <Handle type="source" position={Position.Bottom} className="!bg-green-500 !w-3 !h-3" />
       <div className="text-xs font-semibold text-green-500 uppercase tracking-wider mb-1">
-        {String(data.subtype || 'Trigger')}
+        {data.subtype}
       </div>
-      <div className="font-medium text-foreground text-sm">{String(data.label || 'Trigger')}</div>
+      <div className="font-medium text-foreground text-sm">{data.label}</div>
       {data.description && (
-        <div className="text-xs text-muted-foreground mt-1">{String(data.description)}</div>
+        <div className="text-xs text-muted-foreground mt-1">{data.description}</div>
       )}
     </div>
   );
 }
 
-function ActionNode({ data }: { data: Record<string, unknown> }) {
+function ActionNode({ data }: { data: SparkNodeData }) {
   return (
     <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-blue-500 min-w-[200px] shadow-md">
       <Handle type="target" position={Position.Top} className="!bg-blue-500 !w-3 !h-3" />
       <Handle type="source" position={Position.Bottom} className="!bg-blue-500 !w-3 !h-3" />
       <div className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">
-        {String(data.subtype || 'Action')}
+        {data.subtype}
       </div>
-      <div className="font-medium text-foreground text-sm">{String(data.label || 'Action')}</div>
+      <div className="font-medium text-foreground text-sm">{data.label}</div>
       {data.description && (
-        <div className="text-xs text-muted-foreground mt-1">{String(data.description)}</div>
+        <div className="text-xs text-muted-foreground mt-1">{data.description}</div>
       )}
     </div>
   );
 }
 
-function ConditionNode({ data }: { data: Record<string, unknown> }) {
+function ConditionNode({ data }: { data: SparkNodeData }) {
   return (
     <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-amber-500 min-w-[200px] shadow-md">
       <Handle type="target" position={Position.Top} className="!bg-amber-500 !w-3 !h-3" />
       <Handle type="source" position={Position.Bottom} className="!bg-amber-500 !w-3 !h-3" id="true" style={{ left: '30%' }} />
       <Handle type="source" position={Position.Bottom} className="!bg-red-500 !w-3 !h-3" id="false" style={{ left: '70%' }} />
       <div className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-1">
-        {String(data.subtype || 'Condition')}
+        {data.subtype}
       </div>
-      <div className="font-medium text-foreground text-sm">{String(data.label || 'Condition')}</div>
+      <div className="font-medium text-foreground text-sm">{data.label}</div>
       {data.description && (
-        <div className="text-xs text-muted-foreground mt-1">{String(data.description)}</div>
+        <div className="text-xs text-muted-foreground mt-1">{data.description}</div>
       )}
       <div className="flex gap-4 mt-2 text-xs">
         <span className="text-green-500">✓ True</span>
@@ -76,11 +86,11 @@ const nodeTypes: NodeTypes = {
 };
 
 interface WorkflowCanvasProps {
-  initialNodes?: Node[];
+  initialNodes?: SparkNode[];
   initialEdges?: Edge[];
-  onNodesChange?: (nodes: Node[]) => void;
+  onNodesChange?: (nodes: SparkNode[]) => void;
   onEdgesChange?: (edges: Edge[]) => void;
-  onNodeSelect?: (node: Node | null) => void;
+  onNodeSelect?: (node: SparkNode | null) => void;
 }
 
 export function WorkflowCanvas({
@@ -119,14 +129,14 @@ export function WorkflowCanvas({
         y: event.clientY - bounds.top - 20,
       };
 
-      const newNode: Node = {
+      const newNode: SparkNode = {
         id: crypto.randomUUID(),
         type: nodeDef.category,
         position,
         data: {
           label: nodeDef.label,
           subtype: nodeDef.id,
-          category: nodeDef.category,
+          category: nodeDef.category as 'trigger' | 'action' | 'condition',
           config: {},
         },
       };
@@ -164,7 +174,7 @@ export function WorkflowCanvas({
           if (onEdgesChange) setTimeout(() => onEdgesChange(edges), 0);
         }}
         onConnect={handleConnect}
-        onNodeClick={(_evt, node) => onNodeSelect?.(node)}
+        onNodeClick={(_evt, node) => onNodeSelect?.(node as SparkNode)}
         onPaneClick={() => onNodeSelect?.(null)}
         nodeTypes={nodeTypes}
         fitView

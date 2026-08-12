@@ -11,9 +11,6 @@ import type {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 
-// ============================================================================
-// Paginated response shape (matches backend PaginatedResponse<T>)
-// ============================================================================
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -21,9 +18,6 @@ export interface PaginatedResponse<T> {
   offset: number;
 }
 
-// ============================================================================
-// DLQ types (backend-managed, frontend consumes)
-// ============================================================================
 export interface DLQEntry {
   id: UUID;
   event_type: string;
@@ -31,14 +25,9 @@ export interface DLQEntry {
   error: string;
   attempts: number;
   created_at: string;
-  schema: string;
 }
 
-// ============================================================================
-// Raw API functions — uses the shared api client from @ataqu/api-client
-// ============================================================================
-
-// ---- Workflows CRUD ----
+// ---- Raw API functions ----
 export const listWorkflows = (params?: WorkflowListParams) =>
   api.get<PaginatedResponse<Workflow>>('/workflows', { params });
 
@@ -56,11 +45,9 @@ export const updateWorkflow = (id: UUID, data: UpdateWorkflowRequest, version: n
 export const deleteWorkflow = (id: UUID) =>
   api.delete<void>(`/workflows/${id}`);
 
-// ---- Workflow execution ----
 export const executeWorkflow = (id: UUID, data: TriggerWorkflowRequest) =>
   api.post<void>(`/workflows/${id}/execute`, data);
 
-// ---- Workflow runs ----
 export const listWorkflowRuns = (params?: { limit?: number; offset?: number; workflow_id?: UUID }) =>
   api.get<PaginatedResponse<WorkflowRun>>('/workflows/runs', { params });
 
@@ -70,7 +57,6 @@ export const getWorkflowRun = (runId: UUID) =>
 export const approveWorkflowRun = (runId: UUID) =>
   api.post<void>(`/workflows/runs/${runId}/approve`);
 
-// ---- DLQ ----
 export const listDLQ = (params?: { limit?: number; offset?: number }) =>
   api.get<PaginatedResponse<DLQEntry>>('/dlq', { params });
 
@@ -80,11 +66,8 @@ export const replayDLQ = (id: UUID) =>
 export const deleteDLQ = (id: UUID) =>
   api.delete<void>(`/dlq/${id}`);
 
-// ============================================================================
-// React Query hooks
-// ============================================================================
+// ---- React Query hooks ----
 
-// ---- Workflow queries ----
 export const useListWorkflows = (
   params?: WorkflowListParams,
   options?: UseQueryOptions<PaginatedResponse<Workflow>>
@@ -106,7 +89,6 @@ export const useGetWorkflow = (
     ...options,
   });
 
-// ---- Workflow mutations ----
 export const useCreateWorkflow = (
   options?: UseMutationOptions<Workflow, Error, CreateWorkflowRequest>
 ) => {
@@ -150,12 +132,16 @@ export const useDeleteWorkflow = (
   });
 };
 
+interface ToggleContext {
+  previous: PaginatedResponse<Workflow> | undefined;
+}
+
 export const useToggleWorkflow = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, is_active, version }: { id: UUID; is_active: boolean; version: number }) =>
       updateWorkflow(id, { is_active }, version),
-    onMutate: async ({ id, is_active }) => {
+    onMutate: async ({ id, is_active }): Promise<ToggleContext> => {
       await qc.cancelQueries({ queryKey: ['spark', 'workflows'] });
       const previous = qc.getQueryData<PaginatedResponse<Workflow>>(['spark', 'workflows']);
       qc.setQueryData<PaginatedResponse<Workflow>>(['spark', 'workflows'], (old) => {
@@ -169,7 +155,7 @@ export const useToggleWorkflow = () => {
       });
       return { previous };
     },
-    onError: (_err, _vars, ctx) => {
+    onError: (_err: Error, _vars: { id: UUID; is_active: boolean; version: number }, ctx: ToggleContext | undefined) => {
       if (ctx?.previous) {
         qc.setQueryData(['spark', 'workflows'], ctx.previous);
       }
@@ -180,7 +166,6 @@ export const useToggleWorkflow = () => {
   });
 };
 
-// ---- Execution ----
 export const useExecuteWorkflow = (
   options?: UseMutationOptions<void, Error, { id: UUID; data: TriggerWorkflowRequest }>
 ) =>
@@ -189,7 +174,6 @@ export const useExecuteWorkflow = (
     ...options,
   });
 
-// ---- Runs ----
 export const useListWorkflowRuns = (
   params?: { limit?: number; offset?: number; workflow_id?: UUID },
   options?: UseQueryOptions<PaginatedResponse<WorkflowRun>>
@@ -214,7 +198,6 @@ export const useApproveWorkflowRun = (
   });
 };
 
-// ---- DLQ ----
 export const useListDLQ = (
   params?: { limit?: number; offset?: number },
   options?: UseQueryOptions<PaginatedResponse<DLQEntry>>
@@ -232,21 +215,7 @@ export const useReplayDLQ = (
   const qc = useQueryClient();
   return useMutation({
     mutationFn: replayDLQ,
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: ['spark', 'dlq'] });
-      const previous = qc.getQueryData<PaginatedResponse<DLQEntry>>(['spark', 'dlq']);
-      qc.setQueryData<PaginatedResponse<DLQEntry>>(['spark', 'dlq'], (old) => {
-        if (!old) return old;
-        return { ...old, items: old.items.filter((e) => e.id !== id) };
-      });
-      return { previous };
-    },
-    onError: (_err, _id, ctx) => {
-      if (ctx?.previous) {
-        qc.setQueryData(['spark', 'dlq'], ctx.previous);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['spark', 'dlq'] });
     },
     ...options,
@@ -259,21 +228,7 @@ export const useDeleteDLQ = (
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteDLQ,
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: ['spark', 'dlq'] });
-      const previous = qc.getQueryData<PaginatedResponse<DLQEntry>>(['spark', 'dlq']);
-      qc.setQueryData<PaginatedResponse<DLQEntry>>(['spark', 'dlq'], (old) => {
-        if (!old) return old;
-        return { ...old, items: old.items.filter((e) => e.id !== id) };
-      });
-      return { previous };
-    },
-    onError: (_err, _id, ctx) => {
-      if (ctx?.previous) {
-        qc.setQueryData(['spark', 'dlq'], ctx.previous);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['spark', 'dlq'] });
     },
     ...options,

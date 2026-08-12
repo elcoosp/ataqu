@@ -1,26 +1,25 @@
 import { Trans } from '@lingui/react/macro';
 import { Link } from '@tanstack/react-router';
-import { Switch } from '@ataqu/ui';
-import { Zap, Play, Copy, Trash2 } from 'lucide-react';
+import { Zap, Play } from 'lucide-react';
 import { Button } from '@ataqu/ui';
+import { toast } from 'sonner';
 import type { Workflow } from '@ataqu/api-client';
 import { useToggleWorkflow, useDeleteWorkflow } from '../api/spark-api';
 import { EmptyState } from './empty-state';
-import { toast } from 'sonner';
+import { Switch } from './ui-switch';
 
 interface WorkflowListProps {
   workflows: Workflow[];
 }
 
-const TRIGGER_LABELS: Record<string, string> = {
-  webhook: 'Webhook',
-  schedule: 'Schedule',
-  event: 'Outbox Event',
+const TRIGGER_LABELS: Record<string, React.ReactNode> = {
+  webhook: <Trans>Webhook</Trans>,
+  schedule: <Trans>Schedule</Trans>,
+  event: <Trans>Outbox Event</Trans>,
 };
 
 export function WorkflowList({ workflows }: WorkflowListProps) {
   const toggleMutation = useToggleWorkflow();
-  const deleteMutation = useDeleteWorkflow();
 
   if (workflows.length === 0) {
     return (
@@ -68,7 +67,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 
           <div className="flex items-center gap-3 ml-4">
             <Link to="/workflows/$id" params={{ id: wf.id }}>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit workflow">
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={String(<Trans>Edit workflow</Trans>)}>
                 <Play className="h-4 w-4" />
               </Button>
             </Link>
@@ -77,24 +76,24 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
             </span>
             <Switch
               checked={wf.is_active}
-              onCheckedChange={(checked) =>
+              onCheckedChange={(checked: boolean) =>
                 toggleMutation.mutate(
                   { id: wf.id, is_active: checked, version: wf.version },
                   {
                     onSuccess: () => {
                       toast.success(
                         checked
-                          ? 'Workflow enabled.'
-                          : 'Workflow disabled.'
+                          ? String(<Trans>Workflow enabled.</Trans>)
+                          : String(<Trans>Workflow disabled.</Trans>)
                       );
                     },
                     onError: () => {
-                      toast.error('Failed to toggle workflow.');
+                      toast.error(String(<Trans>Failed to toggle workflow.</Trans>));
                     },
                   }
                 )
               }
-              aria-label={wf.is_active ? 'Disable workflow' : 'Enable workflow'}
+              aria-label={wf.is_active ? String(<Trans>Disable workflow</Trans>) : String(<Trans>Enable workflow</Trans>)}
             />
           </div>
         </div>

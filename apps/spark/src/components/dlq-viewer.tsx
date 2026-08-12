@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Trans } from '@lingui/react/macro';
 import { AlertTriangle, RotateCcw, Trash2 } from 'lucide-react';
 import { Button, Skeleton } from '@ataqu/ui';
+import { toast } from 'sonner';
 import type { DLQEntry } from '../api/spark-api';
 import { useReplayDLQ, useDeleteDLQ } from '../api/spark-api';
 import { EmptyState } from './empty-state';
-import { toast } from 'sonner';
 
 interface DLQViewerProps {
   entries: DLQEntry[];
@@ -79,8 +79,8 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
                 variant="outline"
                 onClick={() =>
                   replayMutation.mutate(entry.id, {
-                    onSuccess: () => toast.success('Event replayed.'),
-                    onError: () => toast.error('Failed to replay event.'),
+                    onSuccess: () => toast.success(String(<Trans>Event replayed.</Trans>)),
+                    onError: () => toast.error(String(<Trans>Failed to replay event.</Trans>)),
                   })
                 }
                 disabled={replayMutation.isPending}
@@ -97,10 +97,10 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
                     onClick={() => {
                       deleteMutation.mutate(entry.id, {
                         onSuccess: () => {
-                          toast.success('DLQ entry deleted.');
+                          toast.success(String(<Trans>DLQ entry deleted.</Trans>));
                           setConfirmId(null);
                         },
-                        onError: () => toast.error('Failed to delete entry.'),
+                        onError: () => toast.error(String(<Trans>Failed to delete entry.</Trans>)),
                       });
                     }}
                   >

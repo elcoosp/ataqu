@@ -28,7 +28,8 @@
     "zustand": "^4.5.2",
     "@xyflow/react": "^12.11.2",
     "lucide-react": "^0.460.0",
-    "croner": "^9.0.0"
+    "croner": "^9.0.0",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@ataqu/test-utils": "workspace:*",

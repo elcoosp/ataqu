@@ -1,10 +1,10 @@
 import { Trans } from '@lingui/react/macro';
 import { History, ChevronRight } from 'lucide-react';
 import { Button, Skeleton } from '@ataqu/ui';
+import { toast } from 'sonner';
 import type { WorkflowRun } from '@ataqu/api-client';
 import { useApproveWorkflowRun } from '../api/spark-api';
 import { EmptyState } from './empty-state';
-import { toast } from 'sonner';
 
 interface ExecutionHistoryProps {
   runs: WorkflowRun[];
@@ -87,8 +87,8 @@ export function ExecutionHistory({ runs, isLoading, onSelectRun }: ExecutionHist
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   approveMutation.mutate(run.id, {
-                    onSuccess: () => toast.success('Run approved.'),
-                    onError: () => toast.error('Failed to approve run.'),
+                    onSuccess: () => toast.success(String(<Trans>Run approved.</Trans>)),
+                    onError: () => toast.error(String(<Trans>Failed to approve run.</Trans>)),
                   });
                 }}
               >

@@ -1,19 +1,18 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Trans } from '@lingui/react/macro';
 import { Play, Save, Trash2, ArrowLeft } from 'lucide-react';
-import { Button, Input, Label, OnboardTour } from '@ataqu/ui';
-import type { Node, Edge } from '@xyflow/react';
+import { Button, Input, OnboardTour } from '@ataqu/ui';
 import { toast } from 'sonner';
-import type { Workflow, CreateWorkflowRequest } from '@ataqu/api-client';
+import type { Edge } from '@xyflow/react';
+import type { Workflow, CreateWorkflowRequest, Trigger, Action, Condition } from '@ataqu/api-client';
 import {
   useGetWorkflow,
   useCreateWorkflow,
   useUpdateWorkflow,
   useDeleteWorkflow,
-  useExecuteWorkflow,
 } from '../api/spark-api';
-import { WorkflowCanvas } from '../components/workflow-canvas';
+import { WorkflowCanvas, type SparkNode } from '../components/workflow-canvas';
 import { NodeSidebar } from '../components/node-sidebar';
 import { NodeConfigPanel } from '../components/node-config-panel';
 import { TestRunModal } from '../components/test-run-modal';
@@ -35,6 +34,166 @@ const TOUR_STEPS = [
   },
 ];
 
+// ---- Deserialize backend workflow into React Flow nodes ----
+function workflowToNodes(wf: Workflow): SparkNode[] {
+  const nodes: SparkNode[] = [];
+  let yPos = 0;
+
+  // Trigger node
+  const triggerLabel = wf.trigger.type === 'event'
+    ? wf.trigger.event_type
+    : wf.trigger.type === 'schedule'
+      ? wf.trigger.cron
+      : 'Webhook';
+
+  nodes.push({
+    id: 'trigger-0',
+    type: 'trigger',
+    position: { x: 250, y: yPos },
+    data: {
+      label: triggerLabel,
+      subtype: wf.trigger.type,
+      category: 'trigger',
+      config: wf.trigger as Record<string, unknown>,
+    },
+  });
+  yPos += 120;
+
+  // Condition nodes
+  wf.conditions.forEach((cond, i) => {
+    nodes.push({
+      id: `condition-${i}`,
+      type: 'condition',
+      position: { x: 250, y: yPos },
+      data: {
+        label: cond.type,
+        subtype: cond.type,
+        category: 'condition',
+        config: cond as unknown as Record<string, unknown>,
+      },
+    });
+    yPos += 120;
+  });
+
+  // Action nodes
+  wf.actions.forEach((action, i) => {
+    nodes.push({
+      id: `action-${i}`,
+      type: 'action',
+      position: { x: 250, y: yPos },
+      data: {
+        label: action.type,
+        subtype: action.type,
+        category: 'action',
+        config: action as unknown as Record<string, unknown>,
+      },
+    });
+    yPos += 120;
+  });
+
+  return nodes;
+}
+
+function workflowToEdges(wf: Workflow): Edge[] {
+  const edges: Edge[] = [];
+  const totalNodes = 1 + wf.conditions.length + wf.actions.length;
+  for (let i = 0; i < totalNodes - 1; i++) {
+    const sourceId = i === 0 ? 'trigger-0' : i <= wf.conditions.length ? `condition-${i - 1}` : `action-${i - 1 - wf.conditions.length}`;
+    const targetId = i < wf.conditions.length ? `condition-${i}` : `action-${i - wf.conditions.length}`;
+    edges.push({
+      id: `edge-${i}`,
+      source: sourceId,
+      target: targetId,
+      animated: true,
+      style: { stroke: '#F59E0B', strokeWidth: 2 },
+    });
+  }
+  return edges;
+}
+
+// ---- Serialize React Flow nodes into backend request ----
+function nodesToWorkflowRequest(nodes: SparkNode[], name: string): Partial<CreateWorkflowRequest> {
+  const triggerNode = nodes.find((n) => n.type === 'trigger');
+  const actionNodes = nodes.filter((n) => n.type === 'action');
+  const conditionNodes = nodes.filter((n) => n.type === 'condition');
+
+  const triggerConfig = (triggerNode?.data?.config || {}) as Record<string, unknown>;
+  const triggerSubtype = triggerNode?.data?.subtype || 'event';
+
+  let trigger: Trigger = { type: 'event', event_type: 'cinq.deal.won' };
+  if (triggerSubtype === 'schedule') {
+    trigger = { type: 'schedule', cron: String(triggerConfig.cron || '0 9 * * *') };
+  } else if (triggerSubtype === 'webhook') {
+    trigger = { type: 'webhook', path: String(triggerConfig.path || '/webhooks/default') };
+  } else {
+    trigger = { type: 'event', event_type: String(triggerConfig.event_type || 'cinq.deal.won') };
+  }
+
+  const actions: Action[] = actionNodes.map((n) => {
+    const config = (n.data?.config || {}) as Record<string, unknown>;
+    const subtype = n.data?.subtype || 'send_email';
+    const params = (config.params || config) as Record<string, unknown>;
+
+    switch (subtype) {
+      case 'create_dial_channel':
+        return { type: 'create_dial_channel', name: String(params.name || ''), channel_type: String(params.channel_type || 'public'), participants: (params.participants as string[]) || [] };
+      case 'send_dial_message':
+        return { type: 'send_dial_message', channel_id: String(params.channel_id || ''), content: String(params.content || '') };
+      case 'reserve_vault_stock':
+        return { type: 'reserve_vault_stock', variant_id: String(params.variant_id || ''), quantity: Number(params.quantity || 1) };
+      case 'adjust_vault_stock':
+        return { type: 'adjust_vault_stock', variant_id: String(params.variant_id || ''), delta: Number(params.delta || 0), reason: String(params.reason || '') };
+      case 'create_cinq_contact':
+        return { type: 'create_cinq_contact', name: String(params.name || ''), email: String(params.email || ''), phone: params.phone as string | undefined };
+      case 'create_cinq_activity':
+        return { type: 'create_cinq_activity', contact_id: String(params.contact_id || ''), activity_type: String(params.activity_type || 'note'), description: String(params.description || '') };
+      case 'create_cinq_lead':
+        return { type: 'create_cinq_lead', name: String(params.name || ''), email: String(params.email || ''), source: String(params.source || '') };
+      case 'request_approval':
+        return { type: 'request_approval', approver_role: String(params.approver_role || 'admin') };
+      case 'send_email':
+        return { type: 'send_email', to: String(params.to || ''), subject: String(params.subject || ''), body: String(params.body || '') };
+      case 'webhook_action':
+        return { type: 'webhook', url: String(params.url || ''), method: String(params.method || 'POST'), body: params.body || {}, headers: (params.headers as Record<string, string>) || {} };
+      default:
+        return { type: 'send_email', to: '', subject: '', body: '' };
+    }
+  });
+
+  const conditions: Condition[] = conditionNodes.map((n) => {
+    const config = (n.data?.config || {}) as Record<string, unknown>;
+    const subtype = n.data?.subtype || 'field_equals';
+    switch (subtype) {
+      case 'field_equals':
+        return { type: 'field_equals', field: String(config.field || ''), value: config.value ?? '' };
+      case 'field_not_equals':
+        return { type: 'field_not_equals', field: String(config.field || ''), value: config.value ?? '' };
+      case 'field_greater_than':
+        return { type: 'field_greater_than', field: String(config.field || ''), value: Number(config.value || 0) };
+      case 'field_less_than':
+        return { type: 'field_less_than', field: String(config.field || ''), value: Number(config.value || 0) };
+      case 'field_contains':
+        return { type: 'field_contains', field: String(config.field || ''), value: String(config.value || '') };
+      case 'field_not_contains':
+        return { type: 'field_not_contains', field: String(config.field || ''), value: String(config.value || '') };
+      case 'field_exists':
+        return { type: 'field_exists', field: String(config.field || '') };
+      case 'field_not_exists':
+        return { type: 'field_not_exists', field: String(config.field || '') };
+      case 'and':
+        return { type: 'and', conditions: [] };
+      case 'or':
+        return { type: 'or', conditions: [] };
+      case 'not':
+        return { type: 'not', condition: { type: 'field_exists', field: '' } };
+      default:
+        return { type: 'field_equals', field: '', value: '' };
+    }
+  });
+
+  return { name, trigger, conditions, actions };
+}
+
 function WorkflowDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -44,18 +203,23 @@ function WorkflowDetail() {
   const createMutation = useCreateWorkflow();
   const updateMutation = useUpdateWorkflow();
   const deleteMutation = useDeleteWorkflow();
-  const executeMutation = useExecuteWorkflow();
 
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [nodes, setNodes] = useState<Node[]>([]);
+  const [selectedNode, setSelectedNode] = useState<SparkNode | null>(null);
+  const [nodes, setNodes] = useState<SparkNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [workflowName, setWorkflowName] = useState('');
   const [showTestModal, setShowTestModal] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
-  // Initialize name from loaded workflow
-  if (workflow && !workflowName) {
-    setWorkflowName(workflow.name);
-  }
+  // Deserialize workflow into canvas when loaded
+  useEffect(() => {
+    if (workflow && !initialized) {
+      setWorkflowName(workflow.name);
+      setNodes(workflowToNodes(workflow));
+      setEdges(workflowToEdges(workflow));
+      setInitialized(true);
+    }
+  }, [workflow, initialized]);
 
   const handleNodeUpdate = useCallback((nodeId: string, data: Record<string, unknown>) => {
     setNodes((prev) =>
@@ -64,119 +228,40 @@ function WorkflowDetail() {
     setSelectedNode(null);
   }, []);
 
-  const buildWorkflowRequest = useCallback((): Partial<CreateWorkflowRequest> => {
-    const triggerNode = nodes.find((n) => n.type === 'trigger');
-    const actionNodes = nodes.filter((n) => n.type === 'action');
-    const conditionNodes = nodes.filter((n) => n.type === 'condition');
-
-    const trigger = triggerNode?.data?.config as Record<string, unknown> | undefined;
-    const triggerSubtype = String(triggerNode?.data?.subtype || 'event');
-
-    let triggerPayload: CreateWorkflowRequest['trigger'] = { type: 'event', event_type: 'cinq.deal.won' };
-    if (triggerSubtype === 'schedule') {
-      triggerPayload = { type: 'schedule', cron: String(trigger?.cron || '0 9 * * *') };
-    } else if (triggerSubtype === 'webhook') {
-      triggerPayload = { type: 'webhook', path: `/webhooks/${id}` };
-    } else {
-      triggerPayload = { type: 'event', event_type: String(trigger?.event_type || 'cinq.deal.won') };
-    }
-
-    const actions: CreateWorkflowRequest['actions'] = actionNodes.map((n) => {
-      const config = n.data?.config as Record<string, unknown> | undefined;
-      const subtype = String(n.data?.subtype || 'send_email');
-      const params = (config?.params || {}) as Record<string, unknown>;
-
-      switch (subtype) {
-        case 'create_dial_channel':
-          return { type: 'create_dial_channel', name: String(params.name || ''), channel_type: String(params.channel_type || 'public'), participants: (params.participants as string[]) || [] };
-        case 'send_dial_message':
-          return { type: 'send_dial_message', channel_id: String(params.channel_id || ''), content: String(params.content || '') };
-        case 'reserve_vault_stock':
-          return { type: 'reserve_vault_stock', variant_id: String(params.variant_id || ''), quantity: Number(params.quantity || 1) };
-        case 'adjust_vault_stock':
-          return { type: 'adjust_vault_stock', variant_id: String(params.variant_id || ''), delta: Number(params.delta || 0), reason: String(params.reason || '') };
-        case 'create_cinq_contact':
-          return { type: 'create_cinq_contact', name: String(params.name || ''), email: String(params.email || ''), phone: params.phone as string | undefined };
-        case 'create_cinq_activity':
-          return { type: 'create_cinq_activity', contact_id: String(params.contact_id || ''), activity_type: String(params.activity_type || 'note'), description: String(params.description || '') };
-        case 'create_cinq_lead':
-          return { type: 'create_cinq_lead', name: String(params.name || ''), email: String(params.email || ''), source: String(params.source || '') };
-        case 'request_approval':
-          return { type: 'request_approval', approver_role: String(params.approver_role || 'admin') };
-        case 'send_email':
-          return { type: 'send_email', to: String(params.to || ''), subject: String(params.subject || ''), body: String(params.body || '') };
-        case 'webhook_action':
-          return { type: 'webhook', url: String(params.url || ''), method: String(params.method || 'POST'), body: params.body || {}, headers: (params.headers as Record<string, string>) || {} };
-        default:
-          return { type: 'send_email', to: '', subject: '', body: '' };
-      }
-    });
-
-    const conditions: CreateWorkflowRequest['conditions'] = conditionNodes.map((n) => {
-      const config = n.data?.config as Record<string, unknown> | undefined;
-      const subtype = String(n.data?.subtype || 'field_equals');
-      switch (subtype) {
-        case 'field_equals':
-          return { type: 'field_equals', field: String(config?.field || ''), value: config?.value ?? '' };
-        case 'field_greater_than':
-          return { type: 'field_greater_than', field: String(config?.field || ''), value: Number(config?.value || 0) };
-        case 'field_less_than':
-          return { type: 'field_less_than', field: String(config?.field || ''), value: Number(config?.value || 0) };
-        case 'field_contains':
-          return { type: 'field_contains', field: String(config?.field || ''), value: String(config?.value || '') };
-        case 'field_exists':
-          return { type: 'field_exists', field: String(config?.field || '') };
-        case 'and':
-          return { type: 'and', conditions: [] };
-        case 'or':
-          return { type: 'or', conditions: [] };
-        default:
-          return { type: 'field_equals', field: '', value: '' };
-      }
-    });
-
-    return {
-      name: workflowName || 'Untitled Workflow',
-      trigger: triggerPayload,
-      conditions,
-      actions,
-    };
-  }, [nodes, workflowName, id]);
-
   const handleSave = useCallback(() => {
-    const req = buildWorkflowRequest();
+    const req = nodesToWorkflowRequest(nodes, workflowName);
     if (!req.name?.trim()) {
-      toast.error('Workflow name is required.');
+      toast.error(String(<Trans>Workflow name is required.</Trans>));
       return;
     }
 
     if (isNew) {
       createMutation.mutate(req as CreateWorkflowRequest, {
         onSuccess: (created) => {
-          toast.success('Workflow saved.');
+          toast.success(String(<Trans>Workflow saved.</Trans>));
           navigate({ to: '/workflows/$id', params: { id: created.id } });
         },
-        onError: () => toast.error('Failed to create workflow.'),
+        onError: () => toast.error(String(<Trans>Failed to create workflow.</Trans>)),
       });
     } else if (workflow) {
       updateMutation.mutate(
         { id: workflow.id, data: { name: req.name, is_active: workflow.is_active }, version: workflow.version },
         {
-          onSuccess: () => toast.success('Workflow saved.'),
-          onError: () => toast.error('Failed to save workflow.'),
+          onSuccess: () => toast.success(String(<Trans>Workflow saved.</Trans>)),
+          onError: () => toast.error(String(<Trans>Failed to save workflow.</Trans>)),
         }
       );
     }
-  }, [isNew, workflow, buildWorkflowRequest, createMutation, updateMutation, navigate]);
+  }, [isNew, workflow, nodes, workflowName, createMutation, updateMutation, navigate]);
 
   const handleDelete = useCallback(() => {
     if (!workflow) return;
     deleteMutation.mutate(workflow.id, {
       onSuccess: () => {
-        toast.success('Workflow deleted.');
+        toast.success(String(<Trans>Workflow deleted.</Trans>));
         navigate({ to: '/' });
       },
-      onError: () => toast.error('Failed to delete workflow.'),
+      onError: () => toast.error(String(<Trans>Failed to delete workflow.</Trans>)),
     });
   }, [workflow, deleteMutation, navigate]);
 
@@ -192,7 +277,6 @@ function WorkflowDetail() {
 
   const content = (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/' })} className="h-8 w-8 flex-shrink-0">
@@ -201,7 +285,7 @@ function WorkflowDetail() {
           <Input
             value={workflowName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWorkflowName(e.target.value)}
-            placeholder="Workflow name"
+            placeholder={String(<Trans>Workflow name</Trans>)}
             className="max-w-md font-heading font-bold text-lg border-none shadow-none focus-visible:ring-0 px-0 h-auto"
           />
         </div>
@@ -227,7 +311,6 @@ function WorkflowDetail() {
         </div>
       </header>
 
-      {/* Builder */}
       <div className="flex-1 flex overflow-hidden">
         <NodeSidebar />
         <main className="flex-1 relative">
@@ -248,7 +331,6 @@ function WorkflowDetail() {
         )}
       </div>
 
-      {/* Test Run Modal */}
       {!isNew && workflow && showTestModal && (
         <TestRunModal
           workflowId={workflow.id}
