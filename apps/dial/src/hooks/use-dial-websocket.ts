@@ -20,7 +20,7 @@ export const useDialWebSocket = () => {
 
   const connect = useCallback(() => {
     if (!token) return;
-    const wsUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:5175';
+    const wsUrl = (import.meta as any).env.VITE_WS_BASE_URL || 'ws://localhost:5175';
     const ws = new WebSocket(`${wsUrl}/ws?token=${token}`);
     wsRef.current = ws;
 
