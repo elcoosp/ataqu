@@ -5,7 +5,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@ataqu/ui";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from "@lingui/macro";
 import { useMemo, useState } from "react";
 import { useFormPreviewStore } from "../../stores/form-preview-store";
 import type { SondForm, SondQuestion } from "../builder/types";

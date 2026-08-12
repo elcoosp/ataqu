@@ -1,5 +1,4 @@
 import {
-	type Form as ApiForm,
 	type CreateFormRequest,
 	type UpdateFormRequest,
 	useCreateForm,
@@ -101,7 +100,7 @@ function FormBuilderRoute() {
 				branding: {},
 			} as CreateFormRequest);
 		}
-	}, [id, createMutation, localForm, navigate]);
+	}, [id, createMutation, localForm]);
 
 	if (id === "new") {
 		return (

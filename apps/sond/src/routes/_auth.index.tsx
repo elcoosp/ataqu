@@ -4,7 +4,6 @@ import { Button, Card, Shell } from "@ataqu/ui";
 import { Trans, t } from "@lingui/macro";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ClipboardList, Plus } from "lucide-react";
-import { EmptyState } from "../components/ui/empty-state";
 
 export const Route = createFileRoute("/_auth/")({
 	component: FormsIndex,

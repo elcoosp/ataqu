@@ -8,7 +8,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@ataqu/ui";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from "@lingui/macro";
 import { Download } from "lucide-react";
 
 interface Props {
