@@ -19,7 +19,7 @@ export function EmployeeDirectory({ onAddEmployee }: { onAddEmployee: () => void
   );
   const { data: searchResults, isLoading: isSearchLoading } = useSearchEmployees(
     { q: debouncedSearch },
-    { enabled: isSearching }
+    { queryKey: ['pause', 'employees', 'search', { q: debouncedSearch }], enabled: isSearching }
   );
 
   const list = isSearching ? searchResults : employees;
