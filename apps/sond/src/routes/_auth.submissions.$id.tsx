@@ -5,10 +5,11 @@ import {
 	useUpdateForm,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Inbox, Shell } from "@ataqu/ui";
+import { Shell } from "@ataqu/ui";
 import { Trans, t } from "@lingui/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Inbox } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { IntegrationToggle } from "../components/integration-toggle";

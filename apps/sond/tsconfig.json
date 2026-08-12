@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"paths": {
 			"@/*": ["./src/*"]
-		}
+		},
+		"skipLibCheck": true
 	},
 	"include": ["src/**/*", "e2e/**/*", "src/routeTree.gen.ts"],
 	"exclude": ["node_modules", "dist"]
