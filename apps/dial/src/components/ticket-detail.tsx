@@ -1,8 +1,7 @@
 import { useIdempotency } from '@ataqu/shared-hooks';
-import { Badge, Button, cn, Skeleton } from '@ataqu/ui';
 import { t } from '@lingui/macro';
+import { Badge, Button, cn, Skeleton } from '@ataqu/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useParams } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -10,12 +9,15 @@ import {
   getTicket,
   listTicketMessages,
   replyToTicket,
-  type Ticket,
   updateTicketStatus,
+  type Ticket,
 } from '@/api/tickets';
+// Import the route to use its useParams
+import { Route as TicketsRoute } from '@/routes/_auth.tickets/$id';
 
 export function TicketDetail() {
-  const { id } = useParams();
+  // Use the route's useParams to get the id
+  const { id } = TicketsRoute.useParams();
   const queryClient = useQueryClient();
   const [reply, setReply] = useState('');
   const { resetKey } = useIdempotency();
