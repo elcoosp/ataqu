@@ -1,17 +1,16 @@
-import { i18n } from '@lingui/core';
-import { Trans } from '@lingui/react/macro';
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input } from '@ataqu/ui';
+import { Trans } from '@lingui/react/macro';
+import { i18n } from '@lingui/core';
 import { Plus, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { RelationCell } from './relation-cell';
 import { cn } from '@ataqu/ui';
 
-// Types
 interface Row {
   id: string;
   values: Record<string, any>;
@@ -26,22 +25,20 @@ interface DatabaseGridProps {
 }
 
 export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProps) {
-  const queryClient = useQueryClieni18n.i18n.t();
+  const queryClient = useQueryClient();
   const { getKey } = useIdempotency();
   const [editingCell, setEditingCell] = useState<{ rowId: string; col: string } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterText, setFilterText] = useState('');
 
-  // Fetch rows
   const { data: rows = [], refetch, error } = useQuery<Row[]>({
     queryKey: ['database-rows', databaseId],
-    queryFn: () => api.gei18n.i18n.t(`/databases/${databaseId}/rows`),
+    queryFn: () => api.get(`/databases/${databaseId}/rows`),
   });
 
   if (error) toast.error(handleApiError(error));
 
-  // Create row mutation
   const createRowMutation = useMutation({
     mutationFn: (data: { values: Record<string, any> }) =>
       api.post<Row>(`/databases/${databaseId}/rows`, data, {
@@ -55,7 +52,6 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
     onError: (err) => toast.error(handleApiError(err)),
   });
 
-  // Update row mutation
   const updateRowMutation = useMutation({
     mutationFn: (data: { rowId: string; values: Record<string, any> }) =>
       api.patch<Row>(`/databases/${databaseId}/rows/${data.rowId}`, data.values, {
@@ -93,7 +89,6 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
     }
   };
 
-  // Filter and sort rows
   const filteredRows = rows.filter((row) => {
     if (!filterText) return true;
     return Object.values(row.values).some((val) =>
@@ -103,7 +98,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
 
   const sortedRows = [...filteredRows];
   if (sortField) {
-    sortedRows.sori18n.i18n.t((a, b) => {
+    sortedRows.sort((a, b) => {
       const aVal = a.values[sortField] ?? '';
       const bVal = b.values[sortField] ?? '';
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -117,15 +112,13 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
     const isEditing = editingCell?.rowId === row.id && editingCell?.col === col.name;
 
     if (isEditing) {
-      // Render input for editing
       if (col.type === 'relation') {
-        // Relation editing uses the RelationCell
         return (
           <RelationCell
             value={value ? { app: 'cinq', entityId: value, label: value } : null}
             onSelect={(v) => handleCellChange(row.id, col.name, v ? v.entityId : null)}
             app="cinq"
-            placeholder={i18n.i18n.t`Search…`}
+            placeholder={i18n.t`Search…`}
           />
         );
       }
@@ -148,13 +141,13 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
       );
     }
 
-    // Display mode
     if (col.type === 'relation') {
       return (
         <RelationCell
           value={value ? { app: 'cinq', entityId: value, label: value } : null}
           onSelect={(v) => handleCellChange(row.id, col.name, v ? v.entityId : null)}
           app="cinq"
+          placeholder={i18n.t`Search…`}
         />
       );
     }
@@ -162,7 +155,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
     return (
       <div
         className="cursor-pointer hover:bg-accent p-1 rounded min-h-[2rem]"
-        onClick={() => handleCellEdii18n.i18n.t(row.id, col.name)}
+        onClick={() => handleCellEdit(row.id, col.name)}
       >
         {col.type === 'number' ? Number(value).toLocaleString() : String(value)}
       </div>
@@ -180,9 +173,9 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
           <div className="relative">
             <Filter className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={i18n.i18n.t`Filter rows…`}
+              placeholder={i18n.t`Filter rows…`}
               value={filterText}
-              onChange={(e) => setFilterTexi18n.i18n.t(e.target.value)}
+              onChange={(e) => setFilterText(e.target.value)}
               className="pl-8 h-8 text-sm w-48"
             />
           </div>
@@ -200,7 +193,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
                 <th
                   key={col.name}
                   className="px-3 py-2 text-left font-medium text-muted-foreground cursor-pointer hover:text-foreground select-none"
-                  onClick={() => handleSori18n.i18n.t(col.name)}
+                  onClick={() => handleSort(col.name)}
                 >
                   <div className="flex items-center gap-1">
                     {col.name}

@@ -1,11 +1,11 @@
-import { i18n } from '@lingui/core';
-import { Trans } from '@lingui/react/macro';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input } from '@ataqu/ui';
+import { Trans } from '@lingui/react/macro';
+import { i18n } from '@lingui/core';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -19,7 +19,7 @@ function TemplatesPage() {
   const { getKey } = useIdempotency();
   const { data, refetch, error } = useQuery<Template[]>({
     queryKey: ['templates'],
-    queryFn: () => api.gei18n.i18n.t('/templates'),
+    queryFn: () => api.get('/templates'),
   });
 
   if (error) toast.error(handleApiError(error));
@@ -37,7 +37,7 @@ function TemplatesPage() {
       toast.success(<Trans>Template created.</Trans>);
       setShowCreator(false);
       setName('');
-      setConteni18n.i18n.t('');
+      setContent('');
       refetch();
     },
     onError: (err) => toast.error(handleApiError(err)),
@@ -60,16 +60,16 @@ function TemplatesPage() {
       {showCreator && (
         <div className="border border-border rounded p-4 space-y-3">
           <Input
-            placeholder={i18n.i18n.t`Template name`}
+            placeholder={i18n.t`Template name`}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <textarea
             className="w-full p-2 border border-border rounded bg-background"
             rows={6}
-            placeholder={i18n.i18n.t`Template content (markdown)`}
+            placeholder={i18n.t`Template content (markdown)`}
             value={content}
-            onChange={(e) => setConteni18n.i18n.t(e.target.value)}
+            onChange={(e) => setContent(e.target.value)}
           />
           <div className="flex gap-2">
             <Button onClick={handleCreate}><Trans>Save</Trans></Button>
