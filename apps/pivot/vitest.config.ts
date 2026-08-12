@@ -5,10 +5,16 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
+    environment: 'browser',
+    provider: 'playwright', // or 'webdriverio'
     setupFiles: ['./src/test-setup.ts'],
     globals: true,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    browser: {
+      enabled: true,
+      name: 'chromium',
+      headless: true,
+    },
   },
   resolve: {
     alias: {

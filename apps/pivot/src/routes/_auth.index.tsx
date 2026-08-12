@@ -1,10 +1,10 @@
+import { Trans } from '@lingui/react/macro';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button } from '@ataqu/ui';
-import { Trans };
 import { i18n } from '@lingui/core'; from '@lingui/react/macro';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';

@@ -1,10 +1,10 @@
+import { Trans } from '@lingui/react/macro';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@ataqu/api-client';
 import { Popover, PopoverContent, PopoverTrigger } from '@ataqu/ui';
 import { Input } from '@ataqu/ui';
 import { SearchIcon, X } from 'lucide-react';
-import { Trans };
 import { i18n } from '@lingui/core'; from '@lingui/react/macro';
 import { useDebounce } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
