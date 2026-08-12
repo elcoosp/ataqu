@@ -12,7 +12,12 @@ export const withChartInteraction = (WrappedChart: React.FC<any>) => {
 
     const handleDataPointClick = async (data: unknown) => {
       const dimension = props.xAxisKey || 'category';
-      const value = (data as any)?.activePayload?.[0]?.payload?.[dimension] || 'Unknown';
+      interface RechartsPayload {
+        activePayload?: { payload?: Record<string, unknown> }[];
+      }
+      const value =
+        ((data as RechartsPayload)?.activePayload?.[0]?.payload?.[dimension] as string) ||
+        'Unknown';
 
       setOpen(true);
       setDrillDown({ loading: true, widgetId, dimension, value: String(value), data: [] });
