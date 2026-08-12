@@ -1,8 +1,11 @@
 // apps/aegis/src/routes/_auth/roles.tsx
 import { createFileRoute } from '@tanstack/react-router';
+import { toast } from "sonner";
+import { EmptyState } from "../../components/empty-state";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Avatar, AvatarFallback, AvatarImage } from "@ataqu/ui";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, EmptyState, Skeleton, useToast } from '@ataqu/ui';
 import { api } from '@ataqu/api-client';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -11,7 +14,7 @@ import { Shield, Plus } from 'lucide-react';
 export const Route = createFileRoute('/_auth/roles')({
   component: () => {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    
     const [openCreate, setOpenCreate] = useState(false);
 
     const { data: roles, isLoading, error } = useQuery({

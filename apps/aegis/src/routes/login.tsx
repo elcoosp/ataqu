@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
 import { AuthLayout } from '@ataqu/ui';
 import { Button } from '@ataqu/ui';
 import { useEffect } from 'react';

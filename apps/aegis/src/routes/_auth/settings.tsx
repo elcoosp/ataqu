@@ -1,5 +1,6 @@
 // apps/aegis/src/routes/_auth/settings.tsx
 import { createFileRoute } from '@tanstack/react-router';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label, Skeleton, toast } from '@ataqu/ui';

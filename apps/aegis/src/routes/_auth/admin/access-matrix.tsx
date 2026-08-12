@@ -1,8 +1,10 @@
 // apps/aegis/src/routes/_auth/admin/access-matrix.tsx
 import { createFileRoute } from '@tanstack/react-router';
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Avatar, AvatarFallback, AvatarImage } from "@ataqu/ui";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Card, CardContent, Skeleton, useToast, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ataqu/ui';
 import { api } from '@ataqu/api-client';
 
 // Apps list
@@ -12,7 +14,7 @@ const ROLES = ['admin', 'editor', 'viewer', 'none'];
 export const Route = createFileRoute('/_auth/admin/access-matrix')({
   component: () => {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    
 
     const { data: matrix, isLoading, error } = useQuery({
       queryKey: ['aegis', 'permission-matrix'],

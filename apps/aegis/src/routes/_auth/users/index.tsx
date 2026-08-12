@@ -1,8 +1,11 @@
 // apps/aegis/src/routes/_auth/users/index.tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { toast } from "sonner";
+import { EmptyState } from "../../components/empty-state";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Avatar, AvatarFallback, AvatarImage } from "@ataqu/ui";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, EmptyState, Skeleton, useToast } from '@ataqu/ui';
 import { api } from '@ataqu/api-client';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -12,7 +15,7 @@ export const Route = createFileRoute('/_auth/users/')({
   component: () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    
     const [openInvite, setOpenInvite] = useState(false);
 
     const { data: users, isLoading, error } = useQuery({

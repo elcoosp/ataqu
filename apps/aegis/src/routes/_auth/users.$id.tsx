@@ -1,8 +1,10 @@
 // apps/aegis/src/routes/_auth/users.$id.tsx
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@ataqu/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Avatar, AvatarFallback, AvatarImage } from "@ataqu/ui";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { Card, CardContent, CardHeader, CardTitle, Button, Skeleton, Dialog, DialogAction, DialogCancel, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, useToast } from '@ataqu/ui';
 import { api } from '@ataqu/api-client';
 import { ArrowLeft } from 'lucide-react';
 
@@ -11,7 +13,7 @@ export const Route = createFileRoute('/_auth/users/$id')({
     const { id } = useParams({ from: '/_auth/users/$id' });
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    
 
     const { data: user, isLoading, error } = useQuery({
       queryKey: ['aegis', 'users', id],
@@ -86,10 +88,7 @@ export const Route = createFileRoute('/_auth/users/$id')({
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
-                    <DialogCancel><Trans>Cancel</Trans></DialogCancel>
-                    <DialogAction onClick={() => deactivateMutation.mutate(user.id)}>
                       <Trans>Revoke</Trans>
-                    </DialogAction>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
