@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@ataqu/api-client';
+import { useGetDatabase } from '@ataqu/api-client';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
@@ -15,10 +14,7 @@ export const Route = createFileRoute('/_auth/db/$id')({
 function DatabaseDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { data, error } = useQuery<Database>({
-    queryKey: ['database', id],
-    queryFn: () => api.get(`/databases/${id}`),
-  });
+  const { data, error } = useGetDatabase(id);
 
   if (error) toast.error(handleApiError(error));
   if (!data) return <div><Trans>Loading…</Trans></div>;

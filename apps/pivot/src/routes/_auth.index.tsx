@@ -1,13 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from '@ataqu/api-client';
+import { useListDocuments, useCreateDocument } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
-import { Button } from '@ataqu/ui';
+import { Button, EmptyState } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { Plus, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { EmptyState } from '@/components/empty-state';
 import { SearchBar } from '@/components/search-bar';
 import type { Document } from '@/types';
 
@@ -17,18 +15,8 @@ export const Route = createFileRoute('/_auth/')({
 
 function DocumentList() {
   const { getKey } = useIdempotency();
-  const { data, refetch, error } = useQuery<Document[]>({
-    queryKey: ['documents'],
-    queryFn: () => api.get('/docs'),
-  });
-
-  if (error) toast.error(handleApiError(error));
-
-  const createMutation = useMutation({
-    mutationFn: (data: { title: string; content: string }) =>
-      api.post<Document>('/docs', data, {
-        headers: { 'Idempotency-Key': getKey() },
-      }),
+  const { data, refetch, error } = useListDocuments();
+  const createMutation = useCreateDocument({
     onSuccess: () => {
       toast.success(<Trans>Document created.</Trans>);
       refetch();
@@ -36,8 +24,13 @@ function DocumentList() {
     onError: (err) => toast.error(handleApiError(err)),
   });
 
+  if (error) toast.error(handleApiError(error));
+
   const handleCreate = () => {
-    createMutation.mutate({ title: 'Untitled', content: '' });
+    createMutation.mutate(
+      { title: 'Untitled', content: '' },
+      { headers: { 'Idempotency-Key': getKey() } }
+    );
   };
 
   return (

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { api } from '@ataqu/api-client';
+import { useUpdateDocument, useDeleteDocument } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { toast } from 'sonner';
@@ -27,11 +26,7 @@ export function DocumentEditor({ id, initialDoc, onDelete, onDuplicate }: Docume
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const updateMutation = useMutation({
-    mutationFn: (data: { title: string; content: string; version: number }) =>
-      api.patch<Document>(`/docs/${id}`, data, {
-        headers: { 'Idempotency-Key': getKey() },
-      }),
+  const updateMutation = useUpdateDocument({
     onSuccess: (data) => {
       setVersion(data.version);
       setSaveStatus('saved');
@@ -43,27 +38,32 @@ export function DocumentEditor({ id, initialDoc, onDelete, onDuplicate }: Docume
     },
   });
 
-  useEffect(() => {
-    if (title === initialDoc.title && content === initialDoc.content) return;
-    setSaveStatus('saving');
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      updateMutation.mutate({ title, content, version });
-    }, 500);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [title, content, version, initialDoc, updateMutation]);
-
-  const deleteMutation = useMutation({
-    mutationFn: () =>
-      api.delete(`/docs/${id}`, { headers: { 'Idempotency-Key': getKey() } }),
+  const deleteMutation = useDeleteDocument({
     onSuccess: () => {
       toast.success(<Trans>Document deleted.</Trans>);
       onDelete?.();
     },
     onError: (error) => toast.error(handleApiError(error)),
   });
+
+  useEffect(() => {
+    if (title === initialDoc.title && content === initialDoc.content) return;
+    setSaveStatus('saving');
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      updateMutation.mutate(
+        { id, data: { title, content, version } },
+        { headers: { 'Idempotency-Key': getKey() } }
+      );
+    }, 500);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [title, content, version, initialDoc, updateMutation, id, getKey]);
+
+  const handleDelete = () => {
+    deleteMutation.mutate(id, { headers: { 'Idempotency-Key': getKey() } });
+  };
 
   const handleExport = () => {
     const blob = new Blob([content], { type: 'text/markdown' });
@@ -93,7 +93,7 @@ export function DocumentEditor({ id, initialDoc, onDelete, onDuplicate }: Docume
           <Button variant="outline" size="sm" onClick={onDuplicate}>
             <Copy className="h-4 w-4 mr-1" />
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate()}>
+          <Button variant="destructive" size="sm" onClick={handleDelete}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>

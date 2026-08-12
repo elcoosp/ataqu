@@ -1,15 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from '@ataqu/api-client';
+import { useListTemplates, useCreateTemplate } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
-import { Button, Input } from '@ataqu/ui';
+import { Button, Input, EmptyState } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { i18n } from '@lingui/core';
 import { Plus, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { EmptyState } from '@/components/empty-state';
 import type { Template } from '@/types';
 
 export const Route = createFileRoute('/_auth/templates')({
@@ -18,22 +16,8 @@ export const Route = createFileRoute('/_auth/templates')({
 
 function TemplatesPage() {
   const { getKey } = useIdempotency();
-  const { data, refetch, error } = useQuery<Template[]>({
-    queryKey: ['templates'],
-    queryFn: () => api.get('/templates'),
-  });
-
-  if (error) toast.error(handleApiError(error));
-
-  const [showCreator, setShowCreator] = useState(false);
-  const [name, setName] = useState('');
-  const [content, setContent] = useState('');
-
-  const createMutation = useMutation({
-    mutationFn: (data: { name: string; content: string }) =>
-      api.post<Template>('/templates', data, {
-        headers: { 'Idempotency-Key': getKey() },
-      }),
+  const { data, refetch, error } = useListTemplates();
+  const createMutation = useCreateTemplate({
     onSuccess: () => {
       toast.success(<Trans>Template created.</Trans>);
       setShowCreator(false);
@@ -44,9 +28,18 @@ function TemplatesPage() {
     onError: (err) => toast.error(handleApiError(err)),
   });
 
+  if (error) toast.error(handleApiError(error));
+
+  const [showCreator, setShowCreator] = useState(false);
+  const [name, setName] = useState('');
+  const [content, setContent] = useState('');
+
   const handleCreate = () => {
     if (!name.trim()) return toast.error(<Trans>Name is required.</Trans>);
-    createMutation.mutate({ name, content });
+    createMutation.mutate(
+      { name, content },
+      { headers: { 'Idempotency-Key': getKey() } }
+    );
   };
 
   return (

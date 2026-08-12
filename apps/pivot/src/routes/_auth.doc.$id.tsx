@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from '@ataqu/api-client';
+import { useGetDocument, useDeleteDocument, useCreateDocument } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
 import { Button } from '@ataqu/ui';
@@ -19,18 +18,15 @@ function DocumentDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { getKey } = useIdempotency();
-  const { data, error, refetch } = useQuery<Document>({
-    queryKey: ['document', id],
-    queryFn: () => api.get(`/docs/${id}`),
+  const { data, error, refetch } = useGetDocument(id);
+  const deleteMutation = useDeleteDocument({
+    onSuccess: () => {
+      toast.success(<Trans>Document deleted.</Trans>);
+      navigate({ to: '/' });
+    },
+    onError: (err) => toast.error(handleApiError(err)),
   });
-
-  if (error) toast.error(handleApiError(error));
-
-  const createMutation = useMutation({
-    mutationFn: (data: { title: string; content: string }) =>
-      api.post<Document>('/docs', data, {
-        headers: { 'Idempotency-Key': getKey() },
-      }),
+  const createMutation = useCreateDocument({
     onSuccess: (doc) => {
       toast.success(<Trans>Document duplicated.</Trans>);
       navigate({ to: '/doc/$id', params: { id: doc.id } });
@@ -38,16 +34,18 @@ function DocumentDetail() {
     onError: (err) => toast.error(handleApiError(err)),
   });
 
+  if (error) toast.error(handleApiError(error));
+
   const handleDelete = () => {
-    navigate({ to: '/' });
+    deleteMutation.mutate(id, { headers: { 'Idempotency-Key': getKey() } });
   };
 
   const handleDuplicate = () => {
     if (data) {
-      createMutation.mutate({
-        title: `${data.title} (copy)`,
-        content: data.content,
-      });
+      createMutation.mutate(
+        { title: `${data.title} (copy)`, content: data.content },
+        { headers: { 'Idempotency-Key': getKey() } }
+      );
     }
   };
 

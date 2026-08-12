@@ -1,13 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from '@ataqu/api-client';
+import { useListDatabases, useCreateDatabase } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
-import { Button } from '@ataqu/ui';
+import { Button, EmptyState } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { Plus, Database } from 'lucide-react';
 import { toast } from 'sonner';
-import { EmptyState } from '@/components/empty-state';
 import type { Database as DatabaseType } from '@/types';
 
 export const Route = createFileRoute('/_auth/db/')({
@@ -16,18 +14,8 @@ export const Route = createFileRoute('/_auth/db/')({
 
 function DatabaseList() {
   const { getKey } = useIdempotency();
-  const { data, refetch, error } = useQuery<DatabaseType[]>({
-    queryKey: ['databases'],
-    queryFn: () => api.get('/databases'),
-  });
-
-  if (error) toast.error(handleApiError(error));
-
-  const createMutation = useMutation({
-    mutationFn: (data: { name: string }) =>
-      api.post<DatabaseType>('/databases', data, {
-        headers: { 'Idempotency-Key': getKey() },
-      }),
+  const { data, refetch, error } = useListDatabases();
+  const createMutation = useCreateDatabase({
     onSuccess: () => {
       toast.success(<Trans>Database created.</Trans>);
       refetch();
@@ -35,8 +23,13 @@ function DatabaseList() {
     onError: (err) => toast.error(handleApiError(err)),
   });
 
+  if (error) toast.error(handleApiError(error));
+
   const handleCreate = () => {
-    createMutation.mutate({ name: 'New Database' });
+    createMutation.mutate(
+      { name: 'New Database' },
+      { headers: { 'Idempotency-Key': getKey() } }
+    );
   };
 
   return (
