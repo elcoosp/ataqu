@@ -33,9 +33,7 @@ export function TaskList({ dealId }: { dealId?: UUID }) {
             <span className={task.status === 'completed' ? 'line-through text-muted-foreground' : ''}>
               {task.title}
             </span>
-            <Badge variant={task.status === 'pending' ? 'default' : 'success'}>
-              {task.status}
-            </Badge>
+            <Badge variant="outline">{task.status}</Badge>
             {task.due_date && (
               <span className="text-sm text-muted-foreground">
                 {new Date(task.due_date).toLocaleDateString()}

@@ -16,14 +16,14 @@ export function EmailTrackingTab({ contactId }: { contactId: UUID }) {
     <div>
       <Table
         columns={[
-          { accessorKey: 'eventType', header: <Trans>Event</Trans> },
-          { accessorKey: 'created_at', header: <Trans>Time</Trans> },
+          { accessorKey: 'event_type', header: 'Event' },
+          { accessorKey: 'created_at', header: 'Time' },
           {
             accessorKey: 'status',
-            header: <Trans>Status</Trans>,
+            header: 'Status',
             cell: ({ row }) => (
-              <Badge variant={row.original.event_type === 'opened' ? 'success' : 'default'}>
-                {row.original.event_type === 'opened' ? <Trans>Opened</Trans> : <Trans>Clicked</Trans>}
+              <Badge variant="outline">
+                {row.original.event_type === 'opened' ? 'Opened' : 'Clicked'}
               </Badge>
             ),
           },

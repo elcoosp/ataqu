@@ -6,13 +6,13 @@ import { useListActivities } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
 
 export function ActivityTimeline({ dealId }: { dealId: UUID }) {
-  const { data, isLoading } = useListActivities({ dealId, limit: 50 });
+  const { data, isLoading } = useListActivities({ deal_id: dealId, limit: 50 });
 
   if (isLoading) {
     return <Skeleton className="h-32 w-full" />;
   }
 
-  const activities = data?.items || [];
+  const activities = data || [];
 
   return (
     <div className="space-y-4">

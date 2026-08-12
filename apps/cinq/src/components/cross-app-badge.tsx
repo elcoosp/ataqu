@@ -18,7 +18,7 @@ export function CrossAppBadge({ entityId }: { entityId: UUID }) {
   if (!vaultRelation) return null;
 
   return (
-    <Badge variant="info" className="gap-1">
+    <Badge variant="outline" className="gap-1">
       <Trans>Stock reserved in VAULT</Trans>
       <a
         href={vaultRelation.link}

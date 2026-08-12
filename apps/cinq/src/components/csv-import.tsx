@@ -2,17 +2,16 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useMutation } from '@tanstack/react-query';
 import Papa from 'papaparse';
-import { Button, Card, CardContent, Progress, useToast } from '@ataqu/ui';
+import { Button, Card, CardContent } from '@ataqu/ui';
+import { toast } from 'sonner';
 import { Trans } from '@lingui/react/macro';
 import { api } from '@ataqu/api-client';
 
 export function CsvImport() {
-  const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [previewData, setPreviewData] = useState<Record<string, string>[]>([]);
-  const [progress, setProgress] = useState(0);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -53,19 +52,11 @@ export function CsvImport() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
     },
-    onMutate: () => setProgress(30),
     onSuccess: (data: any) => {
-      setProgress(100);
-      toast({
-        title: (
-          <Trans>
-            CSV imported: {data.imported} contacts. Failed: {data.failed}
-          </Trans>
-        ),
-      });
+      toast.success(`CSV imported: ${data.imported} contacts. Failed: ${data.failed}`);
     },
     onError: () => {
-      toast({ title: <Trans>Import failed</Trans>, variant: 'destructive' });
+      toast.error('Import failed');
     },
   });
 
@@ -126,7 +117,6 @@ export function CsvImport() {
             <Button onClick={handleImport} disabled={importMutation.isPending} className="mt-4">
               <Trans>Import</Trans>
             </Button>
-            {importMutation.isPending && <Progress value={progress} className="mt-2" />}
           </CardContent>
         </Card>
       )}

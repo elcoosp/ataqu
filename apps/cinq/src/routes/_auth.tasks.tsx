@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { DashboardLayout, EmptyState } from '@ataqu/ui';
+import { DashboardLayout } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { TaskList } from '../components/task-list';
-import { CheckSquare } from 'lucide-react';
 
 export const Route = createFileRoute('/_auth/tasks')({
   component: TasksPage,
@@ -10,15 +9,10 @@ export const Route = createFileRoute('/_auth/tasks')({
 
 function TasksPage() {
   return (
-    <DashboardLayout title={<Trans>Tasks</Trans>}>
+    <DashboardLayout>
       <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4"><Trans>Tasks</Trans></h1>
         <TaskList />
-        <EmptyState
-          icon={CheckSquare}
-          title={<Trans>No tasks</Trans>}
-          description={<Trans>Create tasks to track follow‑ups and to‑dos.</Trans>}
-          ctaLabel={<Trans>Create Task</Trans>}
-        />
       </div>
     </DashboardLayout>
   );

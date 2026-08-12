@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Switch, Badge, useToast } from '@ataqu/ui';
+import { Switch, Badge } from '@ataqu/ui';
+import { toast } from 'sonner';
 import { Trans } from '@lingui/react/macro';
 import { api } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
@@ -14,7 +15,6 @@ export function IntegrationToggle({
   targetApp: 'dial' | 'spark';
   label: string;
 }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(false);
 
@@ -29,16 +29,14 @@ export function IntegrationToggle({
     onSuccess: (data: any) => {
       setEnabled(data.enabled);
       queryClient.invalidateQueries({ queryKey: ['cinq', 'deal', dealId] });
-      toast({
-        title: data.enabled ? (
-          <Trans>CINQ connected to {targetApp}</Trans>
-        ) : (
-          <Trans>CINQ disconnected from {targetApp}</Trans>
-        ),
-      });
+      toast.success(
+        data.enabled
+          ? `CINQ connected to ${targetApp}`
+          : `CINQ disconnected from ${targetApp}`
+      );
     },
     onError: () => {
-      toast({ title: <Trans>Failed to toggle integration</Trans>, variant: 'destructive' });
+      toast.error('Failed to toggle integration');
       setEnabled(!enabled);
     },
   });
@@ -53,7 +51,7 @@ export function IntegrationToggle({
       <Switch checked={enabled} onCheckedChange={handleToggle} />
       <span className="text-sm">{label}</span>
       {enabled && (
-        <Badge variant="success">
+        <Badge variant="outline">
           <Trans>Connected to {targetApp}</Trans>
         </Badge>
       )}

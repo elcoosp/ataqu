@@ -21,8 +21,9 @@ const tourSteps = [
 function DealsIndex() {
   return (
     <OnboardTour tourId="cinq-kanban-tour" steps={tourSteps}>
-      <DashboardLayout title={<Trans>Deals</Trans>}>
+      <DashboardLayout>
         <div className="p-4">
+          <h1 className="text-2xl font-bold mb-4"><Trans>Deals</Trans></h1>
           <DealKanban />
         </div>
       </DashboardLayout>

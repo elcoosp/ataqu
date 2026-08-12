@@ -1,100 +1,57 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  DndContext,
-  useSensors,
-  useSensor,
-  MouseSensor,
-  TouchSensor,
-  closestCorners,
-} from '@dnd-kit/core';
-import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
-import { useToast } from '@ataqu/ui';
+import { KanbanBoard, Badge } from '@ataqu/ui';
+import { toast } from 'sonner';
 import { Trans } from '@lingui/react/macro';
 import {
   useListDeals,
   useListPipelineStages,
   useUpdateDeal,
 } from '@ataqu/api-client';
-import { DealCard } from './deal-card';
-import { EmptyState } from '@ataqu/ui';
-import { TrendingUp } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 
 export function DealKanban() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-
+  const navigate = useNavigate();
   const { data: stages } = useListPipelineStages();
-  const { data: dealsData } = useListDeals({ limit: 1000 });
-  const deals = dealsData?.items || [];
-
+  const { data: deals } = useListDeals({ limit: 1000 });
   const updateDeal = useUpdateDeal();
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
-  );
+  const columns = (stages || []).map((stage) => ({
+    id: stage.id,
+    title: stage.name,
+    items: (deals || []).filter((d) => d.pipeline_stage_id === stage.id),
+  }));
 
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!over) return;
-    const dealId = active.id;
-    const newStageId = over.id;
-
-    // Optimistic update
-    queryClient.setQueryData(['cinq', 'deals', { limit: 1000 }], (old: any) => {
-      if (!old) return old;
-      const updatedItems = old.items.map((d: any) =>
-        d.id === dealId ? { ...d, pipeline_stage_id: newStageId } : d
-      );
-      return { ...old, items: updatedItems };
-    });
-
-    updateDeal.mutate(
-      { id: dealId, data: { pipeline_stage_id: newStageId } },
-      {
-        onError: () => {
-          toast({ title: <Trans>Failed to move deal</Trans>, variant: 'destructive' });
-          queryClient.invalidateQueries({ queryKey: ['cinq', 'deals'] });
-        },
-        onSuccess: () => {
-          toast({ title: <Trans>Deal moved</Trans> });
-        },
-      }
-    );
+  const handleDragEnd = (newColumns: any[]) => {
+    // For simplicity, we just refetch on drag
+    queryClient.invalidateQueries({ queryKey: ['cinq', 'deals'] });
+    toast.info('Deal moved');
   };
 
-  if (!stages || stages.length === 0) {
-    return (
-      <EmptyState
-        icon={TrendingUp}
-        title={<Trans>No pipeline stages</Trans>}
-        description={<Trans>Create a pipeline stage to start tracking deals.</Trans>}
-      />
-    );
-  }
+  const renderItem = (deal: any) => (
+    <div
+      className="p-3 bg-deep-night/50 border border-gray-700/40 rounded-lg cursor-pointer hover:border-amber/50 transition-colors"
+      onClick={() => navigate({ to: `/deals/${deal.id}` })}
+      data-tour="deal-card"
+    >
+      <div className="font-medium">{deal.title}</div>
+      <div className="text-sm text-muted-foreground">${deal.amount.toLocaleString()}</div>
+      {deal.probability !== null && deal.probability !== undefined && (
+        <div className="text-xs">Prob: {deal.probability}%</div>
+      )}
+      <div className="mt-1">
+        <Badge variant="outline">{deal.status}</Badge>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex gap-4 overflow-x-auto p-4" data-tour="kanban-board">
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-        {stages.map((stage) => {
-          const stageDeals = deals.filter((d) => d.pipeline_stage_id === stage.id);
-          return (
-            <div key={stage.id} className="min-w-[280px] flex-1 bg-muted/20 rounded-lg p-2">
-              <h3 className="font-semibold mb-2">{stage.name}</h3>
-              <div className="space-y-2">
-                <SortableContext
-                  items={stageDeals.map((d) => d.id)}
-                  strategy={horizontalListSortingStrategy}
-                >
-                  {stageDeals.map((deal) => (
-                    <DealCard key={deal.id} deal={deal} />
-                  ))}
-                </SortableContext>
-              </div>
-            </div>
-          );
-        })}
-      </DndContext>
+    <div data-tour="kanban-board">
+      <KanbanBoard
+        columns={columns}
+        onDragEnd={handleDragEnd}
+        renderItem={renderItem}
+      />
     </div>
   );
 }

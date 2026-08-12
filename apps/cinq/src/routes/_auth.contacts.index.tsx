@@ -9,8 +9,9 @@ export const Route = createFileRoute('/_auth/contacts/')({
 
 function ContactsIndex() {
   return (
-    <DashboardLayout title={<Trans>Contacts</Trans>}>
+    <DashboardLayout>
       <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4"><Trans>Contacts</Trans></h1>
         <ContactTable />
       </div>
     </DashboardLayout>

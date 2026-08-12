@@ -10,13 +10,13 @@ export function registerCinqActions() {
       id: 'cinq-create-contact',
       name: 'Create Contact',
       shortcut: 'C',
-      action: () => navigate({ to: '/contacts/new' }),
+      action: () => navigate({ to: '/contacts' }),
     },
     {
       id: 'cinq-create-deal',
       name: 'Create Deal',
       shortcut: 'D',
-      action: () => navigate({ to: '/deals/new' }),
+      action: () => navigate({ to: '/deals' }),
     },
     {
       id: 'cinq-go-contacts',
@@ -58,7 +58,7 @@ export function registerCinqActions() {
       id: 'cinq-export-contacts',
       name: 'Export Contacts CSV',
       action: () => {
-        api.get('/cinq/csv/export', { responseType: 'blob' }).then((blob) => {
+        api.get('/cinq/csv/export', { responseType: 'blob' }).then((blob: Blob) => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
@@ -72,7 +72,7 @@ export function registerCinqActions() {
       id: 'cinq-export-deals',
       name: 'Export Deals CSV',
       action: () => {
-        api.get('/cinq/deals/export', { responseType: 'blob' }).then((blob) => {
+        api.get('/cinq/deals/export', { responseType: 'blob' }).then((blob: Blob) => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
