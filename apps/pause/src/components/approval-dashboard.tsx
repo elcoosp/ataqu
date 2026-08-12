@@ -35,7 +35,7 @@ export function ApprovalDashboard() {
       }
       return { previousRequests };
     },
-    onError: (_err, _id, context: OptimisticContext | undefined) => {
+    onError: (_err: Error, _id: string, context: unknown) => {
       if ((context as OptimisticContext)?.previousRequests) {
         queryClient.setQueryData(['pause', 'leave-requests'], context.previousRequests);
       }
@@ -66,7 +66,7 @@ export function ApprovalDashboard() {
       }
       return { previousRequests };
     },
-    onError: (_err, _id, context: OptimisticContext | undefined) => {
+    onError: (_err: Error, _id: string, context: unknown) => {
       if ((context as OptimisticContext)?.previousRequests) {
         queryClient.setQueryData(['pause', 'leave-requests'], context.previousRequests);
       }
