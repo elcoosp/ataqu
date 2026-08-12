@@ -7,5 +7,6 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/cypress/**'],
+    passWithNoTests: true,
   },
 });

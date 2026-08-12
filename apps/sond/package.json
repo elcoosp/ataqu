@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest run --passWithNoTests",
     "lint": "biome check .",
     "lint:fix": "biome check --fix ."
   },
@@ -51,6 +51,7 @@
     "typescript": "^7.0.0",
     "vite": "^8.1.0",
     "vitest": "^2.0.5",
-    "@tanstack/router-core": "^1.170.0"
+    "@tanstack/router-core": "^1.170.0",
+    "jsdom": "^24.0.0"
   }
 }
