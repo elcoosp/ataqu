@@ -23,7 +23,6 @@ function DatabaseDetail() {
   if (error) toast.error(handleApiError(error));
   if (!data) return <div><Trans>Loading…</Trans></div>;
 
-  // Example columns – in real app these come from schema
   const columns = [
     { name: 'Name', type: 'text' as const },
     { name: 'Amount', type: 'number' as const },

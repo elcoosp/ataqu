@@ -27,12 +27,12 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
     setSelectedValue(value);
   }, [value]);
 
-  const { data: results, isLoading, error } = useQuery({
+  const { data: results, isLoading, error } = useQuery<any[]>({
     queryKey: ['relation-search', app, debouncedSearch],
     queryFn: () => {
       if (!debouncedSearch || debouncedSearch.length < 2) return [];
       const endpoint = app === 'cinq' ? '/cinq/deals' : '/vault/products';
-      return api.get<any[]>(endpoint, { params: { q: debouncedSearch, limit: 10 } });
+      return api.get(endpoint, { params: { q: debouncedSearch, limit: 10 } });
     },
     enabled: open && debouncedSearch.length >= 2,
   });
@@ -85,7 +85,7 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={placeholder || i18n._('Search ${app}…')}
+            placeholder={placeholder || i18n._(`Search ${app}…`)}
             className="pl-8"
             autoFocus
           />

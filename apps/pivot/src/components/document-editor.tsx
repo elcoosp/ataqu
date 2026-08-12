@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Trans } from '@lingui/react/macro';
+import { i18n } from '@lingui/core';
 import { Button } from '@ataqu/ui';
 import { FileDown, Copy, Trash2 } from 'lucide-react';
 import type { Document } from '@/types';
@@ -103,13 +104,13 @@ export function DocumentEditor({ id, initialDoc, onDelete, onDuplicate }: Docume
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="bg-transparent text-lg font-medium border-none outline-none p-2"
-            placeholder="Document title"
+            placeholder={i18n._('Document title')}
           />
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="flex-1 p-2 bg-background font-mono text-sm resize-none outline-none"
-            placeholder="Write markdown here…"
+            placeholder={i18n._('Write markdown here…')}
           />
         </div>
         <div className="p-4 bg-card overflow-auto prose prose-sm prose-invert max-w-none">

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
 import { handleApiError } from '@ataqu/shared-utils';
@@ -9,14 +9,7 @@ import { i18n } from '@lingui/core';
 import { Plus, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { RelationCell } from './relation-cell';
-import { cn } from '@ataqu/ui';
-
-interface Row {
-  id: string;
-  values: Record<string, any>;
-  created_at?: string;
-  updated_at?: string;
-}
+import type { DatabaseRow } from '@/types';
 
 interface DatabaseGridProps {
   databaseId: string;
@@ -25,14 +18,13 @@ interface DatabaseGridProps {
 }
 
 export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProps) {
-  const queryClient = useQueryClient();
   const { getKey } = useIdempotency();
   const [editingCell, setEditingCell] = useState<{ rowId: string; col: string } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterText, setFilterText] = useState('');
 
-  const { data: rows = [], refetch, error } = useQuery<Row[]>({
+  const { data: rows = [], refetch, error } = useQuery<DatabaseRow[]>({
     queryKey: ['database-rows', databaseId],
     queryFn: () => api.get(`/databases/${databaseId}/rows`),
   });
@@ -41,7 +33,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
 
   const createRowMutation = useMutation({
     mutationFn: (data: { values: Record<string, any> }) =>
-      api.post<Row>(`/databases/${databaseId}/rows`, data, {
+      api.post<DatabaseRow>(`/databases/${databaseId}/rows`, data, {
         headers: { 'Idempotency-Key': getKey() },
       }),
     onSuccess: () => {
@@ -54,7 +46,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
 
   const updateRowMutation = useMutation({
     mutationFn: (data: { rowId: string; values: Record<string, any> }) =>
-      api.patch<Row>(`/databases/${databaseId}/rows/${data.rowId}`, data.values, {
+      api.patch<DatabaseRow>(`/databases/${databaseId}/rows/${data.rowId}`, data.values, {
         headers: { 'Idempotency-Key': getKey() },
       }),
     onSuccess: () => {
@@ -107,7 +99,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
     });
   }
 
-  const renderCell = (row: Row, col: { name: string; type: string }) => {
+  const renderCell = (row: DatabaseRow, col: { name: string; type: string }) => {
     const value = row.values?.[col.name] ?? '';
     const isEditing = editingCell?.rowId === row.id && editingCell?.col === col.name;
 

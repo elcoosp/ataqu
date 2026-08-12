@@ -6,9 +6,10 @@ import { handleApiError } from '@ataqu/shared-utils';
 import { Button, Input } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
 import { i18n } from '@lingui/core';
-import { Plus } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { EmptyState } from '@/components/empty-state';
 import type { Template } from '@/types';
 
 export const Route = createFileRoute('/_auth/templates')({
@@ -79,14 +80,24 @@ function TemplatesPage() {
           </div>
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(data || []).map((t) => (
-          <div key={t.id} className="border border-border rounded p-4">
-            <h3 className="font-medium">{t.name}</h3>
-            <p className="text-sm text-muted-foreground truncate">{t.content}</p>
-          </div>
-        ))}
-      </div>
+      {data?.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title={<Trans>No templates</Trans>}
+          description={<Trans>Create a template to reuse document structures.</Trans>}
+          ctaLabel={<Trans>Create Template</Trans>}
+          onCta={() => setShowCreator(true)}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data?.map((t) => (
+            <div key={t.id} className="border border-border rounded p-4">
+              <h3 className="font-medium">{t.name}</h3>
+              <p className="text-sm text-muted-foreground truncate">{t.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

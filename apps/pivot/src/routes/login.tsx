@@ -1,15 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import { Trans } from '@lingui/react/macro';
 import { useEffect } from 'react';
 
 export const Route = createFileRoute('/login')({
-  component: LoginRedirect,
+  beforeLoad: () => {
+    throw redirect({ to: 'https://sso.ataqu.com/login', replace: true });
+  },
+  component: LoginPlaceholder,
 });
 
-function LoginRedirect() {
-  useEffect(() => {
-    window.location.href = 'https://sso.ataqu.com/login';
-  }, []);
+function LoginPlaceholder() {
   return (
     <div className="flex items-center justify-center h-full">
       <p><Trans>Redirecting to login…</Trans></p>

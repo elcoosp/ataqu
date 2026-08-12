@@ -4,6 +4,7 @@ export interface Document {
   content: string;
   version: number;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Database {
@@ -17,4 +18,11 @@ export interface Template {
   name: string;
   content: string;
   created_at: string;
+}
+
+export interface DatabaseRow {
+  id: string;
+  values: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
 }
