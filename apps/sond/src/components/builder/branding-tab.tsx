@@ -1,4 +1,5 @@
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ataqu/ui';
+import { Trans } from '@lingui/core/macro';
 import type { SondBranding } from './types';
 
 interface Props {
@@ -10,7 +11,7 @@ export function BrandingTab({ branding, onUpdate }: Props) {
   return (
     <div className="space-y-6 p-4">
       <div>
-        <label className="mb-2 block text-sm font-medium">Primary Color</label>
+        <label className="mb-2 block text-sm font-medium"><Trans>Primary Color</Trans></label>
         <Input
           type="color"
           value={branding.primaryColor || '#f59e0b'}
@@ -19,7 +20,7 @@ export function BrandingTab({ branding, onUpdate }: Props) {
         />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-medium">Logo URL</label>
+        <label className="mb-2 block text-sm font-medium"><Trans>Logo URL</Trans></label>
         <Input
           value={branding.logoUrl || ''}
           onChange={(e) => onUpdate({ logoUrl: e.target.value })}
@@ -27,7 +28,7 @@ export function BrandingTab({ branding, onUpdate }: Props) {
         />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-medium">Font Family</label>
+        <label className="mb-2 block text-sm font-medium"><Trans>Font Family</Trans></label>
         <Select value={branding.fontFamily || 'inter'} onValueChange={(v: 'inter' | 'jetbrains') => onUpdate({ fontFamily: v })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, Input } from '@ataqu/ui';
+import { Trans, t } from '@lingui/core/macro';
 import type { SondQuestion } from '../builder/types';
 
 interface Props {
@@ -18,7 +19,7 @@ export function ConversationalSlide({ question, value, onChange, onNext, onSubmi
 
   const handleNext = () => {
     if (question.required && (value == null || String(value).trim() === '')) {
-      setError('This field is required');
+      setError(t`This field is required`);
       return;
     }
     setError('');
@@ -129,7 +130,7 @@ export function ConversationalSlide({ question, value, onChange, onNext, onSubmi
     <div className="flex min-h-[60vh] flex-col items-center justify-center animate-in fade-in slide-in-from-right-4 duration-150 ease-out">
       <div className="w-full max-w-lg rounded-xl border border-border bg-card p-8 shadow-lg">
         <div className="mb-2 text-sm text-muted-foreground">
-          Question {current} of {total}
+          <Trans>Question {current} of {total}</Trans>
         </div>
         <div className="mb-8 h-1.5 w-full rounded-full bg-muted">
           <div className="h-1.5 rounded-full bg-primary transition-all" style={{ width: `${(current / total) * 100}%` }} />
@@ -138,7 +139,7 @@ export function ConversationalSlide({ question, value, onChange, onNext, onSubmi
         {renderInput()}
         {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
         <Button onClick={handleNext} className="mt-8 h-12 w-full bg-primary text-lg text-primary-foreground hover:bg-primary/90">
-          {isLast ? 'Submit' : 'Next'}
+          {isLast ? <Trans>Submit</Trans> : <Trans>Next</Trans>}
         </Button>
       </div>
     </div>

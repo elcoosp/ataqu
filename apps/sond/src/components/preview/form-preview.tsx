@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button } from '@ataqu/ui';
+import { Trans, t } from '@lingui/core/macro';
 import { ConversationalSlide } from './conversational-slide';
 import { isQuestionVisible } from './visibility';
 import { useFormPreviewStore } from '../../stores/form-preview-store';
@@ -127,10 +128,10 @@ export function FormPreview({ form, open, onClose }: Props) {
       <div className="flex justify-between pt-4">
         {currentSlide > 0 && (
           <Button variant="outline" onClick={() => setCurrentSlide(currentSlide - 1)}>
-            Back
+            <Trans>Back</Trans>
           </Button>
         )}
-        <Button onClick={handleNextPage}>{currentSlide === totalPages - 1 ? 'Submit' : 'Next'}</Button>
+        <Button onClick={handleNextPage}>{currentSlide === totalPages - 1 ? <Trans>Submit</Trans> : <Trans>Next</Trans>}</Button>
       </div>
     </div>
   );
@@ -154,8 +155,8 @@ export function FormPreview({ form, open, onClose }: Props) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="mb-2 text-2xl font-bold">Thank you!</h3>
-              <p className="text-muted-foreground">Your response has been recorded.</p>
+              <h3 className="mb-2 text-2xl font-bold"><Trans>Thank you!</Trans></h3>
+              <p className="text-muted-foreground"><Trans>Your response has been recorded.</Trans></p>
             </div>
           ) : mode === 'conversational' && conversationalQuestion ? (
             <ConversationalSlide

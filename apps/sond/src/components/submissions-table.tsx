@@ -1,5 +1,6 @@
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@ataqu/ui';
 import { Download } from 'lucide-react';
+import { Trans, t } from '@lingui/core/macro';
 import type { Submission, AnswerInput } from '@ataqu/api-client';
 
 interface Props {
@@ -21,17 +22,17 @@ export function SubmissionsTable({ submissions, onExport }: Props) {
       <div className="flex justify-end">
         <Button variant="outline" onClick={onExport}>
           <Download className="mr-2 h-4 w-4" />
-          Export CSV
+          <Trans>Export CSV</Trans>
         </Button>
       </div>
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Submitted At</TableHead>
-              <TableHead>Answer 1</TableHead>
-              <TableHead>Answer 2</TableHead>
-              <TableHead>Answer 3</TableHead>
+              <TableHead><Trans>Submitted At</Trans></TableHead>
+              <TableHead><Trans>Answer 1</Trans></TableHead>
+              <TableHead><Trans>Answer 2</Trans></TableHead>
+              <TableHead><Trans>Answer 3</Trans></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -49,7 +50,7 @@ export function SubmissionsTable({ submissions, onExport }: Props) {
             {submissions.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                  No submissions
+                  <Trans>No submissions</Trans>
                 </TableCell>
               </TableRow>
             )}

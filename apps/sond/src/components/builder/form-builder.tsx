@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
 import { Button, cn } from '@ataqu/ui';
 import { Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Trans, t } from '@lingui/core/macro';
 import { QuestionPalette } from './question-palette';
 import { QuestionConfigPanel } from './question-config-panel';
 import { ConditionalLogicModal } from './conditional-logic-modal';
@@ -34,12 +36,15 @@ function QuestionCard({ question, selected, onSelect, onDelete }: { question: So
     >
       <div className="flex items-start justify-between">
         <div>
-          <div className="font-medium">{question.label || 'Untitled Question'}</div>
-          <div className="text-xs capitalize text-muted-foreground">{question.type.replace('_', ' ')} · Page {question.page}</div>
+          <div className="font-medium">{question.label || t`Untitled Question`}</div>
+          <div className="text-xs capitalize text-muted-foreground">
+            {question.type.replace('_', ' ')} · <Trans>Page</Trans> {question.page}
+          </div>
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           className="text-muted-foreground hover:text-destructive"
+          aria-label={t`Delete question`}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -70,7 +75,7 @@ export function FormBuilder({ questions, onUpdate }: Props) {
         type,
         required: false,
         page: 1,
-        options: type === 'choice' || type === 'multiple_choice' ? ['Option 1'] : undefined,
+        options: type === 'choice' || type === 'multiple_choice' ? [t`Option 1`] : undefined,
         min: type === 'rating' ? 1 : undefined,
         max: type === 'rating' ? 5 : undefined,
       };
@@ -84,6 +89,7 @@ export function FormBuilder({ questions, onUpdate }: Props) {
       newQuestions.splice(insertIndex, 0, newQ);
       onUpdate(newQuestions);
       setSelectedId(newQ.id);
+      toast.success(t`Question added`);
     } else if (activeId.startsWith('q-') && overId.startsWith('q-')) {
       const activeQid = activeId.slice(2);
       const overQid = overId.slice(2);
@@ -106,27 +112,30 @@ export function FormBuilder({ questions, onUpdate }: Props) {
   const handleDelete = (id: string) => {
     onUpdate(questions.filter((q) => q.id !== id));
     if (selectedId === id) setSelectedId(null);
+    toast.success(t`Question deleted`);
   };
 
   const handleSaveCondition = (condition: NonNullable<SondQuestion['conditions']>[number]) => {
     if (!selectedId) return;
     onUpdate(questions.map((q) => (q.id === selectedId ? { ...q, conditions: [condition] } : q)));
+    toast.success(t`Conditional logic saved`);
   };
 
   const handleAddPageBreak = () => {
     if (!selectedId) return;
     const maxPage = questions.reduce((m, q) => Math.max(m, q.page), 0);
     onUpdate(questions.map((q) => (q.id === selectedId ? { ...q, page: maxPage + 1 } : q)));
+    toast.success(t`Page break added`);
   };
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex h-[calc(100vh-64px)]">
+      <div className="flex h-full">
         <QuestionPalette />
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="border-b border-border bg-card px-4 py-2">
             <Button variant="outline" size="sm" onClick={handleAddPageBreak} disabled={!selectedId}>
-              Add Page Break
+              <Trans>Add Page Break</Trans>
             </Button>
           </div>
           <div
@@ -136,7 +145,7 @@ export function FormBuilder({ questions, onUpdate }: Props) {
             <div className="mx-auto max-w-2xl space-y-4">
               {questions.length === 0 && (
                 <div className="rounded-lg border-2 border-dashed border-border py-20 text-center text-muted-foreground">
-                  Drag questions here to build your form
+                  <Trans>Drag questions here to build your form</Trans>
                 </div>
               )}
               {questions.map((q) => (

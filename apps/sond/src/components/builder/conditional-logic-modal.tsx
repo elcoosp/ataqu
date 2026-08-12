@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@ataqu/ui';
+import { Trans, t } from '@lingui/core/macro';
 import type { SondQuestion } from './types';
 import type { FormQuestion } from '@ataqu/api-client';
 
@@ -61,47 +62,47 @@ export function ConditionalLogicModal({ open, question, questions, onSave, onClo
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="ataqu-glass">
         <DialogHeader>
-          <DialogTitle>Add Conditional Logic</DialogTitle>
+          <DialogTitle><Trans>Add Conditional Logic</Trans></DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">If</span>
+            <span className="text-sm font-medium"><Trans>If</Trans></span>
             <Select value={conditionQuestionId} onValueChange={setConditionQuestionId}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Question" />
+                <SelectValue placeholder={t`Question`} />
               </SelectTrigger>
               <SelectContent>
                 {availableQuestions.map((q) => (
                   <SelectItem key={q.id} value={q.id}>
-                    {q.label || 'Untitled'}
+                    {q.label || t`Untitled`}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={operator} onValueChange={(v) => setOperator(v as ConditionOperator)}>
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Operator" />
+                <SelectValue placeholder={t`Operator`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="equals">equals</SelectItem>
-                <SelectItem value="not_equals">not equals</SelectItem>
-                <SelectItem value="contains">contains</SelectItem>
-                <SelectItem value="not_contains">not contains</SelectItem>
-                <SelectItem value="is_empty">is empty</SelectItem>
-                <SelectItem value="is_not_empty">is not empty</SelectItem>
+                <SelectItem value="equals"><Trans>equals</Trans></SelectItem>
+                <SelectItem value="not_equals"><Trans>not equals</Trans></SelectItem>
+                <SelectItem value="contains"><Trans>contains</Trans></SelectItem>
+                <SelectItem value="not_contains"><Trans>not contains</Trans></SelectItem>
+                <SelectItem value="is_empty"><Trans>is empty</Trans></SelectItem>
+                <SelectItem value="is_not_empty"><Trans>is not empty</Trans></SelectItem>
               </SelectContent>
             </Select>
             {!disableValue && (
-              <Input value={value} onChange={(e) => setValue(e.target.value)} className="w-40" placeholder="Value" />
+              <Input value={value} onChange={(e) => setValue(e.target.value)} className="w-40" placeholder={t`Value`} />
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            This question will be shown only when the condition above is met.
+            <Trans>This question will be shown only when the condition above is met.</Trans>
           </p>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save Logic</Button>
+          <Button variant="outline" onClick={onClose}><Trans>Cancel</Trans></Button>
+          <Button onClick={handleSave}><Trans>Save Logic</Trans></Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

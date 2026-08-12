@@ -1,5 +1,5 @@
-import { Badge } from '@ataqu/ui';
-import { Switch } from './ui/switch';
+import { Badge, Switch } from '@ataqu/ui';
+import { Trans } from '@lingui/core/macro';
 
 interface Props {
   label: string;
