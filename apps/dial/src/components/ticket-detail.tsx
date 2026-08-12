@@ -15,7 +15,7 @@ import {
 } from '@/api/tickets';
 
 export function TicketDetail() {
-  const { id } = useParams({ from: '/_auth/tickets/$id' });
+  const { id } = useParams();
   const queryClient = useQueryClient();
   const [reply, setReply] = useState('');
   const { resetKey } = useIdempotency();
