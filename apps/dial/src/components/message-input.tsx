@@ -4,6 +4,7 @@ import { Button } from '@ataqu/ui';
 import { t } from '@lingui/macro';
 import { Loader2, Paperclip, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface MessageInputProps {
   channelId: string;
@@ -23,9 +24,6 @@ export function MessageInput({ channelId, placeholder = t`Type a message...` }: 
     const trimmed = content.trim();
     setIsSending(true);
     try {
-      // Optimistic: add message to UI via WebSocket or cache update
-      // We'll rely on the WebSocket to broadcast and update cache.
-      // But we can also manually update the cache.
       await sendMessage.mutateAsync({
         channelId,
         data: { content: trimmed },
@@ -34,8 +32,8 @@ export function MessageInput({ channelId, placeholder = t`Type a message...` }: 
       resetKey();
       toast.success(t`Message sent`);
     } catch (error) {
-      // Rollback: the mutation will handle error state
       console.error('Failed to send message', error);
+      toast.error(t`Failed to send message`);
     } finally {
       setIsSending(false);
     }
@@ -49,21 +47,20 @@ export function MessageInput({ channelId, placeholder = t`Type a message...` }: 
   };
 
   useEffect(() => {
-    // Auto-resize
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, []);
+  }, [content]);
 
   return (
     <div className="flex items-end gap-2">
       <div className="flex-1 relative">
         <textarea
-          className="resize-none min-h-[40px] max-h-[200px] bg-background border border-input rounded-md px-3 py-2 text-sm"
+          className="resize-none min-h-[40px] max-h-[200px] bg-background border border-input rounded-md px-3 py-2 text-sm w-full"
           ref={textareaRef}
           value={content}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
+          onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           rows={1}

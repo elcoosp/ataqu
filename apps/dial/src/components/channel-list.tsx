@@ -7,24 +7,32 @@ import { Hash, Lock, Plus, Search, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useDialStore } from '@/stores/dial-store';
 
+// Local type that matches the actual API response (which includes type and unread_count)
+type ExtendedChannel = ChannelSummary & {
+  type?: 'public' | 'private' | 'direct_message';
+  unread_count?: number;
+};
+
 export function ChannelList() {
   const { activeChannelId } = useDialStore();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const { data: channels, isLoading } = useListChannels();
 
-  const filteredChannels = useMemo(() => {
-    if (!channels) return [];
-    if (!debouncedSearch) return channels;
-    return channels.filter((c) => c.name.toLowerCase().includes(debouncedSearch.toLowerCase()));
-  }, [channels, debouncedSearch]);
+  // Cast to ExtendedChannel array
+  const extendedChannels = (channels ?? []) as ExtendedChannel[];
 
-  // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
-  const publicChannels = filteredChannels.filter((c) => (c as any).type === 'public');
-  // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
-  const privateChannels = filteredChannels.filter((c) => (c as any).type === 'private');
-  // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
-  const dmChannels = filteredChannels.filter((c) => (c as any).type === 'direct_message');
+  const filteredChannels = useMemo(() => {
+    if (!extendedChannels.length) return [];
+    if (!debouncedSearch) return extendedChannels;
+    return extendedChannels.filter((c) =>
+      c.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+  }, [extendedChannels, debouncedSearch]);
+
+  const publicChannels = filteredChannels.filter((c) => c.type === 'public');
+  const privateChannels = filteredChannels.filter((c) => c.type === 'private');
+  const dmChannels = filteredChannels.filter((c) => c.type === 'direct_message');
 
   const handleCreateChannel = () => {
     window.dispatchEvent(new CustomEvent('openCreateChannelDialog'));
@@ -53,13 +61,11 @@ export function ChannelList() {
     );
   }
 
-  const renderChannel = (channel: ChannelSummary) => {
+  const renderChannel = (channel: ExtendedChannel) => {
     const isActive = activeChannelId === channel.id;
     let icon = <Hash className="h-4 w-4" />;
-    // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
-    if ((channel as any).type === 'private') icon = <Lock className="h-4 w-4" />;
-    // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
-    if ((channel as any).type === 'direct_message') icon = <Users className="h-4 w-4" />;
+    if (channel.type === 'private') icon = <Lock className="h-4 w-4" />;
+    if (channel.type === 'direct_message') icon = <Users className="h-4 w-4" />;
 
     return (
       <Link
@@ -74,14 +80,11 @@ export function ChannelList() {
       >
         <span className="mr-2">{icon}</span>
         <span className="flex-1 truncate text-sm font-medium">{channel.name}</span>
-        {
-          // biome-ignore lint/suspicious/noExplicitAny: API shape is not fully typed
-          ((channel as any).unread_count ?? 0) > 0 && (
-            <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-              {(channel as any).unread_count}
-            </span>
-          )
-        }
+        {(channel.unread_count ?? 0) > 0 && (
+          <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+            {channel.unread_count}
+          </span>
+        )}
       </Link>
     );
   };
