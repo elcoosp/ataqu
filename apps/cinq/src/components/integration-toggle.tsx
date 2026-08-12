@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button } from '@ataqu/ui';
 import { toast } from 'sonner';
-import { Trans } from '@lingui/react/macro';
+import { Trans, t } from '@lingui/macro';
 import { api } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
 
@@ -13,7 +13,7 @@ export function IntegrationToggle({
 }: {
   dealId: UUID;
   targetApp: 'dial' | 'spark';
-  label: string;
+  label: ReactNode;
 }) {
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(false);
@@ -31,12 +31,12 @@ export function IntegrationToggle({
       queryClient.invalidateQueries({ queryKey: ['cinq', 'deal', dealId] });
       toast.success(
         data.enabled
-          ? `CINQ connected to ${targetApp}`
-          : `CINQ disconnected from ${targetApp}`
+          ? t`CINQ connected to ${targetApp}`
+          : t`CINQ disconnected from ${targetApp}`
       );
     },
     onError: () => {
-      toast.error('Failed to toggle integration');
+      toast.error(t`Failed to toggle integration`);
       setEnabled(!enabled);
     },
   });
@@ -55,7 +55,7 @@ export function IntegrationToggle({
         onClick={handleToggle}
         className="min-w-[100px]"
       >
-        {enabled ? 'Connected' : 'Connect'}
+        {enabled ? <Trans>Connected</Trans> : <Trans>Connect</Trans>}
       </Button>
       <span className="text-sm">{label}</span>
       {enabled && (

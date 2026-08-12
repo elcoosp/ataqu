@@ -27,8 +27,8 @@ function DealDetail() {
         <span className="capitalize">{deal.status}</span>
         <span>Prob: {deal.probability ?? '—'}%</span>
         <CrossAppBadge entityId={id} />
-        <IntegrationToggle dealId={id} targetApp="dial" label="Create DIAL channel on won" />
-        <IntegrationToggle dealId={id} targetApp="spark" label="Trigger SPARK workflow on won" />
+        <IntegrationToggle dealId={id} targetApp="dial" label={<Trans>Create DIAL channel on won</Trans>} />
+        <IntegrationToggle dealId={id} targetApp="spark" label={<Trans>Trigger SPARK workflow on won</Trans>} />
       </div>
 
       <Tabs defaultValue="activities" className="mt-4">

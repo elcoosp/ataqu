@@ -1,6 +1,7 @@
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { KanbanBoard, Badge, Skeleton } from '@ataqu/ui';
 import { toast } from 'sonner';
+import { Trans, t } from '@lingui/macro';
 import { listDeals, listPipelineStages } from '@ataqu/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import type { DealResponse, PipelineStageResponse } from '@ataqu/api-client';
@@ -30,9 +31,8 @@ export function DealKanban() {
   }));
 
   const handleDragEnd = (newColumns: any[]) => {
-    // Invalidate deals to refetch, or we could update the cache
     queryClient.invalidateQueries({ queryKey: ['cinq', 'deals'] });
-    toast.info('Deal moved (refresh to see changes)');
+    toast.info(t`Deal moved (refresh to see changes)`);
   };
 
   const renderItem = (deal: DealResponse) => (

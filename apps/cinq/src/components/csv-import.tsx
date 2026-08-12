@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import Papa from 'papaparse';
 import { Button, Card, CardContent } from '@ataqu/ui';
 import { toast } from 'sonner';
-import { Trans } from '@lingui/react/macro';
+import { Trans, t } from '@lingui/macro';
 import { api } from '@ataqu/api-client';
 
 export function CsvImport() {
@@ -54,10 +54,10 @@ export function CsvImport() {
       });
     },
     onSuccess: (data: any) => {
-      toast.success(`CSV imported: ${data.imported} contacts. Failed: ${data.failed}`);
+      toast.success(t`CSV imported: ${data.imported} contacts. Failed: ${data.failed}`);
     },
     onError: () => {
-      toast.error('Import failed');
+      toast.error(t`Import failed`);
     },
   });
 
@@ -88,12 +88,12 @@ export function CsvImport() {
                     onChange={(e) => setMapping({ ...mapping, [h]: e.target.value })}
                     className="border rounded px-2 py-1"
                   >
-                    <option value="">Ignore</option>
-                    <option value="name">Name</option>
-                    <option value="email">Email</option>
-                    <option value="phone">Phone</option>
-                    <option value="company">Company</option>
-                    <option value="customFields">Custom</option>
+                    <option value=""><Trans>Ignore</Trans></option>
+                    <option value="name"><Trans>Name</Trans></option>
+                    <option value="email"><Trans>Email</Trans></option>
+                    <option value="phone"><Trans>Phone</Trans></option>
+                    <option value="company"><Trans>Company</Trans></option>
+                    <option value="customFields"><Trans>Custom</Trans></option>
                   </select>
                 </div>
               ))}

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Input, Skeleton } from '@ataqu/ui';
@@ -55,7 +55,7 @@ export function ContactTable() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search contacts..."
+            placeholder={<Trans>Search contacts...</Trans>}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
@@ -72,11 +72,11 @@ export function ContactTable() {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-deep-night/90 z-10 border-b border-gray-700">
               <tr>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Name</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Email</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Phone</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Company</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Custom</th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400"><Trans>Name</Trans></th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400"><Trans>Email</Trans></th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400"><Trans>Phone</Trans></th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400"><Trans>Company</Trans></th>
+                <th className="text-left py-2 px-3 font-medium text-gray-400"><Trans>Custom</Trans></th>
               </tr>
             </thead>
             <tbody>
