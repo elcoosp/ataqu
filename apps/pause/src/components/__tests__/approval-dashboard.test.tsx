@@ -13,6 +13,11 @@ interface MockLeaveRequest {
   end_date: string;
 }
 
+vi.mock('@lingui/macro', () => ({
+  Trans: ({ children }: any) => children,
+  t: (str: string) => str,
+}));
+
 vi.mock('@ataqu/api-client', () => ({
   useListLeaveRequests: () => ({
     data: [

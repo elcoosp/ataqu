@@ -1,6 +1,7 @@
 import { useCreateLeaveRequest } from '@ataqu/api-client';
 import { Button, Input, Label } from '@ataqu/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Trans, t } from '@lingui/macro';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -26,11 +27,11 @@ interface LeaveRequestFormProps {
 export function LeaveRequestForm({ employeeId, onSuccess, onClose }: LeaveRequestFormProps) {
   const mutation = useCreateLeaveRequest({
     onSuccess: () => {
-      toast.success('Leave requested.');
+      toast.success(t`Leave requested.`);
       onSuccess?.();
       onClose?.();
     },
-    onError: () => toast.error('Failed to request leave.'),
+    onError: () => toast.error(t`Failed to request leave.`),
   });
 
   const {
@@ -49,34 +50,50 @@ export function LeaveRequestForm({ employeeId, onSuccess, onClose }: LeaveReques
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <Label htmlFor="leave_type">Leave Type</Label>
+        <Label htmlFor="leave_type">
+          <Trans>Leave Type</Trans>
+        </Label>
         <select
           id="leave_type"
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           {...register('leave_type')}
         >
-          <option value="annual">Annual</option>
-          <option value="sick">Sick</option>
-          <option value="personal">Personal</option>
-          <option value="unpaid">Unpaid</option>
+          <option value="annual">
+            <Trans>Annual</Trans>
+          </option>
+          <option value="sick">
+            <Trans>Sick</Trans>
+          </option>
+          <option value="personal">
+            <Trans>Personal</Trans>
+          </option>
+          <option value="unpaid">
+            <Trans>Unpaid</Trans>
+          </option>
         </select>
       </div>
       <div>
-        <Label htmlFor="start_date">Start Date</Label>
+        <Label htmlFor="start_date">
+          <Trans>Start Date</Trans>
+        </Label>
         <Input id="start_date" type="date" {...register('start_date')} />
         {errors.start_date && (
           <p className="text-red-500 text-sm">{errors.start_date.message?.toString()}</p>
         )}
       </div>
       <div>
-        <Label htmlFor="end_date">End Date</Label>
+        <Label htmlFor="end_date">
+          <Trans>End Date</Trans>
+        </Label>
         <Input id="end_date" type="date" {...register('end_date')} />
         {errors.end_date && (
           <p className="text-red-500 text-sm">{errors.end_date.message?.toString()}</p>
         )}
       </div>
       <div>
-        <Label htmlFor="reason">Reason</Label>
+        <Label htmlFor="reason">
+          <Trans>Reason</Trans>
+        </Label>
         <textarea
           id="reason"
           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base"
@@ -84,7 +101,7 @@ export function LeaveRequestForm({ employeeId, onSuccess, onClose }: LeaveReques
         />
       </div>
       <Button type="submit" data-tour="request-leave" disabled={mutation.isPending}>
-        Request Leave
+        <Trans>Request Leave</Trans>
       </Button>
     </form>
   );

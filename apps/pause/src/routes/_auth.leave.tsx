@@ -1,5 +1,6 @@
 import { useAuthStore } from '@ataqu/shared-stores';
 import { Button, Dialog, DialogContent, DialogTrigger, OnboardTour, Shell } from '@ataqu/ui';
+import { Trans, t } from '@lingui/macro';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { ApprovalDashboard } from '../components/approval-dashboard';
@@ -20,20 +21,24 @@ function LeavePage() {
         steps={[
           {
             target: '[data-tour="request-leave"]',
-            content: 'No payroll bloat. Just leave tracking.',
+            content: t`No payroll bloat. Just leave tracking.`,
           },
           {
             target: '[data-tour="pending-list"]',
-            content: 'Approve here, and their system access updates automatically via AEGIS.',
+            content: t`Approve here, and their system access updates automatically via AEGIS.`,
           },
         ]}
       >
         <div className="p-8">
           <div className="flex justify-between mb-8">
-            <h1 className="text-2xl font-bold">Leave Requests</h1>
+            <h1 className="text-2xl font-bold">
+              <Trans>Leave Requests</Trans>
+            </h1>
             <Dialog open={isLeaveOpen} onOpenChange={setIsLeaveOpen}>
               <DialogTrigger asChild>
-                <Button>Request Leave</Button>
+                <Button>
+                  <Trans>Request Leave</Trans>
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <LeaveRequestForm

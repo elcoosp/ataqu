@@ -1,22 +1,16 @@
 import {
   type Document,
+  useDeactivateEmployee,
   useGetEmployee,
   useListEmployeeDocuments,
   useUploadDocument,
 } from '@ataqu/api-client';
 import { Button, Card, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from '@ataqu/ui';
+import { Trans, t } from '@lingui/macro';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
-/**
- * Helper function to handle S3 presigned URL upload flow.
- * 1. Fetches presigned URL from backend.
- * 2. Uploads file directly to S3.
- * 3. Returns the final S3 object URL.
- */
 async function uploadFileToS3(file: File): Promise<string> {
-  // 1. Fetch presigned URL from backend
-  // Note: Assuming an endpoint /api/v1/pause/presigned-url exists
   const response = await fetch('/api/v1/pause/presigned-url', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -29,7 +23,6 @@ async function uploadFileToS3(file: File): Promise<string> {
 
   const { upload_url, file_url } = await response.json();
 
-  // 2. Upload file to S3
   const uploadResponse = await fetch(upload_url, {
     method: 'PUT',
     body: file,
@@ -50,8 +43,15 @@ export function EmployeeDetail({ id }: { id: string }) {
   const { data: documents, isLoading: docsLoading } = useListEmployeeDocuments(id);
 
   const uploadMutation = useUploadDocument({
-    onSuccess: () => toast.success('Document uploaded.'),
-    onError: (err) => toast.error(err.message || 'Failed to upload document.'),
+    onSuccess: () => toast.success(t`Document uploaded.`),
+    onError: (err) => toast.error(err.message || t`Failed to upload document.`),
+  });
+
+  const deactivateMutation = useDeactivateEmployee({
+    onSuccess: () => {
+      toast.success(t`Employee offboarded. AEGIS access revoked.`);
+    },
+    onError: () => toast.error(t`Failed to offboard employee.`),
   });
 
   if (isLoading || !employee) {
@@ -69,46 +69,69 @@ export function EmployeeDetail({ id }: { id: string }) {
         data: { file_name: file.name, file_url: fileUrl, doc_type: 'contract' },
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Upload failed');
+      toast.error(error instanceof Error ? error.message : t`Upload failed`);
     }
   };
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center space-x-6">
-        <div className="h-24 w-24 rounded-full bg-amber/20 flex items-center justify-center text-amber font-bold text-4xl">
-          {employee.full_name.charAt(0)}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-6">
+          <div className="h-24 w-24 rounded-full bg-amber/20 flex items-center justify-center text-amber font-bold text-4xl">
+            {employee.full_name.charAt(0)}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-white">{employee.full_name}</h1>
+            <p className="text-lg text-gray-400">{employee.job_title}</p>
+            <p className="text-sm text-gray-500">
+              {employee.email} | {employee.phone || t`No phone`}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold text-white">{employee.full_name}</h1>
-          <p className="text-lg text-gray-400">{employee.job_title}</p>
-          <p className="text-sm text-gray-500">
-            {employee.email} | {employee.phone || 'No phone'}
-          </p>
-        </div>
+        <Button
+          variant="destructive"
+          onClick={() => deactivateMutation.mutate(employee.id)}
+          disabled={deactivateMutation.isPending}
+        >
+          <Trans>Offboard</Trans>
+        </Button>
       </div>
 
       <Tabs defaultValue="leave">
         <TabsList>
-          <TabsTrigger value="leave">Leave Balance</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+          <TabsTrigger value="leave">
+            <Trans>Leave Balance</Trans>
+          </TabsTrigger>
+          <TabsTrigger value="documents">
+            <Trans>Documents</Trans>
+          </TabsTrigger>
+          <TabsTrigger value="onboarding">
+            <Trans>Onboarding</Trans>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="leave">
           <Card className="p-6">
-            <h3 className="text-xl font-semibold mb-4">Leave Balance</h3>
+            <h3 className="text-xl font-semibold mb-4">
+              <Trans>Leave Balance</Trans>
+            </h3>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-gray-400">Accrued</p>
+                <p className="text-sm text-gray-400">
+                  <Trans>Accrued</Trans>
+                </p>
                 <p className="text-2xl font-bold">15d</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Used</p>
+                <p className="text-sm text-gray-400">
+                  <Trans>Used</Trans>
+                </p>
                 <p className="text-2xl font-bold">5d</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Remaining</p>
+                <p className="text-sm text-gray-400">
+                  <Trans>Remaining</Trans>
+                </p>
                 <p className="text-2xl font-bold text-amber">10d</p>
               </div>
             </div>
@@ -118,7 +141,9 @@ export function EmployeeDetail({ id }: { id: string }) {
         <TabsContent value="documents">
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">Documents</h3>
+              <h3 className="text-xl font-semibold">
+                <Trans>Documents</Trans>
+              </h3>
               <label className="cursor-pointer">
                 <input
                   type="file"
@@ -129,7 +154,11 @@ export function EmployeeDetail({ id }: { id: string }) {
                 <Button variant="outline" asChild disabled={uploadMutation.isPending}>
                   <span>
                     <Upload className="h-4 w-4 mr-2" />{' '}
-                    {uploadMutation.isPending ? 'Uploading...' : 'Upload Document'}
+                    {uploadMutation.isPending ? (
+                      <Trans>Uploading...</Trans>
+                    ) : (
+                      <Trans>Upload Document</Trans>
+                    )}
                   </span>
                 </Button>
               </label>
@@ -149,16 +178,20 @@ export function EmployeeDetail({ id }: { id: string }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-400">No documents uploaded.</p>
+              <p className="text-gray-400">
+                <Trans>No documents uploaded.</Trans>
+              </p>
             )}
           </Card>
         </TabsContent>
 
         <TabsContent value="onboarding">
           <Card className="p-6">
-            <h3 className="text-xl font-semibold mb-4">Onboarding Checklist</h3>
+            <h3 className="text-xl font-semibold mb-4">
+              <Trans>Onboarding Checklist</Trans>
+            </h3>
             <div className="space-y-2">
-              {['Create account', 'Sign contract', 'Setup workspace', 'Assign mentor'].map(
+              {[t`Create account`, t`Sign contract`, t`Setup workspace`, t`Assign mentor`].map(
                 (task) => (
                   <div key={task} className="flex items-center space-x-2">
                     <input

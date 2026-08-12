@@ -1,6 +1,7 @@
 import { useListEmployees, useSearchEmployees } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
 import { Button, Card, Input, Skeleton } from '@ataqu/ui';
+import { Trans, t } from '@lingui/macro';
 import { useNavigate } from '@tanstack/react-router';
 import { Search, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
@@ -38,9 +39,9 @@ export function EmployeeDirectory({ onAddEmployee }: { onAddEmployee: () => void
     return (
       <EmptyState
         icon={Users}
-        title="No employees"
-        description="Add your first employee to get started."
-        ctaLabel="Add Employee"
+        title={t`No employees`}
+        description={t`Add your first employee to get started.`}
+        ctaLabel={t`Add Employee`}
         onCtaClick={onAddEmployee}
       />
     );
@@ -52,7 +53,7 @@ export function EmployeeDirectory({ onAddEmployee }: { onAddEmployee: () => void
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search employees..."
+            placeholder={t`Search employees...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 bg-deep-night/50"
@@ -60,7 +61,7 @@ export function EmployeeDirectory({ onAddEmployee }: { onAddEmployee: () => void
         </div>
         <Button onClick={onAddEmployee}>
           <UserPlus className="h-4 w-4 mr-2" />
-          Add Employee
+          <Trans>Add Employee</Trans>
         </Button>
       </div>
 

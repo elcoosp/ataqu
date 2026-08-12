@@ -5,6 +5,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { LeaveRequestForm } from '../leave-request-form';
 
 const mutate = vi.fn();
+vi.mock('@lingui/macro', () => ({
+  Trans: ({ children }: any) => children,
+  t: (str: string) => str,
+}));
+
 vi.mock('@ataqu/api-client', () => ({
   useCreateLeaveRequest: () => ({ mutate, isPending: false }),
 }));
@@ -32,7 +37,7 @@ describe('LeaveRequestForm', () => {
     const endDateInput = container.querySelector('#end_date')!;
     fireEvent.change(endDateInput, { target: { value: '2026-01-02' } });
 
-    const submitButton = screen.getByText(/Request Leave/i);
+    const submitButton = screen.getByRole('button', { name: /Request Leave/i });
     fireEvent.click(submitButton);
 
     await waitFor(() => {

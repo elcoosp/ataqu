@@ -1,5 +1,6 @@
 import { useListEmployees } from '@ataqu/api-client';
 import { Card, Shell } from '@ataqu/ui';
+import { Trans } from '@lingui/macro';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_auth/onboarding')({
@@ -12,11 +13,17 @@ function OnboardingPage() {
   return (
     <Shell activeApp="pause">
       <div className="p-8">
-        <h1 className="text-2xl font-bold mb-8">Onboarding</h1>
+        <h1 className="text-2xl font-bold mb-8">
+          <Trans>Onboarding</Trans>
+        </h1>
         {!employees || employees.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h3 className="text-lg font-semibold mb-1">No active onboarding</h3>
-            <p className="text-sm text-gray-400">New hires will appear here.</p>
+            <h3 className="text-lg font-semibold mb-1">
+              <Trans>No active onboarding</Trans>
+            </h3>
+            <p className="text-sm text-gray-400">
+              <Trans>New hires will appear here.</Trans>
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

@@ -9,6 +9,7 @@ import {
   Label,
   Shell,
 } from '@ataqu/ui';
+import { Trans, t } from '@lingui/macro';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -24,13 +25,17 @@ function DirectoryPage() {
   return (
     <Shell activeApp="pause">
       <div className="p-8">
-        <h1 className="text-2xl font-bold mb-8">Employee Directory</h1>
+        <h1 className="text-2xl font-bold mb-8">
+          <Trans>Employee Directory</Trans>
+        </h1>
         <EmployeeDirectory onAddEmployee={() => setIsAddOpen(true)} />
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Employee</DialogTitle>
+              <DialogTitle>
+                <Trans>Add Employee</Trans>
+              </DialogTitle>
             </DialogHeader>
             <AddEmployeeForm onClose={() => setIsAddOpen(false)} />
           </DialogContent>
@@ -43,10 +48,10 @@ function DirectoryPage() {
 function AddEmployeeForm({ onClose }: { onClose: () => void }) {
   const mutation = useCreateEmployee({
     onSuccess: () => {
-      toast.success('Employee added.');
+      toast.success(t`Employee added.`);
       onClose();
     },
-    onError: () => toast.error('Failed to add employee.'),
+    onError: () => toast.error(t`Failed to add employee.`),
   });
 
   return (
@@ -64,23 +69,31 @@ function AddEmployeeForm({ onClose }: { onClose: () => void }) {
       className="space-y-4"
     >
       <div>
-        <Label htmlFor="full_name">Full Name</Label>
+        <Label htmlFor="full_name">
+          <Trans>Full Name</Trans>
+        </Label>
         <Input id="full_name" name="full_name" required />
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">
+          <Trans>Email</Trans>
+        </Label>
         <Input id="email" name="email" type="email" required />
       </div>
       <div>
-        <Label htmlFor="job_title">Job Title</Label>
+        <Label htmlFor="job_title">
+          <Trans>Job Title</Trans>
+        </Label>
         <Input id="job_title" name="job_title" required />
       </div>
       <div>
-        <Label htmlFor="hire_date">Hire Date</Label>
+        <Label htmlFor="hire_date">
+          <Trans>Hire Date</Trans>
+        </Label>
         <Input id="hire_date" name="hire_date" type="date" required />
       </div>
       <Button type="submit" disabled={mutation.isPending}>
-        Save
+        <Trans>Save</Trans>
       </Button>
     </form>
   );

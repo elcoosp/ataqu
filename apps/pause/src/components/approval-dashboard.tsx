@@ -5,6 +5,7 @@ import {
   useRejectLeaveRequest,
 } from '@ataqu/api-client';
 import { Badge, Button, DataTable } from '@ataqu/ui';
+import { Trans, t } from '@lingui/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Check, X } from 'lucide-react';
@@ -40,10 +41,10 @@ export function ApprovalDashboard() {
       if (ctx?.previousRequests) {
         queryClient.setQueryData(['pause', 'leave-requests'], ctx.previousRequests);
       }
-      toast.error('Failed to approve leave.');
+      toast.error(t`Failed to approve leave.`);
     },
     onSuccess: () => {
-      toast.success('Leave approved.');
+      toast.success(t`Leave approved.`);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['pause', 'leave-requests'] });
@@ -72,10 +73,10 @@ export function ApprovalDashboard() {
       if (ctx?.previousRequests) {
         queryClient.setQueryData(['pause', 'leave-requests'], ctx.previousRequests);
       }
-      toast.error('Failed to reject leave.');
+      toast.error(t`Failed to reject leave.`);
     },
     onSuccess: () => {
-      toast.success('Leave rejected.');
+      toast.success(t`Leave rejected.`);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['pause', 'leave-requests'] });
@@ -85,23 +86,23 @@ export function ApprovalDashboard() {
   const columns: ColumnDef<LeaveRequest>[] = [
     {
       accessorKey: 'employee_name',
-      header: 'Employee',
+      header: () => <Trans>Employee</Trans>,
     },
     {
       accessorKey: 'start_date',
-      header: 'Start Date',
+      header: () => <Trans>Start Date</Trans>,
     },
     {
       accessorKey: 'end_date',
-      header: 'End Date',
+      header: () => <Trans>End Date</Trans>,
     },
     {
       accessorKey: 'leave_type',
-      header: 'Type',
+      header: () => <Trans>Type</Trans>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: () => <Trans>Status</Trans>,
       cell: ({ row }) => {
         const status = row.original.status;
         const color =
@@ -115,7 +116,7 @@ export function ApprovalDashboard() {
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: () => <Trans>Actions</Trans>,
       cell: ({ row }) => {
         const req = row.original;
         return req.status === 'pending' ? (
@@ -141,7 +142,12 @@ export function ApprovalDashboard() {
     },
   ];
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading)
+    return (
+      <div>
+        <Trans>Loading...</Trans>
+      </div>
+    );
 
   return (
     <div data-tour="pending-list">

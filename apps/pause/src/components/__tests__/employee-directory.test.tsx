@@ -16,6 +16,11 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => () => {},
 }));
 
+vi.mock('@lingui/macro', () => ({
+  Trans: ({ children }: any) => children,
+  t: (str: string) => str,
+}));
+
 vi.mock('@ataqu/shared-hooks', () => ({
   useDebounce: (v: string) => v,
 }));
