@@ -1,10 +1,11 @@
 import { useIdempotency } from '@ataqu/shared-hooks';
+import { t } from '@lingui/macro';
 import { Badge, Button, cn, Skeleton } from '@ataqu/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
-import { getTicket, listTicketMessages, replyToTicket, updateTicketStatus } from '@/api/tickets';
+import { getTicket, listTicketMessages, replyToTicket, updateTicketStatus, type Ticket } from '@/api/tickets';
 
 export function TicketDetail() {
   const { id } = useParams({ from: '/_auth/tickets/$id' });
@@ -91,8 +92,7 @@ export function TicketDetail() {
             className="flex-1 min-h-[60px] resize-none bg-background border border-input rounded-md px-3 py-2 text-sm"
             value={reply}
             onChange={(e) => setReply(e.target.value)}
-            placeholder="Type a reply..."
-            className="flex-1 min-h-[60px]"
+            placeholder={t`Type a reply...`}
           />
           <Button
             onClick={() => replyMutation.mutate(reply)}

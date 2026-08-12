@@ -10,7 +10,7 @@ interface MessageInputProps {
   placeholder?: string;
 }
 
-export function MessageInput({ channelId, placeholder = 'Type a message...' }: MessageInputProps) {
+export function MessageInput({ channelId, placeholder = t`Type a message...` }: MessageInputProps) {
   const [content, setContent] = useState('');
   const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -64,7 +64,6 @@ export function MessageInput({ channelId, placeholder = 'Type a message...' }: M
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="resize-none min-h-[40px] max-h-[200px] bg-background"
           rows={1}
         />
         <div className="absolute right-2 bottom-1 text-xs text-muted-foreground">

@@ -3,6 +3,7 @@ import { Badge, Skeleton } from '@ataqu/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { DollarSign, User } from 'lucide-react';
+import { t } from '@lingui/macro';
 import { getCinqContext } from '@/api/cinq-context';
 
 interface ContextSidebarProps {
@@ -30,16 +31,16 @@ export function ContextSidebar({ channelId }: ContextSidebarProps) {
 
   return (
     <div className="p-4 border-l border-border h-full bg-card/30">
-      <h3 className="text-sm font-semibold text-foreground mb-4">Channel Info</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-4">{t`Channel Info`}</h3>
       <div className="space-y-2 text-sm text-muted-foreground">
         <p>
-          <span className="font-medium">Name:</span> {channel.name}
+          <span className="font-medium">{t`Name:`}</span> {channel.name}
         </p>
         <p>
-          <span className="font-medium">Type:</span> {channel.channel_type}
+          <span className="font-medium">{t`Type:`}</span> {channel.channel_type}
         </p>
         <p>
-          <span className="font-medium">Created:</span>{' '}
+          <span className="font-medium">{t`Created:`}</span>{' '}
           {new Date(channel.created_at).toLocaleDateString()}
         </p>
       </div>

@@ -2,6 +2,7 @@ import { useAddReaction, useListMessages } from '@ataqu/api-client';
 import { Avatar, AvatarFallback, Button, cn, Skeleton } from '@ataqu/ui';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { formatDistanceToNow } from 'date-fns';
+import { t } from '@lingui/macro';
 import { Reply } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { MessageInput } from './message-input';
@@ -53,7 +54,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
   if (!allMessages.length) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
-        No messages yet. Say hello!
+        {t`No messages yet. Say hello!`}
       </div>
     );
   }

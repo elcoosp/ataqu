@@ -13,7 +13,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
-import { listTickets, updateTicketStatus } from '@/api/tickets';
+import { t, Trans } from '@lingui/macro';
+import { listTickets, updateTicketStatus, type Ticket } from '@/api/tickets';
 
 export function TicketList() {
   const queryClient = useQueryClient();
@@ -59,12 +60,12 @@ export function TicketList() {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Subject</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Priority</TableHead>
-          <TableHead>Customer</TableHead>
-          <TableHead>Last Message</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead><Trans>Subject</Trans></TableHead>
+          <TableHead><Trans>Status</Trans></TableHead>
+          <TableHead><Trans>Priority</Trans></TableHead>
+          <TableHead><Trans>Customer</Trans></TableHead>
+          <TableHead><Trans>Last Message</Trans></TableHead>
+          <TableHead><Trans>Actions</Trans></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

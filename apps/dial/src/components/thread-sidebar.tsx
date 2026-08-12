@@ -1,6 +1,7 @@
 import { useListThreadMessages } from '@ataqu/api-client';
 import { Button, Sheet, SheetContent, SheetHeader, SheetTitle } from '@ataqu/ui';
 import { X } from 'lucide-react';
+import { t } from '@lingui/macro';
 import { useEffect, useState } from 'react';
 import { MessageInput } from './message-input';
 
@@ -28,7 +29,7 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent side="right" className="w-80 sm:w-96">
         <SheetHeader>
-          <SheetTitle>Thread</SheetTitle>
+          <SheetTitle>{t`Thread`}</SheetTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -54,7 +55,7 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
             <MessageInput
               channelId={channelId}
               threadId={threadId!}
-              placeholder="Reply in thread..."
+              placeholder={t`Reply in thread...`}
             />
           </div>
         </div>

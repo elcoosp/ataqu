@@ -1,6 +1,7 @@
 import { ChannelSummary } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
-import { Button, cn, Input, Skeleton } from '@ataqu/ui';
+import { t } from '@lingui/macro';
+import { Button, cn, Input, Skeleton, EmptyState } from '@ataqu/ui';
 import { useMemo, useState } from 'react';
 import { useDialStore } from '@/stores/dial-store';
 
@@ -63,12 +64,12 @@ export function ChannelList() {
   const renderChannel = (channel: ChannelSummary) => {
     const isActive = activeChannelId === channel.id;
     let icon = <Hash className="h-4 w-4" />;
-    if (channel.channel_type === 'private') icon = <Lock className="h-4 w-4" />;
-    if (channel.channel_type === 'direct_message') icon = <Users className="h-4 w-4" />;
+    if ((channel as any).channel_type === 'private') icon = <Lock className="h-4 w-4" />;
+    if ((channel as any).channel_type === 'direct_message') icon = <Users className="h-4 w-4" />;
 
     // For DMs, show presence dot
     const _presenceDot = null;
-    if (channel.channel_type === 'direct_message') {
+    if ((channel as any).channel_type === 'direct_message') {
       // Assume channel name is the other user's name or we need to fetch participants
       // For simplicity, we'll use the first participant that is not the current user
       // but we don't have participants in the summary. We'll skip presence for now.
@@ -87,9 +88,9 @@ export function ChannelList() {
       >
         <span className="mr-2">{icon}</span>
         <span className="flex-1 truncate text-sm font-medium">{channel.name}</span>
-        {channel.unread_count > 0 && (
+        {(channel as any).unread_count > 0 && (
           <span className="ml-auto bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-            {channel.unread_count}
+            {(channel as any).unread_count}
           </span>
         )}
       </Link>
