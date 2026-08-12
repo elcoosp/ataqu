@@ -13,8 +13,8 @@ export function TaskList() {
   const tasks = data || [];
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { status: string } }) =>
-      updateTask(id, data),
+    mutationFn: ({ id, status }: { id: string; status: 'pending' | 'completed' | 'cancelled' }) =>
+      updateTask(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cinq', 'tasks'] });
     },
@@ -36,7 +36,7 @@ export function TaskList() {
                 const checked = e.target.checked;
                 updateTaskMutation.mutate({
                   id: task.id,
-                  data: { status: checked ? 'completed' : 'pending' },
+                  status: checked ? 'completed' : 'pending',
                 });
               }}
               className="h-4 w-4 rounded border-gray-600 bg-transparent text-amber focus:ring-amber"
