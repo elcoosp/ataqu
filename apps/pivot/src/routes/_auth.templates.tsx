@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useListTemplates, useCreateTemplate } from '@/api';
+import { useListTemplates, useCreateTemplate } from '@ataqu/api-client';
 import { useIdempotency } from '@ataqu/shared-hooks';
-import { Button, EmptyState, Input, Textarea } from '@ataqu/ui';
+import { Button, Input } from '@ataqu/ui';
 import { Trans } from '@lingui/react/macro';
-import { FileText, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -22,8 +22,9 @@ function TemplatesPage() {
   const handleCreate = () => {
     if (!name.trim()) return toast.error(<Trans>Name is required.</Trans>);
     createTemplate(
-      { data: { name, content }, headers: { 'Idempotency-Key': getKey() } },
+      { name, content },
       {
+        headers: { 'Idempotency-Key': getKey() },
         onSuccess: () => {
           toast.success(<Trans>Template created.</Trans>);
           setShowCreator(false);
@@ -44,37 +45,30 @@ function TemplatesPage() {
           <Trans>Create Template</Trans>
         </Button>
       </div>
-
       {showCreator && (
         <div className="border border-border rounded p-4 space-y-3">
           <Input placeholder="Template name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Textarea placeholder="Template content (markdown)" value={content} onChange={(e) => setContent(e.target.value)} rows={6} />
+          <textarea
+            className="w-full p-2 border border-border rounded bg-background"
+            rows={6}
+            placeholder="Template content (markdown)"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
           <div className="flex gap-2">
             <Button onClick={handleCreate}><Trans>Save</Trans></Button>
             <Button variant="outline" onClick={() => setShowCreator(false)}><Trans>Cancel</Trans></Button>
           </div>
         </div>
       )}
-
-      {templates?.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title={<Trans>No templates</Trans>}
-          description={<Trans>Create a template to reuse document structures.</Trans>}
-          ctaLabel={<Trans>Create Template</Trans>}
-          onCta={() => setShowCreator(true)}
-        />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates?.map((t: any) => (
-            <div key={t.id} className="border border-border rounded p-4">
-              <h3 className="font-medium">{t.name}</h3>
-              <p className="text-sm text-muted-foreground truncate">{t.content}</p>
-              <p className="text-xs text-muted-foreground mt-2">{new Date(t.created_at).toLocaleDateString()}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {templates?.map((t) => (
+          <div key={t.id} className="border border-border rounded p-4">
+            <h3 className="font-medium">{t.name}</h3>
+            <p className="text-sm text-muted-foreground truncate">{t.content}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

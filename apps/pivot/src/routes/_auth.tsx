@@ -1,6 +1,5 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router';
+import { Outlet, createFileRoute, Navigate } from '@tanstack/react-router';
 import { useAuthStore } from '@ataqu/shared-stores';
-import { Navigate } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: ({ location }) => {
