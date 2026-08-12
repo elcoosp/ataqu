@@ -5,6 +5,7 @@ import { routeTree } from './routeTree.gen';
 import './index.css';
 
 const router = createRouter({ routeTree });
+registerCinqActions();
 
 declare module '@tanstack/react-router' {
   interface Register {
