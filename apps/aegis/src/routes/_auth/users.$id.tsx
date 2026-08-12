@@ -1,9 +1,9 @@
 // apps/aegis/src/routes/_auth/users.$id.tsx
 
 
-import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, Skeleton } from "@ataqu/ui";
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
 import { toast } from "sonner";
+import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, Skeleton } from "@ataqu/ui";
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';

@@ -1,7 +1,7 @@
 // apps/aegis/src/routes/_auth/dashboard.tsx
 
-import { Card, CardContent, CardHeader, CardTitle, Skeleton } from "@ataqu/ui";
 import { createFileRoute } from '@tanstack/react-router';
+import { Card, CardContent, CardHeader, CardTitle, Skeleton } from "@ataqu/ui";
 
 import { useQuery } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';

@@ -1,9 +1,8 @@
 // apps/aegis/src/routes/__root.tsx
 
-import { Shell } from "@ataqu/ui";
-import { Shell } from '@ataqu/ui';
 
 import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { Shell } from "@ataqu/ui";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nProvider } from '@ataqu/shared-i18n';

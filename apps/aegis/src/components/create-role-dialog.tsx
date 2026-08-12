@@ -1,11 +1,9 @@
 // apps/aegis/src/components/create-role-dialog.tsx
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from "@ataqu/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ataqu/ui';
-import { Button, Input, Label } from '@ataqu/ui';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { toast } from "sonner";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from "@ataqu/ui";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { toast } from 'sonner';
 import { api } from '@ataqu/api-client';
 
 interface CreateRoleDialogProps {
@@ -23,7 +21,7 @@ export function CreateRoleDialog({ open, onOpenChange }: CreateRoleDialogProps) 
   const { register, handleSubmit, control, reset } = useForm<RoleFormData>({
     defaultValues: { permissions: [] },
   });
-  const { fields, append, remove } = useFieldArray<{ permissions: string[] }>({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: 'permissions',
   });

@@ -1,5 +1,5 @@
-import { Button } from "@ataqu/ui";
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { Button } from "@ataqu/ui";
 
 import { useEffect } from 'react';
 import { api } from '@ataqu/api-client';

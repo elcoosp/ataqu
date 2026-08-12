@@ -1,11 +1,9 @@
 // apps/aegis/src/components/create-api-key-dialog.tsx
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from "@ataqu/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ataqu/ui';
-import { Button, Input, Label } from '@ataqu/ui';
 import { useForm } from 'react-hook-form';
+import { toast } from "sonner";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from "@ataqu/ui";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trans } from '@lingui/react/macro';
-import { toast } from 'sonner';
 import { api } from '@ataqu/api-client';
 import { useState } from 'react';
 
