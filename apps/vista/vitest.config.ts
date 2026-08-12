@@ -1,5 +1,5 @@
-import { defineViteConfig } from '@ataqu/vite-preset';
 import path from 'node:path';
+import { defineViteConfig } from '@ataqu/vite-preset';
 import { defineConfig } from 'vitest/config';
 
 const baseConfig = defineViteConfig({ appName: 'vista' });
