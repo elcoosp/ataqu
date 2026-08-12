@@ -25,13 +25,13 @@ export const Route = createFileRoute('/_auth/workflows/$id')({
 const TOUR_STEPS = [
   {
     target: '[data-tour="trigger-sidebar"]',
-    content: 'Zapier charges per task. We charge $0. Pick a trigger.',
-    title: 'Step 1: Choose a trigger',
+    content: t`Zapier charges per task. We charge $0. Pick a trigger.`,
+    title: t`Step 1: Choose a trigger`,
   },
   {
     target: '[data-tour="canvas"]',
-    content: "Drag it here. Connect it to an action. You're done.",
-    title: 'Step 2: Build your workflow',
+    content: t`Drag it here. Connect it to an action. You're done.`,
+    title: t`Step 2: Build your workflow`,
   },
 ];
 
