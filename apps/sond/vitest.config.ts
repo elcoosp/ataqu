@@ -1,12 +1,17 @@
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [react()],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/cypress/**'],
-    passWithNoTests: true,
-  },
+	plugins: [react()],
+	test: {
+		globals: true,
+		browser: {
+			enabled: true,
+			provider: "playwright",
+			name: "chromium",
+			headless: true,
+		},
+		exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**", "**/cypress/**"],
+		passWithNoTests: true,
+	},
 });

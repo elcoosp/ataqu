@@ -1,2 +1,2 @@
-import { defineViteConfig } from '@ataqu/vite-preset';
-export default defineViteConfig({ appName: 'sond' });
+import { defineViteConfig } from "@ataqu/vite-preset";
+export default defineViteConfig({ appName: "sond" });
