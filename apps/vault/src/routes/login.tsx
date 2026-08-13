@@ -1,6 +1,5 @@
+import { AuthLayout, Button, Input } from '@ataqu/ui';
 import { createFileRoute } from '@tanstack/react-router';
-import { AuthLayout } from '@ataqu/ui';
-import { Button, Input } from '@ataqu/ui';
 
 export const Route = createFileRoute('/login')({
   component: () => (
