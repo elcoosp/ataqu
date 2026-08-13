@@ -31,11 +31,11 @@ export const Route = createFileRoute('/_auth/users/$id')({
         api.post(`/aegis/users/${userId}/deactivate`, {}, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['aegis', 'users'] });
-        toast({ title: 'User deactivated.' });
+        toast.success("User deactivated.");
         navigate({ to: '/users' });
       },
       onError: (err: any) => {
-        toast({ title: 'Failed to deactivate', description: err.message, variant: 'destructive' });
+        toast.error("Failed to deactivate");
       },
     });
 

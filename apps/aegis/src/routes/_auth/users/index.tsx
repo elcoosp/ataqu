@@ -31,10 +31,10 @@ export const Route = createFileRoute('/_auth/users/')({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['aegis', 'users'] });
         setOpenInvite(false);
-        toast({ title: 'User invited.' });
+        toast.success("User invited.");
       },
       onError: (err: any) => {
-        toast({ title: 'Invite failed', description: err.message, variant: 'destructive' });
+        toast.error("Invite failed");
       },
     });
 

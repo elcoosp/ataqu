@@ -32,10 +32,10 @@ export const Route = createFileRoute('/_auth/api-keys')({
         queryClient.invalidateQueries({ queryKey: ['aegis', 'api-keys'] });
         setOpenCreate(false);
         setNewKey({ id: data.id, key: data.key });
-        toast({ title: 'API key created.' });
+        toast.success("API key created.");
       },
       onError: (err: any) => {
-        toast({ title: 'Create failed', description: err.message, variant: 'destructive' });
+        toast.error("Create failed");
       },
     });
 
@@ -44,10 +44,10 @@ export const Route = createFileRoute('/_auth/api-keys')({
         api.delete(`/aegis/api-keys/${id}`, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['aegis', 'api-keys'] });
-        toast({ title: 'API key revoked.' });
+        toast.success("API key revoked.");
       },
       onError: (err: any) => {
-        toast({ title: 'Revoke failed', description: err.message, variant: 'destructive' });
+        toast.error("Revoke failed");
       },
     });
 

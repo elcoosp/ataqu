@@ -31,10 +31,10 @@ export const Route = createFileRoute('/_auth/roles')({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['aegis', 'roles'] });
         setOpenCreate(false);
-        toast({ title: 'Role created.' });
+        toast.success("Role created.");
       },
       onError: (err: any) => {
-        toast({ title: 'Create failed', description: err.message, variant: 'destructive' });
+        toast.error("Create failed");
       },
     });
 

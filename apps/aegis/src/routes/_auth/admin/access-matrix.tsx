@@ -27,10 +27,10 @@ export const Route = createFileRoute('/_auth/admin/access-matrix')({
         api.patch(`/aegis/permissions/${userId}/${app}`, { role }, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['aegis', 'permission-matrix'] });
-        toast({ title: 'Permission updated.' });
+        toast.success("Permission updated.");
       },
       onError: (err: any) => {
-        toast({ title: 'Update failed', description: err.message, variant: 'destructive' });
+        toast.error("Update failed");
       },
     });
 

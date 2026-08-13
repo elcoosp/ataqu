@@ -28,10 +28,10 @@ export const Route = createFileRoute('/_auth/settings')({
         api.patch('/aegis/tenant/settings', data, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['aegis', 'tenant'] });
-        toast({ title: 'Settings updated.' });
+        toast.success("Settings updated.");
       },
       onError: (err: any) => {
-        toast({ title: 'Update failed', description: err.message, variant: 'destructive' });
+        toast.error("Update failed");
       },
     });
 
@@ -44,10 +44,10 @@ export const Route = createFileRoute('/_auth/settings')({
       onSuccess: (data) => {
         setMfaSecret(data.secret);
         setMfaQrUrl(data.qr_code_url);
-        toast({ title: 'MFA setup initiated. Scan the QR code.' });
+        toast.success("MFA setup initiated. Scan the QR code.");
       },
       onError: (err: any) => {
-        toast({ title: 'MFA setup failed', description: err.message, variant: 'destructive' });
+        toast.error("MFA setup failed");
       },
     });
 
@@ -57,10 +57,10 @@ export const Route = createFileRoute('/_auth/settings')({
       onSuccess: () => {
         setMfaSecret(null);
         setMfaQrUrl(null);
-        toast({ title: 'MFA enabled.' });
+        toast.success("MFA enabled.");
       },
       onError: (err: any) => {
-        toast({ title: 'Verification failed', description: err.message, variant: 'destructive' });
+        toast.error("Verification failed");
       },
     });
 
