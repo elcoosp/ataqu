@@ -1,6 +1,7 @@
 import { api } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
 import { Badge } from '@ataqu/ui';
+import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
 import { useQuery } from '@tanstack/react-query';
 
@@ -34,7 +35,7 @@ export function CrossAppBadge({ entityId }: { entityId: UUID }) {
     <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
       <a href={href} target="_blank" rel="noreferrer noopener" className="hover:underline">
         {cinqRelation.deal_id ? (
-          `Reserved for CINQ deal #${cinqRelation.deal_id}`
+          t`Reserved for CINQ deal #${cinqRelation.deal_id}`
         ) : (
           <Trans>Reserved for CINQ</Trans>
         )}

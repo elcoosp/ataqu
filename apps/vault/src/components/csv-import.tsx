@@ -1,5 +1,6 @@
 import { useCreateProduct } from '@ataqu/api-client';
 import { Button } from '@ataqu/ui';
+import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ChangeEvent } from 'react';
@@ -93,7 +94,7 @@ export function CsvImport() {
       showToast({
         variant: 'success',
         title: <Trans>Import complete.</Trans>,
-        description: `${imported} products imported.`,
+        description: t`${imported} products imported.`,
       });
     } catch {
       showToast({

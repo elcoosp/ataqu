@@ -1,6 +1,7 @@
 import { useGetProduct, useListVariants } from '@ataqu/api-client';
 import { formatCurrency } from '@ataqu/shared-utils';
 import { Button, OnboardTour, Skeleton } from '@ataqu/ui';
+import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
 import { useMemo, useState } from 'react';
 import { CreateVariantForm } from './create-variant-form';
@@ -19,11 +20,11 @@ import { StockAdjustment } from './stock-adjustment';
 const tourSteps = [
   {
     selector: '[data-tour="stock-display"]',
-    content: 'Real-time stock. Zero race conditions.',
+    content: t`Real-time stock. Zero race conditions.`,
   },
   {
     selector: '[data-tour="adjust-stock"]',
-    content: 'Adjust it. The math is protected at the database level. No overselling.',
+    content: t`Adjust it. The math is protected at the database level. No overselling.`,
   },
 ];
 

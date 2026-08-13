@@ -1,4 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// Mock the Lingui macro to prevent runtime errors if the compiler is not configured in Vitest
+vi.mock('@lingui/core/macro', () => ({
+  t: (strings: TemplateStringsArray, ...values: unknown[]) => {
+    return strings.reduce(
+      (acc, str, i) => acc + str + (values[i] !== undefined ? String(values[i]) : ''),
+      ''
+    );
+  },
+}));
+
 import { getVaultActions, searchVaultActions } from '../actions';
 
 describe('vaultActions', () => {
