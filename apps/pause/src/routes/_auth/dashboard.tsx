@@ -1,5 +1,5 @@
+import { Trans } from '@lingui/macro';
 import { createFileRoute } from '@tanstack/react-router';
-import { Trans } from '@lingui/react/macro';
 
 export const Route = createFileRoute('/_auth/dashboard')({
   component: () => (
