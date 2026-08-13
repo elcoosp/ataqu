@@ -1,8 +1,7 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { Shell } from "@ataqu/ui";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@ataqu/shared-i18n";
-import { OnboardTour } from "@ataqu/ui";
+import { I18nProvider } from '@ataqu/shared-i18n';
+import { OnboardTour, Shell } from '@ataqu/ui';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createRootRoute, Outlet } from '@tanstack/react-router';
 
 const queryClient = new QueryClient();
 

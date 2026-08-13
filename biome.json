@@ -3,7 +3,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended",
+      "recommended": true,
       "style": {
         "useImportType": "off",
         "noNonNullAssertion": "off"
@@ -26,9 +26,24 @@
       "trailingCommas": "es5"
     }
   },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "css": {
     "parser": {
+      "cssModules": false,
       "tailwindDirectives": true
     }
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/routeTree.gen.ts"
+    ]
   }
 }

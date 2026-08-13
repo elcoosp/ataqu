@@ -5,32 +5,32 @@
 
 @theme {
   /* Core shadcn tokens */
-  --color-background: #0A1628;
-  --color-foreground: #F8F9FA;
-  --color-primary: #F59E0B;
-  --color-primary-foreground: #0A1628;
-  --color-secondary: #1E2A3A;
-  --color-secondary-foreground: #F8F9FA;
-  --color-destructive: #EF4444;
-  --color-destructive-foreground: #FFFFFF;
-  --color-muted: #64748B;
-  --color-muted-foreground: #94A3B8;
-  --color-accent: #0F1A2E;
-  --color-accent-foreground: #F8F9FA;
-  --color-popover: #0F1A2E;
-  --color-popover-foreground: #F8F9FA;
-  --color-card: #0F1A2E;
-  --color-card-foreground: #F8F9FA;
-  --color-border: #1E2A3A;
-  --color-input: #1E2A3A;
-  --color-ring: #F59E0B;
+  --color-background: #0a1628;
+  --color-foreground: #f8f9fa;
+  --color-primary: #f59e0b;
+  --color-primary-foreground: #0a1628;
+  --color-secondary: #1e2a3a;
+  --color-secondary-foreground: #f8f9fa;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #64748b;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #0f1a2e;
+  --color-accent-foreground: #f8f9fa;
+  --color-popover: #0f1a2e;
+  --color-popover-foreground: #f8f9fa;
+  --color-card: #0f1a2e;
+  --color-card-foreground: #f8f9fa;
+  --color-border: #1e2a3a;
+  --color-input: #1e2a3a;
+  --color-ring: #f59e0b;
 
   /* Custom Ataqu tokens */
-  --color-deep-night: #0A1628;
-  --color-amber: #F59E0B;
-  --color-success: #10B981;
-  --color-error: #EF4444;
-  --color-warning: #F59E0B;
+  --color-deep-night: #0a1628;
+  --color-amber: #f59e0b;
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
 
   /* Fonts */
   --font-heading: "Unbounded", system-ui, sans-serif;
