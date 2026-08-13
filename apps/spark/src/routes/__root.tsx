@@ -1,21 +1,22 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { Shell } from "@ataqu/ui";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@ataqu/shared-i18n";
-import { OnboardTour } from "@ataqu/ui";
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
+import { Shell } from '@ataqu/ui';
+import { OnboardTour } from '@ataqu/ui';
+import type { QueryClient } from '@tanstack/react-query';
 
-const queryClient = new QueryClient();
+interface RouterContext {
+  queryClient: QueryClient;
+}
 
-export const Route = createRootRoute({
-  component: () => (
-    <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <OnboardTour tourId="default" steps={[]}>
-          <Shell activeApp="spark">
-            <Outlet />
-          </Shell>
-        </OnboardTour>
-      </I18nProvider>
-    </QueryClientProvider>
-  ),
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: RootLayout,
 });
+
+function RootLayout() {
+  return (
+    <OnboardTour tourId="spark-global" steps={[]}>
+      <Shell activeApp="spark">
+        <Outlet />
+      </Shell>
+    </OnboardTour>
+  );
+}
