@@ -1,21 +1,55 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { Shell } from "@ataqu/ui";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@ataqu/shared-i18n";
-import { OnboardTour } from "@ataqu/ui";
+// apps/aegis/src/routes/__root.tsx
 
-const queryClient = new QueryClient();
+
+import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { Shell } from "@ataqu/ui";
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { I18nProvider } from '@ataqu/shared-i18n';
+import { useAuthStore } from '../stores/auth-store';
+import { registerAegisActions } from '../actions';
+import { useState, useEffect } from 'react';
+import { InviteDialog } from '../components/invite-dialog';
+import { CreateApiKeyDialog } from '../components/create-api-key-dialog';
+import { CreateRoleDialog } from '../components/create-role-dialog';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export const Route = createRootRoute({
-  component: () => (
-    <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <OnboardTour tourId="default" steps={[]}>
+  component: () => {
+    const { user } = useAuthStore();
+    const [inviteOpen, setInviteOpen] = useState(false);
+    const [apiKeyOpen, setApiKeyOpen] = useState(false);
+    const [roleOpen, setRoleOpen] = useState(false);
+
+    useEffect(() => {
+      const actions = registerAegisActions(
+        () => setInviteOpen(true),
+        () => setApiKeyOpen(true),
+        () => setRoleOpen(true)
+      );
+      // Register with global command palette store (if exists)
+      
+    }, []);
+
+    return (
+      <QueryClientProvider client={queryClient}>
+        <I18nProvider>
           <Shell activeApp="aegis">
             <Outlet />
+            <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+            <CreateApiKeyDialog open={apiKeyOpen} onOpenChange={setApiKeyOpen} />
+            <CreateRoleDialog open={roleOpen} onOpenChange={setRoleOpen} />
           </Shell>
-        </OnboardTour>
-      </I18nProvider>
-    </QueryClientProvider>
-  ),
+        </I18nProvider>
+      </QueryClientProvider>
+    );
+  },
 });
