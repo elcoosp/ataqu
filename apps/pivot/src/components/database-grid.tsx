@@ -119,8 +119,8 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
           type={col.type === 'number' ? 'number' : 'text'}
           defaultValue={value}
           autoFocus
-          onBlur={(e) => handleCellChange(row.id, col.name, e.target.value)}
-          onKeyDown={(e) => {
+          onBlur={(e: React.FocusEvent) => handleCellChange(row.id, col.name, e.target.value)}
+          onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter') {
               handleCellChange(row.id, col.name, (e.target as HTMLInputElement).value);
             }
@@ -167,7 +167,7 @@ export function DatabaseGrid({ databaseId, columns, onAddRow }: DatabaseGridProp
             <Input
               placeholder={i18n._('Filter rows…')}
               value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterText(e.target.value)}
               className="pl-8 h-8 text-sm w-48"
             />
           </div>

@@ -103,7 +103,7 @@ export function MessageInput({ channelId, placeholder = t`Type a message...` }: 
           className="resize-none min-h-[40px] max-h-[200px] bg-background border border-input rounded-md px-3 py-2 text-sm w-full"
           ref={textareaRef}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           rows={1}

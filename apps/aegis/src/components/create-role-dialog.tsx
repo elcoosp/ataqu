@@ -74,7 +74,7 @@ export function CreateRoleDialog({ open, onOpenChange }: CreateRoleDialogProps) 
               <div className="flex gap-2">
                 <Input
                   value={newPerm}
-                  onChange={(e) => setNewPerm(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPerm(e.target.value)}
                   placeholder="e.g., users:read"
                 />
                 <Button type="button" variant="outline" size="sm" onClick={addPermission}>

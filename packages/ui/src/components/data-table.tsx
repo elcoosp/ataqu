@@ -112,7 +112,7 @@ export function DataTable<TData, TValue>({
           <Input
             placeholder={searchPlaceholder}
             value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGlobalFilter(e.target.value)}
             className="max-w-sm bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
           />
         )}

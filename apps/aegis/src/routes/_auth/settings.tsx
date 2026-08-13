@@ -8,7 +8,7 @@ import { Trans } from '@lingui/react/macro';
 import { api } from '@ataqu/api-client';
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG as QRCode } from "qrcode.react";
 
 export const Route = createFileRoute('/_auth/settings')({
   component: () => {
@@ -133,7 +133,7 @@ export const Route = createFileRoute('/_auth/settings')({
                     type="text"
                     placeholder="123456"
                     value={mfaVerificationCode}
-                    onChange={(e) => setMfaVerificationCode(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMfaVerificationCode(e.target.value)}
                     className="w-32"
                   />
                   <Button

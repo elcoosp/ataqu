@@ -58,7 +58,7 @@ export function GuestForm() {
         <Label htmlFor="guest-name">
           <Trans>Name</Trans>
         </Label>
-        <Input id="guest-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <Input id="guest-name" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} required />
       </div>
       <div>
         <Label htmlFor="guest-email">
@@ -68,7 +68,7 @@ export function GuestForm() {
           id="guest-email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           required
         />
       </div>

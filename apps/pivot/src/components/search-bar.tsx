@@ -32,7 +32,7 @@ export function SearchBar({ onResultClick, className }: SearchBarProps) {
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
           placeholder={i18n._('Search documents, databases, rows…')}
           className="pl-9 pr-8 bg-background border-border"
         />

@@ -63,7 +63,7 @@ export function ExecutionHistory({ runs, isLoading, onSelectRun }: ExecutionHist
           onClick={() => onSelectRun?.(run)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') onSelectRun?.(run); }}
+          onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') onSelectRun?.(run); }}
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3">

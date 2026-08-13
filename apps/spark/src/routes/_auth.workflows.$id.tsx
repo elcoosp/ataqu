@@ -24,12 +24,12 @@ export const Route = createFileRoute('/_auth/workflows/$id')({
 
 const TOUR_STEPS = [
   {
-    target: '[data-tour="trigger-sidebar"]',
+    selector: '[data-tour="trigger-sidebar"]',
     content: t`Zapier charges per task. We charge $0. Pick a trigger.`,
     title: t`Step 1: Choose a trigger`,
   },
   {
-    target: '[data-tour="canvas"]',
+    selector: '[data-tour="canvas"]',
     content: t`Drag it here. Connect it to an action. You're done.`,
     title: t`Step 2: Build your workflow`,
   },
@@ -101,7 +101,7 @@ function workflowToEdges(wf: Workflow): Edge[] {
     edges.push({
       id: `edge-${i}`,
       source: sourceId,
-      target: targetId,
+      selector: targetId,
       animated: true,
       style: { stroke: '#F59E0B', strokeWidth: 2 },
     });

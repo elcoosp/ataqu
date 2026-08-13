@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_auth/dashboard/$id')({
 });
 
 function DashboardDetailPage() {
-  const { id } = useParams({ from: '/_auth/dashboard/$id' });
+  const { id } = useParams() as { id: string };
   const { data: dashboard, isLoading } = useGetDashboard(id);
   const updateDashboardMutation = useUpdateDashboard();
   const queryClient = useQueryClient();
@@ -55,11 +55,11 @@ function DashboardDetailPage() {
 
   const tourSteps = [
     {
-      target: '[data-tour="kpi-card"]',
+      selector: '[data-tour="kpi-card"]',
       content: t`No ETL pipelines. This data is live from CINQ, right now.`,
     },
     {
-      target: '[data-tour="sse-indicator"]',
+      selector: '[data-tour="sse-indicator"]',
       content: t`When a deal closes, this updates in milliseconds. No refresh button needed.`,
     },
   ];
@@ -179,15 +179,15 @@ const CombineDataModal: React.FC<{ onClose: () => void; dashboardId: string }> =
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={onClose}
-      onKeyDown={(e) => {
+      onKeyDown={(e: React.KeyboardEvent) => {
         if (e.key === 'Escape') onClose();
       }}
     >
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
         className="w-[425px] bg-card border border-gray-700/40 rounded-lg p-6 flex flex-col gap-4"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold">
           <Trans>Combine Data</Trans>
@@ -200,7 +200,7 @@ const CombineDataModal: React.FC<{ onClose: () => void; dashboardId: string }> =
             <select
               id="primary-source"
               value={primary}
-              onChange={(e) => setPrimary(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrimary(e.target.value)}
               className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
             >
               <option value="revenue">{t`Revenue`}</option>
@@ -214,7 +214,7 @@ const CombineDataModal: React.FC<{ onClose: () => void; dashboardId: string }> =
             <select
               id="secondary-source"
               value={secondary}
-              onChange={(e) => setSecondary(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSecondary(e.target.value)}
               className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
             >
               <option value="inventory">{t`Inventory`}</option>

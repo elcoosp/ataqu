@@ -119,7 +119,7 @@ function FormsIndex() {
 							<Card className="p-6 transition-shadow hover:shadow-md relative">
 								<button
 									type="button"
-									onClick={(e) => {
+									onClick={(e: React.MouseEvent) => {
 										e.preventDefault();
 										handleDelete(f.id, f.title);
 									}}

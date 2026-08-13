@@ -57,7 +57,7 @@ export function ContactTable() {
           <Input
             placeholder={t`Search contacts...`}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             className="pl-9 bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
           />
         </div>

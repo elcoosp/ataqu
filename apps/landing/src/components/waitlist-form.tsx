@@ -50,8 +50,8 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
     watch,
     setValue,
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { apps: [] },
+    resolver: zodResolver(schema as any),
+    defaultValues: { email: "", apps: [], name: "", role: "", companySize: "" },
   });
 
   const selectedApps = watch("apps") || [];

@@ -34,15 +34,15 @@ export const DrillDownPanel: React.FC = () => {
     <div
       className="fixed inset-0 z-50 flex justify-end bg-black/80"
       onClick={handleClose}
-      onKeyDown={(e) => {
+      onKeyDown={(e: React.KeyboardEvent) => {
         if (e.key === 'Escape') handleClose();
       }}
     >
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
         className="w-[350px] h-full ataqu-glass p-6 flex flex-col gap-4"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">

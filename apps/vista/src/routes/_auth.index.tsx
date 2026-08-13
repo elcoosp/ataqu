@@ -54,7 +54,7 @@ function DashboardListPage() {
           </div>
         ) : (
           <EmptyState
-            icon={BarChart3}
+            icon={BarChart3 as any}
             title={t`No dashboards`}
             description={t`Dashboards are empty because you haven't connected CINQ and VAULT yet. 1 click to connect.`}
             ctaLabel={t`Create Dashboard`}

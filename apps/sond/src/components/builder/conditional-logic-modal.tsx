@@ -98,7 +98,7 @@ export function ConditionalLogicModal({
 						</Select>
 						<Select
 							value={operator}
-							onValueChange={(v) => setOperator(v as ConditionOperator)}
+							onValueChange={(v: string) => setOperator(v as ConditionOperator)}
 						>
 							<SelectTrigger className="w-32">
 								<SelectValue placeholder={t`Operator`} />
@@ -127,7 +127,7 @@ export function ConditionalLogicModal({
 						{!disableValue && (
 							<Input
 								value={value}
-								onChange={(e) => setValue(e.target.value)}
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
 								className="w-40"
 								placeholder={t`Value`}
 							/>

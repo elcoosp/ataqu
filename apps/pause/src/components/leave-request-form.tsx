@@ -40,7 +40,7 @@ export function LeaveRequestForm({ employeeId, onSuccess, onClose }: LeaveReques
     formState: { errors },
   } = useForm<z.infer<typeof schema>>({
     // biome-ignore lint/suspicious/noExplicitAny: zod 4 resolver type mismatch with hookform v3
-    resolver: zodResolver(schema as any),
+    resolver: zodResolver(schema),
   });
 
   const onSubmit = (data: z.infer<typeof schema>) => {

@@ -88,7 +88,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
             <Label htmlFor="et-name">
               <Trans>Name</Trans>
             </Label>
-            <Input id="et-name" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input id="et-name" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} required />
           </div>
           <div>
             <Label htmlFor="et-duration">
@@ -96,7 +96,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
             </Label>
             <Select
               value={String(durationMinutes)}
-              onValueChange={(v) => setDurationMinutes(Number(v))}
+              onValueChange={(v: string) => setDurationMinutes(Number(v))}
             >
               <SelectTrigger id="et-duration">
                 <SelectValue />
@@ -121,7 +121,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
             <Textarea
               id="et-desc"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
             />
           </div>
         </CardContent>
@@ -138,7 +138,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
             <Label>
               <Trans>Type</Trans>
             </Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as '1:1' | 'group')}>
+            <Select value={kind} onValueChange={(v: string) => setKind(v as '1:1' | 'group')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -159,7 +159,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
             <Input
               id="et-location"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocation(e.target.value)}
               placeholder="https://meet.ataqu.com/..."
             />
           </div>
@@ -183,7 +183,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
                 type="number"
                 min={0}
                 value={bufferBefore}
-                onChange={(e) => setBufferBefore(Number(e.target.value))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBufferBefore(Number(e.target.value))}
               />
             </div>
             <div>
@@ -195,7 +195,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
                 type="number"
                 min={0}
                 value={bufferAfter}
-                onChange={(e) => setBufferAfter(Number(e.target.value))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBufferAfter(Number(e.target.value))}
               />
             </div>
           </div>
@@ -263,7 +263,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
             <Textarea
               id="et-invite-tpl"
               value={invitationTemplate}
-              onChange={(e) => setInvitationTemplate(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInvitationTemplate(e.target.value)}
               placeholder="Hi {name}, your meeting is on {date} at {time}."
             />
             <p className="text-xs text-muted-foreground mt-1">
@@ -279,7 +279,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
             <Textarea
               id="et-reminder-tpl"
               value={reminderTemplate}
-              onChange={(e) => setReminderTemplate(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReminderTemplate(e.target.value)}
               placeholder="Reminder: meeting with {name} on {date} at {time}."
             />
           </div>

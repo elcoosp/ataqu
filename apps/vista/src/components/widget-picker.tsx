@@ -21,15 +21,15 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={onClose}
-      onKeyDown={(e) => {
+      onKeyDown={(e: React.KeyboardEvent) => {
         if (e.key === 'Escape') onClose();
       }}
     >
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
         className="w-[425px] bg-card border border-gray-700/40 rounded-lg p-6 flex flex-col gap-4"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">
@@ -47,7 +47,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
             <select
               id="widget-type"
               value={widgetType}
-              onChange={(e) => setWidgetType(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWidgetType(e.target.value)}
               className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
             >
               <option value="kpi">{t`KPI Card`}</option>
@@ -64,7 +64,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onA
             <select
               id="data-source"
               value={dataSource}
-              onChange={(e) => setDataSource(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDataSource(e.target.value)}
               className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
             >
               <option value="revenue">{t`Revenue`}</option>

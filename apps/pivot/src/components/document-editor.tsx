@@ -102,13 +102,13 @@ export function DocumentEditor({ id, initialDoc, onDelete, onDuplicate }: Docume
         <div className="flex flex-col">
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             className="bg-transparent text-lg font-medium border-none outline-none p-2"
             placeholder={i18n._('Document title')}
           />
           <textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContent(e.target.value)}
             className="flex-1 p-2 bg-background font-mono text-sm resize-none outline-none"
             placeholder={i18n._('Write markdown here…')}
           />

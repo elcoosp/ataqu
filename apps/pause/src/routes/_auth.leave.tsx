@@ -20,11 +20,11 @@ function LeavePage() {
         tourId="pause-leave-tour"
         steps={[
           {
-            target: '[data-tour="request-leave"]',
+            selector: '[data-tour="request-leave"]',
             content: t`No payroll bloat. Just leave tracking.`,
           },
           {
-            target: '[data-tour="pending-list"]',
+            selector: '[data-tour="pending-list"]',
             content: t`Approve here, and their system access updates automatically via AEGIS.`,
           },
         ]}

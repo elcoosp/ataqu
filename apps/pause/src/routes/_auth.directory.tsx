@@ -56,9 +56,9 @@ function AddEmployeeForm({ onClose }: { onClose: () => void }) {
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={(e: React.FormEvent) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
+        const formData = new FormData(e.currentTarget as HTMLFormElement);
         mutation.mutate({
           full_name: formData.get('full_name') as string,
           email: formData.get('email') as string,

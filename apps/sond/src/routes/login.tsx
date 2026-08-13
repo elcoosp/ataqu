@@ -54,7 +54,7 @@ function LoginRoute() {
 							type="email"
 							placeholder={t`you@example.com`}
 							value={email}
-							onChange={(e) => setEmail(e.target.value)}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
 							required
 						/>
 					</div>
@@ -70,7 +70,7 @@ function LoginRoute() {
 							type="password"
 							placeholder="••••••••"
 							value={password}
-							onChange={(e) => setPassword(e.target.value)}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
 							required
 						/>
 					</div>

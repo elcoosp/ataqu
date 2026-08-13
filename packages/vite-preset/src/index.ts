@@ -1,7 +1,8 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, type UserConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react-swc';
+import { linguiMacroSwcPlugin } from '@lingui/swc-plugin/options';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
@@ -34,16 +35,11 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         generatedRouteTree: './src/routeTree.gen.ts',
       }),
       react({
-        swc: {
-          plugins: [
-            ['@lingui/swc-plugin', {}],
-          ],
-        },
+        plugins: [linguiMacroSwcPlugin()],
       }),
       tailwindcss(),
     ],
     resolve: {
-      // Native tsconfig path resolution – works per package based on its own tsconfig
       tsconfigPaths: true,
       dedupe: [
         'react',

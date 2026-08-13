@@ -84,11 +84,11 @@ function QuestionCard({
 				</div>
 				<button
 					type="button"
-					onClick={(e) => {
+					onClick={(e: React.MouseEvent) => {
 						e.stopPropagation();
 						onDelete();
 					}}
-					onKeyDown={(e) => e.stopPropagation()}
+					onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
 					className="text-muted-foreground hover:text-destructive"
 					aria-label={t`Delete question`}
 				>

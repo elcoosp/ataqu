@@ -145,7 +145,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 									? (answers[q.id] as string)
 									: ""
 							}
-							onChange={(e) => setAnswer(q.id, e.target.value)}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 							aria-label={q.label}
 						/>
@@ -157,7 +157,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 									? (answers[q.id] as number)
 									: ""
 							}
-							onChange={(e) =>
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 								setAnswer(
 									q.id,
 									e.target.value === "" ? "" : Number(e.target.value),
@@ -174,7 +174,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 									? (answers[q.id] as string)
 									: ""
 							}
-							onChange={(e) => setAnswer(q.id, e.target.value)}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 							aria-label={q.label}
 						/>
@@ -203,7 +203,7 @@ export function FormPreview({ form, open, onClose }: Props) {
 										<input
 											type="checkbox"
 											checked={arr.includes(opt)}
-											onChange={(e) => {
+											onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 												const next = e.target.checked
 													? [...arr, opt]
 													: arr.filter((v) => v !== opt);

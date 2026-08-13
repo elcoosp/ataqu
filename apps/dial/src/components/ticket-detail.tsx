@@ -108,7 +108,7 @@ export function TicketDetail() {
           <textarea
             className="flex-1 min-h-[60px] resize-none bg-background border border-input rounded-md px-3 py-2 text-sm"
             value={reply}
-            onChange={(e) => setReply(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReply(e.target.value)}
             placeholder={t`Type a reply...`}
           />
           <Button

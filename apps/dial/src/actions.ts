@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useDialStore } from '@/stores/dial-store';
 import { t } from '@lingui/macro';
-import { useDialWebSocket } from '@/hooks/use-dial-websocket';
 
 export interface CommandAction {
   id: string;
@@ -29,7 +28,6 @@ export function useDialActions() {
       id: 'create-private-channel',
       title: 'Create Private Channel',
       onSelect: () => {
-        // Trigger private channel creation
         window.dispatchEvent(new CustomEvent('openCreatePrivateChannelDialog'));
       },
     },
@@ -72,9 +70,8 @@ export function useDialActions() {
       id: 'set-status-online',
       title: 'Set Status: Online',
       onSelect: () => {
-        // Update presence via WebSocket
-        const { sendStatus } = useDialWebSocket();
-        sendStatus('online');
+        // Update presence via WebSocket – we'll dispatch an event and let the WebSocket hook handle it
+        window.dispatchEvent(new CustomEvent('setPresence', { detail: { status: 'online' } }));
       },
     },
     {
@@ -95,13 +92,11 @@ export function useDialActions() {
       id: 'connect-to-cinq',
       title: 'Connect to CINQ',
       onSelect: () => {
-        // Navigate to integration settings
         navigate({ to: '/dashboard' });
       },
     },
   ];
 
-  // Add channel navigation actions
   const channelActions: CommandAction[] = (channels ?? []).map((channel: ChannelSummary) => ({
     id: `go-to-channel-${channel.id}`,
     title: `Go to ${channel.name}`,

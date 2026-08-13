@@ -189,7 +189,7 @@ function FormBuilderRoute() {
 				<header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
 					<input
 						value={localForm.title}
-						onChange={(e) => updateTitle(e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateTitle(e.target.value)}
 						className="truncate bg-transparent text-xl font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						aria-label={t`Form title`}
 					/>

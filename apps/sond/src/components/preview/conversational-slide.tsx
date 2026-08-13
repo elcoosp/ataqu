@@ -103,7 +103,7 @@ export function ConversationalSlide({
 									: "text"
 						}
 						value={typeof value === "string" ? value : ""}
-						onChange={(e) => onChange(e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={question.label}
@@ -114,7 +114,7 @@ export function ConversationalSlide({
 					<Input
 						type="number"
 						value={typeof value === "number" ? value : ""}
-						onChange={(e) =>
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 							onChange(e.target.value === "" ? "" : Number(e.target.value))
 						}
 						className="h-12 text-lg"
@@ -127,7 +127,7 @@ export function ConversationalSlide({
 					<Input
 						type="date"
 						value={typeof value === "string" ? value : ""}
-						onChange={(e) => onChange(e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={question.label}
@@ -170,7 +170,7 @@ export function ConversationalSlide({
 								<input
 									type="checkbox"
 									checked={arr.includes(opt)}
-									onChange={(e) => {
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 										const next = e.target.checked
 											? [...arr, opt]
 											: arr.filter((v) => v !== opt);

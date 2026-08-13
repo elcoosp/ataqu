@@ -1,11 +1,13 @@
 // apps/aegis/src/actions.ts
-import { useNavigate } from '@tanstack/react-router';
+// apps/aegis/src/actions.ts
+import { useNavigate, NavigateOptions } from '@tanstack/react-router';
 import { useAuthStore } from './stores/auth-store';
 
 export function registerAegisActions(
   openInviteModal: () => void,
   openCreateApiKeyModal: () => void,
-  openCreateRoleModal: () => void
+  openCreateRoleModal: () => void,
+  navigate: (opts: NavigateOptions) => void
 ) {
   return [
     {
@@ -18,19 +20,19 @@ export function registerAegisActions(
       id: 'aegis-go-users',
       label: 'Go to Users',
       shortcut: ['g', 'u'],
-      action: () => useNavigate()({ to: '/users' }),
+      action: () => navigate({ to: '/users' }),
     },
     {
       id: 'aegis-go-roles',
       label: 'Go to Roles',
       shortcut: ['g', 'r'],
-      action: () => useNavigate()({ to: '/roles' }),
+      action: () => navigate({ to: '/roles' }),
     },
     {
       id: 'aegis-go-api-keys',
       label: 'Go to API Keys',
       shortcut: ['g', 'k'],
-      action: () => useNavigate()({ to: '/api-keys' }),
+      action: () => navigate({ to: '/api-keys' }),
     },
     {
       id: 'aegis-create-api-key',
@@ -48,19 +50,19 @@ export function registerAegisActions(
       id: 'aegis-go-settings',
       label: 'Go to Settings',
       shortcut: ['g', 's'],
-      action: () => useNavigate()({ to: '/settings' }),
+      action: () => navigate({ to: '/settings' }),
     },
     {
       id: 'aegis-go-admin-access-matrix',
       label: 'Access Matrix',
       shortcut: ['a', 'm'],
-      action: () => useNavigate()({ to: '/admin/access-matrix' }),
+      action: () => navigate({ to: '/admin/access-matrix' }),
     },
     {
       id: 'aegis-go-admin-audit',
       label: 'Audit Log',
       shortcut: ['a', 'l'],
-      action: () => useNavigate()({ to: '/admin/audit' }),
+      action: () => navigate({ to: '/admin/audit' }),
     },
     {
       id: 'aegis-logout',
@@ -68,7 +70,7 @@ export function registerAegisActions(
       shortcut: ['l', 'o'],
       action: () => {
         useAuthStore.getState().logout();
-        useNavigate()({ to: '/login' });
+        navigate({ to: '/login' });
       },
     },
   ];

@@ -1,55 +1,15 @@
-// apps/aegis/src/routes/__root.tsx
-
-
-import { createRootRoute, Outlet } from '@tanstack/react-router';
-import { Shell } from "@ataqu/ui";
-
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { I18nProvider } from '@ataqu/shared-i18n';
-import { useAuthStore } from '../stores/auth-store';
-import { registerAegisActions } from '../actions';
-import { useState, useEffect } from 'react';
-import { InviteDialog } from '../components/invite-dialog';
-import { CreateApiKeyDialog } from '../components/create-api-key-dialog';
-import { CreateRoleDialog } from '../components/create-role-dialog';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60_000,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import * as React from 'react'
+import { Outlet, createRootRoute } from '@tanstack/react-router'
 
 export const Route = createRootRoute({
-  component: () => {
-    const { user } = useAuthStore();
-    const [inviteOpen, setInviteOpen] = useState(false);
-    const [apiKeyOpen, setApiKeyOpen] = useState(false);
-    const [roleOpen, setRoleOpen] = useState(false);
+  component: RootComponent,
+})
 
-    useEffect(() => {
-      const actions = registerAegisActions(
-        () => setInviteOpen(true),
-        () => setApiKeyOpen(true),
-        () => setRoleOpen(true)
-      );
-      // Register with global command palette store (if exists)
-      
-    }, []);
-
-    return (
-      <QueryClientProvider client={queryClient}>
-        <I18nProvider>
-          <Shell activeApp="aegis">
-            <Outlet />
-            <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
-            <CreateApiKeyDialog open={apiKeyOpen} onOpenChange={setApiKeyOpen} />
-            <CreateRoleDialog open={roleOpen} onOpenChange={setRoleOpen} />
-          </Shell>
-        </I18nProvider>
-      </QueryClientProvider>
-    );
-  },
-});
+function RootComponent() {
+  return (
+    <React.Fragment>
+      <div>Hello "__root"!</div>
+      <Outlet />
+    </React.Fragment>
+  )
+}

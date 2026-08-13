@@ -32,7 +32,7 @@ export function TaskList() {
             <input
               type="checkbox"
               checked={task.status === 'completed'}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const checked = e.target.checked;
                 updateTaskMutation.mutate({
                   id: task.id,

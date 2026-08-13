@@ -69,7 +69,7 @@ export const Route = createFileRoute('/_auth/admin/audit')({
             <Input
               placeholder="e.g., login"
               value={filters.action || ''}
-              onChange={(e) => setFilters({ ...filters, action: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, action: e.target.value })}
               className="w-40"
             />
           </div>
@@ -102,7 +102,7 @@ export const Route = createFileRoute('/_auth/admin/audit')({
             <Input
               type="date"
               value={filters.from_date || ''}
-              onChange={(e) => setFilters({ ...filters, from_date: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, from_date: e.target.value })}
               className="w-36"
             />
           </div>
@@ -111,7 +111,7 @@ export const Route = createFileRoute('/_auth/admin/audit')({
             <Input
               type="date"
               value={filters.to_date || ''}
-              onChange={(e) => setFilters({ ...filters, to_date: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, to_date: e.target.value })}
               className="w-36"
             />
           </div>

@@ -2,32 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    },
-    "skipLibCheck": true,
-    "types": [
-      "vite/client"
-    ],
-    "skipDefaultLibCheck": true,
-    "noImplicitAny": false,
-    "target": "ES2022",
-    "module": "ESNext",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ]
+      "@/*": ["./src/*"]
+    }
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "../../packages/**/*",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "include": ["src/**/*", "e2e/**/*", "src/routeTree.gen.ts"],
+  "exclude": ["node_modules", "dist"]
 }

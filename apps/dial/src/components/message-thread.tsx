@@ -36,6 +36,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 
   // Handle reactions
   const addReactionMutation = useAddReaction();
+  const deleteReactionMutation = useDeleteReaction();
 
   const handleReactionToggle = (messageId: string, emoji: string) => {
     addReactionMutation.mutate({
@@ -70,7 +71,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
           type="text"
           placeholder={t`Search messages...`}
           className="flex-1 px-3 py-1 text-sm bg-background border border-input rounded-md"
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             // We'll implement search via API and filter messages
           }}
         />

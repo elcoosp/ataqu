@@ -7,7 +7,7 @@ import { EventTypeForm } from '@/components/event-type-form';
 import { RescheduleModal } from '@/components/reschedule-modal';
 import { UpcomingMeetings } from '@/components/upcoming-meetings';
 
-export const Route = createFileRoute('/_auth/')({
+export const Route = createFileRoute('/_auth/dashboard')({
   component: Dashboard,
 });
 

@@ -71,7 +71,7 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
           {selectedValue && (
             <X
               className="h-3 w-3 text-muted-foreground hover:text-foreground"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 handleClear();
               }}
@@ -84,7 +84,7 @@ export function RelationCell({ value, onSelect, app, placeholder }: RelationCell
           <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             placeholder={placeholder || i18n._(`Search ${app}…`)}
             className="pl-8"
             autoFocus

@@ -22,7 +22,7 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
         )}
         ref={ref}
         checked={checked}
-        onChange={(e) => onCheckedChange?.(e.target.checked)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onCheckedChange?.(e.target.checked)}
         {...props}
       />
     );

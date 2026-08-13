@@ -24,7 +24,7 @@ export function CustomFieldsTab({ contact }: { contact: ContactResponse }) {
           <label className="w-32 font-medium">{key}</label>
           <Input
             value={String(value ?? '')}
-            onChange={(e) => handleChange(key, e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(key, e.target.value)}
           />
         </div>
       ))}

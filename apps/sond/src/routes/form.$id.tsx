@@ -15,7 +15,7 @@ import { isQuestionVisible } from "../components/preview/visibility";
 
 // Cast the route path to bypass routeTree.gen.ts strict typing for new routes
 // that haven't been picked up by the TanStack Router plugin yet.
-export const Route = createFileRoute("/form/$id" as any)({
+export const Route = createFileRoute("/form/$id")({
 	component: PublicFormRoute,
 });
 
@@ -179,7 +179,7 @@ function PublicFormRoute() {
 							q.type === "email" ? "email" : q.type === "phone" ? "tel" : "text"
 						}
 						value={typeof value === "string" ? value : ""}
-						onChange={(e) => setAnswer(q.id, e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={q.label}
@@ -191,7 +191,7 @@ function PublicFormRoute() {
 					<Input
 						type="number"
 						value={typeof value === "number" ? value : ""}
-						onChange={(e) =>
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 							setAnswer(
 								q.id,
 								e.target.value === "" ? "" : Number(e.target.value),
@@ -207,7 +207,7 @@ function PublicFormRoute() {
 					<Input
 						type="date"
 						value={typeof value === "string" ? value : ""}
-						onChange={(e) => setAnswer(q.id, e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={q.label}
@@ -246,7 +246,7 @@ function PublicFormRoute() {
 								<input
 									type="checkbox"
 									checked={arr.includes(opt)}
-									onChange={(e) => {
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 										const next = e.target.checked
 											? [...arr, opt]
 											: arr.filter((v) => v !== opt);

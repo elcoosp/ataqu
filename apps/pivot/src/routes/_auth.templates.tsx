@@ -63,14 +63,14 @@ function TemplatesPage() {
           <Input
             placeholder={i18n._('Template name')}
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
           />
           <textarea
             className="w-full p-2 border border-border rounded bg-background"
             rows={6}
             placeholder={i18n._('Template content (markdown)')}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContent(e.target.value)}
           />
           <div className="flex gap-2">
             <Button onClick={handleCreate}><Trans>Save</Trans></Button>

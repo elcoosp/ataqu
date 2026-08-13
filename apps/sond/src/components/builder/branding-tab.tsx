@@ -30,7 +30,7 @@ export function BrandingTab({ branding, onUpdate }: Props) {
 					id={colorId}
 					type="color"
 					value={branding.primaryColor || "#f59e0b"}
-					onChange={(e) => onUpdate({ primaryColor: e.target.value })}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ primaryColor: e.target.value })}
 					className="h-10 w-20 p-1"
 				/>
 			</div>
@@ -41,7 +41,7 @@ export function BrandingTab({ branding, onUpdate }: Props) {
 				<Input
 					id={logoId}
 					value={branding.logoUrl || ""}
-					onChange={(e) => onUpdate({ logoUrl: e.target.value })}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ logoUrl: e.target.value })}
 					placeholder="https://example.com/logo.png"
 				/>
 			</div>

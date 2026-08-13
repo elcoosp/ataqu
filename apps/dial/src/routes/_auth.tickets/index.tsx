@@ -5,12 +5,12 @@ import { TicketList } from '@/components/ticket-list';
 
 const tourSteps = [
   {
-    target: '[data-tour="context-sidebar"]',
+    selector: '[data-tour="context-sidebar"]',
     content: "Support isn't an island. Customer data from CINQ lives right here.",
     title: 'CINQ Integration',
   },
   {
-    target: '[data-tour="reply-box"]',
+    selector: '[data-tour="reply-box"]',
     content: 'Reply instantly. No Zapier required.',
     title: 'Reply to Customers',
   },

@@ -41,7 +41,7 @@ export function QuestionConfigPanel({
 				<Input
 					id={labelId}
 					value={question.label}
-					onChange={(e) => onUpdate({ label: e.target.value })}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ label: e.target.value })}
 					placeholder={t`e.g., What is your name?`}
 				/>
 			</div>
@@ -69,7 +69,7 @@ export function QuestionConfigPanel({
 							<Input
 								key={opt}
 								value={opt}
-								onChange={(e) => {
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 									const newOpts = (question.options || []).map((o) =>
 										o === opt ? e.target.value : o,
 									);
@@ -109,7 +109,7 @@ export function QuestionConfigPanel({
 						<Input
 							type="number"
 							value={question.min ?? 1}
-							onChange={(e) => onUpdate({ min: Number(e.target.value) })}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ min: Number(e.target.value) })}
 							className="w-20"
 							aria-label={t`Minimum rating`}
 						/>
@@ -119,7 +119,7 @@ export function QuestionConfigPanel({
 						<Input
 							type="number"
 							value={question.max ?? 5}
-							onChange={(e) => onUpdate({ max: Number(e.target.value) })}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ max: Number(e.target.value) })}
 							className="w-20"
 							aria-label={t`Maximum rating`}
 						/>
@@ -136,7 +136,7 @@ export function QuestionConfigPanel({
 					type="number"
 					value={question.page}
 					min={1}
-					onChange={(e) =>
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 						onUpdate({ page: Math.max(1, Number(e.target.value)) })
 					}
 				/>

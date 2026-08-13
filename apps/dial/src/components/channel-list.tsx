@@ -104,7 +104,7 @@ export function ChannelList() {
           <Input
             placeholder={t`Search channels...`}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             className="pl-8 h-8 text-sm bg-background"
           />
         </div>
