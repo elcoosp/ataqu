@@ -3,7 +3,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useImportType": "off",
         "noNonNullAssertion": "off"
@@ -24,6 +24,11 @@
       "quoteStyle": "single",
       "semicolons": "always",
       "trailingCommas": "es5"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   }
 }
