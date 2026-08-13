@@ -1,13 +1,16 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
+import { useAuthStore } from '@ataqu/shared-stores';
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: () => {
-    const token = localStorage.getItem('auth-storage')
-      ? JSON.parse(localStorage.getItem('auth-storage')!).state?.token
-      : null;
+    const token = useAuthStore.getState().token;
     if (!token) {
       throw redirect({ to: '/login' });
     }
   },
-  component: () => <Outlet />,
+  component: AuthLayout,
 });
+
+function AuthLayout() {
+  return <Outlet />;
+}

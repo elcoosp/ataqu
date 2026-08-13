@@ -26,7 +26,11 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zustand": "^4.5.2",
-    "papaparse": "^5.5.4"
+    "papaparse": "^5.5.4",
+    "date-fns": "^3.6.0",
+    "lucide-react": "^0.460.0",
+    "react-dropzone": "^14.2.3",
+    "sonner": "^1.7.0"
   },
   "devDependencies": {
     "@ataqu/test-utils": "workspace:*",

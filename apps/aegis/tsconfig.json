@@ -2,9 +2,21 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "noEmit": true
   },
-  "include": ["src/**/*", "e2e/**/*", "src/routeTree.gen.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "e2e/**/*",
+    "src/routeTree.gen.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
