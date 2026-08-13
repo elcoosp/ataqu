@@ -6,7 +6,8 @@ import {
   useUploadDocument,
 } from '@ataqu/api-client';
 import { Button, Card, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from '@ataqu/ui';
-import { Trans, t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 

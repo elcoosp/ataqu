@@ -8,7 +8,23 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        // Add foreign key from core.permissions.user_id to core.users.id
+        // 1. Ensure the core.permissions table exists
+        db.execute_unprepared(
+            r#"
+            CREATE TABLE IF NOT EXISTS core.permissions (
+                id BIGSERIAL PRIMARY KEY,
+                tenant_id UUID NOT NULL,
+                user_id UUID NOT NULL,
+                app TEXT NOT NULL,
+                role TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            "#,
+        )
+        .await?;
+
+        // 2. Add foreign key if not exists
         db.execute_unprepared(
             r#"
             DO $$
@@ -16,6 +32,7 @@ impl MigrationTrait for Migration {
                 IF NOT EXISTS (
                     SELECT 1 FROM information_schema.table_constraints
                     WHERE constraint_name = 'fk_permissions_user'
+                    AND table_schema = 'core' AND table_name = 'permissions'
                 ) THEN
                     ALTER TABLE core.permissions
                     ADD CONSTRAINT fk_permissions_user
@@ -26,7 +43,38 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
-        // Enable RLS on core.outbox if not already enabled
+        // 3. Create required roles if they don't exist
+        db.execute_unprepared(
+            r#"
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'core_role') THEN
+                    CREATE ROLE core_role NOLOGIN;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'cinq_role') THEN
+                    CREATE ROLE cinq_role NOLOGIN;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ops_role') THEN
+                    CREATE ROLE ops_role NOLOGIN;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'vault_role') THEN
+                    CREATE ROLE vault_role NOLOGIN;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'dial_role') THEN
+                    CREATE ROLE dial_role NOLOGIN;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'vista_role') THEN
+                    CREATE ROLE vista_role NOLOGIN;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'dispatcher_role') THEN
+                    CREATE ROLE dispatcher_role NOLOGIN;
+                END IF;
+            END $$;
+            "#,
+        )
+        .await?;
+
+        // 4. Enable RLS on core.outbox
         db.execute_unprepared(
             r#"
             ALTER TABLE core.outbox ENABLE ROW LEVEL SECURITY;
@@ -34,7 +82,7 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
-        // Create RLS policies if they don't exist
+        // 5. Create RLS policies if they don't exist
         db.execute_unprepared(
             r#"
             DO $$
@@ -149,7 +197,7 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
-        // Grant sequence usage
+        // 6. Grant sequence usage
         db.execute_unprepared(
             r#"
             GRANT USAGE, SELECT ON SEQUENCE core.outbox_id_seq
@@ -158,7 +206,7 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
-        // Grant column-level UPDATE privileges to dispatcher_role
+        // 7. Grant column-level UPDATE privileges to dispatcher_role
         db.execute_unprepared(
             r#"
             GRANT SELECT ON core.outbox TO dispatcher_role;
@@ -168,7 +216,7 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
-        // Create dispatcher SELECT policy
+        // 8. Create dispatcher SELECT policy
         db.execute_unprepared(
             r#"
             DO $$
@@ -188,7 +236,7 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
-        // Create dispatcher UPDATE policy
+        // 9. Create dispatcher UPDATE policy
         db.execute_unprepared(
             r#"
             DO $$
@@ -213,6 +261,8 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
+
+        // Drop policies
         db.execute_unprepared("DROP POLICY IF EXISTS outbox_dispatcher_update ON core.outbox;")
             .await?;
         db.execute_unprepared("DROP POLICY IF EXISTS outbox_dispatcher_select ON core.outbox;")
@@ -229,10 +279,20 @@ impl MigrationTrait for Migration {
             .await?;
         db.execute_unprepared("DROP POLICY IF EXISTS outbox_core_insert ON core.outbox;")
             .await?;
+
+        // Drop foreign key
         db.execute_unprepared(
             "ALTER TABLE core.permissions DROP CONSTRAINT IF EXISTS fk_permissions_user;",
         )
         .await?;
+
+        // Drop table
+        db.execute_unprepared("DROP TABLE IF EXISTS core.permissions CASCADE;")
+            .await?;
+
+        // Optionally drop roles (but they might be used elsewhere, so skip in down)
+        // We'll leave them.
+
         Ok(())
     }
 }

@@ -1,7 +1,7 @@
 import { type ChannelSummary, useListChannels } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
 import { Button, cn, Input, Skeleton } from '@ataqu/ui';
-import { t } from '@lingui/macro';
+import { t } from '@lingui/core/macro';
 import { Link } from '@tanstack/react-router';
 import { Hash, Lock, Plus, Search, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';

@@ -1,7 +1,8 @@
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { KanbanBoard, Badge, Skeleton } from '@ataqu/ui';
 import { toast } from 'sonner';
-import { Trans, t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { listDeals, listPipelineStages } from '@ataqu/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import type { DealResponse, PipelineStageResponse } from '@ataqu/api-client';

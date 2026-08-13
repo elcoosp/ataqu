@@ -1,5 +1,6 @@
 import { Button, Input } from "@ataqu/ui";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { useId } from "react";
 import { Switch } from "../ui/switch";
 import type { SondQuestion } from "./types";

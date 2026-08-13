@@ -129,7 +129,6 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000012_create_vista_views::Migration),
             Box::new(m20250101_000024_add_inactivity_reminder::Migration),
             Box::new(m20250101_000026_add_routing_rules_to_forms::Migration),
-            Box::new(m20250101_000022_create_dial_tickets::Migration),
             Box::new(m20250101_000021_create_inactivity_workflow::Migration),
             Box::new(m20250101_000027_add_company_to_contacts::Migration),
             Box::new(m20250101_000028_add_mode_to_forms::Migration),

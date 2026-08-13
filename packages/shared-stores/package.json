@@ -15,5 +15,8 @@
       "default": "./src/index.ts"
     }
   },
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
 }

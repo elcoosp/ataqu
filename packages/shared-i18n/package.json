@@ -6,14 +6,15 @@
   "types": "src/index.ts",
   "scripts": {
     "extract": "lingui extract",
-    "compile": "lingui compile --typescript"
+    "compile": "lingui compile --typescript",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lingui/core": "^6.5.0",
-    "@lingui/react": "^6.5.0"
+    "@lingui/core": "^6.6.0",
+    "@lingui/react": "^6.6.0"
   },
   "devDependencies": {
-    "@lingui/cli": "^6.5.0",
+    "@lingui/cli": "^6.6.0",
     "@lingui/format-po": "^6.6.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

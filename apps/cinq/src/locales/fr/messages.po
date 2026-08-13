@@ -6,9 +6,247 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: fr\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/routes/_auth.contacts.$id.tsx
+#: src/routes/_auth.deals.$id.tsx
+msgid "Activities"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "CINQ connected to {targetApp}"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "CINQ disconnected from {targetApp}"
+msgstr ""
+
+#: src/components/email-tracking-tab.tsx
+msgid "Clicked"
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Column Mapping"
+msgstr ""
+
+#: src/components/contact-table.tsx
+#: src/components/csv-import.tsx
+msgid "Company"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Connect"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Connected"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Connected to {targetApp}"
+msgstr ""
+
+#: src/routes/_auth.contacts.$id.tsx
+msgid "Contact not found"
+msgstr ""
+
+#: src/routes/_auth.contacts.index.tsx
+msgid "Contacts"
+msgstr ""
+
+#: src/App.tsx
+msgid "Create Contact"
+msgstr ""
+
+#: src/App.tsx
+msgid "Create Deal"
+msgstr ""
+
+#: src/routes/_auth.deals.$id.tsx
+msgid "Create DIAL channel on won"
+msgstr ""
+
+#. placeholder {0}: data.imported
+#. placeholder {1}: data.failed
+#: src/components/csv-import.tsx
+msgid "CSV imported: {0} contacts. Failed: {1}"
+msgstr ""
+
+#: src/components/contact-table.tsx
+#: src/components/csv-import.tsx
+msgid "Custom"
+msgstr ""
+
+#: src/routes/_auth.contacts.$id.tsx
+msgid "Custom Fields"
+msgstr ""
 
 #: src/routes/_auth/dashboard.tsx
 msgid "Dashboard"
+msgstr ""
+
+#: src/components/deal-kanban.tsx
+msgid "Deal moved (refresh to see changes)"
+msgstr ""
+
+#: src/routes/_auth.deals.$id.tsx
+msgid "Deal not found"
+msgstr ""
+
+#: src/routes/_auth.deals.index.tsx
+msgid "Deals"
+msgstr ""
+
+#: src/routes/_auth.deals.index.tsx
+msgid "Drag this to 'Won' to trigger native automations across the OS."
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Drop your CSV here or click to browse"
+msgstr ""
+
+#: src/components/contact-table.tsx
+#: src/components/csv-import.tsx
+msgid "Email"
+msgstr ""
+
+#: src/routes/_auth.contacts.$id.tsx
+#: src/routes/_auth.deals.$id.tsx
+msgid "Email Tracking"
+msgstr ""
+
+#: src/components/contact-table.tsx
+msgid "Error loading contacts"
+msgstr ""
+
+#: src/components/email-tracking-tab.tsx
+msgid "Event"
+msgstr ""
+
+#: src/App.tsx
+msgid "Export Contacts CSV"
+msgstr ""
+
+#: src/App.tsx
+msgid "Export Deals CSV"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Failed to toggle integration"
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "File:"
+msgstr ""
+
+#: src/App.tsx
+msgid "Go to Contacts"
+msgstr ""
+
+#: src/App.tsx
+msgid "Go to Deals"
+msgstr ""
+
+#: src/App.tsx
+msgid "Go to Import"
+msgstr ""
+
+#: src/App.tsx
+msgid "Go to Tasks"
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Ignore"
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Import"
+msgstr ""
+
+#: src/App.tsx
+#: src/routes/_auth.import.tsx
+msgid "Import CSV"
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Import failed"
+msgstr ""
+
+#: src/components/contact-table.tsx
+#: src/components/csv-import.tsx
+msgid "Name"
+msgstr ""
+
+#: src/components/activity-timeline.tsx
+msgid "No activities yet"
+msgstr ""
+
+#: src/components/contact-table.tsx
+msgid "No contacts yet. Create one to get started."
+msgstr ""
+
+#: src/components/custom-fields-tab.tsx
+msgid "No custom fields"
+msgstr ""
+
+#: src/components/task-list.tsx
+msgid "No tasks"
+msgstr ""
+
+#: src/components/email-tracking-tab.tsx
+msgid "Opened"
+msgstr ""
+
+#: src/components/contact-table.tsx
+#: src/components/csv-import.tsx
+msgid "Phone"
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Preview"
+msgstr ""
+
+#: src/App.tsx
+msgid "Search Contacts"
+msgstr ""
+
+#: src/components/contact-table.tsx
+msgid "Search contacts..."
+msgstr ""
+
+#: src/App.tsx
+msgid "Search Deals"
+msgstr ""
+
+#: src/components/email-tracking-tab.tsx
+msgid "Status"
+msgstr ""
+
+#: src/components/cross-app-badge.tsx
+msgid "Stock reserved in VAULT"
+msgstr ""
+
+#: src/routes/_auth.contacts.$id.tsx
+#: src/routes/_auth.deals.$id.tsx
+#: src/routes/_auth.tasks.tsx
+msgid "Tasks"
+msgstr ""
+
+#: src/routes/_auth.deals.index.tsx
+msgid "This is your revenue engine. No 3‑year lock‑in, just deals."
+msgstr ""
+
+#: src/components/email-tracking-tab.tsx
+msgid "Time"
+msgstr ""
+
+#: src/routes/_auth.deals.$id.tsx
+msgid "Trigger SPARK workflow on won"
 msgstr ""
 
 #: src/routes/_auth/dashboard.tsx

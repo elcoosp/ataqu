@@ -6,7 +6,8 @@ import {
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Input, Skeleton } from "@ataqu/ui";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";

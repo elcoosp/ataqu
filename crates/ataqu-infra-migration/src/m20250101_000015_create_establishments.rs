@@ -58,22 +58,23 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // Add establishment_id column to deals
+        // Add establishment_id column to deals (qualify schema)
+        let deals_table = (Alias::new("collab_crm"), Alias::new("deals"));
         manager
             .alter_table(
                 Table::alter()
-                    .table(Deals::Table)
-                    .add_column(ColumnDef::new(Deals::EstablishmentId).uuid().null())
+                    .table(deals_table.clone())
+                    .add_column(ColumnDef::new(Alias::new("establishment_id")).uuid().null())
                     .to_owned(),
             )
             .await?;
 
-        // Foreign key constraint
+        // Foreign key constraint (qualify both tables)
         manager
             .create_foreign_key(
                 ForeignKey::create()
                     .name("fk_deals_establishment")
-                    .from(Deals::Table, Deals::EstablishmentId)
+                    .from(deals_table.clone(), Alias::new("establishment_id"))
                     .to(Establishments::Table, Establishments::Id)
                     .on_delete(ForeignKeyAction::SetNull)
                     .to_owned(),
@@ -84,6 +85,7 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        let deals_table = (Alias::new("collab_crm"), Alias::new("deals"));
         manager
             .drop_foreign_key(ForeignKey::drop().name("fk_deals_establishment").to_owned())
             .await?;
@@ -91,8 +93,8 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table(Deals::Table)
-                    .drop_column(Deals::EstablishmentId)
+                    .table(deals_table)
+                    .drop_column(Alias::new("establishment_id"))
                     .to_owned(),
             )
             .await?;
@@ -115,10 +117,4 @@ enum Establishments {
     Address,
     CreatedAt,
     UpdatedAt,
-}
-
-#[derive(Iden)]
-enum Deals {
-    Table,
-    EstablishmentId,
 }

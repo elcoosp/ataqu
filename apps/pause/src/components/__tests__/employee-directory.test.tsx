@@ -3,6 +3,11 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { EmployeeDirectory } from '../employee-directory';
+import { I18nProvider as LinguiProvider } from '@lingui/react';
+import { i18n } from '@lingui/core';
+
+i18n.load('en', {});
+i18n.activate('en');
 
 vi.mock('@lingui/macro', () => ({
   Trans: ({ children }: { children?: ReactNode }) => children,
@@ -38,7 +43,11 @@ vi.mock('../empty-state', () => ({
 
 describe('EmployeeDirectory', () => {
   it('renders employee card', () => {
-    render(<EmployeeDirectory onAddEmployee={() => {}} />);
+    render(
+      <LinguiProvider i18n={i18n}>
+        <EmployeeDirectory onAddEmployee={() => {}} />
+      </LinguiProvider>
+    );
     expect(screen.getByText('John Doe')).toBeTruthy();
   });
 });

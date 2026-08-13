@@ -32,7 +32,7 @@ impl MigrationTrait for Migration {
                 id UUID PRIMARY KEY,
                 tenant_id UUID NOT NULL,
                 name TEXT NOT NULL,
-                order INT NOT NULL,
+                "order" INT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
@@ -45,7 +45,7 @@ impl MigrationTrait for Migration {
             "CREATE INDEX IF NOT EXISTS idx_activities_tenant_contact ON collab_crm.activities (tenant_id, contact_id);",
         ).await?;
         conn.execute_unprepared(
-            "CREATE INDEX IF NOT EXISTS idx_pipeline_stages_tenant_order ON collab_crm.pipeline_stages (tenant_id, order);",
+"CREATE INDEX IF NOT EXISTS idx_pipeline_stages_tenant_order ON collab_crm.pipeline_stages (tenant_id, \"order\");"
         ).await?;
 
         Ok(())

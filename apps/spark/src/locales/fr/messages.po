@@ -6,11 +6,458 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: fr\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/components/node-sidebar.tsx
+msgid "Actions"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Active"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "All child conditions must be true (AND logic)"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "All workflows are healthy."
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Approve"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Approved"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "At least one child condition must be true (OR logic)"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Attempts:"
+msgstr ""
+
+#: src/routes/login.tsx
+msgid "Automation that doesn't charge per task."
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+#: src/components/test-run-modal.tsx
+msgid "Cancel"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Completed"
+msgstr ""
+
+#: src/components/node-sidebar.tsx
+msgid "Conditions"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Configure Action"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Configure Condition"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Configure Trigger"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Confirm"
+msgstr ""
+
+#: src/routes/_auth.index.tsx
+msgid "Create Workflow"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Created:"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Cron Expression"
+msgstr ""
 
 #: src/routes/_auth/dashboard.tsx
 msgid "Dashboard"
 msgstr ""
 
+#: src/routes/_auth.dlq.tsx
+msgid "Dead Letter Queue"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Delete"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Disable workflow"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "DLQ entry deleted."
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Drag it here. Connect it to an action. You're done."
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Edit workflow"
+msgstr ""
+
+#: src/routes/login.tsx
+msgid "Email"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Enable workflow"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Error"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Event replayed."
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Example: Every weekday at 9:00 AM"
+msgstr ""
+
+#: src/routes/_auth.runs.tsx
+msgid "Execution History"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+#: src/components/execution-history.tsx
+msgid "Failed"
+msgstr ""
+
+#: src/routes/_auth.dlq.tsx
+msgid "Failed events that need attention. Replay or delete them."
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Failed to approve run."
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Failed to create workflow."
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Failed to delete entry."
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Failed to delete workflow."
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Failed to replay event."
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Failed to save workflow."
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Failed to toggle workflow."
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Field Path"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Filter (JSON, optional)"
+msgstr ""
+
+#: src/routes/$.tsx
+msgid "Go to Workflows"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Inactive"
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Invalid JSON"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Label"
+msgstr ""
+
+#: src/components/run-detail-panel.tsx
+msgid "Last Updated"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Last updated:"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Loading workflow..."
+msgstr ""
+
+#: src/routes/_auth.runs.tsx
+msgid "Monitor all workflow runs across your workspace."
+msgstr ""
+
+#: src/routes/_auth.index.tsx
+msgid "Native automation triggers and actions. Zero per-task fees."
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "No dead-letter events"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "No runs yet"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "No workflows"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Outbox Event"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Outbox Event Type"
+msgstr ""
+
+#: src/routes/$.tsx
+msgid "Page not found"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Parameters (JSON)"
+msgstr ""
+
+#: src/routes/login.tsx
+msgid "Password"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+#: src/components/run-detail-panel.tsx
+msgid "Payload"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Pending Approval"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Rejected"
+msgstr ""
+
+#: src/components/dlq-viewer.tsx
+msgid "Replay"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Required params:"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Run approved."
+msgstr ""
+
+#: src/components/run-detail-panel.tsx
+msgid "Run Details"
+msgstr ""
+
+#: src/components/run-detail-panel.tsx
+msgid "Run ID"
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Run Test"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Running"
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Running..."
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Save"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Save Configuration"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Schedule"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Secured"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Select an event..."
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Send as X-Webhook-Secret header"
+msgstr ""
+
+#: src/routes/login.tsx
+msgid "Sign In"
+msgstr ""
+
+#: src/routes/login.tsx
+msgid "Sign in to SPARK"
+msgstr ""
+
+#: src/components/run-detail-panel.tsx
+msgid "Started"
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Started:"
+msgstr ""
+
+#: src/components/run-detail-panel.tsx
+msgid "Status"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Step 1: Choose a trigger"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Step 2: Build your workflow"
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Test Payload (JSON)"
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Test Run"
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Test run completed successfully."
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Test run completed."
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Test run failed."
+msgstr ""
+
+#: src/components/test-run-modal.tsx
+msgid "Test run failed. Check the execution history for details."
+msgstr ""
+
+#: src/components/execution-history.tsx
+msgid "Test your workflow to see execution history."
+msgstr ""
+
+#: src/routes/$.tsx
+msgid "The page you are looking for does not exist."
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Timezone"
+msgstr ""
+
+#: src/components/node-sidebar.tsx
+msgid "Triggers"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Use {{payload.field}} for dynamic values"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Value"
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Webhook"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Webhook Secret (optional)"
+msgstr ""
+
+#: src/components/node-config-panel.tsx
+msgid "Webhook URL"
+msgstr ""
+
 #: src/routes/_auth/dashboard.tsx
 msgid "Welcome to your workspace"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Workflow deleted."
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Workflow disabled."
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Workflow enabled."
+msgstr ""
+
+#: src/components/run-detail-panel.tsx
+msgid "Workflow ID"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Workflow name"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Workflow name is required."
+msgstr ""
+
+#: src/components/node-sidebar.tsx
+msgid "Workflow Nodes"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Workflow saved."
+msgstr ""
+
+#: src/routes/_auth.index.tsx
+msgid "Workflows"
+msgstr ""
+
+#: src/routes/_auth.workflows.$id.tsx
+msgid "Zapier charges per task. We charge $0. Pick a trigger."
+msgstr ""
+
+#: src/components/workflow-list.tsx
+msgid "Zapier would charge you $30/mo for this. Turn on your first native trigger."
 msgstr ""

@@ -2,7 +2,8 @@ import { useState, ReactNode } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button } from '@ataqu/ui';
 import { toast } from 'sonner';
-import { Trans, t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { api } from '@ataqu/api-client';
 import type { UUID } from '@ataqu/types';
 

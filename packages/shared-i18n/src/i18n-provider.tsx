@@ -1,35 +1,38 @@
-import React, { useEffect, useState } from 'react';
+// packages/shared-i18n/src/i18n-provider.tsx
+import { useEffect, useState } from 'react';
 import { I18nProvider as LinguiProvider } from '@lingui/react';
 import { i18n } from '@lingui/core';
-import { messages as enMessages } from '../locales/en/messages';
-import { messages as frMessages } from '../locales/fr/messages';
 
-// Load messages for each locale
-i18n.load('en', enMessages);
-i18n.load('fr', frMessages);
-
-function getLocale(): string {
-  if (typeof navigator === 'undefined') return 'en';
-  const stored = localStorage.getItem('ataqu-locale');
-  if (stored) return stored;
-  const browserLocale = navigator.language?.split('-')[0] || 'en';
-  return ['en', 'fr'].includes(browserLocale) ? browserLocale : 'en';
+interface Props {
+  children: React.ReactNode;
+  locale?: string;
 }
 
-export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocale] = useState('en');
+export const I18nProvider = ({ children, locale = 'en' }: Props) => {
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const detected = getLocale();
-    setLocale(detected);
-    i18n.activate(detected);
-    localStorage.setItem('ataqu-locale', detected);
-  }, []);
+    async function load() {
+      try {
+        // Dynamically import the app's compiled messages
+        // Assumes the app has a `src/locales/${locale}/messages.ts` file
+        const { messages } = await import(
+          /* @vite-ignore */ `../../src/locales/${locale}/messages.ts`
+        );
+        i18n.load(locale, messages);
+        i18n.activate(locale);
+        setLoaded(true);
+      } catch {
+        // Fallback to empty messages if not found
+        i18n.load(locale, {});
+        i18n.activate(locale);
+        setLoaded(true);
+      }
+    }
+    load();
+  }, [locale]);
 
-  // Wait until messages are loaded (they are, because we imported them statically)
-  if (!i18n.messages[locale]) {
-    return <>{children}</>;
-  }
+  if (!loaded) return null;
 
   return <LinguiProvider i18n={i18n}>{children}</LinguiProvider>;
 };

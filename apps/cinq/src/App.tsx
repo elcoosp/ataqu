@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from '@tanstack/react-router';
 import { Shell } from '@ataqu/ui';
 import { api } from '@ataqu/api-client';
-import { t } from '@lingui/macro';
+import { t } from '@lingui/core/macro';
 
 export function App() {
   const navigate = useNavigate();

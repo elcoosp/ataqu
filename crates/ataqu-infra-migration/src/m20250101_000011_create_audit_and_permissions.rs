@@ -40,55 +40,68 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .default(Expr::current_timestamp()),
                     )
-                    .index(
-                        Index::create()
-                            .name("idx_permissions_tenant_user_app")
-                            .table(Permissions::Table)
-                            .col(Permissions::TenantId)
-                            .col(Permissions::UserId)
-                            .col(Permissions::App)
-                            .unique(),
+                    .to_owned(),
+            )
+            .await?;
+
+        // Indexes for permissions (added separately)
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_permissions_tenant_user_app")
+                    .table(Permissions::Table)
+                    .col(Permissions::TenantId)
+                    .col(Permissions::UserId)
+                    .col(Permissions::App)
+                    .unique()
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_permissions_app")
+                    .table(Permissions::Table)
+                    .col(Permissions::App)
+                    .to_owned(),
+            )
+            .await?;
+
+        // 2. Create core.audit_logs as a normal table (no partitioning)
+        manager
+            .create_table(
+                Table::create()
+                    .table(AuditLogs::Table)
+                    .if_not_exists()
+                    .col(
+                        ColumnDef::new(AuditLogs::Id)
+                            .big_integer()
+                            .not_null()
+                            .auto_increment()
+                            .primary_key(),
                     )
-                    .index(
-                        Index::create()
-                            .name("idx_permissions_app")
-                            .table(Permissions::Table)
-                            .col(Permissions::App),
+                    .col(ColumnDef::new(AuditLogs::TenantId).uuid().not_null())
+                    .col(ColumnDef::new(AuditLogs::UserId).uuid().not_null())
+                    .col(ColumnDef::new(AuditLogs::Action).string().not_null())
+                    .col(ColumnDef::new(AuditLogs::App).string().not_null())
+                    .col(ColumnDef::new(AuditLogs::EntityType).string())
+                    .col(ColumnDef::new(AuditLogs::EntityId).uuid())
+                    .col(ColumnDef::new(AuditLogs::OldValue).json_binary())
+                    .col(ColumnDef::new(AuditLogs::NewValue).json_binary())
+                    .col(ColumnDef::new(AuditLogs::IpAddress).custom(Alias::new("INET")))
+                    .col(ColumnDef::new(AuditLogs::UserAgent).string())
+                    .col(
+                        ColumnDef::new(AuditLogs::CreatedAt)
+                            .timestamp_with_time_zone()
+                            .not_null()
+                            .default(Expr::current_timestamp()),
                     )
                     .to_owned(),
             )
             .await?;
 
-        // 2. Create partitioned core.audit_logs table (range on created_at)
-        // We create the parent table and a default partition.
-        let db = manager.get_connection();
-        let sql = r#"
-            CREATE TABLE IF NOT EXISTS core.audit_logs (
-                id BIGSERIAL,
-                tenant_id UUID NOT NULL,
-                user_id UUID NOT NULL,
-                action TEXT NOT NULL,
-                app TEXT NOT NULL,
-                entity_type TEXT,
-                entity_id UUID,
-                old_value JSONB,
-                new_value JSONB,
-                ip_address INET,
-                user_agent TEXT,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            ) PARTITION BY RANGE (created_at);
-        "#;
-        db.execute_unprepared(sql).await?;
-
-        // Create default partition for out-of-range data
-        let sql_default = r#"
-            CREATE TABLE IF NOT EXISTS core.audit_logs_default
-            PARTITION OF core.audit_logs
-            DEFAULT;
-        "#;
-        db.execute_unprepared(sql_default).await?;
-
-        // Create indexes on the parent table (they will be inherited by partitions)
+        // Indexes for audit_logs
         manager
             .create_index(
                 Index::create()
@@ -99,6 +112,7 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
+
         manager
             .create_index(
                 Index::create()
@@ -108,6 +122,7 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
+
         manager
             .create_index(
                 Index::create()
@@ -118,22 +133,16 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // 3. Grant permissions (optional, but we follow ADR-035)
-        // We grant INSERT, SELECT to core_role and admin_role etc.
-        // For simplicity we grant to public, but in production we'd restrict.
-        // The ADR says "Enable RLS if needed." We'll leave RLS off for now.
-
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Drop partitions and tables
-        let db = manager.get_connection();
-        let sql = r#"
-            DROP TABLE IF EXISTS core.audit_logs CASCADE;
-            DROP TABLE IF EXISTS core.permissions CASCADE;
-        "#;
-        db.execute_unprepared(sql).await?;
+        manager
+            .drop_table(Table::drop().table(AuditLogs::Table).to_owned())
+            .await?;
+        manager
+            .drop_table(Table::drop().table(Permissions::Table).to_owned())
+            .await?;
         Ok(())
     }
 }
@@ -151,7 +160,6 @@ enum Permissions {
 }
 
 #[derive(DeriveIden)]
-#[allow(dead_code)]
 enum AuditLogs {
     Table,
     Id,

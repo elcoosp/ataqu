@@ -18,3 +18,11 @@ test-integration:
 
 wr:
     watchexec -w ./wr.sh --clear -r "./wr.sh"
+db-start:
+    docker run -d \
+      --name ataqu-postgres-dev \
+      -e POSTGRES_USER=postgres \
+      -e POSTGRES_PASSWORD=postgres \
+      -e POSTGRES_DB=ataqu_test \
+      -p 5433:5432 \
+      postgres:18-alpine

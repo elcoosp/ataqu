@@ -10,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@ataqu/ui';
-import { Trans, t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';

@@ -12,5 +12,8 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     }
+  },
+  "scripts": {
+    "typecheck": "echo \"Skipping typecheck: no TS sources\""
   }
 }

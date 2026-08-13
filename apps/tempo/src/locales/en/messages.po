@@ -6,11 +6,252 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
 
-#: src/routes/_auth/dashboard.tsx
+#: src/components/event-type-form.tsx
+msgid "1 day before"
+msgstr "1 day before"
+
+#: src/components/event-type-form.tsx
+msgid "1 hour before"
+msgstr "1 hour before"
+
+#: src/components/event-type-form.tsx
+msgid "1:1"
+msgstr "1:1"
+
+#: src/components/event-type-form.tsx
+msgid "15 minutes"
+msgstr "15 minutes"
+
+#: src/components/event-type-form.tsx
+msgid "15 minutes before"
+msgstr "15 minutes before"
+
+#: src/components/event-type-form.tsx
+msgid "30 minutes"
+msgstr "30 minutes"
+
+#: src/components/event-type-form.tsx
+msgid "60 minutes"
+msgstr "60 minutes"
+
+#. placeholder {0}: guestDetails?.email
+#: src/components/booking/confirmation-screen.tsx
+msgid "A confirmation email has been sent to {0}."
+msgstr "A confirmation email has been sent to {0}."
+
+#: src/components/booking/confirmation-screen.tsx
+msgid "Add to Calendar"
+msgstr "Add to Calendar"
+
+#: src/components/error-boundary.tsx
+msgid "An unexpected error occurred. Please try again."
+msgstr "An unexpected error occurred. Please try again."
+
+#: src/components/event-type-form.tsx
+msgid "Availability"
+msgstr "Availability"
+
+#: src/components/event-type-form.tsx
+msgid "Basic Information"
+msgstr "Basic Information"
+
+#: src/components/booking/guest-form.tsx
+msgid "Book"
+msgstr "Book"
+
+#: src/components/booking/confirmation-screen.tsx
+msgid "Book another meeting"
+msgstr "Book another meeting"
+
+#: src/components/booking/guest-form.tsx
+msgid "Booking..."
+msgstr "Booking..."
+
+#: src/components/event-type-form.tsx
+msgid "Buffer after (min)"
+msgstr "Buffer after (min)"
+
+#: src/components/event-type-form.tsx
+msgid "Buffer before (min)"
+msgstr "Buffer before (min)"
+
+#: src/routes/_auth.calendar-settings.tsx
+msgid "Calendar Settings"
+msgstr "Calendar Settings"
+
+#: src/components/upcoming-meetings.tsx
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/routes/_auth.dashboard.tsx
+msgid "Connect Calendar"
+msgstr "Connect Calendar"
+
+#: src/components/calendar-settings.tsx
+msgid "Connect Calendars"
+msgstr "Connect Calendars"
+
+#: src/components/calendar-settings.tsx
+msgid "Connect Google Calendar"
+msgstr "Connect Google Calendar"
+
+#: src/components/calendar-settings.tsx
+msgid "Connect Outlook Calendar"
+msgstr "Connect Outlook Calendar"
+
+#: src/components/calendar-settings.tsx
+msgid "Connected Calendars"
+msgstr "Connected Calendars"
+
+#: src/components/booking/time-slot-picker.tsx
+msgid "Continue"
+msgstr "Continue"
+
+#: src/routes/_auth.event-types.$id.tsx
+msgid "Copy Link"
+msgstr "Copy Link"
+
+#: src/routes/_auth.dashboard.tsx
+msgid "Create Event Type"
+msgstr "Create Event Type"
+
+#: src/components/event-type-form.tsx
+msgid "Custom Emails"
+msgstr "Custom Emails"
+
+#: src/routes/_auth.dashboard.tsx
 msgid "Dashboard"
 msgstr "Dashboard"
 
+#: src/components/event-type-form.tsx
+msgid "Description"
+msgstr "Description"
+
+#: src/components/event-type-form.tsx
+msgid "Duration"
+msgstr "Duration"
+
+#: src/components/booking/guest-form.tsx
+msgid "Email"
+msgstr "Email"
+
+#: src/components/event-type-form.tsx
+msgid "Email reminder"
+msgstr "Email reminder"
+
+#: src/components/booking/guest-form.tsx
+msgid "Enter your details"
+msgstr "Enter your details"
+
+#: src/components/event-type-form.tsx
+msgid "Event Type"
+msgstr "Event Type"
+
+#: src/routes/_auth.event-types.$id.tsx
+msgid "Event type not found."
+msgstr "Event type not found."
+
+#: src/components/event-type-form.tsx
+msgid "Group"
+msgstr "Group"
+
+#: src/components/event-type-form.tsx
+msgid "Invitation template"
+msgstr "Invitation template"
+
+#: src/components/event-type-form.tsx
+msgid "Location (video/link)"
+msgstr "Location (video/link)"
+
+#: src/components/booking/confirmation-screen.tsx
+msgid "Meeting booked!"
+msgstr "Meeting booked!"
+
+#: src/components/booking/guest-form.tsx
+#: src/components/event-type-form.tsx
+msgid "Name"
+msgstr "Name"
+
+#: src/components/booking-calendar.tsx
+msgid "No available times. Check back soon."
+msgstr "No available times. Check back soon."
+
+#: src/components/calendar-settings.tsx
+msgid "No calendars connected yet."
+msgstr "No calendars connected yet."
+
+#: src/components/booking/event-type-selector.tsx
+msgid "No event types available."
+msgstr "No event types available."
+
+#: src/components/no-show-badge.tsx
+msgid "No-show detected"
+msgstr "No-show detected"
+
+#: src/components/event-type-form.tsx
+msgid "Reminder template"
+msgstr "Reminder template"
+
+#: src/components/event-type-form.tsx
+msgid "Reminder time"
+msgstr "Reminder time"
+
+#: src/components/event-type-form.tsx
+msgid "Reminders"
+msgstr "Reminders"
+
+#: src/components/reschedule-modal.tsx
+#: src/components/upcoming-meetings.tsx
+msgid "Reschedule"
+msgstr "Reschedule"
+
+#: src/components/reschedule-modal.tsx
+msgid "Reschedule Meeting"
+msgstr "Reschedule Meeting"
+
+#: src/components/event-type-form.tsx
+msgid "Save Event Type"
+msgstr "Save Event Type"
+
+#: src/components/event-type-form.tsx
+msgid "Saving..."
+msgstr "Saving..."
+
+#: src/components/booking/event-type-selector.tsx
+msgid "Select"
+msgstr "Select"
+
+#: src/components/booking-calendar.tsx
+msgid "Show more dates"
+msgstr "Show more dates"
+
+#: src/components/event-type-form.tsx
+msgid "SMS reminder"
+msgstr "SMS reminder"
+
+#: src/components/error-boundary.tsx
+msgid "Something went wrong"
+msgstr "Something went wrong"
+
+#: src/components/error-boundary.tsx
+msgid "Try again"
+msgstr "Try again"
+
+#: src/components/event-type-form.tsx
+msgid "Type"
+msgstr "Type"
+
+#: src/components/event-type-form.tsx
+msgid "Variables: {name}, {date}, {time}"
+msgstr "Variables: {name}, {date}, {time}"
+
 #: src/routes/_auth/dashboard.tsx
-msgid "Welcome to your workspace"
-msgstr "Welcome to your workspace"
+#~ msgid "Welcome to your workspace"
+#~ msgstr "Welcome to your workspace"

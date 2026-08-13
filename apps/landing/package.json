@@ -10,7 +10,8 @@
     "lingui:extract": "lingui extract",
     "lingui:compile": "lingui compile",
     "db:push": "drizzle-kit push",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@drizzle-team/studio": "1.0.3",

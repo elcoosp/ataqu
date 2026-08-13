@@ -5,6 +5,7 @@ import { signupSchema, type SignupInput } from '@ataqu/shared-schemas';
 import { useSignup } from '@ataqu/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@ataqu/ui';
+import { AuthLayout } from '../auth-layout';
 import { Link } from '@tanstack/react-router';
 import { Trans } from '@lingui/react/macro';
 
@@ -28,7 +29,7 @@ export const RegisterForm: React.FC = () => {
       await navigate({ to: '/login' });
     } catch (error: any) {
       const message = error?.message || 'Registration failed';
-      setError('root', { message });
+      setError('root', { type: 'manual', message });
       if (error?.details?.email) {
         setError('email', { message: error.details.email });
       }

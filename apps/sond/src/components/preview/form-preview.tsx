@@ -12,7 +12,8 @@ import {
 	DialogTitle,
 	Skeleton,
 } from "@ataqu/ui";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormPreviewStore } from "../../stores/form-preview-store";

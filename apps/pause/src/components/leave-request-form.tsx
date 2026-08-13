@@ -1,7 +1,8 @@
 import { useCreateLeaveRequest } from '@ataqu/api-client';
 import { Button, Input, Label } from '@ataqu/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Trans, t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';

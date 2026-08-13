@@ -6,6 +6,7 @@ import { useLogin } from '@ataqu/api-client';
 import { useAuthStore } from '@ataqu/shared-stores';
 import { useNavigate } from '@tanstack/react-router';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@ataqu/ui';
+import { AuthLayout } from '../auth-layout';
 import { Link } from '@tanstack/react-router';
 import { Trans } from '@lingui/react/macro';
 
@@ -37,7 +38,7 @@ export const LoginForm: React.FC = () => {
       await navigate({ to: '/dashboard' });
     } catch (error: any) {
       const message = error?.message || 'Invalid email or password';
-      setError('root', { message });
+      setError('root', { type: 'manual', message });
       if (error?.details?.email) {
         setError('email', { message: error.details.email });
       }

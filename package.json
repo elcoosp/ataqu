@@ -13,7 +13,8 @@
     "extract": "pnpm -r extract",
     "compile": "pnpm -r compile",
     "generate:api": "node scripts/generate-api-client.ts",
-    "prepare": "pnpm generate:api"
+    "prepare": "pnpm generate:api",
+    "typecheck": "pnpm -r --if-present typecheck"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.8",
@@ -23,14 +24,35 @@
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-generator": "^1.167.28",
     "@tanstack/router-plugin": "^1.168.30",
+    "@testing-library/jest-dom": "^7.0.1",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react-swc": "^4.3.3",
+    "@vitejs/plugin-react-swc": "^4.0.0",
+    "@vitest/browser-playwright": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10",
+    "happy-dom": "^15.11.7",
+    "playwright": "^1.62.1",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
     "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@lingui/core": "^6.6.0",
+    "@lingui/react": "^6.6.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "vitest": "4.1.10",
+      "@vitest/browser": "4.1.10",
+      "@vitest/browser-playwright": "4.1.10",
+      "@vitest/coverage-v8": "4.1.10",
+      "@lingui/core": "^6.6.0",
+      "@lingui/react": "^6.6.0",
+      "@lingui/cli": "^6.6.0",
+      "@lingui/format-po": "^6.6.0",
+      "@lingui/swc-plugin": "^6.6.0"
+    }
   }
 }

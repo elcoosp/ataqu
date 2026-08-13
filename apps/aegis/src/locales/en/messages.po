@@ -6,11 +6,382 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/routes/_auth/admin/access-matrix.tsx
+#: src/routes/_auth/dashboard.tsx
+msgid "Access Matrix"
+msgstr "Access Matrix"
+
+#: src/routes/_auth/admin/audit.tsx
+msgid "Action"
+msgstr "Action"
+
+#: src/routes/_auth/api-keys.tsx
+msgid "Actions"
+msgstr "Actions"
+
+#: src/routes/_auth/users.$id.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Active"
+msgstr "Active"
+
+#: src/components/create-role-dialog.tsx
+msgid "Add"
+msgstr "Add"
+
+#: src/components/invite-dialog.tsx
+msgid "Admin"
+msgstr "Admin"
+
+#: src/components/create-api-key-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+msgid "API Key Created"
+msgstr "API Key Created"
+
+#: src/components/create-api-key-dialog.tsx
+msgid "API key created."
+msgstr "API key created."
+
+#: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/dashboard.tsx
+msgid "API Keys"
+msgstr "API Keys"
+
+#: src/routes/_auth/admin/audit.tsx
+msgid "App"
+msgstr "App"
+
+#: src/routes/_auth/admin/audit.tsx
+#: src/routes/_auth/dashboard.tsx
+msgid "Audit Log"
+msgstr "Audit Log"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Back to Users"
+msgstr "Back to Users"
+
+#: src/components/create-api-key-dialog.tsx
+#: src/components/create-role-dialog.tsx
+#: src/components/invite-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/routes/_auth/settings.tsx
+msgid "Configure (Coming Soon)"
+msgstr "Configure (Coming Soon)"
+
+#: src/routes/login.tsx
+msgid "Continue with Google"
+msgstr "Continue with Google"
+
+#: src/routes/login.tsx
+msgid "Continue with Microsoft"
+msgstr "Continue with Microsoft"
+
+#: src/components/create-api-key-dialog.tsx
+msgid "Copied!"
+msgstr "Copied!"
+
+#: src/components/create-api-key-dialog.tsx
+msgid "Copy"
+msgstr "Copy"
+
+#: src/components/create-api-key-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+msgid "Copy this key now. You won't be able to see it again."
+msgstr "Copy this key now. You won't be able to see it again."
+
+#: src/components/create-api-key-dialog.tsx
+#: src/components/create-role-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+msgid "Create"
+msgstr "Create"
+
+#: src/components/create-api-key-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+msgid "Create API Key"
+msgstr "Create API Key"
+
+#: src/components/create-api-key-dialog.tsx
+#: src/components/create-role-dialog.tsx
+msgid "Create failed"
+msgstr "Create failed"
+
+#: src/routes/_auth/api-keys.tsx
+msgid "Create Key"
+msgstr "Create Key"
+
+#: src/components/create-role-dialog.tsx
+#: src/routes/_auth/roles.tsx
+msgid "Create Role"
+msgstr "Create Role"
+
+#: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/roles.tsx
+msgid "Created"
+msgstr "Created"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Created:"
+msgstr "Created:"
+
+#: src/components/create-api-key-dialog.tsx
+#: src/components/create-role-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+msgid "Creating..."
+msgstr "Creating..."
 
 #: src/routes/_auth/dashboard.tsx
 msgid "Dashboard"
 msgstr "Dashboard"
 
+#: src/components/create-api-key-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+msgid "Done"
+msgstr "Done"
+
+#: src/components/invite-dialog.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Email"
+msgstr "Email"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Email:"
+msgstr "Email:"
+
+#: src/routes/_auth/users.$id.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Inactive"
+msgstr "Inactive"
+
+#: src/components/invite-dialog.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Invite"
+msgstr "Invite"
+
+#: src/components/invite-dialog.tsx
+msgid "Invite failed"
+msgstr "Invite failed"
+
+#: src/components/invite-dialog.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Invite User"
+msgstr "Invite User"
+
+#: src/components/invite-dialog.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Inviting..."
+msgstr "Inviting..."
+
+#: src/routes/_auth/admin/audit.tsx
+msgid "IP"
+msgstr "IP"
+
+#: src/routes/_auth/settings.tsx
+msgid "IP Allowlist"
+msgstr "IP Allowlist"
+
+#: src/routes/_auth/users/index.tsx
+msgid "Last Active"
+msgstr "Last Active"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Last Login:"
+msgstr "Last Login:"
+
+#: src/routes/_auth/api-keys.tsx
+msgid "Last Used"
+msgstr "Last Used"
+
 #: src/routes/_auth/dashboard.tsx
-msgid "Welcome to your workspace"
-msgstr "Welcome to your workspace"
+msgid "Manage Roles"
+msgstr "Manage Roles"
+
+#: src/routes/_auth/dashboard.tsx
+msgid "Manage Users"
+msgstr "Manage Users"
+
+#: src/components/invite-dialog.tsx
+msgid "Member"
+msgstr "Member"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "MFA Enabled:"
+msgstr "MFA Enabled:"
+
+#: src/routes/_auth/settings.tsx
+msgid "Multi-Factor Authentication (MFA)"
+msgstr "Multi-Factor Authentication (MFA)"
+
+#: src/components/create-api-key-dialog.tsx
+#: src/components/create-role-dialog.tsx
+#: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/roles.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Name"
+msgstr "Name"
+
+#: src/routes/login.tsx
+msgid "No password needed. SSO only."
+msgstr "No password needed. SSO only."
+
+#: src/components/create-role-dialog.tsx
+#: src/routes/_auth/roles.tsx
+msgid "Permissions"
+msgstr "Permissions"
+
+#: src/routes/_auth/settings.tsx
+msgid "Plan"
+msgstr "Plan"
+
+#: src/routes/_auth/dashboard.tsx
+msgid "Plan:"
+msgstr "Plan:"
+
+#: src/routes/_auth/api-keys.tsx
+msgid "Prefix"
+msgstr "Prefix"
+
+#: src/routes/_auth/dashboard.tsx
+msgid "Quick Links"
+msgstr "Quick Links"
+
+#: src/components/create-role-dialog.tsx
+msgid "Remove"
+msgstr "Remove"
+
+#: src/routes/_auth/settings.tsx
+msgid "Restrict access to your tenant to specific IP addresses. (P1 feature - coming soon)"
+msgstr "Restrict access to your tenant to specific IP addresses. (P1 feature - coming soon)"
+
+#: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/users.$id.tsx
+msgid "Revoke"
+msgstr "Revoke"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Revoke Access"
+msgstr "Revoke Access"
+
+#: src/routes/_auth/api-keys.tsx
+msgid "Revoke API Key"
+msgstr "Revoke API Key"
+
+#: src/components/invite-dialog.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Role"
+msgstr "Role"
+
+#: src/components/create-role-dialog.tsx
+msgid "Role created."
+msgstr "Role created."
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Role:"
+msgstr "Role:"
+
+#: src/routes/_auth/roles.tsx
+msgid "Roles"
+msgstr "Roles"
+
+#: src/routes/_auth/settings.tsx
+msgid "Save"
+msgstr "Save"
+
+#: src/routes/_auth/settings.tsx
+msgid "Saving..."
+msgstr "Saving..."
+
+#: src/routes/_auth/settings.tsx
+msgid "Scan this QR code with your authenticator app, then enter the 6-digit code below to verify."
+msgstr "Scan this QR code with your authenticator app, then enter the 6-digit code below to verify."
+
+#: src/routes/_auth/settings.tsx
+msgid "Secure your account with TOTP MFA. You'll need an authenticator app like Google Authenticator or Authy."
+msgstr "Secure your account with TOTP MFA. You'll need an authenticator app like Google Authenticator or Authy."
+
+#: src/routes/_auth/settings.tsx
+msgid "Setting up..."
+msgstr "Setting up..."
+
+#: src/routes/_auth/settings.tsx
+msgid "Settings"
+msgstr "Settings"
+
+#: src/routes/_auth/settings.tsx
+msgid "Setup MFA"
+msgstr "Setup MFA"
+
+#: src/routes/login.tsx
+msgid "Sign in to Ataqu"
+msgstr "Sign in to Ataqu"
+
+#: src/routes/_auth/users/index.tsx
+msgid "Status"
+msgstr "Status"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Status:"
+msgstr "Status:"
+
+#: src/routes/_auth/dashboard.tsx
+msgid "Tenant"
+msgstr "Tenant"
+
+#: src/routes/_auth/settings.tsx
+msgid "Tenant Information"
+msgstr "Tenant Information"
+
+#: src/routes/_auth/settings.tsx
+msgid "Tenant Name"
+msgstr "Tenant Name"
+
+#: src/routes/_auth/api-keys.tsx
+msgid "This action cannot be undone. Any services using this key will lose access."
+msgstr "This action cannot be undone. Any services using this key will lose access."
+
+#: src/routes/_auth/users.$id.tsx
+msgid "This will deactivate the user and revoke all sessions. This action can be undone by an admin."
+msgstr "This will deactivate the user and revoke all sessions. This action can be undone by an admin."
+
+#: src/routes/_auth/admin/audit.tsx
+msgid "Timestamp"
+msgstr "Timestamp"
+
+#: src/routes/_auth/admin/access-matrix.tsx
+#: src/routes/_auth/admin/audit.tsx
+msgid "User"
+msgstr "User"
+
+#: src/components/invite-dialog.tsx
+msgid "User invited."
+msgstr "User invited."
+
+#: src/routes/_auth/dashboard.tsx
+#: src/routes/_auth/users/index.tsx
+msgid "Users"
+msgstr "Users"
+
+#: src/routes/_auth/settings.tsx
+msgid "Verify"
+msgstr "Verify"
+
+#: src/routes/_auth/settings.tsx
+msgid "Verifying..."
+msgstr "Verifying..."
+
+#: src/components/invite-dialog.tsx
+msgid "Viewer"
+msgstr "Viewer"
+
+#: src/routes/_auth/dashboard.tsx
+#~ msgid "Welcome to your workspace"
+#~ msgstr "Welcome to your workspace"

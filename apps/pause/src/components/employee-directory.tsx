@@ -1,7 +1,8 @@
 import { useListEmployees, useSearchEmployees } from '@ataqu/api-client';
 import { useDebounce } from '@ataqu/shared-hooks';
 import { Button, Card, Input, Skeleton } from '@ataqu/ui';
-import { Trans, t } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { useNavigate } from '@tanstack/react-router';
 import { Search, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';

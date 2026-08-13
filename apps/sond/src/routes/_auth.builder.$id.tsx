@@ -15,7 +15,8 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@ataqu/ui";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, Save, Upload } from "lucide-react";

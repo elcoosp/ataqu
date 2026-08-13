@@ -1,5 +1,5 @@
 import { Shell } from '@ataqu/ui';
-import { Trans } from '@lingui/macro';
+import { Trans } from '@lingui/react/macro';
 import { createFileRoute } from '@tanstack/react-router';
 import { ReportsView } from '../components/reports';
 

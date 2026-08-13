@@ -1,4 +1,5 @@
 import type { Message } from '@ataqu/api-client';
+/// <reference types="node" />
 import { useAuthStore } from '@ataqu/shared-stores';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';

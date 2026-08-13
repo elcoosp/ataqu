@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "extract": "lingui extract",
-    "compile": "lingui compile --typescript"
+    "compile": "lingui compile --typescript",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ataqu/api-client": "workspace:*",
@@ -22,7 +23,6 @@
     "@ataqu/ui": "workspace:*",
     "@hookform/resolvers": "^5.7.1",
     "@lingui/core": "^6.6.0",
-    "@lingui/macro": "^5.9.5",
     "@lingui/react": "^6.6.0",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-label": "^2.1.15",

@@ -3,6 +3,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { LeaveRequestForm } from '../leave-request-form';
+import { I18nProvider as LinguiProvider } from '@lingui/react';
+import { i18n } from '@lingui/core';
+
+i18n.load('en', {});
+i18n.activate('en');
 
 const mutate = vi.fn();
 vi.mock('@lingui/macro', () => ({
@@ -26,16 +31,39 @@ vi.mock('@ataqu/ui', () => ({
 
 describe('LeaveRequestForm', () => {
   it('submits form with valid data', async () => {
-    const { container } = render(<LeaveRequestForm employeeId="123" />);
+    const { container } = render(
+      <LinguiProvider i18n={i18n}>
+        <LeaveRequestForm employeeId="123" />
+      </LinguiProvider>
+    );
 
-    const select = container.querySelector('#leave_type')!;
-    fireEvent.change(select, { target: { value: 'sick' } });
+    // Ensure the form elements are rendered (they might be conditionally hidden)
+    // The LeaveRequestForm uses react-hook-form with a <select> element.
+    // The select might be rendered, but we need to get it by role or label.
+    const select = container.querySelector('#leave_type');
+    if (!select) {
+      // If not found, try to get it by role
+      const selectRole = screen.getByRole('combobox', { name: /Leave Type/i });
+      fireEvent.change(selectRole, { target: { value: 'sick' } });
+    } else {
+      fireEvent.change(select, { target: { value: 'sick' } });
+    }
 
-    const startDateInput = container.querySelector('#start_date')!;
-    fireEvent.change(startDateInput, { target: { value: '2026-01-01' } });
+    const startDateInput = container.querySelector('#start_date');
+    if (!startDateInput) {
+      const startInput = screen.getByLabelText(/Start Date/i);
+      fireEvent.change(startInput, { target: { value: '2026-01-01' } });
+    } else {
+      fireEvent.change(startDateInput, { target: { value: '2026-01-01' } });
+    }
 
-    const endDateInput = container.querySelector('#end_date')!;
-    fireEvent.change(endDateInput, { target: { value: '2026-01-02' } });
+    const endDateInput = container.querySelector('#end_date');
+    if (!endDateInput) {
+      const endInput = screen.getByLabelText(/End Date/i);
+      fireEvent.change(endInput, { target: { value: '2026-01-02' } });
+    } else {
+      fireEvent.change(endDateInput, { target: { value: '2026-01-02' } });
+    }
 
     const submitButton = screen.getByRole('button', { name: /Request Leave/i });
     fireEvent.click(submitButton);

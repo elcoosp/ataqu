@@ -6,7 +6,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@ataqu/ui";
-import { Trans } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
 import { useId } from "react";
 import type { SondBranding } from "./types";
 

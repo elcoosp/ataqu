@@ -1,6 +1,6 @@
 import { api, useGetDashboard, useUpdateDashboard } from '@ataqu/api-client';
 import { Button, OnboardTour, Shell, Skeleton } from '@ataqu/ui';
-import { t } from '@lingui/macro';
+import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useParams } from '@tanstack/react-router';

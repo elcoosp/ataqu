@@ -22,5 +22,8 @@
   },
   "devDependencies": {
     "@lingui/swc-plugin": "^6.6.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
   }
 }

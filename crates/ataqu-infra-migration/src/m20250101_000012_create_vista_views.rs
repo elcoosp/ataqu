@@ -13,6 +13,10 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
+        // Create the vista schema if it doesn't exist
+        db.execute_unprepared("CREATE SCHEMA IF NOT EXISTS vista;")
+            .await?;
+
         // Check if dial.tickets exists before creating the view.
         // If it doesn't exist, we'll skip the support_sales view creation.
         let check_sql = "SELECT to_regclass('dial.tickets')";
@@ -30,7 +34,7 @@ impl MigrationTrait for Migration {
             CREATE MATERIALIZED VIEW IF NOT EXISTS vista.cross_app_revenue_inventory AS
             SELECT
                 c.tenant_id,
-                date_trunc('day', c.won_at) AS day,
+                date_trunc('day', c.created_at) AS day,
                 COUNT(c.id) AS deals_won,
                 COALESCE(SUM(c.amount), 0) AS revenue,
                 AVG(v.stock_quantity) AS avg_stock,
@@ -38,7 +42,7 @@ impl MigrationTrait for Migration {
             FROM collab_crm.deals c
             LEFT JOIN vault.variants v ON v.tenant_id = c.tenant_id
             WHERE c.status = 'won'
-            GROUP BY c.tenant_id, date_trunc('day', c.won_at);
+            GROUP BY c.tenant_id, date_trunc('day', c.created_at);
         "#;
 
         let support_sales = if tickets_exists {

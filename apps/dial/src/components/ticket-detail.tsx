@@ -1,5 +1,5 @@
 import { useIdempotency } from '@ataqu/shared-hooks';
-import { t } from '@lingui/macro';
+import { t } from '@lingui/core/macro';
 import { Badge, Button, cn, Skeleton } from '@ataqu/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';

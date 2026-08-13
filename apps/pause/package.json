@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ataqu/api-client": "workspace:*",
@@ -19,7 +20,6 @@
     "@ataqu/types": "workspace:*",
     "@ataqu/ui": "workspace:*",
     "@lingui/core": "^6.6.0",
-    "@lingui/macro": "^5.9.5",
     "@lingui/react": "^6.6.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-router": "^1.170.0",

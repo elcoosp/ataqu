@@ -1,5 +1,5 @@
 import { Button, Shell } from "@ataqu/ui";
-import { Trans } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileQuestion } from "lucide-react";
 

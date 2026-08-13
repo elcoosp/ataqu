@@ -1,6 +1,6 @@
 use ataqu_infra_migration::Migrator;
 use sea_orm::{Database, DbErr};
-use sea_orm_migration::MigratorTrait;
+use sea_orm_migration::{MigratorTrait, SchemaManager};
 
 #[tokio::main]
 async fn main() -> Result<(), DbErr> {
@@ -9,7 +9,15 @@ async fn main() -> Result<(), DbErr> {
     println!("Migrator connecting to: {}", db_url);
 
     let db = Database::connect(&db_url).await?;
-    Migrator::up(&db, None).await?;
-    println!("Migrations applied successfully.");
+    let schema_manager = SchemaManager::new(&db);
+    let migrations = Migrator::migrations();
+
+    for (i, migration) in migrations.iter().enumerate() {
+        let name = migration.name();
+        println!("Applying migration {}: {}", i + 1, name);
+        migration.up(&schema_manager).await?;
+    }
+
+    println!("✅ All migrations applied successfully.");
     Ok(())
 }

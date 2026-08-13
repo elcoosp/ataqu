@@ -1,7 +1,8 @@
 import { type Form, useDeleteForm, useListForms } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Card, Shell, Skeleton } from "@ataqu/ui";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ClipboardList, Plus, Trash2 } from "lucide-react";
 import { useCallback } from "react";

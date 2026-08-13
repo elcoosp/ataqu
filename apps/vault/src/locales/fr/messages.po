@@ -6,11 +6,628 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: fr\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/components/csv-import.tsx
+msgid "{imported} products imported."
+msgstr ""
+
+#: src/components/create-product-form.tsx
+msgid "A product with this SKU may already exist, or the server encountered an error."
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "A warehouse with this name may already exist."
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Active"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Add a variant to start tracking stock and movements."
+msgstr ""
+
+#: src/components/create-variant-form.tsx
+#: src/components/product-detail.tsx
+msgid "Add Variant"
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "Add your first location."
+msgstr ""
+
+#: src/components/create-variant-form.tsx
+msgid "Adding..."
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Adjust it. The math is protected at the database level. No overselling."
+msgstr ""
+
+#: src/actions.ts
+#: src/components/stock-adjustment.tsx
+msgid "Adjust Stock"
+msgstr ""
+
+#: src/components/movement-history.tsx
+#: src/routes/_auth.movements.tsx
+msgid "Adjust stock to see history."
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Adjusting..."
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Adjustment"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Are you sure you want to disconnect Shopify?"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Available"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Cancel"
+msgstr ""
+
+#: src/components/movement-history.tsx
+msgid "Change"
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Change amount"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "CINQ deal"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "CINQ deal ID"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+#: src/components/product-detail.tsx
+#: src/components/warehouse-list.tsx
+msgid "Close"
+msgstr ""
+
+#: src/components/settings/shopify-error-log.tsx
+msgid "Collapse"
+msgstr ""
+
+#: src/components/settings/shopify-connect.tsx
+msgid "Connect Shopify"
+msgstr ""
+
+#: src/actions.ts
+msgid "Connect to CINQ"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Connected"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Connected to CINQ"
+msgstr ""
+
+#: src/components/settings/shopify-connect.tsx
+msgid "Connecting..."
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Could not toggle the CINQ integration. Check your permissions and try again."
+msgstr ""
+
+#: src/actions.ts
+#: src/components/create-product-form.tsx
+#: src/components/product-catalog.tsx
+msgid "Create Product"
+msgstr ""
+
+#: src/actions.ts
+msgid "Create Variant"
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "Create Warehouse"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Created"
+msgstr ""
+
+#: src/components/create-product-form.tsx
+#: src/components/warehouse-list.tsx
+msgid "Creating..."
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "CSV import failed."
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Damage"
+msgstr ""
 
 #: src/routes/_auth/dashboard.tsx
 msgid "Dashboard"
 msgstr ""
 
+#: src/components/movement-history.tsx
+msgid "Date"
+msgstr ""
+
+#: src/components/create-product-form.tsx
+#: src/components/product-catalog.tsx
+msgid "Description"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Disconnect"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Error"
+msgstr ""
+
+#: src/components/settings/shopify-error-log.tsx
+msgid "Expand"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Export CSV"
+msgstr ""
+
+#: src/actions.ts
+msgid "Export Products CSV"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Export ready."
+msgstr ""
+
+#: src/actions.ts
+msgid "Go to Movements"
+msgstr ""
+
+#: src/actions.ts
+msgid "Go to Products"
+msgstr ""
+
+#: src/actions.ts
+msgid "Go to Reservations"
+msgstr ""
+
+#: src/actions.ts
+msgid "Go to Warehouses"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Grid"
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Import complete."
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Import CSV"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Import your product catalog from CSV, or add your first product."
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "Importing..."
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "In Stock"
+msgstr ""
+
+#: src/components/create-variant-form.tsx
+msgid "Initial stock"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Insufficient stock or version conflict. Stock was not reserved."
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Integration update failed."
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Integrations"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Last sync:"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "List"
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "Location"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Low Stock"
+msgstr ""
+
+#: src/components/low-stock-alert-form.tsx
+msgid "Low stock alert set."
+msgstr ""
+
+#: src/components/low-stock-alert-form.tsx
+msgid "Low stock alert update failed."
+msgstr ""
+
+#: src/components/low-stock-alert-form.tsx
+msgid "Low Stock Threshold"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Movement history"
+msgstr ""
+
+#: src/components/create-product-form.tsx
+#: src/components/product-catalog.tsx
+#: src/components/warehouse-list.tsx
+msgid "Name"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Never"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "No matching products"
+msgstr ""
+
+#: src/components/movement-history.tsx
+#: src/routes/_auth.movements.tsx
+msgid "No movements yet"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "No products"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "No reservations"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "No variants"
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "No warehouses"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Price"
+msgstr ""
+
+#: src/components/create-variant-form.tsx
+msgid "Price (cents)"
+msgstr ""
+
+#: src/components/create-product-form.tsx
+msgid "Product created."
+msgstr ""
+
+#: src/components/create-product-form.tsx
+msgid "Product creation failed."
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Product not found"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Products synced:"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Quantity"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Real-time stock. Zero race conditions."
+msgstr ""
+
+#: src/components/movement-history.tsx
+#: src/components/stock-adjustment.tsx
+msgid "Reason"
+msgstr ""
+
+#: src/components/movement-history.tsx
+msgid "Reference"
+msgstr ""
+
+#: src/components/movement-history.tsx
+#: src/components/product-catalog.tsx
+#: src/components/product-detail.tsx
+#: src/components/reservation-list.tsx
+#: src/components/warehouse-list.tsx
+#: src/routes/_auth.movements.tsx
+msgid "Reload the page or try again in a few seconds."
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Reservation created."
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Reservation failed."
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Reserve Stock"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "Reserve stock automatically when CINQ deal is won."
+msgstr ""
+
+#: src/actions.ts
+msgid "Reserve Stock for Deal [ID]"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Reserved"
+msgstr ""
+
+#: src/components/cross-app-badge.tsx
+msgid "Reserved for CINQ"
+msgstr ""
+
+#. placeholder {0}: cinqRelation.deal_id
+#: src/components/cross-app-badge.tsx
+msgid "Reserved for CINQ deal #{0}"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Reserving..."
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Restock"
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Sale"
+msgstr ""
+
+#: src/actions.ts
+msgid "Search Products"
+msgstr ""
+
+#: src/actions.ts
+#: src/components/low-stock-alert-form.tsx
+msgid "Set Low Stock Alert"
+msgstr ""
+
+#: src/components/low-stock-alert-form.tsx
+msgid "Setting..."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Shop:"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Shopify"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Shopify Connection"
+msgstr ""
+
+#: src/components/settings/shopify-connect.tsx
+msgid "Shopify connection failed."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Shopify disconnect failed."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Shopify disconnected."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+#: src/components/shopify-sync-button.tsx
+msgid "Shopify sync failed."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+#: src/components/shopify-sync-button.tsx
+msgid "Shopify sync started."
+msgstr ""
+
+#: src/components/create-product-form.tsx
+#: src/components/create-variant-form.tsx
+#: src/components/product-catalog.tsx
+#: src/components/product-detail.tsx
+msgid "SKU"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+#: src/components/reservation-list.tsx
+msgid "Status"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Stock"
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Stock adjusted."
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "Stock adjustment failed."
+msgstr ""
+
+#: src/components/settings/shopify-error-log.tsx
+msgid "Sync Errors"
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Sync now"
+msgstr ""
+
+#: src/actions.ts
+#: src/components/shopify-sync-button.tsx
+msgid "Sync Shopify"
+msgstr ""
+
+#: src/components/settings/shopify-connect.tsx
+msgid "Sync your Shopify products and inventory with VAULT."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+#: src/components/shopify-sync-button.tsx
+msgid "Syncing..."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "The connection was not removed. Please try again."
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "The CSV must include name and sku columns."
+msgstr ""
+
+#: src/components/settings/shopify-connect.tsx
+msgid "The OAuth flow could not be started. Please try again."
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "The selected CSV file is empty."
+msgstr ""
+
+#: src/components/csv-import.tsx
+msgid "The selected file could not be imported."
+msgstr ""
+
+#: src/components/create-variant-form.tsx
+msgid "The SKU may already exist or the product was not found."
+msgstr ""
+
+#: src/components/stock-adjustment.tsx
+msgid "The stock change was reverted. Please try again."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+#: src/components/shopify-sync-button.tsx
+msgid "The sync request was not accepted. Please try again."
+msgstr ""
+
+#: src/components/low-stock-alert-form.tsx
+msgid "The threshold must be a non-negative number. Please check the value and try again."
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "This product may have been deleted."
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Total stock"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Try another search term or create a new product."
+msgstr ""
+
+#: src/components/movement-history.tsx
+#: src/routes/_auth.movements.tsx
+msgid "Unable to load movements"
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Unable to load product"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Unable to load products"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "Unable to load reservations"
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "Unable to load warehouses"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+#: src/routes/_auth.movements.tsx
+msgid "Variant"
+msgstr ""
+
+#: src/components/create-variant-form.tsx
+msgid "Variant added."
+msgstr ""
+
+#: src/components/create-variant-form.tsx
+msgid "Variant creation failed."
+msgstr ""
+
+#: src/components/product-detail.tsx
+msgid "Variants"
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "VAULT connected to CINQ."
+msgstr ""
+
+#: src/components/integration-toggle.tsx
+msgid "VAULT disconnected from CINQ."
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "Warehouse created."
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "Warehouse creation failed."
+msgstr ""
+
+#: src/components/warehouse-list.tsx
+msgid "Warehouses"
+msgstr ""
+
 #: src/routes/_auth/dashboard.tsx
 msgid "Welcome to your workspace"
+msgstr ""
+
+#: src/components/reservation-list.tsx
+msgid "When CINQ deals are won, stock is reserved automatically."
+msgstr ""
+
+#: src/components/settings/shopify-status.tsx
+msgid "Yes, disconnect"
+msgstr ""
+
+#: src/components/product-catalog.tsx
+msgid "Your product CSV download has started."
 msgstr ""

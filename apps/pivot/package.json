@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ataqu/api-client": "workspace:*",
@@ -19,7 +20,6 @@
     "@ataqu/types": "workspace:*",
     "@ataqu/ui": "workspace:*",
     "@lingui/core": "^6.6.0",
-    "@lingui/macro": "^5.9.5",
     "@lingui/react": "^6.6.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-router": "^1.170.0",
@@ -41,9 +41,8 @@
     "@types/react-dom": "^19.0.0",
     "@types/testing-library__jest-dom": "^6.0.0",
     "@vitejs/plugin-react": "^6.0.4",
-    "@vitest/browser": "^2.1.9",
-    "@vitest/ui": "^2.1.9",
-    "jsdom": "^30.0.1",
+    "@vitest/browser": "4.1.10",
+    "@vitest/ui": "^4.1.10",
     "lucide-react": "^1.31.0",
     "playwright": "1.62.1",
     "react-markdown": "^10.1.0",

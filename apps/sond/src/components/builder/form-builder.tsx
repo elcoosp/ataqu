@@ -6,7 +6,8 @@ import {
 	useDraggable,
 	useDroppable,
 } from "@dnd-kit/core";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import { Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";

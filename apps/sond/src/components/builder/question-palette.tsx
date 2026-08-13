@@ -1,6 +1,7 @@
 import type { FormQuestion } from "@ataqu/api-client";
 import { useDraggable } from "@dnd-kit/core";
-import { Trans, t } from "@lingui/macro";
+import { Trans } from '@lingui/react/macro';
+import { t } from '@lingui/core/macro';
 import {
 	Calendar,
 	CheckSquare,
