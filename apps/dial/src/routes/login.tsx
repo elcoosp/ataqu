@@ -1,6 +1,5 @@
+import { AuthLayout, Button, Input } from '@ataqu/ui';
 import { createFileRoute } from '@tanstack/react-router';
-import { AuthLayout } from '@ataqu/ui';
-import { Button, Input } from '@ataqu/ui';
 
 export const Route = createFileRoute('/login')({
   component: () => (
@@ -9,12 +8,16 @@ export const Route = createFileRoute('/login')({
         <h1 className="text-2xl font-heading mb-4">Login</h1>
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <Input type="email" placeholder="you@example.com" />
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
+              Email
+            </label>
+            <Input id="email" type="email" placeholder="you@example.com" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <Input type="password" placeholder="••••••••" />
+            <label htmlFor="password" className="block text-sm font-medium mb-1">
+              Password
+            </label>
+            <Input id="password" type="password" placeholder="••••••••" />
           </div>
           <Button type="submit" className="w-full bg-amber text-black hover:bg-amber/90">
             Sign In
