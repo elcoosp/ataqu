@@ -25,3 +25,5 @@ export * from './components/ui/dialog';
 export * from './components/ui/command';
 export * from './components/ui/sonner';
 export * from './lib/utils';
+export * from './components/auth/LoginForm';
+export * from './components/auth/RegisterForm';

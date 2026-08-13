@@ -1354,9 +1354,15 @@ importers:
 
   packages/ui:
     dependencies:
+      '@ataqu/api-client':
+        specifier: workspace:*
+        version: link:../api-client
       '@ataqu/shared-hooks':
         specifier: workspace:*
         version: link:../shared-hooks
+      '@ataqu/shared-schemas':
+        specifier: workspace:*
+        version: link:../shared-schemas
       '@ataqu/shared-stores':
         specifier: workspace:*
         version: link:../shared-stores
@@ -1376,8 +1382,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.7)
       '@hookform/resolvers':
-        specifier: ^3.10.0
-        version: 3.10.0(react-hook-form@7.84.0(react@19.2.7))
+        specifier: ^5.7.1
+        version: 5.7.1(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(react-hook-form@7.85.0(react@19.2.7))(zod@4.4.3)
       '@lingui/core':
         specifier: ^6.6.0
         version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
@@ -1457,8 +1463,8 @@ importers:
         specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
       react-hook-form:
-        specifier: ^7.84.0
-        version: 7.84.0(react@19.2.7)
+        specifier: ^7.85.0
+        version: 7.85.0(react@19.2.7)
       recharts:
         specifier: ^3.10.1
         version: 3.10.1(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react-is@18.3.1)(react@19.2.7)(redux@5.0.1)

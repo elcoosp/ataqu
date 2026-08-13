@@ -10,3 +10,4 @@ export * from './vault';
 export * from './vista';
 export * from './sond';
 export * from './spark';
+export { useSignup } from './aegis';

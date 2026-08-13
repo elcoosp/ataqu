@@ -72,6 +72,14 @@ export const useGetAuditLog = (params?: AuditLogQuery, options?: UseQueryOptions
     ...options,
   });
 
+
+
+// ---- Signup ----
+export const signup = (data: { email: string; password: string; name?: string }) =>
+  api.post<{ user_id: string; tenant_id: string; email: string }>('/aegis/signup', data);
+
+export const useSignup = (options?: UseMutationOptions<{ user_id: string; tenant_id: string; email: string }, Error, { email: string; password: string; name?: string }>) =>
+  useMutation({ mutationFn: signup, ...options });
 export const useLogin = (options?: UseMutationOptions<LoginResponse, Error, LoginRequest>) =>
   useMutation({ mutationFn: login, ...options });
 export const useRefreshToken = (options?: UseMutationOptions<LoginResponse, Error, RefreshTokenRequest>) =>
@@ -103,3 +111,9 @@ export const useCreateApiKey = (options?: UseMutationOptions<ApiKeyResponse, Err
   useMutation({ mutationFn: createApiKey, ...options });
 export const useDeleteApiKey = (options?: UseMutationOptions<void, Error, UUID>) =>
   useMutation({ mutationFn: deleteApiKey, ...options });
+
+// ---- Current User ----
+export const getCurrentUser = () => api.get<UserResponse>('/aegis/me');
+
+export const useGetCurrentUser = (options?: UseQueryOptions<UserResponse>) =>
+  useQuery({ queryKey: ['aegis', 'me'], queryFn: getCurrentUser, ...options });
