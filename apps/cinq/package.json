@@ -47,6 +47,8 @@
     "@tanstack/router-core": "^1.170.0",
     "@types/papaparse": "^5.3.15",
     "@lingui/cli": "^6.6.0",
-    "@lingui/format-po": "^6.6.0"
+    "@lingui/format-po": "^6.6.0",
+    "@tailwindcss/postcss": "^4.3.0",
+    "autoprefixer": "^10.4.20"
   }
 }

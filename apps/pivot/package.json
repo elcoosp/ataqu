@@ -53,6 +53,8 @@
     "vite": "^8.1.0",
     "vitest": "^2.0.5",
     "@lingui/cli": "^6.6.0",
-    "@lingui/format-po": "^6.6.0"
+    "@lingui/format-po": "^6.6.0",
+    "@tailwindcss/postcss": "^4.3.0",
+    "autoprefixer": "^10.4.20"
   }
 }

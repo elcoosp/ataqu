@@ -18,10 +18,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.8",
+    "@lingui/core": "^6.6.0",
     "@lingui/format-po": "^6.6.0",
+    "@lingui/react": "^6.6.0",
     "@lingui/swc-plugin": "^6.6.0",
     "@playwright/test": "^1.62.1",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "4.3.3",
     "@tanstack/router-generator": "^1.167.28",
     "@tanstack/router-plugin": "^1.168.30",
     "@testing-library/jest-dom": "^7.0.1",
@@ -33,14 +35,13 @@
     "@vitest/coverage-v8": "^4.1.10",
     "happy-dom": "^15.11.7",
     "playwright": "^1.62.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwindcss": "4.3.3",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
     "vite": "^8.2.1",
-    "vitest": "^4.1.10",
-    "@lingui/core": "^6.6.0",
-    "@lingui/react": "^6.6.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "vitest": "^4.1.10"
   },
   "pnpm": {
     "overrides": {

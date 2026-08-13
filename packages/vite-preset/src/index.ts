@@ -37,7 +37,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       react({
         plugins: [linguiMacroSwcPlugin()],
       }),
-      tailwindcss(),
+      tailwindcss(),   // <-- Ensure this is present
     ],
     resolve: {
       tsconfigPaths: true,
