@@ -25,7 +25,11 @@
     "@tanstack/react-router": "^1.170.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.2",
+    "react-grid-layout": "^1.4.4",
+    "lucide-react": "^0.460.0",
+    "recharts": "^3.10.1",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@ataqu/test-utils": "workspace:*",
@@ -37,6 +41,10 @@
     "typescript": "^7.0.0",
     "vite": "^8.1.0",
     "vitest": "^2.0.5",
-    "@tanstack/router-core": "^1.170.0"
+    "@tanstack/router-core": "^1.170.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^22.20.1",
+    "@types/react-grid-layout": "^1.3.5",
+    "jsdom": "^25.0.1"
   }
 }
