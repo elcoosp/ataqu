@@ -45,9 +45,7 @@ export interface ChartProps {
   showTooltip?: boolean;
   fillOpacity?: number;
   pieColors?: string[];
-  // Bar-specific
   barSize?: number;
-  // Line-specific
   strokeWidth?: number;
   dotSize?: number;
 }
@@ -72,12 +70,13 @@ export function Chart({
   dotSize = 4,
 }: ChartProps) {
   const renderChart = () => {
-    const TooltipContent = ({ active, payload, label }: TooltipProps<any, any>) => {
+    const TooltipContent = (props: any) => {
+      const { active, payload, label } = props;
       if (!active || !payload || !payload.length) return null;
       return (
         <div className="bg-deep-night/90 backdrop-blur-xl border border-gray-700/40 rounded-lg p-3 shadow-lg text-white">
           <p className="text-sm font-medium mb-1">{label}</p>
-          {payload.map((entry, index) => (
+          {payload.map((entry: any, index: number) => (
             <p key={index} className="text-xs" style={{ color: entry.color || '#fff' }}>
               {entry.name}: {entry.value}
             </p>
@@ -124,10 +123,8 @@ export function Chart({
             />
           );
         case 'pie':
-          // Pie is handled separately below
           return null;
         case 'composed':
-          // For composed, we alternate between line and bar
           const isLine = idx % 2 === 0;
           if (isLine) {
             return (
@@ -151,9 +148,9 @@ export function Chart({
     });
 
     const renderPie = () => {
-      const pieData = data.map((d, idx) => ({
+      const pieData = data.map((d) => ({
         name: d[xAxisKey] as string,
-        value: d[series[0]?.key] as number,
+        value: series[0]?.key ? (d[series[0].key] as number) : 0,
         key: d[xAxisKey] as string,
       }));
       return (
@@ -165,7 +162,7 @@ export function Chart({
             cx="50%"
             cy="50%"
             outerRadius={80}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
           >
             {pieData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
@@ -201,7 +198,7 @@ export function Chart({
 
   return (
     <div className={cn('w-full', className)} style={{ height: typeof height === 'number' ? height : height }}>
-      <ResponsiveContainer width={width} height={height}>
+      <ResponsiveContainer width={width as any} height={height as any}>
         {renderChart()}
       </ResponsiveContainer>
     </div>

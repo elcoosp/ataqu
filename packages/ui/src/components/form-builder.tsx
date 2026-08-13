@@ -78,7 +78,7 @@ export function FormBuilder({ fields, onChange, className }: FormBuilderProps) {
 
     const newFields = [...fields];
     const [moved] = newFields.splice(oldIndex, 1);
-    newFields.splice(newIndex, 0, moved);
+    if (moved !== undefined) newFields.splice(newIndex, 0, moved);
     onChange(newFields);
   };
 

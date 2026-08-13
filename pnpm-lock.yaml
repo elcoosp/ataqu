@@ -1278,6 +1278,13 @@ importers:
       react:
         specifier: ^19.2.7
         version: 19.2.7
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.2.4
+        version: 19.2.4(@types/react@19.2.18)
 
   packages/shared-i18n:
     dependencies:
@@ -1294,6 +1301,12 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.2.4
+        version: 19.2.4(@types/react@19.2.18)
       babel-plugin-macros:
         specifier: ^3.1.0
         version: 3.1.0

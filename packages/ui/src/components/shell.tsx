@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React, { useState } from 'react';
 import { useAuthStore, useUIStore } from '@ataqu/shared-stores';
 import { CommandPalette } from './command-palette';

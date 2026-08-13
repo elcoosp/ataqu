@@ -60,7 +60,6 @@ export function DataTable<TData, TValue>({
 
   const { rows } = table.getRowModel();
 
-  // Virtualization for large datasets
   const parentRef = React.useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
@@ -76,7 +75,7 @@ export function DataTable<TData, TValue>({
         const row = rows[virtualRow.index];
         return (
           <tr
-            key={row.id}
+            key={row?.id || `row-${virtualRow.index}`}
             className="border-b border-gray-700/40 hover:bg-white/5 transition-colors"
             style={{
               height: `${virtualRow.size}px`,
@@ -85,7 +84,7 @@ export function DataTable<TData, TValue>({
               width: '100%',
             }}
           >
-            {row.getVisibleCells().map((cell) => (
+            {row?.getVisibleCells()?.map((cell) => (
               <td key={cell.id} className="px-4 py-2 text-sm truncate">
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
@@ -95,9 +94,9 @@ export function DataTable<TData, TValue>({
       });
     }
 
-    return rows.map((row) => (
-      <tr key={row.id} className="border-b border-gray-700/40 hover:bg-white/5 transition-colors">
-        {row.getVisibleCells().map((cell) => (
+    return rows.map((row, index) => (
+      <tr key={row?.id || `row-${index}`} className="border-b border-gray-700/40 hover:bg-white/5 transition-colors">
+        {row?.getVisibleCells()?.map((cell) => (
           <td key={cell.id} className="px-4 py-2 text-sm truncate">
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </td>

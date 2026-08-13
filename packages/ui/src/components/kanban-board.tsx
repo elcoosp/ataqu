@@ -85,7 +85,6 @@ export function KanbanBoard<T>({
 
     if (activeId === overId) return;
 
-    // Find which column the active item is in and which column the over item is in
     let sourceColumnIndex = -1;
     let targetColumnIndex = -1;
     let sourceItemIndex = -1;
@@ -93,12 +92,12 @@ export function KanbanBoard<T>({
 
     for (let i = 0; i < columns.length; i++) {
       const col = columns[i];
-      const itemIndex = col.items.findIndex((_, idx) => `${col.id}-${idx}` === activeId);
+      const itemIndex = col?.items?.findIndex((_, idx) => `${col.id}-${idx}` === activeId) ?? -1;
       if (itemIndex !== -1) {
         sourceColumnIndex = i;
         sourceItemIndex = itemIndex;
       }
-      const overItemIndex = col.items.findIndex((_, idx) => `${col.id}-${idx}` === overId);
+      const overItemIndex = col?.items?.findIndex((_, idx) => `${col.id}-${idx}` === overId) ?? -1;
       if (overItemIndex !== -1) {
         targetColumnIndex = i;
         targetItemIndex = overItemIndex;
@@ -108,25 +107,21 @@ export function KanbanBoard<T>({
     if (sourceColumnIndex === -1 || targetColumnIndex === -1) return;
 
     const newColumns = [...columns];
-    const [movedItem] = newColumns[sourceColumnIndex].items.splice(sourceItemIndex, 1);
+    const [movedItem] = newColumns[sourceColumnIndex]?.items?.splice(sourceItemIndex, 1) ?? [];
 
-    // If moving within same column
+    if (movedItem === undefined) return;
+
     if (sourceColumnIndex === targetColumnIndex) {
-      newColumns[targetColumnIndex].items.splice(targetItemIndex, 0, movedItem);
+      newColumns[targetColumnIndex]?.items?.splice(targetItemIndex, 0, movedItem);
     } else {
-      // Moving to a different column
-      // If targetItemIndex is -1, it means dropping at the end (or on the column itself)
-      // In dnd-kit, dropping on the column itself (not on an item) gives overId === columnId
-      // We handle this by checking if overId is a column id
       const isOverColumn = columns.some((col) => col.id === overId);
       if (isOverColumn) {
-        // Drop at the end of the column
         const targetColIndex = columns.findIndex((col) => col.id === overId);
         if (targetColIndex !== -1) {
-          newColumns[targetColIndex].items.push(movedItem);
+          newColumns[targetColIndex]?.items?.push(movedItem);
         }
       } else {
-        newColumns[targetColumnIndex].items.splice(targetItemIndex, 0, movedItem);
+        newColumns[targetColumnIndex]?.items?.splice(targetItemIndex, 0, movedItem);
       }
     }
 

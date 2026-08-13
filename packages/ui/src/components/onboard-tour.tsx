@@ -1,11 +1,11 @@
 import React from 'react';
-import { TourProvider, useTour, type TourStep } from '@reactour/tour';
+import { TourProvider, useTour, type StepType } from '@reactour/tour';
 import { useOnboardingStore } from '@ataqu/shared-stores';
 import { Button } from './button';
 
 interface OnboardTourProps {
   tourId: string;
-  steps: TourStep[];
+  steps: StepType[];
   children: React.ReactNode;
 }
 
@@ -31,6 +31,10 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
   const step = steps[currentStep];
   if (!step) return null;
 
+  const content = typeof step.content === 'function'
+    ? step.content({ setCurrentStep, currentStep, setIsOpen, steps }) ?? null
+    : step.content;
+
   return (
     <div
       className="fixed z-50 max-w-sm p-4 rounded-lg shadow-lg ataqu-glass border border-gray-700/40"
@@ -40,9 +44,7 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
         transform: 'translate(-50%, -50%)',
       }}
     >
-      <div className="text-white">
-        {typeof step.content === 'string' ? <p className="text-sm">{step.content}</p> : step.content}
-      </div>
+      <div className="text-white">{content}</div>
       <div className="flex justify-end gap-2 mt-4">
         <Button variant="ghost" size="sm" onClick={handleClose} className="text-gray-400 hover:text-white">
           Skip
@@ -63,7 +65,6 @@ export const OnboardTour: React.FC<OnboardTourProps> = ({ tourId, steps, childre
     <TourProvider
       steps={steps}
       onClickMask={() => {}}
-      onAfterOpen={() => {}}
       styles={{
         popover: (base) => ({
           ...base,
@@ -73,10 +74,6 @@ export const OnboardTour: React.FC<OnboardTourProps> = ({ tourId, steps, childre
           borderRadius: '8px',
           color: 'white',
           maxWidth: '400px',
-        }),
-        mask: (base) => ({
-          ...base,
-          backgroundColor: 'rgba(0,0,0,0.5)',
         }),
       }}
     >
