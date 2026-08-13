@@ -1,0 +1,59 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-08-13 14:49+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: fr\n"
+
+#: src/components/auth/RegisterForm.tsx
+msgid "Already have an account?"
+msgstr ""
+
+#: src/components/auth/RegisterForm.tsx
+msgid "Confirm password"
+msgstr ""
+
+#: src/components/auth/RegisterForm.tsx
+msgid "Create account"
+msgstr ""
+
+#: src/components/auth/LoginForm.tsx
+msgid "Create one"
+msgstr ""
+
+#: src/components/auth/RegisterForm.tsx
+msgid "Create your Ataqu account"
+msgstr ""
+
+#: src/components/auth/RegisterForm.tsx
+msgid "Creating account…"
+msgstr ""
+
+#: src/components/auth/LoginForm.tsx
+msgid "Don't have an account?"
+msgstr ""
+
+#: src/components/auth/LoginForm.tsx
+#: src/components/auth/RegisterForm.tsx
+msgid "Email"
+msgstr ""
+
+#: src/components/auth/LoginForm.tsx
+#: src/components/auth/RegisterForm.tsx
+msgid "Password"
+msgstr ""
+
+#: src/components/auth/LoginForm.tsx
+#: src/components/auth/RegisterForm.tsx
+msgid "Sign in"
+msgstr ""
+
+#: src/components/auth/LoginForm.tsx
+msgid "Sign in to Ataqu"
+msgstr ""
+
+#: src/components/auth/LoginForm.tsx
+msgid "Signing in…"
+msgstr ""

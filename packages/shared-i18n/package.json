@@ -24,6 +24,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./lingui.config": {
+      "types": "./lingui.config.ts",
+      "import": "./lingui.config.ts",
+      "default": "./lingui.config.ts"
     }
   },
   "type": "module"

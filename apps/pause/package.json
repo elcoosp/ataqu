@@ -46,6 +46,8 @@
     "vitest": "^2.0.5",
     "@tanstack/router-core": "^1.170.0",
     "@testing-library/react": "^16.0.0",
-    "happy-dom": "^15.7.4"
+    "happy-dom": "^15.7.4",
+    "@lingui/cli": "^6.6.0",
+    "@lingui/format-po": "^6.6.0"
   }
 }

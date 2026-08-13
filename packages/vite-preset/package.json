@@ -19,5 +19,8 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     }
+  },
+  "devDependencies": {
+    "@lingui/swc-plugin": "^6.6.0"
   }
 }

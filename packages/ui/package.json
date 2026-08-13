@@ -17,7 +17,9 @@
     }
   },
   "scripts": {
-    "build": "echo 'No build needed'"
+    "build": "echo 'No build needed'",
+    "extract": "lingui extract",
+    "compile": "lingui compile --typescript"
   },
   "dependencies": {
     "@ataqu/shared-hooks": "workspace:*",
@@ -71,6 +73,8 @@
     "cmdk": "^1.0.0",
     "lucide-react": "^0.460.0",
     "tailwind-merge": "^2.5.0",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "@lingui/cli": "^6.6.0",
+    "@lingui/format-po": "^6.6.0"
   }
 }

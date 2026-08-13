@@ -33,7 +33,13 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
         routesDirectory: './src/routes',
         generatedRouteTree: './src/routeTree.gen.ts',
       }),
-      react(),
+      react({
+        swc: {
+          plugins: [
+            ['@lingui/swc-plugin', {}],
+          ],
+        },
+      }),
       tailwindcss(),
     ],
     resolve: {
