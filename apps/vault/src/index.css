@@ -12,4 +12,5 @@
   --font-mono: JetBrains Mono, monospace;
 }
 
-@source "../../packages/ui/src";
+@source "../../../packages/ui/src";
+@import "@ataqu/ui/styles.css";

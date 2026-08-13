@@ -1,1 +1,4 @@
-/*eslint-disable*/import type{Messages}from"@lingui/core";export const messages=JSON.parse("{\"1hMWR6\":[\"Create account\"],\"5lWFkC\":[\"Sign in\"],\"8ZsakT\":[\"Password\"],\"8wYDMp\":[\"Already have an account?\"],\"C7onlH\":[\"Creating account…\"],\"O3oNi5\":[\"Email\"],\"_3ORbg\":[\"Create one\"],\"ln9_n9\":[\"Don't have an account?\"],\"mRv0ca\":[\"Signing in…\"],\"rn7uCN\":[\"Create your Ataqu account\"],\"xmsNxA\":[\"Sign in to Ataqu\"],\"xnWESi\":[\"Confirm password\"]}")as Messages;
+/*eslint-disable*/ import type { Messages } from "@lingui/core";
+export const messages = JSON.parse(
+	'{"1hMWR6":["Create account"],"5lWFkC":["Sign in"],"8ZsakT":["Password"],"8wYDMp":["Already have an account?"],"C7onlH":["Creating account…"],"O3oNi5":["Email"],"_3ORbg":["Create one"],"ln9_n9":["Don\'t have an account?"],"mRv0ca":["Signing in…"],"rn7uCN":["Create your Ataqu account"],"xmsNxA":["Sign in to Ataqu"],"xnWESi":["Confirm password"]}',
+) as Messages;

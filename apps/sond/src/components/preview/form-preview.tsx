@@ -12,8 +12,8 @@ import {
 	DialogTitle,
 	Skeleton,
 } from "@ataqu/ui";
-import { Trans } from '@lingui/react/macro';
-import { t } from '@lingui/core/macro';
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormPreviewStore } from "../../stores/form-preview-store";
@@ -146,7 +146,9 @@ export function FormPreview({ form, open, onClose }: Props) {
 									? (answers[q.id] as string)
 									: ""
 							}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+								setAnswer(q.id, e.target.value)
+							}
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 							aria-label={q.label}
 						/>
@@ -175,7 +177,9 @@ export function FormPreview({ form, open, onClose }: Props) {
 									? (answers[q.id] as string)
 									: ""
 							}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+								setAnswer(q.id, e.target.value)
+							}
 							className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 							aria-label={q.label}
 						/>

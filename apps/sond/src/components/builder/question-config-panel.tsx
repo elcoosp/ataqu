@@ -1,6 +1,6 @@
 import { Button, Input } from "@ataqu/ui";
-import { Trans } from '@lingui/react/macro';
-import { t } from '@lingui/core/macro';
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useId } from "react";
 import { Switch } from "../ui/switch";
 import type { SondQuestion } from "./types";
@@ -42,7 +42,9 @@ export function QuestionConfigPanel({
 				<Input
 					id={labelId}
 					value={question.label}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ label: e.target.value })}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						onUpdate({ label: e.target.value })
+					}
 					placeholder={t`e.g., What is your name?`}
 				/>
 			</div>
@@ -110,7 +112,9 @@ export function QuestionConfigPanel({
 						<Input
 							type="number"
 							value={question.min ?? 1}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ min: Number(e.target.value) })}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+								onUpdate({ min: Number(e.target.value) })
+							}
 							className="w-20"
 							aria-label={t`Minimum rating`}
 						/>
@@ -120,7 +124,9 @@ export function QuestionConfigPanel({
 						<Input
 							type="number"
 							value={question.max ?? 5}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ max: Number(e.target.value) })}
+							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+								onUpdate({ max: Number(e.target.value) })
+							}
 							className="w-20"
 							aria-label={t`Maximum rating`}
 						/>

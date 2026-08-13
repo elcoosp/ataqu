@@ -1,53 +1,63 @@
 // @vitest-environment happy-dom
-import { render, screen } from '@testing-library/react';
-import type { ComponentProps, ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import { EmployeeDirectory } from '../employee-directory';
-import { I18nProvider as LinguiProvider } from '@lingui/react';
-import { i18n } from '@lingui/core';
 
-i18n.load('en', {});
-i18n.activate('en');
+import { i18n } from "@lingui/core";
+import { I18nProvider as LinguiProvider } from "@lingui/react";
+import { render, screen } from "@testing-library/react";
+import type { ComponentProps, ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
+import { EmployeeDirectory } from "../employee-directory";
 
-vi.mock('@lingui/macro', () => ({
-  Trans: ({ children }: { children?: ReactNode }) => children,
-  t: (str: string) => str,
+i18n.load("en", {});
+i18n.activate("en");
+
+vi.mock("@lingui/macro", () => ({
+	Trans: ({ children }: { children?: ReactNode }) => children,
+	t: (str: string) => str,
 }));
 
-vi.mock('@ataqu/api-client', () => ({
-  useListEmployees: () => ({
-    data: [{ id: '1', full_name: 'John Doe', job_title: 'Dev', email: 'john@doe.com' }],
-    isLoading: false,
-  }),
-  useSearchEmployees: () => ({ data: [], isLoading: false }),
+vi.mock("@ataqu/api-client", () => ({
+	useListEmployees: () => ({
+		data: [
+			{
+				id: "1",
+				full_name: "John Doe",
+				job_title: "Dev",
+				email: "john@doe.com",
+			},
+		],
+		isLoading: false,
+	}),
+	useSearchEmployees: () => ({ data: [], isLoading: false }),
 }));
 
-vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => () => {},
+vi.mock("@tanstack/react-router", () => ({
+	useNavigate: () => () => {},
 }));
 
-vi.mock('@ataqu/shared-hooks', () => ({
-  useDebounce: (v: string) => v,
+vi.mock("@ataqu/shared-hooks", () => ({
+	useDebounce: (v: string) => v,
 }));
 
-vi.mock('@ataqu/ui', () => ({
-  Button: ({ children }: ComponentProps<'button'>) => <button type="button">{children}</button>,
-  Input: () => <input />,
-  Skeleton: () => <div />,
-  Card: ({ children }: ComponentProps<'div'>) => <div>{children}</div>,
+vi.mock("@ataqu/ui", () => ({
+	Button: ({ children }: ComponentProps<"button">) => (
+		<button type="button">{children}</button>
+	),
+	Input: () => <input />,
+	Skeleton: () => <div />,
+	Card: ({ children }: ComponentProps<"div">) => <div>{children}</div>,
 }));
 
-vi.mock('../empty-state', () => ({
-  EmptyState: () => <div data-testid="empty-state" />,
+vi.mock("../empty-state", () => ({
+	EmptyState: () => <div data-testid="empty-state" />,
 }));
 
-describe('EmployeeDirectory', () => {
-  it('renders employee card', () => {
-    render(
-      <LinguiProvider i18n={i18n}>
-        <EmployeeDirectory onAddEmployee={() => {}} />
-      </LinguiProvider>
-    );
-    expect(screen.getByText('John Doe')).toBeTruthy();
-  });
+describe("EmployeeDirectory", () => {
+	it("renders employee card", () => {
+		render(
+			<LinguiProvider i18n={i18n}>
+				<EmployeeDirectory onAddEmployee={() => {}} />
+			</LinguiProvider>,
+		);
+		expect(screen.getByText("John Doe")).toBeTruthy();
+	});
 });

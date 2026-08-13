@@ -46,9 +46,15 @@ importers:
       '@tanstack/router-plugin':
         specifier: ^1.168.30
         version: 1.168.30(@tanstack/react-router@1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(esbuild@0.28.2)(rolldown@1.2.4)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      '@testing-library/dom':
+        specifier: ^10.0.0
+        version: 10.4.1
       '@testing-library/jest-dom':
         specifier: ^7.0.1
         version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.10)
+      '@testing-library/react':
+        specifier: ^16.0.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
@@ -182,9 +188,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -200,12 +203,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -291,9 +291,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -309,12 +306,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -391,9 +385,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -406,9 +397,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
@@ -417,7 +405,7 @@ importers:
         version: 0.460.0(react@19.2.7)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -675,9 +663,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -693,15 +678,12 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       happy-dom:
         specifier: ^15.7.4
         version: 15.11.7
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -781,9 +763,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -814,9 +793,6 @@ importers:
       '@vitest/ui':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       playwright:
         specifier: 1.62.1
         version: 1.62.1
@@ -825,7 +801,7 @@ importers:
         version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -932,9 +908,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -950,15 +923,12 @@ importers:
       '@vitest/browser':
         specifier: 4.1.10
         version: 4.1.10(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       playwright:
         specifier: ^1.49.0
         version: 1.62.1
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -1041,9 +1011,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -1056,12 +1023,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -1100,7 +1064,7 @@ importers:
         version: link:../../packages/ui
       '@ilamy/calendar':
         specifier: ^2.0.3
-        version: 2.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(dayjs@1.11.21)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss-animate@1.0.7(tailwindcss@4.3.1))(tailwindcss@4.3.1)
+        version: 2.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(dayjs@1.11.21)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss-animate@1.0.7(tailwindcss@4.3.3))(tailwindcss@4.3.3)
       '@lingui/core':
         specifier: ^6.6.0
         version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
@@ -1138,9 +1102,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -1153,12 +1114,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -1232,9 +1190,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -1250,12 +1205,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -1338,9 +1290,6 @@ importers:
       '@lingui/format-po':
         specifier: ^6.6.0
         version: 6.6.0
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
@@ -1362,12 +1311,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.5.4(postcss@8.5.26)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       typescript:
         specifier: ^7.0.0
         version: 7.0.2
@@ -1465,7 +1411,7 @@ importers:
     dependencies:
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
 
   packages/test-utils:
     dependencies:
@@ -1649,7 +1595,7 @@ importers:
         version: 2.6.1
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
 
   packages/vite-preset:
     dependencies:
@@ -1667,7 +1613,7 @@ importers:
         version: 10.5.4(postcss@8.5.26)
       tailwindcss:
         specifier: ^4.3.0
-        version: 4.3.1
+        version: 4.3.3
       vite:
         specifier: ^8.1.0
         version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
@@ -4672,8 +4618,8 @@ packages:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
 
-  baseline-browser-mapping@2.11.13:
-    resolution: {integrity: sha512-k9HNuUVMlqVjQ9UHzfPjIqiDbWw7WqT1AoT7GL8VwvF3r0ZfArtgiSPAlmupyNquNgOJHTuH4CKYf8ttMTWBTQ==}
+  baseline-browser-mapping@2.11.14:
+    resolution: {integrity: sha512-JyJ954WzuIR8/FFzX0o5krdSTrBAkcCSRfWSleRsIHSWV+cZe2FI1PKggVkFke1hBldRs+LRxUczzE9iPmgZww==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -8073,7 +8019,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@ilamy/calendar@2.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(dayjs@1.11.21)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss-animate@1.0.7(tailwindcss@4.3.1))(tailwindcss@4.3.1)':
+  '@ilamy/calendar@2.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(dayjs@1.11.21)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss-animate@1.0.7(tailwindcss@4.3.3))(tailwindcss@4.3.3)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
@@ -8095,8 +8041,8 @@ snapshots:
       react-dom: 19.2.7(react@19.2.7)
       rrule: 2.8.1
       tailwind-merge: 3.6.0
-      tailwindcss: 4.3.1
-      tailwindcss-animate: 1.0.7(tailwindcss@4.3.1)
+      tailwindcss: 4.3.3
+      tailwindcss-animate: 1.0.7(tailwindcss@4.3.3)
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
@@ -10244,7 +10190,7 @@ snapshots:
 
   balanced-match@4.0.4: {}
 
-  baseline-browser-mapping@2.11.13: {}
+  baseline-browser-mapping@2.11.14: {}
 
   brace-expansion@1.1.18:
     dependencies:
@@ -10261,7 +10207,7 @@ snapshots:
 
   browserslist@4.28.8:
     dependencies:
-      baseline-browser-mapping: 2.11.13
+      baseline-browser-mapping: 2.11.14
       caniuse-lite: 1.0.30001809
       electron-to-chromium: 1.5.405
       node-releases: 2.0.53
@@ -12311,7 +12257,7 @@ snapshots:
     dependencies:
       '@next/env': 16.3.0-canary.83
       '@swc/helpers': 0.5.15
-      baseline-browser-mapping: 2.11.13
+      baseline-browser-mapping: 2.11.14
       caniuse-lite: 1.0.30001809
       postcss: 8.5.10
       react: 19.2.7
@@ -13166,9 +13112,9 @@ snapshots:
 
   tailwind-merge@3.6.0: {}
 
-  tailwindcss-animate@1.0.7(tailwindcss@4.3.1):
+  tailwindcss-animate@1.0.7(tailwindcss@4.3.3):
     dependencies:
-      tailwindcss: 4.3.1
+      tailwindcss: 4.3.3
 
   tailwindcss@4.3.1: {}
 

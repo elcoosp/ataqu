@@ -6,8 +6,8 @@ import {
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Input, Skeleton } from "@ataqu/ui";
-import { Trans } from '@lingui/react/macro';
-import { t } from '@lingui/core/macro';
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -180,7 +180,9 @@ function PublicFormRoute() {
 							q.type === "email" ? "email" : q.type === "phone" ? "tel" : "text"
 						}
 						value={typeof value === "string" ? value : ""}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							setAnswer(q.id, e.target.value)
+						}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={q.label}
@@ -208,7 +210,9 @@ function PublicFormRoute() {
 					<Input
 						type="date"
 						value={typeof value === "string" ? value : ""}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(q.id, e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							setAnswer(q.id, e.target.value)
+						}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={q.label}

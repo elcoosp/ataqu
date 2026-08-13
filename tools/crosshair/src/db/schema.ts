@@ -1,144 +1,172 @@
-import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
-import { relations } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
+import { createId } from "@paralleldrive/cuid2";
+import { relations } from "drizzle-orm";
+import {
+	index,
+	integer,
+	real,
+	sqliteTable,
+	text,
+} from "drizzle-orm/sqlite-core";
 
 const timestamps = {
-  created_at: integer({ mode: 'timestamp' }).$defaultFn(() => new Date()),
-  updated_at: integer({ mode: 'timestamp' }).$onUpdateFn(() => new Date()),
+	created_at: integer({ mode: "timestamp" }).$defaultFn(() => new Date()),
+	updated_at: integer({ mode: "timestamp" }).$onUpdateFn(() => new Date()),
 };
 
 // ------------------------------------------------------------------
 // 1. COMPETITORS
 // ------------------------------------------------------------------
-export const competitors = sqliteTable('competitors', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  name: text('name').notNull().unique(),
-  mapped_app: text('mapped_app').notNull(),
-  last_scraped_at: integer({ mode: 'timestamp' }),
-  ...timestamps
+export const competitors = sqliteTable("competitors", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	name: text("name").notNull().unique(),
+	mapped_app: text("mapped_app").notNull(),
+	last_scraped_at: integer({ mode: "timestamp" }),
+	...timestamps,
 });
 
 // ------------------------------------------------------------------
 // 2. RAW SIGNALS
 // ------------------------------------------------------------------
-export const rawSignals = sqliteTable('raw_signals', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  source: text('source', { enum: ['reddit', 'twitter', 'youtube', 'review'] }),
-  source_url: text('source_url').unique(),
-  thread_id: text('thread_id'),
-  thread_context: text('thread_context'),
-  author: text('author'),
-  raw_text: text('raw_text').notNull(),
-  competitor_id: text('competitor_id').references(() => competitors.id),
-  mapped_app: text('mapped_app'),
-  status: text('status', { enum: ['new', 'analyzed', 'clustered'] }).default('new'),
-  analyzed_at: integer({ mode: 'timestamp' }),
-  ...timestamps
-}, (table) => ({
-  status_idx: index('status_idx').on(table.status),
-  competitor_idx: index('competitor_idx').on(table.competitor_id),
-  thread_idx: index('thread_idx').on(table.thread_id),
-}));
+export const rawSignals = sqliteTable(
+	"raw_signals",
+	{
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		source: text("source", {
+			enum: ["reddit", "twitter", "youtube", "review"],
+		}),
+		source_url: text("source_url").unique(),
+		thread_id: text("thread_id"),
+		thread_context: text("thread_context"),
+		author: text("author"),
+		raw_text: text("raw_text").notNull(),
+		competitor_id: text("competitor_id").references(() => competitors.id),
+		mapped_app: text("mapped_app"),
+		status: text("status", { enum: ["new", "analyzed", "clustered"] }).default(
+			"new",
+		),
+		analyzed_at: integer({ mode: "timestamp" }),
+		...timestamps,
+	},
+	(table) => ({
+		status_idx: index("status_idx").on(table.status),
+		competitor_idx: index("competitor_idx").on(table.competitor_id),
+		thread_idx: index("thread_idx").on(table.thread_id),
+	}),
+);
 
 // ------------------------------------------------------------------
 // 3. INSIGHTS
 // ------------------------------------------------------------------
-export const insights = sqliteTable('insights', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  signal_id: text('signal_id').notNull().references(() => rawSignals.id),
-  buyer_segment: text('buyer_segment'),
-  workflow: text('workflow'),
-  current_workaround: text('current_workaround'),
-  direct_quote: text('direct_quote'),
-  root_cause: text('root_cause'),
-  competitor: text('competitor'),
-  feature_gap: text('feature_gap'),
-  pricing_complaint: text('pricing_complaint'),
-  ux_friction: text('ux_friction'),
-  urgency: real('urgency'),
-  buying_intent: real('buying_intent'),
-  frequency: real('frequency'),
-  overall_lead_score: real('overall_lead_score'),
-  feature_impact: real('feature_impact'),
-  human_reviewed: integer('human_reviewed', { mode: 'boolean' }).default(false),
-  ...timestamps
+export const insights = sqliteTable("insights", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	signal_id: text("signal_id")
+		.notNull()
+		.references(() => rawSignals.id),
+	buyer_segment: text("buyer_segment"),
+	workflow: text("workflow"),
+	current_workaround: text("current_workaround"),
+	direct_quote: text("direct_quote"),
+	root_cause: text("root_cause"),
+	competitor: text("competitor"),
+	feature_gap: text("feature_gap"),
+	pricing_complaint: text("pricing_complaint"),
+	ux_friction: text("ux_friction"),
+	urgency: real("urgency"),
+	buying_intent: real("buying_intent"),
+	frequency: real("frequency"),
+	overall_lead_score: real("overall_lead_score"),
+	feature_impact: real("feature_impact"),
+	human_reviewed: integer("human_reviewed", { mode: "boolean" }).default(false),
+	...timestamps,
 });
 
 // ------------------------------------------------------------------
 // 4. CLUSTERS
 // ------------------------------------------------------------------
-export const clusters = sqliteTable('clusters', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  name: text('name').notNull(),
-  mapped_app: text('mapped_app').notNull(),
-  core_pain: text('core_pain').notNull(),
-  evidence_count: integer('evidence_count').default(0),
-  best_quotes: text('best_quotes'),
-  common_workarounds: text('common_workarounds'),
-  competitors_mentioned: text('competitors_mentioned'),
-  volume_score: real('volume_score'),
-  severity_score: real('severity_score'),
-  urgency_score: real('urgency_score'),
-  workaround_ugliness: real('workaround_ugliness'),
-  buyer_intent_score: real('buyer_intent_score'),
-  gap_vs_existing: real('gap_vs_existing'),
-  monetization_score: real('monetization_score'),
-  build_feasibility: real('build_feasibility'),
-  total_opportunity_score: real('total_opportunity_score'),
-  verdict: text('verdict', { enum: ['build_test', 'watch', 'ignore', 'needs_research'] }).default('needs_research'),
-  manual_mvp_idea: text('manual_mvp_idea'),
-  landing_page_angle: text('landing_page_angle'),
-  ...timestamps
+export const clusters = sqliteTable("clusters", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	name: text("name").notNull(),
+	mapped_app: text("mapped_app").notNull(),
+	core_pain: text("core_pain").notNull(),
+	evidence_count: integer("evidence_count").default(0),
+	best_quotes: text("best_quotes"),
+	common_workarounds: text("common_workarounds"),
+	competitors_mentioned: text("competitors_mentioned"),
+	volume_score: real("volume_score"),
+	severity_score: real("severity_score"),
+	urgency_score: real("urgency_score"),
+	workaround_ugliness: real("workaround_ugliness"),
+	buyer_intent_score: real("buyer_intent_score"),
+	gap_vs_existing: real("gap_vs_existing"),
+	monetization_score: real("monetization_score"),
+	build_feasibility: real("build_feasibility"),
+	total_opportunity_score: real("total_opportunity_score"),
+	verdict: text("verdict", {
+		enum: ["build_test", "watch", "ignore", "needs_research"],
+	}).default("needs_research"),
+	manual_mvp_idea: text("manual_mvp_idea"),
+	landing_page_angle: text("landing_page_angle"),
+	...timestamps,
 });
 
 // ------------------------------------------------------------------
 // 5. ACTION ITEMS
 // ------------------------------------------------------------------
-export const actionItems = sqliteTable('action_items', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  type: text('type', { enum: ['lead_outreach', 'feature_build'] }),
-  related_cluster_id: text('related_cluster_id').references(() => clusters.id),
-  target_app: text('target_app').notNull(),
-  author: text('author'),
-  source_url: text('source_url'),
-  raw_quote: text('raw_quote'),
-  personalized_message: text('personalized_message'),
-  feature_title: text('feature_title'),
-  feature_description: text('feature_description'),
-  effort_estimate: text('effort_estimate', { enum: ['low', 'medium', 'high'] }),
-  status: text('status', { enum: ['pending', 'done'] }).default('pending'),
-  ...timestamps
+export const actionItems = sqliteTable("action_items", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	type: text("type", { enum: ["lead_outreach", "feature_build"] }),
+	related_cluster_id: text("related_cluster_id").references(() => clusters.id),
+	target_app: text("target_app").notNull(),
+	author: text("author"),
+	source_url: text("source_url"),
+	raw_quote: text("raw_quote"),
+	personalized_message: text("personalized_message"),
+	feature_title: text("feature_title"),
+	feature_description: text("feature_description"),
+	effort_estimate: text("effort_estimate", { enum: ["low", "medium", "high"] }),
+	status: text("status", { enum: ["pending", "done"] }).default("pending"),
+	...timestamps,
 });
 
 // ------------------------------------------------------------------
 // RELATIONS
 // ------------------------------------------------------------------
 export const insightsRelations = relations(insights, ({ one }) => ({
-  signal: one(rawSignals, {
-    fields: [insights.signal_id],
-    references: [rawSignals.id],
-  }),
+	signal: one(rawSignals, {
+		fields: [insights.signal_id],
+		references: [rawSignals.id],
+	}),
 }));
 
 export const rawSignalsRelations = relations(rawSignals, ({ one, many }) => ({
-  competitor: one(competitors, {
-    fields: [rawSignals.competitor_id],
-    references: [competitors.id],
-  }),
-  insights: many(insights),
+	competitor: one(competitors, {
+		fields: [rawSignals.competitor_id],
+		references: [competitors.id],
+	}),
+	insights: many(insights),
 }));
 
 export const competitorsRelations = relations(competitors, ({ many }) => ({
-  rawSignals: many(rawSignals),
+	rawSignals: many(rawSignals),
 }));
 
 export const clustersRelations = relations(clusters, ({ many }) => ({
-  actionItems: many(actionItems),
+	actionItems: many(actionItems),
 }));
 
 export const actionItemsRelations = relations(actionItems, ({ one }) => ({
-  cluster: one(clusters, {
-    fields: [actionItems.related_cluster_id],
-    references: [clusters.id],
-  }),
+	cluster: one(clusters, {
+		fields: [actionItems.related_cluster_id],
+		references: [clusters.id],
+	}),
 }));

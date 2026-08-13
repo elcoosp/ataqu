@@ -7,9 +7,9 @@
     "dev": "pnpm -r --parallel dev",
     "dev-all": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
-    "test": "vitest",
+    "test": "vitest run",
     "test:e2e": "playwright test",
-    "lint": "biome check --apply .",
+    "lint": "biome check --write --unsafe .",
     "extract": "pnpm -r extract",
     "compile": "pnpm -r compile",
     "generate:api": "node scripts/generate-api-client.ts",
@@ -41,7 +41,9 @@
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
     "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/dom": "^10.0.0"
   },
   "pnpm": {
     "overrides": {

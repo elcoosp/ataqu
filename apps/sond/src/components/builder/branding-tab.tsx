@@ -6,7 +6,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@ataqu/ui";
-import { Trans } from '@lingui/react/macro';
+import { Trans } from "@lingui/react/macro";
 import { useId } from "react";
 import type { SondBranding } from "./types";
 
@@ -30,7 +30,9 @@ export function BrandingTab({ branding, onUpdate }: Props) {
 					id={colorId}
 					type="color"
 					value={branding.primaryColor || "#f59e0b"}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ primaryColor: e.target.value })}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						onUpdate({ primaryColor: e.target.value })
+					}
 					className="h-10 w-20 p-1"
 				/>
 			</div>
@@ -41,7 +43,9 @@ export function BrandingTab({ branding, onUpdate }: Props) {
 				<Input
 					id={logoId}
 					value={branding.logoUrl || ""}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ logoUrl: e.target.value })}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						onUpdate({ logoUrl: e.target.value })
+					}
 					placeholder="https://example.com/logo.png"
 				/>
 			</div>

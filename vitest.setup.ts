@@ -1,23 +1,49 @@
-import '@testing-library/jest-dom';
-import { i18n } from '@lingui/core';
-import { I18nProvider } from '@lingui/react';
+import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
 import React from 'react';
+import { i18n } from '@lingui/core';
 
-i18n.load({
-  en: {}
-});
+// Activate Lingui locale and load empty messages to prevent stderr warnings
+i18n.load('en', {});
 i18n.activate('en');
 
-vi.mock('@testing-library/react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@testing-library/react')>();
+window.matchMedia = window.matchMedia || vi.fn().mockImplementation((query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+}));
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.ResizeObserver = window.ResizeObserver || ResizeObserverMock;
+
+class IntersectionObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.IntersectionObserver = window.IntersectionObserver || IntersectionObserverMock;
+
+afterEach(() => {
+  cleanup();
+});
+
+vi.mock('@ataqu/ui', async () => {
+  const actual = await vi.importActual('@ataqu/ui');
   return {
     ...actual,
-    render: (ui: React.ReactElement, options?: any) => {
-      const ExistingWrapper = options?.wrapper || (({ children }: any) => children);
-      const Wrapper = ({ children }: { children: React.ReactNode }) =>
-        React.createElement(I18nProvider, { i18n }, React.createElement(ExistingWrapper, null, children));
-
-      return actual.render(ui, { ...options, wrapper: Wrapper });
-    },
+    Shell: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', { 'data-testid': 'shell-mock' }, children),
+    DashboardLayout: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', { 'data-testid': 'dashboard-layout-mock' }, children),
   };
 });

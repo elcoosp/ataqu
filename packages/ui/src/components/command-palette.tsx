@@ -1,150 +1,181 @@
 /// <reference types="vite/client" />
-import React, { useState, useEffect } from 'react';
+
+import { useDebounce } from "@ataqu/shared-hooks";
+import { useAuthStore } from "@ataqu/shared-stores";
 import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from '@ataqu/ui';
-import { Home, Search, LogOut } from 'lucide-react';
-import { useAuthStore } from '@ataqu/shared-stores';
-import { useNavigate } from '@tanstack/react-router';
-import { useDebounce } from '@ataqu/shared-hooks';
+	CommandDialog,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from "@ataqu/ui";
+import { useNavigate } from "@tanstack/react-router";
+import { Home, LogOut, Search } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 export interface CommandPaletteProps {
-  searchFn?: (q: string) => Promise<unknown[]>;
+	searchFn?: (q: string) => Promise<unknown[]>;
 }
 
 const APP_DOMAINS: Record<string, string> = {
-  aegis: 'sso',
-  cinq: 'crm',
-  dial: 'chat',
-  pivot: 'docs',
-  spark: 'auto',
-  tempo: 'schedule',
-  sond: 'forms',
-  vault: 'inv',
-  pause: 'hr',
-  vista: 'bi',
+	aegis: "sso",
+	cinq: "crm",
+	dial: "chat",
+	pivot: "docs",
+	spark: "auto",
+	tempo: "schedule",
+	sond: "forms",
+	vault: "inv",
+	pause: "hr",
+	vista: "bi",
 };
 
 const APP_NAMES: Record<string, string> = {
-  aegis: 'AEGIS',
-  cinq: 'CINQ',
-  dial: 'DIAL',
-  pivot: 'PIVOT',
-  spark: 'SPARK',
-  tempo: 'TEMPO',
-  sond: 'SOND',
-  vault: 'VAULT',
-  pause: 'PAUSE',
-  vista: 'VISTA',
+	aegis: "AEGIS",
+	cinq: "CINQ",
+	dial: "DIAL",
+	pivot: "PIVOT",
+	spark: "SPARK",
+	tempo: "TEMPO",
+	sond: "SOND",
+	vault: "VAULT",
+	pause: "PAUSE",
+	vista: "VISTA",
 };
 
 const APP_ICONS: Record<string, string> = {
-  aegis: '/apps/aegis.png',
-  cinq: '/apps/cinq.png',
-  dial: '/apps/dial.png',
-  pivot: '/apps/pivot.png',
-  spark: '/apps/spark.png',
-  tempo: '/apps/tempo.png',
-  sond: '/apps/sond.png',
-  vault: '/apps/vault.png',
-  pause: '/apps/pause.png',
-  vista: '/apps/vista.png',
+	aegis: "/apps/aegis.png",
+	cinq: "/apps/cinq.png",
+	dial: "/apps/dial.png",
+	pivot: "/apps/pivot.png",
+	spark: "/apps/spark.png",
+	tempo: "/apps/tempo.png",
+	sond: "/apps/sond.png",
+	vault: "/apps/vault.png",
+	pause: "/apps/pause.png",
+	vista: "/apps/vista.png",
 };
 
 const APP_PORTS: Record<string, number> = {
-  aegis: 5173,
-  cinq: 5174,
-  dial: 5175,
-  pivot: 5176,
-  spark: 5177,
-  tempo: 5178,
-  sond: 5179,
-  vault: 5180,
-  pause: 5181,
-  vista: 5182,
+	aegis: 5173,
+	cinq: 5174,
+	dial: 5175,
+	pivot: 5176,
+	spark: 5177,
+	tempo: 5178,
+	sond: 5179,
+	vault: 5180,
+	pause: 5181,
+	vista: 5182,
 };
 
 function getAppUrl(app: string): string {
-  if (import.meta.env.DEV) {
-    return `http://localhost:${APP_PORTS[app]}`;
-  }
-  return `https://${APP_DOMAINS[app]}.ataqu.com`;
+	if (import.meta.env.DEV) {
+		return `http://localhost:${APP_PORTS[app]}`;
+	}
+	return `https://${APP_DOMAINS[app]}.ataqu.com`;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  const debouncedSearch = useDebounce(search, 300);
-  const navigate = useNavigate();
-  const { logout } = useAuthStore();
+	const [open, setOpen] = useState(false);
+	const [search, setSearch] = useState("");
+	const [results, setResults] = useState<any[]>([]);
+	const debouncedSearch = useDebounce(search, 300);
+	const navigate = useNavigate();
+	const { logout } = useAuthStore();
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, []);
+	useEffect(() => {
+		const down = (e: KeyboardEvent) => {
+			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+				e.preventDefault();
+				setOpen((open) => !open);
+			}
+		};
+		document.addEventListener("keydown", down);
+		return () => document.removeEventListener("keydown", down);
+	}, []);
 
-  useEffect(() => {
-    if (!searchFn || !debouncedSearch.trim()) {
-      setResults([]);
-      return;
-    }
-    searchFn(debouncedSearch).then(setResults).catch(() => setResults([]));
-  }, [debouncedSearch, searchFn]);
+	useEffect(() => {
+		if (!searchFn || !debouncedSearch.trim()) {
+			setResults([]);
+			return;
+		}
+		searchFn(debouncedSearch)
+			.then(setResults)
+			.catch(() => setResults([]));
+	}, [debouncedSearch, searchFn]);
 
-  const handleSelect = (callback: () => void) => {
-    setOpen(false);
-    callback();
-  };
+	const handleSelect = (callback: () => void) => {
+		setOpen(false);
+		callback();
+	};
 
-  return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search apps, navigate, or run commands..." value={search} onValueChange={setSearch} />
-      <CommandList>
-        <CommandEmpty>No commands found.</CommandEmpty>
-        <CommandGroup heading="Switch App">
-          {Object.keys(APP_DOMAINS).map((app) => (
-            <CommandItem key={app} onSelect={() => handleSelect(() => window.location.href = getAppUrl(app))}>
-              <img src={APP_ICONS[app]} alt={APP_NAMES[app]} className="h-5 w-5 mr-2" />
-              <span>{APP_NAMES[app]}</span>
-              <span className="ml-auto text-xs text-muted-foreground">⌘{app[0]}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-        {searchFn && results.length > 0 && (
-          <CommandGroup heading="Search Results">
-            {results.map((item) => (
-              <CommandItem key={item.id} onSelect={() => handleSelect(() => navigate(item.url))}>
-                {item.title}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-        <CommandGroup heading="Navigation">
-          <CommandItem onSelect={() => handleSelect(() => navigate({ to: '/dashboard' }))}>
-            <Home className="mr-2 h-4 w-4" /><span>Dashboard</span><span className="ml-auto text-xs text-muted-foreground">⌘D</span>
-          </CommandItem>
-          <CommandItem onSelect={() => handleSelect(() => console.log('Search opened'))}>
-            <Search className="mr-2 h-4 w-4" /><span>Global Search</span><span className="ml-auto text-xs text-muted-foreground">⌘S</span>
-          </CommandItem>
-        </CommandGroup>
-        <CommandGroup heading="Account">
-          <CommandItem onSelect={() => handleSelect(logout)}>
-            <LogOut className="mr-2 h-4 w-4" /><span>Sign Out</span>
-          </CommandItem>
-        </CommandGroup>
-      </CommandList>
-    </CommandDialog>
-  );
+	return (
+		<CommandDialog open={open} onOpenChange={setOpen}>
+			<CommandInput
+				placeholder="Search apps, navigate, or run commands..."
+				value={search}
+				onValueChange={setSearch}
+			/>
+			<CommandList>
+				<CommandEmpty>No commands found.</CommandEmpty>
+				<CommandGroup heading="Switch App">
+					{Object.keys(APP_DOMAINS).map((app) => (
+						<CommandItem
+							key={app}
+							onSelect={() =>
+								handleSelect(() => (window.location.href = getAppUrl(app)))
+							}
+						>
+							<img
+								src={APP_ICONS[app]}
+								alt={APP_NAMES[app]}
+								className="h-5 w-5 mr-2"
+							/>
+							<span>{APP_NAMES[app]}</span>
+							<span className="ml-auto text-xs text-muted-foreground">
+								⌘{app[0]}
+							</span>
+						</CommandItem>
+					))}
+				</CommandGroup>
+				{searchFn && results.length > 0 && (
+					<CommandGroup heading="Search Results">
+						{results.map((item) => (
+							<CommandItem
+								key={item.id}
+								onSelect={() => handleSelect(() => navigate(item.url))}
+							>
+								{item.title}
+							</CommandItem>
+						))}
+					</CommandGroup>
+				)}
+				<CommandGroup heading="Navigation">
+					<CommandItem
+						onSelect={() => handleSelect(() => navigate({ to: "/dashboard" }))}
+					>
+						<Home className="mr-2 h-4 w-4" />
+						<span>Dashboard</span>
+						<span className="ml-auto text-xs text-muted-foreground">⌘D</span>
+					</CommandItem>
+					<CommandItem
+						onSelect={() => handleSelect(() => console.log("Search opened"))}
+					>
+						<Search className="mr-2 h-4 w-4" />
+						<span>Global Search</span>
+						<span className="ml-auto text-xs text-muted-foreground">⌘S</span>
+					</CommandItem>
+				</CommandGroup>
+				<CommandGroup heading="Account">
+					<CommandItem onSelect={() => handleSelect(logout)}>
+						<LogOut className="mr-2 h-4 w-4" />
+						<span>Sign Out</span>
+					</CommandItem>
+				</CommandGroup>
+			</CommandList>
+		</CommandDialog>
+	);
 };

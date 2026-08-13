@@ -15,8 +15,8 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@ataqu/ui";
-import { Trans } from '@lingui/react/macro';
-import { t } from '@lingui/core/macro';
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, Save, Upload } from "lucide-react";
@@ -190,7 +190,9 @@ function FormBuilderRoute() {
 				<header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
 					<input
 						value={localForm.title}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateTitle(e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							updateTitle(e.target.value)
+						}
 						className="truncate bg-transparent text-xl font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						aria-label={t`Form title`}
 					/>

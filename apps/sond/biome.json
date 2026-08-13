@@ -1,43 +1,33 @@
 {
+	"$schema": "https://biomejs.dev/schemas/2.5.8/schema.json",
 	"root": false,
-	"$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
-	"assist": {
-		"actions": {
-			"source": {
-				"organizeImports": "on"
-			}
+	"files": {
+		"includes": ["**", "!**/dist", "!**/.next", "!**/routeTree.gen.ts"]
+	},
+	"vcs": {
+		"useIgnoreFile": true
+	},
+	"css": {
+		"linter": {
+			"enabled": false
+		},
+		"formatter": {
+			"enabled": false
+		},
+		"assist": {
+			"enabled": false
 		}
 	},
 	"linter": {
-		"enabled": true,
 		"rules": {
-			"preset": "recommended",
-			"suspicious": {
-				"noExplicitAny": "warn"
+			"style": {
+				"noNonNullAssertion": "off"
 			},
-			"correctness": {
-				"noUnusedVariables": "warn"
-			}
+			"suspicious": {
+				"noExplicitAny": "off",
+				"noArrayIndexKey": "off"
+			},
+			"a11y": "off"
 		}
-	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "space",
-		"indentWidth": 2,
-		"lineWidth": 100
-	},
-	"javascript": {
-		"formatter": {
-			"quoteStyle": "single",
-			"trailingCommas": "es5"
-		}
-	},
-	"files": {
-		"ignore": [
-			"**/routeTree.gen.ts",
-			"**/node_modules/**",
-			"**/dist/**",
-			"**/.tanstack/**"
-		]
 	}
 }

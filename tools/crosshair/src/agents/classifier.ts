@@ -1,4 +1,4 @@
-import { callLocalLLMWithJson } from '../llm/client';
+import { callLocalLLMWithJson } from "../llm/client";
 
 const CLASSIFIER_SYSTEM = `
 You are a filter for B2B SaaS complaints.
@@ -21,16 +21,16 @@ Return JSON:
 `;
 
 export async function classifySignal(rawText: string): Promise<{
-  is_complaint: boolean;
-  competitor: string | null;
-  confidence: number;
+	is_complaint: boolean;
+	competitor: string | null;
+	confidence: number;
 }> {
-  const prompt = CLASSIFIER_PROMPT.replace('{text}', rawText.slice(0, 1500));
-  try {
-    const raw = await callLocalLLMWithJson<any>(prompt, CLASSIFIER_SYSTEM);
-    return raw;
-  } catch (e) {
-    console.warn('Classifier failed, defaulting to complaint=false.');
-    return { is_complaint: false, competitor: null, confidence: 0 };
-  }
+	const prompt = CLASSIFIER_PROMPT.replace("{text}", rawText.slice(0, 1500));
+	try {
+		const raw = await callLocalLLMWithJson<any>(prompt, CLASSIFIER_SYSTEM);
+		return raw;
+	} catch (_e) {
+		console.warn("Classifier failed, defaulting to complaint=false.");
+		return { is_complaint: false, competitor: null, confidence: 0 };
+	}
 }

@@ -1,4 +1,4 @@
-import { callLocalLLMWithJson } from '../llm/client';
+import { callLocalLLMWithJson } from "../llm/client";
 
 const LEAD_SYSTEM = `You are a Sales Analyst. Extract buyer profile and urgency.
 Focus on: who they are, what they do, how urgent the problem is.
@@ -28,28 +28,28 @@ Return JSON:
 }`;
 
 export async function extractLeadData(rawText: string): Promise<{
-  buyer_segment: string;
-  workflow: string;
-  current_workaround: string;
-  direct_quote: string;
-  urgency_score: number;
-  buying_intent_score: number;
-  frequency_score: number;
+	buyer_segment: string;
+	workflow: string;
+	current_workaround: string;
+	direct_quote: string;
+	urgency_score: number;
+	buying_intent_score: number;
+	frequency_score: number;
 }> {
-  const prompt = LEAD_PROMPT.replace('{text}', rawText.slice(0, 1500));
-  try {
-    const raw = await callLocalLLMWithJson<any>(prompt, LEAD_SYSTEM);
-    return raw;
-  } catch (e) {
-    console.warn('Lead extraction failed, returning defaults.');
-    return {
-      buyer_segment: 'Unknown',
-      workflow: 'Unknown',
-      current_workaround: 'Unknown',
-      direct_quote: 'No quote',
-      urgency_score: 0,
-      buying_intent_score: 0,
-      frequency_score: 0,
-    };
-  }
+	const prompt = LEAD_PROMPT.replace("{text}", rawText.slice(0, 1500));
+	try {
+		const raw = await callLocalLLMWithJson<any>(prompt, LEAD_SYSTEM);
+		return raw;
+	} catch (_e) {
+		console.warn("Lead extraction failed, returning defaults.");
+		return {
+			buyer_segment: "Unknown",
+			workflow: "Unknown",
+			current_workaround: "Unknown",
+			direct_quote: "No quote",
+			urgency_score: 0,
+			buying_intent_score: 0,
+			frequency_score: 0,
+		};
+	}
 }

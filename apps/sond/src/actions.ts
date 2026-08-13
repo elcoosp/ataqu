@@ -1,4 +1,4 @@
-import { t } from '@lingui/core/macro';
+import { t } from "@lingui/core/macro";
 
 export interface SondAction {
 	id: string;

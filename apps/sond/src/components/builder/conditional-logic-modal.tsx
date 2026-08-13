@@ -13,8 +13,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@ataqu/ui";
-import { Trans } from '@lingui/react/macro';
-import { t } from '@lingui/core/macro';
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 import type { SondQuestion } from "./types";
 
@@ -128,7 +128,9 @@ export function ConditionalLogicModal({
 						{!disableValue && (
 							<Input
 								value={value}
-								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+									setValue(e.target.value)
+								}
 								className="w-40"
 								placeholder={t`Value`}
 							/>

@@ -2,8 +2,8 @@ import type { AnswerValue } from "@ataqu/api-client";
 import { useSubmitConversationalStep } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Input, Skeleton } from "@ataqu/ui";
-import { Trans } from '@lingui/react/macro';
-import { t } from '@lingui/core/macro';
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { SondQuestion } from "../builder/types";
@@ -104,7 +104,9 @@ export function ConversationalSlide({
 									: "text"
 						}
 						value={typeof value === "string" ? value : ""}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange(e.target.value)
+						}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={question.label}
@@ -128,7 +130,9 @@ export function ConversationalSlide({
 					<Input
 						type="date"
 						value={typeof value === "string" ? value : ""}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange(e.target.value)
+						}
 						className="h-12 text-lg"
 						autoFocus
 						aria-label={question.label}

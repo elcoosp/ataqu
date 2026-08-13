@@ -1,4 +1,4 @@
-import { callLocalLLMWithJson } from '../llm/client';
+import { callLocalLLMWithJson } from "../llm/client";
 
 const CLUSTER_SYSTEM = `You are a Product Strategist. Group complaints by shared feature gaps, pricing issues, or UX pain.
 Be specific. Return ONLY valid JSON.`;
@@ -17,18 +17,24 @@ Return JSON:
 }`;
 
 export async function clusterComplaints(data: string): Promise<{
-  name: string;
-  core_pain: string;
-  common_workarounds: string;
-  manual_mvp: string;
-  verdict: 'build_test' | 'watch' | 'ignore';
+	name: string;
+	core_pain: string;
+	common_workarounds: string;
+	manual_mvp: string;
+	verdict: "build_test" | "watch" | "ignore";
 }> {
-  const prompt = CLUSTER_PROMPT.replace('{data}', data.slice(0, 3000));
-  try {
-    const raw = await callLocalLLMWithJson<any>(prompt, CLUSTER_SYSTEM);
-    return raw;
-  } catch (e) {
-    console.warn('Clustering failed, returning default.');
-    return { name: 'Unnamed cluster', core_pain: 'Unknown', common_workarounds: 'Unknown', manual_mvp: 'Unknown', verdict: 'watch' };
-  }
+	const prompt = CLUSTER_PROMPT.replace("{data}", data.slice(0, 3000));
+	try {
+		const raw = await callLocalLLMWithJson<any>(prompt, CLUSTER_SYSTEM);
+		return raw;
+	} catch (_e) {
+		console.warn("Clustering failed, returning default.");
+		return {
+			name: "Unnamed cluster",
+			core_pain: "Unknown",
+			common_workarounds: "Unknown",
+			manual_mvp: "Unknown",
+			verdict: "watch",
+		};
+	}
 }

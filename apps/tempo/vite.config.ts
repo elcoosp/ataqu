@@ -1,2 +1,2 @@
-import { defineViteConfig } from '@ataqu/vite-preset';
-export default defineViteConfig({ appName: 'tempo' });
+import { defineViteConfig } from "@ataqu/vite-preset";
+export default defineViteConfig({ appName: "tempo" });
