@@ -57,6 +57,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
       },
     },
     build: {
+      chunkSizeWarningLimit: 1000,
       target: 'es2024',
       minify: 'esbuild',
       sourcemap: true,
