@@ -3,8 +3,28 @@
 //! Ataqu unified server entry point.
 //! Starts the Axum HTTP server, runs the outbox dispatcher in the background,
 //! and sets up idempotency middleware.
-use ataqu_security::Email;
 mod event_registry;
+use ataqu_api::{AppState, create_router};
+use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
+use ataqu_application::changelog_service::ChangelogService;
+use ataqu_application::cinq_service::CinqService;
+use ataqu_application::dial_service::DialService;
+use ataqu_application::health_service::HealthService;
+use ataqu_application::onboarding_service::OnboardingService;
+use ataqu_application::pause_service::PauseService;
+use ataqu_application::pivot_service::PivotService;
+use ataqu_application::shopify_service::ShopifyService;
+use ataqu_application::sond_service::SondService;
+use ataqu_application::spark_service::SparkService;
+use ataqu_application::tempo_service::TempoService;
+use ataqu_application::vault_service::VaultService;
+use ataqu_application::vista_service::VistaService;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
+use ataqu_infra_pools::Pools;
+use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
+use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
+use ataqu_infra_storage::s3_service::S3Service;
+use ataqu_kernel::{SystemClock, SystemIdGenerator};
 use dotenvy::dotenv;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -15,27 +35,6 @@ use tracing_appender::non_blocking;
 use tracing_appender::rolling;
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
-use ataqu_api::{AppState, create_router};
-use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
-use ataqu_application::cinq_service::CinqService;
-use ataqu_application::dial_service::DialService;
-use ataqu_application::pause_service::PauseService;
-use ataqu_application::pivot_service::PivotService;
-use ataqu_application::sond_service::SondService;
-use ataqu_application::spark_service::SparkService;
-use ataqu_application::tempo_service::TempoService;
-use ataqu_application::vault_service::VaultService;
-use ataqu_application::vista_service::VistaService;
-use ataqu_domain_aegis::repository::AuditRepositoryTrait;
-use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
-use ataqu_kernel::{SystemClock, SystemIdGenerator};
-use ataqu_application::changelog_service::ChangelogService;
-use ataqu_application::health_service::HealthService;
-use ataqu_application::onboarding_service::OnboardingService;
-use ataqu_application::shopify_service::ShopifyService;
-use ataqu_infra_pools::Pools;
-use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
-use ataqu_infra_storage::s3_service::S3Service;
 // use sea_orm::DatabaseConnection;
 // ----------------------------------------------------------------------------
 // Main
@@ -227,13 +226,16 @@ async fn main() -> anyhow::Result<()> {
                         _ => ChannelType::Public,
                     };
                     self.dial_service
-                        .create_channel(self.system_user_id, CreateChannelCommand {
-                            tenant_id: *tenant_id,
-                            name: name.clone(),
-                            channel_type: ct,
-                            created_by: self.system_user_id,
-                            participants: participants.clone(),
-                        })
+                        .create_channel(
+                            self.system_user_id,
+                            CreateChannelCommand {
+                                tenant_id: *tenant_id,
+                                name: name.clone(),
+                                channel_type: ct,
+                                created_by: self.system_user_id,
+                                participants: participants.clone(),
+                            },
+                        )
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -254,15 +256,18 @@ async fn main() -> anyhow::Result<()> {
                 }
                 Action::CreateCinqContact { name, email, phone } => {
                     self.cinq_service
-                        .create_contact(self.system_user_id, CreateContactCommand {
-                            tenant_id: *tenant_id,
-                            name: name.clone(),
-                            company: None,
-                            email: Email::new(email.clone()),
-                            phone: phone.clone().map(PhoneNumber::new),
-                            custom_fields: serde_json::Value::Null,
-                            lead_score: None,
-                        })
+                        .create_contact(
+                            self.system_user_id,
+                            CreateContactCommand {
+                                tenant_id: *tenant_id,
+                                name: name.clone(),
+                                company: None,
+                                email: Email::new(email.clone()),
+                                phone: phone.clone().map(PhoneNumber::new),
+                                custom_fields: serde_json::Value::Null,
+                                lead_score: None,
+                            },
+                        )
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -279,14 +284,17 @@ async fn main() -> anyhow::Result<()> {
                         _ => ActivityType::Note,
                     };
                     self.cinq_service
-                        .create_activity(self.system_user_id, CreateActivityCommand {
-                            tenant_id: *tenant_id,
-                            contact_id: *contact_id,
-                            deal_id: None,
-                            activity_type: act_type,
-                            description: description.clone(),
-                            scheduled_at: None,
-                        })
+                        .create_activity(
+                            self.system_user_id,
+                            CreateActivityCommand {
+                                tenant_id: *tenant_id,
+                                contact_id: *contact_id,
+                                deal_id: None,
+                                activity_type: act_type,
+                                description: description.clone(),
+                                scheduled_at: None,
+                            },
+                        )
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -301,15 +309,18 @@ async fn main() -> anyhow::Result<()> {
                         .await
                         .map_err(|e| e.to_string())?;
                     self.vault_service
-                        .update_stock(self.system_user_id, UpdateStockCommand {
-                            tenant_id: *tenant_id,
-                            variant_id: *variant_id,
-                            delta: *delta,
-                            reason: reason.clone(),
-                            reference: None,
-                            alert_channel_id: None,
-                            expected_version: variant.version,
-                        })
+                        .update_stock(
+                            self.system_user_id,
+                            UpdateStockCommand {
+                                tenant_id: *tenant_id,
+                                variant_id: *variant_id,
+                                delta: *delta,
+                                reason: reason.clone(),
+                                reference: None,
+                                alert_channel_id: None,
+                                expected_version: variant.version,
+                            },
+                        )
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -323,7 +334,13 @@ async fn main() -> anyhow::Result<()> {
                         .await
                         .map_err(|e| e.to_string())?;
                     self.vault_service
-                        .reserve_stock(self.system_user_id, *tenant_id, *variant_id, *quantity, variant.version)
+                        .reserve_stock(
+                            self.system_user_id,
+                            *tenant_id,
+                            *variant_id,
+                            *quantity,
+                            variant.version,
+                        )
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -333,15 +350,18 @@ async fn main() -> anyhow::Result<()> {
                     source,
                 } => {
                     self.cinq_service
-                        .create_contact(self.system_user_id, CreateContactCommand {
-                            tenant_id: *tenant_id,
-                            name: name.clone(),
-                            company: None,
-                            email: Email::new(email.clone()),
-                            phone: None,
-                            custom_fields: serde_json::json!({ "source": source }),
-                            lead_score: None,
-                        })
+                        .create_contact(
+                            self.system_user_id,
+                            CreateContactCommand {
+                                tenant_id: *tenant_id,
+                                name: name.clone(),
+                                company: None,
+                                email: Email::new(email.clone()),
+                                phone: None,
+                                custom_fields: serde_json::json!({ "source": source }),
+                                lead_score: None,
+                            },
+                        )
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -565,7 +585,7 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
     }
-        let system_user_id = std::env::var("SYSTEM_USER_ID")
+    let system_user_id = std::env::var("SYSTEM_USER_ID")
         .ok()
         .and_then(|s| Uuid::parse_str(&s).ok())
         .unwrap_or_else(|| {
@@ -573,11 +593,11 @@ async fn main() -> anyhow::Result<()> {
             Uuid::parse_str("00000000-0000-0000-0000-000000000001")
                 .expect("Hardcoded UUID is invalid")
         });
-        // Validate that the system user ID is not nil and is valid
-        if system_user_id.is_nil() {
-            tracing::warn!("SYSTEM_USER_ID is nil, using default");
-            // Keep default
-        }
+    // Validate that the system user ID is not nil and is valid
+    if system_user_id.is_nil() {
+        tracing::warn!("SYSTEM_USER_ID is nil, using default");
+        // Keep default
+    }
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }
@@ -709,8 +729,16 @@ async fn main() -> anyhow::Result<()> {
     });
     // Shopify worker
     let shopify_repo = Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()));
-    let shopify_log_repo = Arc::new(ataqu_infra_repositories::shopify_sync_log_repo::ShopifySyncLogRepo::new(pools.vault.clone()));
-    let shopify_service = Arc::new(ShopifyService::new(shopify_repo, vault_service.clone(), shopify_log_repo));
+    let shopify_log_repo = Arc::new(
+        ataqu_infra_repositories::shopify_sync_log_repo::ShopifySyncLogRepo::new(
+            pools.vault.clone(),
+        ),
+    );
+    let shopify_service = Arc::new(ShopifyService::new(
+        shopify_repo,
+        vault_service.clone(),
+        shopify_log_repo,
+    ));
     let shopify_http_client = reqwest::Client::new();
     let shopify_service_clone = shopify_service.clone();
     tokio::spawn(async move {
@@ -878,20 +906,33 @@ async fn main() -> anyhow::Result<()> {
     // Event Registry for Outbox
     let mut event_registry = crate::event_registry::EventRegistry::new();
 
-        // SOND routing: CreateLeadFromForm -> create CINQ contact
+    // SOND routing: CreateLeadFromForm -> create CINQ contact
     event_registry.register("collab_crm", "CreateLeadFromForm", {
         let cinq = cinq_service.clone();
         move |evt| {
             let cinq = cinq.clone();
             async move {
                 let payload = &evt.payload;
-                let tenant_id = payload.get("tenant_id")
+                let tenant_id = payload
+                    .get("tenant_id")
                     .and_then(|v| v.as_str())
                     .and_then(|s| uuid::Uuid::parse_str(s).ok())
                     .ok_or("Missing tenant_id")?;
-                let name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let email_str = payload.get("email").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let source = payload.get("source").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let name = payload
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let email_str = payload
+                    .get("email")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let source = payload
+                    .get("source")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
 
                 if name.is_empty() || email_str.is_empty() {
                     tracing::warn!("CreateLeadFromForm: missing name or email, skipping");
@@ -910,9 +951,13 @@ async fn main() -> anyhow::Result<()> {
                 };
                 // Use system user ID (uuid::Uuid::nil() or a configured system user)
                 let system_user_id = system_user_id;
-                cinq.create_contact(system_user_id, cmd).await
+                cinq.create_contact(system_user_id, cmd)
+                    .await
                     .map_err(|e| format!("Failed to create contact: {}", e))?;
-                tracing::info!("Created lead from form response {}", evt.aggregate_id.unwrap_or_default());
+                tracing::info!(
+                    "Created lead from form response {}",
+                    evt.aggregate_id.unwrap_or_default()
+                );
                 Ok(())
             }
         }
@@ -925,12 +970,21 @@ async fn main() -> anyhow::Result<()> {
             let dial = dial.clone();
             async move {
                 let payload = &evt.payload;
-                let tenant_id = payload.get("tenant_id")
+                let tenant_id = payload
+                    .get("tenant_id")
                     .and_then(|v| v.as_str())
                     .and_then(|s| uuid::Uuid::parse_str(s).ok())
                     .ok_or("Missing tenant_id")?;
-                let message = payload.get("message").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let target = payload.get("target").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let message = payload
+                    .get("message")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let target = payload
+                    .get("target")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
 
                 if message.is_empty() || target.is_empty() {
                     tracing::warn!("FormRoutingNotification: missing message or target, skipping");
@@ -948,12 +1002,17 @@ async fn main() -> anyhow::Result<()> {
                         author_id: system_user_id,
                         content: message,
                     };
-                    dial.send_message(cmd).await
+                    dial.send_message(cmd)
+                        .await
                         .map_err(|e| format!("Failed to send notification: {}", e))?;
                 } else if let Ok(user_id) = uuid::Uuid::parse_str(&target) {
                     // Send as a DM to a user (we would need to find their channel or use a DM channel)
                     // For simplicity, we'll just log for now.
-                    tracing::warn!("FormRoutingNotification: DM to user {} not implemented, target: {}", user_id, target);
+                    tracing::warn!(
+                        "FormRoutingNotification: DM to user {} not implemented, target: {}",
+                        user_id,
+                        target
+                    );
                 } else {
                     tracing::warn!("FormRoutingNotification: invalid target (must be UUID)");
                 }
@@ -969,9 +1028,18 @@ async fn main() -> anyhow::Result<()> {
             let client = client.clone();
             async move {
                 let payload = &evt.payload;
-                let url = payload.get("url").and_then(|v| v.as_str()).ok_or("Missing url")?;
-                let method = payload.get("method").and_then(|v| v.as_str()).unwrap_or("POST");
-                let answers = payload.get("answers").cloned().unwrap_or(serde_json::json!({}));
+                let url = payload
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .ok_or("Missing url")?;
+                let method = payload
+                    .get("method")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("POST");
+                let answers = payload
+                    .get("answers")
+                    .cloned()
+                    .unwrap_or(serde_json::json!({}));
 
                 // Simple webhook execution with timeout and no retry
                 let request = match method.to_uppercase().as_str() {
@@ -981,10 +1049,15 @@ async fn main() -> anyhow::Result<()> {
                     "DELETE" => client.delete(url),
                     _ => client.get(url).query(&answers),
                 };
-                let resp = request.send().await
+                let resp = request
+                    .send()
+                    .await
                     .map_err(|e| format!("Webhook request failed: {}", e))?;
                 if resp.status().is_success() {
-                    tracing::info!("Webhook triggered for response {}", evt.aggregate_id.unwrap_or_default());
+                    tracing::info!(
+                        "Webhook triggered for response {}",
+                        evt.aggregate_id.unwrap_or_default()
+                    );
                 } else {
                     tracing::warn!("Webhook returned error: {}", resp.status());
                 }
@@ -1111,13 +1184,12 @@ async fn main() -> anyhow::Result<()> {
     });
     // Import worker handler
     event_registry.register("core", "ImportJob", {
-        let import_worker = Arc::new(ataqu_application::import_worker::ImportWorker::new(core_outbox_for_gdpr.clone(),
+        let import_worker = Arc::new(ataqu_application::import_worker::ImportWorker::new(
+            core_outbox_for_gdpr.clone(),
         ));
         move |evt| {
             let worker = import_worker.clone();
-            async move {
-                worker.handle_event(evt).await.map_err(|e| e.to_string())
-            }
+            async move { worker.handle_event(evt).await.map_err(|e| e.to_string()) }
         }
     });
     // Spawn Outbox Dispatcher
@@ -1157,7 +1229,9 @@ async fn main() -> anyhow::Result<()> {
     let db_reaper = pools.core.clone();
     tokio::spawn(async move {
         loop {
-            if let Err(e) = ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await {
+            if let Err(e) =
+                ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await
+            {
                 tracing::error!(error = %e, "S3 orphan reaper failed");
             }
             tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
@@ -1168,7 +1242,9 @@ async fn main() -> anyhow::Result<()> {
     let db_reaper = pools.core.clone();
     tokio::spawn(async move {
         loop {
-            if let Err(e) = ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await {
+            if let Err(e) =
+                ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await
+            {
                 tracing::error!(error = %e, "S3 orphan reaper failed");
             }
             tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
@@ -1179,7 +1255,12 @@ async fn main() -> anyhow::Result<()> {
     let tempo_client = http_client.clone();
     tokio::spawn(async move {
         loop {
-            if let Err(e) = ataqu_application::tempo_refresh_worker::refresh_expiring_tokens(tempo_db.clone(), tempo_client.clone()).await {
+            if let Err(e) = ataqu_application::tempo_refresh_worker::refresh_expiring_tokens(
+                tempo_db.clone(),
+                tempo_client.clone(),
+            )
+            .await
+            {
                 tracing::error!(error = %e, "Tempo refresh worker failed");
             }
             tokio::time::sleep(std::time::Duration::from_secs(900)).await;

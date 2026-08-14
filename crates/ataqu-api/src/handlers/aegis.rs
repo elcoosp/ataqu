@@ -254,14 +254,10 @@ pub async fn sso_callback(
     let provider_str = state_data["provider"]
         .as_str()
         .ok_or_else(|| ApiResponseError::unauthorized("Missing provider in SSO state"))?;
-    let tenant_id = state_data["tenant_id"]
-        .as_str()
-        .and_then(|s| uuid::Uuid::parse_str(s).ok())
-        .ok_or_else(|| ApiResponseError::unauthorized("Missing tenant in SSO state"))?;
 
     let config = state.sso_config.clone();
-
     let client = state.http_client.clone();
+
     let email_str = if provider_str == "Google" {
         let token_resp = client
             .post("https://oauth2.googleapis.com/token")
@@ -325,10 +321,9 @@ pub async fn sso_callback(
     };
 
     let email = Email::new(email_str);
-    let tenant_id = ataqu_kernel::TenantId::new(tenant_id);
     let resp = state
         .aegis_service
-        .sso_exchange(email, tenant_id)
+        .sso_exchange_with_tenant_resolution(email)
         .await
         .map_err(map_aegis_error)?;
 
@@ -338,7 +333,6 @@ pub async fn sso_callback(
         user_id: resp.user_id,
     }))
 }
-
 #[derive(Debug, Deserialize)]
 pub struct UpdateRoleRequest {
     pub role: String,
