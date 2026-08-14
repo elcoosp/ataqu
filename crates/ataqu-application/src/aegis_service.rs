@@ -175,7 +175,7 @@ impl RealAegisDomain {
             id: user_id,
             tenant_id: cmd.tenant_id,
             email: cmd.email.clone(),
-            password_hash,
+            password_hash: Some(password_hash),
             name: cmd.name.clone(),
             mfa_secret: None,
             mfa_enabled: false,
@@ -200,13 +200,17 @@ impl RealAegisDomain {
         user: User,
         clock: &dyn Clock,
     ) -> Result<User, AegisServiceError> {
-        let parsed_hash = PasswordHash::new(&user.password_hash)
-            .map_err(|_| AegisServiceError::AuthenticationFailed)?;
-        let argon2 = Argon2::default();
-        if argon2
-            .verify_password(cmd.password.as_bytes(), &parsed_hash)
-            .is_err()
-        {
+        if let Some(ref hash) = user.password_hash {
+            let parsed_hash = PasswordHash::new(hash)
+                .map_err(|_| AegisServiceError::AuthenticationFailed)?;
+            let argon2 = Argon2::default();
+            if argon2
+                .verify_password(cmd.password.as_bytes(), &parsed_hash)
+                .is_err()
+            {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+        } else {
             return Err(AegisServiceError::AuthenticationFailed);
         }
         if !user.is_active {
@@ -440,7 +444,25 @@ impl AegisService {
             .email
             .reveal(&ataqu_security::PiiAccessKey::new())
             .to_string();
-        let updated_user = self.domain.authenticate(cmd, user, self.clock.as_ref())?;
+        // Check if password_hash is None (SSO-only user)
+        if let Some(ref hash) = user.password_hash {
+            // Verify password using Argon2
+            let parsed_hash = PasswordHash::new(hash)
+                .map_err(|_| AegisServiceError::AuthenticationFailed)?;
+            let argon2 = Argon2::default();
+            if argon2
+                .verify_password(cmd.password.as_bytes(), &parsed_hash)
+                .is_err()
+            {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+        } else {
+            // No password set, cannot authenticate with password
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+        // Update last_login_at
+        let mut updated_user = user;
+        updated_user.last_login_at = Some(self.clock.now());
         let (access, refresh) =
             generate_token_pair(&updated_user, &email_str, &self.config, self.clock.as_ref())?;
         self.repo.save_user(&updated_user).await?;
@@ -859,7 +881,7 @@ impl AegisService {
                 id: user_id,
                 tenant_id: TenantId::new(Uuid::nil()),
                 email: Email::new("system@ataqu.com".to_string()),
-                password_hash: String::new(),
+                password_hash: Some(String::new()),
                 name: Some("System".to_string()),
                 mfa_secret: None,
                 mfa_enabled: false,
@@ -937,7 +959,7 @@ impl AegisService {
             .map_err(|_| AegisServiceError::Internal("Hashing failed".to_string()))?
             .to_string();
 
-        user.password_hash = password_hash;
+        user.password_hash = Some(password_hash);
         user.version += 1;
         user.updated_at = self.clock.now();
         self.repo.save_user(&user).await?;
@@ -1095,4 +1117,85 @@ impl AegisService {
 
         Ok(())
     }
+    pub async fn sso_exchange_with_tenant_resolution(
+        &self,
+        email: Email,
+    ) -> Result<AuthenticateResponse, AegisServiceError> {
+        // Try to find existing user by email (across tenants)
+        if let Some(user) = self.repo.find_by_email(&email, None).await? {
+            let email_str = user
+                .email
+                .reveal(&ataqu_security::PiiAccessKey::new())
+                .to_string();
+            let (access, refresh) =
+                generate_token_pair(&user, &email_str, &self.config, self.clock.as_ref())?;
+            return Ok(AuthenticateResponse {
+                access_token: access,
+                refresh_token: refresh,
+                user_id: user.id,
+            });
+        }
+
+        // No user – create a new tenant and user
+        let tenant_id = TenantId::new(uuid::Uuid::new_v4());
+        let user_id = self.id_gen.new_uuid_v7();
+        let now = self.clock.now();
+        let user = User {
+            id: user_id,
+            tenant_id,
+            email: email.clone(),
+            password_hash: None,
+            name: None,
+            mfa_secret: None,
+            mfa_enabled: false,
+            is_active: true,
+            role: "member".to_string(),
+            created_at: now,
+            updated_at: now,
+            last_login_at: None,
+            version: 0,
+        };
+        self.repo.save_user(&user).await?;
+
+        // Emit UserCreated event
+        let payload = serde_json::json!({
+            "user_id": user_id,
+            "tenant_id": tenant_id.as_uuid(),
+            "created_at": now,
+        });
+        self.outbox
+            .append("core", "UserCreated", user_id, &payload)
+            .await
+            .map_err(|e| AegisServiceError::Outbox(e.to_string()))?;
+
+        // Set default permissions (viewer for all apps)
+        let default_permissions: Vec<(&str, &str)> = vec![
+            ("aegis", "viewer"),
+            ("cinq", "viewer"),
+            ("dial", "viewer"),
+            ("vault", "viewer"),
+            ("pause", "viewer"),
+            ("pivot", "viewer"),
+            ("sond", "viewer"),
+            ("spark", "viewer"),
+            ("tempo", "viewer"),
+            ("vista", "viewer"),
+        ];
+        for (app, role) in default_permissions {
+            if let Err(e) = self.repo.upsert_permission(tenant_id, user_id, app.to_string(), role.to_string()).await {
+                tracing::warn!(error = %e, "Failed to set default permission for user {} on app {}", user_id, app);
+            }
+        }
+
+        // Generate tokens
+        let email_str = email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let (access, refresh) =
+            generate_token_pair(&user, &email_str, &self.config, self.clock.as_ref())?;
+        Ok(AuthenticateResponse {
+            access_token: access,
+            refresh_token: refresh,
+            user_id,
+        })
+    }
+
 }

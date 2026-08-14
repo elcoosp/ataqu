@@ -38,7 +38,7 @@ pub struct User {
     pub id: Uuid,
     pub tenant_id: TenantId,
     pub email: Email,
-    pub password_hash: String,
+    pub password_hash: Option<String>,
     pub name: Option<String>,
     pub mfa_secret: Option<String>,
     pub mfa_enabled: bool,

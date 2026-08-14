@@ -20,7 +20,7 @@ mod user_entity {
         pub id: Uuid,
         pub tenant_id: Uuid,
         pub email: String,
-        pub password_hash: String,
+        pub password_hash: Option<String>,
         pub mfa_secret: Option<String>,
         pub mfa_enabled: bool,
         pub is_active: bool,
