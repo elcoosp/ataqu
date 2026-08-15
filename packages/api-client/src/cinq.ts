@@ -12,9 +12,11 @@ import type {
 	CreateActivityRequest,
 	CreateContactRequest,
 	CreateDealRequest,
+	CreateEstablishmentRequest,
 	CreatePipelineStageRequest,
 	CreateTaskRequest,
 	DealResponse,
+	Establishment,
 	ImportCsvResult,
 	IntegrationStatus,
 	IntegrationToggleRequest,
@@ -258,6 +260,32 @@ export const useSearchCustomFieldsCross = (
 export const useCreateContact = (
 	options?: UseMutationOptions<ContactResponse, Error, CreateContactRequest>,
 ) => useMutation({ mutationFn: createContact, ...options });
+export const listEstablishments = (params?: {
+	limit?: number;
+	offset?: number;
+}) => api.get<Establishment[]>("/cinq/establishments", { params });
+
+export const createEstablishment = (data: CreateEstablishmentRequest) =>
+	api.post<Establishment>("/cinq/establishments", data);
+
+export const useListEstablishments = (
+	params?: { limit?: number; offset?: number },
+	options?: UseQueryOptions<Establishment[]>,
+) =>
+	useQuery({
+		queryKey: ["cinq", "establishments", params],
+		queryFn: () => listEstablishments(params),
+		...options,
+	});
+
+export const useCreateEstablishment = (
+	options?: UseMutationOptions<
+		Establishment,
+		Error,
+		CreateEstablishmentRequest
+	>,
+) => useMutation({ mutationFn: createEstablishment, ...options });
+
 export const useUpdateContact = (
 	options?: UseMutationOptions<
 		ContactResponse,

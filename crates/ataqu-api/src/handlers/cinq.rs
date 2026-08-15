@@ -113,6 +113,38 @@ impl From<Contact> for ContactResponse {
 }
 
 #[derive(Debug, Serialize)]
+pub struct EstablishmentResponse {
+    pub id: Uuid,
+    pub company_name: String,
+    pub siret: Option<String>,
+    pub address: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<ataqu_domain_cinq::establishment::Establishment> for EstablishmentResponse {
+    fn from(e: ataqu_domain_cinq::establishment::Establishment) -> Self {
+        Self {
+            id: e.id,
+            company_name: e.company_name,
+            siret: e.siret,
+            address: e.address,
+            created_at: e.created_at,
+            updated_at: e.updated_at,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateEstablishmentRequest {
+    pub company_name: String,
+    #[serde(default)]
+    pub siret: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
 pub struct DealResponse {
     pub id: Uuid,
     pub title: String,
@@ -1170,6 +1202,63 @@ pub async fn export_deals(
     Ok((headers, bytes))
 }
 
+pub async fn list_establishments(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<PaginationParams>,
+) -> ApiResult<Json<Vec<EstablishmentResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let establishments = state
+        .cinq_service
+        .list_establishments(auth.tenant_id, limit, offset)
+        .await
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    Ok(Json(
+        establishments.into_iter().map(EstablishmentResponse::from).collect(),
+    ))
+}
+
+pub async fn get_establishment(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<EstablishmentResponse>> {
+    let est = state
+        .cinq_service
+        .get_establishment(auth.tenant_id, id)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::cinq_service::CinqServiceError::EstablishmentNotFound(_) => {
+                ApiResponseError::not_found("Establishment not found")
+            }
+            _ => ApiResponseError::internal("An unexpected error occurred"),
+        })?;
+    Ok(Json(EstablishmentResponse::from(est)))
+}
+
+pub async fn create_establishment(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<CreateEstablishmentRequest>,
+) -> ApiResult<(StatusCode, Json<EstablishmentResponse>)> {
+    if payload.company_name.trim().is_empty() {
+        return Err(ApiResponseError::validation("Company name cannot be empty"));
+    }
+    let cmd = ataqu_application::cinq_service::CreateEstablishmentCommand {
+        tenant_id: auth.tenant_id,
+        company_name: payload.company_name,
+        siret: payload.siret,
+        address: payload.address,
+    };
+    let est = state
+        .cinq_service
+        .create_establishment(auth.user_id, cmd)
+        .await
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    Ok((StatusCode::CREATED, Json(EstablishmentResponse::from(est))))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
@@ -1214,4 +1303,9 @@ pub fn routes() -> Router<AppState> {
         .route("/deals/export", get(export_deals))
         .route("/email/track", post(track_email))
         .route("/integrations/toggle", post(toggle_integration))
+        .route(
+            "/establishments",
+            get(list_establishments).post(create_establishment),
+        )
+        .route("/establishments/:id", get(get_establishment))
 }

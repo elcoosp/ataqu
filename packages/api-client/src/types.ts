@@ -184,6 +184,21 @@ export interface DealResponse {
 	updated_at: DateTime;
 	version: number;
 }
+
+export interface Establishment {
+	id: UUID;
+	company_name: string;
+	siret?: string | null;
+	address?: string | null;
+	created_at: DateTime;
+	updated_at: DateTime;
+}
+
+export interface CreateEstablishmentRequest {
+	company_name: string;
+	siret?: string;
+	address?: string;
+}
 export interface CreateDealRequest {
 	contact_id: UUID;
 	title: string;
