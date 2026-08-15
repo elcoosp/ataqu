@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import { searchEnriched, type UnifiedSearchResult } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import { useAuthStore } from "@ataqu/shared-stores";
 import {
@@ -13,11 +14,7 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { Home, LogOut, Search } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
-
-export interface CommandPaletteProps {
-	searchFn?: (q: string) => Promise<unknown[]>;
-}
+import { useEffect, useRef, useState } from "react";
 
 const APP_DOMAINS: Record<string, string> = {
 	aegis: "sso",
@@ -78,11 +75,17 @@ function getAppUrl(app: string): string {
 	return `https://${APP_DOMAINS[app]}.ataqu.com`;
 }
 
+export interface CommandPaletteProps {
+	searchFn?: (q: string) => Promise<unknown[]>;
+}
+
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 	const [open, setOpen] = useState(false);
-	const [search, setSearch] = useState("");
-	const [results, setResults] = useState<any[]>([]);
-	const debouncedSearch = useDebounce(search, 300);
+	const [query, setQuery] = useState("");
+	const [results, setResults] = useState<UnifiedSearchResult[]>([]);
+	const [loading, setLoading] = useState(false);
+	const debouncedSearch = useDebounce(query, 300);
+	const inputRef = useRef<HTMLInputElement>(null);
 	const navigate = useNavigate();
 	const { logout } = useAuthStore();
 
@@ -90,21 +93,39 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 		const down = (e: KeyboardEvent) => {
 			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
 				e.preventDefault();
-				setOpen((open) => !open);
+				setOpen((o) => !o);
 			}
 		};
 		document.addEventListener("keydown", down);
 		return () => document.removeEventListener("keydown", down);
 	}, []);
 
+	// Live unified search across all apps.
 	useEffect(() => {
-		if (!searchFn || !debouncedSearch.trim()) {
+		const q = debouncedSearch.trim();
+		if (!q) {
 			setResults([]);
+			setLoading(false);
 			return;
 		}
-		searchFn(debouncedSearch)
-			.then(setResults)
-			.catch(() => setResults([]));
+		let cancelled = false;
+		setLoading(true);
+		const run = searchFn
+			? searchFn(q).then((r) => r as UnifiedSearchResult[])
+			: searchEnriched({ q, limit: 20 });
+		run
+			.then((r) => {
+				if (!cancelled) setResults(r);
+			})
+			.catch(() => {
+				if (!cancelled) setResults([]);
+			})
+			.finally(() => {
+				if (!cancelled) setLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
 	}, [debouncedSearch, searchFn]);
 
 	const handleSelect = (callback: () => void) => {
@@ -112,15 +133,33 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 		callback();
 	};
 
+	// Cross-app results open the target app at its deep link; in-app results
+	// use the router for a seamless SPA transition.
+	const openResult = (item: UnifiedSearchResult) => {
+		const target = `${getAppUrl(item.app)}${item.url}`;
+		if (typeof window !== "undefined") {
+			window.location.href = target;
+		}
+	};
+
+	const focusSearch = () => {
+		setOpen(true);
+		// Defer focus until the dialog is mounted.
+		setTimeout(() => inputRef.current?.focus(), 0);
+	};
+
 	return (
 		<CommandDialog open={open} onOpenChange={setOpen}>
 			<CommandInput
-				placeholder="Search apps, navigate, or run commands..."
-				value={search}
-				onValueChange={setSearch}
+				ref={inputRef}
+				placeholder="Search across all apps, or type a command..."
+				value={query}
+				onValueChange={setQuery}
 			/>
 			<CommandList>
-				<CommandEmpty>No commands found.</CommandEmpty>
+				<CommandEmpty>
+					{loading ? "Searching..." : "No results found."}
+				</CommandEmpty>
 				<CommandGroup heading="Switch App">
 					{Object.keys(APP_DOMAINS).map((app) => (
 						<CommandItem
@@ -141,14 +180,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 						</CommandItem>
 					))}
 				</CommandGroup>
-				{searchFn && results.length > 0 && (
+				{results.length > 0 && (
 					<CommandGroup heading="Search Results">
 						{results.map((item) => (
 							<CommandItem
-								key={item.id}
-								onSelect={() => handleSelect(() => navigate(item.url))}
+								key={`${item.app}-${item.entity_type}-${item.id}`}
+								value={`${item.appName} ${item.entity_type} ${item.title} ${item.subtitle ?? ""}`}
+								onSelect={() => handleSelect(() => openResult(item))}
 							>
-								{item.title}
+								<img
+									src={APP_ICONS[item.app]}
+									alt={item.appName}
+									className="h-4 w-4 mr-2 rounded-sm"
+								/>
+								<span className="font-medium">{item.title}</span>
+								{item.subtitle && (
+									<span className="text-xs text-muted-foreground ml-2 truncate max-w-[200px]">
+										{item.subtitle}
+									</span>
+								)}
+								<span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+									{item.appName} · {item.entity_type}
+								</span>
 							</CommandItem>
 						))}
 					</CommandGroup>
@@ -161,9 +214,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 						<span>Dashboard</span>
 						<span className="ml-auto text-xs text-muted-foreground">⌘D</span>
 					</CommandItem>
-					<CommandItem
-						onSelect={() => handleSelect(() => console.log("Search opened"))}
-					>
+					<CommandItem onSelect={() => handleSelect(focusSearch)}>
 						<Search className="mr-2 h-4 w-4" />
 						<span>Global Search</span>
 						<span className="ml-auto text-xs text-muted-foreground">⌘S</span>

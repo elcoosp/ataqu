@@ -5,6 +5,7 @@ export * from "./client";
 export * from "./dial";
 export * from "./pause";
 export * from "./pivot";
+export * from "./search";
 export * from "./sond";
 export * from "./spark";
 export * from "./tempo";
