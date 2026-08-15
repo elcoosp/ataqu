@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { BrandingTab } from "../components/builder/branding-tab";
 import { ConversationalToggle } from "../components/builder/conversational-toggle";
 import { FormBuilder } from "../components/builder/form-builder";
+import { FormRoutingEditor } from "../components/builder/form-routing-editor";
 import type {
 	FormMode,
 	SondBranding,
@@ -231,6 +232,9 @@ function FormBuilderRoute() {
 						<TabsTrigger value="settings">
 							<Trans>Settings</Trans>
 						</TabsTrigger>
+						<TabsTrigger value="routing">
+							<Trans>Routing</Trans>
+						</TabsTrigger>
 					</TabsList>
 
 					<TabsContent value="builder" className="mt-0 flex-1 overflow-hidden">
@@ -258,6 +262,18 @@ function FormBuilderRoute() {
 									onUpdate={updateBranding}
 								/>
 							</div>
+						</div>
+					</TabsContent>
+
+					<TabsContent
+						value="routing"
+						className="mt-0 flex-1 overflow-y-auto p-6"
+					>
+						<div className="mx-auto max-w-2xl">
+							<FormRoutingEditor
+								formId={localForm.id}
+								initialRules={localForm.routing_rules}
+							/>
 						</div>
 					</TabsContent>
 				</Tabs>

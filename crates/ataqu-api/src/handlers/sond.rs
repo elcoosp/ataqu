@@ -32,6 +32,7 @@ pub struct FormResponse {
     pub description: Option<String>,
     pub questions: Vec<Value>,
     pub mode: ataqu_domain_sond::form::FormMode,
+    pub routing_rules: Option<serde_json::Value>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -62,6 +63,7 @@ impl From<ataqu_application::sond_service::Form> for FormResponse {
             description: f.description,
             questions,
             mode: f.mode,
+            routing_rules: f.routing_rules,
             created_at: f.created_at,
         }
     }
@@ -396,6 +398,20 @@ pub async fn list_form_submissions(
     Ok(Json(items))
 }
 
+pub async fn update_form_routing(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(form_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResult<Json<FormResponse>> {
+    let form = state
+        .sond_service
+        .update_form_routing(auth.user_id, auth.tenant_id, form_id, payload)
+        .await
+        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    Ok(Json(FormResponse::from(form)))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form).get(list_forms))
@@ -408,6 +424,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/forms/:id/submissions",
             axum::routing::get(list_form_submissions),
+        )
+        .route(
+            "/forms/:id/routing",
+            axum::routing::patch(update_form_routing),
         )
         .route("/forms/:id/export", axum::routing::get(export_responses))
 }

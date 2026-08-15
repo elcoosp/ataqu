@@ -91,6 +91,17 @@ export const useDeleteForm = (
 	options?: UseMutationOptions<void, Error, UUID>,
 ) => useMutation({ mutationFn: deleteForm, ...options });
 
+export const updateFormRouting = (id: UUID, rules: unknown) =>
+	api.patch<Form>(`/sond/forms/${id}/routing`, rules);
+
+export const useUpdateFormRouting = (
+	options?: UseMutationOptions<Form, Error, { id: UUID; rules: unknown }>,
+) =>
+	useMutation({
+		mutationFn: ({ id, rules }) => updateFormRouting(id, rules),
+		...options,
+	});
+
 export const useSubmitForm = (
 	options?: UseMutationOptions<
 		Submission,
