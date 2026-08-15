@@ -20,7 +20,7 @@
 		"build": "echo 'No build needed'",
 		"extract": "lingui extract",
 		"compile": "lingui compile --typescript",
-		"typecheck": "echo \"Skipping typecheck: shared-hooks import issue\""
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@ataqu/api-client": "workspace:*",

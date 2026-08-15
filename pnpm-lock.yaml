@@ -1418,6 +1418,9 @@ importers:
 
   packages/test-utils:
     dependencies:
+      '@ataqu/types':
+        specifier: workspace:*
+        version: link:../types
       msw:
         specifier: ^2.3.0
         version: 2.15.0(@types/node@26.2.0)(typescript@7.0.2)
