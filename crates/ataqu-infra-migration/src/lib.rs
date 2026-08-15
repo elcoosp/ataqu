@@ -1,8 +1,38 @@
 // allowed: pre-existing clippy warnings blocking TASK-078 build
+//
+// Migration crate layout convention
+// =================================
+// - One file per migration. Filename = the migration's identity in the
+//   `_seaorm_migrations` table (SeaORM derives the name from the module/file
+//   name via `#[derive(DeriveMigrationName)]`). DO NOT rename or move an
+//   already-applied migration file — that changes its identity and makes the
+//   migrator try to re-apply it.
+// - Naming scheme: `mYYYYMMDD_HHMMSS_snake_case_description.rs`
+//   (e.g. `m20250101_000001_core.rs`). Use UTC and a monotonic sequence.
+// - Add new migrations via `cargo run -p ataqu-infra-migration` (sea-orm-cli)
+//   or by copying an existing file and updating the `up`/`down` bodies. Register
+//   the new module in BOTH the `pub mod` block below AND the `migrations()` vec,
+//   appended at the END (migrations run in vec order).
+// - Keep each migration idempotent (use `CREATE TABLE IF NOT EXISTS`, guard
+//   alters) so re-runs are safe.
 
 use sea_orm_migration::prelude::*;
 
+// ---- core / cross-cutting ----
 pub mod m20250101_000001_core;
+pub mod m20250101_000011_create_audit_and_permissions;
+pub mod m20250101_000012_create_vista_views;
+pub mod m20250101_000013_create_shopify_integrations;
+pub mod m20250101_000014_create_onboarding_and_changelog;
+pub mod m20250101_000015_create_establishments;
+pub mod m20250101_000016_create_workflow_runs;
+pub mod m20250101_000017_create_shopify_sync_logs;
+pub mod m20250101_000018_create_user_preferences;
+pub mod m20250101_000019_add_permissions_fk_and_rls;
+pub mod m20250101_000020_create_gdpr_saga_state;
+pub mod m20250101_000021_create_inactivity_workflow;
+pub mod m20250101_000022_create_dial_tickets;
+pub mod m20250101_000023_add_email_tracking_unique;
 pub mod m20250101_000024_add_inactivity_reminder;
 pub mod m20250101_000026_add_routing_rules_to_forms;
 pub mod m20250101_000027_add_company_to_contacts;
@@ -10,9 +40,16 @@ pub mod m20250101_000028_add_mode_to_forms;
 pub mod m20250101_000029_add_shopify_unique_constraint;
 pub mod m20250101_000030_add_scope_to_shopify_integrations;
 pub mod m20250101_000031_create_file_references;
+pub mod m20250101_000032_seed_changelog;
+pub mod m20250101_000033_populate_permissions;
+pub mod m20250101_000034_create_pending_approvals;
+
+// ---- aegis ----
 pub mod m_aegis;
 pub mod m_aegis_add_api_keys;
 pub mod m_aegis_add_roles_and_tenant_settings;
+
+// ---- cinq ----
 pub mod m_cinq;
 pub mod m_cinq_add_activity_stage;
 pub mod m_cinq_add_contact_unique;
@@ -21,61 +58,62 @@ pub mod m_cinq_add_deal_pipeline_stage;
 pub mod m_cinq_add_integrations;
 pub mod m_cinq_add_lead_score;
 pub mod m_cinq_add_tasks;
+
+// ---- dial ----
 pub mod m_dial;
 pub mod m_dial_add_message_columns;
 pub mod m_dial_add_participants;
 pub mod m_dial_add_presence;
 pub mod m_dial_add_reactions;
 pub mod m_dial_add_threads_mentions;
+
+// ---- pause ----
 pub mod m_pause;
 pub mod m_pause_add_columns;
 pub mod m_pause_add_documents;
 pub mod m_pause_rename_to_full_name;
+
+// ---- pivot ----
 pub mod m_pivot;
 pub mod m_pivot_add_blocks_relations;
 pub mod m_pivot_add_database_rows;
 pub mod m_pivot_add_document_versions;
 pub mod m_pivot_add_templates;
+
+// ---- sond ----
 pub mod m_sond;
 pub mod m_sond_add_schema;
+
+// ---- spark ----
 pub mod m_spark;
+
+// ---- tempo ----
 pub mod m_tempo;
 pub mod m_tempo_add_event_types;
 pub mod m_tempo_add_reminder_tz;
 pub mod m_tempo_add_slug;
 pub mod m_tempo_add_status;
 pub mod m_tempo_fix_duration;
+
+// ---- vault ----
 pub mod m_vault;
 pub mod m_vault_add_price_column;
 pub mod m_vault_add_products_variants;
 pub mod m_vault_add_reservations;
 pub mod m_vault_add_stock_movements;
 pub mod m_vault_add_warehouses;
-pub mod m_vista_add_dashboards;
+
+// ---- vista ----
 pub mod m_vista_tables;
-
-// NEW STUBS
-
-pub mod m20250101_000017_create_shopify_sync_logs;
-pub mod m20250101_000018_create_user_preferences;
-pub mod m20250101_000019_add_permissions_fk_and_rls;
-pub mod m20250101_000020_create_gdpr_saga_state;
-pub mod m20250101_000021_create_inactivity_workflow;
-pub mod m20250101_000022_create_dial_tickets;
-pub mod m20250101_000023_add_email_tracking_unique;
-
-pub mod m20250101_000011_create_audit_and_permissions;
-pub mod m20250101_000012_create_vista_views;
-
-pub mod m20250101_000014_create_onboarding_and_changelog;
-pub mod m20250101_000015_create_establishments;
-pub mod m20250101_000016_create_workflow_runs;
+pub mod m_vista_add_dashboards;
 
 pub struct Migrator;
 
 #[async_trait::async_trait]
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
+        // ORDER IS SIGNIFICANT: migrations execute in this vec order.
+        // Do not reorder existing entries; append new ones at the end.
         vec![
             Box::new(m20250101_000001_core::Migration),
             Box::new(m_aegis::Migration),
@@ -118,7 +156,6 @@ impl MigratorTrait for Migrator {
             Box::new(m_vault_add_warehouses::Migration),
             Box::new(m_vista_tables::Migration),
             Box::new(m_vista_add_dashboards::Migration),
-            // NEW MIGRATIONS
             Box::new(m20250101_000011_create_audit_and_permissions::Migration),
             Box::new(m20250101_000013_create_shopify_integrations::Migration),
             Box::new(m20250101_000014_create_onboarding_and_changelog::Migration),
@@ -147,8 +184,3 @@ impl MigratorTrait for Migrator {
         ]
     }
 }
-
-pub mod m20250101_000013_create_shopify_integrations;
-mod m20250101_000032_seed_changelog;
-mod m20250101_000033_populate_permissions;
-mod m20250101_000034_create_pending_approvals;
