@@ -58,4 +58,11 @@ pub trait WorkflowRunRepository: Send + Sync {
         tenant_id: &TenantId,
         run_id: &Uuid,
     ) -> Result<Option<WorkflowRun>, SparkError>;
+
+    async fn list_runs(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<WorkflowRun>, SparkError>;
 }

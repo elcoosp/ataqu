@@ -404,6 +404,40 @@ impl SparkService {
         Ok(())
     }
 
+    /// List workflow runs for a tenant, newest first, paginated.
+    pub async fn list_runs(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> SparkResult<Vec<WorkflowRun>> {
+        let Some(run_repo) = self.run_repo.as_ref() else {
+            return Err(SparkServiceError::Repository(
+                "Workflow run repository not configured".to_string(),
+            ));
+        };
+        Ok(run_repo
+            .list_runs(&tenant_id, limit, offset)
+            .await?)
+    }
+
+    /// Fetch a single workflow run by id.
+    pub async fn get_run(
+        &self,
+        tenant_id: TenantId,
+        run_id: Uuid,
+    ) -> SparkResult<WorkflowRun> {
+        let Some(run_repo) = self.run_repo.as_ref() else {
+            return Err(SparkServiceError::Repository(
+                "Workflow run repository not configured".to_string(),
+            ));
+        };
+        run_repo
+            .get_run(&tenant_id, &run_id)
+            .await?
+            .ok_or(SparkServiceError::WorkflowNotFound)
+    }
+
     async fn execute_workflow(&self, workflow: &Workflow) -> SparkResult<Uuid> {
         let Some(run_repo) = self.run_repo.as_ref() else {
             self.dispatch_actions_without_run_tracking(workflow).await;

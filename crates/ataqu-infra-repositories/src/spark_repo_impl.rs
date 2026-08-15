@@ -5,7 +5,7 @@ use ataqu_domain_spark::{SparkError, Workflow};
 use ataqu_kernel::TenantId;
 use sea_orm::IntoActiveModel;
 use sea_orm::entity::prelude::*;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, Set};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect, Set};
 use uuid::Uuid;
 
 mod workflow_entity {
@@ -431,5 +431,43 @@ impl WorkflowRunRepository for WorkflowRunRepositoryImpl {
             created_at: m.created_at.into(),
             updated_at: m.updated_at.into(),
         }))
+    }
+
+    async fn list_runs(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<WorkflowRun>, SparkError> {
+        use workflow_run_entity as entity;
+        let models = entity::Entity::find()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .order_by_desc(entity::Column::CreatedAt)
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| SparkError::Database(e.to_string()))?;
+
+        Ok(models
+            .into_iter()
+            .map(|m| WorkflowRun {
+                id: m.id,
+                tenant_id: m.tenant_id,
+                workflow_id: m.workflow_id,
+                status: match m.status.as_str() {
+                    "running" => WorkflowRunStatus::Running,
+                    "pending_approval" => WorkflowRunStatus::PendingApproval,
+                    "approved" => WorkflowRunStatus::Approved,
+                    "rejected" => WorkflowRunStatus::Rejected,
+                    "completed" => WorkflowRunStatus::Completed,
+                    "failed" => WorkflowRunStatus::Failed,
+                    _ => WorkflowRunStatus::Running,
+                },
+                payload: m.payload,
+                created_at: m.created_at.into(),
+                updated_at: m.updated_at.into(),
+            })
+            .collect())
     }
 }
