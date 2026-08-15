@@ -7,6 +7,7 @@ import type React from "react";
 import { useState } from "react";
 import { CommandRegistryProvider } from "../command-registry";
 import { Button } from "./button";
+import { ChangelogBell } from "./changelog-bell";
 import { CommandPalette } from "./command-palette";
 import { SetupProgressWidget } from "./setup-progress-widget";
 
@@ -275,6 +276,8 @@ export const Shell: React.FC<ShellProps> = ({
 								Search
 							</span>
 						</Button>
+						<div className="h-8 w-px bg-gray-700 hidden sm:block" />
+						<ChangelogBell />
 						<div className="h-8 w-px bg-gray-700 hidden sm:block" />
 						<Button
 							variant="ghost"
