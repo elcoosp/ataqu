@@ -8,6 +8,7 @@ import { useState } from "react";
 import { CommandRegistryProvider } from "../command-registry";
 import { Button } from "./button";
 import { CommandPalette } from "./command-palette";
+import { SetupProgressWidget } from "./setup-progress-widget";
 
 const APP_ICONS: Record<string, string> = {
 	aegis: "/apps/aegis.png",
@@ -231,6 +232,7 @@ export const Shell: React.FC<ShellProps> = ({
 						{APP_NAMES[activeApp] || "Ataqu"}
 					</span>
 					<div className="flex items-center gap-4">
+						<SetupProgressWidget />
 						{health && (
 							<div
 								title={`System health: ${health.status}${
