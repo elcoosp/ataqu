@@ -4,6 +4,8 @@ node_modules
 dist
 target
 .env
+test-results
+playwright-report
 local.db
 .next
 reddit-session.json

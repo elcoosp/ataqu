@@ -1,3 +1,24 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# pnpm 11+ reads overrides from here (package.json "pnpm.overrides" is ignored).
+overrides:
+  vitest: 4.1.10
+  "@vitest/browser": 4.1.10
+  "@vitest/browser-playwright": 4.1.10
+  "@vitest/coverage-v8": 4.1.10
+  "@lingui/core": ^6.6.0
+  "@lingui/react": ^6.6.0
+  "@lingui/cli": ^6.6.0
+  "@lingui/format-po": ^6.6.0
+  "@lingui/swc-plugin": ^6.6.0
+
+# Allow these packages to run their install build scripts (esbuild/swc need them
+# to produce working binaries; otherwise pnpm's deps-status check fails).
+onlyBuiltDependencies:
+  - esbuild
+  - "@swc/core"
+  - unrs-resolver
+  - sharp
+  - msw
