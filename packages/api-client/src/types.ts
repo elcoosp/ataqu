@@ -46,6 +46,7 @@ export interface UserResponse {
 	is_active: boolean;
 	mfa_enabled: boolean;
 	last_login_at?: DateTime;
+	created_at?: DateTime;
 }
 
 export interface UpdateRoleRequest {

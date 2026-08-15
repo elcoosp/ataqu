@@ -1,5 +1,3 @@
-// TODO: Audit logging - pass user_id to service methods
-// TODO: Add user_id parameter to all service mutation calls
 //! CINQ API handlers using AuthContext.
 //! Only implements endpoints that are fully supported by CinqService.
 

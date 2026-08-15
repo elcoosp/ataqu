@@ -46,6 +46,10 @@ export const bulkDeleteContacts = (data: BulkDeleteRequest) =>
 // ---- Deals ----
 export const listDeals = (params?: { limit?: number; offset?: number }) =>
 	api.get<DealResponse[]>("/cinq/deals", { params });
+export const searchDeals = (q: string, limit = 10) =>
+	api.get<DealResponse[]>("/cinq/deals", {
+		params: { q, limit },
+	});
 export const createDeal = (data: CreateDealRequest) =>
 	api.post<DealResponse>("/cinq/deals", data);
 export const getDeal = (id: UUID) => api.get<DealResponse>(`/cinq/deals/${id}`);

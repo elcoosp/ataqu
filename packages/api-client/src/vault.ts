@@ -29,6 +29,8 @@ export const listProducts = (params?: { limit?: number; offset?: number }) =>
 		"/vault/products",
 		{ params },
 	);
+export const searchProducts = (q: string, limit = 10) =>
+	api.get<Product[]>("/vault/products", { params: { q, limit } });
 export const createProduct = (data: CreateProductRequest) =>
 	api.post<Product>("/vault/products", data);
 export const getProduct = (id: UUID) =>

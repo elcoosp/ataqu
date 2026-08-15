@@ -1,6 +1,6 @@
 // apps/aegis/src/routes/_auth/users.$id.tsx
 
-import { api } from "@ataqu/api-client";
+import { deactivateUser, useListUsers } from "@ataqu/api-client";
 import {
 	Button,
 	Card,
@@ -17,7 +17,7 @@ import {
 	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	useNavigate,
@@ -32,39 +32,11 @@ export const Route = createFileRoute("/_auth/users/$id")({
 		const navigate = useNavigate();
 		const queryClient = useQueryClient();
 
-		const {
-			data: user,
-			isLoading,
-			error,
-		} = useQuery({
-			queryKey: ["aegis", "users", id],
-			queryFn: async () => {
-				const users =
-					await api.get<
-						Array<{
-							id: string;
-							email: string;
-							name?: string;
-							role: string;
-							is_active: boolean;
-							mfa_enabled: boolean;
-							last_login_at?: string;
-							created_at: string;
-							version: number;
-						}>
-					>("/aegis/users");
-				return users.find((u) => u.id === id);
-			},
-			enabled: !!id,
-		});
+		const { data: users = [], isLoading, error } = useListUsers();
+		const user = users.find((u) => u.id === id);
 
 		const _deactivateMutation = useMutation({
-			mutationFn: (userId: string) =>
-				api.post(
-					`/aegis/users/${userId}/deactivate`,
-					{},
-					{ headers: { "Idempotency-Key": crypto.randomUUID() } },
-				),
+			mutationFn: (userId: string) => deactivateUser(userId),
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 				toast.success("User deactivated.");
@@ -147,7 +119,9 @@ export const Route = createFileRoute("/_auth/users/$id")({
 							<strong>
 								<Trans>Created:</Trans>
 							</strong>{" "}
-							{new Date(user.created_at).toLocaleString()}
+							{user.created_at
+								? new Date(user.created_at).toLocaleString()
+								: "—"}
 						</div>
 
 						{user.is_active && (

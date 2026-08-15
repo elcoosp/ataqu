@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { searchDeals, searchProducts } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Input, Popover, PopoverContent, PopoverTrigger } from "@ataqu/ui";
@@ -40,8 +40,11 @@ export function RelationCell({
 		queryKey: ["relation-search", app, debouncedSearch],
 		queryFn: () => {
 			if (!debouncedSearch || debouncedSearch.length < 2) return [];
-			const endpoint = app === "cinq" ? "/cinq/deals" : "/vault/products";
-			return api.get(endpoint, { params: { q: debouncedSearch, limit: 10 } });
+			const endpoint =
+				app === "cinq"
+					? searchDeals(debouncedSearch, 10)
+					: searchProducts(debouncedSearch, 10);
+			return endpoint;
 		},
 		enabled: open && debouncedSearch.length >= 2,
 	});
