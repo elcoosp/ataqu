@@ -13,8 +13,6 @@
 		"lint": "biome check --write --unsafe .",
 		"extract": "pnpm -r extract",
 		"compile": "pnpm -r compile",
-		"generate:api": "node scripts/generate-api-client.ts",
-		"prepare": "pnpm generate:api",
 		"typecheck": "pnpm -r --if-present typecheck"
 	},
 	"devDependencies": {
