@@ -123,7 +123,7 @@ export function TicketDetail() {
 					<textarea
 						className="flex-1 min-h-[60px] resize-none bg-background border border-input rounded-md px-3 py-2 text-sm"
 						value={reply}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 							setReply(e.target.value)
 						}
 						placeholder={t`Type a reply...`}

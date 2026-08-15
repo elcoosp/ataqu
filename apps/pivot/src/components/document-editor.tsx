@@ -29,7 +29,7 @@ export function DocumentEditor({
 	const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
 		"idle",
 	);
-	const timerRef = useRef<NodeJS.Timeout | null>(null);
+	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const updateMutation = useUpdateDocument({
 		onSuccess: (data) => {
@@ -115,7 +115,7 @@ export function DocumentEditor({
 					/>
 					<textarea
 						value={content}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 							setContent(e.target.value)
 						}
 						className="flex-1 p-2 bg-background font-mono text-sm resize-none outline-none"

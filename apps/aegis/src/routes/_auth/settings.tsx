@@ -14,7 +14,7 @@ import {
 import { Trans } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { QRCodeSVG as QRCode } from "qrcode.react";
+import QRCode from "qrcode.react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

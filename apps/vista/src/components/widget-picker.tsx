@@ -49,7 +49,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({
 						<select
 							id="widget-type"
 							value={widgetType}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setWidgetType(e.target.value)
 							}
 							className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
@@ -68,7 +68,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({
 						<select
 							id="data-source"
 							value={dataSource}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setDataSource(e.target.value)
 							}
 							className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"

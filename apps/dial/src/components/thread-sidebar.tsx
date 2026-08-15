@@ -21,7 +21,7 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
 	const { data: messages, isLoading } = useListThreadMessages(
 		threadId!,
 		{ limit: 100, offset: 0 },
-		{ enabled: !!threadId },
+		{ enabled: !!threadId, queryKey: ["thread-messages", threadId] },
 	);
 
 	useEffect(() => {

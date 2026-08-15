@@ -3,7 +3,7 @@ import { Button, OnboardTour, Shell, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, Combine, Plus } from "lucide-react";
 import React from "react";
 import type { Layout } from "react-grid-layout";
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_auth/dashboard/$id")({
 });
 
 function DashboardDetailPage() {
-	const { id } = useParams() as { id: string };
+	const { id } = Route.useParams();
 	const { data: dashboard, isLoading } = useGetDashboard(id);
 	const updateDashboardMutation = useUpdateDashboard();
 	const queryClient = useQueryClient();
@@ -220,7 +220,7 @@ const CombineDataModal: React.FC<{
 						<select
 							id="primary-source"
 							value={primary}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setPrimary(e.target.value)
 							}
 							className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
@@ -236,7 +236,7 @@ const CombineDataModal: React.FC<{
 						<select
 							id="secondary-source"
 							value={secondary}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setSecondary(e.target.value)
 							}
 							className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"

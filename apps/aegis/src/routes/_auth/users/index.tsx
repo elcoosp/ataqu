@@ -210,11 +210,7 @@ function InviteDialog({
 	onSubmit: (data: { email: string; role: string }) => void;
 	isPending: boolean;
 }) {
-	const {
-		register: _register,
-		handleSubmit: _handleSubmit,
-		reset: _reset,
-	} = useForm<{
+	const { register, handleSubmit, reset } = useForm<{
 		email: string;
 		role: string;
 	}>({

@@ -238,11 +238,7 @@ function CreateKeyDialog({
 	onSubmit: (data: { name: string }) => void;
 	isPending: boolean;
 }) {
-	const {
-		register: _register,
-		handleSubmit: _handleSubmit,
-		reset: _reset,
-	} = useForm<{ name: string }>();
+	const { register, handleSubmit, reset } = useForm<{ name: string }>();
 
 	const handleClose = () => {
 		reset();

@@ -92,7 +92,7 @@ export function CsvImport() {
 									<span className="w-32 truncate">{h}</span>
 									<select
 										value={mapping[h] || ""}
-										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+										onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 											setMapping({ ...mapping, [h]: e.target.value })
 										}
 										className="border rounded px-2 py-1"

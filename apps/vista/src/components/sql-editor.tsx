@@ -88,7 +88,7 @@ export const SqlEditor: React.FC = () => {
 				<div className="flex items-center gap-2">
 					<textarea
 						value={sql}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 							setSql(e.target.value)
 						}
 						className="font-mono text-sm bg-deep-night/50 min-h-[100px] w-full p-2 rounded border border-gray-700/40"

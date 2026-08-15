@@ -74,7 +74,7 @@ function TemplatesPage() {
 						rows={6}
 						placeholder={i18n._("Template content (markdown)")}
 						value={content}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 							setContent(e.target.value)
 						}
 					/>

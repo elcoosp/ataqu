@@ -131,7 +131,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
 						<Textarea
 							id="et-desc"
 							value={description}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 								setDescription(e.target.value)
 							}
 						/>
@@ -288,7 +288,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
 						<Textarea
 							id="et-invite-tpl"
 							value={invitationTemplate}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 								setInvitationTemplate(e.target.value)
 							}
 							placeholder="Hi {name}, your meeting is on {date} at {time}."
@@ -306,7 +306,7 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
 						<Textarea
 							id="et-reminder-tpl"
 							value={reminderTemplate}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 								setReminderTemplate(e.target.value)
 							}
 							placeholder="Reminder: meeting with {name} on {date} at {time}."

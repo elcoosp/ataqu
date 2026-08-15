@@ -11,7 +11,7 @@ import {
 } from "@ataqu/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trans } from "@lingui/react/macro";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import type React from "react";
 import { useForm } from "react-hook-form";
 import { AuthLayout } from "../auth-layout";
@@ -142,9 +142,9 @@ export const LoginForm: React.FC = () => {
 
 						<p className="text-center text-sm text-gray-400">
 							<Trans>Don't have an account?</Trans>{" "}
-							<Link to="/register" className="text-primary hover:underline">
+							<a href="/register" className="text-primary hover:underline">
 								<Trans>Create one</Trans>
-							</Link>
+							</a>
 						</p>
 					</form>
 				</CardContent>

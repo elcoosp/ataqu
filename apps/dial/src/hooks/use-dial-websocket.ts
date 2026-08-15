@@ -18,7 +18,7 @@ type WebSocketMessage =
 
 export const useDialWebSocket = () => {
 	const wsRef = useRef<WebSocket | null>(null);
-	const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
+	const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const reconnectAttempts = useRef(0);
 	const { token } = useAuthStore();
 	const { setConnectionState, setPresence, removePresence } = useDialStore();

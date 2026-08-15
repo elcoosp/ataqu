@@ -116,7 +116,7 @@ function workflowToEdges(wf: Workflow): Edge[] {
 		edges.push({
 			id: `edge-${i}`,
 			source: sourceId,
-			selector: targetId,
+			target: targetId,
 			animated: true,
 			style: { stroke: "#F59E0B", strokeWidth: 2 },
 		});

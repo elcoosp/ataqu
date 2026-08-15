@@ -18,7 +18,7 @@ export const Route = createFileRoute("/login")({
 			refreshToken?: string;
 			user_id?: string;
 		};
-		const { login, isAuthenticated } = useAuthStore();
+		const { login, token } = useAuthStore();
 		const [email, setEmail] = useState("");
 		const [password, setPassword] = useState("");
 		const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/login")({
 		useEffect(() => {
 			if (search.token && search.refreshToken && search.user_id) {
 				const user = { id: search.user_id, email: "", tenantId: "", roles: [] };
-				login(search.token, search.refreshToken, user);
+				login(search.token, user);
 				navigate({ to: "/dashboard" });
 			}
 		}, [search]);
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/login")({
 					refresh_token: string;
 					user_id: string;
 				}>("/aegis/login", { email, password });
-				login(res.access_token, res.refresh_token, {
+				login(res.access_token, {
 					id: res.user_id,
 					email,
 					tenantId: "",
@@ -65,7 +65,7 @@ export const Route = createFileRoute("/login")({
 			}
 		};
 
-		if (isAuthenticated) {
+		if (token) {
 			navigate({ to: "/dashboard" });
 			return null;
 		}

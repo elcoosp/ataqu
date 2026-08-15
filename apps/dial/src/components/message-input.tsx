@@ -121,7 +121,7 @@ export function MessageInput({
 					className="resize-none min-h-[40px] max-h-[200px] bg-background border border-input rounded-md px-3 py-2 text-sm w-full"
 					ref={textareaRef}
 					value={content}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+					onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 						setContent(e.target.value)
 					}
 					onKeyDown={handleKeyDown}

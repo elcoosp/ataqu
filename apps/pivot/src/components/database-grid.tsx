@@ -145,7 +145,7 @@ export function DatabaseGrid({
 					type={col.type === "number" ? "number" : "text"}
 					defaultValue={value}
 					autoFocus
-					onBlur={(e: React.FocusEvent) =>
+					onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
 						handleCellChange(row.id, col.name, e.target.value)
 					}
 					onKeyDown={(e: React.KeyboardEvent) => {

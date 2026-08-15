@@ -17,7 +17,7 @@ export const useWebSocket = <T = unknown>(
 	const [lastMessage, setLastMessage] = useState<T | null>(null);
 	const reconnectAttempts = useRef(0);
 	const wsRef = useRef<WebSocket | null>(null);
-	const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
+	const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const {
 		onOpen,
