@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { listDocumentVersions, updateDocument } from "@ataqu/api-client";
 import { useIdempotency } from "@ataqu/shared-hooks";
 import { formatDate, handleApiError } from "@ataqu/shared-utils";
 import {
@@ -33,16 +33,14 @@ export function VersionHistory({
 		error,
 	} = useQuery<any[]>({
 		queryKey: ["versions", documentId],
-		queryFn: () => api.get(`/docs/${documentId}/versions`),
+		queryFn: () => listDocumentVersions(documentId),
 	});
 
 	if (error) toast.error(handleApiError(error));
 
 	const updateMutation = useMutation({
 		mutationFn: (data: { title: string; content: string; version: number }) =>
-			api.patch(`/docs/${documentId}`, data, {
-				headers: { "Idempotency-Key": getKey() },
-			}),
+			updateDocument(documentId, data),
 		onSuccess: () => {
 			toast.success(<Trans>Version restored.</Trans>);
 			onRestore?.();

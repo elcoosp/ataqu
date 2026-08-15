@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { toggleIntegration } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
 import { Badge, Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
@@ -21,12 +21,7 @@ export function IntegrationToggle({
 
 	const mutation = useMutation({
 		mutationFn: (enabled: boolean) =>
-			api.post("/integrations/toggle", {
-				sourceApp: "cinq",
-				targetApp,
-				entityId: dealId,
-				enabled,
-			}),
+			toggleIntegration({ integration: targetApp, enabled }),
 		onSuccess: (data: any) => {
 			setEnabled(data.enabled);
 			queryClient.invalidateQueries({ queryKey: ["cinq", "deal", dealId] });

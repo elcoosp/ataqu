@@ -13,9 +13,9 @@ export interface WorkflowResult {
 }
 
 export const createWorkflow = (data: SparkWorkflow) =>
-	api.post<WorkflowResult>("/workflows", data);
+	api.post<WorkflowResult>("/spark/workflows", data);
 export const executeWorkflow = (workflowId: string) =>
-	api.post<WorkflowResult>(`/workflows/${workflowId}/execute`);
+	api.post<WorkflowResult>(`/spark/workflows/${workflowId}/execute`);
 
 export const useCreateWorkflow = (
 	options?: UseMutationOptions<WorkflowResult, Error, SparkWorkflow>,

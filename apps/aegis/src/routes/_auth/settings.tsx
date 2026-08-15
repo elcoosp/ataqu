@@ -1,6 +1,11 @@
 // apps/aegis/src/routes/_auth/settings.tsx
 
-import { api } from "@ataqu/api-client";
+import {
+	updateTenantSettings,
+	useGetTenantSettings,
+	useMfaSetup,
+	useMfaVerify,
+} from "@ataqu/api-client";
 import {
 	Button,
 	Card,
@@ -12,7 +17,7 @@ import {
 	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import QRCode from "qrcode.react";
 import { useState } from "react";
@@ -27,21 +32,10 @@ export const Route = createFileRoute("/_auth/settings")({
 		const [mfaQrUrl, setMfaQrUrl] = useState<string | null>(null);
 		const [mfaVerificationCode, setMfaVerificationCode] = useState("");
 
-		const {
-			data: tenant,
-			isLoading,
-			error,
-		} = useQuery({
-			queryKey: ["aegis", "tenant"],
-			queryFn: () =>
-				api.get<{ id: string; name: string; plan: string }>("/aegis/tenant"),
-		});
+		const { data: tenant, isLoading, error } = useGetTenantSettings();
 
 		const updateTenantMutation = useMutation({
-			mutationFn: (data: { name: string }) =>
-				api.patch("/aegis/tenant/settings", data, {
-					headers: { "Idempotency-Key": crypto.randomUUID() },
-				}),
+			mutationFn: (data: { name: string }) => updateTenantSettings(data),
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "tenant"] });
 				toast.success("Settings updated.");
@@ -55,13 +49,7 @@ export const Route = createFileRoute("/_auth/settings")({
 			values: tenant ? { name: tenant.name } : { name: "" },
 		});
 
-		const setupMfaMutation = useMutation({
-			mutationFn: () =>
-				api.post<{ secret: string; qr_code_url: string }>(
-					"/aegis/mfa/setup",
-					{},
-					{ headers: { "Idempotency-Key": crypto.randomUUID() } },
-				),
+		const setupMfaMutation = useMfaSetup({
 			onSuccess: (data) => {
 				setMfaSecret(data.secret);
 				setMfaQrUrl(data.qr_code_url);
@@ -72,13 +60,7 @@ export const Route = createFileRoute("/_auth/settings")({
 			},
 		});
 
-		const verifyMfaMutation = useMutation({
-			mutationFn: (code: string) =>
-				api.post(
-					"/aegis/mfa/verify",
-					{ code },
-					{ headers: { "Idempotency-Key": crypto.randomUUID() } },
-				),
+		const verifyMfaMutation = useMfaVerify({
 			onSuccess: () => {
 				setMfaSecret(null);
 				setMfaQrUrl(null);
@@ -193,7 +175,7 @@ export const Route = createFileRoute("/_auth/settings")({
 									/>
 									<Button
 										onClick={() =>
-											verifyMfaMutation.mutate(mfaVerificationCode)
+											verifyMfaMutation.mutate({ code: mfaVerificationCode })
 										}
 										disabled={
 											verifyMfaMutation.isPending ||

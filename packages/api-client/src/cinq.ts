@@ -16,6 +16,8 @@ import type {
 	CreateTaskRequest,
 	DealResponse,
 	ImportCsvResult,
+	IntegrationStatus,
+	IntegrationToggleRequest,
 	ListActivitiesParams,
 	PipelineStageResponse,
 	SearchParams,
@@ -109,6 +111,8 @@ export const importCsv = (formData: FormData) =>
 	});
 export const exportCsv = () =>
 	api.get<Blob>("/cinq/csv/export", { responseType: "blob" });
+export const exportDealsCsv = () =>
+	api.get<Blob>("/cinq/deals/export", { responseType: "blob" });
 
 // ---- Email Tracking ----
 export const trackEmail = (data: TrackEmailRequest) =>
@@ -121,6 +125,17 @@ export const getContactTracking = (
 		`/cinq/contacts/${contactId}/tracking`,
 		{ params },
 	);
+
+// ---- Integrations ----
+export const toggleIntegration = (data: IntegrationToggleRequest) =>
+	api.post<IntegrationStatus>("/cinq/integrations/toggle", data);
+export const useToggleIntegration = (
+	options?: UseMutationOptions<
+		IntegrationStatus,
+		Error,
+		IntegrationToggleRequest
+	>,
+) => useMutation({ mutationFn: toggleIntegration, ...options });
 
 // ---- React Query hooks ----
 export const useListContacts = (

@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { exportCsv, exportDealsCsv } from "@ataqu/api-client";
 import { Shell } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Outlet, useNavigate } from "@tanstack/react-router";
@@ -60,7 +60,7 @@ export function App() {
 				id: "cinq-export-contacts",
 				title: t`Export Contacts CSV`,
 				action: () => {
-					api.get("/cinq/csv/export", { responseType: "blob" }).then((blob) => {
+					exportCsv().then((blob) => {
 						const url = URL.createObjectURL(blob as Blob);
 						const a = document.createElement("a");
 						a.href = url;
@@ -74,16 +74,14 @@ export function App() {
 				id: "cinq-export-deals",
 				title: t`Export Deals CSV`,
 				action: () => {
-					api
-						.get("/cinq/deals/export", { responseType: "blob" })
-						.then((blob) => {
-							const url = URL.createObjectURL(blob as Blob);
-							const a = document.createElement("a");
-							a.href = url;
-							a.download = "deals.csv";
-							a.click();
-							URL.revokeObjectURL(url);
-						});
+					exportDealsCsv().then((blob) => {
+						const url = URL.createObjectURL(blob as Blob);
+						const a = document.createElement("a");
+						a.href = url;
+						a.download = "deals.csv";
+						a.click();
+						URL.revokeObjectURL(url);
+					});
 				},
 			},
 		];

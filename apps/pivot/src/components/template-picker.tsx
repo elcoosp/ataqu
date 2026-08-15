@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { listTemplates, useApplyTemplateToDoc } from "@ataqu/api-client";
 import { useIdempotency } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
@@ -9,7 +9,7 @@ import {
 	DialogTrigger,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -32,18 +32,12 @@ export function TemplatePicker({
 		error,
 	} = useQuery<any[]>({
 		queryKey: ["templates"],
-		queryFn: () => api.get("/templates"),
+		queryFn: () => listTemplates(),
 	});
 
 	if (error) toast.error(handleApiError(error));
 
-	const applyMutation = useMutation({
-		mutationFn: (templateId: string) =>
-			api.post(
-				`/docs/${documentId}/apply-template`,
-				{ templateId },
-				{ headers: { "Idempotency-Key": getKey() } },
-			),
+	const applyMutation = useApplyTemplateToDoc(documentId, {
 		onSuccess: () => {
 			toast.success(<Trans>Template applied.</Trans>);
 			onApplied?.();

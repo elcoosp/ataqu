@@ -7,6 +7,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use uuid::Uuid;
@@ -56,6 +57,87 @@ pub async fn create_user(
             Err(map_aegis_error(err))
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateRoleRequest {
+    pub name: String,
+    #[serde(default)]
+    pub permissions: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RoleResponse {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub name: String,
+    pub permissions: Vec<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+pub async fn list_roles(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<RoleResponse>>> {
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    let rows = sqlx::query(
+		"SELECT id, tenant_id, name, permissions, created_at FROM core.roles WHERE tenant_id = $1 ORDER BY created_at DESC",
+	)
+	.bind(auth.tenant_id.as_uuid())
+	.fetch_all(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to list roles"))?;
+    let list = rows
+        .into_iter()
+        .map(|r| RoleResponse {
+            id: r.get::<Uuid, _>("id"),
+            tenant_id: r.get::<Uuid, _>("tenant_id"),
+            name: r.get::<String, _>("name"),
+            permissions: serde_json::from_value(r.get::<serde_json::Value, _>("permissions"))
+                .unwrap_or_default(),
+            created_at: r.get::<DateTime<Utc>, _>("created_at"),
+        })
+        .collect();
+    Ok(Json(list))
+}
+
+pub async fn create_role(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<CreateRoleRequest>,
+) -> ApiResult<(StatusCode, Json<RoleResponse>)> {
+    use sqlx::Row;
+    let id = Uuid::new_v4();
+    let pool = state.db.get_postgres_connection_pool();
+    sqlx::query(
+        "INSERT INTO core.roles (id, tenant_id, name, permissions) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(id)
+    .bind(auth.tenant_id.as_uuid())
+    .bind(&req.name)
+    .bind(serde_json::json!(req.permissions))
+    .execute(pool)
+    .await
+    .map_err(|_| ApiResponseError::internal("Failed to create role"))?;
+    let row = sqlx::query(
+        "SELECT id, tenant_id, name, permissions, created_at FROM core.roles WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await
+    .map_err(|_| ApiResponseError::internal("Failed to read role"))?;
+    Ok((
+        StatusCode::CREATED,
+        Json(RoleResponse {
+            id: row.get::<Uuid, _>("id"),
+            tenant_id: row.get::<Uuid, _>("tenant_id"),
+            name: row.get::<String, _>("name"),
+            permissions: serde_json::from_value(row.get::<serde_json::Value, _>("permissions"))
+                .unwrap_or_default(),
+            created_at: row.get::<DateTime<Utc>, _>("created_at"),
+        }),
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -743,6 +825,156 @@ pub async fn update_permission(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, Deserialize, Default)]
+pub struct UpdateTenantSettingsRequest {
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub settings: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TenantSettingsResponse {
+	pub id: Uuid,
+	pub tenant_id: Uuid,
+	pub name: String,
+	pub plan: String,
+	pub settings: serde_json::Value,
+	pub updated_at: DateTime<Utc>,
+}
+
+pub async fn get_tenant_settings(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<TenantSettingsResponse>> {
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    let row = sqlx::query(
+		"SELECT id, tenant_id, name, settings, updated_at FROM core.tenant_settings WHERE tenant_id = $1",
+	)
+	.bind(auth.tenant_id.as_uuid())
+	.fetch_optional(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
+    let resp = match row {
+    	Some(r) => TenantSettingsResponse {
+    		id: r.get::<Uuid, _>("id"),
+    		tenant_id: r.get::<Uuid, _>("tenant_id"),
+    		name: r.get::<String, _>("name"),
+    		plan: "standard".to_string(),
+    		settings: r.get::<serde_json::Value, _>("settings"),
+    		updated_at: r.get::<DateTime<Utc>, _>("updated_at"),
+    	},
+    	None => TenantSettingsResponse {
+    		id: Uuid::new_v4(),
+    		tenant_id: auth.tenant_id.as_uuid(),
+    		name: String::new(),
+    		plan: "standard".to_string(),
+    		settings: serde_json::json!({}),
+    		updated_at: Utc::now(),
+    	},
+    };
+    Ok(Json(resp))
+}
+
+pub async fn update_tenant_settings(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<UpdateTenantSettingsRequest>,
+) -> ApiResult<Json<TenantSettingsResponse>> {
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    let existing =
+        sqlx::query("SELECT id, name, settings FROM core.tenant_settings WHERE tenant_id = $1")
+            .bind(auth.tenant_id.as_uuid())
+            .fetch_optional(pool)
+            .await
+            .map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
+    let (id, name, settings) = match existing {
+        Some(r) => (
+            r.get::<Uuid, _>("id"),
+            req.name.unwrap_or_else(|| r.get::<String, _>("name")),
+            match req.settings {
+                Some(s) => s,
+                None => r.get::<serde_json::Value, _>("settings"),
+            },
+        ),
+        None => (
+            Uuid::new_v4(),
+            req.name.unwrap_or_default(),
+            req.settings.unwrap_or_else(|| serde_json::json!({})),
+        ),
+    };
+    sqlx::query(
+		"INSERT INTO core.tenant_settings (id, tenant_id, name, settings, updated_at) VALUES ($1, $2, $3, $4, now())
+		 ON CONFLICT (tenant_id) DO UPDATE SET name = EXCLUDED.name, settings = EXCLUDED.settings, updated_at = now()",
+	)
+	.bind(id)
+	.bind(auth.tenant_id.as_uuid())
+	.bind(&name)
+	.bind(&settings)
+	.execute(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to update tenant settings"))?;
+    let row = sqlx::query(
+		"SELECT id, tenant_id, name, settings, updated_at FROM core.tenant_settings WHERE tenant_id = $1",
+	)
+	.bind(auth.tenant_id.as_uuid())
+	.fetch_one(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
+    Ok(Json(TenantSettingsResponse {
+        id: row.get::<Uuid, _>("id"),
+        tenant_id: row.get::<Uuid, _>("tenant_id"),
+        name: row.get::<String, _>("name"),
+        plan: "standard".to_string(),
+        settings: row.get::<serde_json::Value, _>("settings"),
+        updated_at: row.get::<DateTime<Utc>, _>("updated_at"),
+    }))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct InviteUserRequest {
+    pub email: String,
+    #[serde(default)]
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct InviteUserResponse {
+    pub user_id: Uuid,
+    pub email: String,
+}
+
+pub async fn invite_user(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<InviteUserRequest>,
+) -> ApiResult<(StatusCode, Json<InviteUserResponse>)> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let email = ataqu_security::Email::new(req.email);
+    let cmd = ataqu_application::aegis_service::CreateUserCommand {
+        tenant_id: auth.tenant_id,
+        email: email.clone(),
+        password: Uuid::new_v4().to_string(),
+        name: None,
+    };
+    match state.aegis_service.create_user(cmd).await {
+        Ok(resp) => Ok((
+            StatusCode::CREATED,
+            Json(InviteUserResponse {
+                user_id: resp.user_id,
+                email: resp.email.to_string(),
+            }),
+        )),
+        Err(err) => Err(map_aegis_error(err)),
+    }
+}
+
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::{delete, get, patch, post};
     axum::Router::new()
@@ -750,6 +982,12 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))
         .route("/users/:id/deactivate", post(deactivate_user))
+        .route("/roles", post(create_role).get(list_roles))
+        .route(
+            "/tenant/settings",
+            get(get_tenant_settings).patch(update_tenant_settings),
+        )
+        .route("/users/invite", post(invite_user))
         .route("/logout", post(logout))
         .route("/mfa/setup", post(mfa_setup))
         .route("/mfa/verify", post(mfa_verify))

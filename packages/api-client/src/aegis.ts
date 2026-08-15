@@ -10,14 +10,20 @@ import type {
 	AuditLogEntry,
 	AuditLogQuery,
 	CreateApiKeyRequest,
+	CreateRoleRequest,
 	CreateUserRequest,
+	InviteUserRequest,
+	InviteUserResponse,
 	LoginRequest,
 	LoginResponse,
 	MfaSetupResponse,
 	MfaVerifyRequest,
 	RefreshTokenRequest,
+	RoleResponse,
+	TenantSettings,
 	UpdatePermissionRequest,
 	UpdateRoleRequest,
+	UpdateTenantSettingsRequest,
 	UserResponse,
 } from "./types";
 
@@ -67,6 +73,21 @@ export const deleteApiKey = (id: UUID) =>
 // ---- Audit Log ----
 export const getAuditLog = (params?: AuditLogQuery) =>
 	api.get<AuditLogEntry[]>("/aegis/audit-log", { params });
+
+// ---- Roles ----
+export const listRoles = () => api.get<RoleResponse[]>("/aegis/roles");
+export const createRole = (data: CreateRoleRequest) =>
+	api.post<RoleResponse>("/aegis/roles", data);
+
+// ---- Tenant Settings ----
+export const getTenantSettings = () =>
+	api.get<TenantSettings>("/aegis/tenant/settings");
+export const updateTenantSettings = (data: UpdateTenantSettingsRequest) =>
+	api.patch<TenantSettings>("/aegis/tenant/settings", data);
+
+// ---- Invite ----
+export const inviteUser = (data: InviteUserRequest) =>
+	api.post<InviteUserResponse>("/aegis/users/invite", data);
 
 // ---- React Query hooks ----
 export const useListUsers = (options?: UseQueryOptions<UserResponse[]>) =>
@@ -162,6 +183,39 @@ export const useCreateApiKey = (
 export const useDeleteApiKey = (
 	options?: UseMutationOptions<void, Error, UUID>,
 ) => useMutation({ mutationFn: deleteApiKey, ...options });
+
+// ---- Roles ----
+export const useListRoles = (options?: UseQueryOptions<RoleResponse[]>) =>
+	useQuery({
+		queryKey: ["aegis", "roles"],
+		queryFn: listRoles,
+		...options,
+	});
+export const useCreateRole = (
+	options?: UseMutationOptions<RoleResponse, Error, CreateRoleRequest>,
+) => useMutation({ mutationFn: createRole, ...options });
+
+// ---- Tenant Settings ----
+export const useGetTenantSettings = (
+	options?: UseQueryOptions<TenantSettings>,
+) =>
+	useQuery({
+		queryKey: ["aegis", "tenant", "settings"],
+		queryFn: getTenantSettings,
+		...options,
+	});
+export const useUpdateTenantSettings = (
+	options?: UseMutationOptions<
+		TenantSettings,
+		Error,
+		UpdateTenantSettingsRequest
+	>,
+) => useMutation({ mutationFn: updateTenantSettings, ...options });
+
+// ---- Invite ----
+export const useInviteUser = (
+	options?: UseMutationOptions<InviteUserResponse, Error, InviteUserRequest>,
+) => useMutation({ mutationFn: inviteUser, ...options });
 
 // ---- Current User ----
 export const getCurrentUser = () => api.get<UserResponse>("/aegis/me");

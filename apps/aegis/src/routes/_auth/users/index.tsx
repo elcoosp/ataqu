@@ -25,9 +25,9 @@ import { EmptyState } from "../../../components/empty-state";
 
 ("../../components/empty-state");
 
-import { api } from "@ataqu/api-client";
+import { inviteUser, useListUsers } from "@ataqu/api-client";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -39,32 +39,10 @@ export const Route = createFileRoute("/_auth/users/")({
 
 		const [openInvite, setOpenInvite] = useState(false);
 
-		const {
-			data: users,
-			isLoading,
-			error,
-		} = useQuery({
-			queryKey: ["aegis", "users"],
-			queryFn: () =>
-				api.get<
-					Array<{
-						id: string;
-						email: string;
-						name?: string;
-						role: string;
-						is_active: boolean;
-						mfa_enabled: boolean;
-						last_login_at?: string;
-						created_at: string;
-					}>
-				>("/aegis/users"),
-		});
+		const { data: users, isLoading, error } = useListUsers();
 
 		const inviteMutation = useMutation({
-			mutationFn: (data: { email: string; role: string }) =>
-				api.post("/aegis/users/invite", data, {
-					headers: { "Idempotency-Key": crypto.randomUUID() },
-				}),
+			mutationFn: (data: { email: string; role: string }) => inviteUser(data),
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 				setOpenInvite(false);

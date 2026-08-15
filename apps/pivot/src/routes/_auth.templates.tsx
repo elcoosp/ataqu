@@ -1,10 +1,10 @@
-import { api } from "@ataqu/api-client";
+import { listTemplates, useCreateTemplate } from "@ataqu/api-client";
 import { useIdempotency } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileText, Plus } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +20,7 @@ function TemplatesPage() {
 	const { getKey } = useIdempotency();
 	const { data, refetch, error } = useQuery<Template[]>({
 		queryKey: ["templates"],
-		queryFn: () => api.get("/templates"),
+		queryFn: () => listTemplates(),
 	});
 
 	if (error) toast.error(handleApiError(error));
@@ -29,11 +29,7 @@ function TemplatesPage() {
 	const [name, setName] = useState("");
 	const [content, setContent] = useState("");
 
-	const createMutation = useMutation({
-		mutationFn: (data: { name: string; content: string }) =>
-			api.post<Template>("/templates", data, {
-				headers: { "Idempotency-Key": getKey() },
-			}),
+	const createMutation = useCreateTemplate({
 		onSuccess: () => {
 			toast.success(<Trans>Template created.</Trans>);
 			setShowCreator(false);

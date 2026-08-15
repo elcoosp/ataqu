@@ -1,4 +1,8 @@
-import { api, useGetDashboard, useUpdateDashboard } from "@ataqu/api-client";
+import {
+	combineData,
+	useGetDashboard,
+	useUpdateDashboard,
+} from "@ataqu/api-client";
 import { Button, OnboardTour, Shell, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -176,7 +180,7 @@ const CombineDataModal: React.FC<{
 	const handleCombine = async () => {
 		setIsLoading(true);
 		try {
-			await api.post("/vista/combine", {
+			await combineData({
 				primary,
 				secondary,
 				from_date: new Date(

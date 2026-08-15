@@ -33,6 +33,55 @@ fn default_search_limit() -> u64 {
     100
 }
 
+#[derive(Debug, Deserialize)]
+pub struct IntegrationToggleRequest {
+    pub integration: String,
+    pub enabled: bool,
+    #[serde(default)]
+    pub settings: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct IntegrationStatus {
+    pub integration: String,
+    pub enabled: bool,
+    pub updated_at: DateTime<Utc>,
+}
+
+pub async fn toggle_integration(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<IntegrationToggleRequest>,
+) -> ApiResult<Json<IntegrationStatus>> {
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    sqlx::query(
+		"INSERT INTO cinq.integrations (id, tenant_id, integration, enabled, settings, updated_at) VALUES ($1, $2, $3, $4, $5, now())
+		 ON CONFLICT (tenant_id, integration) DO UPDATE SET enabled = EXCLUDED.enabled, settings = EXCLUDED.settings, updated_at = now()",
+	)
+	.bind(Uuid::new_v4())
+	.bind(auth.tenant_id.as_uuid())
+	.bind(&req.integration)
+	.bind(req.enabled)
+	.bind(req.settings.unwrap_or_else(|| serde_json::json!({})))
+	.execute(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to toggle integration"))?;
+    let row = sqlx::query(
+		"SELECT integration, enabled, updated_at FROM cinq.integrations WHERE tenant_id = $1 AND integration = $2",
+	)
+	.bind(auth.tenant_id.as_uuid())
+	.bind(&req.integration)
+	.fetch_one(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to read integration"))?;
+    Ok(Json(IntegrationStatus {
+        integration: row.get::<String, _>("integration"),
+        enabled: row.get::<bool, _>("enabled"),
+        updated_at: row.get::<DateTime<Utc>, _>("updated_at"),
+    }))
+}
+
 #[derive(Debug, Deserialize, Default)]
 pub struct PaginationParams {
     pub limit: Option<u64>,
@@ -516,7 +565,14 @@ pub async fn update_pipeline_stage(
         })?;
     let stage = state
         .cinq_service
-        .update_pipeline_stage(auth.user_id, auth.tenant_id, id, payload.name, payload.order, if_match)
+        .update_pipeline_stage(
+            auth.user_id,
+            auth.tenant_id,
+            id,
+            payload.name,
+            payload.order,
+            if_match,
+        )
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
     Ok(Json(PipelineStageResponse {
@@ -1079,4 +1135,5 @@ pub fn routes() -> Router<AppState> {
         .route("/csv/import", post(import_csv))
         .route("/csv/export", get(export_csv))
         .route("/email/track", post(track_email))
+        .route("/integrations/toggle", post(toggle_integration))
 }

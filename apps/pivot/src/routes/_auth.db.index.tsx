@@ -1,9 +1,9 @@
-import { api } from "@ataqu/api-client";
+import { listDatabases, useCreateDatabase } from "@ataqu/api-client";
 import { useIdempotency } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Database, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -18,16 +18,12 @@ function DatabaseList() {
 	const { getKey } = useIdempotency();
 	const { data, refetch, error } = useQuery<DatabaseType[]>({
 		queryKey: ["databases"],
-		queryFn: () => api.get("/databases"),
+		queryFn: () => listDatabases(),
 	});
 
 	if (error) toast.error(handleApiError(error));
 
-	const createMutation = useMutation({
-		mutationFn: (data: { name: string }) =>
-			api.post<DatabaseType>("/databases", data, {
-				headers: { "Idempotency-Key": getKey() },
-			}),
+	const createMutation = useCreateDatabase({
 		onSuccess: () => {
 			toast.success(<Trans>Database created.</Trans>);
 			refetch();

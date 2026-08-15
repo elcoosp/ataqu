@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { importCsv } from "@ataqu/api-client";
 import { Button, Card, CardContent } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -50,9 +50,7 @@ export function CsvImport() {
 			const formData = new FormData();
 			formData.append("file", file);
 			formData.append("mapping", JSON.stringify(mapping));
-			return api.post("/cinq/csv/import", formData, {
-				headers: { "Content-Type": "multipart/form-data" },
-			});
+			return importCsv(formData);
 		},
 		onSuccess: (data: any) => {
 			toast.success(

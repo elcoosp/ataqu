@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { searchDocuments } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import { cn, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
@@ -18,7 +18,7 @@ export function SearchBar({ onResultClick, className }: SearchBarProps) {
 		queryKey: ["search", debouncedQuery],
 		queryFn: () => {
 			if (!debouncedQuery || debouncedQuery.length < 2) return [];
-			return api.get("/search", { params: { q: debouncedQuery, limit: 20 } });
+			return searchDocuments({ q: debouncedQuery, limit: 20 });
 		},
 		enabled: debouncedQuery.length >= 2,
 	});

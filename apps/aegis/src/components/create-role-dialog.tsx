@@ -1,6 +1,6 @@
 // apps/aegis/src/components/create-role-dialog.tsx
 
-import { api } from "@ataqu/api-client";
+import { createRole } from "@ataqu/api-client";
 import {
 	Button,
 	Dialog,
@@ -43,9 +43,7 @@ export function CreateRoleDialog({
 
 	const createMutation = useMutation({
 		mutationFn: (data: { name: string; permissions: string[] }) =>
-			api.post("/aegis/roles", data, {
-				headers: { "Idempotency-Key": crypto.randomUUID() },
-			}),
+			createRole(data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["aegis", "roles"] });
 			onOpenChange(false);

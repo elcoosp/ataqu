@@ -83,6 +83,35 @@ pub async fn delete_db(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn get_database_rows(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    let rows = sqlx::query(
+		"SELECT id, database_id, data, created_at FROM collab_ops.database_rows WHERE database_id = $1 AND tenant_id = $2 ORDER BY created_at DESC",
+	)
+	.bind(id)
+	.bind(auth.tenant_id.as_uuid())
+	.fetch_all(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to read database rows"))?;
+    let list = rows
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.get::<Uuid, _>("id"),
+                "database_id": r.get::<Uuid, _>("database_id"),
+                "data": r.get::<serde_json::Value, _>("data"),
+                "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+            })
+        })
+        .collect();
+    Ok(Json(list))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateDocRequest {
     pub title: String,
@@ -216,7 +245,14 @@ pub async fn update_doc(
 
     let doc = state
         .pivot_service
-        .update_document(auth.user_id, auth.tenant_id, id, payload.title, payload.content, if_match)
+        .update_document(
+            auth.user_id,
+            auth.tenant_id,
+            id,
+            payload.title,
+            payload.content,
+            if_match,
+        )
         .await
         .map_err(|e| match e {
             ataqu_application::pivot_service::PivotServiceError::Validation(msg)
@@ -642,6 +678,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
         .route("/databases/:id", axum::routing::delete(delete_db))
+        .route("/databases/:id/rows", axum::routing::get(get_database_rows))
         .route("/docs", axum::routing::post(create_doc).get(list_docs))
         .route(
             "/docs/bulk-delete",

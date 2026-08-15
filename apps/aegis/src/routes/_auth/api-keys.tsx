@@ -1,6 +1,11 @@
 // apps/aegis/src/routes/_auth/api-keys.tsx
 
-import { api } from "@ataqu/api-client";
+import type { ApiKeyResponse } from "@ataqu/api-client";
+import {
+	deleteApiKey,
+	useCreateApiKey,
+	useListApiKeys,
+} from "@ataqu/api-client";
 import {
 	Button,
 	Card,
@@ -23,7 +28,7 @@ import {
 	TableRow,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Copy, Key, Plus } from "lucide-react";
 import { useState } from "react";
@@ -40,35 +45,13 @@ export const Route = createFileRoute("/_auth/api-keys")({
 			null,
 		);
 
-		const {
-			data: keys,
-			isLoading,
-			error,
-		} = useQuery({
-			queryKey: ["aegis", "api-keys"],
-			queryFn: () =>
-				api.get<
-					Array<{
-						id: string;
-						name: string;
-						prefix: string;
-						created_at: string;
-						last_used_at?: string;
-					}>
-				>("/aegis/api-keys"),
-		});
+		const { data, isLoading, error } = useListApiKeys();
 
-		const createMutation = useMutation({
-			mutationFn: (data: { name: string }) =>
-				api.post<{ id: string; key: string }>(
-					"/aegis/api-keys",
-					{ name: data.name, scopes: [], expires_at: null },
-					{ headers: { "Idempotency-Key": crypto.randomUUID() } },
-				),
+		const createMutation = useCreateApiKey({
 			onSuccess: (data) => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "api-keys"] });
 				setOpenCreate(false);
-				setNewKey({ id: data.id, key: data.key });
+				setNewKey({ id: data.id, key: data.key ?? "" });
 				toast.success("API key created.");
 			},
 			onError: (_err: any) => {
@@ -77,10 +60,7 @@ export const Route = createFileRoute("/_auth/api-keys")({
 		});
 
 		const _deleteMutation = useMutation({
-			mutationFn: (id: string) =>
-				api.delete(`/aegis/api-keys/${id}`, {
-					headers: { "Idempotency-Key": crypto.randomUUID() },
-				}),
+			mutationFn: (id: string) => deleteApiKey(id),
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "api-keys"] });
 				toast.success("API key revoked.");
@@ -109,7 +89,7 @@ export const Route = createFileRoute("/_auth/api-keys")({
 			return <div>Error loading API keys.</div>;
 		}
 
-		const keyList = keys || [];
+		const keyList = data || [];
 
 		if (keyList.length === 0) {
 			return (
@@ -168,7 +148,7 @@ export const Route = createFileRoute("/_auth/api-keys")({
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{keyList.map((key) => (
+								{keyList.map((key: ApiKeyResponse) => (
 									<TableRow key={key.id}>
 										<TableCell>{key.name}</TableCell>
 										<TableCell>{key.prefix}</TableCell>

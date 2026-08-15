@@ -45,6 +45,7 @@ export interface UserResponse {
 	role: string;
 	is_active: boolean;
 	mfa_enabled: boolean;
+	last_login_at?: DateTime;
 }
 
 export interface UpdateRoleRequest {
@@ -60,6 +61,8 @@ export interface ApiKeyResponse {
 	prefix: string;
 	scopes: string[];
 	created_at: DateTime;
+	key?: string;
+	last_used_at?: DateTime;
 }
 export interface CreateApiKeyRequest {
 	name: string;
@@ -87,6 +90,51 @@ export interface AuditLogQuery {
 	to_date?: DateTime;
 	limit?: number;
 	offset?: number;
+}
+
+// ---- AEGIS: Roles / Tenant / Invite ----
+export interface RoleResponse {
+	id: UUID;
+	name: string;
+	permissions: string[];
+	created_at: DateTime;
+}
+export interface CreateRoleRequest {
+	name: string;
+	permissions: string[];
+}
+export interface TenantSettings {
+	id: UUID;
+	tenant_id: UUID;
+	name: string;
+	plan: string;
+	settings: Record<string, unknown>;
+	updated_at: DateTime;
+}
+export interface UpdateTenantSettingsRequest {
+	name?: string;
+	settings?: Record<string, unknown>;
+}
+export interface InviteUserRequest {
+	email: string;
+	role: string;
+	name?: string;
+}
+export interface InviteUserResponse {
+	user_id: UUID;
+	email: string;
+}
+
+// ----------------------------------------------------------------------------
+// CINQ: Integrations
+// ----------------------------------------------------------------------------
+export interface IntegrationToggleRequest {
+	integration: string;
+	enabled: boolean;
+}
+export interface IntegrationStatus {
+	integration: string;
+	enabled: boolean;
 }
 
 // ----------------------------------------------------------------------------
@@ -356,6 +404,12 @@ export interface Database {
 	name: string;
 	created_at: DateTime;
 }
+export interface DatabaseRow {
+	id: UUID;
+	database_id: UUID;
+	data: Record<string, unknown>;
+	created_at: DateTime;
+}
 export interface CreateDatabaseCommand {
 	name: string;
 }
@@ -400,6 +454,8 @@ export interface ListRelationsParams {
 }
 export interface SearchDocumentsParams {
 	q: string;
+	limit?: number;
+	offset?: number;
 }
 
 export interface Template {

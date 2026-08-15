@@ -12,11 +12,13 @@ pub mod m20250101_000030_add_scope_to_shopify_integrations;
 pub mod m20250101_000031_create_file_references;
 pub mod m_aegis;
 pub mod m_aegis_add_api_keys;
+pub mod m_aegis_add_roles_and_tenant_settings;
 pub mod m_cinq;
 pub mod m_cinq_add_activity_stage;
 pub mod m_cinq_add_contact_unique;
 pub mod m_cinq_add_contact_version;
 pub mod m_cinq_add_deal_pipeline_stage;
+pub mod m_cinq_add_integrations;
 pub mod m_cinq_add_lead_score;
 pub mod m_cinq_add_tasks;
 pub mod m_dial;
@@ -31,6 +33,7 @@ pub mod m_pause_add_documents;
 pub mod m_pause_rename_to_full_name;
 pub mod m_pivot;
 pub mod m_pivot_add_blocks_relations;
+pub mod m_pivot_add_database_rows;
 pub mod m_pivot_add_document_versions;
 pub mod m_pivot_add_templates;
 pub mod m_sond;
@@ -138,6 +141,9 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000032_seed_changelog::Migration),
             Box::new(m20250101_000033_populate_permissions::Migration),
             Box::new(m20250101_000034_create_pending_approvals::Migration),
+            Box::new(m_aegis_add_roles_and_tenant_settings::Migration),
+            Box::new(m_pivot_add_database_rows::Migration),
+            Box::new(m_cinq_add_integrations::Migration),
         ]
     }
 }

@@ -1,6 +1,6 @@
 // apps/aegis/src/components/invite-dialog.tsx
 
-import { api } from "@ataqu/api-client";
+import { inviteUser } from "@ataqu/api-client";
 import {
 	Button,
 	Dialog,
@@ -32,10 +32,7 @@ export function InviteDialog({ open, onOpenChange }: InviteDialogProps) {
 	});
 
 	const inviteMutation = useMutation({
-		mutationFn: (data: InviteFormData) =>
-			api.post("/aegis/users/invite", data, {
-				headers: { "Idempotency-Key": crypto.randomUUID() },
-			}),
+		mutationFn: (data: InviteFormData) => inviteUser(data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 			onOpenChange(false);

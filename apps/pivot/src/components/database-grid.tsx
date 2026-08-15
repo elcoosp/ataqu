@@ -1,14 +1,17 @@
-import { api } from "@ataqu/api-client";
+import type { DatabaseRow } from "@ataqu/api-client";
+import {
+	useCreateDatabaseRow,
+	useGetDatabaseRows,
+	useUpdateDatabaseRow,
+} from "@ataqu/api-client";
 import { useIdempotency } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Filter, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { DatabaseRow } from "@/types";
 import { RelationCell } from "./relation-cell";
 
 interface DatabaseGridProps {
@@ -34,22 +37,11 @@ export function DatabaseGrid({
 	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 	const [filterText, setFilterText] = useState("");
 
-	const {
-		data: rows = [],
-		refetch,
-		error,
-	} = useQuery<DatabaseRow[]>({
-		queryKey: ["database-rows", databaseId],
-		queryFn: () => api.get(`/databases/${databaseId}/rows`),
-	});
+	const { data: rows = [], refetch, error } = useGetDatabaseRows(databaseId);
 
 	if (error) toast.error(handleApiError(error));
 
-	const createRowMutation = useMutation({
-		mutationFn: (data: { values: Record<string, any> }) =>
-			api.post<DatabaseRow>(`/databases/${databaseId}/rows`, data, {
-				headers: { "Idempotency-Key": getKey() },
-			}),
+	const createRowMutation = useCreateDatabaseRow(databaseId, {
 		onSuccess: () => {
 			toast.success(<Trans>Row added.</Trans>);
 			refetch();
@@ -58,15 +50,7 @@ export function DatabaseGrid({
 		onError: (err) => toast.error(handleApiError(err)),
 	});
 
-	const updateRowMutation = useMutation({
-		mutationFn: (data: { rowId: string; values: Record<string, any> }) =>
-			api.patch<DatabaseRow>(
-				`/databases/${databaseId}/rows/${data.rowId}`,
-				data.values,
-				{
-					headers: { "Idempotency-Key": getKey() },
-				},
-			),
+	const updateRowMutation = useUpdateDatabaseRow(databaseId, {
 		onSuccess: () => {
 			refetch();
 		},
@@ -101,7 +85,7 @@ export function DatabaseGrid({
 
 	const filteredRows = rows.filter((row) => {
 		if (!filterText) return true;
-		return Object.values(row.values).some((val) =>
+		return Object.values(row.data).some((val) =>
 			String(val).toLowerCase().includes(filterText.toLowerCase()),
 		);
 	});
@@ -109,8 +93,8 @@ export function DatabaseGrid({
 	const sortedRows = [...filteredRows];
 	if (sortField) {
 		sortedRows.sort((a, b) => {
-			const aVal = a.values[sortField] ?? "";
-			const bVal = b.values[sortField] ?? "";
+			const aVal = a.data[sortField] ?? "";
+			const bVal = b.data[sortField] ?? "";
 			if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
 			if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
 			return 0;
@@ -121,7 +105,7 @@ export function DatabaseGrid({
 		row: DatabaseRow,
 		col: { name: string; type: string },
 	) => {
-		const value = row.values?.[col.name] ?? "";
+		const value = row.data?.[col.name] ?? "";
 		const isEditing =
 			editingCell?.rowId === row.id && editingCell?.col === col.name;
 
@@ -130,7 +114,9 @@ export function DatabaseGrid({
 				return (
 					<RelationCell
 						value={
-							value ? { app: "cinq", entityId: value, label: value } : null
+							value
+								? { app: "cinq", entityId: String(value), label: String(value) }
+								: null
 						}
 						onSelect={(v) =>
 							handleCellChange(row.id, col.name, v ? v.entityId : null)
@@ -143,7 +129,7 @@ export function DatabaseGrid({
 			return (
 				<Input
 					type={col.type === "number" ? "number" : "text"}
-					defaultValue={value}
+					defaultValue={value as string}
 					autoFocus
 					onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
 						handleCellChange(row.id, col.name, e.target.value)
@@ -168,7 +154,11 @@ export function DatabaseGrid({
 		if (col.type === "relation") {
 			return (
 				<RelationCell
-					value={value ? { app: "cinq", entityId: value, label: value } : null}
+					value={
+						value
+							? { app: "cinq", entityId: String(value), label: String(value) }
+							: null
+					}
 					onSelect={(v) =>
 						handleCellChange(row.id, col.name, v ? v.entityId : null)
 					}

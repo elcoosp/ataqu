@@ -5,44 +5,78 @@ import type {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./client";
 import type {
+	CreateDatabaseCommand,
 	CreateDocumentCommand,
 	CreateRelationCommand,
 	Database,
+	DatabaseRow,
 	Document,
 	ListDocumentsParams,
 	ListRelationsParams,
 	Relation,
 	SearchDocumentsParams,
+	Template,
 	UpdateDocumentCommand,
 } from "./types";
 
 // ---- Documents ----
 export const createDocument = (data: CreateDocumentCommand) =>
-	api.post<Document>("/docs", data);
+	api.post<Document>("/pivot/docs", data);
 export const listDocuments = (params?: ListDocumentsParams) =>
-	api.get<Document[]>("/docs", { params });
-export const getDocument = (id: string) => api.get<Document>(`/docs/${id}`);
+	api.get<Document[]>("/pivot/docs", { params });
+export const getDocument = (id: string) =>
+	api.get<Document>(`/pivot/docs/${id}`);
 export const updateDocument = (id: string, data: UpdateDocumentCommand) =>
-	api.put<Document>(`/docs/${id}`, data);
-export const deleteDocument = (id: string) => api.delete<void>(`/docs/${id}`);
+	api.put<Document>(`/pivot/docs/${id}`, data);
+export const deleteDocument = (id: string) =>
+	api.delete<void>(`/pivot/docs/${id}`);
+
+// ---- Document versions ----
+export const listDocumentVersions = (id: string) =>
+	api.get<unknown[]>(`/pivot/docs/${id}/versions`);
 
 // ---- Databases ----
+export const listDatabases = (params?: { limit?: number; offset?: number }) =>
+	api.get<Database[]>("/pivot/databases", { params });
 export const getDatabase = (id: string) =>
-	api.get<Database>(`/databases/${id}`);
+	api.get<Database>(`/pivot/databases/${id}`);
+export const getDatabaseRows = (id: string) =>
+	api.get<DatabaseRow[]>(`/pivot/databases/${id}/rows`);
+export const createDatabaseRow = (
+	databaseId: string,
+	data: Record<string, unknown>,
+) => api.post<DatabaseRow>(`/pivot/databases/${databaseId}/rows`, data);
+export const updateDatabaseRow = (
+	databaseId: string,
+	rowId: string,
+	data: Record<string, unknown>,
+) =>
+	api.patch<DatabaseRow>(`/pivot/databases/${databaseId}/rows/${rowId}`, data);
+export const createDatabase = (data: CreateDatabaseCommand) =>
+	api.post<Database>("/pivot/databases", data);
+
+// ---- Templates ----
+export const listTemplates = () => api.get<Template[]>("/pivot/templates");
+export const createTemplate = (data: { name: string; content: string }) =>
+	api.post<Template>("/pivot/templates", data);
+export const applyTemplate = (id: string, data: { name: string }) =>
+	api.post<Template>(`/pivot/templates/${id}/apply`, data);
+export const applyTemplateToDoc = (docId: string, templateId: string) =>
+	api.post<Document>(`/pivot/docs/${docId}/apply-template`, { templateId });
 
 // ---- Relations ----
 export const createRelation = (docId: string, data: CreateRelationCommand) =>
-	api.post<Relation>(`/docs/${docId}/relations`, data);
+	api.post<Relation>(`/pivot/docs/${docId}/relations`, data);
 export const listRelations = (docId: string, params?: ListRelationsParams) =>
-	api.get<Relation[]>(`/docs/${docId}/relations`, { params });
+	api.get<Relation[]>(`/pivot/docs/${docId}/relations`, { params });
 export const getRelation = (id: string) =>
-	api.get<Relation>(`/relations/${id}`);
+	api.get<Relation>(`/pivot/relations/${id}`);
 export const deleteRelation = (id: string) =>
-	api.delete<void>(`/relations/${id}`);
+	api.delete<void>(`/pivot/relations/${id}`);
 
 // ---- Search ----
 export const searchDocuments = (params: SearchDocumentsParams) =>
-	api.get<Document[]>("/search", { params });
+	api.get<Document[]>("/pivot/search", { params });
 
 // ---- React Query hooks ----
 export const useListDocuments = (
@@ -70,6 +104,39 @@ export const useGetDatabase = (
 	useQuery({
 		queryKey: ["pivot", "database", id],
 		queryFn: () => getDatabase(id),
+		...options,
+	});
+export const useListDatabases = (
+	params?: { limit?: number; offset?: number },
+	options?: UseQueryOptions<Database[]>,
+) =>
+	useQuery({
+		queryKey: ["pivot", "databases", params],
+		queryFn: () => listDatabases(params),
+		...options,
+	});
+export const useGetDatabaseRows = (
+	id: string,
+	options?: UseQueryOptions<DatabaseRow[]>,
+) =>
+	useQuery({
+		queryKey: ["pivot", "database", id, "rows"],
+		queryFn: () => getDatabaseRows(id),
+		...options,
+	});
+export const useListTemplates = (options?: UseQueryOptions<Template[]>) =>
+	useQuery({
+		queryKey: ["pivot", "templates"],
+		queryFn: listTemplates,
+		...options,
+	});
+export const useListDocumentVersions = (
+	id: string,
+	options?: UseQueryOptions<unknown[]>,
+) =>
+	useQuery({
+		queryKey: ["pivot", "document", id, "versions"],
+		queryFn: () => listDocumentVersions(id),
 		...options,
 	});
 export const useListRelations = (
@@ -123,3 +190,58 @@ export const useCreateRelation = (
 export const useDeleteRelation = (
 	options?: UseMutationOptions<void, Error, string>,
 ) => useMutation({ mutationFn: deleteRelation, ...options });
+export const useApplyTemplate = (
+	options?: UseMutationOptions<
+		Template,
+		Error,
+		{ id: string; data: { name: string } }
+	>,
+) =>
+	useMutation({
+		mutationFn: ({ id, data }) => applyTemplate(id, data),
+		...options,
+	});
+
+export const useCreateTemplate = (
+	options?: UseMutationOptions<
+		Template,
+		Error,
+		{ name: string; content: string }
+	>,
+) => useMutation({ mutationFn: createTemplate, ...options });
+
+export const useCreateDatabase = (
+	options?: UseMutationOptions<Database, Error, CreateDatabaseCommand>,
+) => useMutation({ mutationFn: createDatabase, ...options });
+
+export const useCreateDatabaseRow = (
+	databaseId: string,
+	options?: UseMutationOptions<DatabaseRow, Error, Record<string, unknown>>,
+) =>
+	useMutation({
+		mutationFn: (data) => createDatabaseRow(databaseId, data),
+		...options,
+	});
+
+export const useUpdateDatabaseRow = (
+	databaseId: string,
+	options?: UseMutationOptions<
+		DatabaseRow,
+		Error,
+		{ rowId: string; values: Record<string, unknown> }
+	>,
+) =>
+	useMutation({
+		mutationFn: ({ rowId, values }) =>
+			updateDatabaseRow(databaseId, rowId, values),
+		...options,
+	});
+
+export const useApplyTemplateToDoc = (
+	docId: string,
+	options?: UseMutationOptions<Document, Error, string>,
+) =>
+	useMutation({
+		mutationFn: (templateId) => applyTemplateToDoc(docId, templateId),
+		...options,
+	});
