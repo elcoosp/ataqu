@@ -54,6 +54,7 @@ pub struct PendingApproval {
 pub trait PendingApprovalRepository: Send + Sync {
     async fn create(&self, approval: &PendingApproval) -> Result<(), String>;
     async fn find_pending(&self, tenant_id: TenantId, limit: u64) -> Result<Vec<PendingApproval>, String>;
+    async fn list_all_pending(&self, limit: u64) -> Result<Vec<PendingApproval>, String>;
     async fn approve(&self, id: Uuid, approved_by: Uuid) -> Result<(), String>;
     async fn reject(&self, id: Uuid, approved_by: Uuid) -> Result<(), String>;
     async fn find_by_run_id(&self, tenant_id: TenantId, run_id: Uuid) -> Result<Option<PendingApproval>, String>;
@@ -98,6 +99,35 @@ impl PendingApprovalRepository for SeaOrmPendingApprovalRepo {
         use pending_approval_entity as entity;
         let models = entity::Entity::find()
             .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(entity::Column::Status.eq("pending"))
+            .order_by_asc(entity::Column::CreatedAt)
+            .limit(limit)
+            .all(&self.db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let mut results = Vec::new();
+        for m in models {
+            results.push(PendingApproval {
+                id: m.id,
+                tenant_id: TenantId::new(m.tenant_id),
+                workflow_id: m.workflow_id,
+                run_id: m.run_id,
+                approver_role: m.approver_role,
+                status: m.status,
+                payload: m.payload,
+                approved_by: m.approved_by,
+                approved_at: m.approved_at,
+                created_at: m.created_at,
+                updated_at: m.updated_at,
+            });
+        }
+        Ok(results)
+    }
+
+    async fn list_all_pending(&self, limit: u64) -> Result<Vec<PendingApproval>, String> {
+        use pending_approval_entity as entity;
+        let models = entity::Entity::find()
             .filter(entity::Column::Status.eq("pending"))
             .order_by_asc(entity::Column::CreatedAt)
             .limit(limit)

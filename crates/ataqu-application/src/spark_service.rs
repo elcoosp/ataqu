@@ -304,7 +304,12 @@ impl SparkService {
         Ok(())
     }
 
-    pub async fn approve_workflow_run(&self, tenant_id: TenantId, run_id: Uuid) -> SparkResult<()> {
+    pub async fn approve_workflow_run(
+        &self,
+        tenant_id: TenantId,
+        run_id: Uuid,
+        approved_by: Uuid,
+    ) -> SparkResult<()> {
         let Some(run_repo) = self.run_repo.as_ref() else {
             return Err(SparkServiceError::Repository(
                 "Workflow run repository not configured".to_string(),
@@ -320,14 +325,15 @@ impl SparkService {
             )));
         }
 
-        // Find the pending approval record
+        // Mark the pending approval record as approved by the acting user.
         if let Some(approval_repo) = self.approval_repo.as_ref() {
-            let approval = approval_repo.find_by_run_id(tenant_id, run_id)
+            if let Some(approval) = approval_repo
+                .find_by_run_id(tenant_id, run_id)
                 .await
-                .map_err(|e| SparkServiceError::Repository(e))?;
-            if let Some(approval) = approval {
-                // Mark as approved
-                approval_repo.approve(approval.id, Uuid::nil()) // TODO: use actual user_id
+                .map_err(|e| SparkServiceError::Repository(e))?
+            {
+                approval_repo
+                    .approve(approval.id, approved_by)
                     .await
                     .map_err(|e| SparkServiceError::Repository(e))?;
             }
@@ -349,6 +355,52 @@ impl SparkService {
             .unwrap_or(0);
         self.execute_actions_from(&workflow, run_repo, &run, resume_index)
             .await?;
+        Ok(())
+    }
+
+    /// Reject a workflow run that is pending approval.
+    ///
+    /// Marks the `pending_approvals` row as `rejected` (recorded against the acting
+    /// user) and sets the workflow run status to `Rejected`. The run is not resumed.
+    pub async fn reject_workflow_run(
+        &self,
+        tenant_id: TenantId,
+        run_id: Uuid,
+        rejected_by: Uuid,
+    ) -> SparkResult<()> {
+        let Some(run_repo) = self.run_repo.as_ref() else {
+            return Err(SparkServiceError::Repository(
+                "Workflow run repository not configured".to_string(),
+            ));
+        };
+        let run = run_repo
+            .get_run(&tenant_id, &run_id)
+            .await?
+            .ok_or(SparkServiceError::WorkflowNotFound)?;
+        if run.status != WorkflowRunStatus::PendingApproval {
+            return Err(SparkServiceError::Validation(format!(
+                "Workflow run {run_id} is not pending approval"
+            )));
+        }
+
+        // Mark the pending approval record as rejected by the acting user.
+        if let Some(approval_repo) = self.approval_repo.as_ref() {
+            if let Some(approval) = approval_repo
+                .find_by_run_id(tenant_id, run_id)
+                .await
+                .map_err(|e| SparkServiceError::Repository(e))?
+            {
+                approval_repo
+                    .reject(approval.id, rejected_by)
+                    .await
+                    .map_err(|e| SparkServiceError::Repository(e))?;
+            }
+        }
+
+        run_repo
+            .update_run_status(&tenant_id, &run_id, &WorkflowRunStatus::Rejected)
+            .await?;
+        tracing::info!(workflow_id = %run.workflow_id, run_id = %run_id, "Workflow run rejected");
         Ok(())
     }
 

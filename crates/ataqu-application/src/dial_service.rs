@@ -360,6 +360,49 @@ impl DialService {
         Ok(message)
     }
 
+    /// Send a direct message to a single user, finding or creating the
+    /// 1:1 DM channel between `author_id` and `recipient_id`.
+    pub async fn send_direct_message(
+        &self,
+        tenant_id: TenantId,
+        author_id: Uuid,
+        recipient_id: Uuid,
+        content: String,
+    ) -> DialResult<Message> {
+        let author = UserId::new(author_id);
+        let recipient = UserId::new(recipient_id);
+
+        let channel = match self
+            .repo
+            .find_direct_channel(&tenant_id, &author, &recipient)
+            .await?
+        {
+            Some(channel) => channel,
+            None => {
+                self.create_channel(
+                    author_id,
+                    CreateChannelCommand {
+                        tenant_id,
+                        name: format!("dm:{}-{}", author_id, recipient_id),
+                        channel_type: ChannelType::DirectMessage,
+                        created_by: author_id,
+                        participants: vec![author_id, recipient_id],
+                    },
+                )
+                .await?
+            }
+        };
+
+        self.send_message(SendMessageCommand {
+            tenant_id,
+            channel_id: channel.id.as_uuid(),
+            thread_id: None,
+            author_id,
+            content,
+        })
+        .await
+    }
+
     pub async fn edit_message(
         &self,
         tenant_id: TenantId,

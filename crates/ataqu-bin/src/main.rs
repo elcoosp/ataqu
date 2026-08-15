@@ -1006,13 +1006,18 @@ async fn main() -> anyhow::Result<()> {
                         .await
                         .map_err(|e| format!("Failed to send notification: {}", e))?;
                 } else if let Ok(user_id) = uuid::Uuid::parse_str(&target) {
-                    // Send as a DM to a user (we would need to find their channel or use a DM channel)
-                    // For simplicity, we'll just log for now.
-                    tracing::warn!(
-                        "FormRoutingNotification: DM to user {} not implemented, target: {}",
-                        user_id,
-                        target
-                    );
+                    // Send as a DM to the target user via the DIAL service
+                    // (finds or creates the 1:1 DM channel).
+                    let system_user_id = system_user_id;
+                    let _ = dial
+                        .send_direct_message(
+                            ataqu_kernel::TenantId::new(tenant_id),
+                            system_user_id,
+                            user_id,
+                            message,
+                        )
+                        .await
+                        .map_err(|e| format!("Failed to send DM notification: {}", e));
                 } else {
                     tracing::warn!("FormRoutingNotification: invalid target (must be UUID)");
                 }
@@ -1214,9 +1219,28 @@ async fn main() -> anyhow::Result<()> {
     let gdpr_runner = GdprSagaRunner::new(
         pools.core.get_postgres_connection_pool().clone(),
         core_outbox_for_gdpr.clone(),
+        s3_service.clone(),
     );
     tokio::spawn(async move {
         gdpr_runner.run().await;
+    });
+    // Spawn the SPARK approval worker (polls pending approvals, notifies via DIAL)
+    use ataqu_application::approval_worker::ApprovalWorker;
+    use ataqu_infra_repositories::pending_approval_repo::SeaOrmPendingApprovalRepo;
+    let approval_repo = Arc::new(SeaOrmPendingApprovalRepo::new(
+        pools.core.clone(),
+    ));
+    let approval_worker = ApprovalWorker::new(
+        approval_repo,
+        spark_service.clone(),
+        dial_service.clone(),
+        system_user_id,
+        std::env::var("APPROVAL_NOTIFY_CHANNEL_ID")
+            .ok()
+            .and_then(|v| Uuid::parse_str(&v).ok()),
+    );
+    tokio::spawn(async move {
+        approval_worker.run().await;
     });
     // Spawn scheduled tasks cron worker
     use ataqu_infra_cron::worker::run_cron_worker;

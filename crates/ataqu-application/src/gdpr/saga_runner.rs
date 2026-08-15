@@ -6,15 +6,21 @@ use uuid::Uuid;
 use crate::outbox::Outbox;
 use ataqu_domain_gdpr::GdprRegistry;
 use ataqu_domain_gdpr::{GdprSaga, GdprStep, saga::transition_saga};
+use ataqu_infra_storage::s3_service::S3Service;
 
 pub struct GdprSagaRunner {
     db: PgPool,
     outbox: Arc<dyn Outbox + Send + Sync>,
+    s3_service: Arc<S3Service>,
 }
 
 impl GdprSagaRunner {
-    pub fn new(db: PgPool, outbox: Arc<dyn Outbox + Send + Sync>) -> Self {
-        Self { db, outbox }
+    pub fn new(
+        db: PgPool,
+        outbox: Arc<dyn Outbox + Send + Sync>,
+        s3_service: Arc<S3Service>,
+    ) -> Self {
+        Self { db, outbox, s3_service }
     }
 
     pub async fn run(&self) -> ! {
@@ -126,10 +132,7 @@ impl GdprSagaRunner {
         match saga.step {
             GdprStep::DeactivateUsers => self.deactivate_users(saga.tenant_id).await,
             GdprStep::AnonymizePII => self.anonymize_pii(saga.tenant_id).await,
-            GdprStep::DeleteS3Files => {
-                info!(tenant_id = %saga.tenant_id, "Skipping S3 file deletion (not implemented)");
-                Ok(())
-            }
+            GdprStep::DeleteS3Files => self.delete_s3_files(saga.tenant_id).await,
             GdprStep::PurgeTables => self.purge_tables(saga.tenant_id).await,
             GdprStep::Complete => Ok(()),
         }
@@ -154,6 +157,44 @@ impl GdprSagaRunner {
         .execute(&self.db)
         .await
         .map_err(|e| format!("Failed to anonymize users: {}", e))?;
+        Ok(())
+    }
+
+    /// Delete every S3 object the tenant references in `core.file_references`.
+    /// Objects with no remaining references after deletion are safe to remove;
+    /// we delete by key and let the orphan reaper reclaim any stragglers.
+    async fn delete_s3_files(&self, tenant_id: Uuid) -> Result<(), String> {
+        let rows = sqlx::query(
+            "SELECT file_key FROM core.file_references WHERE tenant_id = $1 AND status != 'deleted'",
+        )
+        .bind(tenant_id)
+        .fetch_all(&self.db)
+        .await
+        .map_err(|e| format!("Failed to list file references: {}", e))?;
+
+        for row in rows {
+            let file_key: String = row
+                .try_get("file_key")
+                .map_err(|e| format!("Failed to parse file_key: {}", e))?;
+            if let Err(e) = self.s3_service.delete_object(&file_key).await {
+                warn!(
+                    tenant_id = %tenant_id,
+                    file_key = %file_key,
+                    error = %e,
+                    "Failed to delete S3 object during GDPR erasure"
+                );
+                return Err(format!("Failed to delete S3 object {file_key}: {e}"));
+            }
+        }
+
+        // Mark references as deleted so we don't retry them.
+        sqlx::query("UPDATE core.file_references SET status = 'deleted' WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .execute(&self.db)
+            .await
+            .map_err(|e| format!("Failed to mark file references deleted: {}", e))?;
+
+        info!(tenant_id = %tenant_id, "Deleted S3 files for tenant");
         Ok(())
     }
 

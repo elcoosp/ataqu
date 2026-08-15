@@ -39,6 +39,7 @@ ataqu-domain-health = { path = "../ataqu-domain-health" }
 ataqu-domain-changelog = { path = "../ataqu-domain-changelog" }
 ataqu-domain-shopify = { path = "../ataqu-domain-shopify" }
 ataqu-infra-outbox = { path = "../ataqu-infra-outbox" }
+ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 csv = "1.3"
 futures = "0.3"
 reqwest = { version = "0.12", features = ["json"] }

@@ -19,6 +19,13 @@ pub trait DialRepository: Send + Sync {
         tenant_id: &TenantId,
         channel_id: &ChannelId,
     ) -> Result<Channel, DialError>;
+    /// Find an existing direct-message channel between exactly the two given users.
+    async fn find_direct_channel(
+        &self,
+        tenant_id: &TenantId,
+        user_a: &UserId,
+        user_b: &UserId,
+    ) -> Result<Option<Channel>, DialError>;
     async fn insert_message(&self, message: &Message) -> Result<(), DialError>;
     async fn update_message_content(
         &self,

@@ -475,6 +475,7 @@ dependencies = [
  "ataqu-infra-outbox",
  "ataqu-infra-pools",
  "ataqu-infra-repositories",
+ "ataqu-infra-storage",
  "ataqu-kernel",
  "ataqu-security",
  "base32",

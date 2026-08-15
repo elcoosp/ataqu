@@ -229,7 +229,7 @@ pub async fn approve_workflow_run(
 ) -> ApiResult<StatusCode> {
     state
         .spark_service
-        .approve_workflow_run(auth.tenant_id, run_id)
+        .approve_workflow_run(auth.tenant_id, run_id, auth.user_id)
         .await
         .map_err(|e| match e {
             ataqu_application::spark_service::SparkServiceError::Validation(msg) => {

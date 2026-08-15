@@ -255,6 +255,48 @@ impl DialRepository for DialRepositoryImpl {
         Ok(channel)
     }
 
+    async fn find_direct_channel(
+        &self,
+        tenant_id: &TenantId,
+        user_a: &UserId,
+        user_b: &UserId,
+    ) -> Result<Option<Channel>, DialError> {
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            r#"
+            SELECT c.id
+            FROM dial.channels c
+            WHERE c.tenant_id = $1
+              AND c.channel_type = 'direct_message'
+              AND (
+                SELECT COUNT(*) FROM dial.channel_participants p
+                WHERE p.channel_id = c.id AND p.user_id IN ($2, $3)
+              ) = 2
+              AND (
+                SELECT COUNT(*) FROM dial.channel_participants p
+                WHERE p.channel_id = c.id
+              ) = 2
+            LIMIT 1
+            "#,
+            vec![
+                tenant_id.as_uuid().into(),
+                user_a.as_uuid().into(),
+                user_b.as_uuid().into(),
+            ],
+        );
+        let rows = self.db.query_all_raw(stmt).await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        let Some(row) = rows.into_iter().next() else {
+            return Ok(None);
+        };
+        let channel_id: uuid::Uuid = row.try_get("", "id")
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        let channel = self
+            .get_channel(tenant_id, &ChannelId::new(channel_id))
+            .await?;
+        Ok(Some(channel))
+    }
+
     async fn insert_message(&self, message: &Message) -> Result<(), DialError> {
         let active = message_domain_to_active(message);
         message_entity::Entity::insert(active)

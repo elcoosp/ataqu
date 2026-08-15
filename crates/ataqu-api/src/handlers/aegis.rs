@@ -794,19 +794,11 @@ pub async fn approve_workflow(
         ));
     }
 
-    // Use the approval worker to approve the run
-    // We need to inject the approval worker into AppState or create it here.
-    // Since we don't have it in AppState, we'll just call spark_service directly.
-    // This is a temporary solution; the worker should be used.
-
-    // For now, we'll just call spark_service.approve_workflow_run directly.
-    // But we also need to mark the approval as approved in the pending_approvals table.
-    // We'll use the pending approval repo.
-
-    // For simplicity, we'll just call the spark service.
+    // Approve the pending run and mark the `pending_approvals` row as approved
+    // by the acting user. The service resumes the workflow on success.
     state
         .spark_service
-        .approve_workflow_run(auth.tenant_id, req.run_id)
+        .approve_workflow_run(auth.tenant_id, req.run_id, auth.user_id)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
@@ -814,7 +806,7 @@ pub async fn approve_workflow(
 }
 
 pub async fn reject_workflow(
-    State(_state): State<crate::AppState>,
+    State(state): State<crate::AppState>,
     auth: AuthContext,
     Json(req): Json<ApproveRequest>,
 ) -> ApiResult<StatusCode> {
@@ -824,9 +816,14 @@ pub async fn reject_workflow(
         ));
     }
 
-    // Mark the approval as rejected and the run as rejected.
-    // For now, we'll just log.
-    tracing::info!("Workflow run {} rejected by {}", req.run_id, auth.user_id);
+    // Reject the pending run: mark the `pending_approvals` row as rejected and
+    // set the workflow run status to `Rejected`. The run is not resumed.
+    state
+        .spark_service
+        .reject_workflow_run(auth.tenant_id, req.run_id, auth.user_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
     Ok(StatusCode::NO_CONTENT)
 }
 
