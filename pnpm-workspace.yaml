@@ -16,6 +16,15 @@ overrides:
 
 # Allow these packages to run their install build scripts (esbuild/swc need them
 # to produce working binaries; otherwise pnpm's deps-status check fails).
+# `allowBuilds` is the pnpm 11 field; `onlyBuiltDependencies` is kept for older
+# pnpm (CI/lockfile-era v9) compatibility.
+allowBuilds:
+  esbuild: true
+  "@swc/core": true
+  unrs-resolver: true
+  sharp: true
+  msw: true
+
 onlyBuiltDependencies:
   - esbuild
   - "@swc/core"
