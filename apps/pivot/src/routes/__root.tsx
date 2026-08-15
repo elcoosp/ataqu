@@ -10,7 +10,25 @@ export const Route = createRootRoute({
 	component: () => (
 		<QueryClientProvider client={queryClient}>
 			<I18nProvider>
-				<OnboardTour tourId="default" steps={[]}>
+				<OnboardTour
+					tourId="default"
+					steps={[
+						{
+							selector: "body",
+							content:
+								"Welcome to PIVOT. Build documents and databases, and save reusable templates.",
+						},
+						{
+							selector: "body",
+							content:
+								"Open version history on any document to review and restore earlier edits.",
+						},
+						{
+							selector: "body",
+							content: "Press ⌘K to jump to PIVOT commands.",
+						},
+					]}
+				>
 					<Shell activeApp="pivot">
 						<PivotCommandRegistrar />
 						<Outlet />
