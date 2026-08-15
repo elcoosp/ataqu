@@ -3,9 +3,12 @@ import {
 	type Submission,
 	useBulkDeleteSubmissions,
 } from "@ataqu/api-client";
+import { useSelectionStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Button,
+	SelectAllCheckbox,
+	SelectionCheckbox,
 	Skeleton,
 	Table,
 	TableBody,
@@ -17,13 +20,14 @@ import {
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { Download, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
 interface Props {
 	submissions: Submission[];
 	onExport: () => void;
 	onRefresh: () => void;
+	/** Selection scope for cross-navigation persistence (spec 2.7) */
+	scope?: string;
 }
 
 function answerToString(a: AnswerInput): string {
@@ -34,43 +38,37 @@ function answerToString(a: AnswerInput): string {
 	return String(v ?? "");
 }
 
-export function SubmissionsTable({ submissions, onExport, onRefresh }: Props) {
-	const [selected, setSelected] = useState<Set<string>>(new Set());
+export function SubmissionsTable({
+	submissions,
+	onExport,
+	onRefresh,
+	scope = "sond:submissions",
+}: Props) {
+	const selected = useSelectionStore((s) => s.selections[scope]);
+	const clear = useSelectionStore((s) => s.clear);
 	const bulkDelete = useBulkDeleteSubmissions({
 		onSuccess: () => {
-			toast.success(t`${selected.size} submission(s) deleted`);
-			setSelected(new Set());
+			toast.success(t`${selected?.size ?? 0} submission(s) deleted`);
+			clear(scope);
 			onRefresh();
 		},
 		onError: (err) => toast.error(handleApiError(err)),
 	});
 
-	const toggleSelect = (id: string) => {
-		setSelected((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) next.delete(id);
-			else next.add(id);
-			return next;
-		});
-	};
-
-	const toggleAll = () => {
-		if (selected.size === submissions.length) {
-			setSelected(new Set());
-		} else {
-			setSelected(new Set(submissions.map((s) => s.id)));
-		}
-	};
+	const ids = submissions.map((s) => s.id);
+	const selectedIds = Array.from(selected ?? []).filter((id) =>
+		ids.includes(id),
+	);
 
 	const handleBulkDelete = () => {
-		if (selected.size === 0) return;
-		bulkDelete.mutate({ ids: Array.from(selected) });
+		if (selectedIds.length === 0) return;
+		bulkDelete.mutate({ ids: selectedIds });
 	};
 
 	return (
 		<div className="space-y-4">
 			<div className="flex justify-end gap-2">
-				{selected.size > 0 && (
+				{selectedIds.length > 0 && (
 					<Button
 						variant="destructive"
 						size="sm"
@@ -78,7 +76,7 @@ export function SubmissionsTable({ submissions, onExport, onRefresh }: Props) {
 						disabled={bulkDelete.isPending}
 					>
 						<Trash2 className="mr-2 h-4 w-4" />
-						<Trans>Delete {selected.size} selected</Trans>
+						<Trans>Delete {selectedIds.length} selected</Trans>
 					</Button>
 				)}
 				<Button variant="outline" onClick={onExport}>
@@ -91,15 +89,7 @@ export function SubmissionsTable({ submissions, onExport, onRefresh }: Props) {
 					<TableHeader>
 						<TableRow>
 							<TableHead className="w-12">
-								<input
-									type="checkbox"
-									checked={
-										selected.size === submissions.length &&
-										submissions.length > 0
-									}
-									onChange={toggleAll}
-									aria-label={t`Select all submissions`}
-								/>
+								<SelectAllCheckbox scope={scope} ids={ids} />
 							</TableHead>
 							<TableHead>
 								<Trans>Submitted At</Trans>
@@ -121,15 +111,10 @@ export function SubmissionsTable({ submissions, onExport, onRefresh }: Props) {
 							return (
 								<TableRow
 									key={s.id}
-									data-state={selected.has(s.id) ? "selected" : undefined}
+									data-state={selected?.has(s.id) ? "selected" : undefined}
 								>
 									<TableCell>
-										<input
-											type="checkbox"
-											checked={selected.has(s.id)}
-											onChange={() => toggleSelect(s.id)}
-											aria-label={t`Select submission from ${new Date(s.submitted_at).toLocaleString()}`}
-										/>
+										<SelectionCheckbox scope={scope} id={s.id} />
 									</TableCell>
 									<TableCell>
 										{new Date(s.submitted_at).toLocaleString()}

@@ -1,17 +1,32 @@
-import { listContacts, searchContacts } from "@ataqu/api-client";
+import {
+	listContacts,
+	searchContacts,
+	useBulkDeleteContacts,
+	useExportCsv,
+} from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import { Input, Skeleton } from "@ataqu/ui";
+import {
+	BulkActionBar,
+	Input,
+	SelectAllCheckbox,
+	SelectionCheckbox,
+	Skeleton,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Download, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
+
+const SCOPE = "cinq:contacts";
 
 export function ContactTable() {
 	const navigate = useNavigate();
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 300);
+	const exportCsv = useExportCsv();
+	const bulkDelete = useBulkDeleteContacts();
 
 	const {
 		data: allData,
@@ -37,6 +52,7 @@ export function ContactTable() {
 		debouncedSearch.length > 0 ? searchData || [] : allData || [];
 	const isLoading = debouncedSearch.length > 0 ? searchLoading : allLoading;
 	const error = debouncedSearch.length > 0 ? searchError : allError;
+	const ids = contacts.map((c) => c.id);
 
 	if (isLoading) {
 		return <Skeleton className="h-64 w-full" />;
@@ -66,6 +82,25 @@ export function ContactTable() {
 				</div>
 			</div>
 
+			<BulkActionBar
+				scope={SCOPE}
+				actions={[
+					{
+						id: "export",
+						label: t`Export CSV`,
+						icon: <Download className="h-4 w-4" />,
+						onClick: () => exportCsv.mutate(),
+					},
+					{
+						id: "delete",
+						label: t`Delete`,
+						icon: <Trash2 className="h-4 w-4" />,
+						variant: "destructive",
+						onClick: (selected) => bulkDelete.mutate({ ids: selected }),
+					},
+				]}
+			/>
+
 			{contacts.length === 0 ? (
 				<div className="text-center py-8 text-gray-400">
 					<Trans>No contacts yet. Create one to get started.</Trans>
@@ -75,6 +110,9 @@ export function ContactTable() {
 					<table className="w-full text-sm">
 						<thead className="sticky top-0 bg-deep-night/90 z-10 border-b border-gray-700">
 							<tr>
+								<th className="w-10 py-2 px-3">
+									<SelectAllCheckbox scope={SCOPE} ids={ids} />
+								</th>
 								<th className="text-left py-2 px-3 font-medium text-gray-400">
 									<Trans>Name</Trans>
 								</th>
@@ -99,6 +137,12 @@ export function ContactTable() {
 									className="border-b border-gray-700/50 hover:bg-white/5 cursor-pointer transition-colors"
 									onClick={() => navigate({ to: `/contacts/${contact.id}` })}
 								>
+									<td
+										className="py-2 px-3"
+										onClick={(e) => e.stopPropagation()}
+									>
+										<SelectionCheckbox scope={SCOPE} id={contact.id} />
+									</td>
 									<td className="py-2 px-3">{contact.name}</td>
 									<td className="py-2 px-3">{contact.email}</td>
 									<td className="py-2 px-3">{contact.phone}</td>

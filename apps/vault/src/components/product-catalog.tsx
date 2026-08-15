@@ -1,6 +1,18 @@
-import { useGetLowStockAlerts, useListProducts } from "@ataqu/api-client";
+import {
+	useBulkDeleteProducts,
+	useGetLowStockAlerts,
+	useListProducts,
+} from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import { Badge, Button, Input, Skeleton } from "@ataqu/ui";
+import {
+	Badge,
+	BulkActionBar,
+	Button,
+	Input,
+	SelectAllCheckbox,
+	SelectionCheckbox,
+	Skeleton,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
 import { CreateProductForm } from "./create-product-form";
@@ -8,6 +20,8 @@ import { CsvImport } from "./csv-import";
 import { EmptyState } from "./empty-state";
 import { PackageIcon } from "./icons";
 import { showToast } from "./toast-store";
+
+const SCOPE = "vault:products";
 
 const escapeCsvValue = (value: string): string =>
 	`"${value.replace(/"/g, '""')}"`;
@@ -20,6 +34,7 @@ export function ProductCatalog() {
 
 	const productsQuery = useListProducts({ limit: 100, offset: 0 });
 	const lowStockQuery = useGetLowStockAlerts({ threshold: 5 });
+	const bulkDelete = useBulkDeleteProducts();
 
 	const products = productsQuery.data?.items ?? [];
 	const lowStockProductIds = useMemo(
@@ -149,6 +164,18 @@ export function ProductCatalog() {
 				</div>
 			</div>
 
+			<BulkActionBar
+				scope={SCOPE}
+				actions={[
+					{
+						id: "delete",
+						label: <Trans>Delete</Trans>,
+						variant: "destructive",
+						onClick: (selected) => bulkDelete.mutate({ ids: selected }),
+					},
+				]}
+			/>
+
 			{showCreateForm ? (
 				<CreateProductForm onCreated={() => setShowCreateForm(false)} />
 			) : null}
@@ -168,6 +195,12 @@ export function ProductCatalog() {
 					<table className="w-full text-left text-sm">
 						<thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
 							<tr>
+								<th className="w-10 px-4 py-3">
+									<SelectAllCheckbox
+										scope={SCOPE}
+										ids={filteredProducts.map((p) => p.id)}
+									/>
+								</th>
 								<th className="px-4 py-3">
 									<Trans>Name</Trans>
 								</th>
@@ -188,6 +221,9 @@ export function ProductCatalog() {
 									key={product.id}
 									className="border-b border-border last:border-b-0"
 								>
+									<td className="px-4 py-3" onClick={(e) => e.preventDefault()}>
+										<SelectionCheckbox scope={SCOPE} id={product.id} />
+									</td>
 									<td className="px-4 py-3">
 										<a
 											href={`/products/${product.id}`}
