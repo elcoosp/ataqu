@@ -760,9 +760,8 @@ pub async fn shopify_webhook(
         use sha2::{Sha256, digest::Mac};
         let client_secret = std::env::var("SHOPIFY_CLIENT_SECRET")
             .map_err(|_| ApiResponseError::internal("SHOPIFY_CLIENT_SECRET not set"))?;
-        let mut mac = <hmac::Hmac<Sha256> as hmac::Mac>::new_from_slice(
-            client_secret.as_bytes()
-        ).map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;
+        let mut mac = <hmac::Hmac<Sha256> as hmac::Mac>::new_from_slice(client_secret.as_bytes())
+            .map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;
         mac.update(body.as_bytes());
         let computed = hex::encode(mac.finalize().into_bytes());
         if !constant_time_eq(&computed, sig) {
@@ -802,17 +801,20 @@ pub async fn shopify_webhook(
                     if delta != 0 {
                         let _ = state
                             .vault_service
-                            .update_stock(Uuid::nil(), ataqu_application::vault_service::UpdateStockCommand {
-                                tenant_id: ataqu_kernel::TenantId::new(
-                                    integration.tenant_id.as_uuid(),
-                                ),
-                                variant_id: variant.id,
-                                delta,
-                                reason: "shopify_webhook".to_string(),
-                                reference: Some(format!("webhook_{}", uuid::Uuid::new_v4())),
-                                alert_channel_id: None,
-                                expected_version: variant.version,
-                            })
+                            .update_stock(
+                                Uuid::nil(),
+                                ataqu_application::vault_service::UpdateStockCommand {
+                                    tenant_id: ataqu_kernel::TenantId::new(
+                                        integration.tenant_id.as_uuid(),
+                                    ),
+                                    variant_id: variant.id,
+                                    delta,
+                                    reason: "shopify_webhook".to_string(),
+                                    reference: Some(format!("webhook_{}", uuid::Uuid::new_v4())),
+                                    alert_channel_id: None,
+                                    expected_version: variant.version,
+                                },
+                            )
                             .await;
                     }
                 }

@@ -10,7 +10,12 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table((Alias::new("collab_ops"), Alias::new("forms")))
-                    .add_column(ColumnDef::new(Alias::new("mode")).string().not_null().default("standard"))
+                    .add_column(
+                        ColumnDef::new(Alias::new("mode"))
+                            .string()
+                            .not_null()
+                            .default("standard"),
+                    )
                     .to_owned(),
             )
             .await

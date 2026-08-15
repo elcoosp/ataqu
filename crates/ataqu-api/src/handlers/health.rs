@@ -6,7 +6,7 @@ const HEALTH_CACHE_KEY: &str = "system_health";
 
 pub async fn get_health_status(State(state): State<AppState>) -> impl IntoResponse {
     let cache = state.health_cache.clone();
-    let service = state.health_service.clone( );
+    let service = state.health_service.clone();
 
     if let Some(cached) = cache.get(&HEALTH_CACHE_KEY.to_string()) {
         return Json(cached.clone());

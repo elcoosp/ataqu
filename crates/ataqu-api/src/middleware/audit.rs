@@ -1,11 +1,11 @@
 //! Audit logging middleware for all state-changing HTTP requests.
+use ataqu_kernel::TenantId;
 use axum::{
     extract::{Request, State},
     http::{Method, StatusCode},
     middleware::Next,
     response::Response,
 };
-use ataqu_kernel::TenantId;
 use serde_json::json;
 use uuid::Uuid;
 
@@ -48,7 +48,10 @@ pub async fn audit_middleware(
 
     // Log the audit event asynchronously (don't block the response)
     let audit_repo = state.audit_repo.clone();
-    let tenant_id = auth_ctx.as_ref().map(|a| a.tenant_id).unwrap_or(TenantId::new(Uuid::nil()));
+    let tenant_id = auth_ctx
+        .as_ref()
+        .map(|a| a.tenant_id)
+        .unwrap_or(TenantId::new(Uuid::nil()));
     let user_id = auth_ctx.as_ref().map(|a| a.user_id).unwrap_or(Uuid::nil());
     let status = response.status().as_u16();
 
@@ -56,27 +59,29 @@ pub async fn audit_middleware(
         let request_body_json = serde_json::from_slice(&body_bytes).unwrap_or(json!({}));
         let _response_body = "[captured]"; // We don't capture response body to avoid memory bloat
 
-        let _ = audit_repo.append_log(
-            tenant_id,
-            user_id,
-            &format!("{} {}", method, path),
-            "api",
-            Some("http_request"),
-            None,
-            Some(json!({
-                "method": method.to_string(),
-                "path": path,
-                "body": request_body_json,
-                "headers": {
-                    "user_agent": None::<String>,
-                }
-            })),
-            Some(json!({
-                "status": status,
-            })),
-            None,
-            None,
-        ).await;
+        let _ = audit_repo
+            .append_log(
+                tenant_id,
+                user_id,
+                &format!("{} {}", method, path),
+                "api",
+                Some("http_request"),
+                None,
+                Some(json!({
+                    "method": method.to_string(),
+                    "path": path,
+                    "body": request_body_json,
+                    "headers": {
+                        "user_agent": None::<String>,
+                    }
+                })),
+                Some(json!({
+                    "status": status,
+                })),
+                None,
+                None,
+            )
+            .await;
     });
 
     Ok(response)

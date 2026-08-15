@@ -28,13 +28,15 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
         || method == &axum::http::Method::PATCH;
 
     let cache_key = if is_state_changing {
-        let key_header = req.headers()
+        let key_header = req
+            .headers()
             .get(IDEMPOTENCY_KEY_HEADER)
             .ok_or(StatusCode::BAD_REQUEST)?
             .to_str()
             .map_err(|_| StatusCode::BAD_REQUEST)?
             .to_string();
-        let tenant_id = req.extensions()
+        let tenant_id = req
+            .extensions()
             .get::<crate::middleware::AuthContext>()
             .map(|a| a.tenant_id.as_uuid().to_string())
             .unwrap_or_else(|| "global".to_string());

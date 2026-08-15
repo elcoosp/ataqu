@@ -20,22 +20,24 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Alias::new("tenant_id")).uuid().not_null())
                     .col(ColumnDef::new(Alias::new("workflow_id")).uuid().not_null())
                     .col(ColumnDef::new(Alias::new("run_id")).uuid().not_null())
-                    .col(ColumnDef::new(Alias::new("approver_role")).text().not_null())
+                    .col(
+                        ColumnDef::new(Alias::new("approver_role"))
+                            .text()
+                            .not_null(),
+                    )
                     .col(
                         ColumnDef::new(Alias::new("status"))
                             .text()
                             .not_null()
                             .default("pending"),
                     )
-                    .col(ColumnDef::new(Alias::new("payload")).json_binary().not_null())
                     .col(
-                        ColumnDef::new(Alias::new("approved_by"))
-                            .uuid(),
+                        ColumnDef::new(Alias::new("payload"))
+                            .json_binary()
+                            .not_null(),
                     )
-                    .col(
-                        ColumnDef::new(Alias::new("approved_at"))
-                            .timestamp_with_time_zone(),
-                    )
+                    .col(ColumnDef::new(Alias::new("approved_by")).uuid())
+                    .col(ColumnDef::new(Alias::new("approved_at")).timestamp_with_time_zone())
                     .col(
                         ColumnDef::new(Alias::new("created_at"))
                             .timestamp_with_time_zone()

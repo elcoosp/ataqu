@@ -267,8 +267,7 @@ fn run_to_response(run: ataqu_domain_spark::workflow::WorkflowRun) -> WorkflowRu
         id: run.id,
         tenant_id: run.tenant_id,
         workflow_id: run.workflow_id,
-        status: serde_json::to_string(&run.status)
-            .unwrap_or_else(|_| format!("{:?}", run.status)),
+        status: serde_json::to_string(&run.status).unwrap_or_else(|_| format!("{:?}", run.status)),
         payload: run.payload,
         created_at: run.created_at.into(),
         updated_at: run.updated_at.into(),
@@ -356,16 +355,21 @@ pub async fn list_dlq(
 
     let mut items = Vec::new();
     for row in rows {
-        let error: Option<String> = row.try_get("attempts").ok().map(|a: i32| {
-            if a >= 3 {
-                Some(format!("max retries exceeded ({a})"))
-            } else {
-                None
-            }
-        })
-        .flatten();
+        let error: Option<String> = row
+            .try_get("attempts")
+            .ok()
+            .map(|a: i32| {
+                if a >= 3 {
+                    Some(format!("max retries exceeded ({a})"))
+                } else {
+                    None
+                }
+            })
+            .flatten();
         items.push(DlqEntryResponse {
-            id: row.try_get("id").map_err(|e| ApiResponseError::internal(&e.to_string()))?,
+            id: row
+                .try_get("id")
+                .map_err(|e| ApiResponseError::internal(&e.to_string()))?,
             schema: row
                 .try_get("schema")
                 .map_err(|e| ApiResponseError::internal(&e.to_string()))?,

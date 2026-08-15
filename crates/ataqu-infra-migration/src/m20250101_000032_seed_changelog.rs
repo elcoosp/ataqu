@@ -24,9 +24,8 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
-        db.execute_unprepared(
-            "DELETE FROM core.changelog WHERE version = '1.0.0';"
-        ).await?;
+        db.execute_unprepared("DELETE FROM core.changelog WHERE version = '1.0.0';")
+            .await?;
         Ok(())
     }
 }

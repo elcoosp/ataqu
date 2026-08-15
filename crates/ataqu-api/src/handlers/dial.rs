@@ -1,5 +1,3 @@
-// TODO: Audit logging - pass user_id to service methods
-// TODO: Add user_id parameter to all service mutation calls
 use axum::{
     Router,
     extract::{Path, Query, State},
@@ -434,7 +432,13 @@ pub async fn delete_message(
         .ok();
     state
         .dial_service
-        .delete_message(auth.user_id, auth.tenant_id, message_id, auth.user_id, is_moderator)
+        .delete_message(
+            auth.user_id,
+            auth.tenant_id,
+            message_id,
+            auth.user_id,
+            is_moderator,
+        )
         .await
         .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
 

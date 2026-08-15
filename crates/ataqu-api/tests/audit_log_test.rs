@@ -48,7 +48,8 @@ async fn test_audit_log_created_on_mutation() {
         .expect("list_logs must succeed");
 
     assert!(
-        logs.iter().any(|l| l.action == "test_action" && l.user_id == actor),
+        logs.iter()
+            .any(|l| l.action == "test_action" && l.user_id == actor),
         "the audit entry we appended should be retrievable for its tenant"
     );
 }
