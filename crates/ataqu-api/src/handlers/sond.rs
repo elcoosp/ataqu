@@ -368,6 +368,34 @@ pub async fn bulk_delete_submissions(
     }
     Ok(StatusCode::NO_CONTENT)
 }
+pub async fn list_form_submissions(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(form_id): Path<Uuid>,
+    Query(params): Query<PaginationParams>,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let responses = state
+        .sond_service
+        .list_responses(auth.tenant_id, form_id, limit, offset)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to load submissions"))?;
+    let items = responses
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.id,
+                "form_id": form_id,
+                "answers": r.answers,
+                "respondent_id": r.respondent_id,
+                "submitted_at": r.submitted_at,
+            })
+        })
+        .collect();
+    Ok(Json(items))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form).get(list_forms))
@@ -376,6 +404,10 @@ pub fn routes() -> Router<AppState> {
             axum::routing::get(get_form)
                 .put(update_form)
                 .delete(delete_form),
+        )
+        .route(
+            "/forms/:id/submissions",
+            axum::routing::get(list_form_submissions),
         )
         .route("/forms/:id/export", axum::routing::get(export_responses))
 }

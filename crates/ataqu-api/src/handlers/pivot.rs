@@ -7,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -672,11 +673,147 @@ pub async fn bulk_delete_documents(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn get_relation(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<serde_json::Value>> {
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    let row = sqlx::query(
+		"SELECT id, tenant_id, from_block_id, to_block_id, relation_type, created_at FROM collab_ops.relations WHERE id = $1 AND tenant_id = $2",
+	)
+		.bind(id)
+		.bind(auth.tenant_id.as_uuid())
+		.fetch_optional(pool)
+		.await
+		.map_err(|_| ApiResponseError::internal("Failed to load relation"))?;
+    let row = row.ok_or_else(|| ApiResponseError::not_found("Relation not found"))?;
+    Ok(Json(serde_json::json!({
+        "id": row.get::<Uuid, _>("id"),
+        "tenant_id": row.get::<Uuid, _>("tenant_id"),
+        "from_block_id": row.get::<Uuid, _>("from_block_id"),
+        "to_block_id": row.get::<Uuid, _>("to_block_id"),
+        "relation_type": row.get::<String, _>("relation_type"),
+        "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+    })))
+}
+
+pub async fn get_database_row(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path((database_id, row_id)): Path<(Uuid, Uuid)>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let pool = state.db.get_postgres_connection_pool();
+    let row = sqlx::query(
+		"SELECT id, database_id, tenant_id, data, created_at FROM collab_ops.database_rows WHERE id = $1 AND database_id = $2 AND tenant_id = $3",
+	)
+	.bind(row_id)
+	.bind(database_id)
+	.bind(auth.tenant_id.as_uuid())
+	.fetch_optional(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to load row"))?;
+    let row = row.ok_or_else(|| ApiResponseError::not_found("Row not found"))?;
+    Ok(Json(serde_json::json!({
+        "id": row.get::<Uuid, _>("id"),
+        "database_id": row.get::<Uuid, _>("database_id"),
+        "tenant_id": row.get::<Uuid, _>("tenant_id"),
+        "data": row.get::<serde_json::Value, _>("data"),
+        "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+    })))
+}
+
+pub async fn update_database_row(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path((database_id, row_id)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResult<StatusCode> {
+    let data = payload
+        .get("data")
+        .cloned()
+        .unwrap_or(serde_json::Value::Object(Default::default()));
+    let pool = state.db.get_postgres_connection_pool();
+    sqlx::query(
+		"UPDATE collab_ops.database_rows SET data = $1 WHERE id = $2 AND database_id = $3 AND tenant_id = $4",
+	)
+	.bind(data)
+	.bind(row_id)
+	.bind(database_id)
+	.bind(auth.tenant_id.as_uuid())
+	.execute(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to update row"))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn delete_database_row(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path((database_id, row_id)): Path<(Uuid, Uuid)>,
+) -> ApiResult<StatusCode> {
+    let pool = state.db.get_postgres_connection_pool();
+    sqlx::query(
+		"DELETE FROM collab_ops.database_rows WHERE id = $1 AND database_id = $2 AND tenant_id = $3",
+	)
+	.bind(row_id)
+	.bind(database_id)
+	.bind(auth.tenant_id.as_uuid())
+	.execute(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to delete row"))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn apply_template_to_doc(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(doc_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let template_id = payload
+        .get("templateId")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| ApiResponseError::validation("templateId required"))?;
+    let template_uuid = Uuid::parse_str(template_id)
+        .map_err(|_| ApiResponseError::validation("Invalid templateId"))?;
+    let pool = state.db.get_postgres_connection_pool();
+    let tpl = sqlx::query(
+        "SELECT name, content FROM collab_ops.templates WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(template_uuid)
+    .bind(auth.tenant_id.as_uuid())
+    .fetch_optional(pool)
+    .await
+    .map_err(|_| ApiResponseError::internal("Failed to load template"))?;
+    let tpl = tpl.ok_or_else(|| ApiResponseError::not_found("Template not found"))?;
+    let content: String = tpl.get("content");
+    sqlx::query(
+		"UPDATE collab_ops.documents SET content = $1, version = version + 1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3",
+	)
+	.bind(&content)
+	.bind(doc_id)
+	.bind(auth.tenant_id.as_uuid())
+	.execute(pool)
+	.await
+	.map_err(|_| ApiResponseError::internal("Failed to apply template"))?;
+    Ok(Json(
+        serde_json::json!({ "id": doc_id, "content": content }),
+    ))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
         .route("/databases/:id", axum::routing::delete(delete_db))
         .route("/databases/:id/rows", axum::routing::get(get_database_rows))
+        .route(
+            "/databases/:id/rows/:rowId",
+            axum::routing::get(get_database_row)
+                .patch(update_database_row)
+                .delete(delete_database_row),
+        )
         .route("/docs", axum::routing::post(create_doc).get(list_docs))
         .route(
             "/docs/bulk-delete",
@@ -690,13 +827,18 @@ pub fn routes() -> Router<AppState> {
                 .delete(delete_doc),
         )
         .route("/docs/:id/blocks", axum::routing::get(list_blocks))
+        .route(
+            "/docs/:id/apply-template",
+            axum::routing::post(apply_template_to_doc),
+        )
+        .route("/docs/:id/relations", axum::routing::get(list_relations))
         .route("/blocks", axum::routing::post(create_block))
         .route(
             "/blocks/:id",
             axum::routing::put(update_block).delete(delete_block),
         )
         .route("/relations", axum::routing::post(create_relation))
-        .route("/docs/:id/relations", axum::routing::get(list_relations))
+        .route("/relations/:id", axum::routing::get(get_relation))
         .route("/search", axum::routing::get(search_docs))
         .route(
             "/templates",

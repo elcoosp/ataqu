@@ -394,6 +394,7 @@ name = "ataqu-api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "argon2",
  "async-trait",
  "ataqu-application",
  "ataqu-contracts",

@@ -920,6 +920,10 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(create_product).get(list_products),
         )
         .route(
+            "/products/bulk-delete",
+            axum::routing::post(bulk_delete_products),
+        )
+        .route(
             "/products/:id",
             axum::routing::get(get_product)
                 .put(update_product)
@@ -928,6 +932,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/variants",
             axum::routing::post(create_variant).get(list_variants),
+        )
+        .route(
+            "/variants/bulk-delete",
+            axum::routing::post(bulk_delete_variants),
         )
         .route(
             "/variants/:id",

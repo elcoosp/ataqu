@@ -34,7 +34,7 @@ export const deleteEventType = (id: UUID) =>
 
 // ---- Public Event Type ----
 export const getPublicEventType = (tenantId: UUID, slug: string) =>
-	api.get<EventType>(`/tempo/event-types/public/${tenantId}/${slug}`);
+	api.get<EventType>(`/tempo/public/${tenantId}/event-types/${slug}`);
 
 // ---- Availability Slots ----
 export const listAvailabilitySlots = (eventTypeId: UUID) =>

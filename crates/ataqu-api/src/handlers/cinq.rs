@@ -10,6 +10,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use uuid::Uuid;
 
 use ataqu_application::cinq_service::{
@@ -1091,6 +1092,84 @@ pub async fn bulk_delete_deals(
 pub struct BulkDeleteDealsRequest {
     pub ids: Vec<Uuid>,
 }
+#[derive(Debug, Deserialize)]
+pub struct BulkDeleteRequest {
+    pub ids: Vec<Uuid>,
+}
+
+pub async fn bulk_delete_tasks(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<BulkDeleteRequest>,
+) -> ApiResult<StatusCode> {
+    let pool = state.db.get_postgres_connection_pool();
+    let ids = &req.ids;
+    sqlx::query("DELETE FROM cinq.tasks WHERE tenant_id = $1 AND id = ANY($2)")
+        .bind(auth.tenant_id.as_uuid())
+        .bind(ids)
+        .execute(pool)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to delete tasks"))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn export_deals(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<impl axum::response::IntoResponse> {
+    let pool = state.db.get_postgres_connection_pool();
+    let rows = sqlx::query(
+		"SELECT id, title, status, amount, probability, owner_id, created_at FROM cinq.deals WHERE tenant_id = $1 ORDER BY created_at DESC",
+	)
+		.bind(auth.tenant_id.as_uuid())
+		.fetch_all(pool)
+		.await
+		.map_err(|_| ApiResponseError::internal("Failed to load deals"))?;
+
+    let mut wtr = csv::Writer::from_writer(Vec::new());
+    let _ = wtr.write_record([
+        "id",
+        "title",
+        "status",
+        "amount",
+        "probability",
+        "owner_id",
+        "created_at",
+    ]);
+    for row in &rows {
+        let id: Uuid = row.get("id");
+        let title: String = row.get("title");
+        let status: String = row.get("status");
+        let amount: i64 = row.get("amount");
+        let probability: i32 = row.get("probability");
+        let owner_id: Uuid = row.get("owner_id");
+        let created_at: chrono::DateTime<chrono::Utc> = row.get("created_at");
+        let _ = wtr.write_record([
+            id.to_string(),
+            title,
+            status,
+            amount.to_string(),
+            probability.to_string(),
+            owner_id.to_string(),
+            created_at.to_rfc3339(),
+        ]);
+    }
+    let bytes = wtr
+        .into_inner()
+        .map_err(|_| ApiResponseError::internal("CSV build failed"))?;
+
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("text/csv"),
+    );
+    headers.insert(
+        axum::http::header::CONTENT_DISPOSITION,
+        axum::http::HeaderValue::from_static("attachment; filename=\"deals.csv\""),
+    );
+    Ok((headers, bytes))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
@@ -1132,6 +1211,7 @@ pub fn routes() -> Router<AppState> {
         .route("/search/custom/cross", get(search_custom_fields_cross))
         .route("/csv/import", post(import_csv))
         .route("/csv/export", get(export_csv))
+        .route("/deals/export", get(export_deals))
         .route("/email/track", post(track_email))
         .route("/integrations/toggle", post(toggle_integration))
 }

@@ -831,12 +831,12 @@ pub struct UpdateTenantSettingsRequest {
 
 #[derive(Debug, Serialize)]
 pub struct TenantSettingsResponse {
-	pub id: Uuid,
-	pub tenant_id: Uuid,
-	pub name: String,
-	pub plan: String,
-	pub settings: serde_json::Value,
-	pub updated_at: DateTime<Utc>,
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub name: String,
+    pub plan: String,
+    pub settings: serde_json::Value,
+    pub updated_at: DateTime<Utc>,
 }
 
 pub async fn get_tenant_settings(
@@ -853,22 +853,22 @@ pub async fn get_tenant_settings(
 	.await
 	.map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
     let resp = match row {
-    	Some(r) => TenantSettingsResponse {
-    		id: r.get::<Uuid, _>("id"),
-    		tenant_id: r.get::<Uuid, _>("tenant_id"),
-    		name: r.get::<String, _>("name"),
-    		plan: "standard".to_string(),
-    		settings: r.get::<serde_json::Value, _>("settings"),
-    		updated_at: r.get::<DateTime<Utc>, _>("updated_at"),
-    	},
-    	None => TenantSettingsResponse {
-    		id: Uuid::new_v4(),
-    		tenant_id: auth.tenant_id.as_uuid(),
-    		name: String::new(),
-    		plan: "standard".to_string(),
-    		settings: serde_json::json!({}),
-    		updated_at: Utc::now(),
-    	},
+        Some(r) => TenantSettingsResponse {
+            id: r.get::<Uuid, _>("id"),
+            tenant_id: r.get::<Uuid, _>("tenant_id"),
+            name: r.get::<String, _>("name"),
+            plan: "standard".to_string(),
+            settings: r.get::<serde_json::Value, _>("settings"),
+            updated_at: r.get::<DateTime<Utc>, _>("updated_at"),
+        },
+        None => TenantSettingsResponse {
+            id: Uuid::new_v4(),
+            tenant_id: auth.tenant_id.as_uuid(),
+            name: String::new(),
+            plan: "standard".to_string(),
+            settings: serde_json::json!({}),
+            updated_at: Utc::now(),
+        },
     };
     Ok(Json(resp))
 }
@@ -971,9 +971,95 @@ pub async fn invite_user(
     }
 }
 
+pub async fn get_me(
+    State(_state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<serde_json::Value>> {
+    Ok(Json(serde_json::json!({
+        "id": auth.user_id,
+        "email": auth.email.to_string(),
+        "name": null,
+        "role": auth.roles.first().cloned().unwrap_or_else(|| "member".to_string()),
+        "is_active": true,
+        "mfa_enabled": false,
+    })))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SignupRequest {
+    pub email: String,
+    pub password: String,
+    pub name: Option<String>,
+}
+
+pub async fn signup(
+    State(state): State<AppState>,
+    Json(req): Json<SignupRequest>,
+) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
+    use argon2::Argon2;
+    use argon2::password_hash::{PasswordHasher, SaltString};
+
+    let email = Email::new(req.email);
+    let salt = SaltString::generate(&mut rand::thread_rng());
+    let argon2 = Argon2::default();
+    let password_hash = argon2
+        .hash_password(req.password.as_bytes(), &salt)
+        .map_err(|_| ApiResponseError::validation("Password hashing failed"))?
+        .to_string();
+
+    let pool = state.db.get_postgres_connection_pool();
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|_| ApiResponseError::internal("tx start failed"))?;
+
+    let tenant_id = uuid::Uuid::new_v4();
+    let now = chrono::Utc::now();
+    sqlx::query(
+        "INSERT INTO core.tenants (id, name, created_at, updated_at) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(tenant_id)
+    .bind(req.name.clone().unwrap_or_else(|| "Tenant".to_string()))
+    .bind(now)
+    .bind(now)
+    .execute(&mut *tx)
+    .await
+    .map_err(|_| ApiResponseError::internal("Tenant creation failed"))?;
+
+    let user_id = uuid::Uuid::new_v4();
+    sqlx::query(
+		"INSERT INTO core.users (id, tenant_id, email, password_hash, name, is_active, mfa_enabled, created_at, updated_at, version) \
+		 VALUES ($1, $2, $3, $4, $5, true, false, $6, $7, 1)",
+	)
+		.bind(user_id)
+		.bind(tenant_id)
+		.bind(email.to_string())
+		.bind(password_hash)
+		.bind(req.name.clone())
+		.bind(now)
+		.bind(now)
+		.execute(&mut *tx)
+		.await
+		.map_err(|_| ApiResponseError::internal("User creation failed"))?;
+
+    tx.commit()
+        .await
+        .map_err(|_| ApiResponseError::internal("tx commit failed"))?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "user_id": user_id,
+            "tenant_id": tenant_id,
+            "email": email.to_string(),
+        })),
+    ))
+}
+
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::{delete, get, patch, post};
     axum::Router::new()
+        .route("/me", get(get_me))
         .route("/audit-log", get(get_audit_log))
         .route("/users", post(create_user).get(list_users))
         .route("/users/:id/role", patch(update_user_role))
@@ -999,6 +1085,7 @@ pub fn public_routes() -> axum::Router<crate::AppState> {
     axum::Router::new()
         .route("/password-reset/request", post(request_password_reset))
         .route("/password-reset/confirm", post(reset_password))
+        .route("/signup", post(signup))
         .route("/sso/login", post(sso_login))
         .route("/sso/callback", post(sso_callback))
         .route("/login", post(login))
