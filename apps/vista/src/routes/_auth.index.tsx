@@ -5,6 +5,7 @@ import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BarChart3, Plus } from "lucide-react";
 import { useVistaActions } from "../actions";
+import { CrossAppSection } from "../components/cross-app-section";
 
 export const Route = createFileRoute("/_auth/")({
 	component: DashboardListPage,
@@ -65,6 +66,10 @@ function DashboardListPage() {
 						ctaLabel={t`Create Dashboard`}
 					/>
 				)}
+
+				<div className="mt-10">
+					<CrossAppSection />
+				</div>
 			</div>
 		</Shell>
 	);

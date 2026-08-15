@@ -11,6 +11,7 @@ export * from "./components/form-builder";
 export * from "./components/kanban-board";
 export * from "./components/layouts";
 export * from "./components/onboard-tour";
+export * from "./components/selection-checkbox";
 export * from "./components/setup-progress-widget";
 export * from "./components/shell";
 export * from "./components/ui/avatar";
