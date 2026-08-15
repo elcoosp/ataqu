@@ -5,6 +5,8 @@ export interface CommandAction {
 	run: () => void;
 }
 
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
+
 export const usePauseCommandActions = (callbacks?: {
 	onAddEmployee?: () => void;
 	onSearchEmployees?: () => void;
@@ -74,4 +76,22 @@ export const usePauseCommandActions = (callbacks?: {
 	];
 
 	return actions;
+};
+
+/** Adapts PAUSE actions to the unified command-palette contract. */
+export function usePauseCommands(): AppCommand[] {
+	const actions = usePauseCommandActions();
+	return actions.map((a) => ({
+		id: a.id,
+		title: a.label,
+		shortcut: a.shortcut,
+		onSelect: a.run,
+	}));
+}
+
+/** Registers PAUSE commands into the global palette for the app's lifetime. */
+export const PauseCommandRegistrar: React.FC = () => {
+	const commands = usePauseCommands();
+	useRegisterCommands(commands);
+	return null;
 };

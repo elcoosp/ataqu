@@ -3,6 +3,7 @@ import {
 	useCreateDashboard,
 	useListDashboards,
 } from "@ataqu/api-client";
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -54,4 +55,24 @@ export const useVistaActions = () => {
 	);
 
 	return [...actions, ...dashboardActions];
+};
+
+/** Adapts VISTA actions to the unified command-palette contract. */
+export function useVistaCommands(): AppCommand[] {
+	const actions = useVistaActions();
+	return actions.map((a) => ({
+		id: a.id,
+		title: a.label,
+		keywords: a.keywords,
+		onSelect: () => {
+			void a.action();
+		},
+	}));
+}
+
+/** Registers VISTA commands into the global palette for the app's lifetime. */
+export const VistaCommandRegistrar: React.FC = () => {
+	const commands = useVistaCommands();
+	useRegisterCommands(commands);
+	return null;
 };

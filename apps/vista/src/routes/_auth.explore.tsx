@@ -1,5 +1,6 @@
 import { Shell } from "@ataqu/ui";
 import { createFileRoute } from "@tanstack/react-router";
+import { VistaCommandRegistrar } from "../actions";
 import { SqlEditor } from "../components/sql-editor";
 
 export const Route = createFileRoute("/_auth/explore")({
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/_auth/explore")({
 function ExplorePage() {
 	return (
 		<Shell activeApp="vista">
+			<VistaCommandRegistrar />
 			<div className="flex flex-col h-full">
 				<div className="p-4 border-b border-gray-700/40">
 					<h1 className="text-xl font-heading text-white">Explore Data</h1>

@@ -2,6 +2,7 @@ import { I18nProvider } from "@ataqu/shared-i18n";
 import { OnboardTour, Shell } from "@ataqu/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { TempoCommandRegistrar } from "../actions";
 
 const queryClient = new QueryClient();
 
@@ -11,6 +12,7 @@ export const Route = createRootRoute({
 			<I18nProvider>
 				<OnboardTour tourId="default" steps={[]}>
 					<Shell activeApp="tempo">
+						<TempoCommandRegistrar />
 						<Outlet />
 					</Shell>
 				</OnboardTour>

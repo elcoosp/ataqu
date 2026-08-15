@@ -1,3 +1,5 @@
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
+
 export interface TempoAction {
 	id: string;
 	label: string;
@@ -67,3 +69,20 @@ export const tempoActions: TempoAction[] = [
 		action: () => {},
 	},
 ];
+
+/** Adapts TEMPO actions to the unified command-palette contract. */
+export function useTempoCommands(): AppCommand[] {
+	return tempoActions.map((a) => ({
+		id: a.id,
+		title: a.label,
+		shortcut: a.shortcut,
+		onSelect: a.action,
+	}));
+}
+
+/** Registers TEMPO commands into the global palette for the app's lifetime. */
+export const TempoCommandRegistrar: React.FC = () => {
+	const commands = useTempoCommands();
+	useRegisterCommands(commands);
+	return null;
+};

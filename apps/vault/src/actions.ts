@@ -1,3 +1,4 @@
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -93,4 +94,26 @@ export const useVaultActions = () => {
 		...action,
 		handler: () => navigate({ to: action.url }),
 	}));
+};
+
+/** Adapts VAULT actions to the unified command-palette contract. */
+export const useVaultCommands = (): AppCommand[] => {
+	const navigate = useNavigate();
+	return getVaultActions().map((action) => ({
+		id: action.id,
+		title: action.label,
+		shortcut: action.shortcut,
+		onSelect: action.url
+			? () => navigate({ to: action.url })
+			: action.handler
+				? action.handler
+				: () => window.dispatchEvent(new CustomEvent(`vault:${action.id}`)),
+	}));
+};
+
+/** Registers VAULT commands into the global palette for the app's lifetime. */
+export const VaultCommandRegistrar: React.FC = () => {
+	const commands = useVaultCommands();
+	useRegisterCommands(commands);
+	return null;
 };

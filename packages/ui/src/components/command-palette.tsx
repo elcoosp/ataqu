@@ -15,6 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Home, LogOut, Search } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useAllCommands } from "../command-registry";
 
 const APP_DOMAINS: Record<string, string> = {
 	aegis: "sso",
@@ -88,6 +89,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const navigate = useNavigate();
 	const { logout } = useAuthStore();
+	const appCommands = useAllCommands();
 
 	useEffect(() => {
 		const down = (e: KeyboardEvent) => {
@@ -202,6 +204,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 								<span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
 									{item.appName} · {item.entity_type}
 								</span>
+							</CommandItem>
+						))}
+					</CommandGroup>
+				)}
+				{appCommands.length > 0 && (
+					<CommandGroup heading="Commands">
+						{appCommands.map((cmd) => (
+							<CommandItem
+								key={cmd.id}
+								value={`${cmd.title} ${cmd.keywords ?? ""}`}
+								onSelect={() => handleSelect(cmd.onSelect)}
+							>
+								{cmd.icon ?? <Search className="mr-2 h-4 w-4" />}
+								<span>{cmd.title}</span>
+								{cmd.shortcut && (
+									<span className="ml-auto text-xs text-muted-foreground">
+										{cmd.shortcut}
+									</span>
+								)}
 							</CommandItem>
 						))}
 					</CommandGroup>

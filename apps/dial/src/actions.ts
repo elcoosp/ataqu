@@ -1,4 +1,5 @@
 import { type ChannelSummary, useListChannels } from "@ataqu/api-client";
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { useNavigate } from "@tanstack/react-router";
 import { useDialStore } from "@/stores/dial-store";
 
@@ -112,3 +113,21 @@ export function useDialActions() {
 
 	return [...channelActions, ...actions];
 }
+
+/** Adapts DIAL actions to the unified command-palette contract. */
+export function useDialCommands(): AppCommand[] {
+	const actions = useDialActions();
+	return actions.map((a) => ({
+		id: a.id,
+		title: a.title,
+		onSelect: a.onSelect,
+		icon: a.icon,
+	}));
+}
+
+/** Registers DIAL commands into the global palette for the app's lifetime. */
+export const DialCommandRegistrar: React.FC = () => {
+	const commands = useDialCommands();
+	useRegisterCommands(commands);
+	return null;
+};

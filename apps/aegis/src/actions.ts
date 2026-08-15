@@ -1,6 +1,8 @@
 // apps/aegis/src/actions.ts
-// apps/aegis/src/actions.ts
+
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import type { NavigateOptions } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "./stores/auth-store";
 
 export function registerAegisActions(
@@ -75,3 +77,27 @@ export function registerAegisActions(
 		},
 	];
 }
+
+/** Adapts AEGIS actions to the unified command-palette contract. */
+export function useAegisCommands(): AppCommand[] {
+	const navigate = useNavigate();
+	const actions = registerAegisActions(
+		() => window.dispatchEvent(new CustomEvent("aegis:open-invite")),
+		() => window.dispatchEvent(new CustomEvent("aegis:open-api-key")),
+		() => window.dispatchEvent(new CustomEvent("aegis:open-role")),
+		(o) => navigate(o),
+	);
+	return actions.map((a) => ({
+		id: a.id,
+		title: a.label,
+		shortcut: Array.isArray(a.shortcut) ? a.shortcut.join(" ") : a.shortcut,
+		onSelect: a.action,
+	}));
+}
+
+/** Registers AEGIS commands into the global palette for the app's lifetime. */
+export const AegisCommandRegistrar: React.FC = () => {
+	const commands = useAegisCommands();
+	useRegisterCommands(commands);
+	return null;
+};

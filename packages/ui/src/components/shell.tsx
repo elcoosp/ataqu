@@ -1,9 +1,11 @@
 /// <reference types="vite/client" />
 
+import { useHealth } from "@ataqu/api-client";
 import { useAuthStore, useUIStore } from "@ataqu/shared-stores";
 import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { CommandRegistryProvider } from "../command-registry";
 import { Button } from "./button";
 import { CommandPalette } from "./command-palette";
 
@@ -88,6 +90,7 @@ export const Shell: React.FC<ShellProps> = ({
 	const { sidebarOpen, toggleSidebar } = useUIStore();
 	const { user, logout } = useAuthStore();
 	const [appsExpanded, setAppsExpanded] = useState(true);
+	const { data: health } = useHealth();
 
 	const appKeys = Object.keys(APP_ICONS);
 
@@ -228,6 +231,33 @@ export const Shell: React.FC<ShellProps> = ({
 						{APP_NAMES[activeApp] || "Ataqu"}
 					</span>
 					<div className="flex items-center gap-4">
+						{health && (
+							<div
+								title={`System health: ${health.status}${
+									health.components
+										? ` (outbox: ${health.components.outbox.status}, DLQ: ${health.components.spark_workflows.dlq_depth}, db pool: ${health.components.db_connection_pools.used}/${health.components.db_connection_pools.max})`
+										: ""
+								}`}
+								className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+									health.status === "Nominal"
+										? "bg-emerald-500/15 text-emerald-400"
+										: health.status === "Degraded"
+											? "bg-amber-500/15 text-amber-400"
+											: "bg-red-500/15 text-red-400"
+								}`}
+							>
+								<span
+									className={`h-2 w-2 rounded-full ${
+										health.status === "Nominal"
+											? "bg-emerald-400"
+											: health.status === "Degraded"
+												? "bg-amber-400"
+												: "bg-red-400"
+									}`}
+								/>
+								{health.status}
+							</div>
+						)}
 						<Button
 							variant="ghost"
 							size="sm"
@@ -270,8 +300,10 @@ export const Shell: React.FC<ShellProps> = ({
 
 				{/* Page content */}
 				<div className="flex-1 overflow-auto p-6">
-					<CommandPalette searchFn={searchFn} />
-					{children}
+					<CommandRegistryProvider>
+						<CommandPalette searchFn={searchFn} />
+						{children}
+					</CommandRegistryProvider>
 				</div>
 			</main>
 		</div>

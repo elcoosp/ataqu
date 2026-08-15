@@ -1,4 +1,6 @@
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
+import { useNavigate } from "@tanstack/react-router";
 
 export interface SondAction {
 	id: string;
@@ -60,3 +62,33 @@ export const getSondActions = (): SondAction[] => [
 		context: "submissions",
 	},
 ];
+
+const SOND_NAV: Record<string, string> = {
+	"sond:go-to-forms": "/_auth/",
+	"sond:go-to-submissions": "/_auth/dashboard",
+};
+
+/** Adapts SOND actions to the unified command-palette contract. */
+export function useSondCommands(): AppCommand[] {
+	const navigate = useNavigate();
+	const actions = getSondActions();
+	return actions.map((a) => {
+		const to = SOND_NAV[a.id];
+		const onSelect = to
+			? () => navigate({ to })
+			: () => window.dispatchEvent(new CustomEvent(a.id));
+		return {
+			id: a.id,
+			title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
+			shortcut: a.shortcut,
+			onSelect,
+		};
+	});
+}
+
+/** Registers SOND commands into the global palette for the app's lifetime. */
+export const SondCommandRegistrar: React.FC = () => {
+	const commands = useSondCommands();
+	useRegisterCommands(commands);
+	return null;
+};

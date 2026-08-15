@@ -2,6 +2,7 @@ import { exportCsv, exportDealsCsv } from "@ataqu/api-client";
 import { Shell } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Outlet, useNavigate } from "@tanstack/react-router";
+import { CinqCommandRegistrar } from "./actions";
 
 export function App() {
 	const navigate = useNavigate();
@@ -99,6 +100,7 @@ export function App() {
 
 	return (
 		<Shell activeApp="cinq" searchFn={searchFn}>
+			<CinqCommandRegistrar />
 			<Outlet />
 		</Shell>
 	);

@@ -1,4 +1,6 @@
 import type { UUID } from "@ataqu/types";
+import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
+import { useNavigate } from "@tanstack/react-router";
 
 export interface SparkCommandAction {
 	id: string;
@@ -129,3 +131,33 @@ export function getSparkActions(opts: {
 
 	return actions;
 }
+
+/** Adapts SPARK actions to the unified command-palette contract. */
+export function useSparkCommands(): AppCommand[] {
+	const routerNavigate = useNavigate();
+	const nav = (path: string) => {
+		const to =
+			path === "/"
+				? "/_auth/"
+				: path.startsWith("/")
+					? `/_auth${path}`
+					: "/_auth/";
+		routerNavigate({ to });
+	};
+	const actions = getSparkActions({ navigate: nav });
+	return actions
+		.filter((a) => a.when === "always" || a.when === undefined)
+		.map((a) => ({
+			id: a.id,
+			title: a.label,
+			shortcut: a.shortcut,
+			onSelect: a.perform,
+		}));
+}
+
+/** Registers SPARK commands into the global palette for the app's lifetime. */
+export const SparkCommandRegistrar: React.FC = () => {
+	const commands = useSparkCommands();
+	useRegisterCommands(commands);
+	return null;
+};

@@ -1,3 +1,4 @@
+export * from "./command-registry";
 export * from "./components/auth/LoginForm";
 export * from "./components/auth/RegisterForm";
 export { AuthLayout } from "./components/auth-layout";

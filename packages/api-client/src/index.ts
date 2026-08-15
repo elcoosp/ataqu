@@ -3,6 +3,7 @@ export { useSignup } from "./aegis";
 export * from "./cinq";
 export * from "./client";
 export * from "./dial";
+export * from "./health";
 export * from "./pause";
 export * from "./pivot";
 export * from "./search";

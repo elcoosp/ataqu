@@ -1,6 +1,7 @@
 import { OnboardTour, Shell } from "@ataqu/ui";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { SparkCommandRegistrar } from "../actions";
 
 interface RouterContext {
 	queryClient: QueryClient;
@@ -14,6 +15,7 @@ function RootLayout() {
 	return (
 		<OnboardTour tourId="spark-global" steps={[]}>
 			<Shell activeApp="spark">
+				<SparkCommandRegistrar />
 				<Outlet />
 			</Shell>
 		</OnboardTour>
