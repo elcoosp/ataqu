@@ -284,7 +284,7 @@ function CreateUserDialog({
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [name, setName] = useState("");
-	const { data: users, isLoading, error } = useListUsers();
+	useListUsers();
 	const queryClient = useQueryClient();
 
 	const createUserMutation = useCreateUser({

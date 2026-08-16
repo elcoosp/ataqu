@@ -58,11 +58,9 @@ describe("useCopyToClipboard (CopyButton)", () => {
 		} catch {
 			(navigator as any).clipboard = { writeText: write };
 		}
-		const { result } = renderHook(() =>
-			useCopyToClipboard({ value: "abc", timeout: 50 }),
-		);
+		const { result } = renderHook(() => useCopyToClipboard({ timeout: 50 }));
 		act(() => {
-			result.current.copy();
+			result.current.copy("abc");
 		});
 		await waitFor(() => expect(result.current.copied).toBe(true));
 		expect(write).toHaveBeenCalledWith("abc");
@@ -79,22 +77,22 @@ describe("useOtpInput", () => {
 		act(() => {
 			result.current
 				.getCellProps(0)
-				.onChange({ target: { value: "1" } } as any);
+				.onChange({ currentTarget: { value: "1" } } as any);
 		});
 		act(() => {
 			result.current
 				.getCellProps(1)
-				.onChange({ target: { value: "2" } } as any);
+				.onChange({ currentTarget: { value: "2" } } as any);
 		});
 		act(() => {
 			result.current
 				.getCellProps(2)
-				.onChange({ target: { value: "3" } } as any);
+				.onChange({ currentTarget: { value: "3" } } as any);
 		});
 		act(() => {
 			result.current
 				.getCellProps(3)
-				.onChange({ target: { value: "4" } } as any);
+				.onChange({ currentTarget: { value: "4" } } as any);
 		});
 		expect(result.current.value).toBe("1234");
 		expect(result.current.complete).toBe(true);
@@ -105,13 +103,16 @@ describe("useOtpInput", () => {
 describe("useTagInput", () => {
 	it("adds and removes tags", () => {
 		const onChange = vi.fn();
-		const { result } = renderHook(() => useTagInput({ value: [], onChange }));
+		const { result } = renderHook(() =>
+			useTagInput({ defaultValue: [], onChange }),
+		);
 		act(() => {
 			result.current.inputProps.onChange({ target: { value: "alpha" } } as any);
 		});
 		act(() => {
 			result.current.inputProps.onKeyDown({
 				key: "Enter",
+				nativeEvent: { isComposing: false },
 				preventDefault: () => {},
 			} as any);
 		});
@@ -136,7 +137,7 @@ describe("useFilterGrid", () => {
 		const { result } = renderHook(() =>
 			useFilterGrid({ items, filters, getKey: (i) => i.id }),
 		);
-		expect(result.current.visible.length).toBe(3);
+		expect(result.current.visible.length).toBe(2);
 		act(() => {
 			result.current.select("a");
 		});
@@ -163,8 +164,8 @@ describe("useTaskSteps", () => {
 			{ id: "s2", label: "Two" },
 		];
 		const { result } = renderHook(() => useTaskSteps({ steps, current: 1 }));
-		expect(result.current.rows[0].state).toBe("done");
-		expect(result.current.rows[1].state).toBe("active");
+		expect(result.current.rows[0].status).toBe("done");
+		expect(result.current.rows[1].status).toBe("active");
 		expect(result.current.complete).toBe(false);
 		const done = renderHook(() => useTaskSteps({ steps, current: 2 })).result;
 		expect(done.current.complete).toBe(true);

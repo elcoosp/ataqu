@@ -11,8 +11,9 @@ import {
 	BoneSuspense,
 	BulkActionBar,
 	CopyButton,
-	Input,
-	LoadingButton,
+	ExpandingSearch,
+	HoldToConfirm,
+	SegmentedControl,
 	SelectAllCheckbox,
 	SelectionCheckbox,
 	ValueFlash,
@@ -21,7 +22,7 @@ import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Download, Search, Trash2 } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -70,6 +71,8 @@ export function ContactTable() {
 			queryKey: ["cinq", "contacts", "list"],
 		},
 	);
+
+	const [filter, setFilter] = useState("all");
 
 	const {
 		data: searchData,
@@ -125,17 +128,22 @@ export function ContactTable() {
 					</h2>
 				</div>
 				<div className="flex items-center gap-2">
-					<div className="relative flex-1 max-w-sm">
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input
-							placeholder={t`Search contacts...`}
-							value={search}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setSearch(e.target.value)
-							}
-							className="pl-9 bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
-						/>
-					</div>
+					<ExpandingSearch
+						value={search}
+						onChange={setSearch}
+						placeholder={t`Search contacts...`}
+						className="relative flex-1 max-w-sm"
+					/>
+					<SegmentedControl
+						label={t`Filter contacts`}
+						options={[
+							{ value: "all", label: t`All` },
+							{ value: "company", label: t`Company` },
+							{ value: "person", label: t`Person` },
+						]}
+						value={filter}
+						onValueChange={setFilter}
+					/>
 				</div>
 
 				<BulkActionBar
@@ -218,13 +226,13 @@ export function ContactTable() {
 												.join(", ")}
 										</td>
 										<td className="py-2 px-3 text-right">
-											<LoadingButton
-												onAction={() => deleteContact.mutate(contact.id)}
-												errorLabel="Failed"
+											<HoldToConfirm
+												onConfirm={() => deleteContact.mutate(contact.id)}
+												confirmLabel="Deleted"
 												className="h-7 px-2 text-[12px] border-red-500/40 text-red-300 hover:bg-red-500/10"
 											>
 												Delete
-											</LoadingButton>
+											</HoldToConfirm>
 										</td>
 									</tr>
 								))}

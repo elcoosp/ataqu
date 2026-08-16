@@ -1,5 +1,5 @@
 import type { FormQuestion } from "@ataqu/api-client";
-import { Button, cn } from "@ataqu/ui";
+import { Button, cn, ProgressBar } from "@ataqu/ui";
 import {
 	DndContext,
 	type DragEndEvent,
@@ -208,14 +208,25 @@ export function FormBuilder({ questions, onUpdate }: Props) {
 				<QuestionPalette />
 				<div className="flex flex-1 flex-col overflow-hidden">
 					<div className="border-b border-border bg-card px-4 py-2">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleAddPageBreak}
-							disabled={!selectedId}
-						>
-							<Trans>Add Page Break</Trans>
-						</Button>
+						<div className="mb-2 flex items-center justify-between">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleAddPageBreak}
+								disabled={!selectedId}
+							>
+								<Trans>Add Page Break</Trans>
+							</Button>
+							<span className="text-xs text-muted-foreground">
+								{questions.filter((q) => q.label.trim().length > 0).length}/
+								{questions.length} labeled
+							</span>
+						</div>
+						<ProgressBar
+							value={questions.filter((q) => q.label.trim().length > 0).length}
+							max={Math.max(questions.length, 1)}
+							label="Form completion"
+						/>
 					</div>
 					<div
 						ref={setNodeRef}

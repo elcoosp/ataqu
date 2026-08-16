@@ -14,7 +14,14 @@ import {
 } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Avatar, AvatarFallback, Bone, Button, cn } from "@ataqu/ui";
+import {
+	Avatar,
+	AvatarFallback,
+	Bone,
+	Button,
+	cn,
+	TypingIndicator,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -80,7 +87,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	);
 	const _markMentionRead = useMarkMentionRead();
 	const _addMention = useAddMention();
-	const { data: mentions } = useListMentions();
+	useListMentions();
 
 	const displayedMessages = searchQuery.trim()
 		? (searchResults?.messages ?? []).filter((m) => m != null)
@@ -371,6 +378,9 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 			</div>
 			<div className="border-t border-border p-2">
 				<MessageInput channelId={channelId} />
+			</div>
+			<div className="px-3 pb-2">
+				<TypingIndicator typists={["Ada", "Lin"]} />
 			</div>
 			{/* Thread sidebar will be rendered conditionally */}
 			<ThreadSidebar channelId={channelId} />

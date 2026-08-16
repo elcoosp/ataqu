@@ -1,12 +1,57 @@
-// packages/ui/src/components/interior/skeleton-swap.tsx
-// interior.dev Async — SkeletonSwap (copied per interior.dev license).
-// Single runtime dependency: motion. Swaps a skeleton for content with no
-// layout shift.
+"use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
-const INSTANT = { duration: 0 } as const;
+const CROSSFADE = {
+	type: "spring",
+	stiffness: 260,
+	damping: 34,
+	mass: 0.8,
+} as const;
+
+const WIDTHS = [100, 93, 97, 88, 95, 91] as const;
+
+function widthFor(index: number, total: number) {
+	if (total > 1 && index === total - 1) return 62;
+	return WIDTHS[(index * 7 + 3) % WIDTHS.length];
+}
+
+export type UseSkeletonSwapOptions = {
+	ready: boolean;
+	delay?: number;
+	minVisible?: number;
+};
+
+export function useSkeletonSwap({
+	ready,
+	delay = 120,
+	minVisible = 380,
+}: UseSkeletonSwapOptions) {
+	const [visible, setVisible] = useState(false);
+	const shownAt = useRef(0);
+
+	useEffect(() => {
+		if (!ready) {
+			if (visible) return;
+			const t = setTimeout(() => {
+				shownAt.current = performance.now();
+				setVisible(true);
+			}, delay);
+			return () => clearTimeout(t);
+		}
+
+		if (!visible) return;
+		const rest = Math.max(
+			0,
+			minVisible - (performance.now() - shownAt.current),
+		);
+		const t = setTimeout(() => setVisible(false), rest);
+		return () => clearTimeout(t);
+	}, [ready, visible, delay, minVisible]);
+
+	return { showSkeleton: visible, busy: !ready };
+}
 
 export type SkeletonSwapProps = {
 	ready: boolean;
@@ -15,7 +60,6 @@ export type SkeletonSwapProps = {
 	lineHeight?: number;
 	barHeight?: number;
 	reserve?: number;
-	height?: number;
 	delay?: number;
 	minVisible?: number;
 	label?: string;
@@ -30,86 +74,108 @@ export function SkeletonSwap({
 	lineHeight = 21,
 	barHeight = 9,
 	reserve,
-	height = reserve ?? lines * lineHeight,
 	delay = 120,
 	minVisible = 380,
-	label = "Loading",
+	label,
 	skeleton,
 	className = "",
 }: SkeletonSwapProps) {
+	const { showSkeleton } = useSkeletonSwap({ ready, delay, minVisible });
 	const reduced = useReducedMotion();
-	const [showSkeleton, setShowSkeleton] = useState(!ready);
-	const mounted = useRef(ready);
-	const lastShown = useRef<number>(Date.now());
+
+	const shell = useRef<HTMLDivElement>(null);
+	const body = useRef<HTMLDivElement>(null);
+	const [scrollable, setScrollable] = useState(false);
+
+	const box = reserve ?? lines * lineHeight;
 
 	useEffect(() => {
-		if (ready) {
-			const elapsed = Date.now() - lastShown.current;
-			const wait = Math.max(0, Math.min(delay, minVisible - elapsed));
-			const t = setTimeout(() => {
-				mounted.current = true;
-				setShowSkeleton(false);
-			}, wait);
-			return () => clearTimeout(t);
-		}
-		lastShown.current = Date.now();
-		setShowSkeleton(true);
-	}, [ready, delay, minVisible]);
+		const el = shell.current;
+		const inner = body.current;
+		if (!el || typeof ResizeObserver === "undefined") return;
 
-	const fade = reduced ? INSTANT : { duration: 0.18 };
+		const check = () => setScrollable(el.scrollHeight - el.clientHeight > 1);
+		check();
+
+		const ro = new ResizeObserver(check);
+		ro.observe(el);
+		if (inner) ro.observe(inner);
+		return () => ro.disconnect();
+	}, []);
 
 	return (
 		<div
-			className={className}
-			aria-busy={showSkeleton}
-			style={{ minHeight: ready ? undefined : height }}
+			ref={shell}
+			aria-busy={!ready}
+			aria-label={label}
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+			tabIndex={scrollable ? 0 : undefined}
+			style={{ height: box }}
+			className={`relative grid overflow-y-auto overscroll-contain text-stone-700 dark:text-stone-200 ${className}`}
 		>
 			<motion.div
+				ref={body}
+				className="col-start-1 row-start-1 min-w-0"
 				initial={false}
-				animate={{ opacity: showSkeleton ? 1 : 0 }}
-				transition={fade}
-				style={{ display: showSkeleton ? "block" : "none" }}
-				aria-hidden={!showSkeleton}
+				animate={
+					reduced
+						? { opacity: showSkeleton ? 0 : 1 }
+						: {
+								opacity: showSkeleton ? 0 : 1,
+								scale: showSkeleton ? 0.99 : 1,
+								filter: showSkeleton ? "blur(4px)" : "blur(0px)",
+							}
+				}
+				transition={reduced ? { duration: 0 } : CROSSFADE}
+				style={{
+					transformOrigin: "top left",
+					pointerEvents: showSkeleton ? "none" : undefined,
+				}}
 			>
-				{skeleton ?? (
-					<div
-						role="status"
-						aria-label={label}
-						style={{ display: "grid", gap: lineHeight - barHeight }}
+				{children}
+			</motion.div>
+
+			<AnimatePresence initial={false}>
+				{showSkeleton ? (
+					<motion.div
+						key="skeleton"
+						aria-hidden
+						className="pointer-events-none col-start-1 row-start-1 w-full self-start"
+						initial={reduced ? { opacity: 1 } : { opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={
+							reduced ? { opacity: 0 } : { opacity: 0, filter: "blur(3px)" }
+						}
+						transition={reduced ? { duration: 0 } : CROSSFADE}
 					>
-						{Array.from({ length: lines }).map((_, i) => (
-							<div
-								key={i}
-								style={{
-									height: barHeight,
-									borderRadius: 6,
-									background:
-										"linear-gradient(90deg, rgba(120,113,108,0.18), rgba(120,113,108,0.32), rgba(120,113,108,0.18))",
-								}}
-							/>
-						))}
-					</div>
-				)}
-			</motion.div>
-			<motion.div
-				initial={false}
-				animate={{ opacity: showSkeleton ? 0 : 1 }}
-				transition={fade}
-			>
-				{ready ? children : null}
-			</motion.div>
+						{skeleton ?? (
+							<div className="w-full">
+								{Array.from({ length: lines }, (_, i) => (
+									<div
+										key={i}
+										className="flex items-center"
+										style={{ height: lineHeight }}
+									>
+										<div
+											className="rounded-[5px] bg-stone-200 dark:bg-white/15"
+											style={{
+												height: barHeight,
+												width: `${widthFor(i, lines)}%`,
+											}}
+										/>
+									</div>
+								))}
+							</div>
+						)}
+					</motion.div>
+				) : null}
+			</AnimatePresence>
+
+			{label ? (
+				<span role="status" className="sr-only">
+					{ready ? `${label} loaded` : ""}
+				</span>
+			) : null}
 		</div>
 	);
-}
-
-export function useSkeletonSwap(ready: boolean) {
-	const [showSkeleton, setShowSkeleton] = useState(!ready);
-	const [busy, setBusy] = useState(!ready);
-
-	useEffect(() => {
-		setShowSkeleton(!ready);
-		setBusy(!ready);
-	}, [ready]);
-
-	return { showSkeleton, busy };
 }

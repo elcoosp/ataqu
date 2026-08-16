@@ -34,7 +34,7 @@ function ContactsIndex() {
 			queryKey: ["cinq", "search-cross", crossQuery],
 		},
 	);
-	const { data: allContacts } = useListContacts({ limit: 100, offset: 0 });
+	useListContacts({ limit: 100, offset: 0 });
 
 	const fieldResults = (fieldSearch.data as ContactItem[] | undefined) ?? [];
 	const crossResults = (crossSearch.data as ContactItem[] | undefined) ?? [];

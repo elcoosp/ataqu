@@ -1,6 +1,7 @@
 import type { Variant } from "@ataqu/api-client";
 import { useBulkAdjustStock, useUpdateStock } from "@ataqu/api-client";
-import { Button, Input, Label } from "@ataqu/ui";
+import { Button, FloatingLabelInput, InlineValidation } from "@ataqu/ui";
+import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import type { QueryKey } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,15 +14,6 @@ interface PaginatedVariants {
 	total: number;
 	limit: number;
 	offset: number;
-}
-
-interface AdjustStockVariables {
-	variantId: string;
-	data: {
-		delta: number;
-		reason: string;
-	};
-	version: number;
 }
 
 interface AdjustStockContext {
@@ -122,39 +114,25 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 		>
 			<div className="grid gap-4 md:grid-cols-3">
 				<div className="space-y-2">
-					<Label htmlFor="stock-adjustment-delta">
-						<Trans>Change amount</Trans>
-					</Label>
-					<Input
-						id="stock-adjustment-delta"
-						type="number"
+					<InlineValidation
+						label={t`Change amount`}
 						value={delta}
-						onChange={(event) => setDelta(event.target.value)}
+						onChange={setDelta}
+						validate={(v) => {
+							const n = Number(v);
+							if (!Number.isFinite(n) || n === 0)
+								return "Enter a non-zero change";
+							return null;
+						}}
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="stock-adjustment-reason">
-						<Trans>Reason</Trans>
-					</Label>
-					<select
+					<FloatingLabelInput
 						id="stock-adjustment-reason"
+						label={t`Reason for adjustment`}
 						value={reason}
-						onChange={(event) => setReason(event.target.value)}
-						className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-					>
-						<option value="sale">
-							<Trans>Sale</Trans>
-						</option>
-						<option value="restock">
-							<Trans>Restock</Trans>
-						</option>
-						<option value="adjustment">
-							<Trans>Adjustment</Trans>
-						</option>
-						<option value="damage">
-							<Trans>Damage</Trans>
-						</option>
-					</select>
+						onChange={(value) => setReason(value)}
+					/>
 				</div>
 				<div className="flex items-end">
 					<Button
