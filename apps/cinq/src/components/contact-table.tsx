@@ -1,11 +1,12 @@
 import {
-	listContacts,
-	searchContacts,
 	useBulkDeleteContacts,
 	useExportCsv,
+	useListContacts,
+	useSearchContacts,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import {
+	Bone,
 	BulkActionBar,
 	Input,
 	SelectAllCheckbox,
@@ -14,7 +15,6 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Download, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -32,21 +32,25 @@ export function ContactTable() {
 		data: allData,
 		isLoading: allLoading,
 		error: allError,
-	} = useQuery({
-		queryKey: ["cinq", "contacts", "list"],
-		queryFn: () => listContacts({ limit: 1000 }),
-		enabled: debouncedSearch.length === 0,
-	});
+	} = useListContacts(
+		{ limit: 1000 },
+		{
+			enabled: debouncedSearch.length === 0,
+			queryKey: ["cinq", "contacts", "list"],
+		},
+	);
 
 	const {
 		data: searchData,
 		isLoading: searchLoading,
 		error: searchError,
-	} = useQuery({
-		queryKey: ["cinq", "contacts", "search", debouncedSearch],
-		queryFn: () => searchContacts({ q: debouncedSearch, limit: 50 }),
-		enabled: debouncedSearch.length > 0,
-	});
+	} = useSearchContacts(
+		{ q: debouncedSearch, limit: 50 },
+		{
+			enabled: debouncedSearch.length > 0,
+			queryKey: ["cinq", "contacts", "search", debouncedSearch],
+		},
+	);
 
 	const contacts =
 		debouncedSearch.length > 0 ? searchData || [] : allData || [];
@@ -55,7 +59,15 @@ export function ContactTable() {
 	const ids = contacts.map((c) => c.id);
 
 	if (isLoading) {
-		return <Skeleton className="h-64 w-full" />;
+		return (
+			<Bone
+				loading
+				name="contacts"
+				fallback={<Skeleton className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	if (error) {

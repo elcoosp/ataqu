@@ -1,26 +1,21 @@
-import { listTemplates, useCreateTemplate } from "@ataqu/api-client";
+import { useCreateTemplate, useListTemplates } from "@ataqu/api-client";
 
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, Input } from "@ataqu/ui";
+import { Bone, Button, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileText, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
-import type { Template } from "@/types";
 
 export const Route = createFileRoute("/_auth/templates")({
 	component: TemplatesPage,
 });
 
 function TemplatesPage() {
-	const { data, refetch, error } = useQuery<Template[]>({
-		queryKey: ["templates"],
-		queryFn: () => listTemplates(),
-	});
+	const { data, refetch, error } = useListTemplates();
 
 	if (error) toast.error(handleApiError(error));
 
@@ -83,28 +78,38 @@ function TemplatesPage() {
 					</div>
 				</div>
 			)}
-			{data?.length === 0 ? (
-				<EmptyState
-					icon={FileText}
-					title={<Trans>No templates</Trans>}
-					description={
-						<Trans>Create a template to reuse document structures.</Trans>
-					}
-					ctaLabel={<Trans>Create Template</Trans>}
-					onCta={() => setShowCreator(true)}
-				/>
-			) : (
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-					{data?.map((t) => (
-						<div key={t.id} className="border border-border rounded p-4">
-							<h3 className="font-medium">{t.name}</h3>
-							<p className="text-sm text-muted-foreground truncate">
-								{t.content}
-							</p>
-						</div>
-					))}
-				</div>
-			)}
+			<Bone
+				loading={!data && !error}
+				name="templates-grid"
+				fallback={
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+						<div className="h-24 rounded border border-border" />
+					</div>
+				}
+			>
+				{data?.length === 0 ? (
+					<EmptyState
+						icon={FileText}
+						title={<Trans>No templates</Trans>}
+						description={
+							<Trans>Create a template to reuse document structures.</Trans>
+						}
+						ctaLabel={<Trans>Create Template</Trans>}
+						onCta={() => setShowCreator(true)}
+					/>
+				) : (
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+						{data?.map((t) => (
+							<div key={t.id} className="border border-border rounded p-4">
+								<h3 className="font-medium">{t.name}</h3>
+								<p className="text-sm text-muted-foreground truncate">
+									{t.content}
+								</p>
+							</div>
+						))}
+					</div>
+				)}
+			</Bone>
 		</div>
 	);
 }

@@ -1,8 +1,7 @@
-import { importCsv } from "@ataqu/api-client";
+import { useImportCsv } from "@ataqu/api-client";
 import { Button, Card, CardContent } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useMutation } from "@tanstack/react-query";
 import Papa from "papaparse";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -44,14 +43,7 @@ export function CsvImport() {
 		maxFiles: 1,
 	});
 
-	const importMutation = useMutation({
-		mutationFn: async () => {
-			if (!file) return;
-			const formData = new FormData();
-			formData.append("file", file);
-			formData.append("mapping", JSON.stringify(mapping));
-			return importCsv(formData);
-		},
+	const importMutation = useImportCsv({
 		onSuccess: (data: any) => {
 			toast.success(
 				t`CSV imported: ${data.imported} contacts. Failed: ${data.failed}`,
@@ -63,7 +55,11 @@ export function CsvImport() {
 	});
 
 	const handleImport = () => {
-		if (file) importMutation.mutate();
+		if (!file) return;
+		const formData = new FormData();
+		formData.append("file", file);
+		formData.append("mapping", JSON.stringify(mapping));
+		importMutation.mutate(formData);
 	};
 
 	return (

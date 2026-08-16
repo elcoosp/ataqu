@@ -1,7 +1,8 @@
-import { listTemplates, useApplyTemplateToDoc } from "@ataqu/api-client";
+import { useApplyTemplateToDoc, useListTemplates } from "@ataqu/api-client";
 
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Dialog,
 	DialogContent,
 	DialogHeader,
@@ -9,7 +10,6 @@ import {
 	DialogTrigger,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -25,14 +25,7 @@ export function TemplatePicker({
 	children,
 }: TemplatePickerProps) {
 	const [open, setOpen] = useState(false);
-	const {
-		data: templates,
-		isLoading,
-		error,
-	} = useQuery<any[]>({
-		queryKey: ["templates"],
-		queryFn: () => listTemplates(),
-	});
+	const { data: templates, isLoading, error } = useListTemplates();
 
 	if (error) toast.error(handleApiError(error));
 
@@ -55,23 +48,28 @@ export function TemplatePicker({
 					</DialogTitle>
 				</DialogHeader>
 				<div className="grid grid-cols-2 gap-4 mt-4">
-					{isLoading && (
-						<p>
-							<Trans>Loading templates…</Trans>
-						</p>
-					)}
-					{templates?.map((t: any) => (
-						<div
-							key={t.id}
-							className="border border-border rounded p-3 hover:border-primary cursor-pointer"
-							onClick={() => applyMutation.mutate(t.id)}
-						>
-							<h4 className="font-medium">{t.name}</h4>
-							<p className="text-sm text-muted-foreground truncate">
-								{t.content}
+					<Bone
+						loading={isLoading}
+						name="templates"
+						fallback={
+							<p>
+								<Trans>Loading templates…</Trans>
 							</p>
-						</div>
-					))}
+						}
+					>
+						{templates?.map((t: any) => (
+							<div
+								key={t.id}
+								className="border border-border rounded p-3 hover:border-primary cursor-pointer"
+								onClick={() => applyMutation.mutate(t.id)}
+							>
+								<h4 className="font-medium">{t.name}</h4>
+								<p className="text-sm text-muted-foreground truncate">
+									{t.content}
+								</p>
+							</div>
+						))}
+					</Bone>
 				</div>
 			</DialogContent>
 		</Dialog>

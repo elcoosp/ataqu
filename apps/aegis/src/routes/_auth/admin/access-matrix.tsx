@@ -1,7 +1,7 @@
 // apps/aegis/src/routes/_auth/admin/access-matrix.tsx
 
 import type { UpdatePermissionRequest } from "@ataqu/api-client";
-import { updatePermission, useGetPermissionMatrix } from "@ataqu/api-client";
+import { useGetPermissionMatrix, useUpdatePermission } from "@ataqu/api-client";
 import {
 	Card,
 	CardContent,
@@ -19,7 +19,7 @@ import {
 	TableRow,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -44,19 +44,7 @@ export const Route = createFileRoute("/_auth/admin/access-matrix")({
 
 		const { data: matrix = [], isLoading, error } = useGetPermissionMatrix();
 
-		const updatePermissionMutation = useMutation({
-			mutationFn: ({
-				userId,
-				app,
-				role,
-			}: {
-				userId: string;
-				app: string;
-				role: string;
-			}) =>
-				updatePermission(userId, app, {
-					role: role as UpdatePermissionRequest["role"],
-				}),
+		const updatePermissionMutation = useUpdatePermission({
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: ["aegis", "permission-matrix"],
@@ -122,7 +110,9 @@ export const Route = createFileRoute("/_auth/admin/access-matrix")({
 															updatePermissionMutation.mutate({
 																userId: entry.user_id,
 																app,
-																role,
+																data: {
+																	role: role as UpdatePermissionRequest["role"],
+																},
 															})
 														}
 													>

@@ -1,12 +1,12 @@
 import type { DealResponse, PipelineStageResponse } from "@ataqu/api-client";
 import {
-	listDeals,
-	listPipelineStages,
+	useListDeals,
+	useListPipelineStages,
 	useUpdatePipelineStage,
 } from "@ataqu/api-client";
-import { Badge, Button, Input, KanbanBoard, Skeleton } from "@ataqu/ui";
+import { Badge, Bone, Button, Input, KanbanBoard, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,14 +15,10 @@ export function DealKanban() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
-	const { data: stages, isLoading: stagesLoading } = useQuery({
-		queryKey: ["cinq", "pipelineStages"],
-		queryFn: listPipelineStages,
-	});
+	const { data: stages, isLoading: stagesLoading } = useListPipelineStages();
 
-	const { data: deals, isLoading: dealsLoading } = useQuery({
-		queryKey: ["cinq", "deals", "list"],
-		queryFn: () => listDeals({ limit: 1000 }),
+	const { data: deals, isLoading: dealsLoading } = useListDeals({
+		limit: 1000,
 	});
 
 	const updateStage = useUpdatePipelineStage({
@@ -51,7 +47,15 @@ export function DealKanban() {
 	};
 
 	if (stagesLoading || dealsLoading) {
-		return <Skeleton className="h-64 w-full" />;
+		return (
+			<Bone
+				loading
+				name="deals"
+				fallback={<Skeleton className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	const columns = (stages || []).map((stage: PipelineStageResponse) => ({

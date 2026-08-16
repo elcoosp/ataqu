@@ -1,24 +1,19 @@
-import { listDatabases, useCreateDatabase } from "@ataqu/api-client";
+import { useCreateDatabase, useListDatabases } from "@ataqu/api-client";
 
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Database, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
-import type { Database as DatabaseType } from "@/types";
 
 export const Route = createFileRoute("/_auth/db/")({
 	component: DatabaseList,
 });
 
 function DatabaseList() {
-	const { data, refetch, error } = useQuery<DatabaseType[]>({
-		queryKey: ["databases"],
-		queryFn: () => listDatabases(),
-	});
+	const { data, refetch, error } = useListDatabases();
 
 	if (error) toast.error(handleApiError(error));
 

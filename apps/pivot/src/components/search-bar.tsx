@@ -1,8 +1,7 @@
-import { searchDocuments } from "@ataqu/api-client";
+import { useSearchDocuments } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import { cn, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
-import { useQuery } from "@tanstack/react-query";
 import { SearchIcon, X } from "lucide-react";
 import { useState } from "react";
 
@@ -14,14 +13,13 @@ interface SearchBarProps {
 export function SearchBar({ onResultClick, className }: SearchBarProps) {
 	const [query, setQuery] = useState("");
 	const debouncedQuery = useDebounce(query, 200);
-	const { data } = useQuery<any[]>({
-		queryKey: ["search", debouncedQuery],
-		queryFn: () => {
-			if (!debouncedQuery || debouncedQuery.length < 2) return [];
-			return searchDocuments({ q: debouncedQuery, limit: 20 });
+	const { data } = useSearchDocuments(
+		{ q: debouncedQuery, limit: 20 },
+		{
+			enabled: debouncedQuery.length >= 2,
+			queryKey: ["search", debouncedQuery],
 		},
-		enabled: debouncedQuery.length >= 2,
-	});
+	);
 
 	const handleClear = () => setQuery("");
 

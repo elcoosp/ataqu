@@ -1,33 +1,26 @@
 import type { TaskResponse } from "@ataqu/api-client";
-import { listTasks, updateTask } from "@ataqu/api-client";
-import { Badge, Skeleton } from "@ataqu/ui";
+import { useListTasks, useUpdateTask } from "@ataqu/api-client";
+import { Badge, Bone, Skeleton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function TaskList() {
-	const queryClient = useQueryClient();
-	const { data, isLoading } = useQuery({
-		queryKey: ["cinq", "tasks", "list"],
-		queryFn: () => listTasks({ limit: 100 }),
-	});
+	const _queryClient = useQueryClient();
+	const { data, isLoading } = useListTasks({ limit: 100 });
 	const tasks = data || [];
 
-	const updateTaskMutation = useMutation({
-		mutationFn: ({
-			id,
-			status,
-			version,
-		}: {
-			id: string;
-			status: "pending" | "completed" | "cancelled";
-			version: number;
-		}) => updateTask(id, { status }, version),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["cinq", "tasks"] });
-		},
-	});
+	const updateTaskMutation = useUpdateTask();
 
-	if (isLoading) return <Skeleton className="h-32 w-full" />;
+	if (isLoading)
+		return (
+			<Bone
+				loading
+				name="tasks"
+				fallback={<Skeleton className="h-32 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 
 	return (
 		<div className="space-y-2">
@@ -45,7 +38,7 @@ export function TaskList() {
 								const checked = e.target.checked;
 								updateTaskMutation.mutate({
 									id: task.id,
-									status: checked ? "completed" : "pending",
+									data: { status: checked ? "completed" : "pending" },
 									version: task.version,
 								});
 							}}

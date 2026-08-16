@@ -1,7 +1,8 @@
-import { listDocumentVersions, updateDocument } from "@ataqu/api-client";
+import { updateDocument, useListDocumentVersions } from "@ataqu/api-client";
 
 import { formatDate, handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	Sheet,
 	SheetContent,
@@ -10,7 +11,7 @@ import {
 	SheetTrigger,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -30,10 +31,7 @@ export function VersionHistory({
 		data: versions,
 		isLoading,
 		error,
-	} = useQuery<any[]>({
-		queryKey: ["versions", documentId],
-		queryFn: () => listDocumentVersions(documentId),
-	});
+	} = useListDocumentVersions(documentId);
 
 	if (error) toast.error(handleApiError(error));
 
@@ -70,33 +68,38 @@ export function VersionHistory({
 					</SheetTitle>
 				</SheetHeader>
 				<div className="mt-4 space-y-2">
-					{isLoading && (
-						<p>
-							<Trans>Loading…</Trans>
-						</p>
-					)}
-					{versions?.map((v: any) => (
-						<div
-							key={v.id}
-							className="flex items-center justify-between p-2 border-b border-border"
-						>
-							<div>
-								<p className="text-sm font-medium">{v.title}</p>
-								<p className="text-xs text-muted-foreground">
-									{formatDate(v.created_at)} • v{v.version}
-								</p>
+					<Bone
+						loading={isLoading}
+						name="versions"
+						fallback={
+							<p>
+								<Trans>Loading…</Trans>
+							</p>
+						}
+					>
+						{versions?.map((v: any) => (
+							<div
+								key={v.id}
+								className="flex items-center justify-between p-2 border-b border-border"
+							>
+								<div>
+									<p className="text-sm font-medium">{v.title}</p>
+									<p className="text-xs text-muted-foreground">
+										{formatDate(v.created_at)} • v{v.version}
+									</p>
+								</div>
+								{v.version !== currentVersion && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => handleRestore(v)}
+									>
+										<Trans>Restore</Trans>
+									</Button>
+								)}
 							</div>
-							{v.version !== currentVersion && (
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => handleRestore(v)}
-								>
-									<Trans>Restore</Trans>
-								</Button>
-							)}
-						</div>
-					))}
+						))}
+					</Bone>
 				</div>
 			</SheetContent>
 		</Sheet>
