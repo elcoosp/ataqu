@@ -1,4 +1,5 @@
 import {
+	useBulkDeleteVariants,
 	useDeleteProduct,
 	useDeleteVariant,
 	useGetProduct,
@@ -44,6 +45,14 @@ export function ProductDetail({ productId }: { productId: string }) {
 		null,
 	);
 	const [showCreateVariant, setShowCreateVariant] = useState(false);
+	const [selectedVariantIds, setSelectedVariantIds] = useState<string[]>([]);
+
+	const bulkDeleteVariants = useBulkDeleteVariants({
+		onSuccess: () => {
+			setSelectedVariantIds([]);
+			void variantsQuery.refetch();
+		},
+	});
 
 	const variants = useMemo(
 		() =>
@@ -349,9 +358,48 @@ export function ProductDetail({ productId }: { productId: string }) {
 						/>
 					) : (
 						<div className="overflow-x-auto rounded-lg border border-border">
+							{selectedVariantIds.length > 0 && (
+								<div className="flex items-center gap-2 border-b border-border bg-muted/20 px-4 py-2 text-sm">
+									<span className="text-muted-foreground">
+										{selectedVariantIds.length} selected
+									</span>
+									<Button
+										variant="destructive"
+										size="sm"
+										disabled={bulkDeleteVariants.isPending}
+										onClick={() =>
+											bulkDeleteVariants.mutate({ ids: selectedVariantIds })
+										}
+									>
+										<Trans>Delete selected</Trans>
+									</Button>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setSelectedVariantIds([])}
+									>
+										<Trans>Clear</Trans>
+									</Button>
+								</div>
+							)}
 							<table className="w-full text-left text-sm">
 								<thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
 									<tr>
+										<th className="w-10 px-4 py-3">
+											<input
+												type="checkbox"
+												aria-label="Select all variants"
+												checked={
+													variants.length > 0 &&
+													selectedVariantIds.length === variants.length
+												}
+												onChange={(e) =>
+													setSelectedVariantIds(
+														e.target.checked ? variants.map((v) => v.id) : [],
+													)
+												}
+											/>
+										</th>
 										<th className="px-4 py-3">
 											<Trans>SKU</Trans>
 										</th>
@@ -376,6 +424,23 @@ export function ProductDetail({ productId }: { productId: string }) {
 											className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/10"
 											onClick={() => setSelectedVariantId(variant.id)}
 										>
+											<td
+												className="w-10 px-4 py-3"
+												onClick={(e) => e.stopPropagation()}
+											>
+												<input
+													type="checkbox"
+													aria-label={`Select ${variant.sku}`}
+													checked={selectedVariantIds.includes(variant.id)}
+													onChange={(e) =>
+														setSelectedVariantIds((prev) =>
+															e.target.checked
+																? [...prev, variant.id]
+																: prev.filter((id) => id !== variant.id),
+														)
+													}
+												/>
+											</td>
 											<td className="px-4 py-3 font-mono text-xs">
 												{variant.sku}
 											</td>

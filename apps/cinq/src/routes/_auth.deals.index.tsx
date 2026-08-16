@@ -1,7 +1,12 @@
+import {
+	type DealResponse,
+	useBulkDeleteDeals,
+	useListDeals,
+} from "@ataqu/api-client";
 import { Button, DashboardLayout, OnboardTour } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { CreateDealDialog } from "../components/create-deal-dialog";
 import { CreatePipelineStageDialog } from "../components/create-pipeline-stage-dialog";
@@ -31,6 +36,13 @@ const tourSteps = [
 function DealsIndex() {
 	const [openCreate, setOpenCreate] = useState(false);
 	const [openStage, setOpenStage] = useState(false);
+	const { data: deals } = useListDeals({ limit: 100, offset: 0 });
+	const bulkDeleteDeals = useBulkDeleteDeals({
+		onSuccess: () => {
+			window.location.reload();
+		},
+	});
+	const allDealIds = (deals ?? []).map((d: DealResponse) => d.id);
 	return (
 		<OnboardTour tourId="cinq-kanban-tour" steps={tourSteps}>
 			<DashboardLayout>
@@ -52,6 +64,22 @@ function DealsIndex() {
 								<Plus className="h-4 w-4 mr-1" />
 								<Trans>New Deal</Trans>
 							</Button>
+							{allDealIds.length > 0 && (
+								<Button
+									size="sm"
+									variant="destructive"
+									onClick={() => {
+										if (
+											window.confirm(`Delete all ${allDealIds.length} deals?`)
+										) {
+											bulkDeleteDeals.mutate({ ids: allDealIds });
+										}
+									}}
+								>
+									<Trash2 className="h-4 w-4 mr-1" />
+									<Trans>Delete all</Trans>
+								</Button>
+							)}
 						</div>
 					</div>
 					<DealKanban />
