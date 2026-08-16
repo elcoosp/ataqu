@@ -5,6 +5,7 @@ import type {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./client";
 import type {
+	Block,
 	CreateDatabaseCommand,
 	CreateDocumentCommand,
 	CreateRelationCommand,
@@ -16,6 +17,7 @@ import type {
 	Relation,
 	SearchDocumentsParams,
 	Template,
+	UpdateBlockRequest,
 	UpdateDocumentCommand,
 } from "./types";
 
@@ -58,6 +60,14 @@ export const updateDatabaseRow = (
 	data: Record<string, unknown>,
 ) =>
 	api.patch<DatabaseRow>(`/pivot/databases/${databaseId}/rows/${rowId}`, data);
+export const updateBlock = (
+	id: string,
+	data: UpdateBlockRequest,
+	version: number,
+) =>
+	api.put<Block>(`/pivot/blocks/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const createDatabase = (data: CreateDatabaseCommand) =>
 	api.post<Database>("/pivot/databases", data);
 
@@ -177,6 +187,17 @@ export const useUpdateDocument = (
 ) =>
 	useMutation({
 		mutationFn: ({ id, data, version }) => updateDocument(id, data, version),
+		...options,
+	});
+export const useUpdateBlock = (
+	options?: UseMutationOptions<
+		Block,
+		Error,
+		{ id: string; data: UpdateBlockRequest; version: number }
+	>,
+) =>
+	useMutation({
+		mutationFn: ({ id, data, version }) => updateBlock(id, data, version),
 		...options,
 	});
 export const useDeleteDocument = (

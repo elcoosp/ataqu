@@ -1,9 +1,16 @@
-import { useGetProduct, useListVariants } from "@ataqu/api-client";
-import { formatCurrency } from "@ataqu/shared-utils";
-import { Button, OnboardTour, Skeleton } from "@ataqu/ui";
+import {
+	useGetProduct,
+	useListVariants,
+	useReserveStock,
+	useUpdateProduct,
+	useUpdateVariant,
+} from "@ataqu/api-client";
+import { formatCurrency, handleApiError } from "@ataqu/shared-utils";
+import { Button, Input, Label, OnboardTour, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { CreateVariantForm } from "./create-variant-form";
 import { CrossAppBadge } from "./cross-app-badge";
 import { EmptyState } from "./empty-state";
@@ -80,6 +87,87 @@ export function ProductDetail({ productId }: { productId: string }) {
 
 	const product = productQuery.data;
 
+	if (!product) return null;
+
+	const updateProduct = useUpdateProduct({
+		onSuccess: () => toast.success(t`Product updated`),
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const updateVariant = useUpdateVariant({
+		onSuccess: () => toast.success(t`Variant updated`),
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const reserveStock = useReserveStock({
+		onSuccess: () => {
+			toast.success(t`Stock reserved`);
+			setReserveQty("");
+			setReserving(false);
+		},
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const [reserving, setReserving] = useState(false);
+	const [reserveQty, setReserveQty] = useState("");
+
+	const saveReserve = () => {
+		if (!selectedVariant) return;
+		const qty = Number(reserveQty);
+		if (!Number.isFinite(qty) || qty <= 0) return;
+		reserveStock.mutate({
+			variantId: selectedVariant.id,
+			data: { quantity: qty },
+			version: selectedVariant.version,
+		});
+	};
+
+	const [editingProduct, setEditingProduct] = useState(false);
+	const [prodName, setProdName] = useState("");
+	const [prodDescription, setProdDescription] = useState("");
+	const [prodSku, setProdSku] = useState("");
+
+	const startEditProduct = () => {
+		setProdName(product.name);
+		setProdDescription(product.description);
+		setProdSku(product.sku);
+		setEditingProduct(true);
+	};
+
+	const saveProduct = () => {
+		updateProduct.mutate({
+			id: product.id,
+			data: {
+				name: prodName,
+				description: prodDescription,
+				sku: prodSku,
+			},
+			version: product.version,
+		});
+		setEditingProduct(false);
+	};
+
+	const [editingVariant, setEditingVariant] = useState(false);
+	const [varPrice, setVarPrice] = useState("");
+	const [varSku, setVarSku] = useState("");
+
+	const startEditVariant = () => {
+		if (!selectedVariant) return;
+		setVarPrice(String(selectedVariant.price / 100));
+		setVarSku(selectedVariant.sku);
+		setEditingVariant(true);
+	};
+
+	const saveVariant = () => {
+		if (!selectedVariant) return;
+		updateVariant.mutate({
+			id: selectedVariant.id,
+			data: {
+				price: Math.round(Number(varPrice) * 100),
+				sku: varSku,
+			},
+			version: selectedVariant.version,
+		});
+		setEditingVariant(false);
+	};
+
 	if (!product) {
 		return (
 			<EmptyState
@@ -96,15 +184,60 @@ export function ProductDetail({ productId }: { productId: string }) {
 				<header className="space-y-2">
 					<div className="flex flex-wrap items-start justify-between gap-4">
 						<div>
-							<h1 className="font-heading text-3xl font-bold text-foreground">
-								{product.name}
-							</h1>
-							<p className="font-mono text-sm text-muted-foreground">
-								{product.sku}
-							</p>
-							<p className="max-w-2xl text-sm text-muted-foreground">
-								{product.description}
-							</p>
+							{editingProduct ? (
+								<div className="space-y-2">
+									<Input
+										value={prodName}
+										onChange={(e) => setProdName(e.target.value)}
+										placeholder={t`Name`}
+									/>
+									<Input
+										value={prodSku}
+										onChange={(e) => setProdSku(e.target.value)}
+										placeholder={t`SKU`}
+									/>
+									<textarea
+										className="w-full rounded-md border border-input bg-background p-2 text-sm"
+										value={prodDescription}
+										onChange={(e) => setProdDescription(e.target.value)}
+										rows={2}
+									/>
+									<div className="flex gap-2">
+										<Button
+											onClick={saveProduct}
+											disabled={updateProduct.isPending}
+										>
+											<Trans>Save</Trans>
+										</Button>
+										<Button
+											variant="ghost"
+											onClick={() => setEditingProduct(false)}
+										>
+											<Trans>Cancel</Trans>
+										</Button>
+									</div>
+								</div>
+							) : (
+								<>
+									<h1 className="font-heading text-3xl font-bold text-foreground">
+										{product.name}
+									</h1>
+									<p className="font-mono text-sm text-muted-foreground">
+										{product.sku}
+									</p>
+									<p className="max-w-2xl text-sm text-muted-foreground">
+										{product.description}
+									</p>
+									<Button
+										variant="outline"
+										size="sm"
+										className="mt-2"
+										onClick={startEditProduct}
+									>
+										<Trans>Edit Product</Trans>
+									</Button>
+								</>
+							)}
 						</div>
 						<div className="flex flex-wrap items-center gap-2">
 							<CrossAppBadge entityId={product.id} />
@@ -246,7 +379,91 @@ export function ProductDetail({ productId }: { productId: string }) {
 
 				{selectedVariant ? (
 					<div className="space-y-6">
-						<StockAdjustment variant={selectedVariant} />
+						<div className="flex flex-wrap items-start justify-between gap-2">
+							<h2 className="font-heading text-xl font-semibold text-foreground">
+								<Trans>Selected variant</Trans>
+							</h2>
+							<div className="flex gap-2">
+								{!editingVariant && !reserving && (
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => setReserving(true)}
+									>
+										<Trans>Reserve Stock</Trans>
+									</Button>
+								)}
+								{!editingVariant && !reserving && (
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={startEditVariant}
+									>
+										<Trans>Edit Variant</Trans>
+									</Button>
+								)}
+							</div>
+						</div>
+						{reserving ? (
+							<div className="flex flex-wrap items-end gap-2 rounded-lg border border-border p-4">
+								<div className="space-y-2">
+									<Label>
+										<Trans>Quantity to reserve</Trans>
+									</Label>
+									<Input
+										type="number"
+										value={reserveQty}
+										onChange={(e) => setReserveQty(e.target.value)}
+										className="w-40"
+									/>
+								</div>
+								<Button onClick={saveReserve} disabled={reserveStock.isPending}>
+									<Trans>Reserve</Trans>
+								</Button>
+								<Button variant="ghost" onClick={() => setReserving(false)}>
+									<Trans>Cancel</Trans>
+								</Button>
+							</div>
+						) : editingVariant ? (
+							<div className="space-y-2 rounded-lg border border-border p-4">
+								<div>
+									<Label>
+										<Trans>SKU</Trans>
+									</Label>
+									<Input
+										value={varSku}
+										onChange={(e) => setVarSku(e.target.value)}
+									/>
+								</div>
+								<div>
+									<Label>
+										<Trans>Price</Trans>
+									</Label>
+									<Input
+										type="number"
+										step="0.01"
+										value={varPrice}
+										onChange={(e) => setVarPrice(e.target.value)}
+									/>
+								</div>
+								<div className="flex gap-2">
+									<Button
+										onClick={saveVariant}
+										disabled={updateVariant.isPending}
+									>
+										<Trans>Save</Trans>
+									</Button>
+									<Button
+										variant="ghost"
+										onClick={() => setEditingVariant(false)}
+									>
+										<Trans>Cancel</Trans>
+									</Button>
+								</div>
+							</div>
+						) : (
+							<StockAdjustment variant={selectedVariant} />
+						)}
 						<div className="space-y-4">
 							<h2 className="font-heading text-xl font-semibold text-foreground">
 								<Trans>Movement history</Trans>

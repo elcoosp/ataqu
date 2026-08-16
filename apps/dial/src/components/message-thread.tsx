@@ -1,15 +1,18 @@
 import {
 	useAddReaction,
 	useDeleteReaction,
+	useEditMessage,
 	useListMessages,
 	useListReactions,
 } from "@ataqu/api-client";
+import { handleApiError } from "@ataqu/shared-utils";
 import { Avatar, AvatarFallback, Button, cn, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { formatDistanceToNow } from "date-fns";
 import { Reply } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { MessageInput } from "./message-input";
 import { ReactionPicker } from "./reaction-picker";
 import { ThreadSidebar } from "./thread-sidebar";
@@ -45,6 +48,12 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	// Handle reactions
 	const addReactionMutation = useAddReaction();
 	const deleteReactionMutation = useDeleteReaction();
+	const editMutation = useEditMessage({
+		onSuccess: () => toast.success(t`Message edited`),
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [draft, setDraft] = useState("");
 
 	const handleReactionToggle = (messageId: string, emoji: string) => {
 		addReactionMutation.mutate({
@@ -147,19 +156,54 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 										</span>
 									</div>
 									<div className="mt-1 text-sm whitespace-pre-wrap break-words">
-										{message.content.split(" ").map((word, i) => {
-											if (word.startsWith("@")) {
-												return (
-													<span
-														key={i}
-														className="bg-primary/20 text-primary-foreground px-0.5 rounded"
+										{editingId === message.id ? (
+											<>
+												<textarea
+													className="w-full rounded-md border border-input bg-background p-2 text-sm"
+													value={draft}
+													onChange={(e) => setDraft(e.target.value)}
+													rows={2}
+													autoFocus
+												/>
+												<div className="mt-1 flex gap-2">
+													<Button
+														size="sm"
+														onClick={() => {
+															editMutation.mutate({
+																messageId: message.id,
+																data: { content: draft },
+																version: message.version,
+															});
+															setEditingId(null);
+														}}
+														disabled={editMutation.isPending}
 													>
-														{word}
-													</span>
-												);
-											}
-											return `${word} `;
-										})}
+														{t`Save`}
+													</Button>
+													<Button
+														size="sm"
+														variant="ghost"
+														onClick={() => setEditingId(null)}
+													>
+														{t`Cancel`}
+													</Button>
+												</div>
+											</>
+										) : (
+											message.content.split(" ").map((word, i) => {
+												if (word.startsWith("@")) {
+													return (
+														<span
+															key={i}
+															className="bg-primary/20 text-primary-foreground px-0.5 rounded"
+														>
+															{word}
+														</span>
+													);
+												}
+												return `${word} `;
+											})
+										)}
 									</div>
 									{/* Reactions */}
 									<div className="flex flex-wrap gap-1 mt-1">
@@ -192,13 +236,24 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 											));
 										})()}
 									</div>
-									{/* Action buttons: reaction, reply */}
+									{/* Action buttons: reaction, reply, edit */}
 									<div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
 										<ReactionPicker
 											onSelect={(emoji) =>
 												handleReactionToggle(message.id, emoji)
 											}
 										/>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
+											onClick={() => {
+												setDraft(message.content);
+												setEditingId(message.id);
+											}}
+										>
+											{t`Edit`}
+										</Button>
 										<Button
 											variant="ghost"
 											size="icon"

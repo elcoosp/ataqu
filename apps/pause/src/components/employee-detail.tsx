@@ -3,11 +3,14 @@ import {
 	useDeactivateEmployee,
 	useGetEmployee,
 	useListEmployeeDocuments,
+	useUpdateEmployee,
 	useUploadDocument,
 } from "@ataqu/api-client";
+import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Button,
 	Card,
+	Input,
 	Skeleton,
 	Tabs,
 	TabsContent,
@@ -17,6 +20,7 @@ import {
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { Upload } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 async function uploadFileToS3(file: File): Promise<string> {
@@ -64,6 +68,39 @@ export function EmployeeDetail({ id }: { id: string }) {
 		onError: () => toast.error(t`Failed to offboard employee.`),
 	});
 
+	const updateEmployee = useUpdateEmployee({
+		onSuccess: () => {
+			toast.success(t`Employee updated.`);
+			setEditing(false);
+		},
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const [editing, setEditing] = useState(false);
+	const [fullName, setFullName] = useState("");
+	const [jobTitle, setJobTitle] = useState("");
+	const [department, setDepartment] = useState("");
+
+	const startEdit = () => {
+		if (!employee) return;
+		setFullName(employee.full_name);
+		setJobTitle(employee.job_title);
+		setDepartment(employee.department ?? "");
+		setEditing(true);
+	};
+
+	const save = () => {
+		if (!employee) return;
+		updateEmployee.mutate({
+			id: employee.id,
+			data: {
+				full_name: fullName,
+				job_title: jobTitle,
+				department: department || null,
+			},
+			version: employee.version,
+		});
+	};
+
 	if (isLoading || !employee) {
 		return <Skeleton className="h-64 w-full" />;
 	}
@@ -91,13 +128,53 @@ export function EmployeeDetail({ id }: { id: string }) {
 						{employee.full_name.charAt(0)}
 					</div>
 					<div>
-						<h1 className="text-3xl font-bold text-white">
-							{employee.full_name}
-						</h1>
-						<p className="text-lg text-gray-400">{employee.job_title}</p>
-						<p className="text-sm text-gray-500">
-							{employee.email} | {employee.phone || t`No phone`}
-						</p>
+						{editing ? (
+							<div className="space-y-2">
+								<Input
+									value={fullName}
+									onChange={(e) => setFullName(e.target.value)}
+									placeholder={t`Full name`}
+								/>
+								<div className="flex gap-2">
+									<Input
+										value={jobTitle}
+										onChange={(e) => setJobTitle(e.target.value)}
+										placeholder={t`Job title`}
+									/>
+									<Input
+										value={department}
+										onChange={(e) => setDepartment(e.target.value)}
+										placeholder={t`Department`}
+									/>
+								</div>
+								<div className="flex gap-2">
+									<Button onClick={save} disabled={updateEmployee.isPending}>
+										<Trans>Save</Trans>
+									</Button>
+									<Button variant="ghost" onClick={() => setEditing(false)}>
+										<Trans>Cancel</Trans>
+									</Button>
+								</div>
+							</div>
+						) : (
+							<>
+								<h1 className="text-3xl font-bold text-white">
+									{employee.full_name}
+								</h1>
+								<p className="text-lg text-gray-400">{employee.job_title}</p>
+								<p className="text-sm text-gray-500">
+									{employee.email} | {employee.phone || t`No phone`}
+								</p>
+								<Button
+									variant="outline"
+									size="sm"
+									className="mt-2"
+									onClick={startEdit}
+								>
+									<Trans>Edit Profile</Trans>
+								</Button>
+							</>
+						)}
 					</div>
 				</div>
 				<Button

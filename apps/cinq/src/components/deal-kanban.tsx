@@ -1,9 +1,14 @@
 import type { DealResponse, PipelineStageResponse } from "@ataqu/api-client";
-import { listDeals, listPipelineStages } from "@ataqu/api-client";
-import { Badge, KanbanBoard, Skeleton } from "@ataqu/ui";
+import {
+	listDeals,
+	listPipelineStages,
+	useUpdatePipelineStage,
+} from "@ataqu/api-client";
+import { Badge, Button, Input, KanbanBoard, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export function DealKanban() {
@@ -19,6 +24,31 @@ export function DealKanban() {
 		queryKey: ["cinq", "deals", "list"],
 		queryFn: () => listDeals({ limit: 1000 }),
 	});
+
+	const updateStage = useUpdatePipelineStage({
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["cinq", "pipelineStages"] });
+			toast.success(t`Stage updated`);
+		},
+		onError: () => toast.error(t`Failed to update stage`),
+	});
+
+	const [editingStageId, setEditingStageId] = useState<string | null>(null);
+	const [stageName, setStageName] = useState("");
+
+	const startStageEdit = (stage: PipelineStageResponse) => {
+		setEditingStageId(stage.id);
+		setStageName(stage.name);
+	};
+
+	const saveStage = (stage: PipelineStageResponse) => {
+		updateStage.mutate({
+			id: stage.id,
+			data: { name: stageName },
+			version: stage.version,
+		});
+		setEditingStageId(null);
+	};
 
 	if (stagesLoading || dealsLoading) {
 		return <Skeleton className="h-64 w-full" />;
@@ -57,7 +87,46 @@ export function DealKanban() {
 	);
 
 	return (
-		<div data-tour="kanban-board">
+		<div data-tour="kanban-board" className="space-y-4">
+			<div className="flex flex-wrap gap-2">
+				{(stages || []).map((stage: PipelineStageResponse) => (
+					<div
+						key={stage.id}
+						className="flex items-center gap-1 rounded-lg border border-border px-2 py-1"
+					>
+						{editingStageId === stage.id ? (
+							<>
+								<Input
+									className="h-7 w-32"
+									value={stageName}
+									onChange={(e) => setStageName(e.target.value)}
+									autoFocus
+								/>
+								<Button
+									size="sm"
+									className="h-7"
+									onClick={() => saveStage(stage)}
+									disabled={updateStage.isPending}
+								>
+									{t`Save`}
+								</Button>
+							</>
+						) : (
+							<>
+								<span className="text-sm">{stage.name}</span>
+								<Button
+									size="sm"
+									variant="ghost"
+									className="h-7 px-2"
+									onClick={() => startStageEdit(stage)}
+								>
+									{t`Edit`}
+								</Button>
+							</>
+						)}
+					</div>
+				))}
+			</div>
 			<KanbanBoard
 				columns={columns}
 				onDragEnd={handleDragEnd}

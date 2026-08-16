@@ -1,9 +1,12 @@
-import { useGetChannel } from "@ataqu/api-client";
-import { Badge, Skeleton } from "@ataqu/ui";
+import { useGetChannel, useUpdateChannel } from "@ataqu/api-client";
+import { handleApiError } from "@ataqu/shared-utils";
+import { Badge, Button, Input, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { DollarSign, User } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { getCinqContext } from "@/api/cinq-context";
 
 interface ContextSidebarProps {
@@ -12,6 +15,13 @@ interface ContextSidebarProps {
 
 export function ContextSidebar({ channelId }: ContextSidebarProps) {
 	const { data: channel, isLoading: channelLoading } = useGetChannel(channelId);
+	const updateChannel = useUpdateChannel({
+		onSuccess: () => toast.success(t`Channel renamed`),
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const [editingName, setEditingName] = useState(false);
+	const [name, setName] = useState("");
+
 	const { data: cinqContext } = useQuery({
 		queryKey: ["cinq-context", channelId],
 		queryFn: () => getCinqContext(channelId),
@@ -29,13 +39,57 @@ export function ContextSidebar({ channelId }: ContextSidebarProps) {
 
 	if (!channel) return null;
 
+	const startEdit = () => {
+		setName(channel.name);
+		setEditingName(true);
+	};
+
+	const saveName = () => {
+		updateChannel.mutate({
+			id: channel.id,
+			data: { name },
+			version: channel.version,
+		});
+		setEditingName(false);
+	};
+
 	return (
 		<div className="p-4 border-l border-border h-full bg-card/30">
 			<h3 className="text-sm font-semibold text-foreground mb-4">{t`Channel Info`}</h3>
 			<div className="space-y-2 text-sm text-muted-foreground">
-				<p>
-					<span className="font-medium">{t`Name:`}</span> {channel.name}
-				</p>
+				<div className="flex items-center gap-2">
+					<span className="font-medium">{t`Name:`}</span>
+					{editingName ? (
+						<>
+							<Input
+								className="h-7 flex-1"
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								autoFocus
+							/>
+							<Button
+								size="sm"
+								className="h-7"
+								onClick={saveName}
+								disabled={updateChannel.isPending}
+							>
+								{t`Save`}
+							</Button>
+						</>
+					) : (
+						<>
+							<span>{channel.name}</span>
+							<Button
+								size="sm"
+								variant="ghost"
+								className="h-7 px-2"
+								onClick={startEdit}
+							>
+								{t`Edit`}
+							</Button>
+						</>
+					)}
+				</div>
 				<p>
 					<span className="font-medium">{t`Type:`}</span> {channel.channel_type}
 				</p>

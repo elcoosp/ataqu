@@ -1,6 +1,11 @@
 // apps/aegis/src/routes/_auth/users.$id.tsx
 
-import { deactivateUser, useListUsers } from "@ataqu/api-client";
+import {
+	deactivateUser,
+	updateUserRole,
+	useListUsers,
+} from "@ataqu/api-client";
+import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Button,
 	Card,
@@ -14,6 +19,11 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
@@ -24,7 +34,10 @@ import {
 	useParams,
 } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+
+const ROLES = ["admin", "manager", "employee", "viewer"];
 
 export const Route = createFileRoute("/_auth/users/$id")({
 	component: () => {
@@ -46,6 +59,19 @@ export const Route = createFileRoute("/_auth/users/$id")({
 				toast.error("Failed to deactivate");
 			},
 		});
+
+		const updateRole = useMutation({
+			mutationFn: (role: string) =>
+				updateUserRole(id, { role }, user?.version ?? 0),
+			onSuccess: () => {
+				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
+				toast.success("Role updated.");
+			},
+			onError: () =>
+				toast.error(handleApiError(error ?? new Error("update failed"))),
+		});
+
+		const [role, setRole] = useState<string>(user?.role ?? "viewer");
 
 		if (isLoading) {
 			return (
@@ -85,12 +111,32 @@ export const Route = createFileRoute("/_auth/users/$id")({
 							<strong>
 								<Trans>Role:</Trans>
 							</strong>{" "}
-							{user.role}
+							<div className="mt-1 flex items-center gap-2">
+								<Select value={role} onValueChange={(v) => setRole(v)}>
+									<SelectTrigger className="w-48">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{ROLES.map((r) => (
+											<SelectItem key={r} value={r}>
+												{r}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<Button
+									size="sm"
+									onClick={() => updateRole.mutate(role)}
+									disabled={updateRole.isPending || role === user.role}
+								>
+									<Trans>Save Role</Trans>
+								</Button>
+							</div>
 						</div>
 						<div>
 							<strong>
 								<Trans>Status:</Trans>
-							</strong>
+							</strong>{" "}
 							{user.is_active ? (
 								<span className="text-green-500 ml-2">
 									<Trans>Active</Trans>

@@ -1,4 +1,8 @@
-import { useCreateWarehouse, useListWarehouses } from "@ataqu/api-client";
+import {
+	useCreateWarehouse,
+	useListWarehouses,
+	useUpdateWarehouse,
+} from "@ataqu/api-client";
 import { Button, Input, Label, Skeleton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,6 +40,43 @@ export function WarehouseList() {
 			});
 		},
 	});
+
+	const updateWarehouse = useUpdateWarehouse({
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ["vault", "warehouses"] });
+			showToast({
+				variant: "success",
+				title: <Trans>Warehouse updated.</Trans>,
+			});
+			setEditingId(null);
+		},
+		onError: () => {
+			showToast({
+				variant: "error",
+				title: <Trans>Warehouse update failed.</Trans>,
+			});
+		},
+	});
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [editName, setEditName] = useState("");
+	const [editLocation, setEditLocation] = useState("");
+
+	const startEdit = (id: string, wName: string, wLocation?: string) => {
+		setEditingId(id);
+		setEditName(wName);
+		setEditLocation(wLocation ?? "");
+	};
+
+	const saveEdit = (id: string) => {
+		updateWarehouse.mutate({
+			id,
+			data: {
+				name: editName,
+				location: editLocation.trim() === "" ? null : editLocation.trim(),
+			},
+			version: warehouses.find((w) => w.id === id)?.version ?? 0,
+		});
+	};
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -158,10 +199,61 @@ export function WarehouseList() {
 									className="border-b border-border last:border-b-0"
 								>
 									<td className="px-4 py-3 font-medium text-foreground">
-										{warehouse.name}
+										{editingId === warehouse.id ? (
+											<Input
+												value={editName}
+												onChange={(e) => setEditName(e.target.value)}
+												className="h-8"
+											/>
+										) : (
+											warehouse.name
+										)}
 									</td>
 									<td className="px-4 py-3 text-muted-foreground">
-										{warehouse.location ?? "—"}
+										{editingId === warehouse.id ? (
+											<Input
+												value={editLocation}
+												onChange={(e) => setEditLocation(e.target.value)}
+												className="h-8"
+												placeholder="—"
+											/>
+										) : (
+											(warehouse.location ?? "—")
+										)}
+									</td>
+									<td className="px-4 py-3">
+										{editingId === warehouse.id ? (
+											<div className="flex gap-2">
+												<Button
+													size="sm"
+													onClick={() => saveEdit(warehouse.id)}
+													disabled={updateWarehouse.isPending}
+												>
+													<Trans>Save</Trans>
+												</Button>
+												<Button
+													size="sm"
+													variant="ghost"
+													onClick={() => setEditingId(null)}
+												>
+													<Trans>Cancel</Trans>
+												</Button>
+											</div>
+										) : (
+											<Button
+												size="sm"
+												variant="outline"
+												onClick={() =>
+													startEdit(
+														warehouse.id,
+														warehouse.name,
+														warehouse.location,
+													)
+												}
+											>
+												<Trans>Edit</Trans>
+											</Button>
+										)}
 									</td>
 								</tr>
 							))}
