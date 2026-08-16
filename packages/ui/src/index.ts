@@ -11,6 +11,7 @@ export * from "./components/command-palette";
 export * from "./components/data-table";
 export { EmptyState } from "./components/empty-state";
 export * from "./components/form-builder";
+export * from "./components/interior";
 export * from "./components/kanban-board";
 export * from "./components/layouts";
 export * from "./components/onboard-tour";

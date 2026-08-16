@@ -9,9 +9,12 @@ import { useDebounce } from "@ataqu/shared-hooks";
 import {
 	Bone,
 	BulkActionBar,
+	CopyButton,
 	Input,
+	LoadingButton,
 	SelectAllCheckbox,
 	SelectionCheckbox,
+	ValueFlash,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -86,6 +89,14 @@ export function ContactTable() {
 
 	return (
 		<div className="space-y-4">
+			<div className="flex items-center justify-between">
+				<h2 className="text-lg font-heading text-white">
+					<Trans>Contacts</Trans>{" "}
+					<span className="text-sm text-gray-400">
+						(<ValueFlash value={contacts.length} label="contact count" />)
+					</span>
+				</h2>
+			</div>
 			<div className="flex items-center gap-2">
 				<div className="relative flex-1 max-w-sm">
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -162,7 +173,15 @@ export function ContactTable() {
 										<SelectionCheckbox scope={SCOPE} id={contact.id} />
 									</td>
 									<td className="py-2 px-3">{contact.name}</td>
-									<td className="py-2 px-3">{contact.email}</td>
+									<td className="py-2 px-3 flex items-center gap-2">
+										<span>{contact.email}</span>
+										<CopyButton
+											value={contact.email}
+											label="Copy"
+											copiedLabel="Copied"
+											className="h-6 px-1.5 text-[11px]"
+										/>
+									</td>
 									<td className="py-2 px-3">{contact.phone}</td>
 									<td className="py-2 px-3">{contact.company}</td>
 									<td className="py-2 px-3">
@@ -172,17 +191,13 @@ export function ContactTable() {
 											.join(", ")}
 									</td>
 									<td className="py-2 px-3 text-right">
-										<button
-											type="button"
-											aria-label="Delete contact"
-											className="text-red-400 hover:text-red-300"
-											onClick={(e) => {
-												e.stopPropagation();
-												deleteContact.mutate(contact.id);
-											}}
+										<LoadingButton
+											onAction={() => deleteContact.mutate(contact.id)}
+											errorLabel="Failed"
+											className="h-7 px-2 text-[12px] border-red-500/40 text-red-300 hover:bg-red-500/10"
 										>
-											<Trash2 className="h-4 w-4" />
-										</button>
+											Delete
+										</LoadingButton>
 									</td>
 								</tr>
 							))}

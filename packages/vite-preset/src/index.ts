@@ -4,6 +4,7 @@ import { linguiMacroSwcPlugin } from "@lingui/swc-plugin/options";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
+import { boneyardPlugin } from "boneyard-js/vite";
 import { defineConfig, type UserConfig } from "vite";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +39,7 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
 				plugins: [linguiMacroSwcPlugin()],
 			}),
 			tailwindcss(), // <-- Ensure this is present
+			boneyardPlugin(),
 		],
 		resolve: {
 			tsconfigPaths: true,
