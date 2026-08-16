@@ -60,11 +60,7 @@ export function ContactTable() {
 		onError: () => toast.error("Delete failed"),
 	});
 
-	const {
-		data: allData,
-		isLoading: allLoading,
-		error: allError,
-	} = useListContacts(
+	const { data: allData, error: allError } = useListContacts(
 		{ limit: 1000 },
 		{
 			enabled: debouncedSearch.length === 0,
@@ -74,11 +70,7 @@ export function ContactTable() {
 
 	const [filter, setFilter] = useState("all");
 
-	const {
-		data: searchData,
-		isLoading: searchLoading,
-		error: searchError,
-	} = useSearchContacts(
+	const { data: searchData, error: searchError } = useSearchContacts(
 		{ q: debouncedSearch, limit: 50 },
 		{
 			enabled: debouncedSearch.length > 0,
@@ -86,11 +78,11 @@ export function ContactTable() {
 		},
 	);
 
-	const contacts =
+	const rawContacts =
 		debouncedSearch.length > 0 ? searchData || [] : allData || [];
-	const _isLoading = debouncedSearch.length > 0 ? searchLoading : allLoading;
+	const filteredContacts = applyContactFilter(rawContacts, filter);
 	const error = debouncedSearch.length > 0 ? searchError : allError;
-	const ids = idsFrom(contacts);
+	const ids = idsFrom(filteredContacts);
 
 	if (error) {
 		return (
@@ -123,7 +115,12 @@ export function ContactTable() {
 					<h2 className="text-lg font-heading text-white">
 						<Trans>Contacts</Trans>{" "}
 						<span className="text-sm text-gray-400">
-							(<ValueFlash value={contacts.length} label="contact count" />)
+							(
+							<ValueFlash
+								value={filteredContacts.length}
+								label="contact count"
+							/>
+							)
 						</span>
 					</h2>
 				</div>
@@ -165,7 +162,7 @@ export function ContactTable() {
 					]}
 				/>
 
-				{contacts.length === 0 ? (
+				{filteredContacts.length === 0 ? (
 					<div className="text-center py-8 text-gray-400">
 						<Trans>No contacts yet. Create one to get started.</Trans>
 					</div>
@@ -195,7 +192,7 @@ export function ContactTable() {
 								</tr>
 							</thead>
 							<tbody>
-								{contacts.map((contact) => (
+								{filteredContacts.map((contact) => (
 									<tr
 										key={contact.id}
 										className="border-b border-gray-700/50 hover:bg-white/5 cursor-pointer transition-colors"
@@ -247,4 +244,15 @@ export function ContactTable() {
 
 function idsFrom<T extends { id: string }>(rows: T[]): string[] {
 	return rows.map((r) => r.id);
+}
+
+type ContactLike = { id: string; company?: string | null };
+
+function applyContactFilter<T extends ContactLike>(
+	rows: T[],
+	filter: string,
+): T[] {
+	if (filter === "company") return rows.filter((r) => Boolean(r.company));
+	if (filter === "person") return rows.filter((r) => !r.company);
+	return rows;
 }
