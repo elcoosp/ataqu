@@ -1,9 +1,14 @@
 import {
+	useAddMention,
 	useAddReaction,
+	useDeleteMessage,
 	useDeleteReaction,
 	useEditMessage,
+	useListMentions,
 	useListMessages,
 	useListReactions,
+	useMarkMentionRead,
+	useSearchMessages,
 } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
@@ -32,21 +37,6 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 
 	const allMessages = (messagesData?.messages ?? []).filter((m) => m != null);
 
-	// Virtualization
-	const virtualizer = useVirtualizer({
-		count: allMessages.length,
-		getScrollElement: () => containerRef.current,
-		estimateSize: () => 60,
-		overscan: 10,
-	});
-
-	// Scroll to bottom on new messages
-	useEffect(() => {
-		if (virtualizer) {
-			virtualizer.scrollToIndex(allMessages.length - 1, { align: "end" });
-		}
-	}, [allMessages.length, virtualizer]);
-
 	// Handle reactions
 	const addReactionMutation = useAddReaction();
 	const deleteReactionMutation = useDeleteReaction();
@@ -56,6 +46,41 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	});
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [draft, setDraft] = useState("");
+	const [searchQuery, setSearchQuery] = useState("");
+
+	const deleteMessage = useDeleteMessage({
+		onSuccess: () => toast.success(t`Message deleted`),
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const { data: searchResults } = useSearchMessages(
+		{ q: searchQuery },
+		{
+			enabled: searchQuery.trim().length > 0,
+			queryKey: ["dial", "search", searchQuery],
+		},
+	);
+	const _markMentionRead = useMarkMentionRead();
+	const _addMention = useAddMention();
+	const { data: mentions } = useListMentions();
+
+	const displayedMessages = searchQuery.trim()
+		? (searchResults?.messages ?? []).filter((m) => m != null)
+		: allMessages;
+
+	// Virtualization
+	const virtualizer = useVirtualizer({
+		count: displayedMessages.length,
+		getScrollElement: () => containerRef.current,
+		estimateSize: () => 60,
+		overscan: 10,
+	});
+
+	// Scroll to bottom on new messages
+	useEffect(() => {
+		if (virtualizer) {
+			virtualizer.scrollToIndex(displayedMessages.length - 1, { align: "end" });
+		}
+	}, [displayedMessages.length, virtualizer]);
 
 	const handleReactionToggle = (messageId: string, emoji: string) => {
 		addReactionMutation.mutate({
@@ -91,7 +116,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 					placeholder={t`Search messages...`}
 					className="flex-1 px-3 py-1 text-sm bg-background border border-input rounded-md"
 					onChange={(_e: React.ChangeEvent<HTMLInputElement>) => {
-						// We'll implement search via API and filter messages
+						setSearchQuery(_e.target.value);
 					}}
 				/>
 				<Button
@@ -117,7 +142,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 					style={{ height: `${virtualizer.getTotalSize()}px` }}
 				>
 					{virtualizer.getVirtualItems().map((virtualRow) => {
-						const message = allMessages[virtualRow.index];
+						const message = displayedMessages[virtualRow.index];
 						if (!message) return null;
 						const isOwn = message.author_id === currentUserId; // from auth store
 						return (
@@ -255,6 +280,15 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 											}}
 										>
 											{t`Edit`}
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6 text-destructive"
+											onClick={() => deleteMessage.mutate(message.id)}
+											disabled={deleteMessage.isPending}
+										>
+											{t`Delete`}
 										</Button>
 										<Button
 											variant="ghost"

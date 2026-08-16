@@ -1,5 +1,6 @@
 import {
 	useCreateWarehouse,
+	useDeleteWarehouse,
 	useListWarehouses,
 	useUpdateWarehouse,
 } from "@ataqu/api-client";
@@ -57,6 +58,23 @@ export function WarehouseList() {
 			});
 		},
 	});
+
+	const deleteWarehouse = useDeleteWarehouse({
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ["vault", "warehouses"] });
+			showToast({
+				variant: "success",
+				title: <Trans>Warehouse deleted.</Trans>,
+			});
+		},
+		onError: () => {
+			showToast({
+				variant: "error",
+				title: <Trans>Warehouse delete failed.</Trans>,
+			});
+		},
+	});
+
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editName, setEditName] = useState("");
 	const [editLocation, setEditLocation] = useState("");
@@ -240,19 +258,29 @@ export function WarehouseList() {
 												</Button>
 											</div>
 										) : (
-											<Button
-												size="sm"
-												variant="outline"
-												onClick={() =>
-													startEdit(
-														warehouse.id,
-														warehouse.name,
-														warehouse.location,
-													)
-												}
-											>
-												<Trans>Edit</Trans>
-											</Button>
+											<>
+												<Button
+													size="sm"
+													variant="outline"
+													onClick={() =>
+														startEdit(
+															warehouse.id,
+															warehouse.name,
+															warehouse.location,
+														)
+													}
+												>
+													<Trans>Edit</Trans>
+												</Button>
+												<Button
+													size="sm"
+													variant="destructive"
+													onClick={() => deleteWarehouse.mutate(warehouse.id)}
+													disabled={deleteWarehouse.isPending}
+												>
+													<Trans>Delete</Trans>
+												</Button>
+											</>
 										)}
 									</td>
 								</tr>

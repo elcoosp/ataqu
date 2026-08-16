@@ -25,7 +25,7 @@ import { EmptyState } from "../../../components/empty-state";
 
 ("../../components/empty-state");
 
-import { useInviteUser, useListUsers } from "@ataqu/api-client";
+import { useCreateUser, useInviteUser, useListUsers } from "@ataqu/api-client";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Users } from "lucide-react";
@@ -38,6 +38,16 @@ export const Route = createFileRoute("/_auth/users/")({
 		const queryClient = useQueryClient();
 
 		const [openInvite, setOpenInvite] = useState(false);
+		const [openCreate, setOpenCreate] = useState(false);
+
+		const _createUserMutation = useCreateUser({
+			onSuccess: () => {
+				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
+				setOpenCreate(false);
+				toast.success("User created.");
+			},
+			onError: () => toast.error("Create failed"),
+		});
 
 		const { data: users, isLoading, error } = useListUsers();
 
@@ -108,6 +118,10 @@ export const Route = createFileRoute("/_auth/users/")({
 						<UserPlus className="mr-2 h-4 w-4" />
 						<Trans>Invite User</Trans>
 					</Button>
+					<Button variant="outline" onClick={() => setOpenCreate(true)}>
+						<UserPlus className="mr-2 h-4 w-4" />
+						<Trans>Create User</Trans>
+					</Button>
 				</div>
 				<Card>
 					<CardContent className="p-0">
@@ -170,6 +184,7 @@ export const Route = createFileRoute("/_auth/users/")({
 					onSubmit={(data) => inviteMutation.mutate(data)}
 					isPending={inviteMutation.isPending}
 				/>
+				<CreateUserDialog open={openCreate} onOpenChange={setOpenCreate} />
 			</div>
 		);
 	},
@@ -238,6 +253,99 @@ function InviteDialog({
 						</Button>
 						<Button type="submit" disabled={isPending}>
 							{isPending ? <Trans>Inviting...</Trans> : <Trans>Invite</Trans>}
+						</Button>
+					</div>
+				</form>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+// Create user dialog component
+function CreateUserDialog({
+	open,
+	onOpenChange,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) {
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [name, setName] = useState("");
+	const { data: users, isLoading, error } = useListUsers();
+	const queryClient = useQueryClient();
+
+	const createUserMutation = useCreateUser({
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
+			onOpenChange(false);
+			setEmail("");
+			setPassword("");
+			setName("");
+		},
+	});
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!email || !password) return;
+		createUserMutation.mutate({
+			email,
+			password,
+			name: name || undefined,
+		});
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>
+						<Trans>Create User</Trans>
+					</DialogTitle>
+				</DialogHeader>
+				<form onSubmit={handleSubmit} className="space-y-4">
+					<div>
+						<Label htmlFor="cu-name">
+							<Trans>Name</Trans>
+						</Label>
+						<Input
+							id="cu-name"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+						/>
+					</div>
+					<div>
+						<Label htmlFor="cu-email">
+							<Trans>Email</Trans>
+						</Label>
+						<Input
+							id="cu-email"
+							type="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+						/>
+					</div>
+					<div>
+						<Label htmlFor="cu-password">
+							<Trans>Password</Trans>
+						</Label>
+						<Input
+							id="cu-password"
+							type="password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+						/>
+					</div>
+					<div className="flex justify-end gap-2">
+						<Button
+							variant="outline"
+							type="button"
+							onClick={() => onOpenChange(false)}
+						>
+							<Trans>Cancel</Trans>
+						</Button>
+						<Button type="submit" disabled={createUserMutation.isPending}>
+							<Trans>Create</Trans>
 						</Button>
 					</div>
 				</form>

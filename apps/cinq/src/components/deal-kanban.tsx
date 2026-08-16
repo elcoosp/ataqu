@@ -1,5 +1,6 @@
 import type { DealResponse, PipelineStageResponse } from "@ataqu/api-client";
 import {
+	useDeleteDeal,
 	useListDeals,
 	useListPipelineStages,
 	useUpdatePipelineStage,
@@ -8,11 +9,19 @@ import { Badge, Bone, Button, Input, KanbanBoard, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export function DealKanban() {
 	const queryClient = useQueryClient();
+	const deleteDeal = useDeleteDeal({
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
+			toast.success("Deal deleted.");
+		},
+		onError: () => toast.error("Delete failed"),
+	});
 	const navigate = useNavigate();
 
 	const { data: stages, isLoading: stagesLoading } = useListPipelineStages();
@@ -73,7 +82,7 @@ export function DealKanban() {
 
 	const renderItem = (deal: DealResponse) => (
 		<div
-			className="p-3 bg-deep-night/50 border border-gray-700/40 rounded-lg cursor-pointer hover:border-amber/50 transition-colors"
+			className="relative p-3 bg-deep-night/50 border border-gray-700/40 rounded-lg cursor-pointer hover:border-amber/50 transition-colors"
 			onClick={() => navigate({ to: `/deals/${deal.id}` })}
 			data-tour="deal-card"
 		>
@@ -87,6 +96,17 @@ export function DealKanban() {
 			<div className="mt-1">
 				<Badge variant="outline">{deal.status}</Badge>
 			</div>
+			<button
+				type="button"
+				aria-label="Delete deal"
+				className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+				onClick={(e) => {
+					e.stopPropagation();
+					deleteDeal.mutate(deal.id);
+				}}
+			>
+				<Trash2 className="h-4 w-4" />
+			</button>
 		</div>
 	);
 

@@ -16,6 +16,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActivityTimeline } from "../components/activity-timeline";
+import { CreateActivityDialog } from "../components/create-activity-dialog";
 import { CustomFieldsTab } from "../components/custom-fields-tab";
 import { EmailTrackingTab } from "../components/email-tracking-tab";
 import { TaskList } from "../components/task-list";
@@ -33,6 +34,7 @@ function ContactDetail() {
 	});
 
 	const [editing, setEditing] = useState(false);
+	const [openActivity, setOpenActivity] = useState(false);
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [phone, setPhone] = useState("");
@@ -72,9 +74,14 @@ function ContactDetail() {
 					<p>{contact.phone}</p>
 				</div>
 				{!editing && (
-					<Button variant="outline" onClick={startEdit}>
-						<Trans>Edit</Trans>
-					</Button>
+					<>
+						<Button variant="outline" onClick={startEdit}>
+							<Trans>Edit</Trans>
+						</Button>
+						<Button variant="outline" onClick={() => setOpenActivity(true)}>
+							<Trans>Log Activity</Trans>
+						</Button>
+					</>
 				)}
 			</div>
 
@@ -146,6 +153,11 @@ function ContactDetail() {
 					<EmailTrackingTab contactId={id} />
 				</TabsContent>
 			</Tabs>
+			<CreateActivityDialog
+				open={openActivity}
+				onOpenChange={setOpenActivity}
+				defaultContactId={id}
+			/>
 		</div>
 	);
 }

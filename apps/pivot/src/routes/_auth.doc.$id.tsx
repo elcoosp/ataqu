@@ -9,6 +9,7 @@ import { Trans } from "@lingui/react/macro";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { DocumentEditor } from "@/components/document-editor";
+import { RelationsPanel } from "@/components/relations-panel";
 import { TemplatePicker } from "@/components/template-picker";
 import { VersionHistory } from "@/components/version-history";
 
@@ -91,6 +92,9 @@ function DocumentDetail() {
 				onDelete={handleDelete}
 				onDuplicate={handleDuplicate}
 			/>
+			<div className="p-4 border-t border-border">
+				<RelationsPanel docId={id} />
+			</div>
 		</div>
 	);
 }

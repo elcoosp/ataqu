@@ -1,4 +1,6 @@
 import {
+	useDeleteProduct,
+	useDeleteVariant,
 	useGetProduct,
 	useListVariants,
 	useReserveStock,
@@ -95,6 +97,17 @@ export function ProductDetail({ productId }: { productId: string }) {
 	});
 	const updateVariant = useUpdateVariant({
 		onSuccess: () => toast.success(t`Variant updated`),
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const deleteProduct = useDeleteProduct({
+		onSuccess: () => {
+			toast.success(t`Product deleted`);
+			window.history.back();
+		},
+		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const deleteVariant = useDeleteVariant({
+		onSuccess: () => toast.success(t`Variant deleted`),
 		onError: (err) => toast.error(handleApiError(err)),
 	});
 	const reserveStock = useReserveStock({
@@ -235,6 +248,15 @@ export function ProductDetail({ productId }: { productId: string }) {
 										onClick={startEditProduct}
 									>
 										<Trans>Edit Product</Trans>
+									</Button>
+									<Button
+										variant="destructive"
+										size="sm"
+										className="mt-2"
+										onClick={() => deleteProduct.mutate(product.id)}
+										disabled={deleteProduct.isPending}
+									>
+										<Trans>Delete Product</Trans>
 									</Button>
 								</>
 							)}
@@ -394,13 +416,23 @@ export function ProductDetail({ productId }: { productId: string }) {
 									</Button>
 								)}
 								{!editingVariant && !reserving && (
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={startEditVariant}
-									>
-										<Trans>Edit Variant</Trans>
-									</Button>
+									<>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={startEditVariant}
+										>
+											<Trans>Edit Variant</Trans>
+										</Button>
+										<Button
+											variant="destructive"
+											size="sm"
+											onClick={() => deleteVariant.mutate(selectedVariant.id)}
+											disabled={deleteVariant.isPending}
+										>
+											<Trans>Delete Variant</Trans>
+										</Button>
+									</>
 								)}
 							</div>
 						</div>

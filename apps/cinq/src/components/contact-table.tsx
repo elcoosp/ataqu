@@ -1,5 +1,6 @@
 import {
 	useBulkDeleteContacts,
+	useDeleteContact,
 	useExportCsv,
 	useListContacts,
 	useSearchContacts,
@@ -15,9 +16,11 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Download, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const SCOPE = "cinq:contacts";
 
@@ -25,8 +28,16 @@ export function ContactTable() {
 	const navigate = useNavigate();
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 300);
+	const queryClient = useQueryClient();
 	const exportCsv = useExportCsv();
 	const bulkDelete = useBulkDeleteContacts();
+	const deleteContact = useDeleteContact({
+		onSuccess: () => {
+			queryClient.invalidateQueries?.({ queryKey: ["cinq", "contacts"] });
+			toast.success("Contact deleted.");
+		},
+		onError: () => toast.error("Delete failed"),
+	});
 
 	const {
 		data: allData,
@@ -164,6 +175,19 @@ export function ContactTable() {
 											.slice(0, 2)
 											.map(([k, v]) => `${k}: ${v}`)
 											.join(", ")}
+									</td>
+									<td className="py-2 px-3 text-right">
+										<button
+											type="button"
+											aria-label="Delete contact"
+											className="text-red-400 hover:text-red-300"
+											onClick={(e) => {
+												e.stopPropagation();
+												deleteContact.mutate(contact.id);
+											}}
+										>
+											<Trash2 className="h-4 w-4" />
+										</button>
 									</td>
 								</tr>
 							))}
