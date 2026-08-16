@@ -27,6 +27,23 @@ import { toast } from "sonner";
 
 const SCOPE = "cinq:contacts";
 
+const CONTACTS_FIXTURE = (
+	<div className="space-y-2">
+		<div className="h-6 w-40 rounded bg-stone-200 dark:bg-white/10" />
+		{Array.from({ length: 6 }).map((_, i) => (
+			<div
+				key={i}
+				className="flex items-center gap-3 rounded border border-gray-700/40 p-2"
+			>
+				<div className="h-4 w-4 rounded" />
+				<div className="h-4 w-40 rounded bg-stone-200 dark:bg-white/10" />
+				<div className="h-4 w-52 rounded bg-stone-200 dark:bg-white/10" />
+				<div className="h-7 w-16 rounded border border-red-500/40" />
+			</div>
+		))}
+	</div>
+);
+
 export function ContactTable() {
 	const navigate = useNavigate();
 	const [search, setSearch] = useState("");
@@ -87,6 +104,11 @@ export function ContactTable() {
 				<Bone
 					loading
 					name="contacts"
+					fixture={CONTACTS_FIXTURE}
+					snapshotConfig={{
+						leafTags: ["p", "h1", "h2", "li", "td", "tr"],
+						captureRoundedBorders: true,
+					}}
 					fallback={<div className="h-64 w-full" />}
 				>
 					{null}

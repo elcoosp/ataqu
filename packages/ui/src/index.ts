@@ -6,6 +6,9 @@ export { BoneSuspense, Skeleton as Bone } from "boneyard-js/react";
 // Apply boneyard global defaults once, for every consumer of @ataqu/ui.
 configureBoneyard({ animate: true });
 
+// Full boneyard capture + layout API (snapshot, descriptor, registry, native scan).
+export * from "./bones";
+
 export * from "./command-registry";
 export * from "./components/auth/LoginForm";
 export * from "./components/auth/RegisterForm";

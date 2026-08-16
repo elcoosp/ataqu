@@ -1,0 +1,7 @@
+{
+	"breakpoints": [375, 768, 1280],
+	"wait": 800,
+	"routes": ["/"],
+	"out": "./bones",
+	"framework": "react"
+}
