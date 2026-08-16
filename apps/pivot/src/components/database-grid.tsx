@@ -4,7 +4,7 @@ import {
 	useGetDatabaseRows,
 	useUpdateDatabaseRow,
 } from "@ataqu/api-client";
-import { useIdempotency } from "@ataqu/shared-hooks";
+
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
@@ -28,7 +28,6 @@ export function DatabaseGrid({
 	columns,
 	onAddRow,
 }: DatabaseGridProps) {
-	const { getKey } = useIdempotency();
 	const [editingCell, setEditingCell] = useState<{
 		rowId: string;
 		col: string;

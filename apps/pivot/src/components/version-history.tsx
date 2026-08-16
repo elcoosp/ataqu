@@ -1,5 +1,5 @@
 import { listDocumentVersions, updateDocument } from "@ataqu/api-client";
-import { useIdempotency } from "@ataqu/shared-hooks";
+
 import { formatDate, handleApiError } from "@ataqu/shared-utils";
 import {
 	Button,
@@ -26,7 +26,6 @@ export function VersionHistory({
 	onRestore,
 }: VersionHistoryProps) {
 	const [open, setOpen] = useState(false);
-	const { getKey } = useIdempotency();
 	const {
 		data: versions,
 		isLoading,

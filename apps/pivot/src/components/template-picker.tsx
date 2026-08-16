@@ -1,5 +1,5 @@
 import { listTemplates, useApplyTemplateToDoc } from "@ataqu/api-client";
-import { useIdempotency } from "@ataqu/shared-hooks";
+
 import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Dialog,
@@ -25,7 +25,6 @@ export function TemplatePicker({
 	children,
 }: TemplatePickerProps) {
 	const [open, setOpen] = useState(false);
-	const { getKey } = useIdempotency();
 	const {
 		data: templates,
 		isLoading,

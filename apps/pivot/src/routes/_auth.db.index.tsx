@@ -1,5 +1,5 @@
 import { listDatabases, useCreateDatabase } from "@ataqu/api-client";
-import { useIdempotency } from "@ataqu/shared-hooks";
+
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
@@ -15,7 +15,6 @@ export const Route = createFileRoute("/_auth/db/")({
 });
 
 function DatabaseList() {
-	const { getKey } = useIdempotency();
 	const { data, refetch, error } = useQuery<DatabaseType[]>({
 		queryKey: ["databases"],
 		queryFn: () => listDatabases(),

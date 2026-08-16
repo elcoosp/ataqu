@@ -1,5 +1,5 @@
 import { listTemplates, useCreateTemplate } from "@ataqu/api-client";
-import { useIdempotency } from "@ataqu/shared-hooks";
+
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
@@ -17,7 +17,6 @@ export const Route = createFileRoute("/_auth/templates")({
 });
 
 function TemplatesPage() {
-	const { getKey } = useIdempotency();
 	const { data, refetch, error } = useQuery<Template[]>({
 		queryKey: ["templates"],
 		queryFn: () => listTemplates(),
