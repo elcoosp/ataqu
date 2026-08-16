@@ -1,7 +1,8 @@
 // apps/aegis/src/routes/_auth/admin/audit.tsx
 
-import { api } from "@ataqu/api-client";
+import { useGetAuditLog } from "@ataqu/api-client";
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
@@ -21,13 +22,14 @@ import {
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Search } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_auth/admin/audit")({
 	component: () => {
+		const _queryClient = useQueryClient();
 		const [filters, setFilters] = useState<{
 			action?: string;
 			app?: string;
@@ -42,33 +44,13 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 			isLoading,
 			error,
 			refetch,
-		} = useQuery({
-			queryKey: ["aegis", "audit", filters, limit, offset],
-			queryFn: () => {
-				const params = new URLSearchParams();
-				if (filters.action) params.append("action", filters.action);
-				if (filters.app) params.append("app", filters.app);
-				if (filters.from_date) params.append("from_date", filters.from_date);
-				if (filters.to_date) params.append("to_date", filters.to_date);
-				if (limit) params.append("limit", String(limit));
-				if (offset) params.append("offset", String(offset));
-				const qs = params.toString();
-				return api.get<
-					Array<{
-						id: string;
-						user_id: string;
-						action: string;
-						app: string;
-						entity_type?: string;
-						entity_id?: string;
-						old_value?: any;
-						new_value?: any;
-						ip_address?: string;
-						user_agent?: string;
-						created_at: string;
-					}>
-				>(`/aegis/audit-log${qs ? `?${qs}` : ""}`);
-			},
+		} = useGetAuditLog({
+			action: filters.action || undefined,
+			app: filters.app || undefined,
+			from_date: filters.from_date || undefined,
+			to_date: filters.to_date || undefined,
+			limit,
+			offset,
 		});
 
 		const handleExport = () => {
@@ -88,8 +70,18 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 		if (isLoading) {
 			return (
 				<div className="p-6">
-					<Skeleton className="h-10 w-48 mb-4" />
-					<Skeleton className="h-96 w-full" />
+					<Bone
+						loading
+						name="audit-loading"
+						fallback={
+							<>
+								<Skeleton className="h-10 w-48 mb-4" />
+								<Skeleton className="h-96 w-full" />
+							</>
+						}
+					>
+						<div />
+					</Bone>
 				</div>
 			);
 		}
