@@ -5,6 +5,7 @@ import {
 	useListMessages,
 	useListReactions,
 } from "@ataqu/api-client";
+import { useAuthStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Avatar, AvatarFallback, Button, cn, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
@@ -27,6 +28,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 		offset: 0,
 	});
 	const containerRef = useRef<HTMLDivElement>(null);
+	const currentUserId = useAuthStore((s) => s.user?.id);
 
 	const allMessages = (messagesData?.messages ?? []).filter((m) => m != null);
 
@@ -117,7 +119,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 					{virtualizer.getVirtualItems().map((virtualRow) => {
 						const message = allMessages[virtualRow.index];
 						if (!message) return null;
-						const isOwn = message.author_id === "current-user-id"; // TODO: get from auth
+						const isOwn = message.author_id === currentUserId; // from auth store
 						return (
 							<div
 								key={message.id}
@@ -216,7 +218,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 													onClick={() => {
 														// Toggle reaction: if user already reacted, delete it
 														const userReaction = reactions.find(
-															(r) => r.user_id === "current-user-id",
+															(r) => r.user_id === currentUserId,
 														);
 														if (userReaction) {
 															deleteReactionMutation.mutate({
