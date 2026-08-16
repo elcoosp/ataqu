@@ -5,12 +5,17 @@ export const useClickOutside = <T extends HTMLElement>(
 ) => {
 	const ref = useRef<T>(null);
 
+	// Keep the latest handler in a ref so the listener is attached once and
+	// always invokes the current handler (avoids re-subscribing every render).
+	const handlerRef = useRef(handler);
+	handlerRef.current = handler;
+
 	useEffect(() => {
 		const listener = (event: MouseEvent | TouchEvent) => {
 			if (!ref.current || ref.current.contains(event.target as Node)) {
 				return;
 			}
-			handler(event);
+			handlerRef.current(event);
 		};
 
 		document.addEventListener("mousedown", listener);
@@ -20,7 +25,7 @@ export const useClickOutside = <T extends HTMLElement>(
 			document.removeEventListener("mousedown", listener);
 			document.removeEventListener("touchstart", listener);
 		};
-	}, [handler]);
+	}, []);
 
 	return ref;
 };

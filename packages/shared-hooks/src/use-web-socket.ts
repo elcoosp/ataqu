@@ -19,14 +19,10 @@ export const useWebSocket = <T = unknown>(
 	const wsRef = useRef<WebSocket | null>(null);
 	const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const {
-		onOpen,
-		onMessage,
-		onClose,
-		onError,
-		reconnectInterval = 3000,
-		maxReconnectAttempts = 5,
-	} = options;
+	// Keep callbacks in refs so they don't trigger reconnects on every render.
+	const handlers = useRef(options);
+	handlers.current = options;
+	const { reconnectInterval = 3000, maxReconnectAttempts = 5 } = options;
 
 	const connect = useCallback(() => {
 		if (!url) return;
@@ -36,24 +32,23 @@ export const useWebSocket = <T = unknown>(
 		ws.onopen = (event) => {
 			setIsConnected(true);
 			reconnectAttempts.current = 0;
-			onOpen?.(event);
+			handlers.current.onOpen?.(event);
 		};
 
 		ws.onmessage = (event) => {
 			try {
 				const data = JSON.parse(event.data) as T;
 				setLastMessage(data);
-				onMessage?.(event);
 			} catch {
 				// If not JSON, pass as is
 				setLastMessage(event.data as T);
-				onMessage?.(event);
 			}
+			handlers.current.onMessage?.(event);
 		};
 
 		ws.onclose = (event) => {
 			setIsConnected(false);
-			onClose?.(event);
+			handlers.current.onClose?.(event);
 			// Attempt reconnect if not closed intentionally
 			if (!event.wasClean && reconnectAttempts.current < maxReconnectAttempts) {
 				reconnectAttempts.current += 1;
@@ -64,17 +59,9 @@ export const useWebSocket = <T = unknown>(
 		};
 
 		ws.onerror = (event) => {
-			onError?.(event);
+			handlers.current.onError?.(event);
 		};
-	}, [
-		url,
-		onOpen,
-		onMessage,
-		onClose,
-		onError,
-		reconnectInterval,
-		maxReconnectAttempts,
-	]);
+	}, [url, reconnectInterval, maxReconnectAttempts]);
 
 	const sendMessage = useCallback((data: unknown) => {
 		if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {

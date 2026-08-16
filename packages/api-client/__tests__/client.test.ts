@@ -93,11 +93,31 @@ describe("api client request core", () => {
 		expect(r).toBe("hi");
 	});
 
-	it("throws on non-ok responses with parsed error body", async () => {
+	it("throws an ApiError on non-ok responses with parsed error body", async () => {
 		fetchMock.mockResolvedValue(
 			jsonResponse({ message: "nope" }, { ok: false, status: 409 }),
 		);
-		await expect(api.get("/x")).rejects.toEqual({ message: "nope" });
+		await expect(api.get("/x")).rejects.toMatchObject({
+			name: "ApiError",
+			status: 409,
+			message: "nope",
+		});
+	});
+
+	it("returns undefined for 204 No Content instead of throwing", async () => {
+		fetchMock.mockResolvedValue(
+			jsonResponse(undefined, { ok: true, status: 204 }),
+		);
+		const result = await api.delete("/x");
+		expect(result).toBeUndefined();
+	});
+
+	it("returns undefined for an empty 200 body", async () => {
+		fetchMock.mockResolvedValue(
+			jsonResponse(undefined, { ok: true, status: 200 }),
+		);
+		const result = await api.delete("/x");
+		expect(result).toBeUndefined();
 	});
 });
 

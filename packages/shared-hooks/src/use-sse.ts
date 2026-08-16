@@ -14,7 +14,10 @@ export const useSSE = <T = unknown>(
 	const [data, setData] = useState<T | null>(null);
 	const [isConnected, setIsConnected] = useState(false);
 	const eventSourceRef = useRef<EventSource | null>(null);
-	const { onMessage, onError, onOpen } = options;
+
+	// Keep callbacks in refs so they don't trigger reconnects on every render.
+	const handlers = useRef(options);
+	handlers.current = options;
 
 	const connect = useCallback(() => {
 		if (!url) return;
@@ -23,26 +26,26 @@ export const useSSE = <T = unknown>(
 
 		es.onopen = (event) => {
 			setIsConnected(true);
-			onOpen?.(event);
+			handlers.current.onOpen?.(event);
 		};
 
 		es.onmessage = (event) => {
 			try {
 				const parsed = JSON.parse(event.data) as T;
 				setData(parsed);
-				onMessage?.(parsed);
+				handlers.current.onMessage?.(parsed);
 			} catch {
 				setData(event.data as T);
-				onMessage?.(event.data);
+				handlers.current.onMessage?.(event.data);
 			}
 		};
 
 		es.onerror = (event) => {
 			setIsConnected(false);
-			onError?.(event);
+			handlers.current.onError?.(event);
 			// EventSource will automatically reconnect
 		};
-	}, [url, onMessage, onError, onOpen]);
+	}, [url]);
 
 	const close = useCallback(() => {
 		if (eventSourceRef.current) {

@@ -6,7 +6,44 @@ export interface RequestOptions extends RequestInit {
 	responseType?: "json" | "blob" | "text" | "arraybuffer";
 }
 
+/**
+ * Normalized error for every non-2xx response. Carries the HTTP status and the
+ * server's `code`/`message` fields when present, and always extends Error so
+ * `error instanceof Error` holds and `error.message` is a usable string.
+ */
+export class ApiError extends Error {
+	status: number;
+	code?: string;
+	details?: unknown;
+
+	constructor(
+		status: number,
+		message: string,
+		code?: string,
+		details?: unknown,
+	) {
+		super(message);
+		this.name = "ApiError";
+		this.status = status;
+		this.code = code;
+		this.details = details;
+	}
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
+async function parseError(resp: Response): Promise<ApiError> {
+	let payload: { code?: string; message?: string; error?: string } | null =
+		null;
+	try {
+		payload = await resp.json();
+	} catch {
+		payload = null;
+	}
+	const message =
+		payload?.message || payload?.error || resp.statusText || "Request failed";
+	return new ApiError(resp.status, message, payload?.code, payload);
+}
 
 async function request<T>(
 	path: string,
@@ -52,17 +89,27 @@ async function request<T>(
 	});
 
 	if (!resp.ok) {
-		const error = await resp
-			.json()
-			.catch(() => ({ code: resp.status, message: resp.statusText }));
-		throw error;
+		throw await parseError(resp);
 	}
 
+	// 204 No Content (and any response without a body) must not be parsed as
+	// JSON — doing so throws a SyntaxError and masks a successful request.
 	const responseType = options.responseType || "json";
-	if (responseType === "blob") return resp.blob() as any;
-	if (responseType === "text") return resp.text() as any;
-	if (responseType === "arraybuffer") return resp.arrayBuffer() as any;
-	return resp.json() as Promise<T>;
+	if (responseType !== "json") {
+		if (responseType === "blob") return (await resp.blob()) as T;
+		if (responseType === "text") return (await resp.text()) as T;
+		if (responseType === "arraybuffer") return (await resp.arrayBuffer()) as T;
+	}
+
+	if (resp.status === 204) return undefined as T;
+	const text = await resp.text();
+	if (!text) return undefined as T;
+	try {
+		return JSON.parse(text) as T;
+	} catch {
+		// Non-JSON 2xx body (e.g. plain text): surface the raw text.
+		return text as unknown as T;
+	}
 }
 
 export const api = {
