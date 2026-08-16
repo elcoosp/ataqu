@@ -54,10 +54,14 @@ export const createBooking = (data: CreateBookingRequest) =>
 	api.post<Booking>("/tempo/bookings", data);
 export const getBooking = (id: UUID) =>
 	api.get<Booking>(`/tempo/bookings/${id}`);
-export const cancelBooking = (id: UUID) =>
-	api.post<Booking>(`/tempo/bookings/${id}/cancel`);
-export const confirmBooking = (id: UUID) =>
-	api.post<Booking>(`/tempo/bookings/${id}/confirm`);
+export const cancelBooking = (id: UUID, version: number) =>
+	api.post<Booking>(`/tempo/bookings/${id}/cancel`, undefined, {
+		headers: { "If-Match": `"${version}"` },
+	});
+export const confirmBooking = (id: UUID, version: number) =>
+	api.post<Booking>(`/tempo/bookings/${id}/confirm`, undefined, {
+		headers: { "If-Match": `"${version}"` },
+	});
 export const rescheduleBooking = (id: UUID, data: RescheduleBookingRequest) =>
 	api.post<Booking>(`/tempo/bookings/${id}/reschedule`, data);
 export const markNoShow = (id: UUID, version: number) =>
@@ -170,11 +174,19 @@ export const useCreateBooking = (
 	options?: UseMutationOptions<Booking, Error, CreateBookingRequest>,
 ) => useMutation({ mutationFn: createBooking, ...options });
 export const useCancelBooking = (
-	options?: UseMutationOptions<Booking, Error, UUID>,
-) => useMutation({ mutationFn: cancelBooking, ...options });
+	options?: UseMutationOptions<Booking, Error, { id: UUID; version: number }>,
+) =>
+	useMutation({
+		mutationFn: ({ id, version }) => cancelBooking(id, version),
+		...options,
+	});
 export const useConfirmBooking = (
-	options?: UseMutationOptions<Booking, Error, UUID>,
-) => useMutation({ mutationFn: confirmBooking, ...options });
+	options?: UseMutationOptions<Booking, Error, { id: UUID; version: number }>,
+) =>
+	useMutation({
+		mutationFn: ({ id, version }) => confirmBooking(id, version),
+		...options,
+	});
 export const useRescheduleBooking = (
 	options?: UseMutationOptions<
 		Booking,

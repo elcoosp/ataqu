@@ -47,9 +47,9 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 	const firstBooking = bookingsData?.items?.[0];
 	useMeetingJoined(firstBooking?.id || null);
 
-	const handleCancel = async (bookingId: string) => {
+	const handleCancel = async (bookingId: string, version: number) => {
 		try {
-			await cancelMutation.mutateAsync(bookingId);
+			await cancelMutation.mutateAsync({ id: bookingId, version });
 			toast.success("Meeting canceled.");
 		} catch {
 			toast.error("Failed to cancel meeting.");
@@ -129,7 +129,7 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 							variant="destructive"
 							size="sm"
 							className="min-h-[44px]"
-							onClick={() => handleCancel(booking.id)}
+							onClick={() => handleCancel(booking.id, booking.version)}
 						>
 							<Trans>Cancel</Trans>
 						</Button>
