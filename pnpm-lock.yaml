@@ -31,6 +31,9 @@ importers:
       '@platejs/markdown':
         specifier: ^53.3.3
         version: 53.3.3(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@7.0.2)
+      boneyard-js:
+        specifier: ^1.9.0
+        version: 1.9.0(react@19.2.7)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       platejs:
         specifier: ^53.3.5
         version: 53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7))
@@ -1801,6 +1804,9 @@ packages:
 
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
+
+  '@chenglou/pretext@0.0.5':
+    resolution: {integrity: sha512-A8GZN10REdFGsyuiUgLV8jjPDDFMg5GmgxGWV0I3igxBOnzj+jgz2VMmVD7g+SFyoctfeqHFxbNatKSzVRWtRg==}
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -4680,6 +4686,33 @@ packages:
     resolution: {integrity: sha512-JyJ954WzuIR8/FFzX0o5krdSTrBAkcCSRfWSleRsIHSWV+cZe2FI1PKggVkFke1hBldRs+LRxUczzE9iPmgZww==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+
+  boneyard-js@1.9.0:
+    resolution: {integrity: sha512-FlIHm7YyQ6GMBPaNY6um5ESHNyZGONoSZ0IMhayuyemBsCUhhDl4nC/gMTOi/25ojtrlnRInTWKqFKb7hGK6Cg==}
+    hasBin: true
+    peerDependencies:
+      '@angular/core': '>=14'
+      preact: '>=10'
+      react: '>=18'
+      react-native: '>=0.71'
+      svelte: '>=5.29'
+      vite: '>=5'
+      vue: '>=3'
+    peerDependenciesMeta:
+      '@angular/core':
+        optional: true
+      preact:
+        optional: true
+      react:
+        optional: true
+      react-native:
+        optional: true
+      svelte:
+        optional: true
+      vite:
+        optional: true
+      vue:
+        optional: true
 
   brace-expansion@1.1.18:
     resolution: {integrity: sha512-Edep/X9fGqVNmzKBVsDYIOtD+z1tuezV70LBjdCst9Tqu76lsnvRiZ6oTic1n+/BIwX6QDGAO94PN4N2SADvtw==}
@@ -7873,6 +7906,9 @@ snapshots:
 
   '@blazediff/core@1.9.1': {}
 
+  '@chenglou/pretext@0.0.5':
+    optional: true
+
   '@colors/colors@1.5.0':
     optional: true
 
@@ -10563,6 +10599,14 @@ snapshots:
   balanced-match@4.0.4: {}
 
   baseline-browser-mapping@2.11.14: {}
+
+  boneyard-js@1.9.0(react@19.2.7)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)):
+    dependencies:
+      playwright: 1.62.1
+    optionalDependencies:
+      '@chenglou/pretext': 0.0.5
+      react: 19.2.7
+      vite: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
 
   brace-expansion@1.1.18:
     dependencies:

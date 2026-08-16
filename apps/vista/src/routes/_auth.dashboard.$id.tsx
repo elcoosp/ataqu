@@ -1,9 +1,20 @@
 import {
-	combineData,
+	useCombineData,
+	useDeleteDashboard,
 	useGetDashboard,
+	useGetDataPoints,
+	useGetKpis,
 	useUpdateDashboard,
 } from "@ataqu/api-client";
-import { Button, OnboardTour, Shell, Skeleton } from "@ataqu/ui";
+import {
+	Bone,
+	Button,
+	Card,
+	CardTitle,
+	OnboardTour,
+	Shell,
+	Skeleton,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -28,7 +39,9 @@ function DashboardDetailPage() {
 	const { id } = Route.useParams();
 	const { data: dashboard, isLoading } = useGetDashboard(id);
 	const updateDashboardMutation = useUpdateDashboard();
+	const deleteDashboardMutation = useDeleteDashboard();
 	const queryClient = useQueryClient();
+	const navigate = Route.useNavigate();
 
 	const [isWidgetPickerOpen, setWidgetPickerOpen] = React.useState(false);
 	const [isCombineOpen, setIsCombineOpen] = React.useState(false);
@@ -125,6 +138,20 @@ function DashboardDetailPage() {
 							<ExportButtons dashboardId={id} />
 							<Button
 								size="sm"
+								variant="destructive"
+								disabled={deleteDashboardMutation.isPending}
+								onClick={async () => {
+									await deleteDashboardMutation.mutateAsync(id);
+									queryClient.invalidateQueries({
+										queryKey: ["vista", "dashboards"],
+									});
+									navigate({ to: "/dashboard" });
+								}}
+							>
+								<Trans>Delete</Trans>
+							</Button>
+							<Button
+								size="sm"
 								variant="outline"
 								onClick={() => setIsCombineOpen(true)}
 							>
@@ -153,6 +180,7 @@ function DashboardDetailPage() {
 								onLayoutChange={handleLayoutChange}
 							/>
 						)}
+						<KpiSummaryPanel />
 					</div>
 				</div>
 			</OnboardTour>
@@ -178,30 +206,25 @@ const CombineDataModal: React.FC<{
 }> = ({ onClose, dashboardId }) => {
 	const [primary, setPrimary] = React.useState("revenue");
 	const [secondary, setSecondary] = React.useState("inventory");
-	const [isLoading, setIsLoading] = React.useState(false);
 	const queryClient = useQueryClient();
-
-	const handleCombine = async () => {
-		setIsLoading(true);
-		try {
-			await combineData({
-				primary,
-				secondary,
-				from_date: new Date(
-					Date.now() - 30 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				to_date: new Date().toISOString(),
-			});
+	const combine = useCombineData({
+		onSuccess: () => {
 			toast.success(t`Data combined successfully.`);
 			queryClient.invalidateQueries({
 				queryKey: ["vista", "dashboard", dashboardId],
 			});
 			onClose();
-		} catch {
-			toast.error(t`Failed to combine data.`);
-		} finally {
-			setIsLoading(false);
-		}
+		},
+		onError: () => toast.error(t`Failed to combine data.`),
+	});
+
+	const handleCombine = () => {
+		combine.mutate({
+			primary,
+			secondary,
+			from_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+			to_date: new Date().toISOString(),
+		});
 	};
 
 	return (
@@ -258,7 +281,7 @@ const CombineDataModal: React.FC<{
 					<Button variant="outline" onClick={onClose}>
 						<Trans>Cancel</Trans>
 					</Button>
-					<Button onClick={handleCombine} disabled={isLoading}>
+					<Button onClick={handleCombine} disabled={combine.isPending}>
 						<Trans>Combine</Trans>
 					</Button>
 				</div>
@@ -266,3 +289,82 @@ const CombineDataModal: React.FC<{
 		</div>
 	);
 };
+
+function KpiSummaryPanel() {
+	const { data: kpis, isLoading: kpisLoading } = useGetKpis();
+	const { data: dataPoints, isLoading: dpLoading } = useGetDataPoints(
+		"revenue",
+		{ limit: 8 },
+	);
+
+	return (
+		<div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+			<Card className="p-4">
+				<CardTitle className="text-white mb-3">
+					<Trans>KPI Summary</Trans>
+				</CardTitle>
+				<Bone
+					loading={kpisLoading}
+					name="kpi-summary"
+					fallback={<div className="h-20 w-full rounded bg-white/5" />}
+				>
+					<ul className="space-y-1 text-sm text-white/90">
+						{(kpis
+							? [
+									["Total Revenue", kpis.total_revenue],
+									["Pipeline Value", kpis.total_pipeline_value],
+									["Deals Won", kpis.total_deals_won],
+									["Low Stock", kpis.low_stock_variants],
+								]
+							: []
+						).map(([label, value]) => (
+							<li key={label} className="flex justify-between">
+								<span className="text-muted-foreground">{label}</span>
+								<span>{String(value ?? 0)}</span>
+							</li>
+						))}
+						{kpis === undefined && (
+							<li className="text-muted-foreground">
+								<Trans>No KPIs available.</Trans>
+							</li>
+						)}
+					</ul>
+				</Bone>
+			</Card>
+			<Card className="p-4">
+				<CardTitle className="text-white mb-3">
+					<Trans>Data Points (revenue)</Trans>
+				</CardTitle>
+				<Bone
+					loading={dpLoading}
+					name="datapoints"
+					fallback={<div className="h-20 w-full rounded bg-white/5" />}
+				>
+					<div className="overflow-x-auto">
+						<table className="w-full text-sm">
+							<tbody>
+								{(dataPoints ?? []).slice(0, 8).map((dp, i) => (
+									<tr key={i} className="border-t border-white/5">
+										<td className="px-2 py-1 text-muted-foreground">
+											{dp.metric_name}
+										</td>
+										<td className="px-2 py-1 text-white/90">
+											{String(dp.value)}
+										</td>
+									</tr>
+								))}
+								{(dataPoints ?? []).length === 0 && (
+									<tr>
+										<td className="px-2 py-1 text-muted-foreground">
+											<Trans>No data points.</Trans>
+										</td>
+									</tr>
+								)}
+							</tbody>
+						</table>
+					</div>
+				</Bone>
+			</Card>
+		</div>
+	);
+}

@@ -2,8 +2,8 @@
 
 import type { ApiKeyResponse } from "@ataqu/api-client";
 import {
-	deleteApiKey,
 	useCreateApiKey,
+	useDeleteApiKey,
 	useListApiKeys,
 } from "@ataqu/api-client";
 import {
@@ -28,7 +28,7 @@ import {
 	TableRow,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Copy, Key, Plus } from "lucide-react";
 import { useState } from "react";
@@ -59,8 +59,7 @@ export const Route = createFileRoute("/_auth/api-keys")({
 			},
 		});
 
-		const _deleteMutation = useMutation({
-			mutationFn: (id: string) => deleteApiKey(id),
+		const _deleteMutation = useDeleteApiKey({
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "api-keys"] });
 				toast.success("API key revoked.");

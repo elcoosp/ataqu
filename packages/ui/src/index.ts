@@ -1,3 +1,5 @@
+export type { SkeletonProps as BoneProps } from "boneyard-js/react";
+export { Skeleton as Bone } from "boneyard-js/react";
 export * from "./command-registry";
 export * from "./components/auth/LoginForm";
 export * from "./components/auth/RegisterForm";

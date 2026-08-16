@@ -1,6 +1,6 @@
 // apps/aegis/src/routes/_auth/roles.tsx
 
-import { createRole, useListRoles } from "@ataqu/api-client";
+import { useCreateRole, useListRoles } from "@ataqu/api-client";
 import {
 	Button,
 	Card,
@@ -14,7 +14,7 @@ import {
 	TableRow,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Shield } from "lucide-react";
 import { useState } from "react";
@@ -30,9 +30,7 @@ export const Route = createFileRoute("/_auth/roles")({
 
 		const { data, isLoading, error } = useListRoles();
 
-		const _createMutation = useMutation({
-			mutationFn: (data: { name: string; permissions: string[] }) =>
-				createRole(data),
+		const _createMutation = useCreateRole({
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "roles"] });
 				setOpenCreate(false);

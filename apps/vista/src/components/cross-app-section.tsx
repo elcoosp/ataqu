@@ -1,7 +1,13 @@
-import { combineData, useGetCrossAppView } from "@ataqu/api-client";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
+import { useCombineData, useGetCrossAppView } from "@ataqu/api-client";
+import {
+	Bone,
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 type Row = Record<string, unknown>;
@@ -27,42 +33,46 @@ function CrossAppView({ view }: { view: string }) {
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				{isLoading ? (
-					<div className="h-24 animate-pulse rounded bg-white/5" />
-				) : error ? (
-					<p className="text-sm text-red-400">
-						<Trans>Unable to load cross-app data.</Trans>
-					</p>
-				) : rows.length === 0 ? (
-					<p className="text-sm text-muted-foreground">
-						<Trans>No combined data yet — connect the source apps.</Trans>
-					</p>
-				) : (
-					<div className="overflow-x-auto">
-						<table className="w-full text-sm">
-							<thead>
-								<tr className="text-left text-xs uppercase text-muted-foreground">
-									{Object.keys(rows[0]).map((k) => (
-										<th key={k} className="px-2 py-1">
-											{k}
-										</th>
-									))}
-								</tr>
-							</thead>
-							<tbody>
-								{rows.map((r, i) => (
-									<tr key={i} className="border-t border-white/5">
-										{Object.values(r).map((v, j) => (
-											<td key={j} className="px-2 py-1 text-white/90">
-												{String(v)}
-											</td>
+				<Bone
+					loading={isLoading}
+					name="cross-app-view"
+					fallback={<div className="h-24 w-full rounded bg-white/5" />}
+				>
+					{error ? (
+						<p className="text-sm text-red-400">
+							<Trans>Unable to load cross-app data.</Trans>
+						</p>
+					) : rows.length === 0 ? (
+						<p className="text-sm text-muted-foreground">
+							<Trans>No combined data yet — connect the source apps.</Trans>
+						</p>
+					) : (
+						<div className="overflow-x-auto">
+							<table className="w-full text-sm">
+								<thead>
+									<tr className="text-left text-xs uppercase text-muted-foreground">
+										{Object.keys(rows[0]).map((k) => (
+											<th key={k} className="px-2 py-1">
+												{k}
+											</th>
 										))}
 									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				)}
+								</thead>
+								<tbody>
+									{rows.map((r, i) => (
+										<tr key={i} className="border-t border-white/5">
+											{Object.values(r).map((v, j) => (
+												<td key={j} className="px-2 py-1 text-white/90">
+													{String(v)}
+												</td>
+											))}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</Bone>
 			</CardContent>
 		</Card>
 	);
@@ -73,14 +83,7 @@ function CombineDataPanel() {
 	const [secondary, setSecondary] = useState("vault");
 	const [result, setResult] = useState<Row[] | null>(null);
 
-	const combine = useMutation({
-		mutationFn: () =>
-			combineData({
-				primary,
-				secondary,
-				from_date: "2026-01-01T00:00:00Z",
-				to_date: "2026-12-31T00:00:00Z",
-			}),
+	const combine = useCombineData({
 		onSuccess: (data) => setResult((data as Row[]) ?? []),
 	});
 
@@ -118,7 +121,14 @@ function CombineDataPanel() {
 				<Button
 					size="sm"
 					disabled={combine.isPending}
-					onClick={() => combine.mutate()}
+					onClick={() =>
+						combine.mutate({
+							primary,
+							secondary,
+							from_date: "2026-01-01T00:00:00Z",
+							to_date: "2026-12-31T00:00:00Z",
+						})
+					}
 				>
 					<Trans>Combine</Trans>
 				</Button>

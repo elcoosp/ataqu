@@ -1,6 +1,6 @@
 // apps/aegis/src/components/invite-dialog.tsx
 
-import { inviteUser } from "@ataqu/api-client";
+import { useInviteUser } from "@ataqu/api-client";
 import {
 	Button,
 	Dialog,
@@ -11,7 +11,7 @@ import {
 	Label,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -31,8 +31,7 @@ export function InviteDialog({ open, onOpenChange }: InviteDialogProps) {
 		defaultValues: { role: "member" },
 	});
 
-	const inviteMutation = useMutation({
-		mutationFn: (data: InviteFormData) => inviteUser(data),
+	const inviteMutation = useInviteUser({
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 			onOpenChange(false);

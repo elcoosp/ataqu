@@ -1,9 +1,9 @@
 // apps/aegis/src/routes/_auth/users.$id.tsx
 
 import {
-	deactivateUser,
-	updateUserRole,
+	useDeactivateUser,
 	useListUsers,
+	useUpdateUserRole,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
@@ -27,7 +27,7 @@ import {
 	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	useNavigate,
@@ -48,8 +48,7 @@ export const Route = createFileRoute("/_auth/users/$id")({
 		const { data: users = [], isLoading, error } = useListUsers();
 		const user = users.find((u) => u.id === id);
 
-		const _deactivateMutation = useMutation({
-			mutationFn: (userId: string) => deactivateUser(userId),
+		const _deactivateMutation = useDeactivateUser({
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 				toast.success("User deactivated.");
@@ -60,9 +59,7 @@ export const Route = createFileRoute("/_auth/users/$id")({
 			},
 		});
 
-		const updateRole = useMutation({
-			mutationFn: (role: string) =>
-				updateUserRole(id, { role }, user?.version ?? 0),
+		const updateRole = useUpdateUserRole({
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 				toast.success("Role updated.");
@@ -126,7 +123,13 @@ export const Route = createFileRoute("/_auth/users/$id")({
 								</Select>
 								<Button
 									size="sm"
-									onClick={() => updateRole.mutate(role)}
+									onClick={() =>
+										updateRole.mutate({
+											userId: id,
+											data: { role },
+											version: user?.version ?? 0,
+										})
+									}
 									disabled={updateRole.isPending || role === user.role}
 								>
 									<Trans>Save Role</Trans>

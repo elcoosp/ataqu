@@ -25,9 +25,9 @@ import { EmptyState } from "../../../components/empty-state";
 
 ("../../components/empty-state");
 
-import { inviteUser, useListUsers } from "@ataqu/api-client";
+import { useInviteUser, useListUsers } from "@ataqu/api-client";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -41,8 +41,7 @@ export const Route = createFileRoute("/_auth/users/")({
 
 		const { data: users, isLoading, error } = useListUsers();
 
-		const inviteMutation = useMutation({
-			mutationFn: (data: { email: string; role: string }) => inviteUser(data),
+		const inviteMutation = useInviteUser({
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 				setOpenInvite(false);

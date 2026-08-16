@@ -1,12 +1,12 @@
 // apps/aegis/src/routes/_auth/settings.tsx
 
 import {
-	updateTenantSettings,
 	useGetIpAllowlist,
 	useGetTenantSettings,
 	useMfaSetup,
 	useMfaVerify,
 	useUpdateIpAllowlist,
+	useUpdateTenantSettings,
 } from "@ataqu/api-client";
 import {
 	Button,
@@ -19,7 +19,7 @@ import {
 	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import QRCode from "qrcode.react";
 import { useState } from "react";
@@ -36,8 +36,7 @@ export const Route = createFileRoute("/_auth/settings")({
 
 		const { data: tenant, isLoading, error } = useGetTenantSettings();
 
-		const updateTenantMutation = useMutation({
-			mutationFn: (data: { name: string }) => updateTenantSettings(data),
+		const updateTenantMutation = useUpdateTenantSettings({
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "tenant"] });
 				toast.success("Settings updated.");
