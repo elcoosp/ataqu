@@ -26,8 +26,14 @@ export const listDocuments = (params?: ListDocumentsParams) =>
 	api.get<Document[]>("/pivot/docs", { params });
 export const getDocument = (id: string) =>
 	api.get<Document>(`/pivot/docs/${id}`);
-export const updateDocument = (id: string, data: UpdateDocumentCommand) =>
-	api.put<Document>(`/pivot/docs/${id}`, data);
+export const updateDocument = (
+	id: string,
+	data: UpdateDocumentCommand,
+	version?: number,
+) =>
+	api.put<Document>(`/pivot/docs/${id}`, data, {
+		headers: version != null ? { "If-Match": String(version) } : {},
+	});
 export const deleteDocument = (id: string) =>
 	api.delete<void>(`/pivot/docs/${id}`);
 
@@ -166,11 +172,11 @@ export const useUpdateDocument = (
 	options?: UseMutationOptions<
 		Document,
 		Error,
-		{ id: string; data: UpdateDocumentCommand }
+		{ id: string; data: UpdateDocumentCommand; version?: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateDocument(id, data),
+		mutationFn: ({ id, data, version }) => updateDocument(id, data, version),
 		...options,
 	});
 export const useDeleteDocument = (

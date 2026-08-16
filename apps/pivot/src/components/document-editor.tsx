@@ -141,14 +141,16 @@ export function DocumentEditor({
 	onDuplicate,
 }: DocumentEditorProps) {
 	const [title, setTitle] = useState(initialDoc.title);
+	const [version, setVersion] = useState(initialDoc.version);
 	const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
 		"idle",
 	);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const updateMutation = useUpdateDocument({
-		onSuccess: () => {
+		onSuccess: (data) => {
 			setSaveStatus("saved");
+			if (typeof data?.version === "number") setVersion(data.version);
 			setTimeout(() => setSaveStatus("idle"), 1500);
 		},
 		onError: (error) => {
@@ -210,8 +212,12 @@ export function DocumentEditor({
 	const value = useEditorValue();
 	const persist = useCallback(() => {
 		setSaveStatus("saving");
-		updateMutation.mutate({ id, data: { title, content: serialize() } });
-	}, [id, title, updateMutation, serialize]);
+		updateMutation.mutate({
+			id,
+			data: { title, content: serialize() },
+			version,
+		});
+	}, [id, title, version, updateMutation, serialize]);
 
 	useEffect(() => {
 		if (timerRef.current) clearTimeout(timerRef.current);
