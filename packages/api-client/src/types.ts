@@ -42,6 +42,7 @@ export interface UserResponse {
 	id: UUID;
 	email: string;
 	name?: string;
+	version: number;
 	role: string;
 	is_active: boolean;
 	mfa_enabled: boolean;
@@ -237,6 +238,7 @@ export interface PipelineStageResponse {
 	id: UUID;
 	name: string;
 	order: number;
+	version: number;
 }
 export interface CreatePipelineStageRequest {
 	name: string;
@@ -329,6 +331,7 @@ export interface Channel {
 	id: UUID;
 	name: string;
 	channel_type: "public" | "private" | "direct_message";
+	version: number;
 	created_by: UUID;
 	participants: UUID[];
 	created_at: DateTime;
@@ -345,6 +348,7 @@ export interface Message {
 	id: UUID;
 	channel_id: UUID;
 	author_id: UUID;
+	version: number;
 	content: string;
 	sent_at: DateTime;
 	thread_id?: UUID;

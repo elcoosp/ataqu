@@ -30,8 +30,14 @@ export const createChannel = (data: CreateChannelRequest) =>
 	api.post<Channel>("/dial/channels", data);
 export const getChannel = (id: UUID) =>
 	api.get<Channel>(`/dial/channels/${id}`);
-export const updateChannel = (id: UUID, data: { name: string }) =>
-	api.put<Channel>(`/dial/channels/${id}`, data);
+export const updateChannel = (
+	id: UUID,
+	data: { name: string },
+	version: number,
+) =>
+	api.put<Channel>(`/dial/channels/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const archiveChannel = (id: UUID) =>
 	api.post<void>(`/dial/channels/${id}/archive`);
 
@@ -45,8 +51,14 @@ export const listMessages = (
 	});
 export const sendMessage = (channelId: UUID, data: SendMessageRequest) =>
 	api.post<Message>(`/dial/channels/${channelId}/messages`, data);
-export const editMessage = (messageId: UUID, data: EditMessageRequest) =>
-	api.put<Message>(`/dial/messages/${messageId}`, data);
+export const editMessage = (
+	messageId: UUID,
+	data: EditMessageRequest,
+	version: number,
+) =>
+	api.put<Message>(`/dial/messages/${messageId}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteMessage = (messageId: UUID) =>
 	api.delete<void>(`/dial/messages/${messageId}`);
 export const bulkDeleteMessages = (data: BulkDeleteRequest) =>
@@ -170,11 +182,11 @@ export const useUpdateChannel = (
 	options?: UseMutationOptions<
 		Channel,
 		Error,
-		{ id: UUID; data: { name: string } }
+		{ id: UUID; data: { name: string }; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateChannel(id, data),
+		mutationFn: ({ id, data, version }) => updateChannel(id, data, version),
 		...options,
 	});
 export const useArchiveChannel = (
@@ -196,11 +208,12 @@ export const useEditMessage = (
 	options?: UseMutationOptions<
 		Message,
 		Error,
-		{ messageId: UUID; data: EditMessageRequest }
+		{ messageId: UUID; data: EditMessageRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ messageId, data }) => editMessage(messageId, data),
+		mutationFn: ({ messageId, data, version }) =>
+			editMessage(messageId, data, version),
 		...options,
 	});
 export const useDeleteMessage = (

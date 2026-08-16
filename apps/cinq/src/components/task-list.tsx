@@ -16,10 +16,12 @@ export function TaskList() {
 		mutationFn: ({
 			id,
 			status,
+			version,
 		}: {
 			id: string;
 			status: "pending" | "completed" | "cancelled";
-		}) => updateTask(id, { status }),
+			version: number;
+		}) => updateTask(id, { status }, version),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["cinq", "tasks"] });
 		},
@@ -44,6 +46,7 @@ export function TaskList() {
 								updateTaskMutation.mutate({
 									id: task.id,
 									status: checked ? "completed" : "pending",
+									version: task.version,
 								});
 							}}
 							className="h-4 w-4 rounded border-gray-600 bg-transparent text-amber focus:ring-amber"

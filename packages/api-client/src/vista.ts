@@ -22,8 +22,14 @@ export const createDashboard = (data: CreateDashboardRequest) =>
 	api.post<Dashboard>("/vista/dashboards", data);
 export const getDashboard = (id: UUID) =>
 	api.get<Dashboard>(`/vista/dashboards/${id}`);
-export const updateDashboard = (id: UUID, data: UpdateDashboardRequest) =>
-	api.put<Dashboard>(`/vista/dashboards/${id}`, data);
+export const updateDashboard = (
+	id: UUID,
+	data: UpdateDashboardRequest,
+	version: number,
+) =>
+	api.put<Dashboard>(`/vista/dashboards/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteDashboard = (id: UUID) =>
 	api.delete<void>(`/vista/dashboards/${id}`);
 
@@ -91,11 +97,11 @@ export const useUpdateDashboard = (
 	options?: UseMutationOptions<
 		Dashboard,
 		Error,
-		{ id: UUID; data: UpdateDashboardRequest }
+		{ id: UUID; data: UpdateDashboardRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateDashboard(id, data),
+		mutationFn: ({ id, data, version }) => updateDashboard(id, data, version),
 		...options,
 	});
 export const useDeleteDashboard = (

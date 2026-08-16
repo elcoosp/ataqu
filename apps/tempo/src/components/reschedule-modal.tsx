@@ -14,6 +14,7 @@ import { BookingCalendar } from "./booking-calendar";
 interface RescheduleModalProps {
 	bookingId: string;
 	eventTypeId: string;
+	version?: number;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }
@@ -21,6 +22,7 @@ interface RescheduleModalProps {
 export function RescheduleModal({
 	bookingId,
 	eventTypeId,
+	version,
 	open,
 	onOpenChange,
 }: RescheduleModalProps) {
@@ -28,11 +30,12 @@ export function RescheduleModal({
 	const rescheduleMutation = useRescheduleBooking();
 
 	const handleReschedule = async () => {
-		if (!selectedSlot) return;
+		if (!selectedSlot || version === undefined) return;
 		try {
 			await rescheduleMutation.mutateAsync({
 				id: bookingId,
 				data: { starts_at: selectedSlot },
+				version,
 			});
 			toast.success("Meeting rescheduled.");
 			onOpenChange(false);

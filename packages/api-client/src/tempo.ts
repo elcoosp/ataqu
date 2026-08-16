@@ -27,8 +27,14 @@ export const createEventType = (data: CreateEventTypeRequest) =>
 	api.post<EventType>("/tempo/event-types", data);
 export const getEventType = (id: UUID) =>
 	api.get<EventType>(`/tempo/event-types/${id}`);
-export const updateEventType = (id: UUID, data: UpdateEventTypeRequest) =>
-	api.put<EventType>(`/tempo/event-types/${id}`, data);
+export const updateEventType = (
+	id: UUID,
+	data: UpdateEventTypeRequest,
+	version: number,
+) =>
+	api.put<EventType>(`/tempo/event-types/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteEventType = (id: UUID) =>
 	api.delete<void>(`/tempo/event-types/${id}`);
 
@@ -62,8 +68,14 @@ export const confirmBooking = (id: UUID, version: number) =>
 	api.post<Booking>(`/tempo/bookings/${id}/confirm`, undefined, {
 		headers: { "If-Match": `"${version}"` },
 	});
-export const rescheduleBooking = (id: UUID, data: RescheduleBookingRequest) =>
-	api.post<Booking>(`/tempo/bookings/${id}/reschedule`, data);
+export const rescheduleBooking = (
+	id: UUID,
+	data: RescheduleBookingRequest,
+	version: number,
+) =>
+	api.post<Booking>(`/tempo/bookings/${id}/reschedule`, data, {
+		headers: { "If-Match": `"${version}"` },
+	});
 export const markNoShow = (id: UUID, version: number) =>
 	api.post<Booking>(`/tempo/bookings/${id}/no-show`, undefined, {
 		headers: { "If-Match": `"${version}"` },
@@ -148,11 +160,11 @@ export const useUpdateEventType = (
 	options?: UseMutationOptions<
 		EventType,
 		Error,
-		{ id: UUID; data: UpdateEventTypeRequest }
+		{ id: UUID; data: UpdateEventTypeRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateEventType(id, data),
+		mutationFn: ({ id, data, version }) => updateEventType(id, data, version),
 		...options,
 	});
 export const useDeleteEventType = (
@@ -191,11 +203,11 @@ export const useRescheduleBooking = (
 	options?: UseMutationOptions<
 		Booking,
 		Error,
-		{ id: UUID; data: RescheduleBookingRequest }
+		{ id: UUID; data: RescheduleBookingRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => rescheduleBooking(id, data),
+		mutationFn: ({ id, data, version }) => rescheduleBooking(id, data, version),
 		...options,
 	});
 export const useMarkNoShow = (

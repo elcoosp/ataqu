@@ -22,8 +22,14 @@ export const listForms = (params?: { limit?: number; offset?: number }) =>
 export const createForm = (data: CreateFormRequest) =>
 	api.post<Form>("/sond/forms", data);
 export const getForm = (id: UUID) => api.get<Form>(`/sond/forms/${id}`);
-export const updateForm = (id: UUID, data: UpdateFormRequest) =>
-	api.put<Form>(`/sond/forms/${id}`, data);
+export const updateForm = (
+	id: UUID,
+	data: UpdateFormRequest,
+	version: number,
+) =>
+	api.put<Form>(`/sond/forms/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteForm = (id: UUID) => api.delete<void>(`/sond/forms/${id}`);
 
 // ---- Submissions ----
@@ -80,11 +86,11 @@ export const useUpdateForm = (
 	options?: UseMutationOptions<
 		Form,
 		Error,
-		{ id: UUID; data: UpdateFormRequest }
+		{ id: UUID; data: UpdateFormRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateForm(id, data),
+		mutationFn: ({ id, data, version }) => updateForm(id, data, version),
 		...options,
 	});
 export const useDeleteForm = (

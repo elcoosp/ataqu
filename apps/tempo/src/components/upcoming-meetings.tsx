@@ -32,7 +32,11 @@ const CalendarIcon = (
 );
 
 interface UpcomingMeetingsProps {
-	onReschedule: (bookingId: string, eventTypeId: string) => void;
+	onReschedule: (
+		bookingId: string,
+		eventTypeId: string,
+		version: number,
+	) => void;
 }
 
 export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
@@ -121,7 +125,9 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 							variant="outline"
 							size="sm"
 							className="min-h-[44px]"
-							onClick={() => onReschedule(booking.id, booking.event_type_id)}
+							onClick={() =>
+								onReschedule(booking.id, booking.event_type_id, booking.version)
+							}
 						>
 							<Trans>Reschedule</Trans>
 						</Button>

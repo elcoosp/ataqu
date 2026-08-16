@@ -69,12 +69,14 @@ function DashboardDetailPage() {
 	];
 
 	const handleAddWidget = async (type: string, dataSource: string) => {
+		if (!dashboard) return;
 		const newWidget = { i: `w${Date.now()}`, type, dataSource, data: [] };
 		const newWidgets = [...widgets, newWidget];
 		try {
 			await updateDashboardMutation.mutateAsync({
 				id,
 				data: { config: { ...config, widgets: newWidgets } },
+				version: dashboard.version,
 			});
 			queryClient.invalidateQueries({ queryKey: ["vista", "dashboard", id] });
 			toast.success(t`Widget added.`);
@@ -84,6 +86,7 @@ function DashboardDetailPage() {
 	};
 
 	const handleLayoutChange = async (newLayout: Layout[]) => {
+		if (!dashboard) return;
 		const updatedWidgets = widgets.map((w) => {
 			const layoutItem = newLayout.find((l) => l.i === w.i);
 			return { ...w, layout: layoutItem };
@@ -92,6 +95,7 @@ function DashboardDetailPage() {
 			await updateDashboardMutation.mutateAsync({
 				id,
 				data: { config: { ...config, widgets: updatedWidgets } },
+				version: dashboard.version,
 			});
 		} catch {
 			// Silent fail for layout saves

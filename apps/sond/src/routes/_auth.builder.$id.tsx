@@ -162,6 +162,7 @@ function FormBuilderRoute() {
 				mode,
 				branding,
 			} as UpdateFormRequest,
+			version: localForm.version,
 		});
 	}, [localForm, updateMutation]);
 
@@ -180,6 +181,7 @@ function FormBuilderRoute() {
 					mode,
 					branding,
 				} as UpdateFormRequest,
+				version: localForm.version,
 			},
 			{ onSuccess: () => toast.success(t`Form published`) },
 		);

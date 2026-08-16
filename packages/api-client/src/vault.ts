@@ -35,8 +35,14 @@ export const createProduct = (data: CreateProductRequest) =>
 	api.post<Product>("/vault/products", data);
 export const getProduct = (id: UUID) =>
 	api.get<Product>(`/vault/products/${id}`);
-export const updateProduct = (id: UUID, data: UpdateProductRequest) =>
-	api.put<Product>(`/vault/products/${id}`, data);
+export const updateProduct = (
+	id: UUID,
+	data: UpdateProductRequest,
+	version: number,
+) =>
+	api.put<Product>(`/vault/products/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteProduct = (id: UUID) =>
 	api.delete<void>(`/vault/products/${id}`);
 export const bulkDeleteProducts = (data: BulkDeleteRequest) =>
@@ -52,20 +58,37 @@ export const createVariant = (data: CreateVariantRequest) =>
 	api.post<Variant>("/vault/variants", data);
 export const getVariant = (id: UUID) =>
 	api.get<Variant>(`/vault/variants/${id}`);
-export const updateVariant = (id: UUID, data: UpdateVariantRequest) =>
-	api.put<Variant>(`/vault/variants/${id}`, data);
+export const updateVariant = (
+	id: UUID,
+	data: UpdateVariantRequest,
+	version: number,
+) =>
+	api.put<Variant>(`/vault/variants/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteVariant = (id: UUID) =>
 	api.delete<void>(`/vault/variants/${id}`);
 export const bulkDeleteVariants = (data: BulkDeleteRequest) =>
 	api.post<void>("/vault/variants/bulk-delete", data);
 
 // ---- Stock ----
-export const updateStock = (variantId: UUID, data: UpdateStockRequest) =>
-	api.put<Variant>(`/vault/variants/${variantId}/stock`, data);
-export const reserveStock = (variantId: UUID, data: ReserveStockRequest) =>
+export const updateStock = (
+	variantId: UUID,
+	data: UpdateStockRequest,
+	version: number,
+) =>
+	api.put<Variant>(`/vault/variants/${variantId}/stock`, data, {
+		headers: { "If-Match": String(version) },
+	});
+export const reserveStock = (
+	variantId: UUID,
+	data: ReserveStockRequest,
+	version: number,
+) =>
 	api.post<{ variant: Variant; reservation_id: UUID }>(
 		`/vault/variants/${variantId}/reserve`,
 		data,
+		{ headers: { "If-Match": String(version) } },
 	);
 export const bulkAdjustStock = (data: BulkStockAdjustRequest) =>
 	api.post<Variant[]>("/vault/variants/bulk-stock-adjust", data);
@@ -89,8 +112,14 @@ export const createWarehouse = (data: CreateWarehouseRequest) =>
 	api.post<Warehouse>("/vault/warehouses", data);
 export const getWarehouse = (id: UUID) =>
 	api.get<Warehouse>(`/vault/warehouses/${id}`);
-export const updateWarehouse = (id: UUID, data: UpdateWarehouseRequest) =>
-	api.put<Warehouse>(`/vault/warehouses/${id}`, data);
+export const updateWarehouse = (
+	id: UUID,
+	data: UpdateWarehouseRequest,
+	version: number,
+) =>
+	api.put<Warehouse>(`/vault/warehouses/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteWarehouse = (id: UUID) =>
 	api.delete<void>(`/vault/warehouses/${id}`);
 
@@ -182,11 +211,11 @@ export const useUpdateProduct = (
 	options?: UseMutationOptions<
 		Product,
 		Error,
-		{ id: UUID; data: UpdateProductRequest }
+		{ id: UUID; data: UpdateProductRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateProduct(id, data),
+		mutationFn: ({ id, data, version }) => updateProduct(id, data, version),
 		...options,
 	});
 export const useDeleteProduct = (
@@ -203,11 +232,11 @@ export const useUpdateVariant = (
 	options?: UseMutationOptions<
 		Variant,
 		Error,
-		{ id: UUID; data: UpdateVariantRequest }
+		{ id: UUID; data: UpdateVariantRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateVariant(id, data),
+		mutationFn: ({ id, data, version }) => updateVariant(id, data, version),
 		...options,
 	});
 export const useDeleteVariant = (
@@ -221,22 +250,24 @@ export const useUpdateStock = (
 	options?: UseMutationOptions<
 		Variant,
 		Error,
-		{ variantId: UUID; data: UpdateStockRequest }
+		{ variantId: UUID; data: UpdateStockRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ variantId, data }) => updateStock(variantId, data),
+		mutationFn: ({ variantId, data, version }) =>
+			updateStock(variantId, data, version),
 		...options,
 	});
 export const useReserveStock = (
 	options?: UseMutationOptions<
 		{ variant: Variant; reservation_id: UUID },
 		Error,
-		{ variantId: UUID; data: ReserveStockRequest }
+		{ variantId: UUID; data: ReserveStockRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ variantId, data }) => reserveStock(variantId, data),
+		mutationFn: ({ variantId, data, version }) =>
+			reserveStock(variantId, data, version),
 		...options,
 	});
 export const useBulkAdjustStock = (
@@ -250,11 +281,11 @@ export const useUpdateWarehouse = (
 	options?: UseMutationOptions<
 		Warehouse,
 		Error,
-		{ id: UUID; data: UpdateWarehouseRequest }
+		{ id: UUID; data: UpdateWarehouseRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateWarehouse(id, data),
+		mutationFn: ({ id, data, version }) => updateWarehouse(id, data, version),
 		...options,
 	});
 export const useDeleteWarehouse = (

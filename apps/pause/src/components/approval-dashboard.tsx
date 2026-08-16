@@ -21,7 +21,7 @@ export function ApprovalDashboard() {
 	const { data: requests, isLoading } = useListLeaveRequests();
 
 	const approveMutation = useApproveLeaveRequest({
-		onMutate: async (id: string) => {
+		onMutate: async ({ id }: { id: string; version: number }) => {
 			await queryClient.cancelQueries({
 				queryKey: ["pause", "leave-requests"],
 			});
@@ -39,7 +39,11 @@ export function ApprovalDashboard() {
 			}
 			return { previousRequests };
 		},
-		onError: (_err: Error, _id: string, context: unknown) => {
+		onError: (
+			_err: Error,
+			_vars: { id: string; version: number },
+			context: unknown,
+		) => {
 			const ctx = context as OptimisticContext | undefined;
 			if (ctx?.previousRequests) {
 				queryClient.setQueryData(
@@ -58,7 +62,7 @@ export function ApprovalDashboard() {
 	});
 
 	const rejectMutation = useRejectLeaveRequest({
-		onMutate: async (id: string) => {
+		onMutate: async ({ id }: { id: string; version: number }) => {
 			await queryClient.cancelQueries({
 				queryKey: ["pause", "leave-requests"],
 			});
@@ -76,7 +80,11 @@ export function ApprovalDashboard() {
 			}
 			return { previousRequests };
 		},
-		onError: (_err: Error, _id: string, context: unknown) => {
+		onError: (
+			_err: Error,
+			_vars: { id: string; version: number },
+			context: unknown,
+		) => {
 			const ctx = context as OptimisticContext | undefined;
 			if (ctx?.previousRequests) {
 				queryClient.setQueryData(
@@ -134,7 +142,9 @@ export function ApprovalDashboard() {
 					<div className="flex gap-2">
 						<Button
 							size="sm"
-							onClick={() => approveMutation.mutate(req.id)}
+							onClick={() =>
+								approveMutation.mutate({ id: req.id, version: req.version })
+							}
 							disabled={approveMutation.isPending}
 						>
 							<Check className="h-4 w-4" />
@@ -142,7 +152,9 @@ export function ApprovalDashboard() {
 						<Button
 							size="sm"
 							variant="destructive"
-							onClick={() => rejectMutation.mutate(req.id)}
+							onClick={() =>
+								rejectMutation.mutate({ id: req.id, version: req.version })
+							}
 							disabled={rejectMutation.isPending}
 						>
 							<X className="h-4 w-4" />

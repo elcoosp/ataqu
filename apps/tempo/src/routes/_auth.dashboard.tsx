@@ -19,10 +19,18 @@ function Dashboard() {
 	const [rescheduleEventTypeId, setRescheduleEventTypeId] = useState<
 		string | null
 	>(null);
+	const [rescheduleVersion, setRescheduleVersion] = useState<number | null>(
+		null,
+	);
 
-	const handleReschedule = (bookingId: string, eventTypeId: string) => {
+	const handleReschedule = (
+		bookingId: string,
+		eventTypeId: string,
+		version: number,
+	) => {
 		setRescheduleBookingId(bookingId);
 		setRescheduleEventTypeId(eventTypeId);
+		setRescheduleVersion(version);
 	};
 
 	return (
@@ -55,6 +63,7 @@ function Dashboard() {
 						<RescheduleModal
 							bookingId={rescheduleBookingId}
 							eventTypeId={rescheduleEventTypeId}
+							version={rescheduleVersion ?? undefined}
 							open={!!rescheduleBookingId}
 							onOpenChange={(open) => {
 								if (!open) {

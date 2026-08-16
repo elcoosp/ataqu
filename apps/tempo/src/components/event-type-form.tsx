@@ -64,7 +64,11 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
 			};
 
 			if (eventType) {
-				await updateMutation.mutateAsync({ id: eventType.id, data: payload });
+				await updateMutation.mutateAsync({
+					id: eventType.id,
+					data: payload,
+					version: eventType.version,
+				});
 				toast.success("Event type updated.");
 			} else {
 				await createMutation.mutateAsync(payload);

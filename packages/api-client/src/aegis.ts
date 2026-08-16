@@ -43,8 +43,14 @@ export const mfaVerify = (data: MfaVerifyRequest) =>
 export const listUsers = () => api.get<UserResponse[]>("/aegis/users");
 export const createUser = (data: CreateUserRequest) =>
 	api.post<UserResponse>("/aegis/users", data);
-export const updateUserRole = (userId: UUID, data: UpdateRoleRequest) =>
-	api.patch<void>(`/aegis/users/${userId}/role`, data);
+export const updateUserRole = (
+	userId: UUID,
+	data: UpdateRoleRequest,
+	version: number,
+) =>
+	api.patch<void>(`/aegis/users/${userId}/role`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deactivateUser = (userId: UUID) =>
 	api.post<void>(`/aegis/users/${userId}/deactivate`);
 
@@ -156,11 +162,12 @@ export const useUpdateUserRole = (
 	options?: UseMutationOptions<
 		void,
 		Error,
-		{ userId: UUID; data: UpdateRoleRequest }
+		{ userId: UUID; data: UpdateRoleRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ userId, data }) => updateUserRole(userId, data),
+		mutationFn: ({ userId, data, version }) =>
+			updateUserRole(userId, data, version),
 		...options,
 	});
 export const useDeactivateUser = (

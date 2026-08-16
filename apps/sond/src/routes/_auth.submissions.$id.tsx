@@ -65,6 +65,7 @@ function SubmissionsRoute() {
 				updateFormMutation.mutate({
 					id,
 					data: { routing_rules: rules },
+					version: form?.version,
 				});
 			}
 		},
@@ -94,6 +95,7 @@ function SubmissionsRoute() {
 				updateFormMutation.mutate({
 					id,
 					data: { routing_rules: rules },
+					version: form?.version,
 				});
 			}
 		},

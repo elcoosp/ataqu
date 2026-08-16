@@ -16,6 +16,7 @@ export function CustomFieldsTab({ contact }: { contact: ContactResponse }) {
 		updateContact.mutate({
 			id: contact.id,
 			data: { custom_fields: newFields },
+			version: contact.version,
 		});
 	};
 

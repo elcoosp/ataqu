@@ -38,8 +38,14 @@ export const createContact = (data: CreateContactRequest) =>
 	api.post<ContactResponse>("/cinq/contacts", data);
 export const getContact = (id: UUID) =>
 	api.get<ContactResponse>(`/cinq/contacts/${id}`);
-export const updateContact = (id: UUID, data: UpdateContactRequest) =>
-	api.put<ContactResponse>(`/cinq/contacts/${id}`, data);
+export const updateContact = (
+	id: UUID,
+	data: UpdateContactRequest,
+	version: number,
+) =>
+	api.put<ContactResponse>(`/cinq/contacts/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteContact = (id: UUID) =>
 	api.delete<void>(`/cinq/contacts/${id}`);
 export const bulkDeleteContacts = (data: BulkDeleteRequest) =>
@@ -55,8 +61,14 @@ export const searchDeals = (q: string, limit = 10) =>
 export const createDeal = (data: CreateDealRequest) =>
 	api.post<DealResponse>("/cinq/deals", data);
 export const getDeal = (id: UUID) => api.get<DealResponse>(`/cinq/deals/${id}`);
-export const updateDeal = (id: UUID, data: UpdateDealRequest) =>
-	api.put<DealResponse>(`/cinq/deals/${id}`, data);
+export const updateDeal = (
+	id: UUID,
+	data: UpdateDealRequest,
+	version: number,
+) =>
+	api.put<DealResponse>(`/cinq/deals/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteDeal = (id: UUID) => api.delete<void>(`/cinq/deals/${id}`);
 export const bulkDeleteDeals = (data: BulkDeleteRequest) =>
 	api.post<void>("/cinq/deals/bulk-delete", data);
@@ -69,7 +81,11 @@ export const createPipelineStage = (data: CreatePipelineStageRequest) =>
 export const updatePipelineStage = (
 	id: UUID,
 	data: UpdatePipelineStageRequest,
-) => api.put<PipelineStageResponse>(`/cinq/pipeline/stages/${id}`, data);
+	version: number,
+) =>
+	api.put<PipelineStageResponse>(`/cinq/pipeline/stages/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deletePipelineStage = (id: UUID) =>
 	api.delete<void>(`/cinq/pipeline/stages/${id}`);
 
@@ -87,8 +103,14 @@ export const listTasks = (params?: { limit?: number; offset?: number }) =>
 export const createTask = (data: CreateTaskRequest) =>
 	api.post<TaskResponse>("/cinq/tasks", data);
 export const getTask = (id: UUID) => api.get<TaskResponse>(`/cinq/tasks/${id}`);
-export const updateTask = (id: UUID, data: UpdateTaskRequest) =>
-	api.put<TaskResponse>(`/cinq/tasks/${id}`, data);
+export const updateTask = (
+	id: UUID,
+	data: UpdateTaskRequest,
+	version: number,
+) =>
+	api.put<TaskResponse>(`/cinq/tasks/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deleteTask = (id: UUID) => api.delete<void>(`/cinq/tasks/${id}`);
 export const bulkDeleteTasks = (data: BulkDeleteRequest) =>
 	api.post<void>("/cinq/tasks/bulk-delete", data);
@@ -290,11 +312,11 @@ export const useUpdateContact = (
 	options?: UseMutationOptions<
 		ContactResponse,
 		Error,
-		{ id: UUID; data: UpdateContactRequest }
+		{ id: UUID; data: UpdateContactRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateContact(id, data),
+		mutationFn: ({ id, data, version }) => updateContact(id, data, version),
 		...options,
 	});
 export const useDeleteContact = (
@@ -311,11 +333,11 @@ export const useUpdateDeal = (
 	options?: UseMutationOptions<
 		DealResponse,
 		Error,
-		{ id: UUID; data: UpdateDealRequest }
+		{ id: UUID; data: UpdateDealRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateDeal(id, data),
+		mutationFn: ({ id, data, version }) => updateDeal(id, data, version),
 		...options,
 	});
 export const useDeleteDeal = (
@@ -336,11 +358,12 @@ export const useUpdatePipelineStage = (
 	options?: UseMutationOptions<
 		PipelineStageResponse,
 		Error,
-		{ id: UUID; data: UpdatePipelineStageRequest }
+		{ id: UUID; data: UpdatePipelineStageRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updatePipelineStage(id, data),
+		mutationFn: ({ id, data, version }) =>
+			updatePipelineStage(id, data, version),
 		...options,
 	});
 export const useDeletePipelineStage = (
@@ -358,11 +381,11 @@ export const useUpdateTask = (
 	options?: UseMutationOptions<
 		TaskResponse,
 		Error,
-		{ id: UUID; data: UpdateTaskRequest }
+		{ id: UUID; data: UpdateTaskRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateTask(id, data),
+		mutationFn: ({ id, data, version }) => updateTask(id, data, version),
 		...options,
 	});
 export const useDeleteTask = (

@@ -23,8 +23,14 @@ export const createEmployee = (data: CreateEmployeeRequest) =>
 	api.post<Employee>("/pause/employees", data);
 export const getEmployee = (id: UUID) =>
 	api.get<Employee>(`/pause/employees/${id}`);
-export const updateEmployee = (id: UUID, data: UpdateEmployeeRequest) =>
-	api.put<Employee>(`/pause/employees/${id}`, data);
+export const updateEmployee = (
+	id: UUID,
+	data: UpdateEmployeeRequest,
+	version: number,
+) =>
+	api.put<Employee>(`/pause/employees/${id}`, data, {
+		headers: { "If-Match": String(version) },
+	});
 export const deactivateEmployee = (id: UUID) =>
 	api.post<void>(`/pause/employees/${id}/deactivate`);
 export const bulkDeactivateEmployees = (data: BulkDeleteRequest) =>
@@ -39,12 +45,18 @@ export const listLeaveRequests = (params?: {
 }) => api.get<LeaveRequest[]>("/pause/leave-requests", { params });
 export const createLeaveRequest = (data: CreateLeaveRequestRequest) =>
 	api.post<LeaveRequest>("/pause/leave-requests", data);
-export const approveLeaveRequest = (id: UUID) =>
-	api.patch<LeaveRequest>(`/pause/leave-requests/${id}/approve`);
-export const rejectLeaveRequest = (id: UUID) =>
-	api.patch<LeaveRequest>(`/pause/leave-requests/${id}/reject`);
-export const cancelLeaveRequest = (id: UUID) =>
-	api.patch<LeaveRequest>(`/pause/leave-requests/${id}/cancel`);
+export const approveLeaveRequest = (id: UUID, version: number) =>
+	api.patch<LeaveRequest>(`/pause/leave-requests/${id}/approve`, undefined, {
+		headers: { "If-Match": String(version) },
+	});
+export const rejectLeaveRequest = (id: UUID, version: number) =>
+	api.patch<LeaveRequest>(`/pause/leave-requests/${id}/reject`, undefined, {
+		headers: { "If-Match": String(version) },
+	});
+export const cancelLeaveRequest = (id: UUID, version: number) =>
+	api.patch<LeaveRequest>(`/pause/leave-requests/${id}/cancel`, undefined, {
+		headers: { "If-Match": String(version) },
+	});
 
 // ---- Documents ----
 export const uploadDocument = (employeeId: UUID, data: UploadDocumentRequest) =>
@@ -98,11 +110,11 @@ export const useUpdateEmployee = (
 	options?: UseMutationOptions<
 		Employee,
 		Error,
-		{ id: UUID; data: UpdateEmployeeRequest }
+		{ id: UUID; data: UpdateEmployeeRequest; version: number }
 	>,
 ) =>
 	useMutation({
-		mutationFn: ({ id, data }) => updateEmployee(id, data),
+		mutationFn: ({ id, data, version }) => updateEmployee(id, data, version),
 		...options,
 	});
 export const useDeactivateEmployee = (
@@ -116,14 +128,38 @@ export const useCreateLeaveRequest = (
 	options?: UseMutationOptions<LeaveRequest, Error, CreateLeaveRequestRequest>,
 ) => useMutation({ mutationFn: createLeaveRequest, ...options });
 export const useApproveLeaveRequest = (
-	options?: UseMutationOptions<LeaveRequest, Error, UUID>,
-) => useMutation({ mutationFn: approveLeaveRequest, ...options });
+	options?: UseMutationOptions<
+		LeaveRequest,
+		Error,
+		{ id: UUID; version: number }
+	>,
+) =>
+	useMutation({
+		mutationFn: ({ id, version }) => approveLeaveRequest(id, version),
+		...options,
+	});
 export const useRejectLeaveRequest = (
-	options?: UseMutationOptions<LeaveRequest, Error, UUID>,
-) => useMutation({ mutationFn: rejectLeaveRequest, ...options });
+	options?: UseMutationOptions<
+		LeaveRequest,
+		Error,
+		{ id: UUID; version: number }
+	>,
+) =>
+	useMutation({
+		mutationFn: ({ id, version }) => rejectLeaveRequest(id, version),
+		...options,
+	});
 export const useCancelLeaveRequest = (
-	options?: UseMutationOptions<LeaveRequest, Error, UUID>,
-) => useMutation({ mutationFn: cancelLeaveRequest, ...options });
+	options?: UseMutationOptions<
+		LeaveRequest,
+		Error,
+		{ id: UUID; version: number }
+	>,
+) =>
+	useMutation({
+		mutationFn: ({ id, version }) => cancelLeaveRequest(id, version),
+		...options,
+	});
 
 export const useUploadDocument = (
 	options?: UseMutationOptions<
