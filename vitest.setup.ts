@@ -1,7 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { i18n } from "@lingui/core";
 import { cleanup } from "@testing-library/react";
-import React from "react";
 import { afterEach, vi } from "vitest";
 
 // Activate Lingui locale and load empty messages to prevent stderr warnings
@@ -40,17 +39,3 @@ afterEach(() => {
 	cleanup();
 });
 
-vi.mock("@ataqu/ui", async () => {
-	const actual = await vi.importActual("@ataqu/ui");
-	return {
-		...actual,
-		Shell: ({ children }: { children: React.ReactNode }) =>
-			React.createElement("div", { "data-testid": "shell-mock" }, children),
-		DashboardLayout: ({ children }: { children: React.ReactNode }) =>
-			React.createElement(
-				"div",
-				{ "data-testid": "dashboard-layout-mock" },
-				children,
-			),
-	};
-});

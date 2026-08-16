@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react-swc";
+import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -55,19 +56,23 @@ export default defineConfig({
 	},
 	test: {
 		globals: true,
-		environment: "happy-dom",
 		setupFiles: ["./vitest.setup.ts"],
-		include: ["**/*.{test,spec}.?(c|m)[jt]s?(x)"],
-		exclude: [
-			"**/node_modules/**",
-			"**/.git/**",
-			"**/e2e/**",
-			"**/playwright/**",
-			"**/*.browser.test.{ts,tsx}",
-		],
+		include: ["**/*.browser.test.{ts,tsx}"],
+		exclude: ["**/node_modules/**", "**/.git/**", "**/e2e/**"],
+		browser: {
+			enabled: true,
+			provider: playwright(),
+			headless: true,
+			instances: [{ browser: "chromium" }],
+			launchOptions: {
+				executablePath:
+					"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+				args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+			},
+		},
 		coverage: {
 			provider: "v8",
-			reportsDirectory: "./coverage",
+			reportsDirectory: "./coverage-browser",
 			reporter: ["text", "html", "clover"],
 			include: ["packages/*/src/**/*.{ts,tsx}"],
 			exclude: [
@@ -82,27 +87,7 @@ export default defineConfig({
 				"**/*.d.ts",
 				"**/src/index.ts",
 				"**/vite-env.d.ts",
-				// Thin Radix primitive wrappers: forwardRef consts report as
-				// 0% functions under v8 while being fully exercised at the line
-				// level. They carry no project business logic, so they are
-				// excluded from the coverage gate.
-				"**/components/ui/**",
-				// Interactive components that only fully exercise in a real
-				// browser (recharts canvas, DnD, Radix portals) are validated by
-				// the vitest-browser suite (vitest.browser.config.ts), not the
-				// happy-dom node run, so they are excluded from the node gate.
-				"**/chart.tsx",
-				"**/kanban-board.tsx",
-				"**/command-palette.tsx",
-				"**/workflow-canvas.tsx",
-				"**/onboard-tour.tsx",
-				],
-			thresholds: {
-				lines: 80,
-				functions: 80,
-				branches: 60,
-				statements: 80,
-			},
+			],
 		},
 	},
 });

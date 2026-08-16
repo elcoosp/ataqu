@@ -8,6 +8,12 @@ test-results
 playwright-report
 local.db
 .next
+
+# Test coverage + browser-test artifacts (regenerated on every run)
+coverage/
+coverage-browser/
+**/__screenshots__/
+.vitest-attachments/
 reddit-session.json
 tsconfig.tsbuildinfo
 assets/hd

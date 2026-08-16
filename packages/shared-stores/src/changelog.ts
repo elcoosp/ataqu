@@ -53,7 +53,8 @@ export const useChangelogStore = create<ChangelogState>()(
 			markSeen: () => set({ lastSeenId: CHANGELOG[0]?.id ?? null }),
 			unreadCount: () => {
 				const idx = CHANGELOG.findIndex((e) => e.id === get().lastSeenId);
-				return idx <= 0 ? CHANGELOG.length : idx;
+				if (idx < 0) return CHANGELOG.length;
+				return idx;
 			},
 		}),
 		{ name: "changelog-storage" },

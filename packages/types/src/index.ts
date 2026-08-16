@@ -26,3 +26,5 @@ export type Entity = {
 	createdAt: string;
 	updatedAt: string;
 };
+
+export * from "./fallbacks";
