@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { api, useLogin, useSignup } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
 import { AuthLayout, Button, Input } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
@@ -21,7 +21,28 @@ export const Route = createFileRoute("/login")({
 		const { login, token } = useAuthStore();
 		const [email, setEmail] = useState("");
 		const [password, setPassword] = useState("");
-		const [loading, setLoading] = useState(false);
+		const [name, setName] = useState("");
+		const [mode, setMode] = useState<"login" | "signup">("login");
+
+		const loginMutation = useLogin({
+			onSuccess: (res) => {
+				login(res.access_token, {
+					id: res.user_id,
+					email,
+					tenantId: "",
+					roles: [],
+				});
+				navigate({ to: "/dashboard" });
+			},
+			onError: () => toast.error("Invalid credentials"),
+		});
+		const signupMutation = useSignup({
+			onSuccess: () => {
+				toast.success("Account created. Check your email to verify.");
+				setMode("login");
+			},
+			onError: () => toast.error("Signup failed"),
+		});
 
 		useEffect(() => {
 			if (search.token && search.refreshToken && search.user_id) {
@@ -42,27 +63,13 @@ export const Route = createFileRoute("/login")({
 			}
 		};
 
-		const handlePasswordLogin = async (e: React.FormEvent) => {
+		const handlePasswordLogin = (e: React.FormEvent) => {
 			e.preventDefault();
-			setLoading(true);
-			try {
-				const res = await api.post<{
-					access_token: string;
-					refresh_token: string;
-					user_id: string;
-				}>("/aegis/login", { email, password });
-				login(res.access_token, {
-					id: res.user_id,
-					email,
-					tenantId: "",
-					roles: [],
-				});
-				navigate({ to: "/dashboard" });
-			} catch {
-				toast.error("Invalid credentials");
-			} finally {
-				setLoading(false);
+			if (mode === "signup") {
+				signupMutation.mutate({ email, password, name: name || undefined });
+				return;
 			}
+			loginMutation.mutate({ email, password });
 		};
 
 		if (token) {
@@ -74,7 +81,11 @@ export const Route = createFileRoute("/login")({
 			<AuthLayout>
 				<div className="bg-deep-night/80 p-8 rounded border border-gray-700/40 w-96 space-y-6">
 					<h1 className="text-2xl font-heading text-center">
-						<Trans>Sign in to Ataqu</Trans>
+						{mode === "signup" ? (
+							<Trans>Create your account</Trans>
+						) : (
+							<Trans>Sign in to Ataqu</Trans>
+						)}
 					</h1>
 					<div className="space-y-3">
 						<Button
@@ -101,6 +112,19 @@ export const Route = createFileRoute("/login")({
 						</div>
 					</div>
 					<form onSubmit={handlePasswordLogin} className="space-y-4">
+						{mode === "signup" && (
+							<div>
+								<label className="block text-sm font-medium mb-1">
+									<Trans>Name</Trans>
+								</label>
+								<Input
+									type="text"
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+									placeholder="Jane Doe"
+								/>
+							</div>
+						)}
 						<div>
 							<label className="block text-sm font-medium mb-1">
 								<Trans>Email</Trans>
@@ -127,11 +151,28 @@ export const Route = createFileRoute("/login")({
 						</div>
 						<Button
 							type="submit"
-							disabled={loading}
+							disabled={loginMutation.isPending || signupMutation.isPending}
 							className="w-full bg-amber text-black hover:bg-amber/90"
 						>
-							{loading ? <Trans>Signing in...</Trans> : <Trans>Sign In</Trans>}
+							{mode === "signup" ? (
+								<Trans>Sign Up</Trans>
+							) : (
+								<Trans>Sign In</Trans>
+							)}
 						</Button>
+						<button
+							type="button"
+							className="text-xs text-muted-foreground hover:text-foreground w-full"
+							onClick={() =>
+								setMode((m) => (m === "login" ? "signup" : "login"))
+							}
+						>
+							{mode === "signup" ? (
+								<Trans>Already have an account? Sign in</Trans>
+							) : (
+								<Trans>Need an account? Sign up</Trans>
+							)}
+						</button>
 					</form>
 				</div>
 			</AuthLayout>

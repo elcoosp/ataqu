@@ -1,6 +1,6 @@
 import { getCrossAppView } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Badge, Skeleton } from "@ataqu/ui";
+import { Badge, Bone } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 
@@ -10,7 +10,16 @@ export function CrossAppBadge({ entityId }: { entityId: UUID }) {
 		queryFn: () => getCrossAppView({ view: "relations" }),
 	});
 
-	if (isLoading) return <Skeleton className="h-6 w-24" />;
+	if (isLoading)
+		return (
+			<Bone
+				loading
+				name="cross-app-badge-1"
+				fallback={<div className="h-6 w-24" />}
+			>
+				{null}
+			</Bone>
+		);
 	if (!data || (data as any[]).length === 0) return null;
 
 	const relations = data as any[];

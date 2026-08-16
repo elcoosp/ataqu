@@ -1,6 +1,7 @@
 // apps/aegis/src/routes/_auth/users/index.tsx
 
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
@@ -10,7 +11,6 @@ import {
 	DialogTitle,
 	Input,
 	Label,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -76,8 +76,20 @@ export const Route = createFileRoute("/_auth/users/")({
 		if (isLoading) {
 			return (
 				<div className="p-6">
-					<Skeleton className="h-10 w-48 mb-4" />
-					<Skeleton className="h-64 w-full" />
+					<Bone
+						loading
+						name="index-1"
+						fallback={<div className="h-10 w-48 mb-4" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="index-2"
+						fallback={<div className="h-64 w-full" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			);
 		}

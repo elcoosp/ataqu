@@ -13,7 +13,6 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -92,11 +91,7 @@ export function TaskList() {
 
 	if (isLoading)
 		return (
-			<Bone
-				loading
-				name="tasks"
-				fallback={<Skeleton className="h-32 w-full" />}
-			>
+			<Bone loading name="tasks" fallback={<div className="h-32 w-full" />}>
 				{null}
 			</Bone>
 		);

@@ -6,15 +6,7 @@ import {
 	useGetKpis,
 	useUpdateDashboard,
 } from "@ataqu/api-client";
-import {
-	Bone,
-	Button,
-	Card,
-	CardTitle,
-	OnboardTour,
-	Shell,
-	Skeleton,
-} from "@ataqu/ui";
+import { Bone, Button, Card, CardTitle, OnboardTour, Shell } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -173,7 +165,13 @@ function DashboardDetailPage() {
 
 					<div className="flex-1 overflow-auto p-8">
 						{isLoading ? (
-							<Skeleton className="h-64 w-full" />
+							<Bone
+								loading
+								name="_auth-dashboard-$id-1"
+								fallback={<div className="h-64 w-full" />}
+							>
+								{null}
+							</Bone>
 						) : (
 							<DashboardGrid
 								widgets={widgets}

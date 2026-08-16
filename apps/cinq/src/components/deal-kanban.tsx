@@ -6,7 +6,7 @@ import {
 	useListPipelineStages,
 	useUpdatePipelineStage,
 } from "@ataqu/api-client";
-import { Badge, Bone, Button, Input, KanbanBoard, Skeleton } from "@ataqu/ui";
+import { Badge, Bone, Button, Input, KanbanBoard } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -65,11 +65,7 @@ export function DealKanban() {
 
 	if (stagesLoading || dealsLoading) {
 		return (
-			<Bone
-				loading
-				name="deals"
-				fallback={<Skeleton className="h-64 w-full" />}
-			>
+			<Bone loading name="deals" fallback={<div className="h-64 w-full" />}>
 				{null}
 			</Bone>
 		);

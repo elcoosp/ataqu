@@ -6,10 +6,10 @@ import {
 import { useSelectionStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	SelectAllCheckbox,
 	SelectionCheckbox,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -152,11 +152,24 @@ export function SubmissionsTableSkeleton() {
 	return (
 		<div className="space-y-4">
 			<div className="flex justify-end">
-				<Skeleton className="h-10 w-32" />
+				<Bone
+					loading
+					name="submissions-table-1"
+					fallback={<div className="h-10 w-32" />}
+				>
+					{null}
+				</Bone>
 			</div>
 			<div className="rounded-md border border-border p-4 space-y-3">
 				{Array.from({ length: 5 }).map((_, i) => (
-					<Skeleton key={i} className="h-10 w-full" />
+					<Bone
+						key={i}
+						loading
+						name="submissions-table-2"
+						fallback={<div className="h-10 w-full" />}
+					>
+						{null}
+					</Bone>
 				))}
 			</div>
 		</div>

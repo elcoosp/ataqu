@@ -9,7 +9,6 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { format } from "date-fns";
@@ -68,7 +67,7 @@ export function ActivityTimeline({ dealId }: { dealId: UUID }) {
 			<Bone
 				loading
 				name="activities"
-				fallback={<Skeleton className="h-32 w-full" />}
+				fallback={<div className="h-32 w-full" />}
 			>
 				{null}
 			</Bone>

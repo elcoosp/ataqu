@@ -1,5 +1,5 @@
 import type { WorkflowRun } from "@ataqu/api-client";
-import { Button, Skeleton } from "@ataqu/ui";
+import { Bone, Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { ChevronRight, History } from "lucide-react";
@@ -42,7 +42,14 @@ export function ExecutionHistory({
 		return (
 			<div className="space-y-3">
 				{[1, 2, 3, 4, 5].map((i) => (
-					<Skeleton key={i} className="h-14 w-full rounded-lg" />
+					<Bone
+						key={i}
+						loading
+						name="execution-history-1"
+						fallback={<div className="h-14 w-full rounded-lg" />}
+					>
+						{null}
+					</Bone>
 				))}
 			</div>
 		);

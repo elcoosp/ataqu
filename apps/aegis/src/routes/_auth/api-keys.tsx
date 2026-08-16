@@ -7,6 +7,7 @@ import {
 	useListApiKeys,
 } from "@ataqu/api-client";
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
@@ -19,7 +20,6 @@ import {
 	DialogTrigger,
 	Input,
 	Label,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -78,8 +78,20 @@ export const Route = createFileRoute("/_auth/api-keys")({
 		if (isLoading) {
 			return (
 				<div className="p-6">
-					<Skeleton className="h-10 w-48 mb-4" />
-					<Skeleton className="h-64 w-full" />
+					<Bone
+						loading
+						name="api-keys-1"
+						fallback={<div className="h-10 w-48 mb-4" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="api-keys-2"
+						fallback={<div className="h-64 w-full" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			);
 		}

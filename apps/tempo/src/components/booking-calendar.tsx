@@ -1,6 +1,6 @@
 import { useListAvailabilitySlots } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Button, Skeleton } from "@ataqu/ui";
+import { Bone, Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
 import { useTimezone } from "@/hooks/use-timezone";
@@ -42,11 +42,41 @@ export function BookingCalendar({
 	if (isLoading) {
 		return (
 			<div className="space-y-4" aria-busy="true">
-				<Skeleton className="h-12 w-full" />
-				<Skeleton className="h-12 w-full" />
-				<Skeleton className="h-12 w-full" />
-				<Skeleton className="h-12 w-full" />
-				<Skeleton className="h-12 w-full" />
+				<Bone
+					loading
+					name="booking-calendar-1"
+					fallback={<div className="h-12 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="booking-calendar-2"
+					fallback={<div className="h-12 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="booking-calendar-3"
+					fallback={<div className="h-12 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="booking-calendar-4"
+					fallback={<div className="h-12 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="booking-calendar-5"
+					fallback={<div className="h-12 w-full" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 	}

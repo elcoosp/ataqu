@@ -6,6 +6,7 @@ import {
 	useParseMigrationFile,
 } from "@ataqu/api-client";
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
@@ -15,7 +16,6 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -119,7 +119,15 @@ function MigrationWizard() {
 								onChange={onFile}
 							/>
 						</div>
-						{parseMut.isPending ? <Skeleton className="h-8 w-32" /> : null}
+						{parseMut.isPending ? (
+							<Bone
+								loading
+								name="migration-1"
+								fallback={<div className="h-8 w-32" />}
+							>
+								{null}
+							</Bone>
+						) : null}
 					</div>
 
 					{parseMut.isError ? (

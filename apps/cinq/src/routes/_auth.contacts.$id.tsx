@@ -9,7 +9,6 @@ import {
 	Button,
 	Input,
 	Label,
-	Skeleton,
 	Tabs,
 	TabsContent,
 	TabsList,
@@ -90,7 +89,16 @@ function ContactDetail() {
 	const [phone, setPhone] = useState("");
 	const [company, setCompany] = useState("");
 
-	if (isLoading) return <Skeleton className="h-64 w-full" />;
+	if (isLoading)
+		return (
+			<Bone
+				loading
+				name="_auth-contacts-$id-1"
+				fallback={<div className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	if (!contact)
 		return (
 			<div>

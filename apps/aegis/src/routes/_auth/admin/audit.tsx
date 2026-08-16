@@ -12,7 +12,6 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -75,8 +74,20 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 						name="audit-loading"
 						fallback={
 							<>
-								<Skeleton className="h-10 w-48 mb-4" />
-								<Skeleton className="h-96 w-full" />
+								<Bone
+									loading
+									name="audit-1"
+									fallback={<div className="h-10 w-48 mb-4" />}
+								>
+									{null}
+								</Bone>
+								<Bone
+									loading
+									name="audit-2"
+									fallback={<div className="h-96 w-full" />}
+								>
+									{null}
+								</Bone>
 							</>
 						}
 					>

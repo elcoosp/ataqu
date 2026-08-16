@@ -2,7 +2,7 @@ import {
 	useCreateEstablishment,
 	useListEstablishments,
 } from "@ataqu/api-client";
-import { Button, Card, EmptyState, Input, Label, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Card, EmptyState, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
@@ -38,7 +38,16 @@ export function EstablishmentList() {
 		});
 	};
 
-	if (isLoading) return <Skeleton className="h-64 w-full" />;
+	if (isLoading)
+		return (
+			<Bone
+				loading
+				name="establishment-list-1"
+				fallback={<div className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	if (isError)
 		return (
 			<EmptyState

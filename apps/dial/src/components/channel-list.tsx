@@ -4,7 +4,7 @@ import {
 	useListChannels,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import { Button, cn, Input, Skeleton } from "@ataqu/ui";
+import { Bone, Button, cn, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -54,9 +54,27 @@ export function ChannelList() {
 	if (isLoading) {
 		return (
 			<div className="p-4 space-y-4">
-				<Skeleton className="h-8 w-full" />
-				<Skeleton className="h-8 w-3/4" />
-				<Skeleton className="h-8 w-1/2" />
+				<Bone
+					loading
+					name="channel-list-1"
+					fallback={<div className="h-8 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="channel-list-2"
+					fallback={<div className="h-8 w-3/4" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="channel-list-3"
+					fallback={<div className="h-8 w-1/2" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 	}

@@ -1,7 +1,7 @@
 // apps/aegis/src/routes/_auth/dashboard.tsx
 
 import { api } from "@ataqu/api-client";
-import { Card, CardContent, CardHeader, CardTitle, Skeleton } from "@ataqu/ui";
+import { Bone, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -29,7 +29,14 @@ export const Route = createFileRoute("/_auth/dashboard")({
 			return (
 				<div className="p-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 					{[1, 2, 3, 4].map((i) => (
-						<Skeleton key={i} className="h-32 w-full" />
+						<Bone
+							key={i}
+							loading
+							name="dashboard-1"
+							fallback={<div className="h-32 w-full" />}
+						>
+							{null}
+						</Bone>
 					))}
 				</div>
 			);

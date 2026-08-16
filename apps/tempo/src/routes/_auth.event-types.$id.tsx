@@ -1,5 +1,5 @@
 import { useGetEventType } from "@ataqu/api-client";
-import { Button, Input, Shell, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Input, Shell } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { EventTypeForm } from "@/components/event-type-form";
@@ -24,7 +24,13 @@ function EventTypeDetail() {
 	if (isLoading) {
 		return (
 			<Shell activeApp="tempo">
-				<Skeleton className="h-64 w-full" />
+				<Bone
+					loading
+					name="_auth-event-types-$id-1"
+					fallback={<div className="h-64 w-full" />}
+				>
+					{null}
+				</Bone>
 			</Shell>
 		);
 	}

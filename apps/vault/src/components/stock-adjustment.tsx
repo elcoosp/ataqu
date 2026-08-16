@@ -1,9 +1,9 @@
 import type { Variant } from "@ataqu/api-client";
-import { api, useBulkAdjustStock } from "@ataqu/api-client";
+import { useBulkAdjustStock, useUpdateStock } from "@ataqu/api-client";
 import { Button, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type { QueryKey } from "@tanstack/react-query";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { showToast } from "./toast-store";
@@ -21,7 +21,7 @@ interface AdjustStockVariables {
 		delta: number;
 		reason: string;
 	};
-	expectedVersion: number;
+	version: number;
 }
 
 interface AdjustStockContext {
@@ -43,16 +43,7 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 	const parsedDelta = Number(delta);
 	const canSubmit = Number.isFinite(parsedDelta) && parsedDelta !== 0;
 
-	const adjustStock = useMutation<
-		Variant,
-		Error,
-		AdjustStockVariables,
-		AdjustStockContext
-	>({
-		mutationFn: ({ variantId, data, expectedVersion }) =>
-			api.put<Variant>(`/vault/variants/${variantId}/stock`, data, {
-				headers: { "If-Match": `"${expectedVersion}"` },
-			}),
+	const adjustStock = useUpdateStock({
 		onMutate: async (variables) => {
 			const previousVariants = queryClient.getQueriesData<PaginatedVariants>({
 				queryKey: ["vault", "variants"],
@@ -81,8 +72,9 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 			return { previousVariants };
 		},
 		onError: (_error, _variables, context) => {
-			if (context?.previousVariants) {
-				for (const [queryKey, data] of context.previousVariants) {
+			const ctx = context as AdjustStockContext | undefined;
+			if (ctx?.previousVariants) {
+				for (const [queryKey, data] of ctx.previousVariants) {
 					queryClient.setQueryData(queryKey, data);
 				}
 			}
@@ -119,7 +111,7 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 				delta: parsedDelta,
 				reason,
 			},
-			expectedVersion: variant.version,
+			version: variant.version,
 		});
 	};
 

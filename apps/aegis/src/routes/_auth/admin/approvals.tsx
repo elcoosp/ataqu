@@ -5,10 +5,10 @@ import {
 	useRejectWorkflow,
 } from "@ataqu/api-client";
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -40,8 +40,20 @@ function ApprovalsPage() {
 	if (isLoading)
 		return (
 			<div className="p-6">
-				<Skeleton className="h-10 w-48 mb-4" />
-				<Skeleton className="h-64 w-full" />
+				<Bone
+					loading
+					name="approvals-1"
+					fallback={<div className="h-10 w-48 mb-4" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="approvals-2"
+					fallback={<div className="h-64 w-full" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 

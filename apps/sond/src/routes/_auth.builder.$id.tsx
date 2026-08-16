@@ -7,9 +7,9 @@ import {
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	Shell,
-	Skeleton,
 	Tabs,
 	TabsContent,
 	TabsList,
@@ -109,8 +109,20 @@ function FormBuilderRoute() {
 		return (
 			<Shell activeApp="sond">
 				<div className="p-8">
-					<Skeleton className="h-8 w-48 mb-4" />
-					<Skeleton className="h-64 w-full rounded-lg" />
+					<Bone
+						loading
+						name="_auth-builder-$id-1"
+						fallback={<div className="h-8 w-48 mb-4" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="_auth-builder-$id-2"
+						fallback={<div className="h-64 w-full rounded-lg" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			</Shell>
 		);
@@ -120,8 +132,20 @@ function FormBuilderRoute() {
 		return (
 			<Shell activeApp="sond">
 				<div className="p-8">
-					<Skeleton className="h-16 w-full mb-4" />
-					<Skeleton className="h-64 w-full rounded-lg" />
+					<Bone
+						loading
+						name="_auth-builder-$id-3"
+						fallback={<div className="h-16 w-full mb-4" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="_auth-builder-$id-4"
+						fallback={<div className="h-64 w-full rounded-lg" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			</Shell>
 		);

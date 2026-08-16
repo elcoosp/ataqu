@@ -1,4 +1,4 @@
-import { Button, Skeleton } from "@ataqu/ui";
+import { Bone, Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
@@ -36,7 +36,14 @@ function SparkIndex() {
 			{isLoading ? (
 				<div className="space-y-3">
 					{[1, 2, 3, 4].map((i) => (
-						<Skeleton key={i} className="h-20 w-full rounded-lg" />
+						<Bone
+							key={i}
+							loading
+							name="_auth-index-1"
+							fallback={<div className="h-20 w-full rounded-lg" />}
+						>
+							{null}
+						</Bone>
 					))}
 				</div>
 			) : (

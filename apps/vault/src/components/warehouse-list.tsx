@@ -14,7 +14,6 @@ import {
 	DialogTitle,
 	Input,
 	Label,
-	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -158,7 +157,15 @@ export function WarehouseList() {
 	};
 
 	if (warehousesQuery.isLoading) {
-		return <Skeleton className="h-64 w-full" />;
+		return (
+			<Bone
+				loading
+				name="warehouse-list-1"
+				fallback={<div className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	if (warehousesQuery.isError) {

@@ -8,10 +8,10 @@ import {
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	Card,
 	Input,
-	Skeleton,
 	Tabs,
 	TabsContent,
 	TabsList,
@@ -105,7 +105,15 @@ export function EmployeeDetail({ id }: { id: string }) {
 	};
 
 	if (isLoading || !employee) {
-		return <Skeleton className="h-64 w-full" />;
+		return (
+			<Bone
+				loading
+				name="employee-detail-1"
+				fallback={<div className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,7 +274,13 @@ export function EmployeeDetail({ id }: { id: string }) {
 							</label>
 						</div>
 						{docsLoading ? (
-							<Skeleton className="h-20 w-full" />
+							<Bone
+								loading
+								name="employee-detail-2"
+								fallback={<div className="h-20 w-full" />}
+							>
+								{null}
+							</Bone>
 						) : documents && documents.length > 0 ? (
 							<ul className="space-y-2">
 								{documents.map((doc: Document) => (

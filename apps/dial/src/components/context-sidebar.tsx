@@ -1,6 +1,6 @@
 import { useGetChannel, useUpdateChannel } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Badge, Button, Input, Skeleton } from "@ataqu/ui";
+import { Badge, Bone, Button, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -31,8 +31,20 @@ export function ContextSidebar({ channelId }: ContextSidebarProps) {
 	if (channelLoading) {
 		return (
 			<div className="p-4 space-y-4">
-				<Skeleton className="h-8 w-full" />
-				<Skeleton className="h-4 w-3/4" />
+				<Bone
+					loading
+					name="context-sidebar-1"
+					fallback={<div className="h-8 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="context-sidebar-2"
+					fallback={<div className="h-4 w-3/4" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 	}

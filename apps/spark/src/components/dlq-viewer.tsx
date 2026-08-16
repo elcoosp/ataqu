@@ -1,4 +1,4 @@
-import { Button, Skeleton } from "@ataqu/ui";
+import { Bone, Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { AlertTriangle, RotateCcw, Trash2 } from "lucide-react";
@@ -22,7 +22,14 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
 		return (
 			<div className="space-y-3">
 				{[1, 2, 3].map((i) => (
-					<Skeleton key={i} className="h-16 w-full rounded-lg" />
+					<Bone
+						key={i}
+						loading
+						name="dlq-viewer-1"
+						fallback={<div className="h-16 w-full rounded-lg" />}
+					>
+						{null}
+					</Bone>
 				))}
 			</div>
 		);

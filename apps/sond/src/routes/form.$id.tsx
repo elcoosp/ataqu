@@ -5,7 +5,7 @@ import {
 	useSubmitForm,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, Input, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
@@ -109,9 +109,27 @@ function PublicFormRoute() {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background">
 				<div className="w-full max-w-lg space-y-4 p-8">
-					<Skeleton className="h-8 w-48" />
-					<Skeleton className="h-12 w-full" />
-					<Skeleton className="h-12 w-full" />
+					<Bone
+						loading
+						name="form-$id-1"
+						fallback={<div className="h-8 w-48" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="form-$id-2"
+						fallback={<div className="h-12 w-full" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="form-$id-3"
+						fallback={<div className="h-12 w-full" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			</div>
 		);
@@ -301,7 +319,13 @@ function PublicFormRoute() {
 						className="mt-8 h-12 w-full bg-primary text-lg text-primary-foreground hover:bg-primary/90"
 					>
 						{submitMutation.isPending ? (
-							<Skeleton className="h-5 w-20" />
+							<Bone
+								loading
+								name="form-$id-4"
+								fallback={<div className="h-5 w-20" />}
+							>
+								{null}
+							</Bone>
 						) : currentSlide === visibleQuestions.length - 1 ? (
 							<Trans>Submit</Trans>
 						) : (

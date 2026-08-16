@@ -7,6 +7,7 @@ import {
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
@@ -24,7 +25,6 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -73,8 +73,20 @@ export const Route = createFileRoute("/_auth/users/$id")({
 		if (isLoading) {
 			return (
 				<div className="p-6">
-					<Skeleton className="h-8 w-32 mb-4" />
-					<Skeleton className="h-40 w-full" />
+					<Bone
+						loading
+						name="users-$id-1"
+						fallback={<div className="h-8 w-32 mb-4" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="users-$id-2"
+						fallback={<div className="h-40 w-full" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			);
 		}

@@ -14,7 +14,7 @@ import {
 } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Avatar, AvatarFallback, Button, cn, Skeleton } from "@ataqu/ui";
+import { Avatar, AvatarFallback, Bone, Button, cn } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -111,9 +111,27 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	if (isLoading) {
 		return (
 			<div className="p-4 space-y-4">
-				<Skeleton className="h-10 w-full" />
-				<Skeleton className="h-10 w-3/4" />
-				<Skeleton className="h-10 w-2/3" />
+				<Bone
+					loading
+					name="message-thread-1"
+					fallback={<div className="h-10 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="message-thread-2"
+					fallback={<div className="h-10 w-3/4" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="message-thread-3"
+					fallback={<div className="h-10 w-2/3" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 	}

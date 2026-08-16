@@ -4,7 +4,7 @@ import {
 	useSearchEmployees,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import { Button, Card, Input, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Card, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,7 +58,14 @@ export function EmployeeDirectory({
 		return (
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{[1, 2, 3, 4, 5, 6].map((n) => (
-					<Skeleton key={n} className="h-32 w-full" />
+					<Bone
+						key={n}
+						loading
+						name="employee-directory-1"
+						fallback={<div className="h-32 w-full" />}
+					>
+						{null}
+					</Bone>
 				))}
 			</div>
 		);

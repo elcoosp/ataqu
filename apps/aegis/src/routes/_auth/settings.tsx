@@ -9,6 +9,7 @@ import {
 	useUpdateTenantSettings,
 } from "@ataqu/api-client";
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
@@ -16,7 +17,6 @@ import {
 	CardTitle,
 	Input,
 	Label,
-	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -90,8 +90,20 @@ export const Route = createFileRoute("/_auth/settings")({
 		if (isLoading) {
 			return (
 				<div className="p-6 space-y-6">
-					<Skeleton className="h-8 w-48" />
-					<Skeleton className="h-40 w-full" />
+					<Bone
+						loading
+						name="settings-1"
+						fallback={<div className="h-8 w-48" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="settings-2"
+						fallback={<div className="h-40 w-full" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			);
 		}
@@ -225,7 +237,13 @@ export const Route = createFileRoute("/_auth/settings")({
 							</Trans>
 						</p>
 						{ipLoading ? (
-							<Skeleton className="mt-2 h-16 w-full" />
+							<Bone
+								loading
+								name="settings-3"
+								fallback={<div className="mt-2 h-16 w-full" />}
+							>
+								{null}
+							</Bone>
 						) : (
 							<ul className="mt-3 space-y-1">
 								{(ipAllowlist?.ip_allowlist ?? []).map((entry) => (

@@ -1,6 +1,6 @@
 import { useGetContactTracking, useTrackEmail } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Badge, Button, Skeleton } from "@ataqu/ui";
+import { Badge, Bone, Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -21,7 +21,16 @@ export function EmailTrackingTab({ contactId }: { contactId: UUID }) {
 	});
 	const [eventType, setEventType] = useState<"send" | "open" | "click">("send");
 
-	if (isLoading) return <Skeleton className="h-32 w-full" />;
+	if (isLoading)
+		return (
+			<Bone
+				loading
+				name="email-tracking-tab-1"
+				fallback={<div className="h-32 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 
 	const events = (data?.items as TrackingEvent[]) || [];
 

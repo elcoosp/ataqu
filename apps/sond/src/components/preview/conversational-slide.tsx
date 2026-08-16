@@ -1,7 +1,7 @@
 import type { AnswerValue } from "@ataqu/api-client";
 import { useSubmitConversationalStep } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, Input, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
@@ -257,7 +257,13 @@ export function ConversationalSlide({
 					className="mt-8 h-12 w-full bg-primary text-lg text-primary-foreground hover:bg-primary/90"
 				>
 					{stepMutation.isPending ? (
-						<Skeleton className="h-5 w-20" />
+						<Bone
+							loading
+							name="conversational-slide-1"
+							fallback={<div className="h-5 w-20" />}
+						>
+							{null}
+						</Bone>
 					) : isLast ? (
 						<Trans>Submit</Trans>
 					) : (

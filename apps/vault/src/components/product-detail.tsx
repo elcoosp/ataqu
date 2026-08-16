@@ -10,7 +10,7 @@ import {
 	useUpdateVariant,
 } from "@ataqu/api-client";
 import { formatCurrency, handleApiError } from "@ataqu/shared-utils";
-import { Bone, Button, Input, Label, OnboardTour, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Input, Label, OnboardTour } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
@@ -82,8 +82,20 @@ export function ProductDetail({ productId }: { productId: string }) {
 	if (productQuery.isLoading || variantsQuery.isLoading) {
 		return (
 			<div className="space-y-4">
-				<Skeleton className="h-16 w-full" />
-				<Skeleton className="h-64 w-full" />
+				<Bone
+					loading
+					name="product-detail-1"
+					fallback={<div className="h-16 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="product-detail-2"
+					fallback={<div className="h-64 w-full" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 	}

@@ -1,6 +1,6 @@
 import { useListMovements } from "@ataqu/api-client";
 import { formatDate } from "@ataqu/shared-utils";
-import { Skeleton } from "@ataqu/ui";
+import { Bone } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { EmptyState } from "./empty-state";
 import { HistoryIcon } from "./icons";
@@ -9,7 +9,15 @@ function MovementsTable({ variantId }: { variantId: string }) {
 	const movementsQuery = useListMovements(variantId, { limit: 50, offset: 0 });
 
 	if (movementsQuery.isLoading) {
-		return <Skeleton className="h-48 w-full" />;
+		return (
+			<Bone
+				loading
+				name="movement-history-1"
+				fallback={<div className="h-48 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	if (movementsQuery.isError) {

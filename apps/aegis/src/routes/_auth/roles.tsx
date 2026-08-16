@@ -2,10 +2,10 @@
 
 import { useCreateRole, useListRoles } from "@ataqu/api-client";
 import {
+	Bone,
 	Button,
 	Card,
 	CardContent,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -44,8 +44,20 @@ export const Route = createFileRoute("/_auth/roles")({
 		if (isLoading) {
 			return (
 				<div className="p-6">
-					<Skeleton className="h-10 w-48 mb-4" />
-					<Skeleton className="h-64 w-full" />
+					<Bone
+						loading
+						name="roles-1"
+						fallback={<div className="h-10 w-48 mb-4" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="roles-2"
+						fallback={<div className="h-64 w-full" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			);
 		}

@@ -1,6 +1,6 @@
 import { type Form, useDeleteForm, useListForms } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, Card, Shell, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Card, Shell } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -53,10 +53,23 @@ function FormsIndex() {
 			<Shell activeApp="sond" searchFn={searchForms}>
 				<div className="p-8">
 					<div className="space-y-4">
-						<Skeleton className="h-8 w-48" />
+						<Bone
+							loading
+							name="_auth-index-1"
+							fallback={<div className="h-8 w-48" />}
+						>
+							{null}
+						</Bone>
 						<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 							{Array.from({ length: 6 }).map((_, i) => (
-								<Skeleton key={i} className="h-32 rounded-lg" />
+								<Bone
+									key={i}
+									loading
+									name="_auth-index-2"
+									fallback={<div className="h-32 rounded-lg" />}
+								>
+									{null}
+								</Bone>
 							))}
 						</div>
 					</div>

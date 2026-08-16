@@ -1,7 +1,7 @@
 import type { Variant } from "@ataqu/api-client";
 import { api, useListVariants } from "@ataqu/api-client";
 import { formatDate } from "@ataqu/shared-utils";
-import { Button, Input, Label, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
@@ -137,7 +137,15 @@ export function ReservationList() {
 	};
 
 	if (variantsQuery.isLoading) {
-		return <Skeleton className="h-64 w-full" />;
+		return (
+			<Bone
+				loading
+				name="reservation-list-1"
+				fallback={<div className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	if (variantsQuery.isError) {

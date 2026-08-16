@@ -5,12 +5,12 @@ import {
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	Skeleton,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -255,7 +255,13 @@ export function FormPreview({ form, open, onClose }: Props) {
 				)}
 				<Button onClick={handleNextPage} disabled={submitMutation.isPending}>
 					{submitMutation.isPending ? (
-						<Skeleton className="h-5 w-20" />
+						<Bone
+							loading
+							name="form-preview-1"
+							fallback={<div className="h-5 w-20" />}
+						>
+							{null}
+						</Bone>
 					) : currentSlide === totalPages - 1 ? (
 						<Trans>Submit</Trans>
 					) : (

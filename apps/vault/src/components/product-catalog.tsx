@@ -6,12 +6,12 @@ import {
 import { useDebounce } from "@ataqu/shared-hooks";
 import {
 	Badge,
+	Bone,
 	BulkActionBar,
 	Button,
 	Input,
 	SelectAllCheckbox,
 	SelectionCheckbox,
-	Skeleton,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
@@ -85,8 +85,20 @@ export function ProductCatalog() {
 	if (productsQuery.isLoading) {
 		return (
 			<div className="space-y-4">
-				<Skeleton className="h-12 w-full" />
-				<Skeleton className="h-72 w-full" />
+				<Bone
+					loading
+					name="product-catalog-1"
+					fallback={<div className="h-12 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="product-catalog-2"
+					fallback={<div className="h-72 w-full" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 	}

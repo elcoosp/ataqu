@@ -1,5 +1,5 @@
 import { useIdempotency } from "@ataqu/shared-hooks";
-import { Badge, Button, cn, Skeleton } from "@ataqu/ui";
+import { Badge, Bone, Button, cn } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -58,7 +58,15 @@ export function TicketDetail() {
 	});
 
 	if (ticketLoading || messagesLoading) {
-		return <Skeleton className="h-40 w-full" />;
+		return (
+			<Bone
+				loading
+				name="ticket-detail-1"
+				fallback={<div className="h-40 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	if (!ticket) return <div>{t`Ticket not found`}</div>;

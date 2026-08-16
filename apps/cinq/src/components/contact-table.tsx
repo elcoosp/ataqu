@@ -12,7 +12,6 @@ import {
 	Input,
 	SelectAllCheckbox,
 	SelectionCheckbox,
-	Skeleton,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -71,11 +70,7 @@ export function ContactTable() {
 
 	if (isLoading) {
 		return (
-			<Bone
-				loading
-				name="contacts"
-				fallback={<Skeleton className="h-64 w-full" />}
-			>
+			<Bone loading name="contacts" fallback={<div className="h-64 w-full" />}>
 				{null}
 			</Bone>
 		);

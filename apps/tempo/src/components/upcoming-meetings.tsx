@@ -3,7 +3,7 @@ import {
 	useListBookings,
 	useMarkNoShow,
 } from "@ataqu/api-client";
-import { Badge, Button, Skeleton } from "@ataqu/ui";
+import { Badge, Bone, Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useMeetingJoined } from "@/hooks/use-meeting-joined";
@@ -72,9 +72,27 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 	if (isLoading) {
 		return (
 			<div className="space-y-4" aria-busy="true">
-				<Skeleton className="h-20 w-full" />
-				<Skeleton className="h-20 w-full" />
-				<Skeleton className="h-20 w-full" />
+				<Bone
+					loading
+					name="upcoming-meetings-1"
+					fallback={<div className="h-20 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="upcoming-meetings-2"
+					fallback={<div className="h-20 w-full" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="upcoming-meetings-3"
+					fallback={<div className="h-20 w-full" />}
+				>
+					{null}
+				</Bone>
 			</div>
 		);
 	}

@@ -3,6 +3,7 @@
 import type { UpdatePermissionRequest } from "@ataqu/api-client";
 import { useGetPermissionMatrix, useUpdatePermission } from "@ataqu/api-client";
 import {
+	Bone,
 	Card,
 	CardContent,
 	Select,
@@ -10,7 +11,6 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -59,8 +59,20 @@ export const Route = createFileRoute("/_auth/admin/access-matrix")({
 		if (isLoading) {
 			return (
 				<div className="p-6">
-					<Skeleton className="h-10 w-48 mb-4" />
-					<Skeleton className="h-96 w-full" />
+					<Bone
+						loading
+						name="access-matrix-1"
+						fallback={<div className="h-10 w-48 mb-4" />}
+					>
+						{null}
+					</Bone>
+					<Bone
+						loading
+						name="access-matrix-2"
+						fallback={<div className="h-96 w-full" />}
+					>
+						{null}
+					</Bone>
 				</div>
 			);
 		}

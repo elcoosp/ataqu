@@ -1,6 +1,7 @@
 import { useGetDeal, useUpdateDeal } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	Input,
 	Label,
@@ -9,7 +10,6 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-	Skeleton,
 	Tabs,
 	TabsContent,
 	TabsList,
@@ -44,7 +44,16 @@ function DealDetail() {
 	const [status, setStatus] = useState<"open" | "won" | "lost">("open");
 	const [probability, setProbability] = useState("");
 
-	if (isLoading) return <Skeleton className="h-64 w-full" />;
+	if (isLoading)
+		return (
+			<Bone
+				loading
+				name="_auth-deals-$id-1"
+				fallback={<div className="h-64 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	if (!deal)
 		return (
 			<div>

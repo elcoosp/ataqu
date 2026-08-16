@@ -1,8 +1,8 @@
 import {
 	Badge,
+	Bone,
 	Button,
 	cn,
-	Skeleton,
 	Table,
 	TableBody,
 	TableCell,
@@ -38,7 +38,15 @@ export function TicketList() {
 	});
 
 	if (isLoading) {
-		return <Skeleton className="h-20 w-full" />;
+		return (
+			<Bone
+				loading
+				name="ticket-list-1"
+				fallback={<div className="h-20 w-full" />}
+			>
+				{null}
+			</Bone>
+		);
 	}
 
 	if (!data?.items.length) {

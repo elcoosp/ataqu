@@ -1,5 +1,5 @@
 import { useListVariants } from "@ataqu/api-client";
-import { Label, Skeleton } from "@ataqu/ui";
+import { Bone, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -20,7 +20,13 @@ function MovementsPage() {
 		return (
 			<>
 				<ToastViewport />
-				<Skeleton className="h-64 w-full" />
+				<Bone
+					loading
+					name="_auth-movements-1"
+					fallback={<div className="h-64 w-full" />}
+				>
+					{null}
+				</Bone>
 			</>
 		);
 	}
