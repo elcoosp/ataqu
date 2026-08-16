@@ -1,12 +1,11 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { i18n as globalI18n } from "@lingui/core";
-import { setupI18n } from "@lingui/core";
+import { i18n as globalI18n, setupI18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { KanbanBoard } from "../src/components/kanban-board";
-import { FormBuilder } from "../src/components/form-builder";
 import { Chart } from "../src/components/chart";
+import { FormBuilder } from "../src/components/form-builder";
+import { KanbanBoard } from "../src/components/kanban-board";
 
 function wrap(ui: React.ReactNode) {
 	const li = setupI18n("en");
@@ -87,7 +86,9 @@ describe("ui component interactions (vitest browser)", () => {
 		// recharts shows the tooltip content once active
 		await waitFor(
 			() =>
-				expect(document.querySelector(".recharts-tooltip-wrapper")).toBeTruthy(),
+				expect(
+					document.querySelector(".recharts-tooltip-wrapper"),
+				).toBeTruthy(),
 			{ timeout: 4000 },
 		);
 	});

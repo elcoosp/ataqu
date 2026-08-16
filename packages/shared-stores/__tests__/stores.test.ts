@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useAuthStore } from "../src/auth";
-import { useSelectionStore } from "../src/selection";
-import { useChangelogStore } from "../src/changelog";
 import { useActivationStore } from "../src/activation";
+import { useAuthStore } from "../src/auth";
+import { useChangelogStore } from "../src/changelog";
 import { useOnboardingStore } from "../src/onboarding";
+import { useSelectionStore } from "../src/selection";
 import { useUIStore } from "../src/ui";
 
-const reset = (store: { setState: (s: any) => void }, initial: any) =>
+const _reset = (store: { setState: (s: any) => void }, initial: any) =>
 	store.setState(initial);
 
 describe("useAuthStore", () => {
-	beforeEach(() => useAuthStore.setState({ token: null, user: null, tenantId: null }));
+	beforeEach(() =>
+		useAuthStore.setState({ token: null, user: null, tenantId: null }),
+	);
 
 	it("logs in and stores token/user/tenant", () => {
 		useAuthStore.getState().login("tok", {
@@ -85,14 +87,14 @@ describe("useSelectionStore", () => {
 		const s = useSelectionStore.getState();
 		s.selectAllFor("s", ["a"], true);
 		s.toggle("s", "a");
-		expect(useSelectionStore.getState().selectAll["s"]).toBe(false);
+		expect(useSelectionStore.getState().selectAll.s).toBe(false);
 	});
 
 	it("clear removes a scope", () => {
 		const s = useSelectionStore.getState();
 		s.select("s", "a");
 		s.clear("s");
-		expect(useSelectionStore.getState().selections["s"]).toBeUndefined();
+		expect(useSelectionStore.getState().selections.s).toBeUndefined();
 	});
 
 	it("clearAll resets everything", () => {
@@ -131,10 +133,14 @@ describe("useActivationStore", () => {
 
 	it("marks and resets completion", () => {
 		useActivationStore.getState().complete("import-contacts");
-		expect(useActivationStore.getState().isComplete("import-contacts")).toBe(true);
+		expect(useActivationStore.getState().isComplete("import-contacts")).toBe(
+			true,
+		);
 		expect(useActivationStore.getState().completedCount()).toBe(1);
 		useActivationStore.getState().reset("import-contacts");
-		expect(useActivationStore.getState().isComplete("import-contacts")).toBe(false);
+		expect(useActivationStore.getState().isComplete("import-contacts")).toBe(
+			false,
+		);
 	});
 
 	it("progress increases as tasks complete", () => {

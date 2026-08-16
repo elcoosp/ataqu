@@ -1,15 +1,15 @@
+import { useOnboardingStore } from "@ataqu/shared-stores";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useDebounce } from "../src/use-debounce";
-import { useLocalStorage } from "../src/use-local-storage";
 import { useClickOutside } from "../src/use-click-outside";
+import { useDebounce } from "../src/use-debounce";
 import { useHotkeys } from "../src/use-hotkeys";
-import { useOptimistic } from "../src/use-optimistic";
 import { useIdempotency } from "../src/use-idempotency";
+import { useLocalStorage } from "../src/use-local-storage";
 import { useOnboard } from "../src/use-onboard";
+import { useOptimistic } from "../src/use-optimistic";
 import { useSSE } from "../src/use-sse";
 import { useWebSocket } from "../src/use-web-socket";
-import { useOnboardingStore } from "@ataqu/shared-stores";
 
 class FakeEventSource {
 	static instances: FakeEventSource[] = [];
@@ -96,7 +96,9 @@ describe("useLocalStorage", () => {
 describe("useClickOutside", () => {
 	it("calls handler when clicking outside the ref element", () => {
 		const handler = vi.fn();
-		const { result } = renderHook(() => useClickOutside<HTMLDivElement>(handler));
+		const { result } = renderHook(() =>
+			useClickOutside<HTMLDivElement>(handler),
+		);
 		const el = document.createElement("div");
 		result.current.current = el;
 		const outside = document.createElement("div");
@@ -110,7 +112,9 @@ describe("useClickOutside", () => {
 
 	it("does not call handler when clicking inside", () => {
 		const handler = vi.fn();
-		const { result } = renderHook(() => useClickOutside<HTMLDivElement>(handler));
+		const { result } = renderHook(() =>
+			useClickOutside<HTMLDivElement>(handler),
+		);
 		const el = document.createElement("div");
 		result.current.current = el;
 		act(() => {
@@ -163,9 +167,12 @@ describe("useOptimistic", () => {
 	it("tracks error on failure", async () => {
 		const onError = vi.fn();
 		const { result } = renderHook(() =>
-			useOptimistic(async () => {
-				throw new Error("fail");
-			}, { onError }),
+			useOptimistic(
+				async () => {
+					throw new Error("fail");
+				},
+				{ onError },
+			),
 		);
 		await act(async () => {
 			await expect(result.current.mutate(1)).rejects.toThrow("fail");
@@ -209,13 +216,17 @@ describe("useOnboard", () => {
 describe("useSSE", () => {
 	it("connects and parses messages", async () => {
 		const onMessage = vi.fn();
-		const { result } = renderHook(() => useSSE("http://x/stream", { onMessage }));
+		const { result } = renderHook(() =>
+			useSSE("http://x/stream", { onMessage }),
+		);
 		await waitFor(() => expect(FakeEventSource.instances.length).toBe(1));
 		const es = FakeEventSource.instances[0];
 		act(() => es.onopen?.(new Event("open") as any));
 		expect(result.current.isConnected).toBe(true);
 		act(() =>
-			es.onmessage?.(new MessageEvent("message", { data: JSON.stringify({ v: 1 }) })),
+			es.onmessage?.(
+				new MessageEvent("message", { data: JSON.stringify({ v: 1 }) }),
+			),
 		);
 		expect(result.current.data).toEqual({ v: 1 });
 		expect(onMessage).toHaveBeenCalledWith({ v: 1 });
@@ -238,15 +249,15 @@ describe("useSSE", () => {
 describe("useWebSocket", () => {
 	it("connects and parses messages", async () => {
 		const onMessage = vi.fn();
-		const { result } = renderHook(() =>
-			useWebSocket("ws://x", { onMessage }),
-		);
+		const { result } = renderHook(() => useWebSocket("ws://x", { onMessage }));
 		await waitFor(() => expect(FakeWebSocket.instances.length).toBe(1));
 		const ws = FakeWebSocket.instances[0];
 		act(() => ws.onopen?.(new Event("open") as any));
 		expect(result.current.isConnected).toBe(true);
 		act(() =>
-			ws.onmessage?.(new MessageEvent("message", { data: JSON.stringify({ a: 1 }) })),
+			ws.onmessage?.(
+				new MessageEvent("message", { data: JSON.stringify({ a: 1 }) }),
+			),
 		);
 		expect(result.current.lastMessage).toEqual({ a: 1 });
 	});

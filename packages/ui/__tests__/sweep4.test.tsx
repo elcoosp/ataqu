@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { setupI18n } from "@lingui/core";
+import { I18nProvider } from "@lingui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createMemoryHistory,
@@ -6,23 +7,23 @@ import {
 	createRouter,
 	RouterProvider,
 } from "@tanstack/react-router";
-import { setupI18n } from "@lingui/core";
-import { I18nProvider } from "@lingui/react";
-import { vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	CommandRegistryProvider,
-	useRegisterCommands,
 	useAllCommands,
 	useCommandRegistry,
 } from "../src/command-registry";
-import { SelectionCheckbox, SelectAllCheckbox } from "../src/components/selection-checkbox";
-import { CommandPalette } from "../src/components/command-palette";
-import { KanbanBoard } from "../src/components/kanban-board";
-import { FormBuilder } from "../src/components/form-builder";
 import { LoginForm } from "../src/components/auth/LoginForm";
 import { RegisterForm } from "../src/components/auth/RegisterForm";
+import { CommandPalette } from "../src/components/command-palette";
+import { FormBuilder } from "../src/components/form-builder";
+import { KanbanBoard } from "../src/components/kanban-board";
+import {
+	SelectAllCheckbox,
+	SelectionCheckbox,
+} from "../src/components/selection-checkbox";
 
 function providers(ui: React.ReactNode) {
 	const li = setupI18n("en");
@@ -60,12 +61,15 @@ function withRouter(ui: React.ReactNode, withRegistry = false) {
 
 describe("ui interaction sweep", () => {
 	beforeEach(() => {
-		vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-			ok: true,
-			status: 200,
-			json: async () => ({ access_token: "t", user_id: "u" }),
-			text: async () => "{}",
-		} as Response));
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+				json: async () => ({ access_token: "t", user_id: "u" }),
+				text: async () => "{}",
+			} as Response),
+		);
 	});
 
 	it("registers and reads commands via the registry", async () => {
@@ -73,9 +77,7 @@ describe("ui interaction sweep", () => {
 			const reg = useCommandRegistry();
 			const register = reg?.register;
 			useEffect(() => {
-				register?.([
-					{ id: "cmd-1", title: "Do thing", onSelect: () => {} },
-				]);
+				register?.([{ id: "cmd-1", title: "Do thing", onSelect: () => {} }]);
 			}, [register]);
 			const all = useAllCommands();
 			return <span>count:{all.length}</span>;
@@ -112,9 +114,7 @@ describe("ui interaction sweep", () => {
 		render(
 			providers(
 				<KanbanBoard
-					columns={[
-						{ id: "c1", title: "To do", items: [{ id: "i1" }] },
-					]}
+					columns={[{ id: "c1", title: "To do", items: [{ id: "i1" }] }]}
 					onDragEnd={() => {}}
 					onAddItem={onAddItem}
 					renderItem={(item: any) => <span>{String(item.id)}</span>}
@@ -162,9 +162,7 @@ describe("ui interaction sweep", () => {
 		const pwds = screen.getAllByPlaceholderText("••••••••");
 		fireEvent.change(pwds[0], { target: { value: "secret" } });
 		fireEvent.change(pwds[1], { target: { value: "secret" } });
-		fireEvent.click(
-			screen.getByRole("button", { name: /create account/i }),
-		);
+		fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 		await waitFor(() => expect(true).toBe(true));
 	});
 });

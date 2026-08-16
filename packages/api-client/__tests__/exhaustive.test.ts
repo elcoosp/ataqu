@@ -1,19 +1,19 @@
+import { useAuthStore } from "@ataqu/shared-stores";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as aegis from "../src/aegis";
 import * as cinq from "../src/cinq";
+import { api } from "../src/client";
 import * as dial from "../src/dial";
+import * as health from "../src/health";
+import * as migration from "../src/migration";
 import * as pause from "../src/pause";
+import * as pivot from "../src/pivot";
+import * as search from "../src/search";
 import * as sond from "../src/sond";
+import * as spark from "../src/spark";
 import * as tempo from "../src/tempo";
 import * as vault from "../src/vault";
 import * as vista from "../src/vista";
-import * as aegis from "../src/aegis";
-import * as pivot from "../src/pivot";
-import * as spark from "../src/spark";
-import * as search from "../src/search";
-import * as migration from "../src/migration";
-import * as health from "../src/health";
-import { api } from "../src/client";
-import { useAuthStore } from "@ataqu/shared-stores";
 
 const fetchMock = vi.fn();
 
@@ -60,7 +60,10 @@ async function exercise(module: Record<string, unknown>, moduleName: string) {
 			for (const args of candidateArgs) {
 				try {
 					const result = (fn as (...a: unknown[]) => unknown)(...args);
-					if (result && typeof (result as Promise<unknown>).then === "function") {
+					if (
+						result &&
+						typeof (result as Promise<unknown>).then === "function"
+					) {
 						await result;
 					}
 					threw = false;

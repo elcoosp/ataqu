@@ -1,4 +1,5 @@
-import { render } from "@testing-library/react";
+import { setupI18n } from "@lingui/core";
+import { I18nProvider } from "@lingui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createMemoryHistory,
@@ -6,10 +7,10 @@ import {
 	createRouter,
 	RouterProvider,
 } from "@tanstack/react-router";
-import { setupI18n } from "@lingui/core";
-import { I18nProvider } from "@lingui/react";
-import { describe, expect, it } from "vitest";
+import { render } from "@testing-library/react";
 import { useForm } from "react-hook-form";
+import { describe, expect, it } from "vitest";
+import { RegisterForm } from "../src/components/auth/RegisterForm";
 import { Card } from "../src/components/card";
 import {
 	Form,
@@ -20,14 +21,12 @@ import {
 	FormLabel,
 	FormMessage,
 } from "../src/components/ui/form";
+import { Popover } from "../src/components/ui/popover";
+import { Select } from "../src/components/ui/select";
+import { Toaster } from "../src/components/ui/sonner";
 import { Switch } from "../src/components/ui/switch";
 import { Textarea } from "../src/components/ui/textarea";
-import { Select } from "../src/components/ui/select";
-import { Popover } from "../src/components/ui/popover";
-import { Tooltip } from "../src/components/ui/tooltip";
-import { TooltipProvider } from "../src/components/ui/tooltip";
-import { Toaster } from "../src/components/ui/sonner";
-import { RegisterForm } from "../src/components/auth/RegisterForm";
+import { Tooltip, TooltipProvider } from "../src/components/ui/tooltip";
 
 function wrapRouter(ui: React.ReactNode) {
 	const li = setupI18n("en");

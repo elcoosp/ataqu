@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { deepClone, sleep, buildQueryString, generateIdempotencyKey } from "../src/index";
-import { formatCurrency, formatDate, truncateText } from "../src/format";
 import { handleApiError } from "../src/error";
+import { formatCurrency, formatDate, truncateText } from "../src/format";
+import {
+	buildQueryString,
+	deepClone,
+	generateIdempotencyKey,
+	sleep,
+} from "../src/index";
 
 describe("format", () => {
 	it("formatDate formats a Date", () => {

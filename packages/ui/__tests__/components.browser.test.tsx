@@ -1,22 +1,21 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { i18n as globalI18n } from "@lingui/core";
-import { setupI18n } from "@lingui/core";
+import { i18n as globalI18n, setupI18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createMemoryHistory,
 	createRootRoute,
 	createRouter,
 	RouterProvider,
 } from "@tanstack/react-router";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { Chart } from "../src/components/chart";
-import { KanbanBoard } from "../src/components/kanban-board";
-import { FormBuilder } from "../src/components/form-builder";
-import { CommandPalette } from "../src/components/command-palette";
-import { WorkflowCanvas } from "../src/components/workflow-canvas";
 import { LoginForm } from "../src/components/auth/LoginForm";
 import { RegisterForm } from "../src/components/auth/RegisterForm";
+import { Chart } from "../src/components/chart";
+import { CommandPalette } from "../src/components/command-palette";
+import { FormBuilder } from "../src/components/form-builder";
+import { KanbanBoard } from "../src/components/kanban-board";
+import { WorkflowCanvas } from "../src/components/workflow-canvas";
 
 function wrap(ui: React.ReactNode, withRouter = false) {
 	const li = setupI18n("en");
@@ -68,7 +67,9 @@ describe("ui components (vitest browser)", () => {
 						{ id: "c2", title: "Done", items: [] },
 					]}
 					onDragEnd={() => {}}
-					renderItem={(item) => <span>{String((item as { id: string }).id)}</span>}
+					renderItem={(item) => (
+						<span>{String((item as { id: string }).id)}</span>
+					)}
 				/>,
 			),
 		);
@@ -83,7 +84,12 @@ describe("ui components (vitest browser)", () => {
 						{ id: "name", type: "text", label: "Name" },
 						{ id: "mail", type: "email", label: "Email" },
 						{ id: "bio", type: "textarea", label: "Bio" },
-						{ id: "role", type: "select", label: "Role", options: [{ value: "a", label: "A" }] },
+						{
+							id: "role",
+							type: "select",
+							label: "Role",
+							options: [{ value: "a", label: "A" }],
+						},
 					]}
 					onChange={() => {}}
 				/>,
@@ -98,9 +104,7 @@ describe("ui components (vitest browser)", () => {
 			.mockImplementation(async (q: string) => [
 				{ id: "x", title: `${q} Result`, onSelect: () => {} },
 			]);
-		render(
-			wrap(<CommandPalette searchFn={searchFn} />),
-		);
+		render(wrap(<CommandPalette searchFn={searchFn} />));
 		// open via the global Ctrl+K shortcut
 		fireEvent.keyDown(document, { key: "k", ctrlKey: true });
 		const input = await waitFor(() => document.querySelector("input"));
@@ -111,9 +115,7 @@ describe("ui components (vitest browser)", () => {
 		expect(await screen.findByText("hello Result")).toBeTruthy();
 		// selecting a result closes the palette (handleSelect -> setOpen(false))
 		fireEvent.click(screen.getByText("hello Result"));
-		await waitFor(() =>
-			expect(screen.queryByText("hello Result")).toBeNull(),
-		);
+		await waitFor(() => expect(screen.queryByText("hello Result")).toBeNull());
 	});
 
 	it("renders WorkflowCanvas with a node and controls", () => {
@@ -138,7 +140,14 @@ describe("ui components (vitest browser)", () => {
 	});
 
 	it("renders every chart type with real layout", async () => {
-		const types = ["line", "bar", "area", "pie", "composed", "scatter"] as const;
+		const types = [
+			"line",
+			"bar",
+			"area",
+			"pie",
+			"composed",
+			"scatter",
+		] as const;
 		for (const type of types) {
 			const { unmount } = render(
 				wrap(
@@ -153,10 +162,9 @@ describe("ui components (vitest browser)", () => {
 					/>,
 				),
 			);
-			await waitFor(
-				() => expect(document.querySelector("svg")).toBeTruthy(),
-				{ timeout: 5000 },
-			);
+			await waitFor(() => expect(document.querySelector("svg")).toBeTruthy(), {
+				timeout: 5000,
+			});
 			unmount();
 		}
 		expect(types.length).toBe(6);

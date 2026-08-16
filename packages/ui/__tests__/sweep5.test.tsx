@@ -1,4 +1,6 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { useSelectionStore } from "@ataqu/shared-stores";
+import { setupI18n } from "@lingui/core";
+import { I18nProvider } from "@lingui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createMemoryHistory,
@@ -6,18 +8,15 @@ import {
 	createRouter,
 	RouterProvider,
 } from "@tanstack/react-router";
-import { setupI18n } from "@lingui/core";
-import { I18nProvider } from "@lingui/react";
-import { vi } from "vitest";
-import { describe, expect, it, beforeEach } from "vitest";
-import { useSelectionStore } from "@ataqu/shared-stores";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BulkActionBar } from "../src/components/bulk-action-bar";
+import { DashboardLayout } from "../src/components/dashboard-layout";
 import { DataTable } from "../src/components/data-table";
 import { FormBuilder } from "../src/components/form-builder";
-import { BulkActionBar } from "../src/components/bulk-action-bar";
 import { OnboardTour } from "../src/components/onboard-tour";
 import { Shell } from "../src/components/shell";
-import { DashboardLayout } from "../src/components/dashboard-layout";
 
 function withRouter(ui: React.ReactNode) {
 	const li = setupI18n("en");
@@ -46,12 +45,15 @@ const columns: ColumnDef<{ name: string }>[] = [
 
 describe("ui interaction sweep 5", () => {
 	beforeEach(() => {
-		vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-			ok: true,
-			status: 200,
-			json: async () => ({ status: "ok" }),
-			text: async () => "{}",
-		} as Response));
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+				json: async () => ({ status: "ok" }),
+				text: async () => "{}",
+			} as Response),
+		);
 		useSelectionStore.getState().clearAll();
 	});
 
@@ -60,11 +62,7 @@ describe("ui interaction sweep 5", () => {
 			<DashboardLayout>
 				<DataTable
 					columns={columns}
-					data={[
-						{ name: "Beta" },
-						{ name: "Alpha" },
-						{ name: "Gamma" },
-					]}
+					data={[{ name: "Beta" }, { name: "Alpha" }, { name: "Gamma" }]}
 					searchColumn="name"
 					pageSize={2}
 				/>
@@ -129,7 +127,7 @@ describe("ui interaction sweep 5", () => {
 	});
 
 	it("OnboardTour: renders children and completes tour", async () => {
-		const markCompleted = vi.fn();
+		const _markCompleted = vi.fn();
 		render(
 			<DashboardLayout>
 				<OnboardTour tourId="t1" steps={[{ content: "Step one" }]}>

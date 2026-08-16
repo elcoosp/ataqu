@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+	dateSchema,
 	emailSchema,
 	loginSchema,
 	passwordSchema,
 	signupSchema,
 	uuidSchema,
-	dateSchema,
 } from "../src/index";
 
 describe("emailSchema", () => {

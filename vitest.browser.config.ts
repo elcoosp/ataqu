@@ -52,7 +52,12 @@ export default defineConfig({
 		},
 	},
 	optimizeDeps: {
-		include: ["react", "react-dom", "react/jsx-dev-runtime", "react/jsx-runtime"],
+		include: [
+			"react",
+			"react-dom",
+			"react/jsx-dev-runtime",
+			"react/jsx-runtime",
+		],
 	},
 	test: {
 		globals: true,
@@ -67,7 +72,11 @@ export default defineConfig({
 			launchOptions: {
 				executablePath:
 					"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-				args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+				args: [
+					"--no-sandbox",
+					"--disable-setuid-sandbox",
+					"--disable-dev-shm-usage",
+				],
 			},
 		},
 		coverage: {

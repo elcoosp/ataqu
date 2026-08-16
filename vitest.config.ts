@@ -51,7 +51,12 @@ export default defineConfig({
 		},
 	},
 	optimizeDeps: {
-		include: ["react", "react-dom", "react/jsx-dev-runtime", "react/jsx-runtime"],
+		include: [
+			"react",
+			"react-dom",
+			"react/jsx-dev-runtime",
+			"react/jsx-runtime",
+		],
 	},
 	test: {
 		globals: true,
@@ -96,7 +101,7 @@ export default defineConfig({
 				"**/command-palette.tsx",
 				"**/workflow-canvas.tsx",
 				"**/onboard-tour.tsx",
-				],
+			],
 			thresholds: {
 				lines: 80,
 				functions: 80,

@@ -1,24 +1,22 @@
-import { render } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { setupI18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { KanbanBoard } from "../src/components/kanban-board";
-import { FormBuilder } from "../src/components/form-builder";
+import { CommandRegistryProvider } from "../src/command-registry";
+import { LoginForm } from "../src/components/auth/LoginForm";
 import { CommandPalette } from "../src/components/command-palette";
-import {
-	CommandRegistryProvider,
-	useCommandRegistry,
-} from "../src/command-registry";
 import { DashboardLayout } from "../src/components/dashboard-layout";
+import { FormBuilder } from "../src/components/form-builder";
+import { KanbanBoard } from "../src/components/kanban-board";
 import { PageLayout } from "../src/components/page-layout";
 import { WorkflowCanvas } from "../src/components/workflow-canvas";
-import { LoginForm } from "../src/components/auth/LoginForm";
 
 const noop = () => {};
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+	const actual =
+		await importOriginal<typeof import("@tanstack/react-router")>();
 	return {
 		...actual,
 		useNavigate: () => noop,
@@ -36,7 +34,9 @@ describe("ui component render sweep 2", () => {
 					{ id: "c2", title: "Done", items: [] },
 				]}
 				onDragEnd={noop}
-				renderItem={(item) => <span>{String((item as { id: string }).id)}</span>}
+				renderItem={(item) => (
+					<span>{String((item as { id: string }).id)}</span>
+				)}
 			/>,
 		);
 		expect(true).toBe(true);
@@ -50,7 +50,12 @@ describe("ui component render sweep 2", () => {
 					{ id: "mail", type: "email", label: "Email" },
 					{ id: "bio", type: "textarea", label: "Bio" },
 					{ id: "active", type: "checkbox", label: "Active" },
-					{ id: "role", type: "select", label: "Role", options: [{ value: "a", label: "A" }] },
+					{
+						id: "role",
+						type: "select",
+						label: "Role",
+						options: [{ value: "a", label: "A" }],
+					},
 				]}
 				onChange={noop}
 			/>,

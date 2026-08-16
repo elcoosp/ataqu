@@ -1,17 +1,24 @@
-import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 import {
+	AuthLayout,
 	Avatar,
 	AvatarFallback,
 	Badge,
+	BulkActionBar,
 	Button,
 	Card,
+	ChangelogBell,
+	Chart,
 	Command,
+	CommandPalette,
+	DataTable,
 	Dialog,
 	DropdownMenu,
 	EmptyState,
+	FormBuilder,
 	Input,
+	KanbanBoard,
 	Label,
+	OnboardTour,
 	Popover,
 	Select,
 	SelectionCheckbox,
@@ -19,21 +26,14 @@ import {
 	Table,
 	Tabs,
 	Tooltip,
-	AuthLayout,
-	BulkActionBar,
-	ChangelogBell,
-	Chart,
-	CommandPalette,
-	DataTable,
-	FormBuilder,
-	KanbanBoard,
-	OnboardTour,
 } from "@ataqu/ui";
-import { Checkbox } from "../src/components/ui/checkbox";
-import { Slider as SliderPrimitive } from "../src/components/ui/slider";
-import { RadioGroup as RadioGroupPrimitive } from "../src/components/ui/radio-group";
-import { TooltipProvider } from "../src/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { Checkbox } from "../src/components/ui/checkbox";
+import { RadioGroup as RadioGroupPrimitive } from "../src/components/ui/radio-group";
+import { Slider as SliderPrimitive } from "../src/components/ui/slider";
+import { TooltipProvider } from "../src/components/ui/tooltip";
 
 const noop = () => {};
 
@@ -117,7 +117,12 @@ describe("ui component render sweep", () => {
 			</AuthLayout>,
 		);
 		render(
-			<EmptyState title="Empty" description="Nothing here" ctaLabel="Add" onCtaClick={noop} />,
+			<EmptyState
+				title="Empty"
+				description="Nothing here"
+				ctaLabel="Add"
+				onCtaClick={noop}
+			/>,
 		);
 		render(<ChangelogBell />);
 		render(<SelectionCheckbox scope="s" id="1" />);

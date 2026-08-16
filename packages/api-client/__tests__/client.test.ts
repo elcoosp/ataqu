@@ -1,8 +1,11 @@
+import { useAuthStore } from "@ataqu/shared-stores";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../src/client";
-import { useAuthStore } from "@ataqu/shared-stores";
 
-function jsonResponse(body: unknown, init: { ok?: boolean; status?: number } = {}) {
+function jsonResponse(
+	body: unknown,
+	init: { ok?: boolean; status?: number } = {},
+) {
 	return {
 		ok: init.ok ?? true,
 		status: init.status ?? 200,
@@ -43,9 +46,7 @@ describe("api client request core", () => {
 		fetchMock.mockResolvedValue(jsonResponse({}));
 		await api.post("/x", { a: 1 });
 		const [, postOpts] = fetchMock.mock.calls[0];
-		expect(postOpts.headers.get("Idempotency-Key")).toMatch(
-			/^[0-9a-f-]{36}$/,
-		);
+		expect(postOpts.headers.get("Idempotency-Key")).toMatch(/^[0-9a-f-]{36}$/);
 	});
 
 	it("serializes JSON body and sets content-type", async () => {
