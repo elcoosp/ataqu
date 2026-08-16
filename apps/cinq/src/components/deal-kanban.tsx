@@ -1,6 +1,7 @@
 import type { DealResponse, PipelineStageResponse } from "@ataqu/api-client";
 import {
 	useDeleteDeal,
+	useDeletePipelineStage,
 	useListDeals,
 	useListPipelineStages,
 	useUpdatePipelineStage,
@@ -19,6 +20,13 @@ export function DealKanban() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
 			toast.success("Deal deleted.");
+		},
+		onError: () => toast.error("Delete failed"),
+	});
+	const deleteStage = useDeletePipelineStage({
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["cinq", "pipeline"] });
+			toast.success("Stage deleted.");
 		},
 		onError: () => toast.error("Delete failed"),
 	});
@@ -145,6 +153,15 @@ export function DealKanban() {
 									onClick={() => startStageEdit(stage)}
 								>
 									{t`Edit`}
+								</Button>
+								<Button
+									size="sm"
+									variant="ghost"
+									className="h-7 px-2 text-red-400 hover:text-red-300"
+									onClick={() => deleteStage.mutate(stage.id)}
+									disabled={deleteStage.isPending}
+								>
+									{t`Delete`}
 								</Button>
 							</>
 						)}

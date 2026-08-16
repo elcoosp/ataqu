@@ -1,9 +1,14 @@
-import { type ChannelSummary, useListChannels } from "@ataqu/api-client";
+import {
+	type ChannelSummary,
+	useArchiveChannel,
+	useListChannels,
+} from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import { Button, cn, Input, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Hash, Lock, Plus, Search, Users } from "lucide-react";
+import { Archive, Hash, Lock, Plus, Search, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useDialStore } from "@/stores/dial-store";
 
@@ -18,6 +23,12 @@ export function ChannelList() {
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 300);
 	const { data: channels, isLoading } = useListChannels();
+	const queryClient = useQueryClient();
+	const archiveChannel = useArchiveChannel({
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["dial", "channels"] });
+		},
+	});
 
 	// Cast to ExtendedChannel array
 	const extendedChannels = (channels ?? []) as ExtendedChannel[];
@@ -102,6 +113,18 @@ export function ChannelList() {
 						{channel.unread_count}
 					</span>
 				)}
+				<button
+					type="button"
+					aria-label="Archive channel"
+					className="ml-2 text-muted-foreground hover:text-foreground"
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						archiveChannel.mutate(channel.id);
+					}}
+				>
+					<Archive className="h-3.5 w-3.5" />
+				</button>
 			</Link>
 		);
 	};

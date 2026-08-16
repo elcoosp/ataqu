@@ -9,6 +9,7 @@ import {
 	useListReactions,
 	useMarkMentionRead,
 	useSearchMessages,
+	useStartThread,
 } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
@@ -51,6 +52,12 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	const deleteMessage = useDeleteMessage({
 		onSuccess: () => toast.success(t`Message deleted`),
 		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const startThread = useStartThread({
+		onSuccess: () => {
+			toast.success("Thread started.");
+		},
+		onError: () => toast.error("Failed to start thread"),
 	});
 	const { data: searchResults } = useSearchMessages(
 		{ q: searchQuery },
@@ -294,13 +301,13 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 											variant="ghost"
 											size="icon"
 											className="h-6 w-6"
-											onClick={() => {
-												window.dispatchEvent(
-													new CustomEvent("openThread", {
-														detail: { messageId: message.id },
-													}),
-												);
-											}}
+											onClick={() =>
+												startThread.mutate({
+													channel_id: channelId,
+													parent_message_id: message.id,
+												})
+											}
+											disabled={startThread.isPending}
 										>
 											<Reply className="h-3 w-3" />
 										</Button>
