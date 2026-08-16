@@ -1,5 +1,11 @@
+import { configureBoneyard } from "boneyard-js/react";
+
 export type { SkeletonProps as BoneProps } from "boneyard-js/react";
-export { Skeleton as Bone } from "boneyard-js/react";
+export { BoneSuspense, Skeleton as Bone } from "boneyard-js/react";
+
+// Apply boneyard global defaults once, for every consumer of @ataqu/ui.
+configureBoneyard({ animate: true });
+
 export * from "./command-registry";
 export * from "./components/auth/LoginForm";
 export * from "./components/auth/RegisterForm";
