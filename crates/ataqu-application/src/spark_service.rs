@@ -6,8 +6,11 @@ use ataqu_domain_spark::repository::{
 };
 use ataqu_domain_spark::{Action, Condition, SparkError, Trigger, Workflow, evaluate_conditions};
 use ataqu_infra_outbox::OutboxEvent;
-use ataqu_infra_repositories::pending_approval_repo::{PendingApprovalRepository};
+use ataqu_infra_repositories::pending_approval_repo::{
+	PendingApproval, PendingApprovalRepository,
+};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::outbox::Outbox;
@@ -107,6 +110,14 @@ impl SparkService {
         run_repo: Arc<dyn WorkflowRunRepository + Send + Sync>,
     ) -> Self {
         self.run_repo = Some(run_repo);
+        self
+    }
+
+    pub fn with_approval_repository(
+        mut self,
+        approval_repo: Arc<dyn PendingApprovalRepository + Send + Sync>,
+    ) -> Self {
+        self.approval_repo = Some(approval_repo);
         self
     }
 
@@ -404,6 +415,21 @@ impl SparkService {
         Ok(())
     }
 
+    /// List pending approvals for a tenant (surfaced in the approvals UI).
+    pub async fn list_pending_approvals(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+    ) -> SparkResult<Vec<PendingApproval>> {
+        let Some(approval_repo) = self.approval_repo.as_ref() else {
+            return Ok(Vec::new());
+        };
+        approval_repo
+            .find_pending(tenant_id, limit)
+            .await
+            .map_err(SparkServiceError::Repository)
+    }
+
     /// List workflow runs for a tenant, newest first, paginated.
     pub async fn list_runs(
         &self,
@@ -478,10 +504,35 @@ impl SparkService {
     ) -> SparkResult<()> {
         let tenant_id = TenantId::new(workflow.tenant_id);
         for (index, action) in workflow.actions.iter().enumerate().skip(start_index) {
-            if matches!(action, Action::RequestApproval { .. }) {
+            if let Action::RequestApproval { approver_role } = action {
                 run_repo
                     .update_run_status(&tenant_id, &run.id, &WorkflowRunStatus::PendingApproval)
                     .await?;
+                // Surface the pending item so approvers get notified by the
+                // approval worker and can act on it via the API.
+                if let Some(approval_repo) = &self.approval_repo {
+                    let now = DateTime::<Utc>::from(self.clock.now());
+                    let approval = PendingApproval {
+                        id: self.id_gen.new_uuid_v7(),
+                        tenant_id,
+                        workflow_id: workflow.id,
+                        run_id: run.id,
+                        approver_role: approver_role.clone(),
+                        status: "pending".to_string(),
+                        payload: serde_json::json!({
+                            "workflow_id": workflow.id,
+                            "run_id": run.id,
+                            "approver_role": approver_role,
+                        }),
+                        approved_by: None,
+                        approved_at: None,
+                        created_at: now,
+                        updated_at: now,
+                    };
+                    if let Err(e) = approval_repo.create(&approval).await {
+                        tracing::error!(error = %e, run_id = %run.id, "Failed to record pending approval");
+                    }
+                }
                 tracing::info!(
                     workflow_id = %workflow.id,
                     run_id = %run.id,

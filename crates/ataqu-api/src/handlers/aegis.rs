@@ -1104,6 +1104,37 @@ pub struct ApproveRequest {
     pub run_id: Uuid,
 }
 
+pub async fn list_approvals(
+    State(state): State<crate::AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<serde_json::Value>>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let approvals = state
+        .spark_service
+        .list_pending_approvals(auth.tenant_id, 100)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let items = approvals
+        .into_iter()
+        .map(|a| {
+            serde_json::json!({
+                "id": a.id,
+                "tenant_id": a.tenant_id.as_uuid(),
+                "workflow_id": a.workflow_id,
+                "run_id": a.run_id,
+                "approver_role": a.approver_role,
+                "status": a.status,
+                "created_at": a.created_at,
+            })
+        })
+        .collect();
+    Ok(Json(items))
+}
+
 pub async fn approve_workflow(
     State(state): State<crate::AppState>,
     auth: AuthContext,
@@ -1149,8 +1180,9 @@ pub async fn reject_workflow(
 }
 
 pub fn approval_routes() -> axum::Router<crate::AppState> {
-    use axum::routing::post;
+    use axum::routing::{get, post};
     axum::Router::new()
+        .route("/", get(list_approvals))
         .route("/approve", post(approve_workflow))
         .route("/reject", post(reject_workflow))
 }

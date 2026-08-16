@@ -610,14 +610,22 @@ async fn main() -> anyhow::Result<()> {
     let spark_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.core.clone(),
     ));
-    let spark_service = Arc::new(SparkService::new(
-        spark_repo.clone(),
-        action_dispatcher,
-        spark_outbox,
-        id_gen.clone(),
-        clock.clone(),
-        Some(audit_repo.clone()),
-    ));
+    let approval_repo = Arc::new(
+        ataqu_infra_repositories::pending_approval_repo::SeaOrmPendingApprovalRepo::new(
+            pools.core.clone(),
+        ),
+    );
+    let spark_service = Arc::new(
+        SparkService::new(
+            spark_repo.clone(),
+            action_dispatcher,
+            spark_outbox,
+            id_gen.clone(),
+            clock.clone(),
+            Some(audit_repo.clone()),
+        )
+        .with_approval_repository(approval_repo.clone()),
+    );
     use ataqu_infra_repositories::tempo_repo_impl::TempoRepositoryImpl;
     let tempo_repo = Arc::new(TempoRepositoryImpl::new(pools.ops.clone()));
     let tempo_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -1226,10 +1234,6 @@ async fn main() -> anyhow::Result<()> {
     });
     // Spawn the SPARK approval worker (polls pending approvals, notifies via DIAL)
     use ataqu_application::approval_worker::ApprovalWorker;
-    use ataqu_infra_repositories::pending_approval_repo::SeaOrmPendingApprovalRepo;
-    let approval_repo = Arc::new(SeaOrmPendingApprovalRepo::new(
-        pools.core.clone(),
-    ));
     let approval_worker = ApprovalWorker::new(
         approval_repo,
         spark_service.clone(),

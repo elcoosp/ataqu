@@ -84,6 +84,16 @@ export interface AuditLogEntry {
 	user_agent?: string;
 	created_at: DateTime;
 }
+
+export interface PendingApproval {
+	id: UUID;
+	tenant_id: UUID;
+	workflow_id: UUID;
+	run_id: UUID;
+	approver_role: string;
+	status: string;
+	created_at: DateTime;
+}
 export interface AuditLogQuery {
 	action?: string;
 	app?: string;

@@ -18,6 +18,7 @@ import type {
 	LoginResponse,
 	MfaSetupResponse,
 	MfaVerifyRequest,
+	PendingApproval,
 	RefreshTokenRequest,
 	RoleResponse,
 	TenantSettings,
@@ -222,3 +223,30 @@ export const getCurrentUser = () => api.get<UserResponse>("/aegis/me");
 
 export const useGetCurrentUser = (options?: UseQueryOptions<UserResponse>) =>
 	useQuery({ queryKey: ["aegis", "me"], queryFn: getCurrentUser, ...options });
+
+// ---- Approvals (SPARK workflow validation) ----
+export const listPendingApprovals = () =>
+	api.get<PendingApproval[]>("/aegis/approvals");
+
+export const approveWorkflow = (data: { run_id: UUID }) =>
+	api.post<unknown>("/aegis/approvals/approve", data);
+
+export const rejectWorkflow = (data: { run_id: UUID }) =>
+	api.post<unknown>("/aegis/approvals/reject", data);
+
+export const useListPendingApprovals = (
+	options?: UseQueryOptions<PendingApproval[]>,
+) =>
+	useQuery({
+		queryKey: ["aegis", "approvals"],
+		queryFn: listPendingApprovals,
+		...options,
+	});
+
+export const useApproveWorkflow = (
+	options?: UseMutationOptions<unknown, Error, { run_id: UUID }>,
+) => useMutation({ mutationFn: approveWorkflow, ...options });
+
+export const useRejectWorkflow = (
+	options?: UseMutationOptions<unknown, Error, { run_id: UUID }>,
+) => useMutation({ mutationFn: rejectWorkflow, ...options });
