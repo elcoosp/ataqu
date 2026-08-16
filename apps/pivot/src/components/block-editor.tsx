@@ -1,7 +1,19 @@
 import type { Block } from "@ataqu/api-client";
-import { useListBlocks, useUpdateBlock } from "@ataqu/api-client";
+import {
+	useCreateBlock,
+	useListBlocks,
+	useUpdateBlock,
+} from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, Label } from "@ataqu/ui";
+import {
+	Button,
+	Label,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
@@ -133,7 +145,18 @@ function BlockRow({ block }: { block: Block }) {
 }
 
 export function BlockEditor({ documentId }: BlockEditorProps) {
-	const { data: blocks = [], isLoading } = useListBlocks(documentId);
+	const { data: blocks = [], isLoading, refetch } = useListBlocks(documentId);
+	const [newType, setNewType] = useState<
+		"markdown" | "table" | "view" | "checklist"
+	>("markdown");
+
+	const createMutation = useCreateBlock(documentId, {
+		onSuccess: () => {
+			toast.success(i18n._("Block added."));
+			void refetch();
+		},
+		onError: (err) => toast.error(handleApiError(err)),
+	});
 
 	if (isLoading) {
 		return (
@@ -143,19 +166,48 @@ export function BlockEditor({ documentId }: BlockEditorProps) {
 		);
 	}
 
-	if (blocks.length === 0) {
-		return (
-			<div className="p-3 text-sm text-muted-foreground">
-				<Trans>No blocks for this document.</Trans>
-			</div>
-		);
-	}
-
 	return (
 		<div className="space-y-3">
-			{blocks.map((block) => (
-				<BlockRow key={block.id} block={block} />
-			))}
+			<div className="flex flex-wrap items-end gap-2">
+				<div className="space-y-1">
+					<Label>
+						<Trans>New block type</Trans>
+					</Label>
+					<Select
+						value={newType}
+						onValueChange={(v) => setNewType(v as typeof newType)}
+					>
+						<SelectTrigger className="w-40">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="markdown">Markdown</SelectItem>
+							<SelectItem value="table">Table</SelectItem>
+							<SelectItem value="view">View</SelectItem>
+							<SelectItem value="checklist">Checklist</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+				<Button
+					onClick={() =>
+						createMutation.mutate({
+							document_id: documentId,
+							block_type: newType,
+						})
+					}
+					disabled={createMutation.isPending}
+				>
+					<Trans>Add block</Trans>
+				</Button>
+			</div>
+
+			{blocks.length === 0 ? (
+				<div className="p-3 text-sm text-muted-foreground">
+					<Trans>No blocks for this document.</Trans>
+				</div>
+			) : (
+				blocks.map((block) => <BlockRow key={block.id} block={block} />)
+			)}
 		</div>
 	);
 }

@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./client";
 import type {
 	Block,
+	CreateBlockRequest,
 	CreateDatabaseCommand,
 	CreateDocumentCommand,
 	CreateRelationCommand,
@@ -70,6 +71,8 @@ export const updateBlock = (
 	});
 export const listBlocks = (documentId: string) =>
 	api.get<Block[]>(`/pivot/docs/${documentId}/blocks`);
+export const createBlock = (data: CreateBlockRequest) =>
+	api.post<Block>("/pivot/blocks", data);
 export const createDatabase = (data: CreateDatabaseCommand) =>
 	api.post<Database>("/pivot/databases", data);
 
@@ -209,6 +212,14 @@ export const useListBlocks = (
 	useQuery({
 		queryKey: ["pivot", "document", documentId, "blocks"],
 		queryFn: () => listBlocks(documentId),
+		...options,
+	});
+export const useCreateBlock = (
+	_documentId: string,
+	options?: UseMutationOptions<Block, Error, CreateBlockRequest>,
+) =>
+	useMutation({
+		mutationFn: createBlock,
 		...options,
 	});
 export const useDeleteDocument = (
