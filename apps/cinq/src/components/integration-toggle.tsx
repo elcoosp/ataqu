@@ -1,9 +1,9 @@
-import { toggleIntegration } from "@ataqu/api-client";
+import { useToggleIntegration, type IntegrationStatus } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
 import { Badge, Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,10 +19,8 @@ export function IntegrationToggle({
 	const queryClient = useQueryClient();
 	const [enabled, setEnabled] = useState(false);
 
-	const mutation = useMutation({
-		mutationFn: (enabled: boolean) =>
-			toggleIntegration({ integration: targetApp, enabled }),
-		onSuccess: (data: any) => {
+	const mutation = useToggleIntegration({
+		onSuccess: (data: IntegrationStatus) => {
 			setEnabled(data.enabled);
 			queryClient.invalidateQueries({ queryKey: ["cinq", "deal", dealId] });
 			toast.success(
@@ -40,7 +38,7 @@ export function IntegrationToggle({
 	const handleToggle = () => {
 		const newValue = !enabled;
 		setEnabled(newValue);
-		mutation.mutate(newValue);
+		mutation.mutate({ integration: targetApp, enabled: newValue });
 	};
 
 	return (

@@ -1,6 +1,11 @@
-import { useGetContact, useUpdateContact } from "@ataqu/api-client";
+import {
+	useGetContact,
+	useListContactTasks,
+	useUpdateContact,
+} from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	Bone,
 	Button,
 	Input,
 	Label,
@@ -19,7 +24,52 @@ import { ActivityTimeline } from "../components/activity-timeline";
 import { CreateActivityDialog } from "../components/create-activity-dialog";
 import { CustomFieldsTab } from "../components/custom-fields-tab";
 import { EmailTrackingTab } from "../components/email-tracking-tab";
-import { TaskList } from "../components/task-list";
+
+function ContactTasks({ contactId }: { contactId: string }) {
+	const { data: tasks, isLoading } = useListContactTasks(contactId, {
+		limit: 100,
+		offset: 0,
+	});
+
+	if (isLoading)
+		return (
+			<Bone
+				loading={true}
+				name="contact-tasks"
+				fallback={<div className="h-20 rounded" />}
+			>
+				{null}
+			</Bone>
+		);
+
+	if (!tasks || tasks.length === 0)
+		return (
+			<p className="text-sm text-muted-foreground">
+				No tasks for this contact.
+			</p>
+		);
+
+	return (
+		<ul className="space-y-2">
+			{tasks.map((task) => (
+				<li
+					key={task.id}
+					className="flex items-center justify-between rounded-md border border-border p-3"
+				>
+					<div>
+						<p className="font-medium">{task.title}</p>
+						<p className="text-xs text-muted-foreground">{task.status}</p>
+					</div>
+					{task.due_date && (
+						<span className="text-xs text-muted-foreground">
+							{task.due_date}
+						</span>
+					)}
+				</li>
+			))}
+		</ul>
+	);
+}
 
 export const Route = createFileRoute("/_auth/contacts/$id")({
 	component: ContactDetail,
@@ -144,7 +194,7 @@ function ContactDetail() {
 					<ActivityTimeline dealId={id} />
 				</TabsContent>
 				<TabsContent value="tasks">
-					<TaskList />
+					<ContactTasks contactId={id} />
 				</TabsContent>
 				<TabsContent value="customFields">
 					<CustomFieldsTab contact={contact} />
