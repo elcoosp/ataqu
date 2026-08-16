@@ -68,6 +68,8 @@ export const updateBlock = (
 	api.put<Block>(`/pivot/blocks/${id}`, data, {
 		headers: { "If-Match": String(version) },
 	});
+export const listBlocks = (documentId: string) =>
+	api.get<Block[]>(`/pivot/docs/${documentId}/blocks`);
 export const createDatabase = (data: CreateDatabaseCommand) =>
 	api.post<Database>("/pivot/databases", data);
 
@@ -198,6 +200,15 @@ export const useUpdateBlock = (
 ) =>
 	useMutation({
 		mutationFn: ({ id, data, version }) => updateBlock(id, data, version),
+		...options,
+	});
+export const useListBlocks = (
+	documentId: string,
+	options?: UseQueryOptions<Block[]>,
+) =>
+	useQuery({
+		queryKey: ["pivot", "document", documentId, "blocks"],
+		queryFn: () => listBlocks(documentId),
 		...options,
 	});
 export const useDeleteDocument = (

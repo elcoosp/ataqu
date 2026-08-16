@@ -29,6 +29,7 @@ import {
 } from "platejs/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { BlockEditor } from "@/components/block-editor";
 import type { Document } from "@/types";
 
 interface DocumentEditorProps {
@@ -279,6 +280,15 @@ export function DocumentEditor({
 					/>
 				</Plate>
 			</div>
+
+			<details className="border-t border-border">
+				<summary className="cursor-pointer p-3 text-sm font-medium text-muted-foreground hover:text-foreground">
+					<Trans>Structured blocks</Trans>
+				</summary>
+				<div className="p-3">
+					<BlockEditor documentId={id} />
+				</div>
+			</details>
 		</div>
 	);
 }
