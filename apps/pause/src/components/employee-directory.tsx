@@ -1,11 +1,17 @@
-import { useListEmployees, useSearchEmployees } from "@ataqu/api-client";
+import {
+	useBulkDeactivateEmployees,
+	useListEmployees,
+	useSearchEmployees,
+} from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import { Button, Card, Input, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Search, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { EmptyState } from "./empty-state";
 
 export function EmployeeDirectory({
@@ -16,6 +22,17 @@ export function EmployeeDirectory({
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 300);
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+	const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+	const bulkDeactivate = useBulkDeactivateEmployees({
+		onSuccess: () => {
+			setSelectedIds([]);
+			queryClient.invalidateQueries({ queryKey: ["pause", "employees"] });
+			toast.success(t`Employees deactivated.`);
+		},
+		onError: () => toast.error(t`Failed to deactivate employees.`),
+	});
 
 	const isSearching = debouncedSearch.trim().length > 0;
 
@@ -79,6 +96,25 @@ export function EmployeeDirectory({
 				</Button>
 			</div>
 
+			{selectedIds.length > 0 && (
+				<div className="flex items-center gap-2 rounded-md border border-border bg-card p-2">
+					<span className="text-sm text-muted-foreground">
+						{selectedIds.length} selected
+					</span>
+					<Button
+						variant="destructive"
+						size="sm"
+						disabled={bulkDeactivate.isPending}
+						onClick={() => bulkDeactivate.mutate({ ids: selectedIds })}
+					>
+						<Trans>Deactivate selected</Trans>
+					</Button>
+					<Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
+						<Trans>Clear</Trans>
+					</Button>
+				</div>
+			)}
+
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{list.map((emp) => (
 					<Card
@@ -89,6 +125,20 @@ export function EmployeeDirectory({
 						}
 					>
 						<div className="flex items-center space-x-4">
+							<input
+								type="checkbox"
+								aria-label={`Select ${emp.full_name}`}
+								className="h-4 w-4"
+								checked={selectedIds.includes(emp.id)}
+								onClick={(e) => e.stopPropagation()}
+								onChange={(e) =>
+									setSelectedIds((prev) =>
+										e.target.checked
+											? [...prev, emp.id]
+											: prev.filter((id) => id !== emp.id),
+									)
+								}
+							/>
 							<div className="h-12 w-12 rounded-full bg-amber/20 flex items-center justify-center text-amber font-bold">
 								{emp.full_name.charAt(0)}
 							</div>

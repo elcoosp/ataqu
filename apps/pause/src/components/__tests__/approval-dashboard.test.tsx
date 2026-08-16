@@ -34,6 +34,7 @@ vi.mock("@ataqu/api-client", () => ({
 	}),
 	useApproveLeaveRequest: () => ({ mutate: vi.fn(), isPending: false }),
 	useRejectLeaveRequest: () => ({ mutate: vi.fn(), isPending: false }),
+	useCancelLeaveRequest: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@tanstack/react-query", () => ({

@@ -28,6 +28,7 @@ vi.mock("@ataqu/api-client", () => ({
 		isLoading: false,
 	}),
 	useSearchEmployees: () => ({ data: [], isLoading: false }),
+	useBulkDeactivateEmployees: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -36,6 +37,15 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("@ataqu/shared-hooks", () => ({
 	useDebounce: (v: string) => v,
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+	useQueryClient: () => ({
+		invalidateQueries: vi.fn(),
+		cancelQueries: vi.fn(),
+		getQueryData: vi.fn(),
+		setQueryData: vi.fn(),
+	}),
 }));
 
 vi.mock("@ataqu/ui", () => ({

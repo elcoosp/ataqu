@@ -1,6 +1,7 @@
 import {
 	type LeaveRequest,
 	useApproveLeaveRequest,
+	useCancelLeaveRequest,
 	useListLeaveRequests,
 	useRejectLeaveRequest,
 } from "@ataqu/api-client";
@@ -102,6 +103,13 @@ export function ApprovalDashboard() {
 		},
 	});
 
+	const cancelMutation = useCancelLeaveRequest({
+		onSuccess: () => {
+			toast.success(t`Leave request cancelled.`);
+		},
+		onError: () => toast.error(t`Failed to cancel leave.`),
+	});
+
 	const columns: ColumnDef<LeaveRequest>[] = [
 		{
 			accessorKey: "employee_name",
@@ -158,6 +166,16 @@ export function ApprovalDashboard() {
 							disabled={rejectMutation.isPending}
 						>
 							<X className="h-4 w-4" />
+						</Button>
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={() =>
+								cancelMutation.mutate({ id: req.id, version: req.version })
+							}
+							disabled={cancelMutation.isPending}
+						>
+							<Trans>Cancel</Trans>
 						</Button>
 					</div>
 				) : null;
