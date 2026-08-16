@@ -1,10 +1,21 @@
 import {
 	useCreateWarehouse,
 	useDeleteWarehouse,
+	useGetWarehouse,
 	useListWarehouses,
 	useUpdateWarehouse,
 } from "@ataqu/api-client";
-import { Button, Input, Label, Skeleton } from "@ataqu/ui";
+import {
+	Bone,
+	Button,
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	Input,
+	Label,
+	Skeleton,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
@@ -13,10 +24,50 @@ import { EmptyState } from "./empty-state";
 import { WarehouseIcon } from "./icons";
 import { showToast } from "./toast-store";
 
+function WarehouseDetailDialog({
+	warehouseId,
+	onOpenChange,
+}: {
+	warehouseId: string;
+	onOpenChange: (open: boolean) => void;
+}) {
+	const { data: warehouse, isLoading } = useGetWarehouse(warehouseId);
+
+	return (
+		<Dialog open onOpenChange={onOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>{isLoading ? "…" : warehouse?.name}</DialogTitle>
+				</DialogHeader>
+				<Bone
+					loading={isLoading}
+					name="warehouse-detail"
+					fallback={<div className="h-24 rounded" />}
+				>
+					{null}
+				</Bone>
+				{warehouse && (
+					<dl className="space-y-2 text-sm">
+						<div className="flex justify-between">
+							<dt className="text-muted-foreground">Name</dt>
+							<dd>{warehouse.name}</dd>
+						</div>
+						<div className="flex justify-between">
+							<dt className="text-muted-foreground">Location</dt>
+							<dd>{warehouse.location ?? "—"}</dd>
+						</div>
+					</dl>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 export function WarehouseList() {
 	const queryClient = useQueryClient();
 	const warehousesQuery = useListWarehouses();
 	const [showCreateForm, setShowCreateForm] = useState(false);
+	const [detailId, setDetailId] = useState<string | null>(null);
 	const [name, setName] = useState("");
 	const [location, setLocation] = useState("");
 
@@ -262,6 +313,13 @@ export function WarehouseList() {
 												<Button
 													size="sm"
 													variant="outline"
+													onClick={() => setDetailId(warehouse.id)}
+												>
+													<Trans>Details</Trans>
+												</Button>
+												<Button
+													size="sm"
+													variant="outline"
 													onClick={() =>
 														startEdit(
 															warehouse.id,
@@ -288,6 +346,14 @@ export function WarehouseList() {
 						</tbody>
 					</table>
 				</div>
+			)}
+			{detailId && (
+				<WarehouseDetailDialog
+					warehouseId={detailId}
+					onOpenChange={(open) => {
+						if (!open) setDetailId(null);
+					}}
+				/>
 			)}
 		</section>
 	);

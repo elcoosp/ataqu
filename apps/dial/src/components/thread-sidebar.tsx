@@ -1,4 +1,4 @@
-import { useListThreadMessages } from "@ataqu/api-client";
+import { useGetThread, useListThreadMessages } from "@ataqu/api-client";
 import {
 	Button,
 	Sheet,
@@ -23,6 +23,10 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
 		{ limit: 100, offset: 0 },
 		{ enabled: !!threadId, queryKey: ["thread-messages", threadId] },
 	);
+	const { data: thread } = useGetThread(threadId!, {
+		enabled: !!threadId,
+		queryKey: ["dial", "thread", threadId],
+	});
 
 	useEffect(() => {
 		const handler = (e: CustomEvent) => {
@@ -41,6 +45,11 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
 			<SheetContent side="right" className="w-80 sm:w-96">
 				<SheetHeader>
 					<SheetTitle>{t`Thread`}</SheetTitle>
+					{thread && (
+						<p className="text-xs text-muted-foreground">
+							{t`Started ${new Date(thread.created_at).toLocaleString()}`}
+						</p>
+					)}
 					<Button
 						variant="ghost"
 						size="icon"

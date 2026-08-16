@@ -3,13 +3,14 @@ import {
 	useDeleteProduct,
 	useDeleteVariant,
 	useGetProduct,
+	useGetVariant,
 	useListVariants,
 	useReserveStock,
 	useUpdateProduct,
 	useUpdateVariant,
 } from "@ataqu/api-client";
 import { formatCurrency, handleApiError } from "@ataqu/shared-utils";
-import { Button, Input, Label, OnboardTour, Skeleton } from "@ataqu/ui";
+import { Bone, Button, Input, Label, OnboardTour, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
@@ -64,6 +65,9 @@ export function ProductDetail({ productId }: { productId: string }) {
 
 	const selectedVariant =
 		variants.find((variant) => variant.id === selectedVariantId) ?? variants[0];
+
+	const { data: variantDetail, isLoading: variantDetailLoading } =
+		useGetVariant(selectedVariant?.id ?? "");
 
 	const totalStock = variants.reduce(
 		(sum, variant) => sum + variant.stock_quantity,
@@ -501,6 +505,33 @@ export function ProductDetail({ productId }: { productId: string }) {
 								)}
 							</div>
 						</div>
+						<Bone
+							loading={variantDetailLoading}
+							name="variant-detail"
+							fallback={<div className="h-16 rounded" />}
+						>
+							{null}
+						</Bone>
+						{variantDetail && (
+							<dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+								<div className="rounded-md border border-border p-2">
+									<dt className="text-muted-foreground">SKU</dt>
+									<dd className="font-mono">{variantDetail.sku}</dd>
+								</div>
+								<div className="rounded-md border border-border p-2">
+									<dt className="text-muted-foreground">Price</dt>
+									<dd>{formatCurrency(variantDetail.price / 100)}</dd>
+								</div>
+								<div className="rounded-md border border-border p-2">
+									<dt className="text-muted-foreground">Stock</dt>
+									<dd className="font-mono">{variantDetail.stock_quantity}</dd>
+								</div>
+								<div className="rounded-md border border-border p-2">
+									<dt className="text-muted-foreground">Version</dt>
+									<dd className="font-mono">{variantDetail.version}</dd>
+								</div>
+							</dl>
+						)}
 						{reserving ? (
 							<div className="flex flex-wrap items-end gap-2 rounded-lg border border-border p-4">
 								<div className="space-y-2">

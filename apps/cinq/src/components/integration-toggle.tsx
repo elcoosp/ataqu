@@ -1,4 +1,7 @@
-import { useToggleIntegration, type IntegrationStatus } from "@ataqu/api-client";
+import {
+	type IntegrationStatus,
+	useToggleIntegration,
+} from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
 import { Badge, Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";

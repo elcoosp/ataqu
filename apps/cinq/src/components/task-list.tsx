@@ -2,15 +2,69 @@ import type { TaskResponse } from "@ataqu/api-client";
 import {
 	useBulkDeleteTasks,
 	useDeleteTask,
+	useGetTask,
 	useListTasks,
 	useUpdateTask,
 } from "@ataqu/api-client";
-import { Badge, Bone, Skeleton } from "@ataqu/ui";
+import {
+	Badge,
+	Bone,
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	Skeleton,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+function TaskDetailDialog({
+	taskId,
+	onOpenChange,
+}: {
+	taskId: string;
+	onOpenChange: (open: boolean) => void;
+}) {
+	const { data: task, isLoading } = useGetTask(taskId);
+
+	return (
+		<Dialog open onOpenChange={onOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>{isLoading ? "…" : (task?.title ?? "")}</DialogTitle>
+				</DialogHeader>
+				<Bone
+					loading={isLoading}
+					name="task-detail"
+					fallback={<div className="h-20 rounded" />}
+				>
+					{null}
+				</Bone>
+				{task && (
+					<dl className="space-y-2 text-sm">
+						<div className="flex justify-between">
+							<dt className="text-muted-foreground">Status</dt>
+							<dd>{task.status}</dd>
+						</div>
+						<div className="flex justify-between">
+							<dt className="text-muted-foreground">Due</dt>
+							<dd>{task.due_date ?? "—"}</dd>
+						</div>
+						{task.description && (
+							<div>
+								<dt className="text-muted-foreground">Description</dt>
+								<dd className="mt-1 whitespace-pre-wrap">{task.description}</dd>
+							</div>
+						)}
+					</dl>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
+}
 
 export function TaskList() {
 	const _queryClient = useQueryClient();
@@ -34,6 +88,7 @@ export function TaskList() {
 		onError: () => toast.error("Bulk delete failed"),
 	});
 	const [selected, setSelected] = useState<string[]>([]);
+	const [detailId, setDetailId] = useState<string | null>(null);
 
 	if (isLoading)
 		return (
@@ -108,6 +163,14 @@ export function TaskList() {
 						)}
 						<button
 							type="button"
+							aria-label="View task"
+							className="text-muted-foreground hover:text-foreground"
+							onClick={() => setDetailId(task.id)}
+						>
+							<Eye className="h-4 w-4" />
+						</button>
+						<button
+							type="button"
 							aria-label="Delete task"
 							className="ml-auto text-red-400 hover:text-red-300"
 							onClick={() => deleteTask.mutate(task.id)}
@@ -116,6 +179,14 @@ export function TaskList() {
 						</button>
 					</div>
 				))
+			)}
+			{detailId && (
+				<TaskDetailDialog
+					taskId={detailId}
+					onOpenChange={(open) => {
+						if (!open) setDetailId(null);
+					}}
+				/>
 			)}
 		</div>
 	);
