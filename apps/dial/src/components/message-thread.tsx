@@ -1,6 +1,7 @@
 import {
 	useAddMention,
 	useAddReaction,
+	useBulkDeleteMessages,
 	useDeleteMessage,
 	useDeleteReaction,
 	useEditMessage,
@@ -15,6 +16,7 @@ import { useAuthStore } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Avatar, AvatarFallback, Button, cn, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { formatDistanceToNow } from "date-fns";
 import { Reply } from "lucide-react";
@@ -29,6 +31,7 @@ interface MessageThreadProps {
 }
 
 export function MessageThread({ channelId }: MessageThreadProps) {
+	const queryClient = useQueryClient();
 	const { data: messagesData, isLoading } = useListMessages(channelId, {
 		limit: 50,
 		offset: 0,
@@ -52,6 +55,15 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	const deleteMessage = useDeleteMessage({
 		onSuccess: () => toast.success(t`Message deleted`),
 		onError: (err) => toast.error(handleApiError(err)),
+	});
+	const bulkDeleteMessages = useBulkDeleteMessages({
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["dial", "messages", channelId],
+			});
+			toast.success("Messages deleted.");
+		},
+		onError: () => toast.error("Delete failed"),
 	});
 	const startThread = useStartThread({
 		onSuccess: () => {
@@ -141,6 +153,27 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 					}
 				>
 					{t`Export PDF`}
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					className="text-destructive"
+					disabled={
+						bulkDeleteMessages.isPending || displayedMessages.length === 0
+					}
+					onClick={() => {
+						if (
+							window.confirm(
+								`Delete all ${displayedMessages.length} shown messages?`,
+							)
+						) {
+							bulkDeleteMessages.mutate({
+								ids: displayedMessages.map((m) => m.id),
+							});
+						}
+					}}
+				>
+					{t`Delete all`}
 				</Button>
 			</div>
 			<div ref={containerRef} className="flex-1 overflow-y-auto">

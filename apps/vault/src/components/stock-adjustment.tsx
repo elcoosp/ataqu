@@ -1,5 +1,5 @@
 import type { Variant } from "@ataqu/api-client";
-import { api } from "@ataqu/api-client";
+import { api, useBulkAdjustStock } from "@ataqu/api-client";
 import { Button, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type { QueryKey } from "@tanstack/react-query";
@@ -33,6 +33,13 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 	const [delta, setDelta] = useState("0");
 	const [reason, setReason] = useState("adjustment");
 
+	const bulkAdjust = useBulkAdjustStock({
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ["vault", "variants"] });
+			void queryClient.invalidateQueries({ queryKey: ["vault", "movements"] });
+		},
+	});
+
 	const parsedDelta = Number(delta);
 	const canSubmit = Number.isFinite(parsedDelta) && parsedDelta !== 0;
 
@@ -47,8 +54,6 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 				headers: { "If-Match": `"${expectedVersion}"` },
 			}),
 		onMutate: async (variables) => {
-			await queryClient.cancelQueries({ queryKey: ["vault", "variants"] });
-
 			const previousVariants = queryClient.getQueriesData<PaginatedVariants>({
 				queryKey: ["vault", "variants"],
 			});
@@ -171,6 +176,26 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 						) : (
 							<Trans>Adjust Stock</Trans>
 						)}
+					</Button>
+					<Button
+						type="button"
+						variant="outline"
+						className="ml-2"
+						disabled={!canSubmit || bulkAdjust.isPending}
+						onClick={() =>
+							bulkAdjust.mutate({
+								adjustments: [
+									{
+										variant_id: variant.id,
+										delta: parsedDelta,
+										expected_version: variant.version,
+									},
+								],
+								reason,
+							})
+						}
+					>
+						<Trans>Bulk Adjust</Trans>
 					</Button>
 				</div>
 			</div>
