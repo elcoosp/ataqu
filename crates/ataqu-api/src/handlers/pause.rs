@@ -574,6 +574,44 @@ pub async fn upload_document(
     })))
 }
 
+/// Returns a presigned S3 PUT URL the client uploads the document bytes to
+/// directly, then passes the returned `file_url` to `upload_document` to
+/// persist the metadata row. Mirrors `dial::upload_file`.
+pub async fn presign_document_upload(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(employee_id): Path<Uuid>,
+    Json(payload): Json<PresignDocumentRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    if !auth.has_role("admin") && !auth.has_role("manager") {
+        return Err(ApiResponseError::Forbidden(
+            "Manager or Admin access required".to_string(),
+        ));
+    }
+    let tenant_id = auth.tenant_id.as_uuid();
+    let file_id = Uuid::new_v4();
+    let key = format!("pause/{}/{}/{}", tenant_id, employee_id, file_id);
+    let url = state
+        .s3_service
+        .generate_upload_url(&key)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to generate upload URL"))?;
+    Ok(Json(serde_json::json!({
+        "upload_url": url,
+        "file_url": key,
+        "key": key,
+        "file_id": file_id,
+        "content_type": payload.content_type,
+    })))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PresignDocumentRequest {
+    pub file_name: String,
+    #[serde(default)]
+    pub content_type: Option<String>,
+}
+
 pub async fn list_documents(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -719,5 +757,9 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/employees/:id/documents",
             post(upload_document).get(list_documents),
+        )
+        .route(
+            "/employees/:id/presigned-url",
+            post(presign_document_upload),
         )
 }

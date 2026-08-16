@@ -23,12 +23,15 @@ import { Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-async function uploadFileToS3(file: File): Promise<string> {
-	const response = await fetch("/api/v1/pause/presigned-url", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ file_name: file.name, content_type: file.type }),
-	});
+async function uploadFileToS3(employeeId: string, file: File): Promise<string> {
+	const response = await fetch(
+		`/api/pause/employees/${employeeId}/presigned-url`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ file_name: file.name, content_type: file.type }),
+		},
+	);
 
 	if (!response.ok) {
 		throw new Error("Failed to get presigned URL");
@@ -110,7 +113,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 		if (!file) return;
 
 		try {
-			const fileUrl = await uploadFileToS3(file);
+			const fileUrl = await uploadFileToS3(id, file);
 			uploadMutation.mutate({
 				employeeId: id,
 				data: { file_name: file.name, file_url: fileUrl, doc_type: "contract" },
