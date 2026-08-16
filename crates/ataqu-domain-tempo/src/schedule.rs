@@ -16,6 +16,8 @@ pub enum BookingStatus {
     Cancelled,
     Completed,
     NoShow,
+    /// The attendee opened the meeting page; the no-show worker must skip it.
+    Joined,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

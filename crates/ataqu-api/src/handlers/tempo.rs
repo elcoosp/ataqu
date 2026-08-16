@@ -538,6 +538,23 @@ pub async fn mark_no_show(
     Ok(Json(booking.into()))
 }
 
+pub async fn mark_joined(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<BookingResponse>> {
+    let cmd = ataqu_application::tempo_service::MarkJoinedCommand {
+        tenant_id: auth.tenant_id,
+        booking_id: id,
+    };
+    let booking = state
+        .tempo_service
+        .mark_joined(cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(booking.into()))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/bookings", axum::routing::post(create_booking))
@@ -555,6 +572,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/bookings/:id/no-show",
             axum::routing::post(mark_no_show),
+        )
+        .route(
+            "/bookings/:id/joined",
+            axum::routing::post(mark_joined),
         )
         .route(
             "/bookings/:id/reschedule",

@@ -9,9 +9,9 @@ export function useMeetingJoined(bookingId: string | null) {
 
 		const controller = new AbortController();
 
-		// Send POST to indicate user has joined the meeting page
-		// This prevents the backend no_show_worker from marking them as no-show
-		fetch(`/api/v1/tempo/bookings/${bookingId}/joined`, {
+		// Send POST to indicate user has joined the meeting page.
+		// This prevents the backend no_show_worker from marking them as no-show.
+		fetch(`/api/tempo/bookings/${bookingId}/joined`, {
 			method: "POST",
 			headers: {
 				Authorization: `Bearer ${token}`,

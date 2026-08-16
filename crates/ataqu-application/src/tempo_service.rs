@@ -33,6 +33,15 @@ pub struct UpdateBookingStatusCommand {
     pub expected_version: i32,
 }
 
+/// Fire-and-forget attendance marker: the attendee opened the meeting page, so
+/// the no-show worker must not flag this booking. Idempotent — re-joining an
+/// already Joined/Completed/Cancelled booking is a no-op.
+#[derive(Debug, Clone)]
+pub struct MarkJoinedCommand {
+    pub tenant_id: TenantId,
+    pub booking_id: Uuid,
+}
+
 #[derive(Debug, Clone)]
 pub struct CreateEventTypeCommand {
     pub tenant_id: TenantId,
@@ -328,6 +337,39 @@ impl TempoService {
 
         self.repo
             .update_booking_status(&cmd.tenant_id, &booking_id, cmd.status.clone())
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        let mut updated_booking = self.get_booking(cmd.tenant_id, cmd.booking_id).await?;
+        updated_booking.version += 1;
+        self.repo
+            .update_booking_version(&cmd.tenant_id, &booking_id, updated_booking.version)
+            .await
+            .map_err(TempoServiceError::Repository)?;
+        Ok(updated_booking)
+    }
+
+    /// Marks a booking as joined (attendee opened the meeting page). Idempotent:
+    /// if the booking is already in a terminal/joined state it is left untouched.
+    /// This prevents `no_show_worker` from auto-flagging an attended meeting.
+    pub async fn mark_joined(&self, cmd: MarkJoinedCommand) -> TempoResult<Booking> {
+        let booking_id = BookingId(cmd.booking_id);
+        let booking = self
+            .repo
+            .find_booking_by_id(&cmd.tenant_id, &booking_id)
+            .await
+            .map_err(TempoServiceError::Repository)?
+            .ok_or(TempoServiceError::BookingNotFound)?;
+
+        match booking.status {
+            BookingStatus::Joined
+            | BookingStatus::Completed
+            | BookingStatus::Cancelled
+            | BookingStatus::NoShow => return Ok(booking),
+            BookingStatus::Pending | BookingStatus::Confirmed => {}
+        }
+
+        self.repo
+            .update_booking_status(&cmd.tenant_id, &booking_id, BookingStatus::Joined)
             .await
             .map_err(TempoServiceError::Repository)?;
         let mut updated_booking = self.get_booking(cmd.tenant_id, cmd.booking_id).await?;

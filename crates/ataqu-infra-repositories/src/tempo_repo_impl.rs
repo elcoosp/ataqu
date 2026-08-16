@@ -114,6 +114,7 @@ fn map_booking(m: booking_entity::Model) -> Booking {
             "cancelled" => BookingStatus::Cancelled,
             "completed" => BookingStatus::Completed,
             "noshow" => BookingStatus::NoShow,
+            "joined" => BookingStatus::Joined,
             _ => BookingStatus::Pending,
         },
         created_at: m.created_at.into(),
