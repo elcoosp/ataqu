@@ -114,6 +114,12 @@ pub async fn auth_middleware(
                 email: ataqu_security::Email::new(token_data.claims.email),
                 roles: token_data.claims.roles,
             };
+            crate::middleware::ip_allowlist::check_ip_allowlist(
+                &app_state,
+                auth_ctx.tenant_id,
+                req.headers(),
+            )
+            .await?;
             req.extensions_mut().insert(auth_ctx);
             return Ok(next.run(req).await);
         } else {
@@ -156,6 +162,12 @@ pub async fn auth_middleware(
                 email: api_key_data.email,
                 roles: vec![api_key_data.role],
             };
+            crate::middleware::ip_allowlist::check_ip_allowlist(
+                &app_state,
+                auth_ctx.tenant_id,
+                req.headers(),
+            )
+            .await?;
             req.extensions_mut().insert(auth_ctx);
 
             // Enforce admin scope for sensitive methods

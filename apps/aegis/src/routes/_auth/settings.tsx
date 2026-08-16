@@ -2,9 +2,11 @@
 
 import {
 	updateTenantSettings,
+	useGetIpAllowlist,
 	useGetTenantSettings,
 	useMfaSetup,
 	useMfaVerify,
+	useUpdateIpAllowlist,
 } from "@ataqu/api-client";
 import {
 	Button,
@@ -42,6 +44,21 @@ export const Route = createFileRoute("/_auth/settings")({
 			},
 			onError: (_err: any) => {
 				toast.error("Update failed");
+			},
+		});
+
+		const { data: ipAllowlist, isLoading: ipLoading } = useGetIpAllowlist();
+		const [ipDraft, setIpDraft] = useState<string>("");
+		const updateIpMutation = useUpdateIpAllowlist({
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: ["aegis", "tenant", "ip-allowlist"],
+				});
+				setIpDraft("");
+				toast.success("IP allowlist updated.");
+			},
+			onError: () => {
+				toast.error("Failed to update IP allowlist");
 			},
 		});
 
@@ -203,13 +220,67 @@ export const Route = createFileRoute("/_auth/settings")({
 					<CardContent>
 						<p className="text-sm text-muted-foreground">
 							<Trans>
-								Restrict access to your tenant to specific IP addresses. (P1
-								feature - coming soon)
+								Restrict access to your tenant to specific IP addresses or CIDR
+								ranges. Leave empty to allow all. Changes take effect
+								immediately.
 							</Trans>
 						</p>
-						<Button disabled className="mt-2">
-							<Trans>Configure (Coming Soon)</Trans>
-						</Button>
+						{ipLoading ? (
+							<Skeleton className="mt-2 h-16 w-full" />
+						) : (
+							<ul className="mt-3 space-y-1">
+								{(ipAllowlist?.ip_allowlist ?? []).map((entry) => (
+									<li
+										key={entry}
+										className="flex items-center justify-between rounded border px-2 py-1 text-sm"
+									>
+										<code>{entry}</code>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() =>
+												updateIpMutation.mutate(
+													(ipAllowlist?.ip_allowlist ?? []).filter(
+														(e) => e !== entry,
+													),
+												)
+											}
+										>
+											<Trans>Remove</Trans>
+										</Button>
+									</li>
+								))}
+								{(ipAllowlist?.ip_allowlist ?? []).length === 0 && (
+									<li className="text-sm text-muted-foreground">
+										<Trans>No restrictions — all IPs allowed.</Trans>
+									</li>
+								)}
+							</ul>
+						)}
+						<form
+							className="mt-3 flex gap-2"
+							onSubmit={(e) => {
+								e.preventDefault();
+								const value = ipDraft.trim();
+								if (!value) return;
+								updateIpMutation.mutate([
+									...(ipAllowlist?.ip_allowlist ?? []),
+									value,
+								]);
+							}}
+						>
+							<Input
+								placeholder="203.0.113.5 or 203.0.113.0/24"
+								value={ipDraft}
+								onChange={(e) => setIpDraft(e.target.value)}
+							/>
+							<Button
+								type="submit"
+								disabled={updateIpMutation.isPending || !ipDraft.trim()}
+							>
+								<Trans>Add</Trans>
+							</Button>
+						</form>
 					</CardContent>
 				</Card>
 			</div>

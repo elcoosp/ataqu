@@ -92,6 +92,15 @@ export const getTenantSettings = () =>
 export const updateTenantSettings = (data: UpdateTenantSettingsRequest) =>
 	api.patch<TenantSettings>("/aegis/tenant/settings", data);
 
+// ---- IP Allowlist ----
+export interface IpAllowlistResponse {
+	ip_allowlist: string[];
+}
+export const getIpAllowlist = () =>
+	api.get<IpAllowlistResponse>("/aegis/tenant/ip-allowlist");
+export const updateIpAllowlist = (ip_allowlist: string[]) =>
+	api.put<IpAllowlistResponse>("/aegis/tenant/ip-allowlist", { ip_allowlist });
+
 // ---- Invite ----
 export const inviteUser = (data: InviteUserRequest) =>
 	api.post<InviteUserResponse>("/aegis/users/invite", data);
@@ -219,6 +228,23 @@ export const useUpdateTenantSettings = (
 		UpdateTenantSettingsRequest
 	>,
 ) => useMutation({ mutationFn: updateTenantSettings, ...options });
+
+// ---- IP Allowlist ----
+export const useGetIpAllowlist = (
+	options?: UseQueryOptions<IpAllowlistResponse>,
+) =>
+	useQuery({
+		queryKey: ["aegis", "tenant", "ip-allowlist"],
+		queryFn: getIpAllowlist,
+		...options,
+	});
+export const useUpdateIpAllowlist = (
+	options?: UseMutationOptions<IpAllowlistResponse, Error, string[]>,
+) =>
+	useMutation({
+		mutationFn: updateIpAllowlist,
+		...options,
+	});
 
 // ---- Invite ----
 export const useInviteUser = (

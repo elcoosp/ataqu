@@ -5,4 +5,5 @@ pub mod audit;
 pub mod csrf;
 pub mod etag;
 pub mod idempotency;
+pub mod ip_allowlist;
 pub mod rate_limit;

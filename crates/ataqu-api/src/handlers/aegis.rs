@@ -971,6 +971,71 @@ pub async fn invite_user(
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct IpAllowlistRequest {
+    pub ip_allowlist: Vec<String>,
+}
+
+/// Reads the tenant's IP allowlist (stored under `settings->'ip_allowlist'`).
+pub async fn get_ip_allowlist(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<serde_json::Value>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    let row = sqlx::query(
+        "SELECT settings->'ip_allowlist' AS allowlist FROM core.tenant_settings WHERE tenant_id = $1",
+    )
+    .bind(auth.tenant_id.as_uuid())
+    .fetch_optional(pool)
+    .await
+    .map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
+    let allowlist = match row {
+        Some(r) => r
+            .get::<Option<serde_json::Value>, _>("allowlist")
+            .unwrap_or(serde_json::json!([])),
+        None => serde_json::json!([]),
+    };
+    Ok(Json(serde_json::json!({ "ip_allowlist": allowlist })))
+}
+
+/// Replaces the tenant's IP allowlist. Stored under `settings->'ip_allowlist'`
+/// via jsonb_set so other settings keys are preserved.
+pub async fn update_ip_allowlist(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(req): Json<IpAllowlistRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let pool = state.db.get_postgres_connection_pool();
+    let allowlist = serde_json::json!(req.ip_allowlist);
+    sqlx::query(
+        "INSERT INTO core.tenant_settings (id, tenant_id, name, settings, updated_at)
+         VALUES ($1, $2, '', jsonb_build_object('ip_allowlist', $3::jsonb), now())
+         ON CONFLICT (tenant_id) DO UPDATE SET settings = jsonb_set(
+             COALESCE(core.tenant_settings.settings, '{}'::jsonb),
+             '{ip_allowlist}',
+             $3::jsonb
+         ), updated_at = now()",
+    )
+    .bind(Uuid::new_v4())
+    .bind(auth.tenant_id.as_uuid())
+    .bind(&allowlist)
+    .execute(pool)
+    .await
+    .map_err(|_| ApiResponseError::internal("Failed to update IP allowlist"))?;
+    Ok(Json(serde_json::json!({ "ip_allowlist": allowlist })))
+}
+
 pub async fn get_me(
     State(_state): State<AppState>,
     auth: AuthContext,
@@ -1068,6 +1133,10 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route(
             "/tenant/settings",
             get(get_tenant_settings).patch(update_tenant_settings),
+        )
+        .route(
+            "/tenant/ip-allowlist",
+            get(get_ip_allowlist).put(update_ip_allowlist),
         )
         .route("/users/invite", post(invite_user))
         .route("/logout", post(logout))
