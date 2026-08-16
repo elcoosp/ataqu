@@ -511,6 +511,33 @@ pub async fn bulk_cancel_bookings(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn mark_no_show(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
+) -> ApiResult<Json<BookingResponse>> {
+    let if_match = headers
+        .get(axum::http::header::IF_MATCH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.trim_matches('"').parse::<i32>().ok())
+        .ok_or_else(|| {
+            ApiResponseError::Validation("Invalid or missing If-Match header".to_string())
+        })?;
+    let cmd = UpdateBookingStatusCommand {
+        tenant_id: auth.tenant_id,
+        booking_id: id,
+        status: BookingStatus::NoShow,
+        expected_version: if_match,
+    };
+    let booking = state
+        .tempo_service
+        .update_booking_status(auth.user_id, cmd)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(booking.into()))
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/bookings", axum::routing::post(create_booking))
@@ -524,6 +551,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/bookings/:id/confirm",
             axum::routing::post(confirm_booking),
+        )
+        .route(
+            "/bookings/:id/no-show",
+            axum::routing::post(mark_no_show),
         )
         .route(
             "/bookings/:id/reschedule",

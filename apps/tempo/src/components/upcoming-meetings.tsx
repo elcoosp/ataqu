@@ -1,4 +1,8 @@
-import { useCancelBooking, useListBookings } from "@ataqu/api-client";
+import {
+	useCancelBooking,
+	useListBookings,
+	useMarkNoShow,
+} from "@ataqu/api-client";
 import { Badge, Button, Skeleton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -37,6 +41,7 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 		offset: 0,
 	});
 	const cancelMutation = useCancelBooking();
+	const noShowMutation = useMarkNoShow();
 
 	// Send meeting joined signal for the first upcoming meeting
 	const firstBooking = bookingsData?.items?.[0];
@@ -48,6 +53,15 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 			toast.success("Meeting canceled.");
 		} catch {
 			toast.error("Failed to cancel meeting.");
+		}
+	};
+
+	const handleNoShow = async (bookingId: string, version: number) => {
+		try {
+			await noShowMutation.mutateAsync({ id: bookingId, version });
+			toast.success("Marked as no-show.");
+		} catch {
+			toast.error("Failed to mark no-show.");
 		}
 	};
 
@@ -119,6 +133,19 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 						>
 							<Trans>Cancel</Trans>
 						</Button>
+						{booking.status !== "no_show" &&
+							booking.status !== "cancelled" &&
+							booking.status !== "completed" && (
+								<Button
+									variant="outline"
+									size="sm"
+									className="min-h-[44px]"
+									disabled={noShowMutation.isPending}
+									onClick={() => handleNoShow(booking.id, booking.version)}
+								>
+									<Trans>Mark no-show</Trans>
+								</Button>
+							)}
 					</div>
 				</div>
 			))}

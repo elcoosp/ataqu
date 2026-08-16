@@ -60,6 +60,10 @@ export const confirmBooking = (id: UUID) =>
 	api.post<Booking>(`/tempo/bookings/${id}/confirm`);
 export const rescheduleBooking = (id: UUID, data: RescheduleBookingRequest) =>
 	api.post<Booking>(`/tempo/bookings/${id}/reschedule`, data);
+export const markNoShow = (id: UUID, version: number) =>
+	api.post<Booking>(`/tempo/bookings/${id}/no-show`, undefined, {
+		headers: { "If-Match": `"${version}"` },
+	});
 export const bulkCancelBookings = (data: { ids: UUID[] }) =>
 	api.post<void>("/tempo/bookings/bulk-cancel", data);
 
@@ -180,6 +184,13 @@ export const useRescheduleBooking = (
 ) =>
 	useMutation({
 		mutationFn: ({ id, data }) => rescheduleBooking(id, data),
+		...options,
+	});
+export const useMarkNoShow = (
+	options?: UseMutationOptions<Booking, Error, { id: UUID; version: number }>,
+) =>
+	useMutation({
+		mutationFn: ({ id, version }) => markNoShow(id, version),
 		...options,
 	});
 export const useBulkCancelBookings = (
