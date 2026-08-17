@@ -11,9 +11,13 @@ import {
 	Bone,
 	Button,
 	Card,
+	HoldToConfirm,
 	Input,
+	ProgressBar,
+	SkeletonSwap,
 	Tabs,
 	TabsContent,
+	TaskSteps,
 	TabsList,
 	TabsTrigger,
 } from "@ataqu/ui";
@@ -106,13 +110,9 @@ export function EmployeeDetail({ id }: { id: string }) {
 
 	if (isLoading || !employee) {
 		return (
-			<Bone
-				loading
-				name="employee-detail-1"
-				fallback={<div className="h-64 w-full" />}
-			>
-				{null}
-			</Bone>
+			<SkeletonSwap ready={false} lines={6}>
+				<div className="h-64 w-full" />
+			</SkeletonSwap>
 		);
 	}
 
@@ -188,13 +188,13 @@ export function EmployeeDetail({ id }: { id: string }) {
 						)}
 					</div>
 				</div>
-				<Button
-					variant="destructive"
-					onClick={() => deactivateMutation.mutate(employee.id)}
+				<HoldToConfirm
+					onConfirm={() => deactivateMutation.mutate(employee.id)}
 					disabled={deactivateMutation.isPending}
+					className="bg-red-600 text-white hover:bg-red-500"
 				>
 					<Trans>Offboard</Trans>
-				</Button>
+				</HoldToConfirm>
 			</div>
 
 			<Tabs defaultValue="leave">
@@ -308,30 +308,21 @@ export function EmployeeDetail({ id }: { id: string }) {
 						<h3 className="text-xl font-semibold mb-4">
 							<Trans>Onboarding Checklist</Trans>
 						</h3>
-						<div className="space-y-2">
-							{[
-								t`Create account`,
-								t`Sign contract`,
-								t`Setup workspace`,
-								t`Assign mentor`,
-							].map((task) => (
-								<div key={task} className="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										id={`task-${task}`}
-										className="rounded border-gray-600 text-amber focus:ring-amber"
-									/>
-									<label htmlFor={`task-${task}`} className="text-gray-300">
-										{task}
-									</label>
-								</div>
-							))}
-						</div>
-						<div className="mt-4 w-full bg-gray-700 rounded-full h-2.5">
-							<div
-								className="bg-amber h-2.5 rounded-full"
-								style={{ width: "50%" }}
-							></div>
+						<div className="space-y-3">
+							<TaskSteps
+								steps={[
+									{ id: "account", label: t`Create account` },
+									{ id: "contract", label: t`Sign contract` },
+									{ id: "workspace", label: t`Setup workspace` },
+									{ id: "mentor", label: t`Assign mentor` },
+								]}
+								current={2}
+							/>
+							<ProgressBar
+								value={50}
+								max={100}
+								label={t`Onboarding progress`}
+							/>
 						</div>
 					</Card>
 				</TabsContent>

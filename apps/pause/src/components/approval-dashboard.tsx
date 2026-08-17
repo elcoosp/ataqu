@@ -5,7 +5,7 @@ import {
 	useListLeaveRequests,
 	useRejectLeaveRequest,
 } from "@ataqu/api-client";
-import { Badge, Button, DataTable } from "@ataqu/ui";
+import { Badge, Button, DataTable, HoldToConfirm } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -157,26 +157,23 @@ export function ApprovalDashboard() {
 						>
 							<Check className="h-4 w-4" />
 						</Button>
-						<Button
-							size="sm"
-							variant="destructive"
-							onClick={() =>
+						<HoldToConfirm
+							onConfirm={() =>
 								rejectMutation.mutate({ id: req.id, version: req.version })
 							}
 							disabled={rejectMutation.isPending}
+							className="bg-red-600 text-white hover:bg-red-500"
 						>
 							<X className="h-4 w-4" />
-						</Button>
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={() =>
+						</HoldToConfirm>
+						<HoldToConfirm
+							onConfirm={() =>
 								cancelMutation.mutate({ id: req.id, version: req.version })
 							}
 							disabled={cancelMutation.isPending}
 						>
 							<Trans>Cancel</Trans>
-						</Button>
+						</HoldToConfirm>
 					</div>
 				) : null;
 			},

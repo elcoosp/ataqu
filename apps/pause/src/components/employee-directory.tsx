@@ -4,7 +4,15 @@ import {
 	useSearchEmployees,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import { Bone, Button, Card, Input } from "@ataqu/ui";
+import {
+	Bone,
+	Button,
+	Card,
+	ExpandingSearch,
+	HoldToConfirm,
+	Input,
+	SkeletonSwap,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -56,18 +64,13 @@ export function EmployeeDirectory({
 
 	if (isLoading || isSearchLoading) {
 		return (
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{[1, 2, 3, 4, 5, 6].map((n) => (
-					<Bone
-						key={n}
-						loading
-						name="employee-directory-1"
-						fallback={<div className="h-32 w-full" />}
-					>
-						{null}
-					</Bone>
-				))}
-			</div>
+			<SkeletonSwap ready={false} lines={6}>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div className="h-32 w-full" />
+					<div className="h-32 w-full" />
+					<div className="h-32 w-full" />
+				</div>
+			</SkeletonSwap>
 		);
 	}
 
@@ -87,14 +90,11 @@ export function EmployeeDirectory({
 		<div className="space-y-6">
 			<div className="flex items-center gap-4">
 				<div className="relative flex-1">
-					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-					<Input
-						placeholder={t`Search employees...`}
+					<ExpandingSearch
 						value={search}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-							setSearch(e.target.value)
-						}
-						className="pl-10 bg-deep-night/50"
+						onChange={setSearch}
+						placeholder={t`Search employees...`}
+						className="bg-deep-night/50"
 					/>
 				</div>
 				<Button onClick={onAddEmployee}>
@@ -108,14 +108,13 @@ export function EmployeeDirectory({
 					<span className="text-sm text-muted-foreground">
 						{selectedIds.length} selected
 					</span>
-					<Button
-						variant="destructive"
-						size="sm"
+					<HoldToConfirm
+						onConfirm={() => bulkDeactivate.mutate({ ids: selectedIds })}
 						disabled={bulkDeactivate.isPending}
-						onClick={() => bulkDeactivate.mutate({ ids: selectedIds })}
+						className="bg-red-600 text-white hover:bg-red-500"
 					>
 						<Trans>Deactivate selected</Trans>
-					</Button>
+					</HoldToConfirm>
 					<Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
 						<Trans>Clear</Trans>
 					</Button>

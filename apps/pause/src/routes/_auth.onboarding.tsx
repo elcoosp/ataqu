@@ -1,5 +1,6 @@
 import { useListEmployees } from "@ataqu/api-client";
-import { Card, Shell } from "@ataqu/ui";
+import { Card, ProgressBar, Shell, TaskSteps } from "@ataqu/ui";
+import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -33,11 +34,16 @@ function OnboardingPage() {
 									<h3 className="font-semibold">{emp.full_name}</h3>
 									<span className="text-sm text-gray-400">{emp.job_title}</span>
 								</div>
-								<div className="w-full bg-gray-700 rounded-full h-2.5">
-									<div
-										className="bg-amber h-2.5 rounded-full"
-										style={{ width: "50%" }}
-									></div>
+								<TaskSteps
+									steps={[
+										{ id: "paperwork", label: t`Paperwork` },
+										{ id: "equipment", label: t`Equipment` },
+										{ id: "training", label: t`Training` },
+									]}
+									current={1}
+								/>
+								<div className="mt-3">
+									<ProgressBar value={50} max={100} label={t`Onboarding progress`} />
 								</div>
 							</Card>
 						))}

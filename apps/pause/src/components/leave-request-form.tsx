@@ -1,5 +1,5 @@
 import { useCreateLeaveRequest } from "@ataqu/api-client";
-import { Button, Input, Label } from "@ataqu/ui";
+import { Button, Input, Label, LoadingButton } from "@ataqu/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -108,13 +108,15 @@ export function LeaveRequestForm({
 					{...register("reason")}
 				/>
 			</div>
-			<Button
-				type="submit"
+			<LoadingButton
+				onAction={() => {
+					handleSubmit(onSubmit)();
+				}}
 				data-tour="request-leave"
 				disabled={mutation.isPending}
 			>
-				<Trans>Request Leave</Trans>
-			</Button>
+				Request Leave
+			</LoadingButton>
 		</form>
 	);
 }
