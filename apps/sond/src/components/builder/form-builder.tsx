@@ -1,5 +1,5 @@
 import type { FormQuestion } from "@ataqu/api-client";
-import { Button, cn, ProgressBar } from "@ataqu/ui";
+import { Button, cn, ProgressBar, SegmentedControl } from "@ataqu/ui";
 import {
 	DndContext,
 	type DragEndEvent,
@@ -103,6 +103,10 @@ function QuestionCard({
 export function FormBuilder({ questions, onUpdate }: Props) {
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [logicModalOpen, setLogicModalOpen] = useState(false);
+	const [currentPage, setCurrentPage] = useState(1);
+	const pages = Array.from(new Set(questions.map((q) => q.page))).sort(
+		(a, b) => a - b,
+	);
 	const { isOver, setNodeRef } = useDroppable({ id: "canvas" });
 
 	const selectedQuestion = questions.find((q) => q.id === selectedId) ?? null;
@@ -221,7 +225,20 @@ export function FormBuilder({ questions, onUpdate }: Props) {
 								{questions.filter((q) => q.label.trim().length > 0).length}/
 								{questions.length} labeled
 							</span>
-						</div>
+							</div>
+							{pages.length > 1 && (
+							<div className="mt-2">
+								<SegmentedControl
+									label={t`Form page`}
+									options={pages.map((p) => ({
+										value: String(p),
+										label: t`Page ${p}`,
+									}))}
+									value={String(currentPage)}
+									onValueChange={(v) => setCurrentPage(Number(v))}
+								/>
+							</div>
+							)}
 						<ProgressBar
 							value={questions.filter((q) => q.label.trim().length > 0).length}
 							max={Math.max(questions.length, 1)}
@@ -241,15 +258,17 @@ export function FormBuilder({ questions, onUpdate }: Props) {
 									<Trans>Drag questions here to build your form</Trans>
 								</div>
 							)}
-							{questions.map((q) => (
-								<QuestionCard
-									key={q.id}
-									question={q}
-									selected={selectedId === q.id}
-									onSelect={() => setSelectedId(q.id)}
-									onDelete={() => handleDelete(q.id)}
-								/>
-							))}
+							{questions
+								.filter((q) => q.page === currentPage)
+								.map((q) => (
+									<QuestionCard
+										key={q.id}
+										question={q}
+										selected={selectedId === q.id}
+										onSelect={() => setSelectedId(q.id)}
+										onDelete={() => handleDelete(q.id)}
+									/>
+								))}
 						</div>
 					</div>
 				</div>
