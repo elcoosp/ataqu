@@ -136,15 +136,45 @@ fn generate_reset_token(
     .map_err(|e| AegisServiceError::Internal(e.to_string()))
 }
 
+/// Constant-time string comparison (used for legacy SHA-256 API-key hashes).
+/// Argon2id verification handles its own constant-time comparison for new keys.
 fn constant_time_eq(a: &str, b: &str) -> bool {
-    if a.len() != b.len() {
-        return false;
-    }
-    let mut result = 0;
-    for (x, y) in a.bytes().zip(b.bytes()) {
-        result |= x ^ y;
-    }
-    result == 0
+	if a.len() != b.len() {
+		return false;
+	}
+	let mut result = 0u8;
+	for (x, y) in a.bytes().zip(b.bytes()) {
+		result |= x ^ y;
+	}
+	result == 0
+}
+
+/// Hash an API key with Argon2id (slow, salted KDF). The resulting PHC string
+/// is stored as `key_hash`.
+fn hash_api_key(key: &str) -> Result<String, AegisServiceError> {
+	let salt = SaltString::generate(&mut rand::thread_rng());
+	Argon2::default()
+		.hash_password(key.as_bytes(), &salt)
+		.map_err(|e| AegisServiceError::Internal(format!("API key hashing failed: {e}")))
+		.map(|h| h.to_string())
+}
+
+/// Verify a presented API key against a stored `key_hash`. New keys are
+/// Argon2id PHC strings; legacy keys created before the migration are stored
+/// as 64-char hex SHA-256 and are accepted via the constant-time fallback so
+/// existing keys keep working until rotated.
+fn verify_api_key(key: &str, key_hash: &str) -> bool {
+	let legacy = key_hash.len() == 64 && key_hash.chars().all(|c| c.is_ascii_hexdigit());
+	if legacy {
+		use sha2::{Digest, Sha256};
+		let mut hasher = Sha256::new();
+		hasher.update(key.as_bytes());
+		return constant_time_eq(&format!("{:x}", hasher.finalize()), key_hash);
+	}
+	PasswordHash::new(key_hash)
+		.ok()
+		.map(|parsed| Argon2::default().verify_password(key.as_bytes(), &parsed).is_ok())
+		.unwrap_or(false)
 }
 
 pub struct RealAegisDomain;
@@ -724,12 +754,7 @@ impl AegisService {
             tenant_id,
             user_id,
             name: created.name.clone(),
-            key_hash: {
-                use sha2::{Digest, Sha256};
-                let mut hasher = Sha256::new();
-                hasher.update(created.key.as_bytes());
-                format!("{:x}", hasher.finalize())
-            },
+            key_hash: hash_api_key(&created.key)?,
             prefix: created.prefix.clone(),
             scopes,
             last_used_at: None,
@@ -790,12 +815,7 @@ impl AegisService {
                 continue;
             }
 
-            // Verify the key against the stored SHA256 hash
-            use sha2::{Digest, Sha256};
-            let mut hasher = Sha256::new();
-            hasher.update(key.as_bytes());
-            let hash_str = format!("{:x}", hasher.finalize());
-            if !constant_time_eq(&hash_str, &api_key.key_hash) {
+            if !verify_api_key(key, &api_key.key_hash) {
                 continue;
             }
 
@@ -1198,4 +1218,47 @@ impl AegisService {
         })
     }
 
+    }
+
+#[cfg(test)]
+mod api_key_crypto_tests {
+    use super::*;
+    use sha2::{Digest, Sha256};
+
+    fn legacy_sha256_hex(key: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(key.as_bytes());
+        format!("{:x}", hasher.finalize())
+    }
+
+    #[test]
+    fn argon2id_hash_verifies_and_wrong_key_rejected() {
+        let key = "ataqu_1234567890abcdef";
+        let hash = hash_api_key(key).expect("hashing should succeed");
+        assert!(verify_api_key(key, &hash), "correct key must verify");
+        assert!(
+            !verify_api_key("ataqu_wrongkey00000000", &hash),
+            "wrong key must be rejected"
+        );
+        assert!(hash.starts_with("$argon2id$"));
+    }
+
+    #[test]
+    fn legacy_sha256_hash_still_verifies_and_wrong_key_rejected() {
+        let key = "ataqu_legacykey000000";
+        let hash = legacy_sha256_hex(key);
+        assert_eq!(hash.len(), 64, "legacy hash is 64 hex chars");
+        assert!(verify_api_key(key, &hash), "legacy key must verify");
+        assert!(
+            !verify_api_key("ataqu_otherkey000000", &hash),
+            "wrong legacy key must be rejected"
+        );
+    }
+
+    #[test]
+    fn argon2id_hash_verifies() {
+        let key = "ataqu_1234567890abcdef";
+        let hash = hash_api_key(key).unwrap();
+        assert!(verify_api_key(key, &hash));
+    }
 }
