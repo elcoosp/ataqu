@@ -1,6 +1,10 @@
 import { usePublicCreateBooking } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
-import { Button, Input, Label } from "@ataqu/ui";
+import {
+	FloatingLabelInput,
+	InlineValidation,
+	LoadingButton,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 import { useBookingStore } from "@/hooks/use-booking-store";
@@ -25,10 +29,10 @@ export function GuestForm() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!eventType || !selectedSlot || !tenantId) return;
+		if (!eventType || !selectedSlot || !tenantId) return false;
 		if (!name.trim() || !email.trim()) {
 			setError("Name and email are required.");
-			return;
+			return false;
 		}
 		setIsSubmitting(true);
 		setError(null);
@@ -46,9 +50,11 @@ export function GuestForm() {
 			setGuestDetails({ name: name.trim(), email: email.trim() });
 			setBookingId(result.id);
 			toast.success("Meeting booked successfully.");
+			return true;
 		} catch {
 			setError("This slot is no longer available. Please select another.");
 			setCurrentScreen("time-slot");
+			return false;
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -59,31 +65,23 @@ export function GuestForm() {
 			<h2 className="text-xl font-heading font-semibold text-foreground">
 				<Trans>Enter your details</Trans>
 			</h2>
-			<div>
-				<Label htmlFor="guest-name">
-					<Trans>Name</Trans>
-				</Label>
-				<Input
-					id="guest-name"
-					value={name}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-						setName(e.target.value)
-					}
-					required
-				/>
-			</div>
-			<div>
-				<Label htmlFor="guest-email">
-					<Trans>Email</Trans>
-				</Label>
-				<Input
-					id="guest-email"
+			<FloatingLabelInput
+				label="Name"
+				value={name}
+				onChange={setName}
+				required
+			/>
+			<div className="space-y-1">
+				<InlineValidation
+					label="Email"
 					type="email"
 					value={email}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-						setEmail(e.target.value)
+					onChange={setEmail}
+					validate={(v) =>
+						/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || v.length === 0
+							? null
+							: "Enter a valid email address"
 					}
-					required
 				/>
 			</div>
 			{error && (
@@ -91,13 +89,18 @@ export function GuestForm() {
 					{error}
 				</p>
 			)}
-			<Button
-				type="submit"
+			<LoadingButton
+				onAction={async () => {
+					const ok = await handleSubmit(
+						new Event("submit") as unknown as React.FormEvent,
+					);
+					if (!ok) throw new Error("booking failed");
+				}}
 				disabled={isSubmitting}
 				className="w-full min-h-[44px]"
 			>
-				{isSubmitting ? <Trans>Booking...</Trans> : <Trans>Book</Trans>}
-			</Button>
+				Book
+			</LoadingButton>
 		</form>
 	);
 }
