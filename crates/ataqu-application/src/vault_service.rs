@@ -586,7 +586,7 @@ impl VaultService {
             self.repo
                 .save_variant(&new_variant)
                 .await
-                .map_err(|e| VaultServiceError::Repository(e))?;
+                .map_err(VaultServiceError::Repository)?;
 
             let movement = ataqu_domain_vault::stock::create_movement(
                 ataqu_domain_vault::stock::CreateMovementCommand {
@@ -602,7 +602,7 @@ impl VaultService {
             self.repo
                 .save_movement(&movement)
                 .await
-                .map_err(|e| VaultServiceError::Repository(e))?;
+                .map_err(VaultServiceError::Repository)?;
 
             let stock_payload = serde_json::json!({
                 "variant_id": new_variant.id,

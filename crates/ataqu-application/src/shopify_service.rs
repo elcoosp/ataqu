@@ -156,15 +156,13 @@ impl ShopifyService {
             // Check for next page link
             if let Some(link_header) = link_header_value.as_ref()
                 && let Ok(link_str) = link_header.to_str()
-            {
-                if let Some(next) = link_str.split(',').find(|s| s.contains("rel=\"next\""))
+                && let Some(next) = link_str.split(',').find(|s| s.contains("rel=\"next\""))
                     && let Some(url_start) = next.find('<')
                 {
                     let url_end = next.find('>').unwrap_or(next.len());
                     page_url = next[url_start + 1..url_end].to_string();
                     continue;
                 }
-            }
             break;
         }
 

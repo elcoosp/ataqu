@@ -337,18 +337,17 @@ impl SparkService {
         }
 
         // Mark the pending approval record as approved by the acting user.
-        if let Some(approval_repo) = self.approval_repo.as_ref() {
-            if let Some(approval) = approval_repo
+        if let Some(approval_repo) = self.approval_repo.as_ref()
+            && let Some(approval) = approval_repo
                 .find_by_run_id(tenant_id, run_id)
                 .await
-                .map_err(|e| SparkServiceError::Repository(e))?
+                .map_err(SparkServiceError::Repository)?
             {
                 approval_repo
                     .approve(approval.id, approved_by)
                     .await
-                    .map_err(|e| SparkServiceError::Repository(e))?;
+                    .map_err(SparkServiceError::Repository)?;
             }
-        }
 
         let workflow = self
             .repo
@@ -395,18 +394,17 @@ impl SparkService {
         }
 
         // Mark the pending approval record as rejected by the acting user.
-        if let Some(approval_repo) = self.approval_repo.as_ref() {
-            if let Some(approval) = approval_repo
+        if let Some(approval_repo) = self.approval_repo.as_ref()
+            && let Some(approval) = approval_repo
                 .find_by_run_id(tenant_id, run_id)
                 .await
-                .map_err(|e| SparkServiceError::Repository(e))?
+                .map_err(SparkServiceError::Repository)?
             {
                 approval_repo
                     .reject(approval.id, rejected_by)
                     .await
-                    .map_err(|e| SparkServiceError::Repository(e))?;
+                    .map_err(SparkServiceError::Repository)?;
             }
-        }
 
         run_repo
             .update_run_status(&tenant_id, &run_id, &WorkflowRunStatus::Rejected)

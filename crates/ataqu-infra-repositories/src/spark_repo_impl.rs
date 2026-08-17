@@ -302,7 +302,7 @@ impl SparkRepository for SparkRepositoryImpl {
             workflow_id: m.workflow_id,
             fence_token: m.fence_token as u64,
             holder: m.holder,
-            expires_at: m.expires_at.map(|dt| dt),
+            expires_at: m.expires_at,
             created_at: m.created_at,
             updated_at: m.updated_at,
         }))
@@ -316,7 +316,7 @@ impl SparkRepository for SparkRepositoryImpl {
             workflow_id: Set(lease.workflow_id),
             fence_token: Set(lease.fence_token as i64),
             holder: Set(lease.holder.clone()),
-            expires_at: Set(lease.expires_at.map(|dt| dt)),
+            expires_at: Set(lease.expires_at),
             created_at: Set(lease.created_at),
             updated_at: Set(lease.updated_at),
         };

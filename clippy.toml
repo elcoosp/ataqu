@@ -1,1 +1,6 @@
 msrv = "1.97.0"
+# Dependency-injection constructors and audit helpers intentionally take many
+# collaborators (repos, services, clock, id-gen, audit). 7 is too strict for
+# this DI-heavy architecture; 12 keeps genuinely over-parameterized functions
+# flagged while accepting the standard injected-dependency pattern.
+too-many-arguments-threshold = 12

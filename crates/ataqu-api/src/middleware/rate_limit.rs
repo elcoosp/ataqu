@@ -1,3 +1,4 @@
+use axum::extract::ConnectInfo;
 use axum::{
     body::Body,
     extract::{Request, State},
@@ -6,6 +7,7 @@ use axum::{
     response::Response,
 };
 use dashmap::DashMap;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -65,26 +67,21 @@ impl RateLimiter {
 
 pub async fn rate_limit_middleware(
     State(limiter): State<RateLimiter>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
     req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
+    // Rate-limit key: prefer the authenticated tenant; otherwise fall back to
+    // the *real* peer socket address. We deliberately do NOT trust
+    // `x-forwarded-for` — it is fully client-controlled and would let an
+    // attacker rotate it per request to bypass the limiter. Only a trusted
+    // reverse proxy (configured via `trusted_proxies`) should be allowed to
+    // supply the client IP.
     let key = req
         .extensions()
         .get::<crate::middleware::AuthContext>()
         .map(|auth| format!("tenant:{}", auth.tenant_id.as_uuid()))
-        .or_else(|| {
-            req.headers()
-                .get("x-forwarded-for")
-                .and_then(|v| v.to_str().ok())
-                .map(|s| format!("ip:{}", s))
-        })
-        .unwrap_or_else(|| {
-            req.headers()
-                .get("user-agent")
-                .and_then(|v| v.to_str().ok())
-                .map(|s| format!("ua:{}", s))
-                .unwrap_or_else(|| "unknown".to_string())
-        });
+        .unwrap_or_else(|| format!("ip:{peer_addr}"));
 
     if limiter.check(&key) {
         Ok(next.run(req).await)

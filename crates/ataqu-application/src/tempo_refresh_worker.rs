@@ -56,7 +56,7 @@ pub async fn refresh_expiring_tokens(
 
         match refresh_token_for_provider(&client, provider, &refresh_token).await {
             Ok((new_access_token, new_expires_in)) => {
-                let new_expiry = Utc::now() + Duration::seconds(new_expires_in as i64);
+                let new_expiry = Utc::now() + Duration::seconds(new_expires_in);
                 let update_stmt = Statement::from_sql_and_values(
                     DbBackend::Postgres,
                     "UPDATE collab_ops.bookings SET oauth_access_token = $1, oauth_token_expires_at = $2 WHERE id = $3",

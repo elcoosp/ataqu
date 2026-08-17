@@ -23,9 +23,9 @@ pub fn flush_idempotency_cache() {
 /// Note: Advisory lock and durable storage are handled by the IdempotencyContext extractor.
 pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
     let method = req.method();
-    let is_state_changing = method == &axum::http::Method::POST
-        || method == &axum::http::Method::PUT
-        || method == &axum::http::Method::PATCH;
+    let is_state_changing = method == axum::http::Method::POST
+        || method == axum::http::Method::PUT
+        || method == axum::http::Method::PATCH;
 
     let cache_key = if is_state_changing {
         let key_header = req
@@ -45,8 +45,8 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
         None
     };
 
-    if let Some(ref key) = cache_key {
-        if let Some(cached) = IDEMPOTENCY_CACHE.get(key) {
+    if let Some(ref key) = cache_key
+        && let Some(cached) = IDEMPOTENCY_CACHE.get(key) {
             let mut resp = axum::response::Response::builder().status(cached.status);
             for (k, v) in &cached.headers {
                 if let Ok(header_name) = axum::http::HeaderName::from_bytes(k.as_bytes())
@@ -58,12 +58,11 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
             let body_bytes = serde_json::to_vec(&cached.body).unwrap_or_default();
             return Ok(resp.body(axum::body::Body::from(body_bytes)).unwrap());
         }
-    }
 
     let resp = next.run(req).await;
 
-    if let Some(key) = cache_key {
-        if resp.status().is_success() {
+    if let Some(key) = cache_key
+        && resp.status().is_success() {
             let status = resp.status();
             let headers = resp.headers().clone();
             let body = axum::body::to_bytes(resp.into_body(), 1024 * 1024)
@@ -91,7 +90,6 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
             }
             return Ok(new_resp.body(axum::body::Body::from(body)).unwrap());
         }
-    }
 
     Ok(resp)
 }

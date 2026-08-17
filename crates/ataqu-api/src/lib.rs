@@ -4,9 +4,11 @@
 
 use axum::{
     Router,
+    extract::connect_info::IntoMakeServiceWithConnectInfo,
     extract::State,
     routing::{get, post},
 };
+use std::net::SocketAddr;
 use dashmap::DashMap;
 use metrics_exporter_prometheus::PrometheusHandle;
 use moka::sync::Cache;
@@ -154,7 +156,7 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
     }
 }
 
-pub fn create_router(state: AppState) -> Router {
+pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, SocketAddr> {
     use handlers::aegis::routes as aegis_routes;
     use handlers::cinq::routes as cinq_routes;
     use handlers::dial::routes as dial_routes;
@@ -248,4 +250,5 @@ pub fn create_router(state: AppState) -> Router {
             crate::middleware::idempotency::idempotency_middleware,
         ))
         .with_state(state)
+        .into_make_service_with_connect_info::<SocketAddr>()
 }

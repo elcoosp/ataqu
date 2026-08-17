@@ -358,14 +358,13 @@ pub async fn list_dlq(
         let error: Option<String> = row
             .try_get("attempts")
             .ok()
-            .map(|a: i32| {
+            .and_then(|a: i32| {
                 if a >= 3 {
                     Some(format!("max retries exceeded ({a})"))
                 } else {
                     None
                 }
-            })
-            .flatten();
+            });
         items.push(DlqEntryResponse {
             id: row
                 .try_get("id")
