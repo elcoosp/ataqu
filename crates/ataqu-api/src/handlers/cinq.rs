@@ -203,7 +203,7 @@ pub async fn create_contact(
         .cinq_service
         .create_contact(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -227,7 +227,7 @@ pub async fn list_contacts(
         .cinq_service
         .list_contacts(auth.tenant_id, limit, offset)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
 
     let items = contacts.into_iter().map(ContactResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
@@ -356,7 +356,7 @@ pub async fn bulk_delete_contacts(
         .cinq_service
         .bulk_delete_contacts(auth.tenant_id, payload.ids)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -393,7 +393,7 @@ pub async fn create_deal(
         .cinq_service
         .create_deal(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -413,7 +413,7 @@ pub async fn list_deals(
         .cinq_service
         .list_deals(auth.tenant_id, limit, offset)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let items = deals.into_iter().map(DealResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -542,7 +542,7 @@ pub async fn list_pipeline_stages(
         .cinq_service
         .list_pipeline_stages(auth.tenant_id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(
         stages
             .into_iter()
@@ -569,7 +569,7 @@ pub async fn create_pipeline_stage(
         .cinq_service
         .create_pipeline_stage(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok((
         StatusCode::CREATED,
         Json(PipelineStageResponse {
@@ -605,7 +605,7 @@ pub async fn update_pipeline_stage(
             if_match,
         )
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(PipelineStageResponse {
         id: stage.id,
         name: stage.name,
@@ -622,7 +622,7 @@ pub async fn delete_pipeline_stage(
         .cinq_service
         .delete_pipeline_stage(auth.user_id, auth.tenant_id, id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -651,7 +651,7 @@ pub async fn create_activity(
         .cinq_service
         .create_activity(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok((
         StatusCode::CREATED,
         Json(ActivityResponse {
@@ -681,13 +681,13 @@ pub async fn list_activities(
             .cinq_service
             .list_activities_for_contact(auth.tenant_id, contact_id, limit, offset)
             .await
-            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?
+            .map_err(ApiResponseError::internal_err)?
     } else {
         state
             .cinq_service
             .list_all_activities(auth.tenant_id, limit, offset)
             .await
-            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?
+            .map_err(ApiResponseError::internal_err)?
     };
     let items = activities
         .into_iter()
@@ -742,7 +742,7 @@ pub async fn search_contacts(
         .cinq_service
         .search_contacts(auth.tenant_id, &params.q, params.limit.unwrap_or(20))
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -767,7 +767,7 @@ pub async fn search_by_custom_field(
             serde_json::json!(params.value),
         )
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -794,7 +794,7 @@ pub async fn search_custom_fields_cross(
         .cinq_service
         .search_custom_fields_cross(auth.tenant_id, &params.q, limit)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(
         contacts.into_iter().map(ContactResponse::from).collect(),
     ))
@@ -839,7 +839,7 @@ pub async fn import_csv(
         .cinq_service
         .import_contacts(auth.tenant_id, rows)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
 
     Ok(Json(ImportCsvResultDetailed {
         imported,
@@ -856,7 +856,7 @@ pub async fn export_csv(
         .cinq_service
         .export_contacts_stream(auth.tenant_id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
 
     use axum::body::Body;
     use futures::StreamExt;
@@ -939,7 +939,7 @@ pub async fn create_task(
         .cinq_service
         .create_task(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -959,7 +959,7 @@ pub async fn list_tasks(
         .cinq_service
         .list_tasks(auth.tenant_id, limit, offset)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
 
@@ -1088,7 +1088,7 @@ pub async fn list_contact_tasks(
             params.offset.unwrap_or(0),
         )
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(tasks.into_iter().map(TaskResponse::from).collect()))
 }
 
@@ -1116,7 +1116,7 @@ pub async fn bulk_delete_deals(
         .cinq_service
         .bulk_delete_deals(auth.tenant_id, payload.ids)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -1213,7 +1213,7 @@ pub async fn list_establishments(
         .cinq_service
         .list_establishments(auth.tenant_id, limit, offset)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(
         establishments.into_iter().map(EstablishmentResponse::from).collect(),
     ))
@@ -1255,7 +1255,7 @@ pub async fn create_establishment(
         .cinq_service
         .create_establishment(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok((StatusCode::CREATED, Json(EstablishmentResponse::from(est))))
 }
 

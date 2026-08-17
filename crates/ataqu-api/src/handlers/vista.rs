@@ -34,7 +34,7 @@ pub async fn get_kpis(
         .vista_service
         .get_aggregated_view(auth.tenant_id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(KpiSummary {
         total_events: view.total_events,
         total_contacts: view.total_contacts,
@@ -65,7 +65,7 @@ pub async fn create_dashboard(
         .vista_service
         .create_dashboard(auth.tenant_id, payload.name, payload.config)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(
         serde_json::json!({ "id": dashboard.id, "version": dashboard.version }),
     ))
@@ -79,7 +79,7 @@ pub async fn list_dashboards(
         .vista_service
         .list_dashboards(auth.tenant_id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let resp = dashboards
         .into_iter()
         .map(|d| {
@@ -105,7 +105,7 @@ pub async fn delete_dashboard(
         .vista_service
         .delete_dashboard(auth.tenant_id, id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -133,7 +133,7 @@ pub async fn update_dashboard(
         .vista_service
         .update_dashboard(auth.tenant_id, id, payload.name, payload.config, if_match)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(serde_json::json!({
         "id": dashboard.id,
         "name": dashboard.name,
@@ -181,7 +181,7 @@ pub async fn get_data_points_handler(
         .vista_service
         .get_data_points(auth.tenant_id, &metric, 1000)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let resp = points
         .into_iter()
         .map(|p| {

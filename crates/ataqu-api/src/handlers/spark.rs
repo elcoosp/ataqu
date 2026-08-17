@@ -61,7 +61,7 @@ pub async fn list_workflows(
         .spark_service
         .list_workflows(auth.tenant_id, limit, offset)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let items = workflows
         .into_iter()
         .map(|w| WorkflowResponse {
@@ -97,7 +97,7 @@ pub async fn create_workflow(
         .spark_service
         .create_workflow(cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let resp = WorkflowResponse {
         id: workflow.id,
         name: workflow.name,
@@ -152,7 +152,7 @@ pub async fn update_workflow(
         .spark_service
         .update_workflow(cmd, if_match)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let resp = WorkflowResponse {
         id: workflow.id,
         name: workflow.name,
@@ -172,7 +172,7 @@ pub async fn delete_workflow(
         .spark_service
         .delete_workflow(auth.tenant_id, id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -191,7 +191,7 @@ pub async fn execute_workflow(
         .spark_service
         .trigger_workflow(cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::ACCEPTED)
 }
 

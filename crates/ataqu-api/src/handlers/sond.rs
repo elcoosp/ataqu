@@ -86,7 +86,7 @@ pub async fn create_form(
         .sond_service
         .create_form(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::ETAG,
@@ -106,7 +106,7 @@ pub async fn list_forms(
         .sond_service
         .list_forms(auth.tenant_id, limit, offset)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let items = forms.into_iter().map(|f| f.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -203,7 +203,7 @@ pub async fn delete_form(
         .sond_service
         .delete_form(auth.user_id, auth.tenant_id, id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -243,7 +243,7 @@ pub async fn submit_form(
         .sond_service
         .submit_response(cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::CREATED)
 }
 
@@ -256,22 +256,22 @@ pub async fn export_responses(
         .sond_service
         .list_responses(auth.tenant_id, form_id, 100000, 0)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
 
     let mut wtr = csv::Writer::from_writer(vec![]);
     wtr.write_record(["response_id", "submitted_at", "answers"])
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     for r in responses {
         let answers_json = serde_json::to_string(&r.answers)
-            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+            .map_err(ApiResponseError::internal_err)?;
         wtr.write_record(&[r.id.to_string(), r.submitted_at.to_rfc3339(), answers_json])
-            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+            .map_err(ApiResponseError::internal_err)?;
     }
     let data = String::from_utf8(
         wtr.into_inner()
-            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?,
+            .map_err(ApiResponseError::internal_err)?,
     )
-    .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+    .map_err(ApiResponseError::internal_err)?;
     Ok((
         StatusCode::OK,
         [
@@ -366,7 +366,7 @@ pub async fn bulk_delete_submissions(
             .sond_service
             .delete_submission(auth.user_id, auth.tenant_id, id)
             .await
-            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+            .map_err(ApiResponseError::internal_err)?;
     }
     Ok(StatusCode::NO_CONTENT)
 }
@@ -408,7 +408,7 @@ pub async fn update_form_routing(
         .sond_service
         .update_form_routing(auth.user_id, auth.tenant_id, form_id, payload)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(FormResponse::from(form)))
 }
 

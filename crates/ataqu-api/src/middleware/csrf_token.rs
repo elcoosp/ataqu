@@ -45,17 +45,18 @@ impl CsrfProtector {
         Self { secret }
     }
 
-    /// Build from `CSRF_SECRET` (base64, 32 bytes). Required config; fails fast.
-    pub fn from_env() -> Self {
+    /// Build from `CSRF_SECRET` (base64, 32 bytes). Required config; returns
+    /// an error (instead of panicking) so `main` can surface it cleanly.
+    pub fn from_env() -> anyhow::Result<Self> {
         let raw = std::env::var("CSRF_SECRET")
-            .unwrap_or_else(|_| panic!("CSRF_SECRET must be set (32 bytes, base64)"));
+            .map_err(|_| anyhow::anyhow!("CSRF_SECRET must be set (32 bytes, base64)"))?;
         let bytes = URL_SAFE
             .decode(raw.trim())
-            .unwrap_or_else(|_| panic!("CSRF_SECRET must be valid base64"));
+            .map_err(|_| anyhow::anyhow!("CSRF_SECRET must be valid base64"))?;
         let secret: [u8; 32] = bytes
             .try_into()
-            .unwrap_or_else(|_| panic!("CSRF_SECRET must be 32 bytes"));
-        Self { secret }
+            .map_err(|_| anyhow::anyhow!("CSRF_SECRET must be 32 bytes"))?;
+        Ok(Self { secret })
     }
 
     /// Mint a new signed token `value.signature` (both base64url, no pad).

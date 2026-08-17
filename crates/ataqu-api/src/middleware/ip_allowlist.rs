@@ -36,10 +36,19 @@ pub fn client_ip(headers: &HeaderMap) -> Option<IpAddr> {
 }
 
 /// Load the tenant's IP allowlist from `settings->'ip_allowlist'`.
+///
+/// Results are cached per tenant for a short TTL (see AppState.allowlist_cache)
+/// so the hot auth path does not issue a DB query on every request. Admins
+/// changing the allowlist see the new value within the TTL window.
 async fn load_allowlist(
     state: &AppState,
     tenant_id: TenantId,
 ) -> Result<Vec<String>, ApiResponseError> {
+    let key = tenant_id.as_uuid().to_string();
+    if let Some(cached) = state.allowlist_cache.get(&key) {
+        return Ok(cached);
+    }
+
     use sqlx::Row;
     let pool = state.db.get_postgres_connection_pool();
     let row = sqlx::query(
@@ -48,7 +57,7 @@ async fn load_allowlist(
     .bind(tenant_id.as_uuid())
     .fetch_optional(pool)
     .await
-    .map_err(|_| ApiResponseError::internal("Failed to read tenant IP allowlist"))?;
+    .map_err(ApiResponseError::internal_err)?;
 
     let value = match row {
         Some(r) => r
@@ -64,6 +73,7 @@ async fn load_allowlist(
         // Null, an empty array, or any malformed value means "no restriction".
         _ => Vec::new(),
     };
+    state.allowlist_cache.insert(key, list.clone());
     Ok(list)
 }
 

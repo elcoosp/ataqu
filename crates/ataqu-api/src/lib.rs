@@ -80,6 +80,9 @@ pub struct AppState {
     /// Proxies allowed to supply X-Forwarded-For / X-Real-IP. Empty = trust no
     /// proxy (forwarding headers are ignored for security decisions).
     pub trusted_proxies: crate::middleware::client_ip::TrustedProxies,
+    /// Short-TTL cache of tenant IP allowlists keyed by tenant id, so the
+    /// per-request auth path does not hit the DB on every request.
+    pub allowlist_cache: moka::sync::Cache<String, Vec<String>>,
 }
 
 async fn security_headers_middleware(

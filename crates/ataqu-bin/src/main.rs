@@ -682,11 +682,14 @@ async fn main() -> anyhow::Result<()> {
             .time_to_live(Duration::from_secs(600))
             .build(),
     );
+    let allowlist_cache = moka::sync::Cache::<String, Vec<String>>::builder()
+        .time_to_live(Duration::from_secs(60))
+        .build();
     let trusted_proxies = ataqu_api::middleware::client_ip::TrustedProxies::from_env_value(
         &std::env::var("TRUSTED_PROXIES").unwrap_or_default(),
     );
     let csrf_protector = std::sync::Arc::new(
-        ataqu_api::middleware::csrf_token::CsrfProtector::from_env(),
+        ataqu_api::middleware::csrf_token::CsrfProtector::from_env()?,
     );
     let rate_limiter = ataqu_api::middleware::rate_limit::RateLimiter::new(
         100,
@@ -1335,6 +1338,7 @@ async fn main() -> anyhow::Result<()> {
         changelog_service,
         audit_repo: audit_repo.clone(),
         trusted_proxies,
+        allowlist_cache,
         csrf_protector,
     };
     let app = create_router(app_state);

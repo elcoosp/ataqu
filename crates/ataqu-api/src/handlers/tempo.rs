@@ -75,7 +75,7 @@ pub async fn create_booking(
         .tempo_service
         .create_booking(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok((StatusCode::CREATED, Json(booking.into())))
 }
 
@@ -87,7 +87,7 @@ pub async fn list_bookings(
         .tempo_service
         .list_bookings(auth.tenant_id, 100, 0)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let items = bookings.into_iter().map(|b| b.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -133,7 +133,7 @@ pub async fn cancel_booking(
         .tempo_service
         .update_booking_status(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(booking.into()))
 }
 
@@ -196,7 +196,7 @@ pub async fn confirm_booking(
         .tempo_service
         .update_booking_status(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(booking.into()))
 }
 
@@ -247,7 +247,7 @@ pub async fn create_event_type(
         .tempo_service
         .create_event_type(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok((StatusCode::CREATED, Json(event_type.into())))
 }
 
@@ -262,7 +262,7 @@ pub async fn list_event_types(
         .tempo_service
         .list_event_types(auth.tenant_id, limit, offset)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     let items = event_types.into_iter().map(|e| e.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
@@ -332,7 +332,7 @@ pub async fn delete_event_type(
         .tempo_service
         .delete_event_type(auth.user_id, auth.tenant_id, id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -379,7 +379,7 @@ pub async fn create_availability_slot(
         .tempo_service
         .create_availability_slot(auth.user_id, cmd)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok((StatusCode::CREATED, Json(slot.into())))
 }
 
@@ -392,7 +392,7 @@ pub async fn list_availability_slots(
         .tempo_service
         .list_availability_slots(auth.tenant_id, event_type_id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(Json(slots.into_iter().map(|s| s.into()).collect()))
 }
 
@@ -405,7 +405,7 @@ pub async fn delete_availability_slot(
         .tempo_service
         .delete_availability_slot(auth.user_id, auth.tenant_id, slot_id)
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -442,7 +442,7 @@ pub async fn public_create_booking(
             payload.invitee_email,
         )
         .await
-        .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+        .map_err(ApiResponseError::internal_err)?;
     Ok((
         StatusCode::CREATED,
         Json(PublicBookingResponse {
@@ -506,7 +506,7 @@ pub async fn bulk_cancel_bookings(
             .tempo_service
             .update_booking_status(auth.user_id, cmd)
             .await
-            .map_err(|_| ApiResponseError::internal("An unexpected error occurred"))?;
+            .map_err(ApiResponseError::internal_err)?;
     }
     Ok(StatusCode::NO_CONTENT)
 }
