@@ -1,12 +1,13 @@
 use crate::AppState;
 use crate::error::ApiResponseError;
 use ataqu_kernel::TenantId;
-use axum::extract::{FromRequestParts, Request, State};
+use axum::extract::{ConnectInfo, FromRequestParts, Request, State};
 use axum::http::request::Parts;
 use axum::middleware::Next;
 use axum::response::Response;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +55,7 @@ where
 
 pub async fn auth_middleware(
     State(app_state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, ApiResponseError> {
@@ -117,7 +119,7 @@ pub async fn auth_middleware(
             crate::middleware::ip_allowlist::check_ip_allowlist(
                 &app_state,
                 auth_ctx.tenant_id,
-                req.headers(),
+                Some(peer_addr.ip()),
             )
             .await?;
             req.extensions_mut().insert(auth_ctx);
@@ -165,7 +167,7 @@ pub async fn auth_middleware(
             crate::middleware::ip_allowlist::check_ip_allowlist(
                 &app_state,
                 auth_ctx.tenant_id,
-                req.headers(),
+                Some(peer_addr.ip()),
             )
             .await?;
             req.extensions_mut().insert(auth_ctx);

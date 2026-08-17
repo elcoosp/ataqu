@@ -13,10 +13,13 @@ use std::net::IpAddr;
 
 /// Extract the originating client IP.
 ///
-/// In production the API sits behind a reverse proxy / load balancer, so the
-/// real client IP is carried in `X-Forwarded-For` (first hop) or `X-Real-IP`.
-/// If neither header is present we return `None` and the caller treats that as
-/// "cannot determine" (see `check_ip_allowlist`).
+/// NOTE: this derives the IP from request headers (`X-Forwarded-For`,
+/// `X-Real-IP`). Those headers are **client-controlled** and must NOT be
+/// trusted for security decisions unless the request arrived from a configured
+/// trusted reverse proxy. The IP allowlist enforcement therefore takes the
+/// *real peer socket address* (see `auth_middleware`, which receives it via
+/// axum `ConnectInfo<SocketAddr>`) rather than calling this function. This
+/// helper is retained only for diagnostics / testing.
 pub fn client_ip(headers: &HeaderMap) -> Option<IpAddr> {
     if let Some(xff) = headers.get("x-forwarded-for").and_then(|v| v.to_str().ok()) {
         // Take the first address; it is the original client.
@@ -81,22 +84,25 @@ fn ip_matches(ip: IpAddr, allowlist: &[String]) -> bool {
 
 /// Enforce the tenant IP allowlist on an authenticated request.
 ///
-/// Returns `Ok(())` when access is permitted (empty list, undetermined client
-/// IP, or a matching address) and `Err(ApiResponseError::Forbidden)` when the
-/// allowlist is non-empty and the client IP is not covered by it.
+/// `client_ip` is the **real peer socket address** (from axum
+/// `ConnectInfo<SocketAddr>`), not a client-supplied `X-Forwarded-For`. Returns
+/// `Ok(())` when access is permitted (empty list, undetermined client IP, or a
+/// matching address) and `Err(ApiResponseError::Forbidden)` when the allowlist
+/// is non-empty and the client IP is not covered by it.
 pub async fn check_ip_allowlist(
     state: &AppState,
     tenant_id: TenantId,
-    headers: &HeaderMap,
+    client_ip: Option<IpAddr>,
 ) -> Result<(), ApiResponseError> {
     let allowlist = load_allowlist(state, tenant_id).await?;
     if allowlist.is_empty() {
         return Ok(());
     }
-    match client_ip(headers) {
-        // If we cannot determine the client IP (no proxy headers present in a
-        // non-proxied deployment), failing closed is too aggressive; we allow.
-        // In a proper deployment X-Forwarded-For / X-Real-IP are always set.
+    match client_ip {
+        // If we cannot determine the client IP the peer address was not
+        // captured (ConnectInfo unavailable). Failing closed would break
+        // non-proxied/non-TCP deployments, so we allow; in a proper deployment
+        // the peer address is always known.
         None => Ok(()),
         Some(ip) => {
             if ip_matches(ip, &allowlist) {
