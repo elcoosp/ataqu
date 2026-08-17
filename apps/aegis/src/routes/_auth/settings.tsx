@@ -21,7 +21,7 @@ import {
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -183,7 +183,7 @@ export const Route = createFileRoute("/_auth/settings")({
 						) : (
 							<div className="space-y-4">
 								<div className="flex justify-center">
-									{mfaQrUrl && <QRCode value={mfaQrUrl} size={200} />}
+									{mfaQrUrl && <QRCodeSVG value={mfaQrUrl} size={200} />}
 								</div>
 								<p className="text-sm text-muted-foreground">
 									<Trans>
