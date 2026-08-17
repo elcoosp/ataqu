@@ -4,7 +4,7 @@ import { api } from "./client";
 export type ChangelogCategory = "New" | "Improved" | "Fixed";
 
 export interface ChangelogEntry {
-	id: string;
+	id: number;
 	version: string;
 	date: string;
 	title: string;
@@ -13,19 +13,14 @@ export interface ChangelogEntry {
 	breaking_change: boolean;
 }
 
-export interface ChangelogResponse {
-	entries: ChangelogEntry[];
-	total: number;
-}
-
-/** Fetch the changelog (spec 2.12). */
-export const getChangelog = async (): Promise<ChangelogResponse> => {
-	return api.get<ChangelogResponse>("/v1/changelog");
+/** Fetch the changelog (spec 2.12). Returns a bare array of entries. */
+export const getChangelog = async (): Promise<ChangelogEntry[]> => {
+	return api.get<ChangelogEntry[]>("/v1/changelog");
 };
 
-/** Mark changelog entries as read. */
-export const markChangelogRead = async (ids: string[]): Promise<void> => {
-	await api.post<void>("/v1/changelog/mark-read", { ids });
+/** Mark all changelog entries as read for the current user. No body required. */
+export const markChangelogRead = async (): Promise<void> => {
+	await api.post<void>("/v1/changelog/mark-read");
 };
 
 /** TanStack Query hook for the changelog list. */
@@ -36,11 +31,11 @@ export const useChangelog = () =>
 		staleTime: 60_000,
 	});
 
-/** Mutation that marks the given changelog entries as read. */
+/** Mutation that marks the changelog as read for the current user. */
 export const useMarkChangelogRead = () => {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: (ids: string[]) => markChangelogRead(ids),
+		mutationFn: () => markChangelogRead(),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["changelog-unread"] });
 		},

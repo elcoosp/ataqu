@@ -1,47 +1,44 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 
-export type OnboardingTaskStatus = "pending" | "completed";
-
-export interface OnboardingTask {
-	id: string;
-	title: string;
-	description: string;
-	completed: boolean;
-	completed_at: string | null;
-}
-
-export interface TeamMemberActivation {
-	user_id: string;
-	full_name: string;
-	email: string;
-	activated: boolean;
-	last_active_at: string | null;
-}
+import { useAuthStore } from "@ataqu/shared-stores";
 
 export interface OnboardingStatus {
 	tenant_id: string;
-	tasks: OnboardingTask[];
-	setup_complete: boolean;
-	activation_rate: number; // 0..1
-	last_activity_at: string | null;
+	/** Ids of tasks the tenant has completed. */
+	tasks_completed: string[];
+	last_active_at: string | null;
+	progress_percentage: number;
+}
+
+export interface TeamStatusUser {
+	user_id: string;
+	name: string | null;
+	email: string;
+	last_login_at: string | null;
+	role: string;
+	is_active: boolean;
 }
 
 export interface TeamStatus {
-	members: TeamMemberActivation[];
-	activation_rate: number; // 0..1
-	total: number;
-	activated: number;
+	users: TeamStatusUser[];
+	tenant_progress: number;
 }
 
 /** Fetch the current tenant's onboarding setup status (spec 2.10). */
 export const getOnboardingStatus = async (): Promise<OnboardingStatus> => {
-	return api.get<OnboardingStatus>("/v1/onboarding/status");
+	const tenantId = useAuthStore.getState().tenantId;
+	const qs = tenantId ? `?tenant_id=${tenantId}` : "";
+	return api.get<OnboardingStatus>(`/v1/onboarding/status${qs}`);
 };
 
-/** Mark a single onboarding task complete. */
+/** Mark a single onboarding task complete (requires tenant_id in the body). */
 export const completeOnboardingTask = async (taskId: string): Promise<void> => {
-	await api.post<void>("/v1/onboarding/task-complete", { task_id: taskId });
+	const tenantId = useAuthStore.getState().tenantId;
+	await api.post<void>("/v1/onboarding/task-complete", {
+		tenant_id: tenantId,
+		task_id: taskId,
+	});
 };
 
 /** Fetch team activation status (admin). */

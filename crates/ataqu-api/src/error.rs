@@ -108,11 +108,17 @@ impl IntoResponse for ApiResponseError {
                 "RATE_LIMITED",
                 "Rate limit exceeded",
             ),
-            Self::Internal(msg) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "INTERNAL_ERROR",
-                msg.as_str(),
-            ),
+            Self::Internal(msg) => {
+                // Never expose the raw internal cause to clients — it may leak
+                // DB connection strings, SQL, or stack detail. The real message
+                // is already logged above; the client gets a generic message.
+                tracing::error!(internal_message = %msg, "returning 500 INTERNAL_ERROR");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "INTERNAL_ERROR",
+                    "An unexpected error occurred. Please retry or contact support.",
+                )
+            }
             Self::ServiceUnavailable(msg) => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 "SERVICE_UNAVAILABLE",

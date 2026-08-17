@@ -6,7 +6,7 @@ import {
 	useCompleteOnboardingTask,
 	useOnboardingStatus,
 } from "@ataqu/api-client";
-import { activationTaskHref } from "@ataqu/shared-stores";
+import { ACTIVATION_TASKS, activationTaskHref } from "@ataqu/shared-stores";
 
 /**
  * Persistent onboarding activation widget (spec 2.10). Shows the setup progress
@@ -19,9 +19,9 @@ export function SetupProgressWidget() {
 	const { data, isLoading } = useOnboardingStatus();
 	const completeTask = useCompleteOnboardingTask();
 
-	const tasks = data?.tasks ?? [];
-	const done = tasks.filter((t) => t.completed).length;
-	const total = tasks.length || 1;
+	const completed = new Set(data?.tasks_completed ?? []);
+	const total = ACTIVATION_TASKS.length || 1;
+	const done = ACTIVATION_TASKS.filter((t) => completed.has(t.id)).length;
 	const pct = Math.round((done / total) * 100);
 
 	return (
@@ -53,32 +53,35 @@ export function SetupProgressWidget() {
 						</p>
 					)}
 					<ul className="space-y-1">
-						{tasks.map((task) => (
-							<li key={task.id}>
-								<button
-									type="button"
-									onClick={() => {
-										if (!task.completed) {
-											completeTask.mutate(task.id);
-										} else {
-											const href = activationTaskHref(task.id);
-											if (href) window.location.assign(href);
-										}
-									}}
-									className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-300 hover:bg-white/5"
-								>
-									{task.completed ? (
-										<Check className="h-4 w-4 text-emerald-400" />
-									) : (
-										<Circle className="h-4 w-4 text-gray-500" />
-									)}
-									<span className={task.completed ? "line-through" : ""}>
-										{task.title}
-									</span>
-								</button>
-							</li>
-						))}
-						{!isLoading && tasks.length === 0 && (
+						{ACTIVATION_TASKS.map((task) => {
+							const isDone = completed.has(task.id);
+							return (
+								<li key={task.id}>
+									<button
+										type="button"
+										onClick={() => {
+											if (!isDone) {
+												completeTask.mutate(task.id);
+											} else {
+												const href = activationTaskHref(task.id);
+												if (href) window.location.assign(href);
+											}
+										}}
+										className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-300 hover:bg-white/5"
+									>
+										{isDone ? (
+											<Check className="h-4 w-4 text-emerald-400" />
+										) : (
+											<Circle className="h-4 w-4 text-gray-500" />
+										)}
+										<span className={isDone ? "line-through" : ""}>
+											{task.label}
+										</span>
+									</button>
+								</li>
+							);
+						})}
+						{!isLoading && ACTIVATION_TASKS.length === 0 && (
 							<li className="text-xs text-gray-400">
 								<Trans>No setup tasks.</Trans>
 							</li>

@@ -1,6 +1,15 @@
 // apps/aegis/src/routes/_auth/admin/team-status.tsx
 
-import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ataqu/ui";
+import {
+	Card,
+	CardContent,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@ataqu/ui";
 import { useTeamStatus } from "@ataqu/api-client";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
@@ -28,8 +37,8 @@ function TeamStatusPage() {
 		);
 	}
 
-	const members = data?.members ?? [];
-	const rate = Math.round((data?.activation_rate ?? 0) * 100);
+	const users = data?.users ?? [];
+	const rate = Math.round((data?.tenant_progress ?? 0) * 100);
 
 	return (
 		<div className="space-y-4 p-6">
@@ -59,20 +68,24 @@ function TeamStatusPage() {
 									<Trans>Email</Trans>
 								</TableHead>
 								<TableHead>
+									<Trans>Role</Trans>
+								</TableHead>
+								<TableHead>
 									<Trans>Status</Trans>
 								</TableHead>
 								<TableHead>
-									<Trans>Last active</Trans>
+									<Trans>Last login</Trans>
 								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{members.map((m) => (
-								<TableRow key={m.user_id}>
-									<TableCell className="text-white">{m.full_name}</TableCell>
-									<TableCell className="text-gray-300">{m.email}</TableCell>
+							{users.map((u) => (
+								<TableRow key={u.user_id}>
+									<TableCell className="text-white">{u.name ?? "—"}</TableCell>
+									<TableCell className="text-gray-300">{u.email}</TableCell>
+									<TableCell className="text-gray-400">{u.role}</TableCell>
 									<TableCell>
-										{m.activated ? (
+										{u.is_active ? (
 											<span className="rounded bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400">
 												<Trans>Active</Trans>
 											</span>
@@ -83,8 +96,8 @@ function TeamStatusPage() {
 										)}
 									</TableCell>
 									<TableCell className="text-gray-400">
-										{m.last_active_at
-											? new Date(m.last_active_at).toLocaleString()
+										{u.last_login_at
+											? new Date(u.last_login_at).toLocaleString()
 											: "—"}
 									</TableCell>
 								</TableRow>

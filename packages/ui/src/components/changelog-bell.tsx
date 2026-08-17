@@ -2,10 +2,7 @@ import { Trans } from "@lingui/react/macro";
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import {
-	useChangelog,
-	useMarkChangelogRead,
-} from "@ataqu/api-client";
+import { useChangelog, useMarkChangelogRead } from "@ataqu/api-client";
 import { useChangelogStore } from "@ataqu/shared-stores";
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -26,17 +23,19 @@ export function ChangelogBell() {
 	const lastSeenId = useChangelogStore((s) => s.lastSeenId);
 	const markSeen = useChangelogStore((s) => s.markSeen);
 
-	const entries = data?.entries ?? [];
+	const entries = data ?? [];
 	const latestId = entries[0]?.id ?? null;
 	const showDot = latestId !== null && latestId !== lastSeenId;
 
 	useEffect(() => {
 		if (!open) return;
-		markSeen();
+		// Record that the user has viewed up to the newest entry.
+		markSeen(latestId);
 		if (entries.length > 0) {
-			markRead.mutate(entries.map((e) => e.id));
+			markRead.mutate();
 		}
-	}, [open, markSeen, markRead, entries]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [open]);
 
 	return (
 		<div className="relative">

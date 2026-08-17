@@ -7,8 +7,8 @@ import { persist } from "zustand/middleware";
  * store only records `lastSeenId` so the bell can show a red dot for new entries.
  */
 interface ChangelogState {
-	lastSeenId: string | null;
-	markSeen: (id?: string | null) => void;
+	lastSeenId: number | null;
+	markSeen: (id?: number | null) => void;
 }
 
 export const useChangelogStore = create<ChangelogState>()(
