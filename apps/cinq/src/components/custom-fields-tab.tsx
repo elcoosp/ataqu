@@ -1,6 +1,6 @@
 import type { ContactResponse } from "@ataqu/api-client";
 import { useUpdateContact } from "@ataqu/api-client";
-import { Input } from "@ataqu/ui";
+import { Accordion, FloatingLabelInput } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 
@@ -20,24 +20,35 @@ export function CustomFieldsTab({ contact }: { contact: ContactResponse }) {
 		});
 	};
 
-	return (
-		<div className="space-y-4">
-			{Object.entries(fields).map(([key, value]) => (
-				<div key={key} className="flex items-center gap-2">
-					<label className="w-32 font-medium">{key}</label>
-					<Input
-						value={String(value ?? "")}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-							handleChange(key, e.target.value)
-						}
-					/>
-				</div>
-			))}
-			{Object.keys(fields).length === 0 && (
-				<p className="text-muted-foreground">
-					<Trans>No custom fields</Trans>
-				</p>
-			)}
+	if (Object.keys(fields).length === 0) {
+		return (
+			<p className="text-muted-foreground">
+				<Trans>No custom fields</Trans>
+			</p>
+		);
+	}
+
+	const fieldRows = Object.entries(fields).map(([key, value]) => (
+		<div key={key} className="flex items-center gap-2 py-1">
+			<label className="w-32 font-medium shrink-0">{key}</label>
+			<FloatingLabelInput
+				label={key}
+				value={String(value ?? "")}
+				onChange={(v: string) => handleChange(key, v)}
+			/>
 		</div>
+	));
+
+	return (
+		<Accordion
+			items={[
+				{
+					id: "custom-fields",
+					title: <Trans>Custom Fields</Trans>,
+					meta: `${Object.keys(fields).length}`,
+					content: <div className="space-y-3 py-2">{fieldRows}</div>,
+				},
+			]}
+		/>
 	);
 }

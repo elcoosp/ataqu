@@ -13,6 +13,8 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	HoldToConfirm,
+	SkeletonSwap,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -91,9 +93,9 @@ export function TaskList() {
 
 	if (isLoading)
 		return (
-			<Bone loading name="tasks" fallback={<div className="h-32 w-full" />}>
-				{null}
-			</Bone>
+			<SkeletonSwap ready={false} lines={4}>
+				<div className="h-32 w-full" />
+			</SkeletonSwap>
 		);
 
 	return (
@@ -164,14 +166,13 @@ export function TaskList() {
 						>
 							<Eye className="h-4 w-4" />
 						</button>
-						<button
-							type="button"
-							aria-label="Delete task"
-							className="ml-auto text-red-400 hover:text-red-300"
-							onClick={() => deleteTask.mutate(task.id)}
+						<HoldToConfirm
+							onConfirm={() => deleteTask.mutate(task.id)}
+							confirmLabel="Deleted"
+							className="ml-auto bg-red-600 text-white hover:bg-red-500"
 						>
 							<Trash2 className="h-4 w-4" />
-						</button>
+						</HoldToConfirm>
 					</div>
 				))
 			)}

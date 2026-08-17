@@ -6,8 +6,11 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	Input,
-	Label,
+	FloatingLabelInput,
+	InlineValidation,
+	LoadingButton,
+	SkeletonSwap,
+	TagInput,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,6 +29,7 @@ export function CreateContactDialog({
 	const [email, setEmail] = useState("");
 	const [phone, setPhone] = useState("");
 	const [company, setCompany] = useState("");
+	const [tags, setTags] = useState<string[]>([]);
 	const [submitting, setSubmitting] = useState(false);
 
 	const createMutation = useCreateContact({
@@ -37,6 +41,7 @@ export function CreateContactDialog({
 			setEmail("");
 			setPhone("");
 			setCompany("");
+			setTags([]);
 		},
 		onError: () => toast.error("Create failed"),
 	});
@@ -65,63 +70,73 @@ export function CreateContactDialog({
 						<Trans>New Contact</Trans>
 					</DialogTitle>
 				</DialogHeader>
-				<Bone
-					loading={submitting}
-					name="create-contact"
-					fallback={<div className="h-40 w-full rounded bg-white/5" />}
-				>
+				<SkeletonSwap ready={!submitting} lines={4}>
 					<div className="space-y-3">
+						<FloatingLabelInput
+							label="Name"
+							value={name}
+							onChange={setName}
+						/>
+					<InlineValidation
+						label="Email"
+						type="email"
+						value={email}
+						onChange={setEmail}
+						validate={(v) =>
+							/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || v.length === 0
+								? null
+								: "Enter a valid email address"
+						}
+					/>
+						<FloatingLabelInput
+							label="Phone"
+							type="tel"
+							value={phone}
+							onChange={setPhone}
+						/>
+						<FloatingLabelInput
+							label="Company"
+							value={company}
+							onChange={setCompany}
+						/>
 						<div>
-							<Label>
-								<Trans>Name</Trans>
-							</Label>
-							<Input
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								placeholder="Jane Doe"
-							/>
-						</div>
-						<div>
-							<Label>
-								<Trans>Email</Trans>
-							</Label>
-							<Input
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								placeholder="jane@acme.com"
-							/>
-						</div>
-						<div>
-							<Label>
-								<Trans>Phone</Trans>
-							</Label>
-							<Input
-								value={phone}
-								onChange={(e) => setPhone(e.target.value)}
-								placeholder="+1 555 000 0000"
-							/>
-						</div>
-						<div>
-							<Label>
-								<Trans>Company</Trans>
-							</Label>
-							<Input
-								value={company}
-								onChange={(e) => setCompany(e.target.value)}
-								placeholder="Acme"
+							<Label text="Tags" />
+							<TagInput
+								value={tags}
+								onChange={setTags}
+								placeholder="Add a tag and press Enter"
 							/>
 						</div>
 						<div className="flex justify-end gap-2 pt-2">
 							<Button variant="outline" onClick={() => onOpenChange(false)}>
 								<Trans>Cancel</Trans>
 							</Button>
-							<Button onClick={handleSubmit} disabled={submitting}>
-								<Trans>Create</Trans>
-							</Button>
+							<LoadingButton
+								onAction={async () => {
+									await new Promise<void>((resolve, reject) => {
+										try {
+											handleSubmit();
+											resolve();
+										} catch (e) {
+											reject(e);
+										}
+									});
+								}}
+								disabled={submitting}
+								className="bg-amber text-black hover:bg-amber/90"
+							>
+								Create
+							</LoadingButton>
 						</div>
 					</div>
-				</Bone>
+				</SkeletonSwap>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+function Label({ text }: { text: string }) {
+	return (
+		<label className="block text-sm font-medium mb-1">{text}</label>
 	);
 }

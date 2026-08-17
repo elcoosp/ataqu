@@ -1,5 +1,12 @@
 import { useImportCsv } from "@ataqu/api-client";
-import { Button, Card, CardContent } from "@ataqu/ui";
+import {
+	Button,
+	Card,
+	CardContent,
+	HoldToConfirm,
+	ProgressBar,
+	SkeletonSwap,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import Papa from "papaparse";
@@ -117,36 +124,45 @@ export function CsvImport() {
 							<h4 className="font-medium">
 								<Trans>Preview</Trans>
 							</h4>
-							<table className="w-full text-sm">
-								<thead>
-									<tr>
-										{headers.map((h) => (
-											<th key={h} className="text-left">
-												{h}
-											</th>
-										))}
-									</tr>
-								</thead>
-								<tbody>
-									{previewData.map((row, i) => (
-										<tr key={i}>
+							<SkeletonSwap ready={!importMutation.isPending} lines={5}>
+								<table className="w-full text-sm">
+									<thead>
+										<tr>
 											{headers.map((h) => (
-												<td key={h} className="border px-2 py-1">
-													{row[h]}
-												</td>
+												<th key={h} className="text-left">
+													{h}
+												</th>
 											))}
 										</tr>
-									))}
-								</tbody>
-							</table>
+									</thead>
+									<tbody>
+										{previewData.map((row, i) => (
+											<tr key={i}>
+												{headers.map((h) => (
+													<td key={h} className="border px-2 py-1">
+														{row[h]}
+													</td>
+												))}
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</SkeletonSwap>
 						</div>
-						<Button
-							onClick={handleImport}
+						{importMutation.isPending && (
+							<ProgressBar
+								value={null}
+								className="mt-4"
+								pendingLabel="Importing…"
+							/>
+						)}
+						<HoldToConfirm
+							onConfirm={handleImport}
 							disabled={importMutation.isPending}
-							className="mt-4"
+							className="mt-4 bg-amber text-black hover:bg-amber/90"
 						>
 							<Trans>Import</Trans>
-						</Button>
+						</HoldToConfirm>
 					</CardContent>
 				</Card>
 			)}
