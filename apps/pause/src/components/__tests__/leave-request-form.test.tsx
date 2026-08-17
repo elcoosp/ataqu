@@ -28,6 +28,17 @@ vi.mock("@ataqu/ui", () => ({
 	),
 	Input: (props: ComponentProps<"input">) => <input {...props} />,
 	Label: ({ children }: ComponentProps<"span">) => <span>{children}</span>,
+	LoadingButton: ({
+		children,
+		onAction,
+	}: {
+		children?: ReactNode;
+		onAction?: () => unknown;
+	}) => (
+		<button type="button" onClick={() => onAction?.()}>
+			{children}
+		</button>
+	),
 }));
 
 describe("LeaveRequestForm", () => {

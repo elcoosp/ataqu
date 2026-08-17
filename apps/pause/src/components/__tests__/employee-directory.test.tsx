@@ -55,6 +55,12 @@ vi.mock("@ataqu/ui", () => ({
 	Input: () => <input />,
 	Skeleton: () => <div />,
 	Card: ({ children }: ComponentProps<"div">) => <div>{children}</div>,
+	ExpandingSearch: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+		<input data-testid="expanding-search" value={value} onChange={(e) => onChange(e.target.value)} />
+	),
+	HoldToConfirm: ({ children, onConfirm }: { children?: ReactNode; onConfirm: () => void }) => (
+		<button type="button" onClick={onConfirm}>{children}</button>
+	),
 }));
 
 vi.mock("../empty-state", () => ({
