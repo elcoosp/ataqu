@@ -29,9 +29,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 					<ValueFlash
 						value={numericValue}
 						format={(v) =>
-							typeof value === "number"
-								? v.toLocaleString()
-								: String(value)
+							typeof value === "number" ? v.toLocaleString() : String(value)
 						}
 						className="text-3xl font-mono font-bold text-foreground"
 					/>

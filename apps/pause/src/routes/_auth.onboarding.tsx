@@ -43,7 +43,11 @@ function OnboardingPage() {
 									current={1}
 								/>
 								<div className="mt-3">
-									<ProgressBar value={50} max={100} label={t`Onboarding progress`} />
+									<ProgressBar
+										value={50}
+										max={100}
+										label={t`Onboarding progress`}
+									/>
 								</div>
 							</Card>
 						))}

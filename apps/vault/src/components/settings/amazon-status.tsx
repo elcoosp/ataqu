@@ -1,12 +1,18 @@
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
-import { Trans } from "@lingui/react/macro";
-import { useState } from "react";
-
 import {
 	useAmazonStatus,
 	useDisconnectAmazon,
 	useSyncAmazon,
 } from "@ataqu/api-client";
+import {
+	Badge,
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@ataqu/ui";
+import { Trans } from "@lingui/react/macro";
+import { useState } from "react";
 import { showToast } from "../toast-store";
 
 /** Amazon Seller Central connection status, manual sync and disconnect. */
@@ -14,7 +20,10 @@ export function AmazonStatus() {
 	const { data: status, refetch } = useAmazonStatus();
 	const sync = useSyncAmazon({
 		onSuccess: () => {
-			showToast({ variant: "success", title: <Trans>Amazon sync started.</Trans> });
+			showToast({
+				variant: "success",
+				title: <Trans>Amazon sync started.</Trans>,
+			});
 		},
 		onError: () => {
 			showToast({

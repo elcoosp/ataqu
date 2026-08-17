@@ -3,9 +3,8 @@ import { useAuthStore } from "@ataqu/shared-stores";
 import {
 	AuthLayout,
 	Button,
-	Input,
-	LoadingButton,
 	FloatingLabelInput,
+	LoadingButton,
 	PasswordStrength,
 	SegmentedControl,
 } from "@ataqu/ui";

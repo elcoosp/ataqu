@@ -1,5 +1,6 @@
 // apps/aegis/src/routes/_auth/admin/team-status.tsx
 
+import { useTeamStatus } from "@ataqu/api-client";
 import {
 	Card,
 	CardContent,
@@ -10,7 +11,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@ataqu/ui";
-import { useTeamStatus } from "@ataqu/api-client";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 

@@ -225,8 +225,8 @@ export function FormBuilder({ questions, onUpdate }: Props) {
 								{questions.filter((q) => q.label.trim().length > 0).length}/
 								{questions.length} labeled
 							</span>
-							</div>
-							{pages.length > 1 && (
+						</div>
+						{pages.length > 1 && (
 							<div className="mt-2">
 								<SegmentedControl
 									label={t`Form page`}
@@ -238,7 +238,7 @@ export function FormBuilder({ questions, onUpdate }: Props) {
 									onValueChange={(v) => setCurrentPage(Number(v))}
 								/>
 							</div>
-							)}
+						)}
 						<ProgressBar
 							value={questions.filter((q) => q.label.trim().length > 0).length}
 							max={Math.max(questions.length, 1)}

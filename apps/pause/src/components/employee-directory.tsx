@@ -5,19 +5,17 @@ import {
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import {
-	Bone,
 	Button,
 	Card,
 	ExpandingSearch,
 	HoldToConfirm,
-	Input,
 	SkeletonSwap,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Search, UserPlus, Users } from "lucide-react";
+import { UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "./empty-state";

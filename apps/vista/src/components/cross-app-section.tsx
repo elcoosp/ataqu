@@ -9,8 +9,8 @@ import {
 	SkeletonSwap,
 	TreeView,
 } from "@ataqu/ui";
-import { Trans } from "@lingui/react/macro";
 import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 
 type Row = Record<string, unknown>;
@@ -193,7 +193,11 @@ export function CrossAppSection() {
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<TreeView nodes={appTree} label={t`Apps`} defaultExpanded={["ataqu"]} />
+					<TreeView
+						nodes={appTree}
+						label={t`Apps`}
+						defaultExpanded={["ataqu"]}
+					/>
 				</CardContent>
 			</Card>
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

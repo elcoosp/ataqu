@@ -7,7 +7,6 @@ import {
 	useListApiKeys,
 } from "@ataqu/api-client";
 import {
-	Bone,
 	Button,
 	Card,
 	CardContent,
@@ -35,7 +34,7 @@ import {
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, Key, Plus } from "lucide-react";
+import { Key, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -197,8 +196,8 @@ export const Route = createFileRoute("/_auth/api-keys")({
 															</DialogTitle>
 															<DialogDescription>
 																<Trans>
-																	This action cannot be undone. Any services using
-																	this key will lose access.
+																	This action cannot be undone. Any services
+																	using this key will lose access.
 																</Trans>
 															</DialogDescription>
 														</DialogHeader>

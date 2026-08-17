@@ -1,16 +1,11 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
-import { motion } from "motion/react";
-import { useState } from "react";
 import {
 	Accordion,
-	BlurUpImage,
 	CollapsibleBanner,
 	IconMorph,
-	ITabs,
-	LikeBurst,
 	Lightbox,
+	LikeBurst,
 	LogoMarquee,
 	NewItemsPill,
 	PressDepth,
@@ -18,6 +13,9 @@ import {
 	SnapCarousel,
 	TextReveal,
 } from "@ataqu/ui";
+import { Trans } from "@lingui/react/macro";
+import { motion } from "motion/react";
+import { useState } from "react";
 import { AppGrid } from "@/components/app-grid";
 import { ArchitectureProof } from "@/components/architecture-proof";
 import { EscapeHatch } from "@/components/escape-hatch";
@@ -235,9 +233,7 @@ export function HomeContent() {
 								className="rounded-lg border border-border bg-card p-6 text-left"
 							>
 								<p className="text-foreground">“{t.quote}”</p>
-								<p className="mt-3 text-sm text-muted-foreground">
-									{t.author}
-								</p>
+								<p className="mt-3 text-sm text-muted-foreground">{t.author}</p>
 								<div className="mt-4">
 									<LikeBurst
 										initialCount={12 + i * 7}

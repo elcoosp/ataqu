@@ -27,8 +27,8 @@ import {
 	Tabs,
 	Tooltip,
 } from "@ataqu/ui";
-import type { ColumnDef } from "@tanstack/react-table";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Checkbox } from "../src/components/ui/checkbox";

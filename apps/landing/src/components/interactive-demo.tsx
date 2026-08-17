@@ -1,7 +1,5 @@
 "use client";
 
-import { Trans } from "@lingui/react/macro";
-import { useRef, useState } from "react";
 import {
 	FilterGrid,
 	HideOnScroll,
@@ -19,9 +17,10 @@ import {
 	StickyHeader,
 	StreamingText,
 	SwipeDeck,
-	Tooltip,
 	WizardSteps,
 } from "@ataqu/ui";
+import { Trans } from "@lingui/react/macro";
+import { useRef, useState } from "react";
 
 type AppItem = { id: string; name: string; tier: "free" | "pro" | "suite" };
 
@@ -55,9 +54,21 @@ const POLL_OPTIONS = [
 ];
 
 const WIZARD = [
-	{ id: "signup", label: "Sign up", content: <Trans>Create your workspace.</Trans> },
-	{ id: "pick", label: "Pick apps", content: <Trans>Choose the apps you need.</Trans> },
-	{ id: "invite", label: "Invite team", content: <Trans>Bring your team along.</Trans> },
+	{
+		id: "signup",
+		label: "Sign up",
+		content: <Trans>Create your workspace.</Trans>,
+	},
+	{
+		id: "pick",
+		label: "Pick apps",
+		content: <Trans>Choose the apps you need.</Trans>,
+	},
+	{
+		id: "invite",
+		label: "Invite team",
+		content: <Trans>Bring your team along.</Trans>,
+	},
 	{ id: "go", label: "Go live", content: <Trans>Start using Ataqu.</Trans> },
 ];
 
@@ -92,7 +103,9 @@ export function InteractiveDemo() {
 
 			{/* StickyHeader */}
 			<StickyHeader title={String(<Trans>Compare plans</Trans>)}>
-				<Trans>Sticky, condensing header that stays in view as you scroll.</Trans>
+				<Trans>
+					Sticky, condensing header that stays in view as you scroll.
+				</Trans>
 			</StickyHeader>
 
 			{/* ScrollSpy + ReadingProgress */}
@@ -204,7 +217,12 @@ export function InteractiveDemo() {
 
 			{/* OtpInput */}
 			<div className="rounded-lg border border-border p-6">
-				<OtpInput length={6} onChange={setOtp} defaultValue={otp} label={String(<Trans>Verification code</Trans>)} />
+				<OtpInput
+					length={6}
+					onChange={setOtp}
+					defaultValue={otp}
+					label={String(<Trans>Verification code</Trans>)}
+				/>
 				<p className="mt-2 text-xs text-muted-foreground">
 					<Trans>Entered: {otp || "—"}</Trans>
 				</p>
@@ -227,7 +245,11 @@ export function InteractiveDemo() {
 			{/* IPopover + ITooltipGroup */}
 			<div className="flex flex-wrap items-center gap-4">
 				<IPopover
-					trigger={<button className="rounded-md border border-border px-3 py-1.5 text-sm">Open popover</button>}
+					trigger={
+						<button className="rounded-md border border-border px-3 py-1.5 text-sm">
+							Open popover
+						</button>
+					}
 					label={String(<Trans>Popover</Trans>)}
 				>
 					<div className="p-3 text-sm">Popover content goes here.</div>
@@ -238,7 +260,7 @@ export function InteractiveDemo() {
 							Hover me
 						</button>
 					</ITooltip>
-					</ITooltipGroup>
+				</ITooltipGroup>
 			</div>
 		</section>
 	);

@@ -1,8 +1,4 @@
-import {
-	LiveActivity,
-	PresenceAvatars,
-	TypingIndicator,
-} from "@ataqu/ui";
+import { LiveActivity, PresenceAvatars, TypingIndicator } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type React from "react";
 
@@ -18,10 +14,7 @@ export const SseIndicator: React.FC<SseIndicatorProps> = ({
 	typists = [],
 }) => {
 	return (
-		<div
-			className="flex items-center gap-3"
-			data-tour="sse-indicator"
-		>
+		<div className="flex items-center gap-3" data-tour="sse-indicator">
 			<LiveActivity
 				activity={
 					isConnected
@@ -39,9 +32,7 @@ export const SseIndicator: React.FC<SseIndicatorProps> = ({
 							}
 				}
 			/>
-			{viewers.length > 0 && (
-				<PresenceAvatars people={viewers} max={4} />
-			)}
+			{viewers.length > 0 && <PresenceAvatars people={viewers} max={4} />}
 			{typists.length > 0 && <TypingIndicator typists={typists} />}
 			{!isConnected && <Trans>Disconnected</Trans>}
 		</div>

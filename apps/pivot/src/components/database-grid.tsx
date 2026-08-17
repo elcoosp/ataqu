@@ -9,7 +9,7 @@ import { handleApiError } from "@ataqu/shared-utils";
 import { Button, ExpandingSearch, Input, Pagination } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
-import { ChevronDown, ChevronUp, Filter, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RelationCell } from "./relation-cell";
@@ -251,17 +251,13 @@ export function DatabaseGrid({
 							</tr>
 						)}
 					</tbody>
-					</table>
-					{pageCount > 1 && (
-						<div className="flex justify-center p-3">
-							<Pagination
-								count={pageCount}
-								page={page}
-								onPageChange={setPage}
-							/>
-						</div>
-					)}
+				</table>
+				{pageCount > 1 && (
+					<div className="flex justify-center p-3">
+						<Pagination count={pageCount} page={page} onPageChange={setPage} />
 					</div>
-					</div>
-					);
-					}
+				)}
+			</div>
+		</div>
+	);
+}

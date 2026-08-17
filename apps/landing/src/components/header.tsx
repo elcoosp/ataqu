@@ -1,11 +1,11 @@
 "use client";
 
+import { Dropdown, type ICommandItem, ICommandPalette } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Dropdown, ICommandPalette, type ICommandItem } from "@ataqu/ui";
 
 const COMPETITORS = [
 	{ slug: "hubspot", label: "HubSpot" },
@@ -27,12 +27,48 @@ export function Header() {
 	const router = useRouter();
 
 	const commandItems: ICommandItem[] = [
-		{ id: "home", label: "Home", hint: "Go to home", keywords: "start landing", shortcut: ["g", "h"] },
-		{ id: "pricing", label: "Pricing", hint: "View pricing", keywords: "cost plans", shortcut: ["g", "p"] },
-		{ id: "about", label: "About", hint: "About Ataqu", keywords: "company", shortcut: ["g", "a"] },
-		{ id: "blog", label: "Blog", hint: "Read the blog", keywords: "news articles", shortcut: ["g", "b"] },
-		{ id: "roadmap", label: "Roadmap", hint: "See the roadmap", keywords: "plans future", shortcut: ["g", "r"] },
-		{ id: "faq", label: "FAQ", hint: "Frequently asked questions", keywords: "help", shortcut: ["g", "f"] },
+		{
+			id: "home",
+			label: "Home",
+			hint: "Go to home",
+			keywords: "start landing",
+			shortcut: ["g", "h"],
+		},
+		{
+			id: "pricing",
+			label: "Pricing",
+			hint: "View pricing",
+			keywords: "cost plans",
+			shortcut: ["g", "p"],
+		},
+		{
+			id: "about",
+			label: "About",
+			hint: "About Ataqu",
+			keywords: "company",
+			shortcut: ["g", "a"],
+		},
+		{
+			id: "blog",
+			label: "Blog",
+			hint: "Read the blog",
+			keywords: "news articles",
+			shortcut: ["g", "b"],
+		},
+		{
+			id: "roadmap",
+			label: "Roadmap",
+			hint: "See the roadmap",
+			keywords: "plans future",
+			shortcut: ["g", "r"],
+		},
+		{
+			id: "faq",
+			label: "FAQ",
+			hint: "Frequently asked questions",
+			keywords: "help",
+			shortcut: ["g", "f"],
+		},
 		...COMPETITORS.map((c) => ({
 			id: `alt-${c.slug}`,
 			label: `Alternatives: ${c.label}`,

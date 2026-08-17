@@ -1,10 +1,6 @@
 import { usePublicCreateBooking } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
-import {
-	FloatingLabelInput,
-	InlineValidation,
-	LoadingButton,
-} from "@ataqu/ui";
+import { FloatingLabelInput, InlineValidation, LoadingButton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 import { useBookingStore } from "@/hooks/use-booking-store";

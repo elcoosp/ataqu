@@ -1,5 +1,5 @@
 import { useCreateLeaveRequest } from "@ataqu/api-client";
-import { Button, Input, Label, LoadingButton } from "@ataqu/ui";
+import { Input, Label, LoadingButton } from "@ataqu/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";

@@ -1,6 +1,6 @@
 import { Button, Drawer } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { Download, X } from "lucide-react";
+import { Download } from "lucide-react";
 import type React from "react";
 import { useDrillDownStore } from "../../hooks/use-drill-down-store";
 import { DrillDownTable } from "./drill-down-table";

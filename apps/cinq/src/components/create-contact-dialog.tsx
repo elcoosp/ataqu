@@ -1,6 +1,5 @@
 import { useCreateContact } from "@ataqu/api-client";
 import {
-	Bone,
 	Button,
 	Dialog,
 	DialogContent,
@@ -72,22 +71,18 @@ export function CreateContactDialog({
 				</DialogHeader>
 				<SkeletonSwap ready={!submitting} lines={4}>
 					<div className="space-y-3">
-						<FloatingLabelInput
-							label="Name"
-							value={name}
-							onChange={setName}
+						<FloatingLabelInput label="Name" value={name} onChange={setName} />
+						<InlineValidation
+							label="Email"
+							type="email"
+							value={email}
+							onChange={setEmail}
+							validate={(v) =>
+								/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || v.length === 0
+									? null
+									: "Enter a valid email address"
+							}
 						/>
-					<InlineValidation
-						label="Email"
-						type="email"
-						value={email}
-						onChange={setEmail}
-						validate={(v) =>
-							/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || v.length === 0
-								? null
-								: "Enter a valid email address"
-						}
-					/>
 						<FloatingLabelInput
 							label="Phone"
 							type="tel"
@@ -136,7 +131,5 @@ export function CreateContactDialog({
 }
 
 function Label({ text }: { text: string }) {
-	return (
-		<label className="block text-sm font-medium mb-1">{text}</label>
-	);
+	return <label className="block text-sm font-medium mb-1">{text}</label>;
 }

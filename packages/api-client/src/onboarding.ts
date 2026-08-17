@@ -1,7 +1,6 @@
+import { useAuthStore } from "@ataqu/shared-stores";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
-
-import { useAuthStore } from "@ataqu/shared-stores";
 
 export interface OnboardingStatus {
 	tenant_id: string;

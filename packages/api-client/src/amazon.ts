@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 
 export interface AmazonStatus {
@@ -21,7 +21,9 @@ export const getAmazonStatus = async (): Promise<AmazonStatus> => {
 };
 
 /** Connect an Amazon Seller Central account via LWA credentials. */
-export const connectAmazon = async (data: AmazonConnectRequest): Promise<void> => {
+export const connectAmazon = async (
+	data: AmazonConnectRequest,
+): Promise<void> => {
 	await api.post<void>("/vault/amazon/connect", data);
 };
 

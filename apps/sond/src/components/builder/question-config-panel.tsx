@@ -159,14 +159,28 @@ export function QuestionConfigPanel({
 	);
 
 	const items = [
-		{ id: "question", title: <Trans>Question</Trans>, content: questionSection },
+		{
+			id: "question",
+			title: <Trans>Question</Trans>,
+			content: questionSection,
+		},
 		...(optionsSection
-			? [{ id: "options", title: <Trans>Options</Trans>, content: optionsSection }]
+			? [
+					{
+						id: "options",
+						title: <Trans>Options</Trans>,
+						content: optionsSection,
+					},
+				]
 			: []),
 		...(ratingSection
 			? [{ id: "rating", title: <Trans>Rating</Trans>, content: ratingSection }]
 			: []),
-		{ id: "settings", title: <Trans>Settings</Trans>, content: settingsSection },
+		{
+			id: "settings",
+			title: <Trans>Settings</Trans>,
+			content: settingsSection,
+		},
 	];
 
 	return (

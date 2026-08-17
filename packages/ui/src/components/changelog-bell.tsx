@@ -1,9 +1,8 @@
+import { useChangelog, useMarkChangelogRead } from "@ataqu/api-client";
+import { useChangelogStore } from "@ataqu/shared-stores";
 import { Trans } from "@lingui/react/macro";
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
-
-import { useChangelog, useMarkChangelogRead } from "@ataqu/api-client";
-import { useChangelogStore } from "@ataqu/shared-stores";
 
 const CATEGORY_STYLES: Record<string, string> = {
 	New: "bg-emerald-500/15 text-emerald-400",

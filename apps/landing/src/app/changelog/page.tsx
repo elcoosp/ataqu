@@ -117,8 +117,8 @@ export default function ChangelogPage() {
 					</p>
 					<p>
 						<Trans>
-							Every change is recorded here and in the in-app changelog bell,
-							so your team always knows what changed.
+							Every change is recorded here and in the in-app changelog bell, so
+							your team always knows what changed.
 						</Trans>
 					</p>
 				</div>

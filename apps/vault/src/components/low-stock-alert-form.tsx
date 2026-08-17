@@ -1,8 +1,8 @@
 import { api } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Button, CollapsibleBanner, LoadingButton, SliderDetents } from "@ataqu/ui";
-import { Trans } from "@lingui/react/macro";
+import { CollapsibleBanner, LoadingButton, SliderDetents } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";

@@ -17,9 +17,9 @@ import {
 	SkeletonSwap,
 	Tabs,
 	TabsContent,
-	TaskSteps,
 	TabsList,
 	TabsTrigger,
+	TaskSteps,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";

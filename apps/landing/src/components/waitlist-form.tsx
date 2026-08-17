@@ -1,11 +1,11 @@
 "use client";
 
+import { LoadingButton } from "@ataqu/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { t } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react";
 import { Trans } from "@lingui/react/macro";
 import { AnimatePresence, motion } from "motion/react";
-import { LoadingButton } from "@ataqu/ui";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";

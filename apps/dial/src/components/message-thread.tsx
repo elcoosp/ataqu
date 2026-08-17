@@ -17,7 +17,6 @@ import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Avatar,
 	AvatarFallback,
-	Bone,
 	Button,
 	cn,
 	HoldToConfirm,

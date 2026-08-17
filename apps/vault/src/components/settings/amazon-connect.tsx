@@ -1,8 +1,14 @@
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "@ataqu/ui";
+import { useAmazonStatus, useConnectAmazon } from "@ataqu/api-client";
+import {
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	Input,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-
-import { useAmazonStatus, useConnectAmazon } from "@ataqu/api-client";
 import { showToast } from "../toast-store";
 
 /** Connect an Amazon Seller Central account via SP-API LWA credentials. */
@@ -19,9 +25,7 @@ export function AmazonConnect() {
 			showToast({
 				variant: "error",
 				title: <Trans>Amazon connection failed.</Trans>,
-				description: (
-					<Trans>Check the credentials and try again.</Trans>
-				),
+				description: <Trans>Check the credentials and try again.</Trans>,
 			});
 		},
 	});

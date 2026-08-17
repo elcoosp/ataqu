@@ -1,12 +1,11 @@
-import { Trans } from "@lingui/react/macro";
-import { Check, Circle } from "lucide-react";
-import { useState } from "react";
-
 import {
 	useCompleteOnboardingTask,
 	useOnboardingStatus,
 } from "@ataqu/api-client";
 import { ACTIVATION_TASKS, activationTaskHref } from "@ataqu/shared-stores";
+import { Trans } from "@lingui/react/macro";
+import { Check, Circle } from "lucide-react";
+import { useState } from "react";
 
 /**
  * Persistent onboarding activation widget (spec 2.10). Shows the setup progress
