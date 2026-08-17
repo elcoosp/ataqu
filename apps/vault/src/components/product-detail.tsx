@@ -35,6 +35,8 @@ import { MovementHistory } from "./movement-history";
 import { ShopifyConnect } from "./settings/shopify-connect";
 import { ShopifyErrorLog } from "./settings/shopify-error-log";
 import { ShopifyStatus } from "./settings/shopify-status";
+import { AmazonConnect } from "./settings/amazon-connect";
+import { AmazonStatus } from "./settings/amazon-status";
 import { ShopifySyncButton } from "./shopify-sync-button";
 import { StockAdjustment } from "./stock-adjustment";
 
@@ -624,7 +626,15 @@ export function ProductDetail({ productId }: { productId: string }) {
 					<ShopifyConnect />
 					<ShopifyStatus />
 					<ShopifyErrorLog />
-				</div>
+					</div>
+
+					<div className="space-y-4">
+					<h2 className="font-heading text-xl font-semibold text-foreground">
+						<Trans>Amazon</Trans>
+					</h2>
+					<AmazonConnect />
+					<AmazonStatus />
+					</div>
 			</section>
 		</OnboardTour>
 	);
