@@ -168,7 +168,7 @@ pub async fn reschedule_booking(
                     ApiResponseError::validation(&msg)
                 }
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(booking.into()))
 }
@@ -318,7 +318,7 @@ pub async fn update_event_type(
             ataqu_application::tempo_service::TempoServiceError::EventTypeNotFound => {
                 ApiResponseError::not_found("Event type not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(event_type.into()))
 }

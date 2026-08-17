@@ -218,7 +218,7 @@ pub async fn webhook_trigger(
             ataqu_application::spark_service::SparkServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(StatusCode::ACCEPTED)
 }
@@ -239,7 +239,7 @@ pub async fn approve_workflow_run(
             ataqu_application::spark_service::SparkServiceError::WorkflowNotFound => {
                 ApiResponseError::not_found("Workflow run not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
 
     Ok(StatusCode::OK)

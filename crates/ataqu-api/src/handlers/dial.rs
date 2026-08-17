@@ -309,7 +309,7 @@ pub async fn list_messages(
             ataqu_application::dial_service::DialServiceError::Validation(msg) => {
                 ApiResponseError::Forbidden(msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     let items = msgs.into_iter().map(|m| m.into()).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
@@ -706,7 +706,7 @@ pub async fn delete_reaction(
                     ApiResponseError::validation(&msg)
                 }
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }

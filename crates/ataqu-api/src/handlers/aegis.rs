@@ -246,7 +246,7 @@ fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
         MfaSetupFailed(msg) => ApiResponseError::validation(&msg),
         Database(msg) => ApiResponseError::internal(&msg),
         Outbox(msg) => ApiResponseError::internal(&msg),
-        Domain(_e) => ApiResponseError::internal("An unexpected error occurred"),
+        Domain(err) => ApiResponseError::internal_err(err),
         NotFound(msg) => ApiResponseError::not_found(&msg),
         Conflict(msg) => ApiResponseError::conflict(&msg),
         MfaRequired => ApiResponseError::unauthorized("MFA required"),

@@ -319,7 +319,7 @@ pub async fn update_contact(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(ContactResponse::from(contact)))
 }
@@ -337,7 +337,7 @@ pub async fn delete_contact(
             ataqu_application::cinq_service::CinqServiceError::ContactNotFound => {
                 ApiResponseError::not_found("Contact not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -373,7 +373,7 @@ pub async fn create_deal(
             ataqu_application::cinq_service::CinqServiceError::PipelineStageNotFound => {
                 ApiResponseError::validation("Invalid pipeline_stage_id")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
 
     let cmd = CreateDealCommand {
@@ -511,7 +511,7 @@ pub async fn update_deal(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(DealResponse::from(deal)))
 }
@@ -529,7 +529,7 @@ pub async fn delete_deal(
             ataqu_application::cinq_service::CinqServiceError::DealNotFound => {
                 ApiResponseError::not_found("Deal not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -977,7 +977,7 @@ pub async fn get_task(
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
                 ApiResponseError::not_found("Task not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     let etag = format!("\"{}\"", task.version);
     if let Some(if_none_match) = headers.get(axum::http::header::IF_NONE_MATCH)
@@ -1050,7 +1050,7 @@ pub async fn update_task(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(task.into()))
 }
@@ -1068,7 +1068,7 @@ pub async fn delete_task(
             ataqu_application::cinq_service::CinqServiceError::TaskNotFound => {
                 ApiResponseError::not_found("Task not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -1232,7 +1232,7 @@ pub async fn get_establishment(
             ataqu_application::cinq_service::CinqServiceError::EstablishmentNotFound(_) => {
                 ApiResponseError::not_found("Establishment not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(EstablishmentResponse::from(est)))
 }

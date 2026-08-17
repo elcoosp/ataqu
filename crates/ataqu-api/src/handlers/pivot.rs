@@ -205,7 +205,7 @@ pub async fn get_doc(
             ataqu_application::pivot_service::PivotServiceError::DocumentNotFound => {
                 ApiResponseError::not_found("Document not found")
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     let etag = format!("\"{}\"", doc.version);
     let mut resp_headers = axum::http::HeaderMap::new();
@@ -262,7 +262,7 @@ pub async fn update_doc(
             ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(doc.into()))
 }
@@ -462,7 +462,7 @@ pub async fn update_block(
             ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(block.into()))
 }
@@ -639,7 +639,7 @@ pub async fn apply_template(
             ataqu_application::pivot_service::PivotServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(

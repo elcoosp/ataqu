@@ -175,7 +175,7 @@ pub async fn update_product(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(product.into()))
 }
@@ -347,7 +347,7 @@ pub async fn update_variant(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(variant.into()))
 }
@@ -405,7 +405,7 @@ pub async fn update_stock(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(variant.into()))
 }
@@ -520,7 +520,7 @@ pub async fn reserve_stock(
             ataqu_application::vault_service::VaultServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(

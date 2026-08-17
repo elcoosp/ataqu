@@ -127,7 +127,7 @@ pub async fn create_employee(
             {
                 ApiResponseError::Conflict(msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
 
     let employee = state
@@ -183,7 +183,7 @@ pub async fn request_leave(
             {
                 ApiResponseError::Conflict(msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
 
     let request = state
@@ -532,7 +532,7 @@ pub async fn update_employee(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(employee.into()))
 }

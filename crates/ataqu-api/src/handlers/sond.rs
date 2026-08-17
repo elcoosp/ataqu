@@ -189,7 +189,7 @@ pub async fn update_form(
             {
                 ApiResponseError::conflict(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(updated_form.into()))
 }
@@ -333,7 +333,7 @@ pub async fn submit_form_step(
             ataqu_application::sond_service::SondServiceError::Validation(msg) => {
                 ApiResponseError::Validation(msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
 
     Ok(Json(StepSubmitResponse {

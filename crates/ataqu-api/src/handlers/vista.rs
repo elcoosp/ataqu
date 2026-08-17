@@ -167,7 +167,7 @@ pub async fn execute_raw_sql(
             ataqu_application::vista_service::VistaServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(results))
 }
@@ -222,7 +222,7 @@ pub async fn drill_down(
             ataqu_application::vista_service::VistaServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(results))
 }
@@ -245,7 +245,7 @@ pub async fn get_cross_app_dashboard(
             ataqu_application::vista_service::VistaServiceError::Validation(msg) => {
                 ApiResponseError::validation(&msg)
             }
-            _ => ApiResponseError::internal("An unexpected error occurred"),
+            err => ApiResponseError::internal_err(err),
         })?;
     Ok(Json(results))
 }
