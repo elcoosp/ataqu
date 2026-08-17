@@ -43,6 +43,7 @@ pub mod m20250101_000031_create_file_references;
 pub mod m20250101_000032_seed_changelog;
 pub mod m20250101_000033_populate_permissions;
 pub mod m20250101_000034_create_pending_approvals;
+pub mod m20250101_000035_create_amazon_sync;
 
 // ---- aegis ----
 pub mod m_aegis;
@@ -178,6 +179,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250101_000032_seed_changelog::Migration),
             Box::new(m20250101_000033_populate_permissions::Migration),
             Box::new(m20250101_000034_create_pending_approvals::Migration),
+            Box::new(m20250101_000035_create_amazon_sync::Migration),
             Box::new(m_aegis_add_roles_and_tenant_settings::Migration),
             Box::new(m_pivot_add_database_rows::Migration),
             Box::new(m_cinq_add_integrations::Migration),

@@ -399,6 +399,7 @@ dependencies = [
  "ataqu-application",
  "ataqu-contracts",
  "ataqu-domain-aegis",
+ "ataqu-domain-amazon",
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
  "ataqu-domain-health",
@@ -461,6 +462,7 @@ dependencies = [
  "async-trait",
  "ataqu-contracts",
  "ataqu-domain-aegis",
+ "ataqu-domain-amazon",
  "ataqu-domain-changelog",
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
@@ -581,6 +583,17 @@ dependencies = [
  "thiserror 2.0.19",
  "tracing",
  "urlencoding",
+ "uuid",
+]
+
+[[package]]
+name = "ataqu-domain-amazon"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "ataqu-kernel",
+ "chrono",
+ "serde",
  "uuid",
 ]
 
@@ -815,6 +828,7 @@ dependencies = [
  "async-trait",
  "ataqu-contracts",
  "ataqu-domain-aegis",
+ "ataqu-domain-amazon",
  "ataqu-domain-cinq",
  "ataqu-domain-dial",
  "ataqu-domain-pause",

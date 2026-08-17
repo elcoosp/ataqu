@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 ataqu-domain-health = { path = "../ataqu-domain-health" }
 ataqu-domain-shopify = { path = "../ataqu-domain-shopify" }
+ataqu-domain-amazon = { path = "../ataqu-domain-amazon" }
 hmac = "0.12"
 generic-array = "0.14"
 hex = "0.4"

@@ -14,6 +14,9 @@ use ataqu_application::onboarding_service::OnboardingService;
 use ataqu_application::pause_service::PauseService;
 use ataqu_application::pivot_service::PivotService;
 use ataqu_application::shopify_service::ShopifyService;
+use ataqu_application::amazon_service::AmazonService;
+use ataqu_infra_repositories::amazon_repo_impl::AmazonRepositoryImpl;
+use ataqu_infra_repositories::amazon_sync_log_repo::AmazonSyncLogRepo;
 use ataqu_application::sond_service::SondService;
 use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
@@ -772,6 +775,27 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(300)).await;
         }
     });
+    // Amazon Seller Central worker (spec 9 — Amazon Sync, P1)
+    let amazon_repo = Arc::new(
+        AmazonRepositoryImpl::new(pools.vault.clone())
+            .map_err(|e| anyhow::anyhow!(e))?,
+    );
+    let amazon_log_repo = Arc::new(AmazonSyncLogRepo::new(pools.vault.clone()));
+    let amazon_service = Arc::new(AmazonService::new(
+        amazon_repo,
+        vault_service.clone(),
+        amazon_log_repo,
+    ));
+    let amazon_http_client = reqwest::Client::new();
+    let amazon_service_clone = amazon_service.clone();
+    tokio::spawn(async move {
+        loop {
+            tracing::info!("Running Amazon inventory sync worker...");
+            let client = amazon_http_client.clone();
+            amazon_service_clone.sync_all(&client).await;
+            tokio::time::sleep(Duration::from_secs(300)).await;
+        }
+    });
     // Background workers
     let tempo_service_for_workers = tempo_service.clone();
     let spark_service_for_cron = spark_service.clone();
@@ -1339,6 +1363,7 @@ async fn main() -> anyhow::Result<()> {
         s3_service,
         onboarding_service,
         changelog_service,
+        amazon_service,
         audit_repo: audit_repo.clone(),
         trusted_proxies,
         allowlist_cache,

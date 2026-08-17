@@ -77,6 +77,7 @@ pub struct AppState {
     pub s3_service: Arc<S3Service>,
     pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>,
     pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
+    pub amazon_service: Arc<ataqu_application::amazon_service::AmazonService>,
     pub audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
     /// Proxies allowed to supply X-Forwarded-For / X-Real-IP. Empty = trust no
     /// proxy (forwarding headers are ignored for security decisions).
@@ -252,6 +253,10 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
         .route(
             "/api/v1/changelog/unread",
             get(handlers::changelog::get_unread_changelog),
+        )
+        .route(
+            "/api/v1/changelog/mark-read",
+            post(handlers::changelog::mark_changelog_read),
         )
         .nest("/api/aegis", aegis_routes())
         .nest("/api/cinq", cinq_routes())

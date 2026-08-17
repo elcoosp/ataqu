@@ -875,6 +875,122 @@ pub async fn shopify_sync(
     Ok(StatusCode::ACCEPTED)
 }
 
+// ----------------------------------------------------------------------
+// Amazon Seller Central connect / sync endpoints (spec 9 — Amazon Sync, P1)
+// ----------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+pub struct AmazonConnectRequest {
+    pub marketplace_id: String,
+    pub seller_id: String,
+    /// LWA refresh token used to mint SP-API credentials.
+    pub refresh_token: String,
+}
+
+pub async fn amazon_connect(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<AmazonConnectRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let integration = ataqu_domain_amazon::AmazonIntegration {
+        id: Uuid::new_v4(),
+        tenant_id: auth.tenant_id,
+        marketplace_id: payload.marketplace_id,
+        seller_id: payload.seller_id,
+        refresh_token: payload.refresh_token,
+        last_synced_at: None,
+        created_at: chrono::Utc::now(),
+    };
+    state
+        .amazon_service
+        .repo
+        .save_integration(&integration)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    Ok(Json(serde_json::json!({ "status": "connected" })))
+}
+
+pub async fn amazon_disconnect(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let integrations = state
+        .amazon_service
+        .repo
+        .list_integrations(&auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    if let Some(integration) = integrations.first() {
+        state
+            .amazon_service
+            .repo
+            .delete_integration(integration.id)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn amazon_status(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<serde_json::Value>> {
+    let integrations = state
+        .amazon_service
+        .repo
+        .list_integrations(&auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let connected = integrations.first();
+    Ok(Json(serde_json::json!({
+        "connected": connected.is_some(),
+        "marketplace_id": connected.map(|i| i.marketplace_id.clone()),
+        "seller_id": connected.map(|i| i.seller_id.clone()),
+        "last_synced_at": connected.and_then(|i| i.last_synced_at).map(|t| t.to_rfc3339()),
+    })))
+}
+
+pub async fn amazon_sync(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let integrations = state
+        .amazon_service
+        .repo
+        .list_integrations(&auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let integration = integrations
+        .first()
+        .ok_or_else(|| ApiResponseError::not_found("Amazon not connected"))?;
+
+    let client = state.http_client.clone();
+    let amazon_service = state.amazon_service.clone();
+    let integration_clone = integration.clone();
+    tokio::spawn(async move {
+        let _ = amazon_service
+            .sync_tenant_inventory(&integration_clone, &client)
+            .await;
+    });
+
+    Ok(StatusCode::ACCEPTED)
+}
+
 #[derive(Debug, serde::Deserialize)]
 pub struct BulkDeleteIdsRequest {
     pub ids: Vec<Uuid>,
@@ -915,6 +1031,10 @@ pub fn routes() -> Router<AppState> {
         .route("/shopify/callback", axum::routing::get(shopify_callback))
         .route("/shopify/webhook", axum::routing::post(shopify_webhook))
         .route("/shopify/sync", axum::routing::post(shopify_sync))
+        .route("/amazon/connect", axum::routing::post(amazon_connect))
+        .route("/amazon/disconnect", axum::routing::post(amazon_disconnect))
+        .route("/amazon/sync", axum::routing::post(amazon_sync))
+        .route("/amazon/status", axum::routing::get(amazon_status))
         .route(
             "/products",
             axum::routing::post(create_product).get(list_products),

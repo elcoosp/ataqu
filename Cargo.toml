@@ -21,6 +21,7 @@ members = [
     "crates/ataqu-domain-onboarding",
     "crates/ataqu-domain-changelog",
     "crates/ataqu-domain-shopify",
+    "crates/ataqu-domain-amazon",
     "crates/ataqu-infra-cron",
     "crates/ataqu-infra-idempotency",
     "crates/ataqu-infra-migration",
