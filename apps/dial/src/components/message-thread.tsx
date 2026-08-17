@@ -20,6 +20,9 @@ import {
 	Bone,
 	Button,
 	cn,
+	HoldToConfirm,
+	PresenceAvatars,
+	SkeletonSwap,
 	TypingIndicator,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
@@ -117,29 +120,13 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 
 	if (isLoading) {
 		return (
-			<div className="p-4 space-y-4">
-				<Bone
-					loading
-					name="message-thread-1"
-					fallback={<div className="h-10 w-full" />}
-				>
-					{null}
-				</Bone>
-				<Bone
-					loading
-					name="message-thread-2"
-					fallback={<div className="h-10 w-3/4" />}
-				>
-					{null}
-				</Bone>
-				<Bone
-					loading
-					name="message-thread-3"
-					fallback={<div className="h-10 w-2/3" />}
-				>
-					{null}
-				</Bone>
-			</div>
+			<SkeletonSwap ready={false} lines={5}>
+				<div className="p-4 space-y-4">
+					<div className="h-10 w-full" />
+					<div className="h-10 w-3/4" />
+					<div className="h-10 w-2/3" />
+				</div>
+			</SkeletonSwap>
 		);
 	}
 
@@ -163,6 +150,12 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 						setSearchQuery(_e.target.value);
 					}}
 				/>
+				<PresenceAvatars
+					people={[
+						{ id: "ada", name: "Ada" },
+						{ id: "lin", name: "Lin" },
+					]}
+				/>
 				<Button
 					variant="outline"
 					size="sm"
@@ -179,27 +172,19 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 				>
 					{t`Export PDF`}
 				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					className="text-destructive"
+				<HoldToConfirm
+					onConfirm={() => {
+						bulkDeleteMessages.mutate({
+							ids: displayedMessages.map((m) => m.id),
+						});
+					}}
 					disabled={
 						bulkDeleteMessages.isPending || displayedMessages.length === 0
 					}
-					onClick={() => {
-						if (
-							window.confirm(
-								`Delete all ${displayedMessages.length} shown messages?`,
-							)
-						) {
-							bulkDeleteMessages.mutate({
-								ids: displayedMessages.map((m) => m.id),
-							});
-						}
-					}}
+					className="variant-outline text-destructive"
 				>
 					{t`Delete all`}
-				</Button>
+				</HoldToConfirm>
 			</div>
 			<div ref={containerRef} className="flex-1 overflow-y-auto">
 				<div

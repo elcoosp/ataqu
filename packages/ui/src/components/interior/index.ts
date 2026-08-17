@@ -52,6 +52,7 @@ export {
 	type UsePopoverOptions as IUsePopoverOptions,
 	type UsePopoverResult as IUsePopoverResult,
 } from "./popover";
+export * from "./presence-avatars";
 export * from "./press-depth";
 export * from "./progress-bar";
 export * from "./reading-progress";
