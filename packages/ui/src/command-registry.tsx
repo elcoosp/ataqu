@@ -82,11 +82,11 @@ export const useRegisterCommands = (cmds: AppCommand[]): void => {
 		return;
 	}
 
-	// Register (or refresh) commands whenever the list changes.
-	ctx.register(cmds);
-
-	// Unregister on unmount.
+	// Register (or refresh) commands after commit, never during render — calling
+	// ctx.register() synchronously here would setState on the provider while a
+	// child is still rendering, which throws in React 18/19 concurrent mode.
 	useEffect(() => {
+		ctx.register(cmds);
 		return () => ctx.unregister(ids);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ctx, ids.join(",")]);

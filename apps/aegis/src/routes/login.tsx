@@ -57,7 +57,10 @@ export const Route = createFileRoute("/login")({
 				login(search.token, user);
 				navigate({ to: "/dashboard" });
 			}
-		}, [search]);
+			// Depend on the primitive search fields, not the `search` object itself
+			// (useSearch returns a new object reference every render, which would
+			// re-run this effect on each render and loop on the SSO callback).
+		}, [search.token, search.refreshToken, search.user_id, login, navigate]);
 
 		const handleSSO = async (provider: "google" | "microsoft") => {
 			try {
