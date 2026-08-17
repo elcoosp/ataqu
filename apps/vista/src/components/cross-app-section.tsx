@@ -6,8 +6,11 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle,
+	SkeletonSwap,
+	TreeView,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
+import { t } from "@lingui/core/macro";
 import { useState } from "react";
 
 type Row = Record<string, unknown>;
@@ -47,30 +50,32 @@ function CrossAppView({ view }: { view: string }) {
 							<Trans>No combined data yet — connect the source apps.</Trans>
 						</p>
 					) : (
-						<div className="overflow-x-auto">
-							<table className="w-full text-sm">
-								<thead>
-									<tr className="text-left text-xs uppercase text-muted-foreground">
-										{Object.keys(rows[0]).map((k) => (
-											<th key={k} className="px-2 py-1">
-												{k}
-											</th>
-										))}
-									</tr>
-								</thead>
-								<tbody>
-									{rows.map((r, i) => (
-										<tr key={i} className="border-t border-white/5">
-											{Object.values(r).map((v, j) => (
-												<td key={j} className="px-2 py-1 text-white/90">
-													{String(v)}
-												</td>
+						<SkeletonSwap ready={!isLoading} lines={4}>
+							<div className="overflow-x-auto">
+								<table className="w-full text-sm">
+									<thead>
+										<tr className="text-left text-xs uppercase text-muted-foreground">
+											{Object.keys(rows[0]).map((k) => (
+												<th key={k} className="px-2 py-1">
+													{k}
+												</th>
 											))}
 										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
+									</thead>
+									<tbody>
+										{rows.map((r, i) => (
+											<tr key={i} className="border-t border-white/5">
+												{Object.values(r).map((v, j) => (
+													<td key={j} className="px-2 py-1 text-white/90">
+														{String(v)}
+													</td>
+												))}
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</SkeletonSwap>
 					)}
 				</Bone>
 			</CardContent>
@@ -164,11 +169,33 @@ function CombineDataPanel() {
 }
 
 export function CrossAppSection() {
+	const appTree = [
+		{
+			id: "ataqu",
+			label: "Ataqu Platform",
+			children: [
+				{ id: "cinq", label: "CINQ (CRM)" },
+				{ id: "vault", label: "VAULT (Inventory)" },
+				{ id: "dial", label: "DIAL (Comms)" },
+				{ id: "spark", label: "SPARK (Automation)" },
+			],
+		},
+	];
 	return (
 		<div className="space-y-4">
 			<h2 className="text-lg font-heading text-white">
 				<Trans>Cross-App Dashboards</Trans>
 			</h2>
+			<Card className="h-full">
+				<CardHeader>
+					<CardTitle className="text-white">
+						<Trans>App Data Graph</Trans>
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<TreeView nodes={appTree} label={t`Apps`} defaultExpanded={["ataqu"]} />
+				</CardContent>
+			</Card>
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				{VIEWS.map((v) => (
 					<CrossAppView key={v.id} view={v.id} />

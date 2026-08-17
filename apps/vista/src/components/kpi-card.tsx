@@ -1,4 +1,4 @@
-import { Card } from "@ataqu/ui";
+import { Card, ValueFlash } from "@ataqu/ui";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import type React from "react";
 
@@ -17,6 +17,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 	trendValue,
 	className,
 }) => {
+	const numericValue = typeof value === "number" ? value : Number(value) || 0;
 	return (
 		<Card
 			className={`p-6 bg-card border-gray-700/40 flex flex-col justify-center ${className || ""}`}
@@ -25,9 +26,15 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 			<div className="flex flex-col space-y-2">
 				<span className="text-sm text-muted-foreground">{label}</span>
 				<div className="flex items-baseline gap-2">
-					<span className="text-3xl font-mono font-bold text-foreground">
-						{value}
-					</span>
+					<ValueFlash
+						value={numericValue}
+						format={(v) =>
+							typeof value === "number"
+								? v.toLocaleString()
+								: String(value)
+						}
+						className="text-3xl font-mono font-bold text-foreground"
+					/>
 					{trend && (
 						<div
 							className={`flex items-center text-xs font-medium ${trend === "up" ? "text-success" : "text-error"}`}

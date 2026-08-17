@@ -1,4 +1,4 @@
-import { Button } from "@ataqu/ui";
+import { Button, Drawer } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { Download, X } from "lucide-react";
 import type React from "react";
@@ -8,8 +8,6 @@ import { DrillDownTable } from "./drill-down-table";
 export const DrillDownPanel: React.FC = () => {
 	const { isOpen, setOpen, loading, data, dimension, value } =
 		useDrillDownStore();
-
-	if (!isOpen) return null;
 
 	const exportCsv = () => {
 		if (data.length === 0) return;
@@ -33,26 +31,12 @@ export const DrillDownPanel: React.FC = () => {
 	const handleClose = () => setOpen(false);
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex justify-end bg-black/80"
-			onClick={handleClose}
-			onKeyDown={(e: React.KeyboardEvent) => {
-				if (e.key === "Escape") handleClose();
-			}}
+		<Drawer
+			open={isOpen}
+			onOpenChange={(o) => !o && handleClose()}
+			title={`${value} ${"Details"}`}
 		>
-			<div
-				className="w-[350px] h-full ataqu-glass p-6 flex flex-col gap-4"
-				onClick={(e: React.MouseEvent) => e.stopPropagation()}
-				onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
-			>
-				<div className="flex justify-between items-center">
-					<h2 className="text-lg font-semibold">
-						{value} <Trans>Details</Trans>
-					</h2>
-					<Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-						<X className="h-4 w-4" />
-					</Button>
-				</div>
+			<div className="flex flex-col gap-4 h-full">
 				<p className="text-sm text-muted-foreground">
 					<Trans>
 						Showing raw data for {dimension}: {value}
@@ -83,6 +67,6 @@ export const DrillDownPanel: React.FC = () => {
 					)}
 				</div>
 			</div>
-		</div>
+		</Drawer>
 	);
 };

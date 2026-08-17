@@ -1,22 +1,49 @@
+import {
+	LiveActivity,
+	PresenceAvatars,
+	TypingIndicator,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type React from "react";
 
 interface SseIndicatorProps {
 	isConnected: boolean;
+	viewers?: { id: string; name: string }[];
+	typists?: string[];
 }
 
-export const SseIndicator: React.FC<SseIndicatorProps> = ({ isConnected }) => {
+export const SseIndicator: React.FC<SseIndicatorProps> = ({
+	isConnected,
+	viewers = [],
+	typists = [],
+}) => {
 	return (
 		<div
-			className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-				isConnected ? "bg-success/10 text-success" : "bg-error/10 text-error"
-			}`}
+			className="flex items-center gap-3"
 			data-tour="sse-indicator"
 		>
-			<span
-				className={`h-2 w-2 rounded-full ${isConnected ? "bg-success animate-pulse" : "bg-error"}`}
+			<LiveActivity
+				activity={
+					isConnected
+						? {
+								id: "conn",
+								title: "Live dashboard",
+								detail: "Connected to realtime stream",
+								phase: "running",
+							}
+						: {
+								id: "disc",
+								title: "Disconnected",
+								detail: "Reconnecting to stream…",
+								phase: "running",
+							}
+				}
 			/>
-			{isConnected ? <Trans>Live</Trans> : <Trans>Disconnected</Trans>}
+			{viewers.length > 0 && (
+				<PresenceAvatars people={viewers} max={4} />
+			)}
+			{typists.length > 0 && <TypingIndicator typists={typists} />}
+			{!isConnected && <Trans>Disconnected</Trans>}
 		</div>
 	);
 };

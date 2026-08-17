@@ -1,9 +1,9 @@
 import { api } from "@ataqu/api-client";
 import { useLocalStorage } from "@ataqu/shared-hooks";
-import { Button } from "@ataqu/ui";
+import { Button, LoadingButton, ShowMore } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { Download, Play } from "lucide-react";
+import { Download } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
@@ -77,7 +77,7 @@ export const SqlEditor: React.FC = () => {
 									className="w-full text-left text-xs text-gray-400 hover:text-white truncate p-2 rounded bg-deep-night/50 hover:bg-deep-night"
 									onClick={() => setSql(q)}
 								>
-									{q}
+									<ShowMore lines={1}>{q}</ShowMore>
 								</button>
 							</li>
 						))}
@@ -96,9 +96,13 @@ export const SqlEditor: React.FC = () => {
 					/>
 				</div>
 				<div className="flex items-center gap-2">
-					<Button size="sm" onClick={runQuery} disabled={isLoading}>
-						<Play className="h-4 w-4 mr-2" /> <Trans>Run Query</Trans>
-					</Button>
+					<LoadingButton
+						onAction={runQuery}
+						disabled={isLoading}
+						pendingLabel="Running…"
+					>
+						Run Query
+					</LoadingButton>
 					<Button
 						size="sm"
 						variant="outline"

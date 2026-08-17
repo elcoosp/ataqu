@@ -1,5 +1,5 @@
 import { api } from "@ataqu/api-client";
-import { Button } from "@ataqu/ui";
+import { Button, CopyButton } from "@ataqu/ui";
 import { FileSpreadsheet, FileText, Image as ImageIcon } from "lucide-react";
 import type React from "react";
 import { toast } from "sonner";
@@ -34,6 +34,11 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
 
 	return (
 		<div className="flex items-center gap-2">
+			<CopyButton
+				value={`${window.location.origin}/vista/dashboards/${dashboardId}`}
+				label="Copy share link"
+				className="variant-outline"
+			/>
 			<Button variant="outline" size="sm" onClick={() => handleExport("pdf")}>
 				<FileText className="h-4 w-4 mr-2" /> PDF
 			</Button>
