@@ -3,7 +3,9 @@
 import { Trans } from "@lingui/react/macro";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { Dropdown, ICommandPalette, type ICommandItem } from "@ataqu/ui";
 
 const COMPETITORS = [
 	{ slug: "hubspot", label: "HubSpot" },
@@ -21,6 +23,47 @@ const COMPETITORS = [
 
 export function Header() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const [paletteOpen, setPaletteOpen] = useState(false);
+	const router = useRouter();
+
+	const commandItems: ICommandItem[] = [
+		{ id: "home", label: "Home", hint: "Go to home", keywords: "start landing", shortcut: ["g", "h"] },
+		{ id: "pricing", label: "Pricing", hint: "View pricing", keywords: "cost plans", shortcut: ["g", "p"] },
+		{ id: "about", label: "About", hint: "About Ataqu", keywords: "company", shortcut: ["g", "a"] },
+		{ id: "blog", label: "Blog", hint: "Read the blog", keywords: "news articles", shortcut: ["g", "b"] },
+		{ id: "roadmap", label: "Roadmap", hint: "See the roadmap", keywords: "plans future", shortcut: ["g", "r"] },
+		{ id: "faq", label: "FAQ", hint: "Frequently asked questions", keywords: "help", shortcut: ["g", "f"] },
+		...COMPETITORS.map((c) => ({
+			id: `alt-${c.slug}`,
+			label: `Alternatives: ${c.label}`,
+			hint: `Compare with ${c.label}`,
+			keywords: `alternative ${c.label.toLowerCase()}`,
+		})),
+	];
+
+	const onCommandSelect = useCallback(
+		(item: ICommandItem) => {
+			if (item.id.startsWith("alt-")) {
+				const slug = item.id.replace("alt-", "");
+				router.push(`/alternatives/${slug}`);
+			} else {
+				router.push(`/${item.id === "home" ? "" : item.id}`);
+			}
+			setPaletteOpen(false);
+		},
+		[router],
+	);
+
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				e.preventDefault();
+				setPaletteOpen((o) => !o);
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, []);
 
 	return (
 		<header className="border-b border-border bg-background/90 backdrop-blur-sm sticky top-0 z-50">
@@ -75,25 +118,22 @@ export function Header() {
 						<Trans>FAQ</Trans>
 					</Link>
 
-					<div className="relative group">
-						<button className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-							<Trans>Alternatives</Trans>
-							<span className="text-xs">▾</span>
-						</button>
-						<div className="absolute left-0 mt-2 w-48 rounded-lg border border-border bg-card shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-							<div className="p-2 space-y-1">
-								{COMPETITORS.map((c) => (
-									<Link
-										key={c.slug}
-										href={`/alternatives/${c.slug}`}
-										className="block px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-md transition-colors"
-									>
-										{c.label}
-									</Link>
-								))}
-							</div>
-						</div>
-					</div>
+					<Dropdown
+						label="Alternatives"
+						placeholder="Alternatives"
+						items={COMPETITORS.map((c) => ({ value: c.slug, label: c.label }))}
+						onChange={(value) => router.push(`/alternatives/${value}`)}
+					/>
+
+					<button
+						type="button"
+						onClick={() => setPaletteOpen(true)}
+						className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-xs border border-border rounded px-2 py-1"
+						aria-label="Open command palette"
+					>
+						<Trans>Search</Trans>
+						<span className="text-[10px] opacity-60">⌘K</span>
+					</button>
 				</nav>
 
 				<button
@@ -178,6 +218,14 @@ export function Header() {
 					</div>
 				</div>
 			)}
+
+			<ICommandPalette
+				open={paletteOpen}
+				items={commandItems}
+				onSelect={onCommandSelect}
+				onDismiss={() => setPaletteOpen(false)}
+				placeholder="Search Ataqu…"
+			/>
 		</header>
 	);
 }
