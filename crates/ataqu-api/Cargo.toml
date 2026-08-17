@@ -7,6 +7,7 @@ edition = "2024"
 ataqu-domain-health = { path = "../ataqu-domain-health" }
 ataqu-domain-shopify = { path = "../ataqu-domain-shopify" }
 hmac = "0.12"
+generic-array = "0.14"
 hex = "0.4"
 ataqu-infra-storage = { path = "../ataqu-infra-storage" }
 axum = { version = "0.8.9", features = ["ws", "multipart"] }

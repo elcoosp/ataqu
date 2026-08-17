@@ -36,14 +36,18 @@ impl Encryptor {
     /// (optional, base64) is the previous key, retained so existing ciphertexts
     /// remain decryptable after a rotation. To rotate: set `ENCRYPTION_KEY_PREV`
     /// to the current key, then change `ENCRYPTION_KEY` to the new key.
-    pub fn from_env() -> Self {
-        let primary = Self::key_from_env("ENCRYPTION_KEY");
+    ///
+    /// Returns an error (instead of panicking) when a key is missing or
+    /// malformed, so the caller can surface it as a startup failure.
+    pub fn from_env() -> Result<Self, String> {
+        let primary = Self::key_from_env("ENCRYPTION_KEY")?;
         let mut keys = vec![primary];
         if let Ok(prev_b64) = std::env::var("ENCRYPTION_KEY_PREV")
-            && !prev_b64.trim().is_empty() {
-                keys.push(Self::decode_key(&prev_b64));
-            }
-        Self { keys }
+            && !prev_b64.trim().is_empty()
+        {
+            keys.push(Self::decode_key(&prev_b64)?);
+        }
+        Ok(Self { keys })
     }
 
     /// Build directly from explicit keys (primary first). Exposed for tests and
@@ -53,19 +57,19 @@ impl Encryptor {
         Self { keys }
     }
 
-    fn key_from_env(var: &str) -> [u8; 32] {
+    fn key_from_env(var: &str) -> Result<[u8; 32], String> {
         let raw = std::env::var(var)
-            .unwrap_or_else(|_| panic!("{var} must be set (32 bytes, base64)"));
+            .map_err(|_| format!("{var} must be set (32 bytes, base64)"))?;
         Self::decode_key(&raw)
     }
 
-    fn decode_key(b64: &str) -> [u8; 32] {
+    fn decode_key(b64: &str) -> Result<[u8; 32], String> {
         let bytes = base64::engine::general_purpose::STANDARD
             .decode(b64.trim())
-            .expect("ENCRYPTION_KEY must be valid base64");
+            .map_err(|_| "ENCRYPTION_KEY must be valid base64".to_string())?;
         bytes
             .try_into()
-            .expect("ENCRYPTION_KEY must be 32 bytes")
+            .map_err(|_| "ENCRYPTION_KEY must be 32 bytes".to_string())
     }
 
     /// Encrypt `plaintext` with the primary key, embedding its version.

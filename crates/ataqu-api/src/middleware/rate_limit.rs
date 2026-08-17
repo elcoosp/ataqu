@@ -100,10 +100,11 @@ pub async fn rate_limit_middleware(
     if limiter.check(&key) {
         Ok(next.run(req).await)
     } else {
-        Ok(axum::response::Response::builder()
+        let resp = axum::response::Response::builder()
             .status(StatusCode::TOO_MANY_REQUESTS)
             .header("Retry-After", "60")
             .body(Body::from("Rate limit exceeded"))
-            .unwrap())
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        Ok(resp)
     }
 }

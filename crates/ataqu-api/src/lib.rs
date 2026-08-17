@@ -8,6 +8,7 @@ use axum::{
     extract::State,
     routing::{get, post},
 };
+use crate::error::ApiResponseError;
 use std::net::SocketAddr;
 use dashmap::DashMap;
 use metrics_exporter_prometheus::PrometheusHandle;
@@ -171,7 +172,9 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 /// into the `X-CSRF-Token` header), and echoes the token in the
 /// `X-CSRF-Token` response header. Clients call this once, then send the token
 /// back on every state-changing request.
-async fn issue_csrf_token(State(state): State<AppState>) -> axum::response::Response {
+async fn issue_csrf_token(
+    State(state): State<AppState>,
+) -> Result<axum::response::Response, ApiResponseError> {
     use axum::http::{header, HeaderValue};
     let token = state.csrf_protector.issue();
     let cookie = format!(
@@ -183,16 +186,22 @@ async fn issue_csrf_token(State(state): State<AppState>) -> axum::response::Resp
         .status(axum::http::StatusCode::OK)
         .header(
             crate::middleware::csrf_token::CSRF_HEADER_NAME,
-            HeaderValue::from_str(&token).unwrap(),
+            HeaderValue::from_str(&token)
+                .map_err(|_| ApiResponseError::internal("CSRF token is not valid UTF-8"))?,
         )
-        .header(header::SET_COOKIE, HeaderValue::from_str(&cookie).unwrap())
+        .header(
+            header::SET_COOKIE,
+            HeaderValue::from_str(&cookie)
+                .map_err(|_| ApiResponseError::internal("CSRF cookie is not valid UTF-8"))?,
+        )
         .body(axum::body::Body::empty())
-        .unwrap();
+        .map_err(|_| ApiResponseError::internal("failed to build CSRF token response"))?;
     // Also expose the token in the JSON body for clients that prefer it.
     *resp.body_mut() = axum::body::Body::from(
-        serde_json::to_vec(&serde_json::json!({ "csrfToken": token })).unwrap(),
+        serde_json::to_vec(&serde_json::json!({ "csrfToken": token }))
+            .map_err(|_| ApiResponseError::internal("failed to serialize CSRF token"))?,
     );
-    resp
+    Ok(resp)
 }
 
 pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, SocketAddr> {

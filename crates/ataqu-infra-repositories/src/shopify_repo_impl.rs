@@ -12,9 +12,9 @@ pub struct ShopifyRepositoryImpl {
 }
 
 impl ShopifyRepositoryImpl {
-    pub fn new(db: DatabaseConnection) -> Self {
-        let encryptor = Encryptor::from_env();
-        Self { db, encryptor }
+    pub fn new(db: DatabaseConnection) -> Result<Self, String> {
+        let encryptor = Encryptor::from_env()?;
+        Ok(Self { db, encryptor })
     }
 }
 
@@ -62,8 +62,7 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
 
     async fn save_integration(&self, integration: &ShopifyIntegration) -> Result<(), String> {
         use crate::entities::shopify as entity;
-        let encryptor = Encryptor::from_env();
-        let encrypted_token = encryptor.encrypt(&integration.access_token);
+        let encrypted_token = self.encryptor.encrypt(&integration.access_token);
         let active = entity::ActiveModel {
             id: Set(integration.id),
             tenant_id: Set(integration.tenant_id.as_uuid()),
@@ -84,7 +83,6 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
         tenant_id: &TenantId,
     ) -> Result<Vec<ShopifyIntegration>, String> {
         use crate::entities::shopify as entity;
-        let encryptor = Encryptor::from_env();
         let models = entity::Entity::find()
             .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
             .all(&self.db)
@@ -92,7 +90,7 @@ impl ShopifyRepository for ShopifyRepositoryImpl {
             .map_err(|e| e.to_string())?;
         let mut ints = Vec::new();
         for m in models {
-            let decrypted_token = match encryptor.decrypt(&m.access_token) {
+            let decrypted_token = match self.encryptor.decrypt(&m.access_token) {
                 Ok(token) => token,
                 Err(e) => {
                     tracing::error!("Failed to decrypt token for integration {}: {}", m.id, e);

@@ -748,7 +748,10 @@ async fn main() -> anyhow::Result<()> {
         }
     });
     // Shopify worker
-    let shopify_repo = Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()));
+    let shopify_repo = Arc::new(
+        ShopifyRepositoryImpl::new(pools.vault.clone())
+            .map_err(|e| anyhow::anyhow!(e))?,
+    );
     let shopify_log_repo = Arc::new(
         ataqu_infra_repositories::shopify_sync_log_repo::ShopifySyncLogRepo::new(
             pools.vault.clone(),

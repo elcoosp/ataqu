@@ -25,6 +25,8 @@
 //! only break legitimate API clients.
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
+use generic_array::typenum::U64;
+use generic_array::GenericArray;
 use hmac::{Hmac, Mac};
 use rand::RngCore;
 use sha2::Sha256;
@@ -37,12 +39,22 @@ type HmacSha256 = Hmac<Sha256>;
 /// Issues and verifies stateless HMAC-signed CSRF tokens.
 #[derive(Clone)]
 pub struct CsrfProtector {
-    secret: [u8; 32],
+    /// HMAC key padded to the SHA-256 block size (64 bytes) once at
+    /// construction, so signing/verifying is infallible (`Hmac::new` takes a
+    /// fixed-size `GenericArray` and never fails for a correctly-sized key).
+    key: GenericArray<u8, U64>,
 }
 
 impl CsrfProtector {
+    /// Build from a 32-byte raw secret. The secret is zero-padded to the
+    /// 64-byte HMAC block size, matching what `Hmac::new_from_slice` does
+    /// internally, so the padded key is cryptographically identical.
     pub fn new(secret: [u8; 32]) -> Self {
-        Self { secret }
+        let mut padded = [0u8; 64];
+        padded[..32].copy_from_slice(&secret);
+        Self {
+            key: *GenericArray::from_slice(&padded),
+        }
     }
 
     /// Build from `CSRF_SECRET` (base64, 32 bytes). Required config; returns
@@ -56,7 +68,7 @@ impl CsrfProtector {
         let secret: [u8; 32] = bytes
             .try_into()
             .map_err(|_| anyhow::anyhow!("CSRF_SECRET must be 32 bytes"))?;
-        Ok(Self { secret })
+        Ok(Self::new(secret))
     }
 
     /// Mint a new signed token `value.signature` (both base64url, no pad).
@@ -68,8 +80,7 @@ impl CsrfProtector {
     }
 
     fn sign(&self, value: &[u8]) -> Vec<u8> {
-        let mut mac = HmacSha256::new_from_slice(&self.secret)
-            .expect("HMAC accepts any key length");
+        let mut mac = HmacSha256::new(&self.key);
         mac.update(value);
         mac.finalize().into_bytes().to_vec()
     }
@@ -90,10 +101,7 @@ impl CsrfProtector {
         };
         // Recompute HMAC(value) and verify against the supplied signature using
         // the constant-time compare built into the MAC.
-        let mut mac = match HmacSha256::new_from_slice(&self.secret) {
-            Ok(m) => m,
-            Err(_) => return false,
-        };
+        let mut mac = HmacSha256::new(&self.key);
         mac.update(&value);
         mac.verify_slice(&sig).is_ok()
     }

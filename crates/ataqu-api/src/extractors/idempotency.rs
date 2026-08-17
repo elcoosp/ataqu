@@ -96,7 +96,7 @@ where
             let resp = axum::response::Response::builder()
                 .status(status)
                 .body(axum::body::Body::from(body_bytes))
-                .unwrap();
+                .map_err(|_| ApiResponseError::internal("failed to build idempotent response"))?;
             Ok(resp)
         }
         Err(e) if e.is_validation() => {

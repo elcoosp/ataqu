@@ -422,6 +422,7 @@ dependencies = [
  "dashmap",
  "dotenvy",
  "futures",
+ "generic-array",
  "hex",
  "hmac 0.12.1",
  "http 1.5.0",
