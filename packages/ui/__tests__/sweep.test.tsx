@@ -28,6 +28,7 @@ import {
 	Tooltip,
 } from "@ataqu/ui";
 import type { ColumnDef } from "@tanstack/react-table";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Checkbox } from "../src/components/ui/checkbox";
@@ -124,7 +125,12 @@ describe("ui component render sweep", () => {
 				onCtaClick={noop}
 			/>,
 		);
-		render(<ChangelogBell />);
+		const queryClient = new QueryClient();
+		render(
+			<QueryClientProvider client={queryClient}>
+				<ChangelogBell />
+			</QueryClientProvider>,
+		);
 		render(<SelectionCheckbox scope="s" id="1" />);
 		render(
 			<BulkActionBar

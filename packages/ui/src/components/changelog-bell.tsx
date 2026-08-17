@@ -1,7 +1,12 @@
-import { CHANGELOG, useChangelogStore } from "@ataqu/shared-stores";
 import { Trans } from "@lingui/react/macro";
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import {
+	useChangelog,
+	useMarkChangelogRead,
+} from "@ataqu/api-client";
+import { useChangelogStore } from "@ataqu/shared-stores";
 
 const CATEGORY_STYLES: Record<string, string> = {
 	New: "bg-emerald-500/15 text-emerald-400",
@@ -11,19 +16,27 @@ const CATEGORY_STYLES: Record<string, string> = {
 
 /**
  * In-app changelog bell (spec 2.12). Shows a red dot for unread entries;
- * clicking opens a modal listing recent features/improvements/fixes.
+ * clicking opens a modal listing recent features/improvements/fixes fetched
+ * from the backend (`GET /api/v1/changelog`).
  */
 export function ChangelogBell() {
 	const [open, setOpen] = useState(false);
+	const { data, isLoading } = useChangelog();
+	const markRead = useMarkChangelogRead();
 	const lastSeenId = useChangelogStore((s) => s.lastSeenId);
 	const markSeen = useChangelogStore((s) => s.markSeen);
-	const _unread = useChangelogStore((s) => s.unreadCount());
+
+	const entries = data?.entries ?? [];
+	const latestId = entries[0]?.id ?? null;
+	const showDot = latestId !== null && latestId !== lastSeenId;
 
 	useEffect(() => {
-		if (open) markSeen();
-	}, [open, markSeen]);
-
-	const showDot = lastSeenId !== CHANGELOG[0]?.id;
+		if (!open) return;
+		markSeen();
+		if (entries.length > 0) {
+			markRead.mutate(entries.map((e) => e.id));
+		}
+	}, [open, markSeen, markRead, entries]);
 
 	return (
 		<div className="relative">
@@ -44,8 +57,13 @@ export function ChangelogBell() {
 					<p className="mb-2 text-sm font-medium text-white">
 						<Trans>What's new</Trans>
 					</p>
+					{isLoading && (
+						<p className="text-xs text-gray-400">
+							<Trans>Loading…</Trans>
+						</p>
+					)}
 					<ul className="space-y-3">
-						{CHANGELOG.map((entry) => (
+						{entries.map((entry) => (
 							<li
 								key={entry.id}
 								className="border-b border-white/5 pb-2 last:border-0"
@@ -59,11 +77,21 @@ export function ChangelogBell() {
 										{entry.category}
 									</span>
 									<span className="text-xs text-gray-500">{entry.date}</span>
+									{entry.breaking_change && (
+										<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase text-red-400">
+											<Trans>Breaking</Trans>
+										</span>
+									)}
 								</div>
 								<p className="mt-1 text-sm text-white">{entry.title}</p>
 								<p className="text-xs text-gray-400">{entry.description}</p>
 							</li>
 						))}
+						{!isLoading && entries.length === 0 && (
+							<li className="text-xs text-gray-400">
+								<Trans>No updates yet.</Trans>
+							</li>
+						)}
 					</ul>
 				</div>
 			)}

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useActivationStore } from "../src/activation";
+import { ACTIVATION_TASKS } from "../src/activation";
 import { useAuthStore } from "../src/auth";
 import { useChangelogStore } from "../src/changelog";
 import { useOnboardingStore } from "../src/onboarding";
@@ -109,46 +109,27 @@ describe("useSelectionStore", () => {
 describe("useChangelogStore", () => {
 	beforeEach(() => useChangelogStore.setState({ lastSeenId: null }));
 
-	it("reports full unread count before marking seen", () => {
-		expect(useChangelogStore.getState().unreadCount()).toBeGreaterThan(0);
+	it("starts with no lastSeenId", () => {
+		expect(useChangelogStore.getState().lastSeenId).toBeNull();
 	});
 
-	it("markSeen sets lastSeenId to the latest entry", () => {
-		useChangelogStore.getState().markSeen();
-		expect(useChangelogStore.getState().lastSeenId).toBeTruthy();
-		expect(useChangelogStore.getState().unreadCount()).toBe(0);
+	it("markSeen records the newest entry id", () => {
+		useChangelogStore.getState().markSeen("2026-08-16-unified-search");
+		expect(useChangelogStore.getState().lastSeenId).toBe(
+			"2026-08-16-unified-search",
+		);
 	});
 });
 
-describe("useActivationStore", () => {
-	beforeEach(() =>
-		useActivationStore.setState({
-			completed: {},
-		}),
-	);
-
-	it("has a positive total", () => {
-		expect(useActivationStore.getState().total).toBeGreaterThan(0);
+describe("ACTIVATION_TASKS", () => {
+	it("has a positive number of activation tasks", () => {
+		expect(ACTIVATION_TASKS.length).toBeGreaterThan(0);
 	});
 
-	it("marks and resets completion", () => {
-		useActivationStore.getState().complete("import-contacts");
-		expect(useActivationStore.getState().isComplete("import-contacts")).toBe(
-			true,
-		);
-		expect(useActivationStore.getState().completedCount()).toBe(1);
-		useActivationStore.getState().reset("import-contacts");
-		expect(useActivationStore.getState().isComplete("import-contacts")).toBe(
-			false,
-		);
-	});
-
-	it("progress increases as tasks complete", () => {
-		const total = useActivationStore.getState().total;
-		useActivationStore.getState().complete("import-contacts");
-		expect(useActivationStore.getState().progress()).toBe(
-			Math.round((1 / total) * 100),
-		);
+	it("exposes a deep link for each task", () => {
+		for (const task of ACTIVATION_TASKS) {
+			expect(task.href).toBeTruthy();
+		}
 	});
 });
 

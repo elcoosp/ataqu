@@ -1,20 +1,27 @@
-import { ACTIVATION_TASKS, useActivationStore } from "@ataqu/shared-stores";
 import { Trans } from "@lingui/react/macro";
 import { Check, Circle } from "lucide-react";
 import { useState } from "react";
 
+import {
+	useCompleteOnboardingTask,
+	useOnboardingStatus,
+} from "@ataqu/api-client";
+import { activationTaskHref } from "@ataqu/shared-stores";
+
 /**
- * Persistent onboarding activation widget (spec 2.10). Shows the setup
- * progress percentage and a popover listing the activation tasks.
+ * Persistent onboarding activation widget (spec 2.10). Shows the setup progress
+ * percentage and a popover listing the activation tasks. State is sourced from
+ * the backend (`GET /api/v1/onboarding/status`); completing a task calls
+ * `POST /api/v1/onboarding/task-complete`.
  */
 export function SetupProgressWidget() {
 	const [open, setOpen] = useState(false);
-	const completed = useActivationStore((s) => s.completed);
-	const complete = useActivationStore((s) => s.complete);
-	const reset = useActivationStore((s) => s.reset);
+	const { data, isLoading } = useOnboardingStatus();
+	const completeTask = useCompleteOnboardingTask();
 
-	const done = ACTIVATION_TASKS.filter((t) => completed[t.id]).length;
-	const total = ACTIVATION_TASKS.length;
+	const tasks = data?.tasks ?? [];
+	const done = tasks.filter((t) => t.completed).length;
+	const total = tasks.length || 1;
 	const pct = Math.round((done / total) * 100);
 
 	return (
@@ -40,30 +47,42 @@ export function SetupProgressWidget() {
 					<p className="mb-2 text-sm font-medium text-white">
 						<Trans>Activation checklist</Trans>
 					</p>
+					{isLoading && (
+						<p className="text-xs text-gray-400">
+							<Trans>Loading…</Trans>
+						</p>
+					)}
 					<ul className="space-y-1">
-						{ACTIVATION_TASKS.map((task) => {
-							const isDone = !!completed[task.id];
-							return (
-								<li key={task.id}>
-									<button
-										type="button"
-										onClick={() =>
-											isDone ? reset(task.id) : complete(task.id)
+						{tasks.map((task) => (
+							<li key={task.id}>
+								<button
+									type="button"
+									onClick={() => {
+										if (!task.completed) {
+											completeTask.mutate(task.id);
+										} else {
+											const href = activationTaskHref(task.id);
+											if (href) window.location.assign(href);
 										}
-										className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-300 hover:bg-white/5"
-									>
-										{isDone ? (
-											<Check className="h-4 w-4 text-emerald-400" />
-										) : (
-											<Circle className="h-4 w-4 text-gray-500" />
-										)}
-										<span className={isDone ? "line-through" : ""}>
-											{task.label}
-										</span>
-									</button>
-								</li>
-							);
-						})}
+									}}
+									className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-300 hover:bg-white/5"
+								>
+									{task.completed ? (
+										<Check className="h-4 w-4 text-emerald-400" />
+									) : (
+										<Circle className="h-4 w-4 text-gray-500" />
+									)}
+									<span className={task.completed ? "line-through" : ""}>
+										{task.title}
+									</span>
+								</button>
+							</li>
+						))}
+						{!isLoading && tasks.length === 0 && (
+							<li className="text-xs text-gray-400">
+								<Trans>No setup tasks.</Trans>
+							</li>
+						)}
 					</ul>
 				</div>
 			)}
