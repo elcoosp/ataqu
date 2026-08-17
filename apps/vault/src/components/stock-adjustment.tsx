@@ -1,6 +1,12 @@
 import type { Variant } from "@ataqu/api-client";
 import { useBulkAdjustStock, useUpdateStock } from "@ataqu/api-client";
-import { Button, FloatingLabelInput, InlineValidation } from "@ataqu/ui";
+import {
+	Button,
+	FloatingLabelInput,
+	InlineValidation,
+	LoadingButton,
+	SliderDetents,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import type { QueryKey } from "@tanstack/react-query";
@@ -125,6 +131,16 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 							return null;
 						}}
 					/>
+					<SliderDetents
+						label={t`Adjustment amount`}
+						value={Number.isFinite(parsedDelta) ? parsedDelta : 0}
+						onValueChange={(v) => setDelta(String(v))}
+						min={-100}
+						max={100}
+						step={1}
+						detents={[-50, 0, 50]}
+						format={(v) => (v > 0 ? `+${v}` : `${v}`)}
+					/>
 				</div>
 				<div className="space-y-2">
 					<FloatingLabelInput
@@ -135,18 +151,32 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 					/>
 				</div>
 				<div className="flex items-end">
-					<Button
-						type="submit"
-						data-tour="adjust-stock"
+					<LoadingButton
+						onAction={async () => {
+							await new Promise<void>((resolve, reject) => {
+								try {
+									adjustStock.mutate(
+										{
+											variantId: variant.id,
+											data: { delta: parsedDelta, reason },
+											version: variant.version,
+										},
+										{
+											onSuccess: () => resolve(),
+											onError: () => reject(),
+										},
+									);
+								} catch (e) {
+									reject(e);
+								}
+							});
+						}}
 						disabled={!canSubmit || adjustStock.isPending}
+						data-tour="adjust-stock"
 						className="w-full md:w-auto"
 					>
-						{adjustStock.isPending ? (
-							<Trans>Adjusting...</Trans>
-						) : (
-							<Trans>Adjust Stock</Trans>
-						)}
-					</Button>
+						Adjust Stock
+					</LoadingButton>
 					<Button
 						type="button"
 						variant="outline"

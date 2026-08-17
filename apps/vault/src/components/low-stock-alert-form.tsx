@@ -1,7 +1,8 @@
 import { api } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Button, Input, Label } from "@ataqu/ui";
+import { Button, CollapsibleBanner, LoadingButton, SliderDetents } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
+import { t } from "@lingui/core/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -48,27 +49,51 @@ export function LowStockAlertForm({ productId }: { productId: UUID }) {
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4">
-			<div className="space-y-2">
-				<Label htmlFor="low-stock-threshold">
-					<Trans>Low Stock Threshold</Trans>
-				</Label>
-				<Input
-					id="low-stock-threshold"
-					type="number"
-					min="0"
-					value={threshold}
-					onChange={(event) => setThreshold(event.target.value)}
-					className="w-32"
-				/>
-			</div>
-			<Button type="submit" disabled={setAlert.isPending}>
-				{setAlert.isPending ? (
-					<Trans>Setting...</Trans>
-				) : (
-					<Trans>Set Low Stock Alert</Trans>
-				)}
-			</Button>
-		</form>
+		<div className="space-y-4">
+			<CollapsibleBanner
+				title={<Trans>About low stock alerts</Trans>}
+				description={
+					<Trans>
+						You'll be notified when any variant's available stock drops to or
+						below the threshold you set here.
+					</Trans>
+				}
+			/>
+			<form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4">
+				<div className="space-y-2">
+					<SliderDetents
+						label={t`Low Stock Threshold`}
+						value={Number.isFinite(Number(threshold)) ? Number(threshold) : 0}
+						onValueChange={(v) => setThreshold(String(v))}
+						min={0}
+						max={100}
+						step={1}
+						detents={[1, 5, 10, 25]}
+					/>
+				</div>
+				<LoadingButton
+					onAction={async () => {
+						await new Promise<void>((resolve, reject) => {
+							try {
+								const value = Number(threshold);
+								if (Number.isFinite(value) && value >= 0) {
+									setAlert.mutate(value, {
+										onSuccess: () => resolve(),
+										onError: () => reject(),
+									});
+								} else {
+									resolve();
+								}
+							} catch (e) {
+								reject(e);
+							}
+						});
+					}}
+					disabled={setAlert.isPending}
+				>
+					Set Low Stock Alert
+				</LoadingButton>
+			</form>
+		</div>
 	);
 }

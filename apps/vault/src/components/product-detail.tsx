@@ -10,7 +10,17 @@ import {
 	useUpdateVariant,
 } from "@ataqu/api-client";
 import { formatCurrency, handleApiError } from "@ataqu/shared-utils";
-import { Bone, Button, Input, Label, OnboardTour } from "@ataqu/ui";
+import {
+	Bone,
+	Button,
+	CopyButton,
+	HoldToConfirm,
+	Input,
+	Label,
+	OnboardTour,
+	SkeletonSwap,
+	ValueFlash,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
@@ -81,22 +91,12 @@ export function ProductDetail({ productId }: { productId: string }) {
 
 	if (productQuery.isLoading || variantsQuery.isLoading) {
 		return (
-			<div className="space-y-4">
-				<Bone
-					loading
-					name="product-detail-1"
-					fallback={<div className="h-16 w-full" />}
-				>
-					{null}
-				</Bone>
-				<Bone
-					loading
-					name="product-detail-2"
-					fallback={<div className="h-64 w-full" />}
-				>
-					{null}
-				</Bone>
-			</div>
+			<SkeletonSwap ready={false} lines={6}>
+				<div className="space-y-4">
+					<div className="h-16 w-full" />
+					<div className="h-64 w-full" />
+				</div>
+			</SkeletonSwap>
 		);
 	}
 
@@ -263,6 +263,11 @@ export function ProductDetail({ productId }: { productId: string }) {
 									<p className="font-mono text-sm text-muted-foreground">
 										{product.sku}
 									</p>
+									<CopyButton
+										value={product.sku}
+										label="Copy SKU"
+										className="mt-1"
+									/>
 									<p className="max-w-2xl text-sm text-muted-foreground">
 										{product.description}
 									</p>
@@ -274,15 +279,14 @@ export function ProductDetail({ productId }: { productId: string }) {
 									>
 										<Trans>Edit Product</Trans>
 									</Button>
-									<Button
-										variant="destructive"
-										size="sm"
-										className="mt-2"
-										onClick={() => deleteProduct.mutate(product.id)}
+									<HoldToConfirm
+										onConfirm={() => deleteProduct.mutate(product.id)}
+										confirmLabel="Deleted"
 										disabled={deleteProduct.isPending}
+										className="mt-2 bg-red-600 text-white hover:bg-red-500"
 									>
 										<Trans>Delete Product</Trans>
-									</Button>
+									</HoldToConfirm>
 								</>
 							)}
 						</div>
@@ -306,7 +310,7 @@ export function ProductDetail({ productId }: { productId: string }) {
 									: "font-mono text-2xl font-bold text-destructive"
 							}
 						>
-							{totalStock}
+							<ValueFlash value={totalStock} label="total stock" />
 						</p>
 					</div>
 					<div className="rounded-lg border border-border bg-card p-4">
