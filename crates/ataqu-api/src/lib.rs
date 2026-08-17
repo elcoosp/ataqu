@@ -65,6 +65,8 @@ pub struct AppState {
     pub presence_counts: PresenceCounts,
     pub email_tracking_tx: Sender<TrackingEvent>,
     pub rate_limiter: RateLimiter,
+    /// Stateless HMAC-signed CSRF token protector for cookie-auth double-submit.
+    pub csrf_protector: Arc<crate::middleware::csrf_token::CsrfProtector>,
     pub metrics_handle: PrometheusHandle,
     pub sso_states: SsoStates,
     pub sso_config: ataqu_domain_aegis::sso::SsoConfig,
@@ -159,6 +161,37 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
     }
 }
 
+/// Issue a CSRF double-submit token and return it.
+///
+/// `GET /api/v1/csrf-token` (safe, no auth): mints a signed token, sets it in a
+/// `csrf_token` cookie (SameSite=Strict, not HttpOnly so the SPA can copy it
+/// into the `X-CSRF-Token` header), and echoes the token in the
+/// `X-CSRF-Token` response header. Clients call this once, then send the token
+/// back on every state-changing request.
+async fn issue_csrf_token(State(state): State<AppState>) -> axum::response::Response {
+    use axum::http::{header, HeaderValue};
+    let token = state.csrf_protector.issue();
+    let cookie = format!(
+        "{}={}; Path=/; Max-Age=86400; SameSite=Strict; Secure",
+        crate::middleware::csrf_token::CSRF_COOKIE_NAME,
+        token
+    );
+    let mut resp = axum::response::Response::builder()
+        .status(axum::http::StatusCode::OK)
+        .header(
+            crate::middleware::csrf_token::CSRF_HEADER_NAME,
+            HeaderValue::from_str(&token).unwrap(),
+        )
+        .header(header::SET_COOKIE, HeaderValue::from_str(&cookie).unwrap())
+        .body(axum::body::Body::empty())
+        .unwrap();
+    // Also expose the token in the JSON body for clients that prefer it.
+    *resp.body_mut() = axum::body::Body::from(
+        serde_json::to_vec(&serde_json::json!({ "csrfToken": token })).unwrap(),
+    );
+    resp
+}
+
 pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, SocketAddr> {
     use handlers::aegis::routes as aegis_routes;
     use handlers::cinq::routes as cinq_routes;
@@ -178,6 +211,10 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
+        .route(
+            "/api/v1/csrf-token",
+            get(issue_csrf_token),
+        )
         .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
         ))
@@ -232,6 +269,10 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
         // Idempotency is now handled by the IdempotencyContext extractor
         .layer(axum::middleware::from_fn(
             crate::middleware::csrf::csrf_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.csrf_protector.clone(),
+            crate::middleware::csrf_double_submit::csrf_double_submit_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.rate_limiter.clone(),
