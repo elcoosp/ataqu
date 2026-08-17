@@ -56,7 +56,9 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
                 }
             }
             let body_bytes = serde_json::to_vec(&cached.body).unwrap_or_default();
-            return Ok(resp.body(axum::body::Body::from(body_bytes)).unwrap());
+            return resp
+            .body(axum::body::Body::from(body_bytes))
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
         }
 
     let resp = next.run(req).await;
@@ -88,7 +90,9 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
             for (k, v) in &headers {
                 new_resp = new_resp.header(k.clone(), v.clone());
             }
-            return Ok(new_resp.body(axum::body::Body::from(body)).unwrap());
+            return new_resp
+            .body(axum::body::Body::from(body))
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
         }
 
     Ok(resp)
