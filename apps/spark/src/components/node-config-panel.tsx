@@ -1,4 +1,4 @@
-import { Button, Input, Label } from "@ataqu/ui";
+import { Button, Input, Label, LoadingButton, ShowMore } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type { Node } from "@xyflow/react";
 import { X } from "lucide-react";
@@ -244,7 +244,9 @@ export function NodeConfigPanel({
 								}}
 							/>
 							<p className="text-xs text-muted-foreground mt-1">
-								<Trans>Use {"{{payload.field}}"} for dynamic values</Trans>
+								<ShowMore lines={1}>
+									<Trans>Use {"{{payload.field}}"} for dynamic values</Trans>
+								</ShowMore>
 							</p>
 						</div>
 						{subtype === "send_email" && (
@@ -353,9 +355,14 @@ export function NodeConfigPanel({
 			</div>
 
 			<div className="mt-6 pt-4 border-t border-border">
-				<Button onClick={handleSave} className="w-full">
-					<Trans>Save Configuration</Trans>
-				</Button>
+				<LoadingButton
+					onAction={async () => {
+						handleSave();
+					}}
+					className="w-full"
+				>
+					Save Configuration
+				</LoadingButton>
 			</div>
 		</aside>
 	);
