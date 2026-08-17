@@ -1,6 +1,14 @@
 import { api, useLogin, useSignup } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
-import { AuthLayout, Button, Input } from "@ataqu/ui";
+import {
+	AuthLayout,
+	Button,
+	Input,
+	LoadingButton,
+	FloatingLabelInput,
+	PasswordStrength,
+	SegmentedControl,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import {
 	createFileRoute,
@@ -87,6 +95,17 @@ export const Route = createFileRoute("/login")({
 							<Trans>Sign in to Ataqu</Trans>
 						)}
 					</h1>
+
+					<SegmentedControl
+						label="Authentication mode"
+						options={[
+							{ value: "login", label: "Sign in" },
+							{ value: "signup", label: "Sign up" },
+						]}
+						value={mode}
+						onValueChange={(v) => setMode(v as "login" | "signup")}
+					/>
+
 					<div className="space-y-3">
 						<Button
 							onClick={() => handleSSO("google")}
@@ -113,53 +132,56 @@ export const Route = createFileRoute("/login")({
 					</div>
 					<form onSubmit={handlePasswordLogin} className="space-y-4">
 						{mode === "signup" && (
-							<div>
-								<label className="block text-sm font-medium mb-1">
-									<Trans>Name</Trans>
-								</label>
-								<Input
-									type="text"
-									value={name}
-									onChange={(e) => setName(e.target.value)}
-									placeholder="Jane Doe"
-								/>
-							</div>
+							<FloatingLabelInput
+								label="Name"
+								value={name}
+								onChange={setName}
+							/>
 						)}
-						<div>
-							<label className="block text-sm font-medium mb-1">
-								<Trans>Email</Trans>
-							</label>
-							<Input
+						<div className="space-y-1">
+							<FloatingLabelInput
+								label="Email"
 								type="email"
 								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								placeholder="you@example.com"
+								onChange={setEmail}
 								required
 							/>
 						</div>
-						<div>
-							<label className="block text-sm font-medium mb-1">
-								<Trans>Password</Trans>
-							</label>
-							<Input
+						<div className="space-y-1">
+							<FloatingLabelInput
+								label="Password"
 								type="password"
 								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								placeholder="••••••••"
+								onChange={setPassword}
 								required
 							/>
+							{mode === "signup" && password.length > 0 && (
+								<PasswordStrength value={password} />
+							)}
 						</div>
-						<Button
-							type="submit"
+						<LoadingButton
+							onAction={async () => {
+								if (mode === "signup") {
+									await new Promise<void>((resolve, reject) => {
+										signupMutation.mutate(
+											{ email, password, name: name || undefined },
+											{ onSuccess: () => resolve(), onError: () => reject() },
+										);
+									});
+								} else {
+									await new Promise<void>((resolve, reject) => {
+										loginMutation.mutate(
+											{ email, password },
+											{ onSuccess: () => resolve(), onError: () => reject() },
+										);
+									});
+								}
+							}}
 							disabled={loginMutation.isPending || signupMutation.isPending}
 							className="w-full bg-amber text-black hover:bg-amber/90"
 						>
-							{mode === "signup" ? (
-								<Trans>Sign Up</Trans>
-							) : (
-								<Trans>Sign In</Trans>
-							)}
-						</Button>
+							{mode === "signup" ? "Sign Up" : "Sign In"}
+						</LoadingButton>
 						<button
 							type="button"
 							className="text-xs text-muted-foreground hover:text-foreground w-full"

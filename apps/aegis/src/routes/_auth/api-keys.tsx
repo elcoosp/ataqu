@@ -11,6 +11,8 @@ import {
 	Button,
 	Card,
 	CardContent,
+	ContextMenu,
+	CopyButton,
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -18,8 +20,11 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	HoldToConfirm,
 	Input,
 	Label,
+	LoadingButton,
+	SkeletonSwap,
 	Table,
 	TableBody,
 	TableCell,
@@ -78,20 +83,10 @@ export const Route = createFileRoute("/_auth/api-keys")({
 		if (isLoading) {
 			return (
 				<div className="p-6">
-					<Bone
-						loading
-						name="api-keys-1"
-						fallback={<div className="h-10 w-48 mb-4" />}
-					>
-						{null}
-					</Bone>
-					<Bone
-						loading
-						name="api-keys-2"
-						fallback={<div className="h-64 w-full" />}
-					>
-						{null}
-					</Bone>
+					<SkeletonSwap ready={false} lines={4}>
+						<div className="h-10 w-48 mb-4" />
+						<div className="h-64 w-full" />
+					</SkeletonSwap>
 				</div>
 			);
 		}
@@ -172,29 +167,52 @@ export const Route = createFileRoute("/_auth/api-keys")({
 												: "—"}
 										</TableCell>
 										<TableCell>
-											<Dialog>
-												<DialogTrigger asChild>
-													<Button variant="destructive" size="sm">
-														<Trans>Revoke</Trans>
-													</Button>
-												</DialogTrigger>
-												<DialogContent>
-													<DialogHeader>
-														<DialogTitle>
-															<Trans>Revoke API Key</Trans>
-														</DialogTitle>
-														<DialogDescription>
-															<Trans>
-																This action cannot be undone. Any services using
-																this key will lose access.
-															</Trans>
-														</DialogDescription>
-													</DialogHeader>
-													<DialogFooter>
-														<Trans>Revoke</Trans>
-													</DialogFooter>
-												</DialogContent>
-											</Dialog>
+											<ContextMenu
+												items={[
+													{
+														id: "copy",
+														label: "Copy prefix",
+													},
+													{
+														id: "revoke",
+														label: "Revoke key",
+													},
+												]}
+												onSelect={(id) => {
+													if (id === "copy") {
+														navigator.clipboard.writeText(key.prefix);
+													}
+												}}
+											>
+												<Dialog>
+													<DialogTrigger asChild>
+														<Button variant="destructive" size="sm">
+															<Trans>Revoke</Trans>
+														</Button>
+													</DialogTrigger>
+													<DialogContent>
+														<DialogHeader>
+															<DialogTitle>
+																<Trans>Revoke API Key</Trans>
+															</DialogTitle>
+															<DialogDescription>
+																<Trans>
+																	This action cannot be undone. Any services using
+																	this key will lose access.
+																</Trans>
+															</DialogDescription>
+														</DialogHeader>
+														<DialogFooter>
+															<HoldToConfirm
+																onConfirm={() => _deleteMutation.mutate(key.id)}
+																className="w-full bg-red-600 text-white hover:bg-red-500"
+															>
+																<Trans>Revoke key</Trans>
+															</HoldToConfirm>
+														</DialogFooter>
+													</DialogContent>
+												</Dialog>
+											</ContextMenu>
 										</TableCell>
 									</TableRow>
 								))}
@@ -259,9 +277,24 @@ function CreateKeyDialog({
 						<Button variant="outline" type="button" onClick={handleClose}>
 							<Trans>Cancel</Trans>
 						</Button>
-						<Button type="submit" disabled={isPending}>
-							{isPending ? <Trans>Creating...</Trans> : <Trans>Create</Trans>}
-						</Button>
+						<LoadingButton
+							disabled={isPending}
+							onAction={async () => {
+								await new Promise<void>((resolve, reject) => {
+									handleSubmit((data) => {
+										try {
+											onSubmit(data);
+											resolve();
+										} catch (e) {
+											reject(e);
+										}
+									})();
+								});
+							}}
+							className="bg-amber text-black hover:bg-amber/90"
+						>
+							Create
+						</LoadingButton>
 					</div>
 				</form>
 			</DialogContent>
@@ -277,14 +310,6 @@ function NewKeyDisplay({
 	keyData: { id: string; key: string };
 	onDismiss: () => void;
 }) {
-	const [copied, setCopied] = useState(false);
-
-	const copyToClipboard = () => {
-		navigator.clipboard.writeText(keyData.key);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
-	};
-
 	return (
 		<Dialog
 			open={true}
@@ -301,18 +326,10 @@ function NewKeyDisplay({
 				<div className="space-y-4">
 					<div className="bg-muted p-3 rounded relative">
 						<code className="text-sm break-all">{keyData.key}</code>
-						<Button
-							size="sm"
-							variant="ghost"
+						<CopyButton
+							value={keyData.key}
 							className="absolute right-2 top-2"
-							onClick={copyToClipboard}
-						>
-							{copied ? (
-								<Check className="h-4 w-4" />
-							) : (
-								<Copy className="h-4 w-4" />
-							)}
-						</Button>
+						/>
 					</div>
 					<p className="text-sm text-muted-foreground">
 						<Trans>Copy this key now. You won't be able to see it again.</Trans>
