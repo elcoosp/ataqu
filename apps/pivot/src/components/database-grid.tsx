@@ -6,7 +6,7 @@ import {
 } from "@ataqu/api-client";
 
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, Input } from "@ataqu/ui";
+import { Button, ExpandingSearch, Input, Pagination } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
 import { ChevronDown, ChevronUp, Filter, Plus } from "lucide-react";
@@ -35,6 +35,8 @@ export function DatabaseGrid({
 	const [sortField, setSortField] = useState<string | null>(null);
 	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 	const [filterText, setFilterText] = useState("");
+	const [page, setPage] = useState(1);
+	const PAGE_SIZE = 10;
 
 	const { data: rows = [], refetch, error } = useGetDatabaseRows(databaseId);
 
@@ -99,6 +101,9 @@ export function DatabaseGrid({
 			return 0;
 		});
 	}
+
+	const pageRows = sortedRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+	const pageCount = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
 
 	const renderCell = (
 		row: DatabaseRow,
@@ -186,14 +191,11 @@ export function DatabaseGrid({
 						<Trans>Add Row</Trans>
 					</Button>
 					<div className="relative">
-						<Filter className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input
-							placeholder={i18n._("Filter rows…")}
+						<ExpandingSearch
 							value={filterText}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setFilterText(e.target.value)
-							}
-							className="pl-8 h-8 text-sm w-48"
+							onChange={setFilterText}
+							placeholder={i18n._("Filter rows…")}
+							className="relative flex-1 max-w-xs"
 						/>
 					</div>
 				</div>
@@ -226,7 +228,7 @@ export function DatabaseGrid({
 						</tr>
 					</thead>
 					<tbody>
-						{sortedRows.map((row) => (
+						{pageRows.map((row) => (
 							<tr
 								key={row.id}
 								className="border-t border-border hover:bg-accent/5"
@@ -238,7 +240,7 @@ export function DatabaseGrid({
 								))}
 							</tr>
 						))}
-						{sortedRows.length === 0 && (
+						{pageRows.length === 0 && (
 							<tr>
 								<td
 									colSpan={columns.length}
@@ -249,8 +251,17 @@ export function DatabaseGrid({
 							</tr>
 						)}
 					</tbody>
-				</table>
-			</div>
-		</div>
-	);
-}
+					</table>
+					{pageCount > 1 && (
+						<div className="flex justify-center p-3">
+							<Pagination
+								count={pageCount}
+								page={page}
+								onPageChange={setPage}
+							/>
+						</div>
+					)}
+					</div>
+					</div>
+					);
+					}
