@@ -682,8 +682,14 @@ async fn main() -> anyhow::Result<()> {
             .time_to_live(Duration::from_secs(600))
             .build(),
     );
-    let rate_limiter =
-        ataqu_api::middleware::rate_limit::RateLimiter::new(100, Duration::from_secs(60));
+    let trusted_proxies = ataqu_api::middleware::client_ip::TrustedProxies::from_env_value(
+        &std::env::var("TRUSTED_PROXIES").unwrap_or_default(),
+    );
+    let rate_limiter = ataqu_api::middleware::rate_limit::RateLimiter::new(
+        100,
+        Duration::from_secs(60),
+        trusted_proxies.clone(),
+    );
     let http_client = reqwest::Client::new();
     let sso_config = ataqu_domain_aegis::sso::SsoConfig {
         google_client_id: std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default(),
@@ -1325,6 +1331,7 @@ async fn main() -> anyhow::Result<()> {
         onboarding_service,
         changelog_service,
         audit_repo: audit_repo.clone(),
+        trusted_proxies,
     };
     let app = create_router(app_state);
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

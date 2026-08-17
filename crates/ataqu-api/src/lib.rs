@@ -75,6 +75,9 @@ pub struct AppState {
     pub onboarding_service: Arc<ataqu_application::onboarding_service::OnboardingService>,
     pub changelog_service: Arc<ataqu_application::changelog_service::ChangelogService>,
     pub audit_repo: Arc<dyn ataqu_domain_aegis::repository::AuditRepositoryTrait + Send + Sync>,
+    /// Proxies allowed to supply X-Forwarded-For / X-Real-IP. Empty = trust no
+    /// proxy (forwarding headers are ignored for security decisions).
+    pub trusted_proxies: crate::middleware::client_ip::TrustedProxies,
 }
 
 async fn security_headers_middleware(

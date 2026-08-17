@@ -119,7 +119,11 @@ pub async fn auth_middleware(
             crate::middleware::ip_allowlist::check_ip_allowlist(
                 &app_state,
                 auth_ctx.tenant_id,
-                Some(peer_addr.ip()),
+                Some(crate::middleware::client_ip::resolve_effective_client_ip(
+                    peer_addr.ip(),
+                    req.headers(),
+                    &app_state.trusted_proxies,
+                )),
             )
             .await?;
             req.extensions_mut().insert(auth_ctx);
@@ -167,7 +171,11 @@ pub async fn auth_middleware(
             crate::middleware::ip_allowlist::check_ip_allowlist(
                 &app_state,
                 auth_ctx.tenant_id,
-                Some(peer_addr.ip()),
+                Some(crate::middleware::client_ip::resolve_effective_client_ip(
+                    peer_addr.ip(),
+                    req.headers(),
+                    &app_state.trusted_proxies,
+                )),
             )
             .await?;
             req.extensions_mut().insert(auth_ctx);
