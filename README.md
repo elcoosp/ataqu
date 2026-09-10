@@ -10,20 +10,20 @@ Built to kill HubSpot, Slack, Zapier, Notion, Zoho, Calendly, Typeform, Cin7, Pe
 
 ## Badges
 
-![Rust 1.97](https://img.shields.io/badge/Rust-1.97.1-000000?logo=rust&logoColor=white&style=for-the-badge)
-![PostgreSQL 18](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white&style=for-the-badge)
-![Vite 8](https://img.shields.io/badge/Vite-8.2.1-646CFF?logo=vite&logoColor=white&style=for-the-badge)
-![React 19](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react&logoColor=black&style=for-the-badge)
-![TanStack Router](https://img.shields.io/badge/TanStack_Router-1.170-FF4154?style=for-the-badge)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white&style=for-the-badge)
-![pnpm 11](https://img.shields.io/badge/pnpm-11-F6F6F6?logo=pnpm&logoColor=43B02A&style=for-the-badge)
-![Axum 0.8](https://img.shields.io/badge/Axum-0.8.9-000000?logo=rust&logoColor=white&style=for-the-badge)
-![SeaORM 2.0](https://img.shields.io/badge/SeaORM-2.0.0--rc.41-000000?logo=rust&logoColor=white&style=for-the-badge)
-![Biome 2.5](https://img.shields.io/badge/Biome-2.5.8-60A5FA?style=for-the-badge)
-![Lingui v6](https://img.shields.io/badge/Lingui-v6-1E90FF?style=for-the-badge)
-![Vitest 4](https://img.shields.io/badge/Vitest-4.1.10-6E9F18?logo=vitest&logoColor=white&style=for-the-badge)
-![Playwright](https://img.shields.io/badge/Playwright-1.62-000000?logo=playwright&logoColor=white&style=for-the-badge)
-![Next.js 16](https://img.shields.io/badge/Next.js-16.3_(landing)-000000?logo=nextdotjs&logoColor=white&style=for-the-badge)
+![Rust 1.97](https://img.shields.io/badge/Rust-1.97.1-000000?logo=rust&logoColor=white&style=square)
+![PostgreSQL 18](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white&style=square)
+![Vite 8](https://img.shields.io/badge/Vite-8.2.1-646CFF?logo=vite&logoColor=white&style=square)
+![React 19](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react&logoColor=black&style=square)
+![TanStack Router](https://img.shields.io/badge/TanStack_Router-1.170-FF4154?style=square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white&style=square)
+![pnpm 11](https://img.shields.io/badge/pnpm-11-F6F6F6?logo=pnpm&logoColor=43B02A&style=square)
+![Axum 0.8](https://img.shields.io/badge/Axum-0.8.9-000000?logo=rust&logoColor=white&style=square)
+![SeaORM 2.0](https://img.shields.io/badge/SeaORM-2.0.0--rc.41-000000?logo=rust&logoColor=white&style=square)
+![Biome 2.5](https://img.shields.io/badge/Biome-2.5.8-60A5FA?style=square)
+![Lingui v6](https://img.shields.io/badge/Lingui-v6-1E90FF?style=square)
+![Vitest 4](https://img.shields.io/badge/Vitest-4.1.10-6E9F18?logo=vitest&logoColor=white&style=square)
+![Playwright](https://img.shields.io/badge/Playwright-1.62-000000?logo=playwright&logoColor=white&style=square)
+![Next.js 16](https://img.shields.io/badge/Next.js-16.3_(landing)-000000?logo=nextdotjs&logoColor=white&style=square)
 
 ---
 
