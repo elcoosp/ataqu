@@ -39,9 +39,17 @@ export const CommandRegistryProvider: React.FC<{
 
 	const register = useCallback((cmds: AppCommand[]) => {
 		setCommands((prev) => {
-			const byId = new Map(prev.map((c) => [c.id, c]));
-			for (const c of cmds) byId.set(c.id, c);
-			return Array.from(byId.values());
+			let changed = false;
+			const byId = new Map<string, AppCommand>();
+			for (const c of prev) byId.set(c.id, c);
+			for (const c of cmds) {
+				const existing = byId.get(c.id);
+				// Return the SAME state reference when nothing changed so React
+				// bails out and the registering consumer's effect does not loop.
+				if (!changed && existing !== c) changed = true;
+				byId.set(c.id, c);
+			}
+			return changed ? Array.from(byId.values()) : prev;
 		});
 	}, []);
 
@@ -85,11 +93,14 @@ export const useRegisterCommands = (cmds: AppCommand[]): void => {
 	// Register (or refresh) commands after commit, never during render — calling
 	// ctx.register() synchronously here would setState on the provider while a
 	// child is still rendering, which throws in React 18/19 concurrent mode.
+	// Deps are the STABLE register/unregister callbacks (not the context object,
+	// whose identity changes whenever the registry updates — depending on it
+	// would re-run this effect on every update and loop forever).
 	useEffect(() => {
 		ctx.register(cmds);
 		return () => ctx.unregister(ids);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ctx, ids.join(",")]);
+	}, [ctx.register, ctx.unregister, ids.join(",")]);
 };
 
 /** Read all currently-registered app commands. */
