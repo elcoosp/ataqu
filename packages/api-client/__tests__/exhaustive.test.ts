@@ -1,11 +1,14 @@
 import { useAuthStore } from "@ataqu/shared-stores";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as aegis from "../src/aegis";
+import * as amazon from "../src/amazon";
+import * as changelog from "../src/changelog";
 import * as cinq from "../src/cinq";
 import { api } from "../src/client";
 import * as dial from "../src/dial";
 import * as health from "../src/health";
 import * as migration from "../src/migration";
+import * as onboarding from "../src/onboarding";
 import * as pause from "../src/pause";
 import * as pivot from "../src/pivot";
 import * as search from "../src/search";
@@ -56,6 +59,7 @@ async function exercise(module: Record<string, unknown>, moduleName: string) {
 				["1", { data: {} }, 1],
 				["1", "1", 1],
 				["1", { reason: "x" }, 1],
+				[{ marketplace_id: "M", seller_id: "S", refresh_token: "R" }],
 			];
 			for (const args of candidateArgs) {
 				try {
@@ -112,6 +116,15 @@ describe("api-client exhaustive raw-function coverage", () => {
 	});
 	it("exercises spark client fns", async () => {
 		await exercise(spark as any, "spark");
+	});
+	it("exercises amazon client fns", async () => {
+		await exercise(amazon as any, "amazon");
+	});
+	it("exercises changelog client fns", async () => {
+		await exercise(changelog as any, "changelog");
+	});
+	it("exercises onboarding client fns", async () => {
+		await exercise(onboarding as any, "onboarding");
 	});
 	it("exercises health client fns", async () => {
 		await exercise(health as any, "health");
