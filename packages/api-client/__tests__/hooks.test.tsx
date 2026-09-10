@@ -3,10 +3,16 @@ import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as aegis from "../src/aegis";
+import * as amazon from "../src/amazon";
+import * as changelog from "../src/changelog";
 import * as cinq from "../src/cinq";
 import * as dial from "../src/dial";
+import * as health from "../src/health";
+import * as migration from "../src/migration";
+import * as onboarding from "../src/onboarding";
 import * as pause from "../src/pause";
 import * as pivot from "../src/pivot";
+import * as search from "../src/search";
 import * as sond from "../src/sond";
 import * as spark from "../src/spark";
 import * as tempo from "../src/tempo";
@@ -62,6 +68,9 @@ describe("api-client hooks render", () => {
 		aegis,
 		pivot,
 		spark,
+		amazon,
+		changelog,
+		onboarding,
 	};
 
 	for (const [modName, mod] of Object.entries(modules)) {
@@ -108,4 +117,24 @@ describe("api-client hooks render", () => {
 			expect(rendered.length).toBeGreaterThan(0);
 		});
 	}
+
+	it("renders health / search / migration hooks", () => {
+		fetchMock.mockResolvedValue(
+			jsonResponse([{ app: "cinq", entity_type: "contact", id: "1", title: "A" }]),
+		);
+		const rendered: string[] = [];
+		const cases: Array<[string, () => unknown]> = [
+			["useHealth", () => health.useHealth()],
+			// useSearch requires a query arg (it calls q.trim())
+			["useSearch", () => search.useSearch("a")],
+			["useParseMigrationFile", () => migration.useParseMigrationFile()],
+			["useImportMigrationData", () => migration.useImportMigrationData()],
+		];
+		for (const [name, hook] of cases) {
+			const { unmount } = wrap(hook);
+			unmount();
+			rendered.push(name);
+		}
+		expect(rendered).toHaveLength(4);
+	});
 });
