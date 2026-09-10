@@ -8,6 +8,7 @@
 		"dev-all": "pnpm -r --parallel dev",
 		"build": "pnpm -r build",
 		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"test:e2e:cinq": "playwright test apps/cinq/e2e",
 		"lint": "biome check --write --unsafe .",
