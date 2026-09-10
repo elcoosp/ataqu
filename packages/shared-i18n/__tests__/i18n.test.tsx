@@ -1,6 +1,17 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { I18nProvider } from "../src/i18n-provider";
+import { messages as enMessages } from "../src/locales/en/messages";
+import { messages as frMessages } from "../src/locales/fr/messages";
+
+describe("compiled catalogs", () => {
+	it("loads the en catalog", () => {
+		expect(enMessages).toBeTruthy();
+	});
+	it("loads the fr catalog", () => {
+		expect(frMessages).toBeTruthy();
+	});
+});
 
 describe("I18nProvider", () => {
 	it("renders children once the locale loads", async () => {

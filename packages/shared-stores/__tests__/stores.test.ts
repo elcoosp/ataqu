@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { ACTIVATION_TASKS } from "../src/activation";
+import { ACTIVATION_TASKS, activationTaskHref } from "../src/activation";
 import { useAuthStore } from "../src/auth";
 import { useChangelogStore } from "../src/changelog";
 import { useOnboardingStore } from "../src/onboarding";
@@ -130,6 +130,17 @@ describe("ACTIVATION_TASKS", () => {
 		for (const task of ACTIVATION_TASKS) {
 			expect(task.href).toBeTruthy();
 		}
+	});
+});
+
+describe("activationTaskHref", () => {
+	it("returns the href for a known task id", () => {
+		for (const task of ACTIVATION_TASKS) {
+			expect(activationTaskHref(task.id)).toBe(task.href);
+		}
+	});
+	it("returns undefined for an unknown id", () => {
+		expect(activationTaskHref("does-not-exist")).toBeUndefined();
 	});
 });
 
