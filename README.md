@@ -1,10 +1,10 @@
-# Ataqu — the $79/mo alternative to the SaaS stack lock-in
+# Ataqu — the open-source alternative to the SaaS stack lock-in
 
 **A single Rust + PostgreSQL backend, powering 10 natively integrated business applications delivered as independent Vite + React 19 SPAs.**
 
-Built to kill HubSpot, Slack, Zapier, Notion, Zoho, Calendly, Typeform, Cin7, Personio, and Okta with one math:
+Built to kill HubSpot, Slack, Zapier, Notion, Zoho, Calendly, Typeform, Cin7, Personio, and Okta:
 
-> **$15/mo for 1 app · $39/mo for 5 apps · $79/mo for all 10**
+> **1 app · 5 apps · all 10 apps**
 
 ---
 
