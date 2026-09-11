@@ -98,7 +98,6 @@ export default defineConfig({
 				// happy-dom node run, so they are excluded from the node gate.
 				"**/chart.tsx",
 				"**/kanban-board.tsx",
-				"**/command-palette.tsx",
 				"**/workflow-canvas.tsx",
 				"**/onboard-tour.tsx",
 			],
