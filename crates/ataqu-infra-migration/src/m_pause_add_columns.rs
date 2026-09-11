@@ -10,7 +10,7 @@ impl MigrationTrait for Migration {
         // Add columns to employees
         conn.execute_unprepared(
             r#"
-            ALTER TABLE collab_ops.employees
+            ALTER TABLE collab_ops.employee
             ADD COLUMN IF NOT EXISTS phone TEXT,
             ADD COLUMN IF NOT EXISTS job_title TEXT NOT NULL DEFAULT 'Employee',
             ADD COLUMN IF NOT EXISTS department TEXT,
@@ -24,7 +24,7 @@ impl MigrationTrait for Migration {
         // Add columns to leave_requests
         conn.execute_unprepared(
             r#"
-            ALTER TABLE collab_ops.leave_requests
+            ALTER TABLE collab_ops.leave_request
             ADD COLUMN IF NOT EXISTS leave_type TEXT NOT NULL DEFAULT 'annual',
             ADD COLUMN IF NOT EXISTS reason TEXT,
             ADD COLUMN IF NOT EXISTS reviewer_id UUID,
@@ -41,7 +41,7 @@ impl MigrationTrait for Migration {
         let conn = manager.get_connection();
         conn.execute_unprepared(
             r#"
-            ALTER TABLE collab_ops.employees
+            ALTER TABLE collab_ops.employee
             DROP COLUMN IF EXISTS phone,
             DROP COLUMN IF EXISTS job_title,
             DROP COLUMN IF EXISTS department,
@@ -53,7 +53,7 @@ impl MigrationTrait for Migration {
         .await?;
         conn.execute_unprepared(
             r#"
-            ALTER TABLE collab_ops.leave_requests
+            ALTER TABLE collab_ops.leave_request
             DROP COLUMN IF EXISTS leave_type,
             DROP COLUMN IF EXISTS reason,
             DROP COLUMN IF EXISTS reviewer_id,
