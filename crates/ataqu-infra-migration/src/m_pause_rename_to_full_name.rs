@@ -10,7 +10,7 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table((Alias::new("collab_ops"), Employees::Table))
+                    .table((Alias::new("collab_ops"), Employee::Table))
                     .drop_column(Alias::new("first_name"))
                     .to_owned(),
             )
@@ -20,7 +20,7 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table((Alias::new("collab_ops"), Employees::Table))
+                    .table((Alias::new("collab_ops"), Employee::Table))
                     .drop_column(Alias::new("last_name"))
                     .to_owned(),
             )
@@ -31,9 +31,9 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table((Alias::new("collab_ops"), Employees::Table))
+                    .table((Alias::new("collab_ops"), Employee::Table))
                     .add_column_if_not_exists(
-                        ColumnDef::new(Employees::FullName)
+                        ColumnDef::new(Employee::FullName)
                             .text()
                             .not_null()
                             .default("Unknown"),
@@ -47,8 +47,8 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table((Alias::new("collab_ops"), Employees::Table))
-                    .drop_column(Employees::FullName)
+                    .table((Alias::new("collab_ops"), Employee::Table))
+                    .drop_column(Employee::FullName)
                     .to_owned(),
             )
             .await
@@ -57,7 +57,7 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table((Alias::new("collab_ops"), Employees::Table))
+                    .table((Alias::new("collab_ops"), Employee::Table))
                     .add_column_if_not_exists(
                         ColumnDef::new(Alias::new("first_name"))
                             .text()
@@ -72,7 +72,7 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table((Alias::new("collab_ops"), Employees::Table))
+                    .table((Alias::new("collab_ops"), Employee::Table))
                     .add_column_if_not_exists(
                         ColumnDef::new(Alias::new("last_name"))
                             .text()
@@ -86,7 +86,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(Iden)]
-enum Employees {
+enum Employee {
     Table,
     FullName,
 }
