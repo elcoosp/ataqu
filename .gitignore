@@ -21,3 +21,4 @@ assets/hd
 # Local tool/build temp dirs (TanStack Router, etc.) — never commit
 **/.tanstack/tmp/
 **/.tanstack/cache/
+docs
