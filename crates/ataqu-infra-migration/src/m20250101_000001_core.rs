@@ -15,6 +15,20 @@ impl MigrationTrait for Migration {
             .await?;
         println!("  ✅ core schema created");
 
+        // Create core.tenants (referenced by core.users and many FKs)
+        db.execute_unprepared(
+            r#"
+            CREATE TABLE IF NOT EXISTS core.tenants (
+                id UUID PRIMARY KEY,
+                name TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            "#,
+        )
+        .await?;
+        println!("  ✅ core.tenants created");
+
         // Create app_schema ENUM (with error handling)
         db.execute_unprepared(
             "DO $$ BEGIN
