@@ -4,13 +4,15 @@ import {
 	useListChannels,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import { Bone, Button, cn, Input } from "@ataqu/ui";
+import {
+ Bone, Button, cn, Input 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Archive, Hash, Lock, Plus, Search, Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useDialStore } from "@/stores/dial-store";
+import { useDialStore } from "../../../apps/dial/stores/dial-store";
 
 // Local type that matches the actual API response (which includes type and unread_count)
 type ExtendedChannel = ChannelSummary & {
@@ -111,7 +113,7 @@ export function ChannelList() {
 		return (
 			<Link
 				key={channel.id}
-				to="/channels/$id"
+				to="/dial/channels/$id"
 				params={{ id: channel.id }}
 				className={cn(
 					"flex items-center px-3 py-2 rounded-md transition-colors",
