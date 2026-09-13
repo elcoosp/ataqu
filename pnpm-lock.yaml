@@ -155,33 +155,90 @@ importers:
       '@ataqu/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@dnd-kit/core':
+        specifier: ^6.3.1
+        version: 6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@dnd-kit/sortable':
+        specifier: ^10.0.0
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      '@dnd-kit/utilities':
+        specifier: ^3.2.2
+        version: 3.2.2(react@19.2.7)
       '@hookform/resolvers':
         specifier: ^5.7.1
         version: 5.7.1(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(react-hook-form@7.85.0(react@19.2.7))(zod@4.4.3)
+      '@ilamy/calendar':
+        specifier: ^2.0.3
+        version: 2.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(dayjs@1.11.21)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss-animate@1.0.7(tailwindcss@4.3.3))(tailwindcss@4.3.3)
       '@lingui/core':
         specifier: ^6.6.0
         version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
       '@lingui/react':
         specifier: ^6.6.0
         version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
+      '@platejs/basic-nodes':
+        specifier: ^53.0.0
+        version: 53.0.0(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@platejs/indent':
+        specifier: ^53.0.0
+        version: 53.0.0(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@platejs/list':
+        specifier: ^53.1.3
+        version: 53.1.3(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@platejs/markdown':
+        specifier: ^53.3.3
+        version: 53.3.3(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@7.0.2)
       '@radix-ui/react-dialog':
         specifier: ^1.1.23
         version: 1.1.23(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-label':
         specifier: ^2.1.15
         version: 2.1.15(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-radio-group':
+        specifier: ^1.4.7
+        version: 1.4.7(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-select':
         specifier: ^2.3.7
         version: 2.3.7(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-switch':
+        specifier: ^1.3.7
+        version: 1.3.7(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-tabs':
+        specifier: ^1.1.21
+        version: 1.1.21(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@radix-ui/react-tooltip':
+        specifier: ^1.2.16
+        version: 1.2.16(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.101.0
         version: 5.101.4(react@19.2.7)
       '@tanstack/react-router':
         specifier: ^1.170.0
         version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/react-table':
+        specifier: ^8.20.5
+        version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tanstack/react-virtual':
+        specifier: ^3.14.9
+        version: 3.14.9(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@xyflow/react':
+        specifier: ^12.11.2
+        version: 12.11.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      croner:
+        specifier: ^9.0.0
+        version: 9.1.0
+      date-fns:
+        specifier: ^3.6.0
+        version: 3.6.0
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.7)
+      nuqs:
+        specifier: ^2.4.0
+        version: 2.9.5(@tanstack/react-router@1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      papaparse:
+        specifier: ^5.5.4
+        version: 5.6.0
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.2.7)
@@ -191,15 +248,33 @@ importers:
       react-dom:
         specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
+      react-dropzone:
+        specifier: ^14.2.3
+        version: 14.4.1(react@19.2.7)
+      react-grid-layout:
+        specifier: ^1.4.4
+        version: 1.5.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react-hook-form:
         specifier: ^7.85.0
         version: 7.85.0(react@19.2.7)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.18)(react@19.2.7)
+      recharts:
+        specifier: ^3.10.1
+        version: 3.10.1(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react-is@18.3.1)(react@19.2.7)(redux@5.0.1)
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
       sonner:
         specifier: ^2.0.7
         version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       uuid:
         specifier: ^14.0.1
         version: 14.0.1
+      zod:
+        specifier: ^4.4.1
+        version: 4.4.3
       zustand:
         specifier: ^4.5.2
         version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
@@ -219,109 +294,15 @@ importers:
       '@tanstack/router-core':
         specifier: ^1.170.0
         version: 1.171.22
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@types/uuid':
-        specifier: ^11.0.0
-        version: 11.0.0
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/cinq:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      date-fns:
-        specifier: ^3.6.0
-        version: 3.6.0
-      lucide-react:
-        specifier: ^0.460.0
-        version: 0.460.0(react@19.2.7)
-      papaparse:
-        specifier: ^5.5.4
-        version: 5.6.0
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      react-dropzone:
-        specifier: ^14.2.3
-        version: 14.4.1(react@19.2.7)
-      sonner:
-        specifier: ^1.7.0
-        version: 1.7.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
+      '@testing-library/jest-dom':
+        specifier: ^7.0.1
+        version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.10)
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@testing-library/user-event':
+        specifier: ^14.6.4
+        version: 14.6.4(@testing-library/dom@10.4.1)
       '@types/papaparse':
         specifier: ^5.3.15
         version: 5.5.2
@@ -331,106 +312,30 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.4(@types/react@19.2.18)
+      '@types/react-grid-layout':
+        specifier: ^1.3.5
+        version: 1.3.6
+      '@types/testing-library__jest-dom':
+        specifier: ^6.0.0
+        version: 6.0.0(@testing-library/dom@10.4.1)(vitest@4.1.10)
+      '@types/uuid':
+        specifier: ^11.0.0
+        version: 11.0.0
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
+      '@vitest/browser':
         specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/dial:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-virtual':
-        specifier: ^3.14.9
-        version: 3.14.9(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      sonner:
-        specifier: ^2.0.7
-        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      date-fns:
-        specifier: ^4.1.0
-        version: 4.4.0
-      lucide-react:
-        specifier: ^0.460.0
-        version: 0.460.0(react@19.2.7)
+        version: 4.1.10(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)
+      '@vitest/ui':
+        specifier: ^4.1.10
+        version: 4.1.10(vitest@4.1.10)
+      happy-dom:
+        specifier: ^15.7.4
+        version: 15.11.7
+      playwright:
+        specifier: 1.62.1
+        version: 1.62.1
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.3
@@ -612,763 +517,6 @@ importers:
       typescript:
         specifier: next
         version: 7.1.0-dev.20260817.1
-
-  apps/pause:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@hookform/resolvers':
-        specifier: ^5.7.1
-        version: 5.7.1(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(react-hook-form@7.85.0(react@19.2.7))(zod@4.4.3)
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-table':
-        specifier: ^8.20.5
-        version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      date-fns:
-        specifier: ^3.6.0
-        version: 3.6.0
-      lucide-react:
-        specifier: ^0.460.0
-        version: 0.460.0(react@19.2.7)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      react-hook-form:
-        specifier: ^7.80.0
-        version: 7.85.0(react@19.2.7)
-      sonner:
-        specifier: ^1.5.0
-        version: 1.7.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zod:
-        specifier: ^4.4.1
-        version: 4.4.3
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@testing-library/react':
-        specifier: ^16.0.0
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      happy-dom:
-        specifier: ^15.7.4
-        version: 15.11.7
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/pivot:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@platejs/basic-nodes':
-        specifier: ^53.0.0
-        version: 53.0.0(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@platejs/indent':
-        specifier: ^53.0.0
-        version: 53.0.0(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@platejs/list':
-        specifier: ^53.1.3
-        version: 53.1.3(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@platejs/markdown':
-        specifier: ^53.3.3
-        version: 53.3.3(platejs@53.3.5(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.7)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@7.0.2)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      lucide-react:
-        specifier: ^1.31.0
-        version: 1.31.0(react@19.2.7)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      react-markdown:
-        specifier: ^10.1.0
-        version: 10.1.0(@types/react@19.2.18)(react@19.2.7)
-      remark-gfm:
-        specifier: ^4.0.1
-        version: 4.0.1
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@testing-library/jest-dom':
-        specifier: ^7.0.1
-        version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.10)
-      '@testing-library/react':
-        specifier: ^16.3.2
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@testing-library/user-event':
-        specifier: ^14.6.4
-        version: 14.6.4(@testing-library/dom@10.4.1)
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@types/testing-library__jest-dom':
-        specifier: ^6.0.0
-        version: 6.0.0(@testing-library/dom@10.4.1)(vitest@4.1.10)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      '@vitest/browser':
-        specifier: 4.1.10
-        version: 4.1.10(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/ui':
-        specifier: ^4.1.10
-        version: 4.1.10(vitest@4.1.10)
-      playwright:
-        specifier: 1.62.1
-        version: 1.62.1
-      sonner:
-        specifier: ^2.0.7
-        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/sond:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@dnd-kit/core':
-        specifier: ^6.3.1
-        version: 6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@dnd-kit/sortable':
-        specifier: ^10.0.0
-        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
-      '@dnd-kit/utilities':
-        specifier: ^3.2.2
-        version: 3.2.2(react@19.2.7)
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@radix-ui/react-dialog':
-        specifier: ^1.1.2
-        version: 1.1.23(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-radio-group':
-        specifier: ^1.4.7
-        version: 1.4.7(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-select':
-        specifier: ^2.3.7
-        version: 2.3.7(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-switch':
-        specifier: ^1.3.7
-        version: 1.3.7(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-tabs':
-        specifier: ^1.1.21
-        version: 1.1.21(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@radix-ui/react-tooltip':
-        specifier: ^1.2.16
-        version: 1.2.16(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      lucide-react:
-        specifier: ^0.460.0
-        version: 0.460.0(react@19.2.7)
-      nuqs:
-        specifier: ^2.4.0
-        version: 2.9.5(@tanstack/react-router@1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      sonner:
-        specifier: ^2.0.7
-        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      '@vitest/browser':
-        specifier: 4.1.10
-        version: 4.1.10(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)
-      playwright:
-        specifier: ^1.49.0
-        version: 1.62.1
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/spark:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@xyflow/react':
-        specifier: ^12.11.2
-        version: 12.11.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(immer@11.1.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      croner:
-        specifier: ^9.0.0
-        version: 9.1.0
-      lucide-react:
-        specifier: ^0.460.0
-        version: 0.460.0(react@19.2.7)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      sonner:
-        specifier: ^2.0.7
-        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/tempo:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@ilamy/calendar':
-        specifier: ^2.0.3
-        version: 2.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(dayjs@1.11.21)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss-animate@1.0.7(tailwindcss@4.3.3))(tailwindcss@4.3.3)
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      sonner:
-        specifier: ^2.0.7
-        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/vault:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      papaparse:
-        specifier: ^5.5.4
-        version: 5.6.0
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      sonner:
-        specifier: ^1.5.0
-        version: 1.7.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@types/papaparse':
-        specifier: ^5.3.15
-        version: 5.5.2
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  apps/vista:
-    dependencies:
-      '@ataqu/api-client':
-        specifier: workspace:*
-        version: link:../../packages/api-client
-      '@ataqu/shared-hooks':
-        specifier: workspace:*
-        version: link:../../packages/shared-hooks
-      '@ataqu/shared-i18n':
-        specifier: workspace:*
-        version: link:../../packages/shared-i18n
-      '@ataqu/shared-schemas':
-        specifier: workspace:*
-        version: link:../../packages/shared-schemas
-      '@ataqu/shared-stores':
-        specifier: workspace:*
-        version: link:../../packages/shared-stores
-      '@ataqu/shared-utils':
-        specifier: workspace:*
-        version: link:../../packages/shared-utils
-      '@ataqu/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@ataqu/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@lingui/core':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)
-      '@lingui/react':
-        specifier: ^6.6.0
-        version: 6.6.0(@babel/core@7.29.7)(@babel/types@7.29.8)(babel-plugin-macros@3.1.0)(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.4(react@19.2.7)
-      '@tanstack/react-router':
-        specifier: ^1.170.0
-        version: 1.170.27(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      lucide-react:
-        specifier: ^0.460.0
-        version: 0.460.0(react@19.2.7)
-      react:
-        specifier: ^19.2.7
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.2.7
-        version: 19.2.7(react@19.2.7)
-      react-grid-layout:
-        specifier: ^1.4.4
-        version: 1.5.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      recharts:
-        specifier: ^3.10.1
-        version: 3.10.1(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react-is@18.3.1)(react@19.2.7)(redux@5.0.1)
-      sonner:
-        specifier: ^2.0.7
-        version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      zustand:
-        specifier: ^4.5.2
-        version: 4.5.7(@types/react@19.2.18)(immer@11.1.16)(react@19.2.7)
-    devDependencies:
-      '@ataqu/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
-      '@ataqu/vite-preset':
-        specifier: workspace:*
-        version: link:../../packages/vite-preset
-      '@lingui/cli':
-        specifier: ^6.6.0
-        version: 6.6.0(babel-plugin-macros@3.1.0)(esbuild@0.28.2)(rolldown@1.2.4)
-      '@lingui/format-po':
-        specifier: ^6.6.0
-        version: 6.6.0
-      '@tanstack/router-core':
-        specifier: ^1.170.0
-        version: 1.171.22
-      '@testing-library/react':
-        specifier: ^16.0.0
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@types/node':
-        specifier: ^22.20.1
-        version: 22.20.1
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.18)
-      '@types/react-grid-layout':
-        specifier: ^1.3.5
-        version: 1.3.6
-      '@vitejs/plugin-react':
-        specifier: ^6.0.4
-        version: 6.0.5(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vite:
-        specifier: ^8.1.0
-        version: 8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@22.20.1)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/api-client:
     dependencies:
@@ -5052,9 +4200,6 @@ packages:
   date-fns@3.6.0:
     resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
 
-  date-fns@4.4.0:
-    resolution: {integrity: sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==}
-
   dayjs@1.11.21:
     resolution: {integrity: sha512-98IT+HOahAisibz/yjKbzuOBwYcjJ7BCLPzARyHiyEBmRz4fatF+KPJszEHXsGYjUG234aH/cOjW1wwTbKUZlA==}
 
@@ -7181,12 +6326,6 @@ packages:
   slate@0.126.2:
     resolution: {integrity: sha512-38C8GU9awiEbroZm+DzXEFUWKptb1QV9xcgcUjseas4PtqQdBnEPITocosYzFHXEVrlkafjZEv8KH8pjhe0esQ==}
 
-  sonner@1.7.4:
-    resolution: {integrity: sha512-DIS8z4PfJRbIyfVFDVnK9rO3eYDtse4Omcm6bt0oEr5/jtLgysmjuBl1frJ9E/EQZrFmKx2A8m/s5s9CRXIzhw==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
-      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
-
   sonner@2.0.8:
     resolution: {integrity: sha512-UM/ByIoFra8yzV75n1o0Puu0bw5U/9UNnDacrJNspekBewIfsQ3D6ez1nvlWpt7aTsO6rujQtifBpycwIivqlg==}
     peerDependencies:
@@ -8521,33 +7660,12 @@ snapshots:
 
   '@inquirer/ansi@2.0.7': {}
 
-  '@inquirer/confirm@6.1.1(@types/node@22.20.1)':
-    dependencies:
-      '@inquirer/core': 11.2.1(@types/node@22.20.1)
-      '@inquirer/type': 4.0.7(@types/node@22.20.1)
-    optionalDependencies:
-      '@types/node': 22.20.1
-    optional: true
-
   '@inquirer/confirm@6.1.1(@types/node@26.2.0)':
     dependencies:
       '@inquirer/core': 11.2.1(@types/node@26.2.0)
       '@inquirer/type': 4.0.7(@types/node@26.2.0)
     optionalDependencies:
       '@types/node': 26.2.0
-
-  '@inquirer/core@11.2.1(@types/node@22.20.1)':
-    dependencies:
-      '@inquirer/ansi': 2.0.7
-      '@inquirer/figures': 2.0.7
-      '@inquirer/type': 4.0.7(@types/node@22.20.1)
-      cli-width: 4.1.0
-      fast-wrap-ansi: 0.2.2
-      mute-stream: 3.0.0
-      signal-exit: 4.1.0
-    optionalDependencies:
-      '@types/node': 22.20.1
-    optional: true
 
   '@inquirer/core@11.2.1(@types/node@26.2.0)':
     dependencies:
@@ -8562,11 +7680,6 @@ snapshots:
       '@types/node': 26.2.0
 
   '@inquirer/figures@2.0.7': {}
-
-  '@inquirer/type@4.0.7(@types/node@22.20.1)':
-    optionalDependencies:
-      '@types/node': 22.20.1
-    optional: true
 
   '@inquirer/type@4.0.7(@types/node@26.2.0)':
     optionalDependencies:
@@ -10360,29 +9473,10 @@ snapshots:
     transitivePeerDependencies:
       - '@swc/helpers'
 
-  '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
-    dependencies:
-      '@rolldown/pluginutils': 1.0.1
-      vite: 8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-
   '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-
-  '@vitest/browser-playwright@4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(playwright@1.62.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)':
-    dependencies:
-      '@vitest/browser': 4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/mocker': 4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      playwright: 1.62.1
-      tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@22.20.1)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-    transitivePeerDependencies:
-      - bufferutil
-      - msw
-      - utf-8-validate
-      - vite
-    optional: true
 
   '@vitest/browser-playwright@4.1.10(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(playwright@1.62.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
@@ -10396,24 +9490,6 @@ snapshots:
       - msw
       - utf-8-validate
       - vite
-
-  '@vitest/browser@4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)':
-    dependencies:
-      '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      '@vitest/utils': 4.1.10
-      magic-string: 0.30.21
-      pngjs: 7.0.0
-      sirv: 3.0.2
-      tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@22.20.1)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - msw
-      - utf-8-validate
-      - vite
-    optional: true
 
   '@vitest/browser@4.1.10(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
@@ -10456,15 +9532,6 @@ snapshots:
       '@vitest/utils': 4.1.10
       chai: 6.2.2
       tinyrainbow: 3.1.1
-
-  '@vitest/mocker@4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
-    dependencies:
-      '@vitest/spy': 4.1.10
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      msw: 2.15.0(@types/node@22.20.1)(typescript@7.0.2)
-      vite: 8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
 
   '@vitest/mocker@4.1.10(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
@@ -10949,8 +10016,6 @@ snapshots:
       is-data-view: 1.0.2
 
   date-fns@3.6.0: {}
-
-  date-fns@4.4.0: {}
 
   dayjs@1.11.21: {}
 
@@ -12737,32 +11802,6 @@ snapshots:
 
   ms@2.1.3: {}
 
-  msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2):
-    dependencies:
-      '@inquirer/confirm': 6.1.1(@types/node@22.20.1)
-      '@mswjs/interceptors': 0.41.9
-      '@open-draft/deferred-promise': 3.0.0
-      '@types/statuses': 2.0.6
-      cookie: 1.1.1
-      graphql: 16.14.2
-      headers-polyfill: 5.0.1
-      is-node-process: 1.2.0
-      outvariant: 1.4.3
-      path-to-regexp: 6.3.0
-      picocolors: 1.1.1
-      rettime: 0.11.11
-      statuses: 2.0.2
-      strict-event-emitter: 0.5.1
-      tough-cookie: 6.0.2
-      type-fest: 5.8.0
-      until-async: 3.0.2
-      yargs: 17.7.3
-    optionalDependencies:
-      typescript: 7.0.2
-    transitivePeerDependencies:
-      - '@types/node'
-    optional: true
-
   msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2):
     dependencies:
       '@inquirer/confirm': 6.1.1(@types/node@26.2.0)
@@ -13590,11 +12629,6 @@ snapshots:
 
   slate@0.126.2: {}
 
-  sonner@1.7.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
-    dependencies:
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-
   sonner@2.0.8(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       react: 19.2.7
@@ -14085,21 +13119,6 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0):
-    dependencies:
-      lightningcss: 1.33.0
-      picomatch: 4.0.5
-      postcss: 8.5.26
-      rolldown: 1.2.4
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      '@types/node': 22.20.1
-      esbuild: 0.28.2
-      fsevents: 2.3.3
-      jiti: 2.7.0
-      tsx: 4.23.12
-      yaml: 2.9.0
-
   vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.33.0
@@ -14114,37 +13133,6 @@ snapshots:
       jiti: 2.7.0
       tsx: 4.23.12
       yaml: 2.9.0
-
-  vitest@4.1.10(@types/node@22.20.1)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)):
-    dependencies:
-      '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      '@vitest/pretty-format': 4.1.10
-      '@vitest/runner': 4.1.10
-      '@vitest/snapshot': 4.1.10
-      '@vitest/spy': 4.1.10
-      '@vitest/utils': 4.1.10
-      es-module-lexer: 2.3.1
-      expect-type: 1.4.0
-      magic-string: 0.30.21
-      obug: 2.1.4
-      pathe: 2.0.3
-      picomatch: 4.0.5
-      std-env: 4.2.0
-      tinybench: 2.9.0
-      tinyexec: 1.3.0
-      tinyglobby: 0.2.17
-      tinyrainbow: 3.1.1
-      vite: 8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@types/node': 22.20.1
-      '@vitest/browser-playwright': 4.1.10(msw@2.15.0(@types/node@22.20.1)(typescript@7.0.2))(playwright@1.62.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/coverage-v8': 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
-      '@vitest/ui': 4.1.10(vitest@4.1.10)
-      happy-dom: 15.11.7
-    transitivePeerDependencies:
-      - msw
 
   vitest@4.1.10(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@15.11.7)(msw@2.15.0(@types/node@26.2.0)(typescript@7.0.2))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)):
     dependencies:
