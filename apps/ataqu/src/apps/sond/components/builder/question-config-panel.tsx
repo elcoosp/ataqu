@@ -1,4 +1,6 @@
-import { Accordion, Button, Input } from "@ataqu/ui";
+import {
+ Accordion, Button, Input 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useId } from "react";
