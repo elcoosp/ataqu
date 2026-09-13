@@ -1,6 +1,8 @@
 import { useListMovements } from "@ataqu/api-client";
 import { formatDate } from "@ataqu/shared-utils";
-import { Bone } from "@ataqu/ui";
+import {
+ Bone 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { EmptyState } from "./empty-state";
 import { HistoryIcon } from "./icons";
