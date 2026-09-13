@@ -1,5 +1,7 @@
 import type { Workflow } from "@ataqu/api-client";
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { Link } from "@tanstack/react-router";
@@ -46,7 +48,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 				>
 					<div className="flex-1 min-w-0">
 						<Link
-							to="/workflows/$id"
+							to="/spark/workflows/$id"
 							params={{ id: wf.id }}
 							className="text-foreground font-medium hover:text-primary transition-colors block truncate"
 						>
@@ -74,7 +76,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 					</div>
 
 					<div className="flex items-center gap-3 ml-4">
-						<Link to="/workflows/$id" params={{ id: wf.id }}>
+						<Link to="/spark/workflows/$id" params={{ id: wf.id }}>
 							<Button
 								variant="ghost"
 								size="icon"
