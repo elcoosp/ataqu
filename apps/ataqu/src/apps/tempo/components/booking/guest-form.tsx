@@ -1,11 +1,13 @@
 import { usePublicCreateBooking } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
-import { FloatingLabelInput, InlineValidation, LoadingButton } from "@ataqu/ui";
+import {
+ FloatingLabelInput, InlineValidation, LoadingButton 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-import { useBookingStore } from "@/hooks/use-booking-store";
-import { useTimezone } from "@/hooks/use-timezone";
-import { toast } from "@/hooks/use-toast";
+import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
+import { useTimezone } from "../../../../apps/tempo/hooks/use-timezone";
+import { toast } from "../../../../apps/tempo/hooks/use-toast";
 
 export function GuestForm() {
 	const timezone = useTimezone();
