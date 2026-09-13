@@ -6,7 +6,7 @@ import {
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { useEffect, useState } from "react";
-import { useAuthStore } from "../stores/auth-store";
+import { useAuthStore } from "@ataqu/shared-stores";
 
 /**
  * Loads the authenticated user's profile via useGetCurrentUser and pushes it
