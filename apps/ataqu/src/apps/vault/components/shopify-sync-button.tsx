@@ -1,6 +1,8 @@
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useShopifySync } from "@/hooks/use-shopify-sync";
+import { useShopifySync } from "../../../apps/vault/hooks/use-shopify-sync";
 import { showToast } from "./toast-store";
 
 export function ShopifySyncButton() {
