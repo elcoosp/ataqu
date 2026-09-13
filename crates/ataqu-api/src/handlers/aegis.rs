@@ -296,7 +296,9 @@ pub async fn sso_login(
     });
     state
         .sso_states
-        .insert(sso_state.clone(), state_data.to_string());
+        .insert(sso_state.clone(), state_data.to_string(), 600)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e))?;
     let redirect = ataqu_domain_aegis::sso::build_authorization_url(&provider, &config, &sso_state);
 
     Ok(Json(serde_json::json!({
@@ -333,10 +335,10 @@ pub async fn sso_callback(
 ) -> ApiResult<axum::response::Redirect> {
     let state_data_str = state
         .sso_states
-        .get(&req.state)
-        .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?
-        .clone();
-    state.sso_states.invalidate(&req.state);
+        .take(&req.state)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e))?
+        .ok_or_else(|| ApiResponseError::unauthorized("Invalid or expired SSO state"))?;
 
     let state_data: serde_json::Value = serde_json::from_str(&state_data_str)
         .map_err(|_| ApiResponseError::unauthorized("Invalid SSO state data"))?;

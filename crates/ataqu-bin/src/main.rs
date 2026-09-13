@@ -680,11 +680,10 @@ async fn main() -> anyhow::Result<()> {
     let ws_registry = Arc::new(DashMap::new());
     let conn_index = Arc::new(DashMap::new());
     let presence_counts = Arc::new(DashMap::new());
-    let sso_states = Arc::new(
-        moka::sync::Cache::builder()
-            .time_to_live(Duration::from_secs(600))
-            .build(),
-    );
+    let sso_states: Arc<dyn ataqu_application::sso_state_store::SsoStateStore + Send + Sync> =
+        Arc::new(ataqu_application::sso_state_store::PostgresSsoStateStore::new(
+            pools.core.clone(),
+        ));
     let allowlist_cache = moka::sync::Cache::<String, Vec<String>>::builder()
         .time_to_live(Duration::from_secs(60))
         .build();

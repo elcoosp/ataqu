@@ -12,7 +12,6 @@ use crate::error::ApiResponseError;
 use std::net::SocketAddr;
 use dashmap::DashMap;
 use metrics_exporter_prometheus::PrometheusHandle;
-use moka::sync::Cache;
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
@@ -41,7 +40,8 @@ pub type WsRegistry =
     Arc<DashMap<(Uuid, Uuid), Arc<DashMap<Uuid, tokio::sync::mpsc::UnboundedSender<String>>>>>;
 pub type ConnIndex = Arc<DashMap<Uuid, Vec<(Uuid, Uuid)>>>;
 pub type PresenceCounts = Arc<DashMap<Uuid, std::sync::atomic::AtomicUsize>>;
-pub type SsoStates = Arc<Cache<String, String>>;
+pub type SsoStates =
+    Arc<dyn ataqu_application::sso_state_store::SsoStateStore + Send + Sync>;
 
 /// Application state shared across handlers.
 #[derive(Clone)]
