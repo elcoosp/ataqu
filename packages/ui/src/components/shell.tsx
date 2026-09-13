@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useHealth } from "@ataqu/api-client";
 import { useAuthStore, useUIStore } from "@ataqu/shared-stores";
 import { ThemeToggle } from "./theme-toggle";
@@ -38,38 +39,19 @@ const APP_NAMES: Record<string, string> = {
 	vista: "VISTA",
 };
 
-const APP_DOMAINS: Record<string, string> = {
-	aegis: "sso",
-	cinq: "crm",
-	dial: "chat",
-	pivot: "docs",
-	spark: "auto",
-	tempo: "schedule",
-	sond: "forms",
-	vault: "inv",
-	pause: "hr",
-	vista: "bi",
+/** In-app home route for each app in the consolidated single-origin shell. */
+export const APP_HOME: Record<string, string> = {
+	aegis: "/dashboard",
+	cinq: "/cinq/contacts",
+	dial: "/dial",
+	pivot: "/pivot",
+	spark: "/spark",
+	tempo: "/tempo/dashboard",
+	sond: "/sond",
+	vault: "/vault/products",
+	pause: "/pause/directory",
+	vista: "/vista",
 };
-
-const APP_PORTS: Record<string, number> = {
-	aegis: 5173,
-	cinq: 5174,
-	dial: 5175,
-	pivot: 5176,
-	spark: 5177,
-	tempo: 5178,
-	sond: 5179,
-	vault: 5180,
-	pause: 5181,
-	vista: 5182,
-};
-
-function getAppUrl(app: string): string {
-	if (import.meta.env.DEV) {
-		return `http://localhost:${APP_PORTS[app]}`;
-	}
-	return `https://${APP_DOMAINS[app]}.ataqu.com`;
-}
 
 export interface SidebarItem {
 	label: string;
@@ -94,6 +76,20 @@ export const Shell: React.FC<ShellProps> = ({
 	const { user, logout } = useAuthStore();
 	const [appsExpanded, setAppsExpanded] = useState(true);
 	const { data: health } = useHealth();
+	// Derive the active app from the current route so the shell highlights
+	// the app being viewed even when the caller passes a stale value.
+	let pathname = "";
+	try {
+		pathname = useRouterState({ select: (s) => s.location.pathname });
+	} catch {
+		pathname = "";
+	}
+	let routeActiveApp = activeApp;
+	{
+		const seg = pathname.split("/").filter(Boolean)[0] ?? "";
+		if ((APP_NAMES as Record<string, string>)[seg]) routeActiveApp = seg;
+		else if (seg === "" || seg === "dashboard") routeActiveApp = "aegis";
+	}
 
 	const appKeys = Object.keys(APP_ICONS);
 
@@ -144,12 +140,12 @@ export const Shell: React.FC<ShellProps> = ({
 						appsExpanded &&
 						appKeys.map((app) => {
 							const iconSrc = APP_ICONS[app];
-							const isActive = app === activeApp;
-							const href = getAppUrl(app);
+							const isActive = app === routeActiveApp;
+							const to = APP_HOME[app] ?? "/";
 							return (
-								<a
+								<Link
 									key={app}
-									href={href}
+									to={to}
 									className={`flex items-center px-4 py-3 transition-colors ${
 										isActive
 											? "bg-amber/10 text-amber border-r-2 border-amber"
@@ -166,7 +162,7 @@ export const Shell: React.FC<ShellProps> = ({
 											{APP_NAMES[app]}
 										</span>
 									)}
-								</a>
+								</Link>
 							);
 						})}
 
@@ -231,7 +227,7 @@ export const Shell: React.FC<ShellProps> = ({
 				{/* Header with app name - no avatar */}
 				<header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
 					<span className="font-heading text-xl text-white">
-						{APP_NAMES[activeApp] || "Ataqu"}
+						{APP_NAMES[routeActiveApp] || "Ataqu"}
 					</span>
 					<div className="flex items-center gap-4">
 						<SetupProgressWidget />
