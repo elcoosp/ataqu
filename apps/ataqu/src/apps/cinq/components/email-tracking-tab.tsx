@@ -1,6 +1,8 @@
 import { useGetContactTracking, useTrackEmail } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Badge, Bone, Button } from "@ataqu/ui";
+import {
+ Badge, Bone, Button 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { format } from "date-fns";
 import { useState } from "react";
