@@ -11,16 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const APP_PORTS: Record<string, number> = {
-	aegis: 5173,
-	cinq: 5174,
-	dial: 5175,
-	pivot: 5176,
-	spark: 5177,
-	tempo: 5178,
-	sond: 5179,
-	vault: 5180,
-	pause: 5181,
-	vista: 5182,
+	ataqu: 5173,
 };
 
 export const defineViteConfig = (options: { appName: string }): UserConfig => {
