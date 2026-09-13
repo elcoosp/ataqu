@@ -1,9 +1,11 @@
 import { useListAvailabilitySlots } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Bone, Button } from "@ataqu/ui";
+import {
+ Bone, Button 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
-import { useTimezone } from "@/hooks/use-timezone";
+import { useTimezone } from "../../../apps/tempo/hooks/use-timezone";
 
 interface BookingCalendarProps {
 	eventTypeId: UUID;
