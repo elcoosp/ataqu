@@ -1,5 +1,7 @@
 import { useDeleteDocument, useUpdateDocument } from "@ataqu/api-client";
-import { Button, cn } from "@ataqu/ui";
+import {
+ Button, cn 
+} from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
 import {
@@ -29,8 +31,8 @@ import {
 } from "platejs/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BlockEditor } from "@/components/block-editor";
-import type { Document } from "@/types";
+import { BlockEditor } from "../../../apps/pivot/components/block-editor";
+import type { Document } from "../../../apps/pivot/types";
 
 interface DocumentEditorProps {
 	id: string;
