@@ -1,9 +1,11 @@
 import { useListEventTypes } from "@ataqu/api-client";
-import { Button, SegmentedControl } from "@ataqu/ui";
+import {
+ Button, SegmentedControl 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-import { useBookingStore } from "@/hooks/use-booking-store";
+import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
 
 export function EventTypeSelector() {
 	const { data: eventTypesData } = useListEventTypes();
