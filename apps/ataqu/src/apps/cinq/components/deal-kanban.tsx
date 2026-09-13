@@ -6,7 +6,9 @@ import {
 	useListPipelineStages,
 	useUpdatePipelineStage,
 } from "@ataqu/api-client";
-import { Badge, Bone, Button, Input, KanbanBoard } from "@ataqu/ui";
+import {
+ Badge, Bone, Button, Input, KanbanBoard 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -87,7 +89,7 @@ export function DealKanban() {
 	const renderItem = (deal: DealResponse) => (
 		<div
 			className="relative p-3 bg-deep-night/50 border border-gray-700/40 rounded-lg cursor-pointer hover:border-amber/50 transition-colors"
-			onClick={() => navigate({ to: `/deals/${deal.id}` })}
+			onClick={() => navigate({ to: `/cinq/cinq/deals/${deal.id}` })}
 			data-tour="deal-card"
 		>
 			<div className="font-medium">{deal.title}</div>
