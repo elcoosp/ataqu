@@ -1,5 +1,7 @@
 import { api } from "@ataqu/api-client";
-import { Button, CopyButton } from "@ataqu/ui";
+import {
+ Button, CopyButton 
+} from "@ataqu/ui";
 import { FileSpreadsheet, FileText, Image as ImageIcon } from "lucide-react";
 import type React from "react";
 import { toast } from "sonner";
