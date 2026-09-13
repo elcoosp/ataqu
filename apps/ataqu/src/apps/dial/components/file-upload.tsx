@@ -1,5 +1,7 @@
 import { useUploadFile } from "@ataqu/api-client";
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Loader2, Paperclip } from "lucide-react";
 import { useState } from "react";
