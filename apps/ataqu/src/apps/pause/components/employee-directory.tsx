@@ -125,7 +125,7 @@ export function EmployeeDirectory({
 						key={emp.id}
 						className="p-4 cursor-pointer hover:bg-accent/10 transition-colors"
 						onClick={() =>
-							navigate({ to: "/employees/$id", params: { id: emp.id } })
+							navigate({ to: "/pause/employees/$id", params: { id: emp.id } })
 						}
 					>
 						<div className="flex items-center space-x-4">
