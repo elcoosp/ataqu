@@ -1,7 +1,9 @@
 import type { Variant } from "@ataqu/api-client";
 import { api, useListVariants } from "@ataqu/api-client";
 import { formatDate } from "@ataqu/shared-utils";
-import { Bone, Button, Input, Label } from "@ataqu/ui";
+import {
+ Bone, Button, Input, Label 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
@@ -281,10 +283,8 @@ export function ReservationList() {
 									<td className="px-4 py-3">
 										{reservation.dealId ? (
 											<a
-												href={`https://crm.ataqu.com/deals/${reservation.dealId}`}
+												href={`/cinq/deals/${reservation.dealId}`}
 												className="text-primary hover:underline"
-												target="_blank"
-												rel="noreferrer noopener"
 											>
 												{reservation.dealId}
 											</a>
