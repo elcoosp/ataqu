@@ -1,4 +1,6 @@
-import { LiveActivity, PresenceAvatars, TypingIndicator } from "@ataqu/ui";
+import {
+ LiveActivity, PresenceAvatars, TypingIndicator 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type React from "react";
 
