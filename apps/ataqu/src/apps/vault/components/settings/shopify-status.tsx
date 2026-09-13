@@ -13,8 +13,8 @@ import {
 	useShopifyDisconnect,
 	useShopifyIntegrations,
 	useShopifySync,
-} from "@/hooks/use-shopify-sync";
-import { useShopifyStore } from "@/stores/shopify-store";
+} from "../../../../apps/vault/hooks/use-shopify-sync";
+import { useShopifyStore } from "../../../../apps/vault/stores/shopify-store";
 import { showToast } from "../toast-store";
 
 export function ShopifyStatus() {
