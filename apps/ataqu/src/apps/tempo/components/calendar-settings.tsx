@@ -1,4 +1,6 @@
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
+import {
+ Button, Card, CardContent, CardHeader, CardTitle 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 
 export function CalendarSettings() {
