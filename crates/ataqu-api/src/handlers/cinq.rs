@@ -1136,7 +1136,7 @@ pub async fn bulk_delete_tasks(
 ) -> ApiResult<StatusCode> {
     let pool = state.db.get_postgres_connection_pool();
     let ids = &req.ids;
-    sqlx::query("DELETE FROM cinq.tasks WHERE tenant_id = $1 AND id = ANY($2)")
+    sqlx::query("DELETE FROM collab_crm.tasks WHERE tenant_id = $1 AND id = ANY($2)")
         .bind(auth.tenant_id.as_uuid())
         .bind(ids)
         .execute(pool)
@@ -1151,7 +1151,7 @@ pub async fn export_deals(
 ) -> ApiResult<impl axum::response::IntoResponse> {
     let pool = state.db.get_postgres_connection_pool();
     let rows = sqlx::query(
-		"SELECT id, title, status, amount, probability, owner_id, created_at FROM cinq.deals WHERE tenant_id = $1 ORDER BY created_at DESC",
+		"SELECT id, title, status, amount, probability, owner_id, created_at FROM collab_crm.deals WHERE tenant_id = $1 ORDER BY created_at DESC",
 	)
 		.bind(auth.tenant_id.as_uuid())
 		.fetch_all(pool)
@@ -1270,7 +1270,6 @@ pub fn routes() -> Router<AppState> {
         .route("/contacts/bulk-delete", post(bulk_delete_contacts))
         .route("/deals/bulk-delete", post(bulk_delete_deals))
         .route("/deals", post(create_deal).get(list_deals))
-        .route("/deals/bulk-delete", post(bulk_delete_deals))
         .route(
             "/deals/{id}",
             get(get_deal).put(update_deal).delete(delete_deal),
