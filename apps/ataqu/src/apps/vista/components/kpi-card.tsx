@@ -1,4 +1,6 @@
-import { Card, ValueFlash } from "@ataqu/ui";
+import {
+ Card, ValueFlash 
+} from "@ataqu/ui";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import type React from "react";
 
