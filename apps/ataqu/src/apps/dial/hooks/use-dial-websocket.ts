@@ -3,7 +3,7 @@ import type { Message } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
-import { useDialStore } from "@/stores/dial-store";
+import { useDialStore } from "../../../apps/dial/stores/dial-store";
 
 type WebSocketMessage =
 	| { type: "message"; channelId: string; message: Message }
@@ -27,8 +27,8 @@ export const useDialWebSocket = () => {
 	const connect = useCallback(() => {
 		if (!token) return;
 		const wsUrl =
-			(import.meta as any).env.VITE_WS_BASE_URL || "ws://localhost:5175";
-		const ws = new WebSocket(`${wsUrl}/ws?token=${token}`);
+			(import.meta as any).env.VITE_WS_BASE_URL || "/ws";
+		const ws = new WebSocket((wsUrl.endsWith('/ws') ? `${wsUrl}?token=${token}` : `${wsUrl}/ws?token=${token}`));
 		wsRef.current = ws;
 
 		ws.onopen = () => {
