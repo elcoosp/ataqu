@@ -47,6 +47,7 @@ pub mod m20250101_000035_create_amazon_sync;
 pub mod m20250102_000001_create_sso_states;
 pub mod m20260913_000001_add_missing_columns;
 pub mod m20260913_000002_create_cross_app_support_sales;
+pub mod m20260913_000003_fix_schema_gaps;
 
 // ---- aegis ----
 pub mod m_aegis;
@@ -189,6 +190,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250102_000001_create_sso_states::Migration),
             Box::new(m20260913_000001_add_missing_columns::Migration),
             Box::new(m20260913_000002_create_cross_app_support_sales::Migration),
+            Box::new(m20260913_000003_fix_schema_gaps::Migration),
         ]
     }
 }
