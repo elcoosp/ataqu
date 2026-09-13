@@ -45,3 +45,5 @@ export * from "./components/ui/tabs";
 export * from "./components/ui/tooltip";
 export * from "./components/workflow-canvas";
 export * from "./lib/utils";
+export * from "./theme";
+export * from "./components/theme-toggle";
