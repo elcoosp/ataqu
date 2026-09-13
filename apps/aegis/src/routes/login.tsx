@@ -66,6 +66,7 @@ export const Route = createFileRoute("/login")({
 			try {
 				const res = await api.post<{ url: string }>("/aegis/sso/login", {
 					provider,
+					return_to: `${window.location.origin}/login`,
 				});
 				window.location.href = res.url;
 			} catch {

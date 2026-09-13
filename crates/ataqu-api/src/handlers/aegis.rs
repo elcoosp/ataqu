@@ -257,6 +257,8 @@ fn map_aegis_error(err: AegisServiceError) -> ApiResponseError {
 #[derive(Debug, Deserialize)]
 pub struct SsoLoginRequest {
     pub provider: String,
+    #[serde(default)]
+    pub return_to: Option<String>,
 }
 
 pub async fn sso_login(
@@ -278,10 +280,19 @@ pub async fn sso_login(
         SsoProvider::Google => "Google",
         SsoProvider::Microsoft => "Microsoft",
     };
-    // Store provider and tenant_id as JSON
+    // Validate return_to to prevent open redirects.
+    let return_to = req
+        .return_to
+        .filter(|u| {
+            u.starts_with("http://localhost:")
+                || (u.starts_with("https://") && u.contains("ataqu.com"))
+        })
+        .unwrap_or_else(|| "http://localhost:5173/login".to_string());
+    // Store provider, tenant_id, and return_to as JSON
     let state_data = serde_json::json!({
         "provider": provider_str,
         "tenant_id": auth.tenant_id.as_uuid(),
+        "return_to": return_to,
     });
     state
         .sso_states
@@ -295,7 +306,7 @@ pub async fn sso_login(
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SsoCallbackRequest {
+pub struct SsoCallbackQuery {
     pub code: String,
     pub state: String,
 }
@@ -318,8 +329,8 @@ struct MicrosoftUserInfo {
 
 pub async fn sso_callback(
     State(state): State<AppState>,
-    Json(req): Json<SsoCallbackRequest>,
-) -> ApiResult<Json<LoginResponse>> {
+    Query(req): Query<SsoCallbackQuery>,
+) -> ApiResult<axum::response::Redirect> {
     let state_data_str = state
         .sso_states
         .get(&req.state)
@@ -405,11 +416,20 @@ pub async fn sso_callback(
         .await
         .map_err(map_aegis_error)?;
 
-    Ok(Json(LoginResponse {
-        access_token: resp.access_token,
-        refresh_token: resp.refresh_token,
-        user_id: resp.user_id,
-    }))
+    let return_to = state_data["return_to"]
+        .as_str()
+        .unwrap_or("http://localhost:5173/login");
+
+    let sep = if return_to.contains('?') { '&' } else { '?' };
+    let target = format!(
+        "{}{sep}token={}&refreshToken={}&user_id={}",
+        return_to,
+        urlencoding::encode(&resp.access_token),
+        urlencoding::encode(&resp.refresh_token),
+        resp.user_id,
+    );
+
+    Ok(axum::response::Redirect::to(&target))
 }
 #[derive(Debug, Deserialize)]
 pub struct UpdateRoleRequest {
@@ -1150,13 +1170,13 @@ pub fn routes() -> axum::Router<crate::AppState> {
 }
 
 pub fn public_routes() -> axum::Router<crate::AppState> {
-    use axum::routing::post;
+    use axum::routing::{get, post};
     axum::Router::new()
         .route("/password-reset/request", post(request_password_reset))
         .route("/password-reset/confirm", post(reset_password))
         .route("/signup", post(signup))
         .route("/sso/login", post(sso_login))
-        .route("/sso/callback", post(sso_callback))
+        .route("/sso/callback", get(sso_callback))
         .route("/login", post(login))
         .route("/refresh", post(refresh_token))
 }
