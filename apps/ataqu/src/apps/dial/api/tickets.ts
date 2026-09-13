@@ -23,21 +23,21 @@ export interface TicketMessage {
 
 export const listTickets = (params?: { limit?: number; offset?: number }) =>
 	api.get<{ items: Ticket[]; total: number; limit: number; offset: number }>(
-		"/dial/tickets",
+		"/dial/dial/tickets",
 		{
 			params,
 		},
 	);
 
-export const getTicket = (id: UUID) => api.get<Ticket>(`/dial/tickets/${id}`);
+export const getTicket = (id: UUID) => api.get<Ticket>(`/dial/dial/tickets/${id}`);
 
 export const updateTicketStatus = (id: UUID, status: Ticket["status"]) =>
-	api.patch<Ticket>(`/dial/tickets/${id}`, { status });
+	api.patch<Ticket>(`/dial/dial/tickets/${id}`, { status });
 
 export const replyToTicket = (id: UUID, content: string) =>
-	api.post<TicketMessage>(`/dial/tickets/${id}/replies`, { content });
+	api.post<TicketMessage>(`/dial/dial/tickets/${id}/replies`, { content });
 
 export const listTicketMessages = (
 	id: UUID,
 	params?: { limit?: number; offset?: number },
-) => api.get<TicketMessage[]>(`/dial/tickets/${id}/messages`, { params });
+) => api.get<TicketMessage[]>(`/dial/dial/tickets/${id}/messages`, { params });
