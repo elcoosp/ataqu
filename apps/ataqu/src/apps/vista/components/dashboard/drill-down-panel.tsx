@@ -1,4 +1,6 @@
-import { Button, Drawer } from "@ataqu/ui";
+import {
+ Button, Drawer 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { Download } from "lucide-react";
 import type React from "react";
