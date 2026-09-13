@@ -1,5 +1,7 @@
 import { useListEmployees, useListLeaveRequests } from "@ataqu/api-client";
-import { Chart } from "@ataqu/ui";
+import {
+ Chart 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMemo } from "react";
