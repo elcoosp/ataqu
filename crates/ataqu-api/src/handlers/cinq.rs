@@ -1264,7 +1264,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/contacts", post(create_contact).get(list_contacts))
         .route(
-            "/contacts/:id",
+            "/contacts/{id}",
             get(get_contact).put(update_contact).delete(delete_contact),
         )
         .route("/contacts/bulk-delete", post(bulk_delete_contacts))
@@ -1272,7 +1272,7 @@ pub fn routes() -> Router<AppState> {
         .route("/deals", post(create_deal).get(list_deals))
         .route("/deals/bulk-delete", post(bulk_delete_deals))
         .route(
-            "/deals/:id",
+            "/deals/{id}",
             get(get_deal).put(update_deal).delete(delete_deal),
         )
         .route(
@@ -1280,19 +1280,19 @@ pub fn routes() -> Router<AppState> {
             get(list_pipeline_stages).post(create_pipeline_stage),
         )
         .route(
-            "/pipeline/stages/:id",
+            "/pipeline/stages/{id}",
             put(update_pipeline_stage).delete(delete_pipeline_stage),
         )
         .route("/activities", post(create_activity).get(list_activities))
-        .route("/activities/:id", get(get_activity))
+        .route("/activities/{id}", get(get_activity))
         .route("/tasks", post(create_task).get(list_tasks))
         .route(
-            "/tasks/:id",
+            "/tasks/{id}",
             get(get_task).put(update_task).delete(delete_task),
         )
-        .route("/contacts/:id/tasks", get(list_contact_tasks))
+        .route("/contacts/{id}/tasks", get(list_contact_tasks))
         .route(
-            "/contacts/:id/tracking",
+            "/contacts/{id}/tracking",
             get(super::email_tracking::get_contact_tracking),
         )
         .route("/search", get(search_contacts))
@@ -1307,5 +1307,5 @@ pub fn routes() -> Router<AppState> {
             "/establishments",
             get(list_establishments).post(create_establishment),
         )
-        .route("/establishments/:id", get(get_establishment))
+        .route("/establishments/{id}", get(get_establishment))
 }

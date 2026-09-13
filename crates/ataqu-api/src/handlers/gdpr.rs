@@ -37,7 +37,7 @@ pub async fn request_tenant_deletion(
 
 pub fn routes() -> axum::Router<crate::AppState> {
     axum::Router::new().route(
-        "/tenants/:id",
+        "/tenants/{id}",
         axum::routing::delete(request_tenant_deletion),
     )
 }

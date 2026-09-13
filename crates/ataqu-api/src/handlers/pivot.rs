@@ -806,10 +806,10 @@ pub async fn apply_template_to_doc(
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
-        .route("/databases/:id", axum::routing::delete(delete_db))
-        .route("/databases/:id/rows", axum::routing::get(get_database_rows))
+        .route("/databases/{id}", axum::routing::delete(delete_db))
+        .route("/databases/{id}/rows", axum::routing::get(get_database_rows))
         .route(
-            "/databases/:id/rows/:rowId",
+            "/databases/{id}/rows/{rowId}",
             axum::routing::get(get_database_row)
                 .patch(update_database_row)
                 .delete(delete_database_row),
@@ -819,30 +819,30 @@ pub fn routes() -> Router<AppState> {
             "/docs/bulk-delete",
             axum::routing::post(bulk_delete_documents),
         )
-        .route("/docs/:id/versions", axum::routing::get(list_doc_versions))
+        .route("/docs/{id}/versions", axum::routing::get(list_doc_versions))
         .route(
-            "/docs/:id",
+            "/docs/{id}",
             axum::routing::get(get_doc)
                 .put(update_doc)
                 .delete(delete_doc),
         )
-        .route("/docs/:id/blocks", axum::routing::get(list_blocks))
+        .route("/docs/{id}/blocks", axum::routing::get(list_blocks))
         .route(
-            "/docs/:id/apply-template",
+            "/docs/{id}/apply-template",
             axum::routing::post(apply_template_to_doc),
         )
-        .route("/docs/:id/relations", axum::routing::get(list_relations))
+        .route("/docs/{id}/relations", axum::routing::get(list_relations))
         .route("/blocks", axum::routing::post(create_block))
         .route(
-            "/blocks/:id",
+            "/blocks/{id}",
             axum::routing::put(update_block).delete(delete_block),
         )
         .route("/relations", axum::routing::post(create_relation))
-        .route("/relations/:id", axum::routing::get(get_relation))
+        .route("/relations/{id}", axum::routing::get(get_relation))
         .route("/search", axum::routing::get(search_docs))
         .route(
             "/templates",
             axum::routing::post(create_template).get(list_templates),
         )
-        .route("/templates/:id/apply", axum::routing::post(apply_template))
+        .route("/templates/{id}/apply", axum::routing::post(apply_template))
 }

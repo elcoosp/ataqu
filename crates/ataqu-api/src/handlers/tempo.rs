@@ -471,11 +471,11 @@ pub async fn get_public_event_type(
 pub fn public_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/public/:tenant_id/event-types/:slug",
+            "/public/{tenant_id}/event-types/{slug}",
             axum::routing::get(get_public_event_type),
         )
         .route(
-            "/public/:tenant_id/bookings",
+            "/public/{tenant_id}/bookings",
             axum::routing::post(public_create_booking),
         )
 }
@@ -563,22 +563,22 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(bulk_cancel_bookings),
         )
         .route("/bookings", axum::routing::get(list_bookings))
-        .route("/bookings/:id", axum::routing::get(get_booking))
-        .route("/bookings/:id/cancel", axum::routing::post(cancel_booking))
+        .route("/bookings/{id}", axum::routing::get(get_booking))
+        .route("/bookings/{id}/cancel", axum::routing::post(cancel_booking))
         .route(
-            "/bookings/:id/confirm",
+            "/bookings/{id}/confirm",
             axum::routing::post(confirm_booking),
         )
         .route(
-            "/bookings/:id/no-show",
+            "/bookings/{id}/no-show",
             axum::routing::post(mark_no_show),
         )
         .route(
-            "/bookings/:id/joined",
+            "/bookings/{id}/joined",
             axum::routing::post(mark_joined),
         )
         .route(
-            "/bookings/:id/reschedule",
+            "/bookings/{id}/reschedule",
             axum::routing::post(reschedule_booking),
         )
         .route(
@@ -586,7 +586,7 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(create_event_type).get(list_event_types),
         )
         .route(
-            "/event-types/:id",
+            "/event-types/{id}",
             axum::routing::put(update_event_type).delete(delete_event_type),
         )
         .route(
@@ -594,11 +594,11 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(create_availability_slot),
         )
         .route(
-            "/availability-slots/:event_type_id",
+            "/availability-slots/{event_type_id}",
             axum::routing::get(list_availability_slots),
         )
         .route(
-            "/availability-slots/:id",
+            "/availability-slots/{id}",
             axum::routing::delete(delete_availability_slot),
         )
 }

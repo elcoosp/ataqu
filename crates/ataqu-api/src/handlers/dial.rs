@@ -762,37 +762,37 @@ pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
         .route("/channels", post(create_channel).get(list_channels))
-        .route("/channels/:id", get(get_channel).put(update_channel))
+        .route("/channels/{id}", get(get_channel).put(update_channel))
         .route(
-            "/channels/:id/archive",
+            "/channels/{id}/archive",
             axum::routing::post(archive_channel),
         )
         .route(
-            "/channels/:id/messages",
+            "/channels/{id}/messages",
             post(send_message).get(list_messages),
         )
-        .route("/channels/:id/export", axum::routing::get(export_channel))
+        .route("/channels/{id}/export", axum::routing::get(export_channel))
         .route(
-            "/channels/:id/export/pdf",
+            "/channels/{id}/export/pdf",
             axum::routing::get(export_channel_pdf),
         )
-        .route("/messages/:id", put(edit_message).delete(delete_message))
+        .route("/messages/{id}", put(edit_message).delete(delete_message))
         .route("/messages/bulk-delete", post(bulk_delete_messages))
         .route(
-            "/messages/:id/reactions",
+            "/messages/{id}/reactions",
             post(add_reaction).get(list_reactions),
         )
         .route(
-            "/messages/:id/reactions/:reaction_id",
+            "/messages/{id}/reactions/{reaction_id}",
             axum::routing::delete(delete_reaction),
         )
         .route("/threads", post(start_thread))
-        .route("/threads/:id", get(get_thread))
-        .route("/threads/:id/messages", get(list_thread_messages))
+        .route("/threads/{id}", get(get_thread))
+        .route("/threads/{id}/messages", get(list_thread_messages))
         .route("/mentions", post(add_mention).get(list_mentions))
-        .route("/mentions/:id/read", post(mark_mention_read))
+        .route("/mentions/{id}/read", post(mark_mention_read))
         .route("/presence/online", get(get_online_users))
         .route("/search", get(search_messages))
-        .route("/channels/:id/files", post(upload_file))
+        .route("/channels/{id}/files", post(upload_file))
         .nest("/ws", super::dial_ws::routes())
 }

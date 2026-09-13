@@ -435,7 +435,7 @@ pub async fn delete_dlq(
 
 pub fn public_routes() -> Router<AppState> {
     Router::new().route(
-        "/webhooks/:tenant_id/:workflow_id",
+        "/webhooks/{tenant_id}/{workflow_id}",
         axum::routing::post(webhook_trigger),
     )
 }
@@ -445,19 +445,19 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/workflows", get(list_workflows).post(create_workflow))
         .route(
-            "/workflows/:id",
+            "/workflows/{id}",
             get(get_workflow)
                 .put(update_workflow)
                 .delete(delete_workflow),
         )
-        .route("/workflows/:id/execute", post(execute_workflow))
+        .route("/workflows/{id}/execute", post(execute_workflow))
         .route("/workflows/runs", get(list_workflow_runs))
-        .route("/workflows/runs/:id", get(get_workflow_run))
+        .route("/workflows/runs/{id}", get(get_workflow_run))
         .route(
-            "/workflows/runs/:run_id/approve",
+            "/workflows/runs/{run_id}/approve",
             post(approve_workflow_run),
         )
         .route("/dlq", get(list_dlq))
-        .route("/dlq/:id/replay", post(replay_dlq))
-        .route("/dlq/:id", axum::routing::delete(delete_dlq))
+        .route("/dlq/{id}/replay", post(replay_dlq))
+        .route("/dlq/{id}", axum::routing::delete(delete_dlq))
 }

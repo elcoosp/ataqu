@@ -740,9 +740,9 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/employees", post(create_employee).get(list_employees))
         .route("/employees/search", get(search_employees))
-        .route("/employees/:id", put(update_employee))
+        .route("/employees/{id}", put(update_employee))
         // Note: update_employee now requires If-Match header
-        .route("/employees/:id/deactivate", post(deactivate_employee))
+        .route("/employees/{id}/deactivate", post(deactivate_employee))
         .route(
             "/employees/bulk-deactivate",
             post(bulk_deactivate_employees),
@@ -751,15 +751,15 @@ pub fn routes() -> Router<AppState> {
             "/leave-requests",
             post(request_leave).get(list_leave_requests),
         )
-        .route("/leave-requests/:id/approve", patch(approve_leave))
-        .route("/leave-requests/:id/reject", patch(reject_leave))
-        .route("/leave-requests/:id/cancel", patch(cancel_leave))
+        .route("/leave-requests/{id}/approve", patch(approve_leave))
+        .route("/leave-requests/{id}/reject", patch(reject_leave))
+        .route("/leave-requests/{id}/cancel", patch(cancel_leave))
         .route(
-            "/employees/:id/documents",
+            "/employees/{id}/documents",
             post(upload_document).get(list_documents),
         )
         .route(
-            "/employees/:id/presigned-url",
+            "/employees/{id}/presigned-url",
             post(presign_document_upload),
         )
 }

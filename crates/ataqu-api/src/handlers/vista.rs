@@ -287,11 +287,11 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(create_dashboard).get(list_dashboards),
         )
         .route(
-            "/dashboards/:id",
+            "/dashboards/{id}",
             axum::routing::delete(delete_dashboard).put(update_dashboard),
         )
         .route(
-            "/data-points/:metric",
+            "/data-points/{metric}",
             axum::routing::get(get_data_points_handler),
         )
         .route("/drill-down", axum::routing::post(drill_down))

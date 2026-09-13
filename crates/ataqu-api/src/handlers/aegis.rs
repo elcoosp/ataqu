@@ -1148,8 +1148,8 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/me", get(get_me))
         .route("/audit-log", get(get_audit_log))
         .route("/users", post(create_user).get(list_users))
-        .route("/users/:id/role", patch(update_user_role))
-        .route("/users/:id/deactivate", post(deactivate_user))
+        .route("/users/{id}/role", patch(update_user_role))
+        .route("/users/{id}/deactivate", post(deactivate_user))
         .route("/roles", post(create_role).get(list_roles))
         .route(
             "/tenant/settings",
@@ -1164,9 +1164,9 @@ pub fn routes() -> axum::Router<crate::AppState> {
         .route("/mfa/setup", post(mfa_setup))
         .route("/mfa/verify", post(mfa_verify))
         .route("/api-keys", post(create_api_key).get(list_api_keys))
-        .route("/api-keys/:id", delete(delete_api_key))
+        .route("/api-keys/{id}", delete(delete_api_key))
         .route("/permission-matrix", get(get_permission_matrix))
-        .route("/permissions/:user_id/:app", patch(update_permission))
+        .route("/permissions/{user_id}/{app}", patch(update_permission))
         .nest("/approvals", approval_routes())
 }
 

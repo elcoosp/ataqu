@@ -1044,7 +1044,7 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(bulk_delete_products),
         )
         .route(
-            "/products/:id",
+            "/products/{id}",
             axum::routing::get(get_product)
                 .put(update_product)
                 .delete(delete_product),
@@ -1058,19 +1058,19 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(bulk_delete_variants),
         )
         .route(
-            "/variants/:id",
+            "/variants/{id}",
             axum::routing::get(get_variant)
                 .put(update_variant)
                 .delete(delete_variant),
         )
-        .route("/variants/:id/stock", axum::routing::put(update_stock))
-        .route("/variants/:id/reserve", axum::routing::post(reserve_stock))
+        .route("/variants/{id}/stock", axum::routing::put(update_stock))
+        .route("/variants/{id}/reserve", axum::routing::post(reserve_stock))
         .route(
             "/variants/bulk-stock-adjust",
             axum::routing::post(bulk_adjust_stock),
         )
         .route(
-            "/variants/:id/movements",
+            "/variants/{id}/movements",
             axum::routing::get(list_movements),
         )
         .route("/alerts/low-stock", axum::routing::get(get_low_stock))
@@ -1079,7 +1079,7 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(create_warehouse).get(list_warehouses),
         )
         .route(
-            "/warehouses/:id",
+            "/warehouses/{id}",
             axum::routing::put(update_warehouse).delete(delete_warehouse),
         )
 }

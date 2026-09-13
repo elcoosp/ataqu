@@ -262,16 +262,13 @@ pub async fn export_responses(
     wtr.write_record(["response_id", "submitted_at", "answers"])
         .map_err(ApiResponseError::internal_err)?;
     for r in responses {
-        let answers_json = serde_json::to_string(&r.answers)
-            .map_err(ApiResponseError::internal_err)?;
+        let answers_json =
+            serde_json::to_string(&r.answers).map_err(ApiResponseError::internal_err)?;
         wtr.write_record(&[r.id.to_string(), r.submitted_at.to_rfc3339(), answers_json])
             .map_err(ApiResponseError::internal_err)?;
     }
-    let data = String::from_utf8(
-        wtr.into_inner()
-            .map_err(ApiResponseError::internal_err)?,
-    )
-    .map_err(ApiResponseError::internal_err)?;
+    let data = String::from_utf8(wtr.into_inner().map_err(ApiResponseError::internal_err)?)
+        .map_err(ApiResponseError::internal_err)?;
     Ok((
         StatusCode::OK,
         [
@@ -344,9 +341,9 @@ pub async fn submit_form_step(
 
 pub fn public_routes() -> Router<AppState> {
     Router::new()
-        .route("/forms/:id/submit", axum::routing::post(submit_form))
+        .route("/forms/{id}/submit", axum::routing::post(submit_form))
         .route(
-            "/forms/:id/submit/step",
+            "/forms/{id}/submit/step",
             axum::routing::post(submit_form_step),
         )
 }
@@ -416,18 +413,18 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/forms", axum::routing::post(create_form).get(list_forms))
         .route(
-            "/forms/:id",
+            "/forms/{id}",
             axum::routing::get(get_form)
                 .put(update_form)
                 .delete(delete_form),
         )
         .route(
-            "/forms/:id/submissions",
+            "/forms/{id}/submissions",
             axum::routing::get(list_form_submissions),
         )
         .route(
-            "/forms/:id/routing",
+            "/forms/{id}/routing",
             axum::routing::patch(update_form_routing),
         )
-        .route("/forms/:id/export", axum::routing::get(export_responses))
+        .route("/forms/{id}/export", axum::routing::get(export_responses))
 }
