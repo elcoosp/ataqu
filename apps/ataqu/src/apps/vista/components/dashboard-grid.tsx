@@ -1,4 +1,6 @@
-import { Chart } from "@ataqu/ui";
+import {
+ Chart 
+} from "@ataqu/ui";
 import type React from "react";
 import GridLayout, { type Layout } from "react-grid-layout";
 import { withChartInteraction } from "./dashboard/chart-interaction";
