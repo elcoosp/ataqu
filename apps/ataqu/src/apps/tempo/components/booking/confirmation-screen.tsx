@@ -1,6 +1,8 @@
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useBookingStore } from "@/hooks/use-booking-store";
+import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
 
 export function ConfirmationScreen() {
 	const { eventType, selectedSlot, guestDetails, reset } = useBookingStore();
