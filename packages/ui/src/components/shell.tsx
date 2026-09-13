@@ -2,6 +2,7 @@
 
 import { useHealth } from "@ataqu/api-client";
 import { useAuthStore, useUIStore } from "@ataqu/shared-stores";
+import { ThemeToggle } from "./theme-toggle";
 import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
@@ -278,6 +279,7 @@ export const Shell: React.FC<ShellProps> = ({
 						</Button>
 						<div className="h-8 w-px bg-gray-700 hidden sm:block" />
 						<ChangelogBell />
+										<ThemeToggle />
 						<div className="h-8 w-px bg-gray-700 hidden sm:block" />
 						<Button
 							variant="ghost"
