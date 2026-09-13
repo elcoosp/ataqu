@@ -56,6 +56,15 @@ async fn main() -> anyhow::Result<()> {
     let db_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:5433/ataqu".to_string());
     let pools = std::sync::Arc::new(Pools::new(&db_url).await?);
+
+    {
+        use sea_orm_migration::MigratorTrait;
+        info!("Applying pending database migrations...");
+        ataqu_infra_migration::Migrator::up(&pools.core, None)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to apply migrations: {e}"))?;
+        info!("Database migrations up to date.");
+    }
     let id_gen = Arc::new(SystemIdGenerator);
     let clock = Arc::new(SystemClock);
     let jwt_secret_raw = std::env::var("JWT_SECRET")
