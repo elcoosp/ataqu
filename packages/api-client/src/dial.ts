@@ -15,6 +15,7 @@ import type {
 	Mention,
 	Message,
 	MessageListResponse,
+	PaginatedResponse,
 	Reaction,
 	SearchMessagesParams,
 	SendMessageRequest,
@@ -25,7 +26,8 @@ import type {
 } from "./types";
 
 // ---- Channels ----
-export const listChannels = () => api.get<ChannelSummary[]>("/dial/channels");
+export const listChannels = () =>
+	api.get<PaginatedResponse<ChannelSummary>>("/dial/channels");
 export const createChannel = (data: CreateChannelRequest) =>
 	api.post<Channel>("/dial/channels", data);
 export const getChannel = (id: UUID) =>
@@ -110,7 +112,9 @@ export const exportChannelPdf = (channelId: UUID) =>
 	});
 
 // ---- React Query hooks ----
-export const useListChannels = (options?: UseQueryOptions<ChannelSummary[]>) =>
+export const useListChannels = (
+	options?: UseQueryOptions<PaginatedResponse<ChannelSummary>>,
+) =>
 	useQuery({
 		queryKey: ["dial", "channels"],
 		queryFn: listChannels,

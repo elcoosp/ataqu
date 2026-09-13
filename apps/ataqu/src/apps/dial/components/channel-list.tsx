@@ -33,7 +33,7 @@ export function ChannelList() {
 	});
 
 	// Cast to ExtendedChannel array
-	const extendedChannels = (channels ?? []) as ExtendedChannel[];
+	const extendedChannels = (channels?.items ?? []) as ExtendedChannel[];
 
 	const filteredChannels = useMemo(() => {
 		if (!extendedChannels.length) return [];
@@ -81,7 +81,7 @@ export function ChannelList() {
 		);
 	}
 
-	if (!channels?.length) {
+	if (!channels?.items?.length) {
 		return (
 			<div className="flex flex-col items-center justify-center h-full p-4">
 				<Hash className="h-12 w-12 mb-4 text-muted-foreground/20" />

@@ -5,6 +5,14 @@
 export type UUID = string;
 export type DateTime = string; // ISO 8601
 
+/** Envelope returned by all paginated list endpoints (`PaginatedResponse`). */
+export interface PaginatedResponse<T> {
+	items: T[];
+	total: number;
+	limit: number;
+	offset: number;
+}
+
 // ----------------------------------------------------------------------------
 // AEGIS
 // ----------------------------------------------------------------------------
