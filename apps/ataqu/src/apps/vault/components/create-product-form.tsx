@@ -1,6 +1,8 @@
 import type { CreateProductRequest, Product } from "@ataqu/api-client";
 import { createProduct } from "@ataqu/api-client";
-import { Button, Input, Label } from "@ataqu/ui";
+import {
+ Button, Input, Label 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type { QueryKey } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
