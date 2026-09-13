@@ -17,9 +17,9 @@ import {
 import { Trans } from "@lingui/react/macro";
 import type React from "react";
 import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
+import { Switch } from "../../../apps/tempo/components/ui/switch";
+import { Textarea } from "../../../apps/tempo/components/ui/textarea";
+import { toast } from "../../../apps/tempo/hooks/use-toast";
 
 interface EventTypeFormProps {
 	eventType?: EventType;
