@@ -1,6 +1,8 @@
 import { api } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Badge } from "@ataqu/ui";
+import {
+ Badge 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
