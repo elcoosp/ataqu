@@ -1,4 +1,6 @@
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import type { ReactNode } from "react";
 
 export interface EmptyStateProps {
