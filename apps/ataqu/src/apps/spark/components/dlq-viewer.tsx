@@ -1,4 +1,6 @@
-import { Bone, Button } from "@ataqu/ui";
+import {
+ Bone, Button 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { AlertTriangle, RotateCcw, Trash2 } from "lucide-react";
