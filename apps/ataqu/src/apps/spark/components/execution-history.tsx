@@ -1,5 +1,7 @@
 import type { WorkflowRun } from "@ataqu/api-client";
-import { Bone, Button } from "@ataqu/ui";
+import {
+ Bone, Button 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { ChevronRight, History } from "lucide-react";
