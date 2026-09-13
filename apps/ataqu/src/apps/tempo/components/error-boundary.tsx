@@ -1,4 +1,6 @@
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type { ErrorInfo, ReactNode } from "react";
 import { Component } from "react";
