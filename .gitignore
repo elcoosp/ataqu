@@ -22,3 +22,4 @@ assets/hd
 **/.tanstack/tmp/
 **/.tanstack/cache/
 docs
+logs
