@@ -1,6 +1,8 @@
 import type { ContactResponse } from "@ataqu/api-client";
 import { useUpdateContact } from "@ataqu/api-client";
-import { Accordion, FloatingLabelInput } from "@ataqu/ui";
+import {
+ Accordion, FloatingLabelInput 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 
