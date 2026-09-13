@@ -196,7 +196,7 @@ export function ContactTable() {
 									<tr
 										key={contact.id}
 										className="border-b border-gray-700/50 hover:bg-white/5 cursor-pointer transition-colors"
-										onClick={() => navigate({ to: `/contacts/${contact.id}` })}
+										onClick={() => navigate({ to: `/cinq/cinq/contacts/${contact.id}` })}
 									>
 										<td
 											className="py-2 px-3"
