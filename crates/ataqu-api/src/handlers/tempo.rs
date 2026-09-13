@@ -594,11 +594,7 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(create_availability_slot),
         )
         .route(
-            "/availability-slots/{event_type_id}",
-            axum::routing::get(list_availability_slots),
-        )
-        .route(
             "/availability-slots/{id}",
-            axum::routing::delete(delete_availability_slot),
+            axum::routing::get(list_availability_slots).delete(delete_availability_slot),
         )
 }

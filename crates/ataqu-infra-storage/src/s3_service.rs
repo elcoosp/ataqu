@@ -11,6 +11,8 @@ pub enum S3Error {
     Init(String),
     #[error("Presigned URL generation failed: {0}")]
     Presign(String),
+    #[error("S3 list failed: {0}")]
+    List(String),
     #[error("Invalid bucket configuration")]
     InvalidBucket,
 }
@@ -82,7 +84,7 @@ impl S3Service {
             let resp = req
                 .send()
                 .await
-                .map_err(|e| S3Error::Presign(e.to_string()))?;
+                .map_err(|e| S3Error::List(format!("{e:?}")))?;
             for obj in resp.contents() {
                 if let Some(key) = obj.key() {
                     objects.push(key.to_string());
@@ -110,7 +112,7 @@ impl S3Service {
             req = req.continuation_token(token);
         }
         let resp = req.send().await
-            .map_err(|e| S3Error::Presign(e.to_string()))?;
+            .map_err(|e| S3Error::List(format!("{e:?}")))?;
         let mut keys = Vec::new();
         for obj in resp.contents() {
             if let Some(key) = obj.key() {

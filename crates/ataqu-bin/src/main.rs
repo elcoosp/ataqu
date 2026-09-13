@@ -660,10 +660,21 @@ async fn main() -> anyhow::Result<()> {
         clock.clone(),
     ));
     // Email tracking writer
+    let email_spill_dir = std::path::PathBuf::from(
+        std::env::var("EMAIL_SPILL_DIR")
+            .unwrap_or_else(|_| "/tmp/ataqu_email_spill".to_string()),
+    );
+    if let Err(e) = std::fs::create_dir_all(&email_spill_dir) {
+        tracing::error!(
+            error = %e,
+            dir = %email_spill_dir.display(),
+            "Failed to create email spill dir"
+        );
+    }
     let (email_writer, email_tracking_tx) =
         ataqu_infra_repositories::email_tracking_writer::EmailTrackingWriter::new(
             pools.ops.clone(),
-            std::path::PathBuf::from("/tmp/ataqu_email_spill"),
+            email_spill_dir,
             10 * 1024 * 1024,
         );
     tokio::spawn(async move {
@@ -1290,32 +1301,25 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         run_cron_worker(cron_pool).await;
     });
-    // Spawn S3 orphan reaper (every hour)
-    let s3_reaper = s3_service.clone();
-    let db_reaper = pools.core.clone();
-    tokio::spawn(async move {
-        loop {
-            if let Err(e) =
-                ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await
-            {
-                tracing::error!(error = %e, "S3 orphan reaper failed");
+    let s3_reaper_enabled = std::env::var("S3_ENABLED")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+    if s3_reaper_enabled {
+        let s3_reaper = s3_service.clone();
+        let db_reaper = pools.core.clone();
+        tokio::spawn(async move {
+            loop {
+                if let Err(e) =
+                    ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await
+                {
+                    tracing::error!(error = %e, "S3 orphan reaper failed");
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
             }
-            tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
-        }
-    });
-    // Spawn S3 orphan reaper (every hour)
-    let s3_reaper = s3_service.clone();
-    let db_reaper = pools.core.clone();
-    tokio::spawn(async move {
-        loop {
-            if let Err(e) =
-                ataqu_infra_storage::orphan_reaper::reap_orphans(&s3_reaper, &db_reaper).await
-            {
-                tracing::error!(error = %e, "S3 orphan reaper failed");
-            }
-            tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
-        }
-    });
+        });
+    } else {
+        tracing::info!("S3 orphan reaper disabled (set S3_ENABLED=true to enable)");
+    }
     // Spawn Tempo OAuth refresh worker (every 15 minutes)
     let tempo_db = pools.ops.clone();
     let tempo_client = http_client.clone();
