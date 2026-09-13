@@ -1,6 +1,12 @@
 import { i18n } from "@lingui/core";
 import { I18nProvider as LinguiProvider } from "@lingui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+	createMemoryHistory,
+	createRootRoute,
+	createRouter,
+	RouterProvider,
+} from "@tanstack/react-router";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Shell } from "../src/components/shell";
@@ -43,13 +49,22 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 describe("Shell", () => {
-	it("renders children and shows active app", () => {
-		renderWithProviders(
-			<Shell activeApp="cinq">
-				<div>Test Content</div>
-			</Shell>,
-		);
-		expect(screen.getByText("Test Content")).toBeInTheDocument();
+	it("renders children and shows active app", async () => {
+		// Shell now uses <Link> + useRouterState: render inside a router.
+		const rootRoute = createRootRoute({
+			component: () => (
+				<Shell activeApp="cinq">
+					<div>Test Content</div>
+				</Shell>
+			),
+		});
+		const router = createRouter({
+			routeTree: rootRoute,
+			history: createMemoryHistory({ initialEntries: ["/cinq/contacts"] }),
+		});
+		renderWithProviders(<RouterProvider router={router} />);
+		await router.load();
+		expect(await screen.findByText("Test Content")).toBeInTheDocument();
 		// Check that the sidebar highlights CINQ (the link with text CINQ)
 		const links = screen.getAllByRole("link");
 		const cinqLink = links.find((l) => l.textContent?.includes("CINQ"));
