@@ -1,4 +1,6 @@
-import { Badge } from "@ataqu/ui";
+import {
+ Badge 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 
 export function NoShowBadge() {
