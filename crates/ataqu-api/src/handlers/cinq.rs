@@ -55,7 +55,7 @@ pub async fn toggle_integration(
     use sqlx::Row;
     let pool = state.db.get_postgres_connection_pool();
     sqlx::query(
-		"INSERT INTO cinq.integrations (id, tenant_id, integration, enabled, settings, updated_at) VALUES ($1, $2, $3, $4, $5, now())
+		"INSERT INTO collab_crm.integrations (id, tenant_id, integration, enabled, settings, updated_at) VALUES ($1, $2, $3, $4, $5, now())
 		 ON CONFLICT (tenant_id, integration) DO UPDATE SET enabled = EXCLUDED.enabled, settings = EXCLUDED.settings, updated_at = now()",
 	)
 	.bind(Uuid::new_v4())
@@ -67,7 +67,7 @@ pub async fn toggle_integration(
 	.await
 	.map_err(|_| ApiResponseError::internal("Failed to toggle integration"))?;
     let row = sqlx::query(
-		"SELECT integration, enabled, updated_at FROM cinq.integrations WHERE tenant_id = $1 AND integration = $2",
+		"SELECT integration, enabled, updated_at FROM collab_crm.integrations WHERE tenant_id = $1 AND integration = $2",
 	)
 	.bind(auth.tenant_id.as_uuid())
 	.bind(&req.integration)

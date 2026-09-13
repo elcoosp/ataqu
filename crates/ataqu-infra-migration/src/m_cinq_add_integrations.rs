@@ -10,7 +10,7 @@ impl MigrationTrait for Migration {
         let conn = manager.get_connection();
         conn.execute_unprepared(
             r#"
-            CREATE TABLE IF NOT EXISTS cinq.integrations (
+            CREATE TABLE IF NOT EXISTS collab_crm.integrations (
                 id UUID PRIMARY KEY,
                 tenant_id UUID NOT NULL,
                 integration TEXT NOT NULL,
@@ -26,7 +26,7 @@ impl MigrationTrait for Migration {
     }
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DROP TABLE IF EXISTS cinq.integrations;")
+        conn.execute_unprepared("DROP TABLE IF EXISTS collab_crm.integrations;")
             .await?;
         Ok(())
     }
