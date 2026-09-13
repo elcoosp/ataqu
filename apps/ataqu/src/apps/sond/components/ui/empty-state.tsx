@@ -1,4 +1,6 @@
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import type { LucideIcon } from "lucide-react";
 
 interface EmptyStateProps {
