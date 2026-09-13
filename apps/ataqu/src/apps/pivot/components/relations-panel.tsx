@@ -3,7 +3,9 @@ import {
 	useDeleteRelation,
 	useListRelations,
 } from "@ataqu/api-client";
-import { Button, Input, Label } from "@ataqu/ui";
+import {
+ Button, Input, Label 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
