@@ -1,4 +1,6 @@
-import { Button, Label } from "@ataqu/ui";
+import {
+ Button, Label 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { CheckCircle2, Play, X, XCircle } from "lucide-react";
