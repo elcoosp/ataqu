@@ -1,9 +1,11 @@
 import { formatDate } from "@ataqu/shared-utils";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
+import {
+ Button, Card, CardContent, CardHeader, CardTitle 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-import { useShopifySyncLogs } from "@/hooks/use-shopify-sync";
-import { useShopifyStore } from "@/stores/shopify-store";
+import { useShopifySyncLogs } from "../../../../apps/vault/hooks/use-shopify-sync";
+import { useShopifyStore } from "../../../../apps/vault/stores/shopify-store";
 
 export function ShopifyErrorLog() {
 	const { data: logs } = useShopifySyncLogs();
