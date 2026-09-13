@@ -8,7 +8,7 @@ import {
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "../../../apps/tempo/hooks/use-toast";
 import { BookingCalendar } from "./booking-calendar";
 
 interface RescheduleModalProps {
