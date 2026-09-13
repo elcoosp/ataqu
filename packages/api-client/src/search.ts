@@ -22,7 +22,7 @@ export interface UnifiedSearchResult {
 	id: UUID;
 	title: string;
 	subtitle?: string | null;
-	/** In-app route (relative to the target app's origin), e.g. `/contacts/:id`. */
+	/** In-app route (relative to the consolidated single-origin shell), e.g. `/cinq/contacts/:id`. */
 	url: string;
 	/** Human-readable app name, e.g. "CINQ". */
 	appName: string;
@@ -41,35 +41,35 @@ const APP_NAMES: Record<string, string> = {
 	vista: "VISTA",
 };
 
-/** Map a (app, entity_type, id) triple to the in-app deep-link route. */
+/** Map a (app, entity_type, id) triple to the consolidated in-app route. */
 function urlFor(app: string, entityType: string, id: UUID): string {
 	switch (`${app}/${entityType}`) {
 		case "cinq/contact":
-			return `/contacts/${id}`;
+			return `/cinq/contacts/${id}`;
 		case "cinq/deal":
-			return `/deals/${id}`;
+			return `/cinq/deals/${id}`;
 		case "dial/message":
-			return `/channels`;
+			return `/dial`;
 		case "pivot/document":
-			return `/doc/${id}`;
+			return `/pivot/doc/${id}`;
 		case "pivot/database":
-			return `/db/${id}`;
+			return `/pivot/db/${id}`;
 		case "pause/employee":
-			return `/employees/${id}`;
+			return `/pause/employees/${id}`;
 		case "aegis/user":
 			return `/users/${id}`;
 		case "vault/product":
-			return `/products/${id}`;
+			return `/vault/products/${id}`;
 		case "vault/variant":
-			return `/products/${id}`;
+			return `/vault/products/${id}`;
 		case "spark/workflow":
-			return `/workflows/${id}`;
+			return `/spark/workflows/${id}`;
 		case "vista/dashboard":
-			return `/dashboards/${id}`;
+			return `/vista/dashboards/${id}`;
 		case "tempo/event_type":
-			return `/event-types/${id}`;
+			return `/tempo/event-types/${id}`;
 		case "sond/form":
-			return `/forms/${id}`;
+			return `/sond/forms/${id}`;
 		default:
 			return `/`;
 	}
