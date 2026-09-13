@@ -16,19 +16,7 @@ import { Home, LogOut, Search } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useAllCommands } from "../command-registry";
-
-const APP_DOMAINS: Record<string, string> = {
-	aegis: "sso",
-	cinq: "crm",
-	dial: "chat",
-	pivot: "docs",
-	spark: "auto",
-	tempo: "schedule",
-	sond: "forms",
-	vault: "inv",
-	pause: "hr",
-	vista: "bi",
-};
+import { APP_HOME } from "./shell";
 
 const APP_NAMES: Record<string, string> = {
 	aegis: "AEGIS",
@@ -55,26 +43,6 @@ const APP_ICONS: Record<string, string> = {
 	pause: "/apps/pause.png",
 	vista: "/apps/vista.png",
 };
-
-const APP_PORTS: Record<string, number> = {
-	aegis: 5173,
-	cinq: 5174,
-	dial: 5175,
-	pivot: 5176,
-	spark: 5177,
-	tempo: 5178,
-	sond: 5179,
-	vault: 5180,
-	pause: 5181,
-	vista: 5182,
-};
-
-function getAppUrl(app: string): string {
-	if (import.meta.env.DEV) {
-		return `http://localhost:${APP_PORTS[app]}`;
-	}
-	return `https://${APP_DOMAINS[app]}.ataqu.com`;
-}
 
 export interface CommandPaletteProps {
 	searchFn?: (q: string) => Promise<unknown[]>;
@@ -135,13 +103,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 		callback();
 	};
 
-	// Cross-app results open the target app at its deep link; in-app results
-	// use the router for a seamless SPA transition.
+	// All results resolve to in-app routes in the consolidated single-origin
+	// shell — navigate with the router, never via window.location.
 	const openResult = (item: UnifiedSearchResult) => {
-		const target = `${getAppUrl(item.app)}${item.url}`;
-		if (typeof window !== "undefined") {
-			window.location.href = target;
-		}
+		navigate({ to: item.url as never });
 	};
 
 	const focusSearch = () => {
@@ -163,11 +128,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 					{loading ? "Searching..." : "No results found."}
 				</CommandEmpty>
 				<CommandGroup heading="Switch App">
-					{Object.keys(APP_DOMAINS).map((app) => (
+					{Object.keys(APP_HOME).map((app) => (
 						<CommandItem
 							key={app}
 							onSelect={() =>
-								handleSelect(() => (window.location.href = getAppUrl(app)))
+								handleSelect(() => navigate({ to: APP_HOME[app] as never }))
 							}
 						>
 							<img
