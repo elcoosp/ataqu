@@ -1,7 +1,9 @@
 import { searchDeals, searchProducts } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Input, Popover, PopoverContent, PopoverTrigger } from "@ataqu/ui";
+import {
+ Input, Popover, PopoverContent, PopoverTrigger 
+} from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
