@@ -1,4 +1,6 @@
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import type React from "react";
 
 interface EmptyStateProps {
