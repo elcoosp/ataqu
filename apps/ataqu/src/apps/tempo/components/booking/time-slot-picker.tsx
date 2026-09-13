@@ -1,7 +1,9 @@
-import { Button } from "@ataqu/ui";
+import {
+ Button 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { BookingCalendar } from "@/components/booking-calendar";
-import { useBookingStore } from "@/hooks/use-booking-store";
+import { BookingCalendar } from "../../../../apps/tempo/components/booking-calendar";
+import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
 
 export function TimeSlotPicker() {
 	const eventType = useBookingStore((state) => state.eventType);
