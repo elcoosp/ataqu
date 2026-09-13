@@ -3,7 +3,9 @@ import {
 	useToggleIntegration,
 } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Badge, Button } from "@ataqu/ui";
+import {
+ Badge, Button 
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
