@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { listTickets, type Ticket, updateTicketStatus } from "@/api/tickets";
+import { listTickets, type Ticket, updateTicketStatus } from "../api/tickets";
 
 export function TicketList() {
 	const queryClient = useQueryClient();
@@ -99,7 +99,7 @@ export function TicketList() {
 					<TableRow key={ticket.id}>
 						<TableCell>
 							<Link
-								to="/tickets/$id"
+								to="/dial/tickets/$id"
 								params={{ id: ticket.id }}
 								className="hover:underline"
 							>
