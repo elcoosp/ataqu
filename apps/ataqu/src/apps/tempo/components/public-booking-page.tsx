@@ -1,4 +1,4 @@
-import { useBookingStore } from "@/hooks/use-booking-store";
+import { useBookingStore } from "../../../apps/tempo/hooks/use-booking-store";
 import { ConfirmationScreen } from "./booking/confirmation-screen";
 import { EventTypeSelector } from "./booking/event-type-selector";
 import { GuestForm } from "./booking/guest-form";
