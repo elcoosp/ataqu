@@ -1,4 +1,6 @@
-import { cn } from "@ataqu/ui";
+import {
+ cn 
+} from "@ataqu/ui";
 import type React from "react";
 
 interface EmptyStateProps {
