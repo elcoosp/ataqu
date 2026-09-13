@@ -1,6 +1,8 @@
 import { useSearchDocuments } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import { cn, Input } from "@ataqu/ui";
+import {
+ cn, Input 
+} from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { SearchIcon, X } from "lucide-react";
 import { useState } from "react";
