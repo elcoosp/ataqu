@@ -1,4 +1,6 @@
-import { Button, cn } from "@ataqu/ui";
+import {
+ Button, cn 
+} from "@ataqu/ui";
 
 interface EmptyStateProps {
 	icon?: React.ComponentType<{ className?: string }>;
