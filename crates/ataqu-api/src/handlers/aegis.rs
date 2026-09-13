@@ -263,7 +263,6 @@ pub struct SsoLoginRequest {
 
 pub async fn sso_login(
     State(state): State<AppState>,
-    auth: AuthContext,
     Json(req): Json<SsoLoginRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     use ataqu_domain_aegis::sso::SsoProvider;
@@ -288,10 +287,10 @@ pub async fn sso_login(
                 || (u.starts_with("https://") && u.contains("ataqu.com"))
         })
         .unwrap_or_else(|| "http://localhost:5173/login".to_string());
-    // Store provider, tenant_id, and return_to as JSON
+    // Store provider and return_to as JSON. The tenant is resolved later,
+    // in the callback, from the IdP-verified email.
     let state_data = serde_json::json!({
         "provider": provider_str,
-        "tenant_id": auth.tenant_id.as_uuid(),
         "return_to": return_to,
     });
     state

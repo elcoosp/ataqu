@@ -1,5 +1,6 @@
 import "./index.css";
 import "./index.css";
+import { Toaster } from "@ataqu/ui";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -16,5 +17,6 @@ const router = createRouter({ routeTree });
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<RouterProvider router={router} />
+		<Toaster richColors position="bottom-right" />
 	</React.StrictMode>,
 );
