@@ -1,6 +1,8 @@
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
+import {
+ Button, Card, CardContent, CardHeader, CardTitle 
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useShopifyAuthStart } from "@/hooks/use-shopify-sync";
+import { useShopifyAuthStart } from "../../../../apps/vault/hooks/use-shopify-sync";
 import { showToast } from "../toast-store";
 
 export function ShopifyConnect() {
