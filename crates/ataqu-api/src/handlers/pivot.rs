@@ -807,7 +807,10 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/databases", axum::routing::post(create_db).get(list_dbs))
         .route("/databases/{id}", axum::routing::delete(delete_db))
-        .route("/databases/{id}/rows", axum::routing::get(get_database_rows))
+        .route(
+            "/databases/{id}/rows",
+            axum::routing::get(get_database_rows),
+        )
         .route(
             "/databases/{id}/rows/{rowId}",
             axum::routing::get(get_database_row)
