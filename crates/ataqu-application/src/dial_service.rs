@@ -92,9 +92,11 @@ impl DialService {
     }
 
     // -- Channel methods --
-    pub async fn create_channel(&self, user_id: Uuid, cmd: CreateChannelCommand) -> DialResult<Channel> {
-
-
+    pub async fn create_channel(
+        &self,
+        user_id: Uuid,
+        cmd: CreateChannelCommand,
+    ) -> DialResult<Channel> {
         if cmd.channel_type == ChannelType::DirectMessage && cmd.participants.len() != 2 {
             return Err(DialServiceError::Validation(
                 "Direct message channels must have exactly 2 participants".to_string(),
@@ -160,8 +162,6 @@ impl DialService {
         user_id: Uuid,
         channel_id: Uuid,
     ) -> DialResult<()> {
-
-
         let channel = self
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
@@ -188,8 +188,6 @@ impl DialService {
         name: Option<String>,
         expected_version: i32,
     ) -> DialResult<Channel> {
-
-
         let mut channel = self
             .repo
             .get_channel(&tenant_id, &ChannelId::new(channel_id))
@@ -473,12 +471,14 @@ impl DialService {
         self.get_message(tenant_id, message_id).await
     }
 
-    pub async fn delete_message(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn delete_message(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
         message_id: Uuid,
         deleter_id: Uuid,
-        is_moderator: bool,) -> DialResult<()> {
-
-
+        is_moderator: bool,
+    ) -> DialResult<()> {
         let message = self
             .repo
             .get_message(&tenant_id, &MessageId::new(message_id))
@@ -929,7 +929,6 @@ impl DialService {
         tenant_id: TenantId,
         message_id: Uuid,
     ) -> DialResult<Vec<Reaction>> {
-
         self.repo
             .list_reactions_for_message(&tenant_id, &MessageId::new(message_id))
             .await
@@ -943,7 +942,6 @@ impl DialService {
         message_id: Uuid,
         reaction_id: Uuid,
     ) -> DialResult<()> {
-
         let reaction = self
             .repo
             .get_reaction(&tenant_id, &reaction_id)
