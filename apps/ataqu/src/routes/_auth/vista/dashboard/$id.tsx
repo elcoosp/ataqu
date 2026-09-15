@@ -6,9 +6,7 @@ import {
 	useGetKpis,
 	useUpdateDashboard,
 } from "@ataqu/api-client";
-import {
- Bone, Button, Card, CardTitle, OnboardTour 
-} from "@ataqu/ui";
+import { Bone, Button, Card, CardTitle, OnboardTour } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,12 +16,16 @@ import React from "react";
 import type { Layout } from "react-grid-layout";
 import { toast } from "sonner";
 import { DrillDownPanel } from "../../../../apps/vista/components/dashboard/drill-down-panel";
-import { DashboardGrid, type Widget } from "../../../../apps/vista/components/dashboard-grid";
+import {
+	DashboardGrid,
+	type Widget,
+} from "../../../../apps/vista/components/dashboard-grid";
 import { ExportButtons } from "../../../../apps/vista/components/export-buttons";
 import { FilterBar } from "../../../../apps/vista/components/filter-bar";
 import { SseIndicator } from "../../../../apps/vista/components/sse-indicator";
 import { WidgetPicker } from "../../../../apps/vista/components/widget-picker";
 import { useVistaSSE } from "../../../../apps/vista/hooks/use-sse";
+import { useWidgetData } from "../../../../apps/vista/hooks/use-widget-data";
 
 export const Route = createFileRoute("/_auth/vista/dashboard/$id")({
 	component: DashboardDetailPage,
@@ -42,27 +44,13 @@ function DashboardDetailPage() {
 	const { isConnected } = useVistaSSE(`/api/vista/kpis/${id}/stream`);
 
 	const config = (dashboard?.config || {}) as { widgets?: Widget[] };
-	const widgets = config.widgets || [
-		{ i: "w1", type: "kpi", dataSource: "Revenue", data: [] },
-		{
-			i: "w2",
-			type: "bar",
-			dataSource: "Pipeline",
-			data: [
-				{ name: "Jan", value: 4000 },
-				{ name: "Feb", value: 3000 },
-			],
-		},
-		{
-			i: "w3",
-			type: "line",
-			dataSource: "Stock",
-			data: [
-				{ name: "Jan", value: 200 },
-				{ name: "Feb", value: 150 },
-			],
-		},
-	];
+	const widgets = useWidgetData(
+		config.widgets || [
+			{ i: "w1", type: "kpi", dataSource: "revenue", data: [] },
+			{ i: "w2", type: "bar", dataSource: "pipeline_value", data: [] },
+			{ i: "w3", type: "line", dataSource: "stock_level", data: [] },
+		],
+	);
 
 	const tourSteps = [
 		{
@@ -78,7 +66,7 @@ function DashboardDetailPage() {
 	const handleAddWidget = async (type: string, dataSource: string) => {
 		if (!dashboard) return;
 		const newWidget = { i: `w${Date.now()}`, type, dataSource, data: [] };
-		const newWidgets = [...widgets, newWidget];
+		const newWidgets = [...(config.widgets || []), newWidget];
 		try {
 			await updateDashboardMutation.mutateAsync({
 				id,
@@ -94,7 +82,8 @@ function DashboardDetailPage() {
 
 	const handleLayoutChange = async (newLayout: Layout[]) => {
 		if (!dashboard) return;
-		const updatedWidgets = widgets.map((w) => {
+		const sourceWidgets = config.widgets || [];
+		const updatedWidgets = sourceWidgets.map((w) => {
 			const layoutItem = newLayout.find((l) => l.i === w.i);
 			return { ...w, layout: layoutItem };
 		});
@@ -111,7 +100,7 @@ function DashboardDetailPage() {
 
 	return (
 		<>
-		<DrillDownPanel />
+			<DrillDownPanel />
 			<OnboardTour tourId="vista-dashboard-tour" steps={tourSteps}>
 				<div className="flex flex-col h-full">
 					<div className="flex items-center justify-between p-4 border-b border-gray-700/40">
