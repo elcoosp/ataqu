@@ -23,10 +23,10 @@
 //! Header-auth (Bearer / X-API-Key) requests are exempt: the browser cannot
 //! attach those cross-origin, so double-submit would be meaningless and would
 //! only break legitimate API clients.
-use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
-use generic_array::typenum::U64;
+use base64::engine::general_purpose::URL_SAFE;
 use generic_array::GenericArray;
+use generic_array::typenum::U64;
 use hmac::{Hmac, Mac};
 use rand::RngCore;
 use sha2::Sha256;
@@ -135,10 +135,7 @@ pub fn cookie_value(headers: &axum::http::HeaderMap, name: &str) -> Option<Strin
 
 /// Double-submit verification: header token present, cookie token present,
 /// they are equal (constant-time), and the header token's signature is valid.
-pub fn verify_double_submit(
-    headers: &axum::http::HeaderMap,
-    protector: &CsrfProtector,
-) -> bool {
+pub fn verify_double_submit(headers: &axum::http::HeaderMap, protector: &CsrfProtector) -> bool {
     let cookie_tok = cookie_value(headers, CSRF_COOKIE_NAME);
     let header_tok = headers
         .get(CSRF_HEADER_NAME)
@@ -146,9 +143,7 @@ pub fn verify_double_submit(
         .map(|s| s.to_string());
 
     match (cookie_tok, header_tok) {
-        (Some(cookie), Some(header)) => {
-            ct_eq(&cookie, &header) && protector.verify(&header)
-        }
+        (Some(cookie), Some(header)) => ct_eq(&cookie, &header) && protector.verify(&header),
         _ => false,
     }
 }
