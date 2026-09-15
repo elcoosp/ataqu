@@ -1,14 +1,10 @@
 import {
-	useAddMention,
 	useAddReaction,
 	useBulkDeleteMessages,
 	useDeleteMessage,
-	useDeleteReaction,
 	useEditMessage,
 	useListMentions,
 	useListMessages,
-	useListReactions,
-	useMarkMentionRead,
 	useSearchMessages,
 	useStartThread,
 } from "@ataqu/api-client";
@@ -32,6 +28,7 @@ import { Reply } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { MessageInput } from "./message-input";
+import { MessageReactions } from "./message-reactions";
 import { ReactionPicker } from "./reaction-picker";
 import { ThreadSidebar } from "./thread-sidebar";
 
@@ -48,11 +45,10 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const currentUserId = useAuthStore((s) => s.user?.id);
 
-	const allMessages = (messagesData?.messages ?? []).filter((m) => m != null);
+	const allMessages = (messagesData?.items ?? []).filter((m) => m != null);
 
 	// Handle reactions
 	const addReactionMutation = useAddReaction();
-	const deleteReactionMutation = useDeleteReaction();
 	const editMutation = useEditMessage({
 		onSuccess: () => toast.success(t`Message edited`),
 		onError: (err) => toast.error(handleApiError(err)),
@@ -60,6 +56,19 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [draft, setDraft] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
+	const [activeTypists] = useState<string[]>([]);
+
+	// Derive unique participants from messages (fallback until presence API is wired)
+	const channelParticipants = Array.from(
+		new Map(
+			allMessages
+				.filter((m) => m.author_id !== currentUserId)
+				.map((m) => [
+					m.author_id,
+					{ id: m.author_id, name: m.author_id.slice(0, 8) },
+				]),
+		).values(),
+	).slice(0, 6);
 
 	const deleteMessage = useDeleteMessage({
 		onSuccess: () => toast.success(t`Message deleted`),
@@ -87,9 +96,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 			queryKey: ["dial", "search", searchQuery],
 		},
 	);
-	const _markMentionRead = useMarkMentionRead();
-	const _addMention = useAddMention();
-	useListMentions();
+	useListMentions(); // mentions fetched for potential UI display
 
 	const displayedMessages = searchQuery.trim()
 		? (searchResults?.messages ?? []).filter((m) => m != null)
@@ -149,12 +156,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 						setSearchQuery(_e.target.value);
 					}}
 				/>
-				<PresenceAvatars
-					people={[
-						{ id: "ada", name: "Ada" },
-						{ id: "lin", name: "Lin" },
-					]}
-				/>
+				<PresenceAvatars people={channelParticipants} max={4} />
 				<Button
 					variant="outline"
 					size="sm"
@@ -229,90 +231,73 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 											{formatDistanceToNow(new Date(message.sent_at), {
 												addSuffix: true,
 											})}
+											{message.edited_at && (
+												<span className="text-[10px] text-muted-foreground ml-1">
+													(edited)
+												</span>
+											)}
 										</span>
 									</div>
-									<div className="mt-1 text-sm whitespace-pre-wrap break-words">
-										{editingId === message.id ? (
-											<>
-												<textarea
-													className="w-full rounded-md border border-input bg-background p-2 text-sm"
-													value={draft}
-													onChange={(e) => setDraft(e.target.value)}
-													rows={2}
-													autoFocus
-												/>
-												<div className="mt-1 flex gap-2">
-													<Button
-														size="sm"
-														onClick={() => {
-															editMutation.mutate({
-																messageId: message.id,
-																data: { content: draft },
-																version: message.version,
-															});
-															setEditingId(null);
-														}}
-														disabled={editMutation.isPending}
-													>
-														{t`Save`}
-													</Button>
-													<Button
-														size="sm"
-														variant="ghost"
-														onClick={() => setEditingId(null)}
-													>
-														{t`Cancel`}
-													</Button>
-												</div>
-											</>
+									{
+										message.deleted_at ? (
+											<div className="mt-1 text-sm text-muted-foreground italic">
+												Message deleted
+											</div>
 										) : (
-											message.content.split(" ").map((word, i) => {
-												if (word.startsWith("@")) {
-													return (
-														<span
-															key={i}
-															className="bg-primary/20 text-primary-foreground px-0.5 rounded"
-														>
-															{word}
-														</span>
-													);
-												}
-												return `${word} `;
-											})
-										)}
-									</div>
-									{/* Reactions */}
-									<div className="flex flex-wrap gap-1 mt-1">
-										{(() => {
-											const { data: reactions } = useListReactions(message.id);
-											return reactions?.map((r) => (
-												<span
-													key={r.id}
-													className="text-xs bg-muted/30 px-1.5 py-0.5 rounded cursor-pointer hover:bg-muted/50"
-													onClick={() => {
-														// Toggle reaction: if user already reacted, delete it
-														const userReaction = reactions.find(
-															(r) => r.user_id === currentUserId,
-														);
-														if (userReaction) {
-															deleteReactionMutation.mutate({
-																messageId: message.id,
-																reactionId: userReaction.id,
-															});
-														} else {
-															addReactionMutation.mutate({
-																messageId: message.id,
-																data: { emoji: r.emoji },
-															});
+											<div className="mt-1 text-sm whitespace-pre-wrap break-words">
+												{editingId === message.id ? (
+													<>
+														<textarea
+															className="w-full rounded-md border border-input bg-background p-2 text-sm"
+															value={draft}
+															onChange={(e) => setDraft(e.target.value)}
+															rows={2}
+															autoFocus
+														/>
+														<div className="mt-1 flex gap-2">
+															<Button
+																size="sm"
+																onClick={() => {
+																	editMutation.mutate({
+																		messageId: message.id,
+																		data: { content: draft },
+																		version: message.version,
+																	});
+																	setEditingId(null);
+																}}
+																disabled={editMutation.isPending}
+															>
+																{t`Save`}
+															</Button>
+															<Button
+																size="sm"
+																variant="ghost"
+																onClick={() => setEditingId(null)}
+															>
+																{t`Cancel`}
+															</Button>
+														</div>
+													</>
+												) : (
+													message.content.split(" ").map((word, i) => {
+														if (word.startsWith("@")) {
+															return (
+																<span
+																	key={i}
+																	className="bg-primary/20 text-primary-foreground px-0.5 rounded"
+																>
+																	{word}
+																</span>
+															);
 														}
-													}}
-												>
-													{r.emoji}
-												</span>
-											));
-										})()}
-									</div>
-									{/* Action buttons: reaction, reply, edit */}
+														return `${word} `;
+													})
+												)}
+											</div>
+										) /* end deleted_at check */
+									}
+									{/* Reactions */}
+									<MessageReactions messageId={message.id} />
 									<div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
 										<ReactionPicker
 											onSelect={(emoji) =>
@@ -364,7 +349,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 				<MessageInput channelId={channelId} />
 			</div>
 			<div className="px-3 pb-2">
-				<TypingIndicator typists={["Ada", "Lin"]} />
+				<TypingIndicator typists={activeTypists} />
 			</div>
 			{/* Thread sidebar will be rendered conditionally */}
 			<ThreadSidebar channelId={channelId} />
