@@ -1,6 +1,11 @@
+import { i18n } from "@lingui/core";
 import { describe, expect, it, vi } from "vitest";
 
-// Mock the Lingui macro to prevent runtime errors if the compiler is not configured in Vitest
+// Activate a locale: the Lingui macro compiles t`...` down to real
+// i18n._(...) calls, which throw without an active locale.
+i18n.load("en", {});
+i18n.activate("en");
+
 vi.mock("@lingui/core/macro", () => ({
 	t: (strings: TemplateStringsArray, ...values: unknown[]) => {
 		return strings.reduce(
