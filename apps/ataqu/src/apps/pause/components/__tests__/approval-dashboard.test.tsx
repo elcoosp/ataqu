@@ -20,16 +20,21 @@ vi.mock("@lingui/macro", () => ({
 
 vi.mock("@ataqu/api-client", () => ({
 	useListLeaveRequests: () => ({
-		data: [
-			{
-				id: "1",
-				employee_name: "John",
-				status: "pending",
-				leave_type: "annual",
-				start_date: "2026-01-01",
-				end_date: "2026-01-02",
-			},
-		],
+		data: {
+			items: [
+				{
+					id: "1",
+					employee_name: "John",
+					status: "pending",
+					leave_type: "annual",
+					start_date: "2026-01-01",
+					end_date: "2026-01-02",
+				},
+			],
+			total: 1,
+			limit: 100,
+			offset: 0,
+		},
 		isLoading: false,
 	}),
 	useApproveLeaveRequest: () => ({ mutate: vi.fn(), isPending: false }),
