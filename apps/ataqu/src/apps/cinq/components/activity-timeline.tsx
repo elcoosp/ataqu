@@ -9,7 +9,9 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	SegmentedControl,
 } from "@ataqu/ui";
+import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
@@ -55,11 +57,16 @@ function ActivityDetailDialog({
 
 export function ActivityTimeline({ dealId }: { dealId: UUID }) {
 	const [detailId, setDetailId] = useState<string | null>(null);
+	const [typeFilter, setTypeFilter] = useState("all");
 	const { data, isLoading } = useListActivities({ limit: 50 });
 
 	const activities = useMemo(
-		() => (data || []).filter((a: ActivityResponse) => a.deal_id === dealId),
-		[data, dealId],
+		() =>
+			(data?.items ?? []).filter(
+				(a: ActivityResponse) =>
+					a.deal_id === dealId && (typeFilter === "all" || a.activity_type === typeFilter),
+			),
+		[data, dealId, typeFilter],
 	);
 
 	if (isLoading) {
@@ -76,6 +83,18 @@ export function ActivityTimeline({ dealId }: { dealId: UUID }) {
 
 	return (
 		<div className="space-y-4">
+			<SegmentedControl
+				label={t`Filter activities`}
+				options={[
+					{ value: "all", label: t`All` },
+					{ value: "call", label: t`Calls` },
+					{ value: "email", label: t`Emails` },
+					{ value: "meeting", label: t`Meetings` },
+					{ value: "note", label: t`Notes` },
+				]}
+				value={typeFilter}
+				onValueChange={setTypeFilter}
+			/>
 			{activities.length === 0 ? (
 				<p className="text-muted-foreground">
 					<Trans>No activities yet</Trans>
