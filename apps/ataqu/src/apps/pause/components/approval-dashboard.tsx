@@ -1,5 +1,6 @@
 import {
 	type LeaveRequest,
+	type PaginatedResponse,
 	useApproveLeaveRequest,
 	useCancelLeaveRequest,
 	useListLeaveRequests,
@@ -16,7 +17,7 @@ import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface OptimisticContext {
-	previousRequests?: LeaveRequest[];
+	previousRequests?: PaginatedResponse<LeaveRequest>;
 }
 
 export function ApprovalDashboard() {
@@ -28,16 +29,18 @@ export function ApprovalDashboard() {
 			await queryClient.cancelQueries({
 				queryKey: ["pause", "leave-requests"],
 			});
-			const previousRequests = queryClient.getQueryData<LeaveRequest[]>([
-				"pause",
-				"leave-requests",
-			]);
+			const previousRequests = queryClient.getQueryData<
+				PaginatedResponse<LeaveRequest>
+			>(["pause", "leave-requests"]);
 			if (previousRequests) {
-				queryClient.setQueryData<LeaveRequest[]>(
+				queryClient.setQueryData<PaginatedResponse<LeaveRequest>>(
 					["pause", "leave-requests"],
-					previousRequests.map((req) =>
-						req.id === id ? { ...req, status: "approved" as const } : req,
-					),
+					{
+						...previousRequests,
+						items: previousRequests.items.map((req) =>
+							req.id === id ? { ...req, status: "approved" as const } : req,
+						),
+					},
 				);
 			}
 			return { previousRequests };
@@ -69,16 +72,18 @@ export function ApprovalDashboard() {
 			await queryClient.cancelQueries({
 				queryKey: ["pause", "leave-requests"],
 			});
-			const previousRequests = queryClient.getQueryData<LeaveRequest[]>([
-				"pause",
-				"leave-requests",
-			]);
+			const previousRequests = queryClient.getQueryData<
+				PaginatedResponse<LeaveRequest>
+			>(["pause", "leave-requests"]);
 			if (previousRequests) {
-				queryClient.setQueryData<LeaveRequest[]>(
+				queryClient.setQueryData<PaginatedResponse<LeaveRequest>>(
 					["pause", "leave-requests"],
-					previousRequests.map((req) =>
-						req.id === id ? { ...req, status: "rejected" as const } : req,
-					),
+					{
+						...previousRequests,
+						items: previousRequests.items.map((req) =>
+							req.id === id ? { ...req, status: "rejected" as const } : req,
+						),
+					},
 				);
 			}
 			return { previousRequests };
@@ -112,6 +117,7 @@ export function ApprovalDashboard() {
 		onError: () => toast.error(t`Failed to cancel leave.`),
 	});
 
+	const leaveItems = requests?.items ?? [];
 	const columns: ColumnDef<LeaveRequest>[] = [
 		{
 			accessorKey: "employee_name",
@@ -150,15 +156,22 @@ export function ApprovalDashboard() {
 				const req = row.original;
 				return req.status === "pending" ? (
 					<div className="flex gap-2">
-						<Button
-							size="sm"
-							onClick={() =>
+						<HoldToConfirm
+							onConfirm={() =>
 								approveMutation.mutate({ id: req.id, version: req.version })
 							}
 							disabled={approveMutation.isPending}
+							className="bg-green-600 text-white hover:bg-green-500"
 						>
-							<Check className="h-4 w-4" />
-						</Button>
+							<Button
+								size="sm"
+								variant="ghost"
+								className="h-full w-full"
+								disabled={approveMutation.isPending}
+							>
+								<Check className="h-4 w-4" />
+							</Button>
+						</HoldToConfirm>
 						<HoldToConfirm
 							onConfirm={() =>
 								rejectMutation.mutate({ id: req.id, version: req.version })
@@ -191,7 +204,7 @@ export function ApprovalDashboard() {
 
 	return (
 		<div data-tour="pending-list">
-			<DataTable columns={columns} data={requests || []} />
+			<DataTable columns={columns} data={leaveItems} />
 		</div>
 	);
 }
