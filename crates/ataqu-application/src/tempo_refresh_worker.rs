@@ -1,8 +1,8 @@
 //! Tempo OAuth token refresh worker.
+use chrono::{Duration, Utc};
 use reqwest::Client;
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
-use chrono::{Utc, Duration};
-use tracing::{info, error};
+use tracing::{error, info};
 
 #[derive(Debug)]
 pub enum Provider {
@@ -10,10 +10,7 @@ pub enum Provider {
     Microsoft,
 }
 
-pub async fn refresh_expiring_tokens(
-    db: DatabaseConnection,
-    client: Client,
-) -> Result<(), String> {
+pub async fn refresh_expiring_tokens(db: DatabaseConnection, client: Client) -> Result<(), String> {
     let now = Utc::now();
     let threshold = now + Duration::hours(1);
 
@@ -23,12 +20,9 @@ pub async fn refresh_expiring_tokens(
         WHERE oauth_refresh_token IS NOT NULL
           AND oauth_token_expires_at <= $1
     "#;
-    let stmt = Statement::from_sql_and_values(
-        DbBackend::Postgres,
-        sql,
-        [threshold.into()],
-    );
-    let rows = db.query_all_raw(stmt)
+    let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql, [threshold.into()]);
+    let rows = db
+        .query_all_raw(stmt)
         .await
         .map_err(|e| format!("DB query failed: {}", e))?;
 
@@ -39,11 +33,14 @@ pub async fn refresh_expiring_tokens(
     info!("Found {} bookings with expiring tokens", rows.len());
 
     for row in rows {
-        let booking_id: uuid::Uuid = row.try_get("", "id")
+        let booking_id: uuid::Uuid = row
+            .try_get("", "id")
             .map_err(|e| format!("Missing id: {}", e))?;
-        let refresh_token: String = row.try_get("", "oauth_refresh_token")
+        let refresh_token: String = row
+            .try_get("", "oauth_refresh_token")
             .map_err(|e| format!("Missing refresh_token: {}", e))?;
-        let provider_str: String = row.try_get("", "provider")
+        let provider_str: String = row
+            .try_get("", "provider")
             .unwrap_or_else(|_| "google".to_string());
         let provider = match provider_str.as_str() {
             "google" => Provider::Google,
@@ -60,9 +57,14 @@ pub async fn refresh_expiring_tokens(
                 let update_stmt = Statement::from_sql_and_values(
                     DbBackend::Postgres,
                     "UPDATE collab_ops.bookings SET oauth_access_token = $1, oauth_token_expires_at = $2 WHERE id = $3",
-                    [new_access_token.into(), new_expiry.into(), booking_id.into()],
+                    [
+                        new_access_token.into(),
+                        new_expiry.into(),
+                        booking_id.into(),
+                    ],
                 );
-                db.execute_raw(update_stmt).await
+                db.execute_raw(update_stmt)
+                    .await
                     .map_err(|e| format!("Failed to update booking: {}", e))?;
                 info!("Refreshed token for booking {}", booking_id);
             }
@@ -112,8 +114,14 @@ async fn refresh_token_for_provider(
         return Err(format!("OAuth error: {}", text));
     }
 
-    let json: serde_json::Value = resp.json().await.map_err(|e| format!("JSON parse error: {}", e))?;
-    let access_token = json["access_token"].as_str().ok_or("Missing access_token")?.to_string();
+    let json: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("JSON parse error: {}", e))?;
+    let access_token = json["access_token"]
+        .as_str()
+        .ok_or("Missing access_token")?
+        .to_string();
     let expires_in = json["expires_in"].as_i64().unwrap_or(3600);
     Ok((access_token, expires_in))
 }
