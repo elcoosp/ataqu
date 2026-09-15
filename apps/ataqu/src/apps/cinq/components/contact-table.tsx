@@ -22,11 +22,50 @@ import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Download, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, Download, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 const SCOPE = "cinq:contacts";
+
+/** Table header cell that toggles client-side sorting on click. */
+function SortableHead({
+	label,
+	sortKey,
+	activeKey,
+	sortDir,
+	onSort,
+}: {
+	label: ReactNode;
+	sortKey: "name" | "email" | "company";
+	activeKey: "name" | "email" | "company" | null;
+	sortDir: "asc" | "desc";
+	onSort: (key: "name" | "email" | "company") => void;
+}) {
+	const isActive = activeKey === sortKey;
+	return (
+		<th className="text-left py-2 px-3 font-medium text-gray-400">
+			<button
+				type="button"
+				onClick={() => onSort(sortKey)}
+				className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+				aria-label={`Sort by ${sortKey}`}
+			>
+				{label}
+				{isActive ? (
+					sortDir === "asc" ? (
+						<ChevronUp className="h-3 w-3" />
+					) : (
+						<ChevronDown className="h-3 w-3" />
+					)
+				) : (
+					<ChevronsUpDown className="h-3 w-3 opacity-40" />
+				)}
+			</button>
+		</th>
+	);
+}
 
 const CONTACTS_FIXTURE = (
 	<div className="space-y-2">
@@ -69,6 +108,8 @@ export function ContactTable() {
 	);
 
 	const [filter, setFilter] = useState("all");
+	const [sortKey, setSortKey] = useState<"name" | "email" | "company" | null>(null);
+	const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
 	const { data: searchData, error: searchError } = useSearchContacts(
 		{ q: debouncedSearch, limit: 50 },
@@ -79,10 +120,26 @@ export function ContactTable() {
 	);
 
 	const rawContacts =
-		debouncedSearch.length > 0 ? searchData || [] : allData || [];
+		debouncedSearch.length > 0
+			? searchData || []
+			: allData?.items ?? [];
 	const filteredContacts = applyContactFilter(rawContacts, filter);
+	const sortedContacts = sortContacts(filteredContacts, sortKey, sortDir);
 	const error = debouncedSearch.length > 0 ? searchError : allError;
 	const ids = idsFrom(filteredContacts);
+
+	const toggleSort = (key: "name" | "email" | "company") => {
+		if (sortKey !== key) {
+			setSortKey(key);
+			setSortDir("asc");
+			return;
+		}
+		if (sortDir === "asc") {
+			setSortDir("desc");
+			return;
+		}
+		setSortKey(null);
+	};
 
 	if (error) {
 		return (
@@ -174,25 +231,37 @@ export function ContactTable() {
 									<th className="w-10 py-2 px-3">
 										<SelectAllCheckbox scope={SCOPE} ids={ids} />
 									</th>
-									<th className="text-left py-2 px-3 font-medium text-gray-400">
-										<Trans>Name</Trans>
-									</th>
-									<th className="text-left py-2 px-3 font-medium text-gray-400">
-										<Trans>Email</Trans>
-									</th>
+									<SortableHead
+										label={<Trans>Name</Trans>}
+										sortKey="name"
+										activeKey={sortKey}
+										sortDir={sortDir}
+										onSort={toggleSort}
+									/>
+									<SortableHead
+										label={<Trans>Email</Trans>}
+										sortKey="email"
+										activeKey={sortKey}
+										sortDir={sortDir}
+										onSort={toggleSort}
+									/>
 									<th className="text-left py-2 px-3 font-medium text-gray-400">
 										<Trans>Phone</Trans>
 									</th>
-									<th className="text-left py-2 px-3 font-medium text-gray-400">
-										<Trans>Company</Trans>
-									</th>
+									<SortableHead
+										label={<Trans>Company</Trans>}
+										sortKey="company"
+										activeKey={sortKey}
+										sortDir={sortDir}
+										onSort={toggleSort}
+									/>
 									<th className="text-left py-2 px-3 font-medium text-gray-400">
 										<Trans>Custom</Trans>
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								{filteredContacts.map((contact) => (
+								{sortedContacts.map((contact) => (
 									<tr
 										key={contact.id}
 										className="border-b border-gray-700/50 hover:bg-white/5 cursor-pointer transition-colors"
@@ -255,4 +324,21 @@ function applyContactFilter<T extends ContactLike>(
 	if (filter === "company") return rows.filter((r) => Boolean(r.company));
 	if (filter === "person") return rows.filter((r) => !r.company);
 	return rows;
+}
+
+type ContactSortKey = "name" | "email" | "company";
+
+function sortContacts<T extends { id: string }>(
+	rows: T[],
+	sortKey: ContactSortKey | null,
+	sortDir: "asc" | "desc",
+): T[] {
+	if (!sortKey) return rows;
+	return [...rows].sort((a, b) => {
+		const left = String((a as Record<string, unknown>)[sortKey] ?? "").toLowerCase();
+		const right = String((b as Record<string, unknown>)[sortKey] ?? "").toLowerCase();
+		if (left === right) return 0;
+		const comparison = left < right ? -1 : 1;
+		return sortDir === "asc" ? comparison : -comparison;
+	});
 }
