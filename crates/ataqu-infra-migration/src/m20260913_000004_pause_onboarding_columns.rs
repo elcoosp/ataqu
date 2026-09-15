@@ -9,30 +9,23 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Alias::new("employees"))
-                    .add_column_if_not_exists(
-                        ColumnDef::new(Alias::new("onboarding_tasks"))
-                            .json_binary()
-                            .not_null()
-                            .default("[]"),
-                    )
-                    .add_column_if_not_exists(
-                        ColumnDef::new(Alias::new("onboarding_completed_at"))
-                            .timestamp_with_time_zone(),
-                    )
-                    .to_owned(),
-            )
-            .await
+        let conn = manager.get_connection();
+        conn.execute_unprepared(
+            r#"
+            ALTER TABLE collab_ops.employee
+            ADD COLUMN IF NOT EXISTS onboarding_tasks JSONB NOT NULL DEFAULT '[]'::jsonb,
+            ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ;
+            "#,
+        )
+        .await?;
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
         conn.execute_unprepared(
             r#"
-            ALTER TABLE collab_ops.employees
+            ALTER TABLE collab_ops.employee
             DROP COLUMN IF EXISTS onboarding_completed_at,
             DROP COLUMN IF EXISTS onboarding_tasks;
             "#,
