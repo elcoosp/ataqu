@@ -14,6 +14,12 @@ use sea_orm::{
 use std::time::SystemTime;
 use uuid::Uuid;
 
+/// Parses the JSONB `onboarding_tasks` column (stored as TEXT via SeaORM string
+/// mapping) into the domain's task-id list. Falls back to empty on bad data.
+fn parse_onboarding_tasks(raw: &str) -> Vec<String> {
+    serde_json::from_str::<Vec<String>>(raw).unwrap_or_default()
+}
+
 mod employee_entity {
     use chrono::{DateTime, NaiveDate, Utc};
     use sea_orm::entity::prelude::*;
@@ -32,6 +38,8 @@ mod employee_entity {
         pub department: Option<String>,
         pub hire_date: NaiveDate,
         pub is_active: bool,
+        pub onboarding_tasks: String,
+        pub onboarding_completed_at: Option<DateTime<Utc>>,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
         pub version: i32,
@@ -151,6 +159,8 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             department: Set(event.department.clone()),
             hire_date: Set(event.hire_date),
             is_active: Set(true),
+            onboarding_tasks: Set("[]".to_string()),
+            onboarding_completed_at: Set(None),
             created_at: Set(event.created_at.into()),
             updated_at: Set(event.created_at.into()),
             version: Set(0),
@@ -184,6 +194,8 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             department: m.department,
             hire_date: m.hire_date,
             is_active: m.is_active,
+            onboarding_tasks: parse_onboarding_tasks(&m.onboarding_tasks),
+            onboarding_completed_at: m.onboarding_completed_at.map(Into::into),
             created_at: m.created_at.into(),
             updated_at: m.updated_at.into(),
             version: m.version,
@@ -216,6 +228,8 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
                 department: m.department,
                 hire_date: m.hire_date,
                 is_active: m.is_active,
+                onboarding_tasks: parse_onboarding_tasks(&m.onboarding_tasks),
+                onboarding_completed_at: m.onboarding_completed_at.map(Into::into),
                 created_at: m.created_at.into(),
                 updated_at: m.updated_at.into(),
                 version: m.version,
@@ -249,6 +263,8 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
                 department: m.department,
                 hire_date: m.hire_date,
                 is_active: m.is_active,
+                onboarding_tasks: parse_onboarding_tasks(&m.onboarding_tasks),
+                onboarding_completed_at: m.onboarding_completed_at.map(Into::into),
                 created_at: m.created_at.into(),
                 updated_at: m.updated_at.into(),
                 version: m.version,
@@ -274,6 +290,9 @@ impl EmployeeRepositoryPort for PauseRepositoryImpl {
             department: Set(employee.department.clone()),
             hire_date: Set(employee.hire_date),
             is_active: Set(employee.is_active),
+            onboarding_tasks: Set(serde_json::to_string(&employee.onboarding_tasks)
+                .unwrap_or_else(|_| "[]".to_string())),
+            onboarding_completed_at: Set(employee.onboarding_completed_at.map(Into::into)),
             created_at: Set(employee.created_at.into()),
             updated_at: Set(employee.updated_at.into()),
             version: Set(employee.version),
