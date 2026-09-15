@@ -24,14 +24,16 @@ pub fn client_ip(headers: &HeaderMap) -> Option<IpAddr> {
     if let Some(xff) = headers.get("x-forwarded-for").and_then(|v| v.to_str().ok()) {
         // Take the first address; it is the original client.
         if let Some(first) = xff.split(',').next()
-            && let Ok(ip) = first.trim().parse::<IpAddr>() {
-                return Some(ip);
-            }
-    }
-    if let Some(real) = headers.get("x-real-ip").and_then(|v| v.to_str().ok())
-        && let Ok(ip) = real.trim().parse::<IpAddr>() {
+            && let Ok(ip) = first.trim().parse::<IpAddr>()
+        {
             return Some(ip);
         }
+    }
+    if let Some(real) = headers.get("x-real-ip").and_then(|v| v.to_str().ok())
+        && let Ok(ip) = real.trim().parse::<IpAddr>()
+    {
+        return Some(ip);
+    }
     None
 }
 
@@ -85,9 +87,10 @@ fn ip_matches(ip: IpAddr, allowlist: &[String]) -> bool {
                 return true;
             }
         } else if let Ok(exact) = entry.parse::<IpAddr>()
-            && exact == ip {
-                return true;
-            }
+            && exact == ip
+        {
+            return true;
+        }
     }
     false
 }
