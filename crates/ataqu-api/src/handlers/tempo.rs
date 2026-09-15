@@ -569,14 +569,8 @@ pub fn routes() -> Router<AppState> {
             "/bookings/{id}/confirm",
             axum::routing::post(confirm_booking),
         )
-        .route(
-            "/bookings/{id}/no-show",
-            axum::routing::post(mark_no_show),
-        )
-        .route(
-            "/bookings/{id}/joined",
-            axum::routing::post(mark_joined),
-        )
+        .route("/bookings/{id}/no-show", axum::routing::post(mark_no_show))
+        .route("/bookings/{id}/joined", axum::routing::post(mark_joined))
         .route(
             "/bookings/{id}/reschedule",
             axum::routing::post(reschedule_booking),
