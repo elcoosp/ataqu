@@ -21,6 +21,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActivityTimeline } from "../../../../apps/cinq/components/activity-timeline";
+import { CreateActivityDialog } from "../../../../apps/cinq/components/create-activity-dialog";
 import { CrossAppBadge } from "../../../../apps/cinq/components/cross-app-badge";
 import { EmailTrackingTab } from "../../../../apps/cinq/components/email-tracking-tab";
 import { IntegrationToggle } from "../../../../apps/cinq/components/integration-toggle";
@@ -43,6 +44,7 @@ function DealDetail() {
 	const [amount, setAmount] = useState("");
 	const [status, setStatus] = useState<"open" | "won" | "lost">("open");
 	const [probability, setProbability] = useState("");
+	const [openLogActivity, setOpenLogActivity] = useState(false);
 
 	if (isLoading)
 		return (
@@ -166,6 +168,9 @@ function DealDetail() {
 
 			<div className="flex gap-4 items-center flex-wrap mt-4">
 				<CrossAppBadge entityId={id} />
+				<Button variant="outline" onClick={() => setOpenLogActivity(true)}>
+					<Trans>Log Activity</Trans>
+				</Button>
 				<IntegrationToggle
 					dealId={id}
 					targetApp="dial"
@@ -194,12 +199,19 @@ function DealDetail() {
 					<ActivityTimeline dealId={id} />
 				</TabsContent>
 				<TabsContent value="tasks">
-					<TaskList />
+					<TaskList dealId={deal.id} />
 				</TabsContent>
 				<TabsContent value="tracking">
 					<EmailTrackingTab contactId={deal.contact_id} />
 				</TabsContent>
 			</Tabs>
+
+			<CreateActivityDialog
+				open={openLogActivity}
+				onOpenChange={setOpenLogActivity}
+				defaultContactId={deal.contact_id}
+				defaultDealId={deal.id}
+			/>
 		</div>
 	);
 }
