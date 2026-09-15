@@ -1,4 +1,5 @@
 import { shopifyAuthStart, shopifySync } from "@ataqu/api-client";
+import type { PaginatedResponse } from "@ataqu/api-client";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ShopifyIntegration, ShopifySyncLog } from "../../../apps/vault/api/shopify-api";
@@ -7,7 +8,6 @@ import {
 	getShopifyIntegrations,
 	getShopifySyncLogs,
 } from "../../../apps/vault/api/shopify-api";
-
 /** Polling interval: 10 seconds. Bounded and cancelled on unmount by TanStack Query. */
 const SHOPIFY_POLL_INTERVAL_MS = 10_000;
 
@@ -23,7 +23,7 @@ export const useShopifyIntegrations = () =>
 	});
 
 export const useShopifySyncLogs = () =>
-	useQuery<ShopifySyncLog[]>({
+	useQuery<PaginatedResponse<ShopifySyncLog>>({
 		queryKey: ["vault", "shopify", "sync-logs"],
 		queryFn: () => getShopifySyncLogs({ limit: 20 }),
 		retry: false,
