@@ -58,7 +58,7 @@ export function EmployeeDirectory({
 			},
 		);
 
-	const list = isSearching ? searchResults : employees;
+	const list = isSearching ? searchResults : employees?.items ?? [];
 
 	if (isLoading || isSearchLoading) {
 		return (
