@@ -187,7 +187,11 @@ impl CinqService {
         }
     }
 
-    pub async fn create_contact(&self, user_id: Uuid, cmd: CreateContactCommand) -> CinqResult<Contact> {
+    pub async fn create_contact(
+        &self,
+        user_id: Uuid,
+        cmd: CreateContactCommand,
+    ) -> CinqResult<Contact> {
         let domain_cmd = DomainCreateContact {
             tenant_id: cmd.tenant_id,
             name: cmd.name.clone(),
@@ -248,9 +252,11 @@ impl CinqService {
         Ok(contact)
     }
 
-    pub async fn update_contact(&self, user_id: Uuid, cmd: UpdateContactCommand) -> CinqResult<Contact> {
-
-
+    pub async fn update_contact(
+        &self,
+        user_id: Uuid,
+        cmd: UpdateContactCommand,
+    ) -> CinqResult<Contact> {
         let mut contact = self
             .contact_repo
             .find_contact_by_id(&cmd.tenant_id, cmd.id)
@@ -317,9 +323,12 @@ impl CinqService {
         Ok(contact)
     }
 
-    pub async fn delete_contact(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
-
-
+    pub async fn delete_contact(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> CinqResult<()> {
         self.contact_repo.delete_contact(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
             audit_repo
@@ -558,8 +567,6 @@ impl CinqService {
     }
 
     pub async fn create_deal(&self, user_id: Uuid, cmd: CreateDealCommand) -> CinqResult<Deal> {
-
-
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
         if let Some(est_id) = cmd.establishment_id {
             let _ = self.get_establishment(cmd.tenant_id, est_id).await?;
@@ -617,8 +624,6 @@ impl CinqService {
     }
 
     pub async fn update_deal(&self, user_id: Uuid, cmd: UpdateDealCommand) -> CinqResult<Deal> {
-
-
         let mut deal = self
             .deal_repo
             .find_deal_by_id(&cmd.tenant_id, cmd.id)
@@ -704,9 +709,12 @@ impl CinqService {
         Ok(deal)
     }
 
-    pub async fn delete_deal(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
-
-
+    pub async fn delete_deal(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> CinqResult<()> {
         self.deal_repo.delete_deal(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
             audit_repo
@@ -741,14 +749,16 @@ impl CinqService {
         limit: u64,
         offset: u64,
     ) -> CinqResult<(Vec<Deal>, u64)> {
-
         let total = self.deal_repo.count_deals(&tenant_id).await?;
         let deals = self.deal_repo.list_deals(&tenant_id, limit, offset).await?;
         Ok((deals, total))
     }
 
-    pub async fn create_activity(&self, user_id: Uuid, cmd: CreateActivityCommand) -> CinqResult<Activity> {
-
+    pub async fn create_activity(
+        &self,
+        user_id: Uuid,
+        cmd: CreateActivityCommand,
+    ) -> CinqResult<Activity> {
         let _ = self.get_contact(cmd.tenant_id, cmd.contact_id).await?;
         let domain_cmd = DomainCreateActivity {
             tenant_id: cmd.tenant_id,
@@ -818,7 +828,6 @@ impl CinqService {
         limit: u64,
         offset: u64,
     ) -> CinqResult<(Vec<Activity>, u64)> {
-
         let total = self.activity_repo.count_all_activities(&tenant_id).await?;
         let activities = self
             .activity_repo
@@ -827,8 +836,11 @@ impl CinqService {
         Ok((activities, total))
     }
 
-    pub async fn create_pipeline_stage(&self, user_id: Uuid, cmd: CreatePipelineStageCommand,) -> CinqResult<PipelineStage> {
-
+    pub async fn create_pipeline_stage(
+        &self,
+        user_id: Uuid,
+        cmd: CreatePipelineStageCommand,
+    ) -> CinqResult<PipelineStage> {
         let domain_cmd = DomainCreateStage {
             tenant_id: cmd.tenant_id,
             name: cmd.name,
@@ -867,7 +879,6 @@ impl CinqService {
         &self,
         tenant_id: TenantId,
     ) -> CinqResult<Vec<PipelineStage>> {
-
         Ok(self.stage_repo.list_pipeline_stages(&tenant_id).await?)
     }
 
@@ -882,12 +893,15 @@ impl CinqService {
             .ok_or(CinqServiceError::PipelineStageNotFound)
     }
 
-    pub async fn update_pipeline_stage(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_pipeline_stage(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
         id: Uuid,
         name: Option<String>,
         order: Option<i32>,
-        expected_version: i32,) -> CinqResult<PipelineStage> {
-
+        expected_version: i32,
+    ) -> CinqResult<PipelineStage> {
         let mut stage = self
             .stage_repo
             .find_pipeline_stage_by_id(&tenant_id, id)
@@ -935,13 +949,16 @@ impl CinqService {
         Ok(stage)
     }
 
-    pub async fn delete_pipeline_stage(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
-
+    pub async fn delete_pipeline_stage(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> CinqResult<()> {
         self.stage_repo
             .delete_pipeline_stage(&tenant_id, id)
             .await?;
         if let Some(audit_repo) = &self.audit_repo {
-
             audit_repo
                 .append_log(
                     tenant_id,
@@ -961,8 +978,11 @@ impl CinqService {
         Ok(())
     }
 
-    pub async fn create_task(&self, user_id: Uuid, cmd: ataqu_domain_cinq::task::CreateTaskCommand,) -> CinqResult<ataqu_domain_cinq::task::Task> {
-
+    pub async fn create_task(
+        &self,
+        user_id: Uuid,
+        cmd: ataqu_domain_cinq::task::CreateTaskCommand,
+    ) -> CinqResult<ataqu_domain_cinq::task::Task> {
         let event =
             ataqu_domain_cinq::task::create_task(cmd, self.id_gen.as_ref(), self.clock.as_ref())
                 .map_err(CinqServiceError::Domain)?;
@@ -1012,7 +1032,6 @@ impl CinqService {
         limit: u64,
         offset: u64,
     ) -> CinqResult<Vec<ataqu_domain_cinq::task::Task>> {
-
         Ok(self.task_repo.list_tasks(&tenant_id, limit, offset).await?)
     }
 
@@ -1029,8 +1048,11 @@ impl CinqService {
             .await?)
     }
 
-    pub async fn update_task(&self, user_id: Uuid, cmd: ataqu_domain_cinq::task::UpdateTaskCommand,) -> CinqResult<ataqu_domain_cinq::task::Task> {
-
+    pub async fn update_task(
+        &self,
+        user_id: Uuid,
+        cmd: ataqu_domain_cinq::task::UpdateTaskCommand,
+    ) -> CinqResult<ataqu_domain_cinq::task::Task> {
         let mut task = self.get_task(cmd.tenant_id, cmd.id).await?;
 
         if task.version != cmd.expected_version {
@@ -1048,7 +1070,6 @@ impl CinqService {
             task.description = Some(desc);
         }
         if let Some(due) = event.due_date {
-
             task.due_date = Some(due);
         }
         if let Some(status) = event.status {
@@ -1063,9 +1084,12 @@ impl CinqService {
         Ok(task)
     }
 
-    pub async fn delete_task(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> CinqResult<()> {
-
-
+    pub async fn delete_task(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> CinqResult<()> {
         self.task_repo.delete_task(&tenant_id, id).await?;
         if let Some(audit_repo) = &self.audit_repo {
             audit_repo
@@ -1087,8 +1111,11 @@ impl CinqService {
         Ok(())
     }
 
-    pub async fn create_establishment(&self, user_id: Uuid, cmd: CreateEstablishmentCommand,) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
-
+    pub async fn create_establishment(
+        &self,
+        user_id: Uuid,
+        cmd: CreateEstablishmentCommand,
+    ) -> CinqResult<ataqu_domain_cinq::establishment::Establishment> {
         use ataqu_domain_cinq::establishment::{
             CreateEstablishmentCommand as DomainCreate, create_establishment as domain_create,
         };
