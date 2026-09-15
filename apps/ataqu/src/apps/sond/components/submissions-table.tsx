@@ -60,6 +60,11 @@ export function SubmissionsTable({
 		ids.includes(id),
 	);
 
+	const maxAnswers = submissions.reduce(
+		(n, s) => Math.max(n, s.answers?.length ?? 0),
+		0,
+	);
+
 	const handleBulkDelete = () => {
 		if (selectedIds.length === 0) return;
 		bulkDelete.mutate({ ids: selectedIds });
@@ -134,7 +139,7 @@ export function SubmissionsTable({
 						{submissions.length === 0 && (
 							<TableRow>
 								<TableCell
-									colSpan={5}
+									colSpan={2 + maxAnswers}
 									className="py-8 text-center text-muted-foreground"
 								>
 									<Trans>No submissions</Trans>
