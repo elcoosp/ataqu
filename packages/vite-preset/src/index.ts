@@ -47,16 +47,16 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
 			port: APP_PORTS[options.appName] || 5173,
 			strictPort: true,
 			proxy: {
-				"/api": "http://localhost:3000",
-				"/ws": { target: "ws://localhost:3000", ws: true },
+				"/api": "http://127.0.0.1:3000",
+				"/ws": { target: "ws://127.0.0.1:3000", ws: true },
 			},
 		},
 		preview: {
 			port: APP_PORTS[options.appName] || 5173,
 			strictPort: true,
 			proxy: {
-				"/api": "http://localhost:3000",
-				"/ws": { target: "ws://localhost:3000", ws: true },
+				"/api": "http://127.0.0.1:3000",
+				"/ws": { target: "ws://127.0.0.1:3000", ws: true },
 			},
 		},
 		build: {
