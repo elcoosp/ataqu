@@ -7,8 +7,10 @@ import { Trans } from "@lingui/react/macro";
 import { useMemo } from "react";
 
 export function ReportsView() {
-	const { data: employees } = useListEmployees({ limit: 1000 });
-	const { data: leaveRequests } = useListLeaveRequests();
+	const { data: employeesData } = useListEmployees({ limit: 1000 });
+	const { data: leaveRequestsData } = useListLeaveRequests();
+	const employees = employeesData?.items ?? [];
+	const leaveRequests = leaveRequestsData?.items ?? [];
 
 	const headcountByDept = useMemo(() => {
 		const counts: Record<string, number> = {};
