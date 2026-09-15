@@ -64,13 +64,15 @@ pub fn resolve_effective_client_ip(
         return peer;
     }
 
-    if let Some(xff) = headers
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-    {
+    if let Some(xff) = headers.get("x-forwarded-for").and_then(|v| v.to_str().ok()) {
         // XFF is a comma list from client to proxy. The original client is the
         // rightmost entry that is not itself a trusted proxy.
-        for token in xff.split(',').map(str::trim).filter(|s| !s.is_empty()).rev() {
+        for token in xff
+            .split(',')
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .rev()
+        {
             if let Ok(ip) = token.parse::<IpAddr>()
                 && !trusted.contains(ip)
             {
