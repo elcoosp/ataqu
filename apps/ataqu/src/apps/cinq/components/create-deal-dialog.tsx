@@ -31,7 +31,8 @@ export function CreateDealDialog({
 	onOpenChange: (o: boolean) => void;
 }) {
 	const queryClient = useQueryClient();
-	const { data: contacts } = useListContacts({ limit: 1000 });
+	const { data: contactsData } = useListContacts({ limit: 1000 });
+	const contacts = contactsData?.items ?? [];
 	const { data: stages } = useListPipelineStages();
 	const [title, setTitle] = useState("");
 	const [amount, setAmount] = useState("");
