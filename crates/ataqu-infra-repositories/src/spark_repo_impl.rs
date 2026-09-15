@@ -5,7 +5,9 @@ use ataqu_domain_spark::{SparkError, Workflow};
 use ataqu_kernel::TenantId;
 use sea_orm::IntoActiveModel;
 use sea_orm::entity::prelude::*;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect, Set};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect, Set,
+};
 use uuid::Uuid;
 
 mod workflow_entity {
