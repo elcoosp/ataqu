@@ -2,17 +2,17 @@
 
 //! Ataqu API layer – Axum handlers, middleware, and shared state.
 
+use crate::error::ApiResponseError;
 use axum::{
     Router,
-    extract::connect_info::IntoMakeServiceWithConnectInfo,
     extract::State,
+    extract::connect_info::IntoMakeServiceWithConnectInfo,
     routing::{get, post},
 };
-use crate::error::ApiResponseError;
-use std::net::SocketAddr;
 use dashmap::DashMap;
 use metrics_exporter_prometheus::PrometheusHandle;
 use sea_orm::DatabaseConnection;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use uuid::Uuid;
@@ -40,8 +40,7 @@ pub type WsRegistry =
     Arc<DashMap<(Uuid, Uuid), Arc<DashMap<Uuid, tokio::sync::mpsc::UnboundedSender<String>>>>>;
 pub type ConnIndex = Arc<DashMap<Uuid, Vec<(Uuid, Uuid)>>>;
 pub type PresenceCounts = Arc<DashMap<Uuid, std::sync::atomic::AtomicUsize>>;
-pub type SsoStates =
-    Arc<dyn ataqu_application::sso_state_store::SsoStateStore + Send + Sync>;
+pub type SsoStates = Arc<dyn ataqu_application::sso_state_store::SsoStateStore + Send + Sync>;
 
 /// Application state shared across handlers.
 #[derive(Clone)]
@@ -176,7 +175,7 @@ async fn readiness_check(State(state): State<AppState>) -> impl axum::response::
 async fn issue_csrf_token(
     State(state): State<AppState>,
 ) -> Result<axum::response::Response, ApiResponseError> {
-    use axum::http::{header, HeaderValue};
+    use axum::http::{HeaderValue, header};
     let token = state.csrf_protector.issue();
     let cookie = format!(
         "{}={}; Path=/; Max-Age=86400; SameSite=Strict; Secure",
@@ -224,10 +223,7 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
-        .route(
-            "/api/v1/csrf-token",
-            get(issue_csrf_token),
-        )
+        .route("/api/v1/csrf-token", get(issue_csrf_token))
         .layer(axum::middleware::from_fn(
             crate::middleware::etag::etag_middleware,
         ))
