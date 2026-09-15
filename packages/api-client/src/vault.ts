@@ -12,6 +12,7 @@ import type {
 	CreateVariantRequest,
 	CreateWarehouseRequest,
 	LowStockParams,
+	PaginatedResponse,
 	Product,
 	ReserveStockRequest,
 	StockMovement,
@@ -24,13 +25,16 @@ import type {
 } from "./types";
 
 // ---- Products ----
-export const listProducts = (params?: { limit?: number; offset?: number }) =>
-	api.get<{ items: Product[]; total: number; limit: number; offset: number }>(
-		"/vault/products",
-		{ params },
-	);
-export const searchProducts = (q: string, limit = 10) =>
-	api.get<Product[]>("/vault/products", { params: { q, limit } });
+export const listProducts = (
+	params?: { limit?: number; offset?: number },
+) =>
+	api.get<PaginatedResponse<Product>>("/vault/products", { params });
+export const searchProducts = (
+	q: string,
+	limit = 10,
+) => api.get<PaginatedResponse<Product>>("/vault/products", {
+	params: { q, limit },
+});
 export const createProduct = (data: CreateProductRequest) =>
 	api.post<Product>("/vault/products", data);
 export const getProduct = (id: UUID) =>
@@ -49,11 +53,9 @@ export const bulkDeleteProducts = (data: BulkDeleteRequest) =>
 	api.post<void>("/vault/products/bulk-delete", data);
 
 // ---- Variants ----
-export const listVariants = (params?: { limit?: number; offset?: number }) =>
-	api.get<{ items: Variant[]; total: number; limit: number; offset: number }>(
-		"/vault/variants",
-		{ params },
-	);
+export const listVariants = (
+	params?: { limit?: number; offset?: number },
+) => api.get<PaginatedResponse<Variant>>("/vault/variants", { params });
 export const createVariant = (data: CreateVariantRequest) =>
 	api.post<Variant>("/vault/variants", data);
 export const getVariant = (id: UUID) =>
