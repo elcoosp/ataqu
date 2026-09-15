@@ -17,14 +17,19 @@ vi.mock("@lingui/macro", () => ({
 
 vi.mock("@ataqu/api-client", () => ({
 	useListEmployees: () => ({
-		data: [
-			{
-				id: "1",
-				full_name: "John Doe",
-				job_title: "Dev",
-				email: "john@doe.com",
-			},
-		],
+		data: {
+			items: [
+				{
+					id: "1",
+					full_name: "John Doe",
+					job_title: "Dev",
+					email: "john@doe.com",
+				},
+			],
+			total: 1,
+			limit: 100,
+			offset: 0,
+		},
 		isLoading: false,
 	}),
 	useSearchEmployees: () => ({ data: [], isLoading: false }),
