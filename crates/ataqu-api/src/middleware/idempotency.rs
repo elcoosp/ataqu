@@ -46,54 +46,56 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
     };
 
     if let Some(ref key) = cache_key
-        && let Some(cached) = IDEMPOTENCY_CACHE.get(key) {
-            let mut resp = axum::response::Response::builder().status(cached.status);
-            for (k, v) in &cached.headers {
-                if let Ok(header_name) = axum::http::HeaderName::from_bytes(k.as_bytes())
-                    && let Ok(header_value) = axum::http::HeaderValue::from_str(v)
-                {
-                    resp = resp.header(header_name, header_value);
-                }
+        && let Some(cached) = IDEMPOTENCY_CACHE.get(key)
+    {
+        let mut resp = axum::response::Response::builder().status(cached.status);
+        for (k, v) in &cached.headers {
+            if let Ok(header_name) = axum::http::HeaderName::from_bytes(k.as_bytes())
+                && let Ok(header_value) = axum::http::HeaderValue::from_str(v)
+            {
+                resp = resp.header(header_name, header_value);
             }
-            let body_bytes = serde_json::to_vec(&cached.body).unwrap_or_default();
-            return resp
+        }
+        let body_bytes = serde_json::to_vec(&cached.body).unwrap_or_default();
+        return resp
             .body(axum::body::Body::from(body_bytes))
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
-        }
+    }
 
     let resp = next.run(req).await;
 
     if let Some(key) = cache_key
-        && resp.status().is_success() {
-            let status = resp.status();
-            let headers = resp.headers().clone();
-            let body = axum::body::to_bytes(resp.into_body(), 1024 * 1024)
-                .await
-                .unwrap_or_default();
-            let body_json: serde_json::Value =
-                serde_json::from_slice(&body).unwrap_or(serde_json::Value::Null);
-            let mut header_map = std::collections::HashMap::new();
-            for (k, v) in &headers {
-                let k_str = k.to_string();
-                if let Ok(v_str) = v.to_str() {
-                    header_map.insert(k_str, v_str.to_string());
-                }
+        && resp.status().is_success()
+    {
+        let status = resp.status();
+        let headers = resp.headers().clone();
+        let body = axum::body::to_bytes(resp.into_body(), 1024 * 1024)
+            .await
+            .unwrap_or_default();
+        let body_json: serde_json::Value =
+            serde_json::from_slice(&body).unwrap_or(serde_json::Value::Null);
+        let mut header_map = std::collections::HashMap::new();
+        for (k, v) in &headers {
+            let k_str = k.to_string();
+            if let Ok(v_str) = v.to_str() {
+                header_map.insert(k_str, v_str.to_string());
             }
-            let cached = CachedResponse {
-                status: status.as_u16(),
-                headers: header_map,
-                body: body_json,
-            };
-            IDEMPOTENCY_CACHE.insert(key, cached);
+        }
+        let cached = CachedResponse {
+            status: status.as_u16(),
+            headers: header_map,
+            body: body_json,
+        };
+        IDEMPOTENCY_CACHE.insert(key, cached);
 
-            let mut new_resp = axum::response::Response::builder().status(status);
-            for (k, v) in &headers {
-                new_resp = new_resp.header(k.clone(), v.clone());
-            }
-            return new_resp
+        let mut new_resp = axum::response::Response::builder().status(status);
+        for (k, v) in &headers {
+            new_resp = new_resp.header(k.clone(), v.clone());
+        }
+        return new_resp
             .body(axum::body::Body::from(body))
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
-        }
+    }
 
     Ok(resp)
 }
