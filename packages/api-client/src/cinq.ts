@@ -21,6 +21,7 @@ import type {
 	IntegrationStatus,
 	IntegrationToggleRequest,
 	ListActivitiesParams,
+	PaginatedResponse,
 	PipelineStageResponse,
 	SearchParams,
 	TaskResponse,
@@ -33,7 +34,7 @@ import type {
 
 // ---- Contacts ----
 export const listContacts = (params?: { limit?: number; offset?: number }) =>
-	api.get<ContactResponse[]>("/cinq/contacts", { params });
+	api.get<PaginatedResponse<ContactResponse>>("/cinq/contacts", { params });
 export const createContact = (data: CreateContactRequest) =>
 	api.post<ContactResponse>("/cinq/contacts", data);
 export const getContact = (id: UUID) =>
@@ -53,9 +54,9 @@ export const bulkDeleteContacts = (data: BulkDeleteRequest) =>
 
 // ---- Deals ----
 export const listDeals = (params?: { limit?: number; offset?: number }) =>
-	api.get<DealResponse[]>("/cinq/deals", { params });
+	api.get<PaginatedResponse<DealResponse>>("/cinq/deals", { params });
 export const searchDeals = (q: string, limit = 10) =>
-	api.get<DealResponse[]>("/cinq/deals", {
+	api.get<PaginatedResponse<DealResponse>>("/cinq/deals", {
 		params: { q, limit },
 	});
 export const createDeal = (data: CreateDealRequest) =>
@@ -91,7 +92,7 @@ export const deletePipelineStage = (id: UUID) =>
 
 // ---- Activities ----
 export const listActivities = (params?: ListActivitiesParams) =>
-	api.get<ActivityResponse[]>("/cinq/activities", { params });
+	api.get<PaginatedResponse<ActivityResponse>>("/cinq/activities", { params });
 export const createActivity = (data: CreateActivityRequest) =>
 	api.post<ActivityResponse>("/cinq/activities", data);
 export const getActivity = (id: UUID) =>
@@ -168,7 +169,7 @@ export const useToggleIntegration = (
 // ---- React Query hooks ----
 export const useListContacts = (
 	params?: { limit?: number; offset?: number },
-	options?: UseQueryOptions<ContactResponse[]>,
+	options?: UseQueryOptions<PaginatedResponse<ContactResponse>>,
 ) =>
 	useQuery({
 		queryKey: ["cinq", "contacts", params],
@@ -186,7 +187,7 @@ export const useGetContact = (
 	});
 export const useListDeals = (
 	params?: { limit?: number; offset?: number },
-	options?: UseQueryOptions<DealResponse[]>,
+	options?: UseQueryOptions<PaginatedResponse<DealResponse>>,
 ) =>
 	useQuery({
 		queryKey: ["cinq", "deals", params],
@@ -209,7 +210,7 @@ export const useListPipelineStages = (
 	});
 export const useListActivities = (
 	params?: ListActivitiesParams,
-	options?: UseQueryOptions<ActivityResponse[]>,
+	options?: UseQueryOptions<PaginatedResponse<ActivityResponse>>,
 ) =>
 	useQuery({
 		queryKey: ["cinq", "activities", params],
