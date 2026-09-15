@@ -1,9 +1,9 @@
 //! Async CSV import worker – processes import jobs from the outbox.
 use crate::outbox::Outbox;
 use ataqu_infra_outbox::OutboxEvent;
+use serde_json::Value;
 use std::sync::Arc;
 use tracing::info;
-use serde_json::Value;
 
 pub struct ImportWorker {
     outbox: Arc<dyn Outbox>,
@@ -33,10 +33,7 @@ impl ImportWorker {
             .and_then(|v| v.as_str())
             .ok_or("Missing import_type")?
             .to_string();
-        let _mapping = payload
-            .get("mapping")
-            .cloned()
-            .unwrap_or(Value::Null);
+        let _mapping = payload.get("mapping").cloned().unwrap_or(Value::Null);
         let user_id = payload
             .get("user_id")
             .and_then(|v| v.as_str())
@@ -47,13 +44,15 @@ impl ImportWorker {
         let response = reqwest::get(&file_url)
             .await
             .map_err(|e| format!("Failed to download file: {}", e))?;
-        let csv_content = response.text()
+        let csv_content = response
+            .text()
             .await
             .map_err(|e| format!("Failed to read CSV: {}", e))?;
 
         // Parse CSV
         let mut reader = csv::Reader::from_reader(csv_content.as_bytes());
-        let _headers = reader.headers()
+        let _headers = reader
+            .headers()
             .map_err(|e| format!("Invalid CSV headers: {}", e))?
             .clone();
 
@@ -63,13 +62,20 @@ impl ImportWorker {
             let mut row = serde_json::Map::new();
             for (i, field) in record.iter().enumerate() {
                 if let Some(header) = _headers.get(i) {
-                    row.insert(header.to_string(), serde_json::Value::String(field.to_string()));
+                    row.insert(
+                        header.to_string(),
+                        serde_json::Value::String(field.to_string()),
+                    );
                 }
             }
             rows.push(serde_json::Value::Object(row));
         }
 
-        info!("Import of {} rows completed for tenant {}", rows.len(), tenant_id);
+        info!(
+            "Import of {} rows completed for tenant {}",
+            rows.len(),
+            tenant_id
+        );
 
         let notify_payload = serde_json::json!({
             "tenant_id": tenant_id,
