@@ -38,13 +38,13 @@ const tourSteps = [
 function DealsIndex() {
 	const [openCreate, setOpenCreate] = useState(false);
 	const [openStage, setOpenStage] = useState(false);
-	const { data: deals } = useListDeals({ limit: 100, offset: 0 });
+	const { data: dealsData } = useListDeals({ limit: 100, offset: 0 });
 	const bulkDeleteDeals = useBulkDeleteDeals({
 		onSuccess: () => {
 			window.location.reload();
 		},
 	});
-	const allDealIds = (deals ?? []).map((d: DealResponse) => d.id);
+	const allDealIds = (dealsData?.items ?? []).map((d: DealResponse) => d.id);
 	return (
 		<OnboardTour tourId="cinq-kanban-tour" steps={tourSteps}>
 			<DashboardLayout>
