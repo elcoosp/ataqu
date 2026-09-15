@@ -10,7 +10,9 @@ pub use ataqu_domain_pause::{
 };
 
 use crate::outbox::Outbox;
-use ataqu_infra_idempotency::{AcquireOutcome, CachedResponse, IdempotencyGuard, SeaOrmIdempotencyStore};
+use ataqu_infra_idempotency::{
+    AcquireOutcome, CachedResponse, IdempotencyGuard, SeaOrmIdempotencyStore,
+};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use sea_orm::DatabaseConnection;
 
@@ -86,7 +88,8 @@ impl PauseService {
             AcquireOutcome::Proceed(guard) => {
                 // Execute the operation inside the guard transaction
                 let result = async {
-                    let event = ataqu_domain_pause::employee::create_employee(command, id_gen, clock)?;
+                    let event =
+                        ataqu_domain_pause::employee::create_employee(command, id_gen, clock)?;
                     self.employee_repo.insert(tenant_id, &event).await?;
                     let payload = serde_json::json!({
                         "employee_id": event.employee_id,
@@ -107,7 +110,8 @@ impl PauseService {
                         .await
                         .map_err(PauseServiceError::Outbox)?;
                     Ok(event.employee_id)
-                }.await;
+                }
+                .await;
 
                 match result {
                     Ok(id) => {
@@ -117,7 +121,8 @@ impl PauseService {
                             headers: HashMap::new(),
                             body: response_body,
                         };
-                        guard.complete(response, None)
+                        guard
+                            .complete(response, None)
                             .await
                             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
                         Ok(id)
@@ -125,10 +130,14 @@ impl PauseService {
                     Err(e) => {
                         // Check if it's a validation error (should be failed status)
                         if matches!(e, PauseServiceError::Validation(_)) {
-                            guard.fail().await
+                            guard
+                                .fail()
+                                .await
                                 .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
                         } else {
-                            guard.abort().await
+                            guard
+                                .abort()
+                                .await
                                 .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
                         }
                         Err(e)
@@ -173,7 +182,8 @@ impl PauseService {
                         .await
                         .map_err(PauseServiceError::Outbox)?;
                     Ok(event.leave_request_id)
-                }.await;
+                }
+                .await;
 
                 match result {
                     Ok(id) => {
@@ -183,17 +193,22 @@ impl PauseService {
                             headers: HashMap::new(),
                             body: response_body,
                         };
-                        guard.complete(response, None)
+                        guard
+                            .complete(response, None)
                             .await
                             .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
                         Ok(id)
                     }
                     Err(e) => {
                         if matches!(e, PauseServiceError::Validation(_)) {
-                            guard.fail().await
+                            guard
+                                .fail()
+                                .await
                                 .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
                         } else {
-                            guard.abort().await
+                            guard
+                                .abort()
+                                .await
                                 .map_err(|e| PauseServiceError::Idempotency(e.to_string()))?;
                         }
                         Err(e)
@@ -434,6 +449,48 @@ impl PauseService {
             .await
             .map_err(PauseServiceError::Outbox)?;
         Ok(())
+    }
+
+    /// Marks one onboarding task complete for an employee (idempotent).
+    /// Returns the updated employee so callers can surface real progress.
+    pub async fn complete_employee_onboarding_task(
+        &self,
+        tenant_id: &TenantId,
+        employee_id: Uuid,
+        task_id: &str,
+    ) -> Result<Employee, PauseServiceError> {
+        let mut employee = self
+            .employee_repo
+            .find_by_id(tenant_id, employee_id)
+            .await
+            .map_err(|e| PauseServiceError::Persistence(e.to_string()))?
+            .ok_or(PauseServiceError::NotFound)?;
+
+        ataqu_domain_pause::employee::complete_onboarding_task(
+            &mut employee,
+            task_id,
+            self.clock.as_ref(),
+        )?;
+        employee.version += 1;
+        self.employee_repo.update(tenant_id, &employee).await?;
+
+        let payload = serde_json::json!({
+            "employee_id": employee.id,
+            "tenant_id": employee.tenant_id.as_uuid(),
+            "task_id": task_id,
+            "onboarding_tasks": employee.onboarding_tasks,
+        });
+        self.outbox
+            .append(
+                PAUSE_SCHEMA,
+                "EmployeeOnboardingTaskCompleted",
+                employee.id,
+                &payload,
+            )
+            .await
+            .map_err(PauseServiceError::Outbox)?;
+
+        Ok(employee)
     }
 
     pub async fn cancel_leave(
