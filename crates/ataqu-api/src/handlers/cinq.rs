@@ -1215,7 +1215,10 @@ pub async fn list_establishments(
         .await
         .map_err(ApiResponseError::internal_err)?;
     Ok(Json(
-        establishments.into_iter().map(EstablishmentResponse::from).collect(),
+        establishments
+            .into_iter()
+            .map(EstablishmentResponse::from)
+            .collect(),
     ))
 }
 
