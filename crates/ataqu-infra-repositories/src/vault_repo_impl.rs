@@ -1,4 +1,3 @@
-
 use async_trait::async_trait;
 use ataqu_domain_vault::inventory::{Product, Variant, Warehouse};
 use ataqu_domain_vault::repository::VaultRepository;
