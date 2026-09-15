@@ -1,9 +1,14 @@
 import { useListMovements } from "@ataqu/api-client";
 import { formatDate } from "@ataqu/shared-utils";
+import type { StockMovement } from "@ataqu/api-client";
 import {
- Bone 
+	Bone,
+	ExpandingSearch,
+	SegmentedControl,
 } from "@ataqu/ui";
+import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import { useMemo, useState } from "react";
 import { EmptyState } from "./empty-state";
 import { HistoryIcon } from "./icons";
 
@@ -36,6 +41,30 @@ function MovementsTable({ variantId }: { variantId: string }) {
 
 	const movements = movementsQuery.data ?? [];
 
+	const [reasonFilter, setReasonFilter] = useState("all");
+	const [query, setQuery] = useState("");
+
+	const reasons = useMemo(() => {
+		const seen = new Set<string>();
+		for (const movement of movements) {
+			if (movement.reason) seen.add(movement.reason);
+		}
+		return Array.from(seen);
+	}, [movements]);
+
+	const filteredMovements = useMemo(() => {
+		const needle = query.trim().toLowerCase();
+		return movements.filter((movement: StockMovement) => {
+			if (reasonFilter !== "all" && movement.reason !== reasonFilter) return false;
+			if (!needle) return true;
+			return (
+				(movement.reason ?? "").toLowerCase().includes(needle) ||
+				(movement.reference ?? "").toLowerCase().includes(needle) ||
+				String(movement.quantity).includes(needle)
+			);
+		});
+	}, [movements, query, reasonFilter]);
+
 	if (movements.length === 0) {
 		return (
 			<EmptyState
@@ -47,8 +76,33 @@ function MovementsTable({ variantId }: { variantId: string }) {
 	}
 
 	return (
-		<div className="overflow-x-auto rounded-lg border border-border">
-			<table className="w-full text-left text-sm">
+		<div className="space-y-3">
+			<div className="flex flex-wrap items-center gap-2">
+				<ExpandingSearch
+					value={query}
+					onChange={setQuery}
+					placeholder={t`Search by reason, reference, or quantity...`}
+					className="relative flex-1 min-w-48 max-w-sm"
+				/>
+				<SegmentedControl
+					label={t`Filter movements`}
+					options={[
+						{ value: "all", label: t`All` },
+						...reasons.map((reason) => ({ value: reason, label: reason })),
+					]}
+					value={reasonFilter}
+					onValueChange={setReasonFilter}
+				/>
+			</div>
+			{filteredMovements.length === 0 ? (
+				<div className="overflow-x-auto rounded-lg border border-border">
+					<p className="px-4 py-6 text-center text-sm text-muted-foreground">
+						<Trans>No movements match this filter.</Trans>
+					</p>
+				</div>
+			) : (
+				<div className="overflow-x-auto rounded-lg border border-border">
+					<table className="w-full text-left text-sm">
 				<thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
 					<tr>
 						<th className="px-4 py-3">
@@ -66,7 +120,7 @@ function MovementsTable({ variantId }: { variantId: string }) {
 					</tr>
 				</thead>
 				<tbody>
-					{movements.map((movement) => (
+					{filteredMovements.map((movement) => (
 						<tr
 							key={movement.id}
 							className="border-b border-border last:border-b-0"
@@ -93,6 +147,8 @@ function MovementsTable({ variantId }: { variantId: string }) {
 					))}
 				</tbody>
 			</table>
+			</div>
+			)}
 		</div>
 	);
 }
