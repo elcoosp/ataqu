@@ -27,7 +27,8 @@ export function CreateTaskDialog({
 	onOpenChange: (o: boolean) => void;
 }) {
 	const queryClient = useQueryClient();
-	const { data: contacts } = useListContacts({ limit: 1000 });
+	const { data: contactsData } = useListContacts({ limit: 1000 });
+	const contacts = contactsData?.items ?? [];
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [contactId, setContactId] = useState("");
