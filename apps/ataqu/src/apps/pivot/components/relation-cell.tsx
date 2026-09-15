@@ -35,21 +35,24 @@ export function RelationCell({
 	}, [value]);
 
 	const {
-		data: results,
+		data: resultsData,
 		isLoading,
 		error,
 	} = useQuery<any[]>({
 		queryKey: ["relation-search", app, debouncedSearch],
-		queryFn: () => {
+		queryFn: async () => {
 			if (!debouncedSearch || debouncedSearch.length < 2) return [];
-			const endpoint =
-				app === "cinq"
-					? searchDeals(debouncedSearch, 10)
-					: searchProducts(debouncedSearch, 10);
-			return endpoint;
+			// CINQ deals come back paginated ({ items }), VAULT products
+			// come back as a bare array — normalize both to an array.
+			if (app === "cinq") {
+				const res = await searchDeals(debouncedSearch, 10);
+				return res?.items ?? [];
+			}
+			return (await searchProducts(debouncedSearch, 10)) ?? [];
 		},
 		enabled: open && debouncedSearch.length >= 2,
 	});
+	const results = resultsData ?? [];
 
 	const handleSelect = (item: any) => {
 		const label = item.title || item.name || item.id;
