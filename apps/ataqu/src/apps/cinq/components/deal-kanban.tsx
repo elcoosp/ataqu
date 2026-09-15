@@ -4,10 +4,11 @@ import {
 	useDeletePipelineStage,
 	useListDeals,
 	useListPipelineStages,
+	useUpdateDeal,
 	useUpdatePipelineStage,
 } from "@ataqu/api-client";
 import {
- Badge, Bone, Button, Input, KanbanBoard 
+ Badge, Bone, Button, Input, KanbanBoard, type KanbanColumn
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -48,6 +49,13 @@ export function DealKanban() {
 		onError: () => toast.error(t`Failed to update stage`),
 	});
 
+	const updateDeal = useUpdateDeal({
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
+		},
+		onError: () => toast.error("Failed to move deal"),
+	});
+
 	const [editingStageId, setEditingStageId] = useState<string | null>(null);
 	const [stageName, setStageName] = useState("");
 
@@ -76,14 +84,29 @@ export function DealKanban() {
 	const columns = (stages || []).map((stage: PipelineStageResponse) => ({
 		id: stage.id,
 		title: stage.name,
-		items: (deals || []).filter(
+		items: (deals?.items ?? []).filter(
 			(d: DealResponse) => d.pipeline_stage_id === stage.id,
 		),
 	}));
 
-	const handleDragEnd = (_newColumns: any[]) => {
-		queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
-		toast.info(t`Deal moved (refresh to see changes)`);
+	const handleDragEnd = (newColumns: KanbanColumn<DealResponse>[]) => {
+		const originalStageByDeal = new Map<string, string>(
+			(deals?.items ?? []).map((d) => [d.id, d.pipeline_stage_id]),
+		);
+		const movedDeals = newColumns.flatMap((col) =>
+			col.items
+				.filter((d: DealResponse) => d.pipeline_stage_id !== col.id)
+				.map((d: DealResponse) => ({ dealId: d.id, newStageId: col.id, version: d.version })),
+		);
+		if (movedDeals.length > 0) {
+			movedDeals.forEach(({ dealId, newStageId, version }) => {
+				const originalStage = originalStageByDeal.get(dealId);
+				if (originalStage !== newStageId) {
+					updateDeal.mutate({ id: dealId, data: { pipeline_stage_id: newStageId }, version });
+				}
+			});
+			toast.success("Deal moved");
+		}
 	};
 
 	const renderItem = (deal: DealResponse) => (
