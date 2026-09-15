@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { i18n } from "@lingui/core";
 import { I18nProvider as LinguiProvider } from "@lingui/react";
 import { render, screen } from "@testing-library/react";
@@ -14,6 +15,6 @@ describe("SseIndicator", () => {
 				<SseIndicator isConnected={true} />
 			</LinguiProvider>,
 		);
-		expect(screen.getByText("Live")).toBeTruthy();
+		expect(screen.getAllByText("Live dashboard").length).toBeGreaterThan(0);
 	});
 });
