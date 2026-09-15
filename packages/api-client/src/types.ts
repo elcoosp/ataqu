@@ -520,6 +520,10 @@ export interface Employee {
 	department?: string;
 	hire_date: string; // YYYY-MM-DD
 	is_active: boolean;
+	/** Ids of completed onboarding tasks (paperwork / equipment / training). */
+	onboarding_tasks: string[];
+	/** Set once every onboarding task is complete. */
+	onboarding_completed_at: DateTime | null;
 	created_at: DateTime;
 	updated_at: DateTime;
 	version: number;
