@@ -27,9 +27,10 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, Statu
     // Modern, robust signal: a browser-initiated cross-site request is always
     // flagged by the user agent. Reject it for any state-changing method.
     if let Some(site) = headers.get("sec-fetch-site").and_then(|v| v.to_str().ok())
-        && site.eq_ignore_ascii_case("cross-site") {
-            return Err(StatusCode::FORBIDDEN);
-        }
+        && site.eq_ignore_ascii_case("cross-site")
+    {
+        return Err(StatusCode::FORBIDDEN);
+    }
 
     // Defense-in-depth: if an Origin is supplied, it must match the Host.
     if let Some(origin) = headers.get("origin").and_then(|v| v.to_str().ok()) {
@@ -41,8 +42,7 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, Statu
             let Some(origin_host) = origin_url.host_str() else {
                 return Err(StatusCode::FORBIDDEN);
             };
-            let same_origin =
-                origin_host == host || origin_host.ends_with(&format!(".{host}"));
+            let same_origin = origin_host == host || origin_host.ends_with(&format!(".{host}"));
             if !same_origin {
                 return Err(StatusCode::FORBIDDEN);
             }
