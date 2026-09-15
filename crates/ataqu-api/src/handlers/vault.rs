@@ -833,6 +833,130 @@ pub async fn shopify_webhook(
     Ok(StatusCode::OK)
 }
 
+// ----------------------------------------------------------------------
+// Shopify sync log retrieval (spec: VISTA / VAULT settings panel)
+// ----------------------------------------------------------------------
+
+#[derive(Debug, Serialize)]
+pub struct SyncLogResponse {
+    id: i64,
+    sync_type: String,
+    status: String,
+    product_id: Option<Uuid>,
+    shopify_id: Option<i64>,
+    error_message: Option<String>,
+    retry_count: i32,
+    created_at: DateTime<Utc>,
+}
+
+pub async fn list_shopify_sync_logs(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<PaginationParams>,
+) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<SyncLogResponse>>> {
+    let limit = params.limit.unwrap_or(100);
+    let offset = params.offset.unwrap_or(0);
+    let logs = state
+        .shopify_service
+        .log_repo
+        .list_failed_logs(auth.tenant_id, limit, offset)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    let total = logs.len() as u64;
+    let items = logs
+        .into_iter()
+        .map(|log| SyncLogResponse {
+            id: log.id,
+            sync_type: log.sync_type,
+            status: log.status,
+            product_id: log.product_id,
+            shopify_id: log.shopify_id,
+            error_message: log.error_message,
+            retry_count: log.retry_count,
+            created_at: log.created_at,
+        })
+        .collect();
+    Ok(Json(ataqu_contracts::PaginatedResponse {
+        items,
+        total,
+        limit,
+        offset,
+    }))
+}
+
+/// GET /vault/shopify/integrations — returns the tenant's integrations with a
+/// product count (variants synced per integration is tracked via products table).
+#[derive(Debug, Serialize)]
+pub struct ShopifyIntegrationResponse {
+    pub id: Uuid,
+    pub shop_domain: String,
+    pub status: String,
+    pub last_synced_at: Option<DateTime<Utc>>,
+    pub product_count: i64,
+    pub created_at: DateTime<Utc>,
+}
+
+pub async fn list_shopify_integrations(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<Vec<ShopifyIntegrationResponse>>> {
+    let integrations = state
+        .shopify_service
+        .repo
+        .list_integrations(&auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+    use ataqu_infra_repositories::entities::vault::variant as variant_entity;
+    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+
+    let mut items = Vec::with_capacity(integrations.len());
+    for integration in integrations {
+        // Count products that were synced for this tenant (sync writes into vault.products).
+        let product_count = variant_entity::Entity::find()
+            .filter(variant_entity::Column::TenantId.eq(auth.tenant_id.as_uuid()))
+            .count(&state.db)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+
+        // No status column is persisted yet; integrations are live until deleted.
+        let status = "active";
+
+        items.push(ShopifyIntegrationResponse {
+            id: integration.id,
+            shop_domain: integration.shop_domain,
+            status: status.to_string(),
+            last_synced_at: integration.last_synced_at,
+            product_count: product_count as i64,
+            created_at: integration.created_at,
+        });
+    }
+    Ok(Json(items))
+}
+
+/// DELETE /vault/shopify/disconnect — removes the tenant's Shopify integration(s).
+pub async fn shopify_disconnect(
+    State(state): State<AppState>,
+    auth: AuthContext,
+) -> ApiResult<StatusCode> {
+    let integrations = state
+        .shopify_service
+        .repo
+        .list_integrations(&auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    for integration in integrations {
+        state
+            .shopify_service
+            .repo
+            .delete_integration(integration.id)
+            .await
+            .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// Helper for constant time comparison
 // Helper for constant time comparison
 fn constant_time_eq(a: &str, b: &str) -> bool {
     if a.len() != b.len() {
@@ -1031,6 +1155,18 @@ pub fn routes() -> Router<AppState> {
         .route("/shopify/callback", axum::routing::get(shopify_callback))
         .route("/shopify/webhook", axum::routing::post(shopify_webhook))
         .route("/shopify/sync", axum::routing::post(shopify_sync))
+        .route(
+            "/shopify/integrations",
+            axum::routing::get(list_shopify_integrations),
+        )
+        .route(
+            "/shopify/disconnect",
+            axum::routing::delete(shopify_disconnect),
+        )
+        .route(
+            "/shopify/sync-logs",
+            axum::routing::get(list_shopify_sync_logs),
+        )
         .route("/amazon/connect", axum::routing::post(amazon_connect))
         .route("/amazon/disconnect", axum::routing::post(amazon_disconnect))
         .route("/amazon/sync", axum::routing::post(amazon_sync))
