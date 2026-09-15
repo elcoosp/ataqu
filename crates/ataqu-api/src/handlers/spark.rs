@@ -355,16 +355,13 @@ pub async fn list_dlq(
 
     let mut items = Vec::new();
     for row in rows {
-        let error: Option<String> = row
-            .try_get("attempts")
-            .ok()
-            .and_then(|a: i32| {
-                if a >= 3 {
-                    Some(format!("max retries exceeded ({a})"))
-                } else {
-                    None
-                }
-            });
+        let error: Option<String> = row.try_get("attempts").ok().and_then(|a: i32| {
+            if a >= 3 {
+                Some(format!("max retries exceeded ({a})"))
+            } else {
+                None
+            }
+        });
         items.push(DlqEntryResponse {
             id: row
                 .try_get("id")
