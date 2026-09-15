@@ -38,6 +38,8 @@ pub struct EmployeeResponse {
     pub department: Option<String>,
     pub hire_date: NaiveDate,
     pub is_active: bool,
+    pub onboarding_tasks: Vec<String>,
+    pub onboarding_completed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -53,6 +55,8 @@ impl From<Employee> for EmployeeResponse {
             department: e.department,
             hire_date: e.hire_date,
             is_active: e.is_active,
+            onboarding_tasks: e.onboarding_tasks,
+            onboarding_completed_at: e.onboarding_completed_at.map(Into::into),
             created_at: e.created_at.into(),
             updated_at: e.updated_at.into(),
         }
@@ -259,6 +263,35 @@ pub async fn deactivate_employee(
         .await
         .map_err(ApiResponseError::internal_err)?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CompleteOnboardingTaskRequest {
+    pub task_id: String,
+}
+
+/// POST /pause/employees/{id}/onboarding/complete — marks one onboarding task
+/// done for an employee. Idempotent; returns the updated employee.
+pub async fn complete_employee_onboarding_task(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CompleteOnboardingTaskRequest>,
+) -> ApiResult<Json<EmployeeResponse>> {
+    let employee = state
+        .pause_service
+        .complete_employee_onboarding_task(&auth.tenant_id, id, &payload.task_id)
+        .await
+        .map_err(|e| match e {
+            ataqu_application::pause_service::PauseServiceError::NotFound => {
+                ApiResponseError::not_found("Employee not found")
+            }
+            ataqu_application::pause_service::PauseServiceError::Domain(
+                ataqu_domain_pause::PauseDomainError::Validation(msg),
+            ) => ApiResponseError::validation(&msg),
+            other => ApiResponseError::internal_err(other),
+        })?;
+    Ok(Json(EmployeeResponse::from(employee)))
 }
 
 #[derive(Debug, Deserialize)]
@@ -743,6 +776,10 @@ pub fn routes() -> Router<AppState> {
         .route("/employees/{id}", put(update_employee))
         // Note: update_employee now requires If-Match header
         .route("/employees/{id}/deactivate", post(deactivate_employee))
+        .route(
+            "/employees/{id}/onboarding/complete",
+            post(complete_employee_onboarding_task),
+        )
         .route(
             "/employees/bulk-deactivate",
             post(bulk_deactivate_employees),
