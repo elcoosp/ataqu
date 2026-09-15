@@ -8,15 +8,12 @@ export const withChartInteraction = (WrappedChart: React.FC<any>) => {
 		const setOpen = useDrillDownStore((s) => s.setOpen);
 		const { mutateAsync } = useDrillDown();
 
-		const handleDataPointClick = async (data: unknown) => {
-			const dimension = props.xAxisKey || "category";
-			interface RechartsPayload {
-				activePayload?: { payload?: Record<string, unknown> }[];
-			}
-			const value =
-				((data as RechartsPayload)?.activePayload?.[0]?.payload?.[
-					dimension
-				] as string) || "Unknown";
+		const dimension = props.xAxisKey || "category";
+		const metric = props.series?.[0]?.key ?? "revenue";
+
+		const handleDataPointClick = async (payload: Record<string, unknown>) => {
+			const value = payload?.[dimension];
+			if (value === undefined || value === null) return;
 
 			setOpen(true);
 			setDrillDown({
@@ -29,7 +26,7 @@ export const withChartInteraction = (WrappedChart: React.FC<any>) => {
 
 			try {
 				const result = await mutateAsync({
-					metric: props.series[0].key,
+					metric,
 					dimension,
 					value: String(value),
 				});
@@ -39,20 +36,6 @@ export const withChartInteraction = (WrappedChart: React.FC<any>) => {
 			}
 		};
 
-		const dimension = props.xAxisKey || "category";
-
-		return (
-			<button
-				type="button"
-				className="block w-full h-full bg-transparent border-0 p-0 cursor-pointer text-left"
-				onClick={() =>
-					handleDataPointClick({
-						activePayload: [{ payload: { [dimension]: "Clicked" } }],
-					})
-				}
-			>
-				<WrappedChart {...props} />
-			</button>
-		);
+		return <WrappedChart {...props} onDataPointClick={handleDataPointClick} />;
 	};
 };
