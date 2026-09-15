@@ -11,6 +11,7 @@ import type {
 	ConversationalStepResponse,
 	CreateFormRequest,
 	Form,
+	PaginatedResponse,
 	Submission,
 	SubmitFormRequest,
 	UpdateFormRequest,
@@ -18,7 +19,7 @@ import type {
 
 // ---- Forms ----
 export const listForms = (params?: { limit?: number; offset?: number }) =>
-	api.get<Form[]>("/sond/forms", { params });
+	api.get<PaginatedResponse<Form>>("/sond/forms", { params });
 export const createForm = (data: CreateFormRequest) =>
 	api.post<Form>("/sond/forms", data);
 export const getForm = (id: UUID) => api.get<Form>(`/sond/forms/${id}`);
@@ -55,7 +56,7 @@ export const bulkDeleteSubmissions = (data: BulkDeleteRequest) =>
 // ---- React Query hooks ----
 export const useListForms = (
 	params?: { limit?: number; offset?: number },
-	options?: UseQueryOptions<Form[]>,
+	options?: UseQueryOptions<PaginatedResponse<Form>>,
 ) =>
 	useQuery({
 		queryKey: ["sond", "forms", params],
