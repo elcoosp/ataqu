@@ -14,7 +14,6 @@ import type {
 	EditMessageRequest,
 	Mention,
 	Message,
-	MessageListResponse,
 	PaginatedResponse,
 	Reaction,
 	SearchMessagesParams,
@@ -48,7 +47,7 @@ export const listMessages = (
 	channelId: UUID,
 	params?: { limit?: number; offset?: number },
 ) =>
-	api.get<MessageListResponse>(`/dial/channels/${channelId}/messages`, {
+	api.get<PaginatedResponse<Message>>(`/dial/channels/${channelId}/messages`, {
 		params,
 	});
 export const sendMessage = (channelId: UUID, data: SendMessageRequest) =>
@@ -129,7 +128,7 @@ export const useGetChannel = (id: UUID, options?: UseQueryOptions<Channel>) =>
 export const useListMessages = (
 	channelId: UUID,
 	params?: { limit?: number; offset?: number },
-	options?: UseQueryOptions<MessageListResponse>,
+	options?: UseQueryOptions<PaginatedResponse<Message>>,
 ) =>
 	useQuery({
 		queryKey: ["dial", "messages", channelId, params],
