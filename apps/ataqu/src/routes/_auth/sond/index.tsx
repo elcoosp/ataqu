@@ -16,7 +16,8 @@ export const Route = createFileRoute("/_auth/sond/")({
 
 function FormsIndex() {
 	const navigate = useNavigate();
-	const { data: forms = [], isLoading, refetch } = useListForms();
+	const { data: formsData, isLoading, refetch } = useListForms();
+	const forms = formsData?.items ?? [];
 	const deleteMutation = useDeleteForm({
 		onSuccess: () => {
 			toast.success(t`Form deleted`);
