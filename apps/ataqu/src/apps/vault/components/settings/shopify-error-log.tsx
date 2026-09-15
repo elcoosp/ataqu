@@ -8,7 +8,8 @@ import { useShopifySyncLogs } from "../../../../apps/vault/hooks/use-shopify-syn
 import { useShopifyStore } from "../../../../apps/vault/stores/shopify-store";
 
 export function ShopifyErrorLog() {
-	const { data: logs } = useShopifySyncLogs();
+		const { data: logsData } = useShopifySyncLogs();
+	const logs = logsData?.items ?? [];
 	const storeErrors = useShopifyStore((state) => state.errorLog);
 	const [expanded, setExpanded] = useState(false);
 
