@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { api, type PaginatedResponse } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
 
 export interface ShopifyIntegration {
@@ -24,7 +24,9 @@ export const getShopifyIntegrations = () =>
 	api.get<ShopifyIntegration[]>("/vault/shopify/integrations");
 
 export const getShopifySyncLogs = (params?: { limit?: number }) =>
-	api.get<ShopifySyncLog[]>("/vault/shopify/sync-logs", { params });
+	api.get<PaginatedResponse<ShopifySyncLog>>("/vault/shopify/sync-logs", {
+		params,
+	});
 
 export const disconnectShopify = () =>
 	api.delete<void>("/vault/shopify/disconnect");
