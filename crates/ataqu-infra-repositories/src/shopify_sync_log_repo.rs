@@ -1,5 +1,5 @@
 //! Repository for Shopify sync logs.
-use sea_orm::{DatabaseConnection, EntityTrait, IntoActiveModel, Set};
+use sea_orm::{DatabaseConnection, EntityTrait, IntoActiveModel, QuerySelect, Set};
 use uuid::Uuid;
 
 use ataqu_kernel::TenantId;
@@ -107,5 +107,25 @@ impl ShopifySyncLogRepo {
             .await
             .map_err(|e| e.to_string())?;
         Ok(())
+    }
+
+    /// Returns failed sync log entries ordered newest-first, paginated.
+    pub async fn list_failed_logs(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<shopify_sync_log_entity::Model>, String> {
+        use sea_orm::{ColumnTrait, QueryFilter, QueryOrder};
+        use shopify_sync_log_entity as entity;
+        entity::Entity::find()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(entity::Column::Status.eq("failed"))
+            .order_by_desc(entity::Column::CreatedAt)
+            .limit(limit)
+            .offset(offset)
+            .all(&self.db)
+            .await
+            .map_err(|e| e.to_string())
     }
 }
