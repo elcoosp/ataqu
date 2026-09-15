@@ -1,10 +1,12 @@
 import { type Form, useUpdateFormRouting } from "@ataqu/api-client";
-import {
- Button, Input, Label 
-} from "@ataqu/ui";
+import { handleApiError } from "@ataqu/shared-utils";
+import { Button, Input, Label } from "@ataqu/ui";
+import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface Condition {
 	field: string;
@@ -55,17 +57,23 @@ export function FormRoutingEditor({
 		(initialRules as Rule[] | undefined) ?? [],
 	);
 	const [saving, setSaving] = useState(false);
-	const updateRouting = useUpdateFormRouting();
+	const queryClient = useQueryClient();
+	const updateRouting = useUpdateFormRouting({
+		onSuccess: (form) => {
+			// Keep local editor state in sync with what the server persisted.
+			setRules((form.routing_rules as Rule[] | undefined) ?? []);
+			queryClient.invalidateQueries({ queryKey: ["sond", "form", formId] });
+			queryClient.invalidateQueries({ queryKey: ["sond", "forms"] });
+			toast.success(t`Routing rules saved`);
+		},
+		onError: (err) => toast.error(handleApiError(err)),
+	});
 
 	const save = () => {
 		setSaving(true);
 		updateRouting.mutate(
 			{ id: formId as Form["id"], rules },
-			{
-				onSettled: () => setSaving(false),
-				onSuccess: () => {},
-				onError: () => {},
-			},
+			{ onSettled: () => setSaving(false) },
 		);
 	};
 
@@ -224,12 +232,20 @@ export function FormRoutingEditor({
 			)}
 
 			<div className="flex gap-2">
-				<Button variant="outline" onClick={addRule}>
+				<Button
+					variant="outline"
+					onClick={addRule}
+					disabled={updateRouting.isPending}
+				>
 					<Plus className="mr-2 h-4 w-4" />
 					<Trans>Add Rule</Trans>
 				</Button>
 				<Button onClick={save} disabled={saving || updateRouting.isPending}>
-					{saving ? <Trans>Saving...</Trans> : <Trans>Save Routing</Trans>}
+					{saving || updateRouting.isPending ? (
+						<Trans>Saving...</Trans>
+					) : (
+						<Trans>Save Routing</Trans>
+					)}
 				</Button>
 			</div>
 		</div>
