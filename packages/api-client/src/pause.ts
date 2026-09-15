@@ -12,13 +12,14 @@ import type {
 	Document,
 	Employee,
 	LeaveRequest,
+	PaginatedResponse,
 	UpdateEmployeeRequest,
 	UploadDocumentRequest,
 } from "./types";
 
 // ---- Employees ----
 export const listEmployees = (params?: { limit?: number; offset?: number }) =>
-	api.get<Employee[]>("/pause/employees", { params });
+	api.get<PaginatedResponse<Employee>>("/pause/employees", { params });
 export const createEmployee = (data: CreateEmployeeRequest) =>
 	api.post<Employee>("/pause/employees", data);
 export const getEmployee = (id: UUID) =>
@@ -33,6 +34,10 @@ export const updateEmployee = (
 	});
 export const deactivateEmployee = (id: UUID) =>
 	api.post<void>(`/pause/employees/${id}/deactivate`);
+export const completeEmployeeOnboardingTask = (id: UUID, taskId: string) =>
+	api.post<Employee>(`/pause/employees/${id}/onboarding/complete`, {
+		task_id: taskId,
+	});
 export const bulkDeactivateEmployees = (data: BulkDeleteRequest) =>
 	api.post<void>("/pause/employees/bulk-deactivate", data);
 export const searchEmployees = (params: { q: string; limit?: number }) =>
@@ -42,7 +47,8 @@ export const searchEmployees = (params: { q: string; limit?: number }) =>
 export const listLeaveRequests = (params?: {
 	limit?: number;
 	offset?: number;
-}) => api.get<LeaveRequest[]>("/pause/leave-requests", { params });
+}) =>
+	api.get<PaginatedResponse<LeaveRequest>>("/pause/leave-requests", { params });
 export const createLeaveRequest = (data: CreateLeaveRequestRequest) =>
 	api.post<LeaveRequest>("/pause/leave-requests", data);
 export const approveLeaveRequest = (id: UUID, version: number) =>
@@ -70,7 +76,7 @@ export const listEmployeeDocuments = (
 // ---- React Query hooks ----
 export const useListEmployees = (
 	params?: { limit?: number; offset?: number },
-	options?: UseQueryOptions<Employee[]>,
+	options?: UseQueryOptions<PaginatedResponse<Employee>>,
 ) =>
 	useQuery({
 		queryKey: ["pause", "employees", params],
@@ -95,7 +101,7 @@ export const useSearchEmployees = (
 
 export const useListLeaveRequests = (
 	params?: { limit?: number; offset?: number },
-	options?: UseQueryOptions<LeaveRequest[]>,
+	options?: UseQueryOptions<PaginatedResponse<LeaveRequest>>,
 ) =>
 	useQuery({
 		queryKey: ["pause", "leave-requests", params],
@@ -120,6 +126,13 @@ export const useUpdateEmployee = (
 export const useDeactivateEmployee = (
 	options?: UseMutationOptions<void, Error, UUID>,
 ) => useMutation({ mutationFn: deactivateEmployee, ...options });
+export const useCompleteEmployeeOnboardingTask = (
+	options?: UseMutationOptions<Employee, Error, { id: UUID; taskId: string }>,
+) =>
+	useMutation({
+		mutationFn: ({ id, taskId }) => completeEmployeeOnboardingTask(id, taskId),
+		...options,
+	});
 export const useBulkDeactivateEmployees = (
 	options?: UseMutationOptions<void, Error, BulkDeleteRequest>,
 ) => useMutation({ mutationFn: bulkDeactivateEmployees, ...options });
