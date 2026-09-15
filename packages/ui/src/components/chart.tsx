@@ -52,6 +52,11 @@ export interface ChartProps {
 	barSize?: number;
 	strokeWidth?: number;
 	dotSize?: number;
+	/**
+	 * Called with the underlying data row when a user clicks a data point.
+	 * Enables drill-down from VISTA widgets.
+	 */
+	onDataPointClick?: (payload: Record<string, unknown>) => void;
 }
 
 const CHART_COLORS = [
@@ -80,6 +85,7 @@ export function Chart({
 	barSize = 20,
 	strokeWidth = 2,
 	dotSize = 4,
+	onDataPointClick,
 }: ChartProps) {
 	const renderChart = () => {
 		const TooltipContent = (props: any) => {
@@ -104,6 +110,16 @@ export function Chart({
 		const commonProps = {
 			data,
 			margin: { top: 10, right: 30, left: 0, bottom: 0 },
+			onClick: (state: unknown) => {
+				if (!onDataPointClick) return;
+				const event = state as {
+					activePayload?: { payload?: Record<string, unknown> }[];
+					payload?: Record<string, unknown>;
+				};
+				const row = event?.activePayload?.[0]?.payload ?? event?.payload;
+				if (row) onDataPointClick(row);
+			},
+			className: onDataPointClick ? "cursor-pointer" : undefined,
 		};
 
 		const seriesElements = series.map((s, idx) => {
@@ -185,6 +201,7 @@ export function Chart({
 				name: d[xAxisKey] as string,
 				value: series[0]?.key ? (d[series[0].key] as number) : 0,
 				key: d[xAxisKey] as string,
+				__row: d as Record<string, unknown>,
 			}));
 			return (
 				<PieChart {...commonProps}>
@@ -198,6 +215,12 @@ export function Chart({
 						label={({ name, percent }) =>
 							`${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
 						}
+						onClick={(entry: unknown) => {
+							if (!onDataPointClick) return;
+							const row = (entry as { __row?: Record<string, unknown> })?.__row;
+							if (row) onDataPointClick(row);
+						}}
+						className={onDataPointClick ? "cursor-pointer" : undefined}
 					>
 						{pieData.map((_entry, index) => (
 							<Cell
