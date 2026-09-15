@@ -6,9 +6,7 @@ use ataqu_domain_spark::repository::{
 };
 use ataqu_domain_spark::{Action, Condition, SparkError, Trigger, Workflow, evaluate_conditions};
 use ataqu_infra_outbox::OutboxEvent;
-use ataqu_infra_repositories::pending_approval_repo::{
-	PendingApproval, PendingApprovalRepository,
-};
+use ataqu_infra_repositories::pending_approval_repo::{PendingApproval, PendingApprovalRepository};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -342,12 +340,12 @@ impl SparkService {
                 .find_by_run_id(tenant_id, run_id)
                 .await
                 .map_err(SparkServiceError::Repository)?
-            {
-                approval_repo
-                    .approve(approval.id, approved_by)
-                    .await
-                    .map_err(SparkServiceError::Repository)?;
-            }
+        {
+            approval_repo
+                .approve(approval.id, approved_by)
+                .await
+                .map_err(SparkServiceError::Repository)?;
+        }
 
         let workflow = self
             .repo
@@ -399,12 +397,12 @@ impl SparkService {
                 .find_by_run_id(tenant_id, run_id)
                 .await
                 .map_err(SparkServiceError::Repository)?
-            {
-                approval_repo
-                    .reject(approval.id, rejected_by)
-                    .await
-                    .map_err(SparkServiceError::Repository)?;
-            }
+        {
+            approval_repo
+                .reject(approval.id, rejected_by)
+                .await
+                .map_err(SparkServiceError::Repository)?;
+        }
 
         run_repo
             .update_run_status(&tenant_id, &run_id, &WorkflowRunStatus::Rejected)
@@ -440,17 +438,11 @@ impl SparkService {
                 "Workflow run repository not configured".to_string(),
             ));
         };
-        Ok(run_repo
-            .list_runs(&tenant_id, limit, offset)
-            .await?)
+        Ok(run_repo.list_runs(&tenant_id, limit, offset).await?)
     }
 
     /// Fetch a single workflow run by id.
-    pub async fn get_run(
-        &self,
-        tenant_id: TenantId,
-        run_id: Uuid,
-    ) -> SparkResult<WorkflowRun> {
+    pub async fn get_run(&self, tenant_id: TenantId, run_id: Uuid) -> SparkResult<WorkflowRun> {
         let Some(run_repo) = self.run_repo.as_ref() else {
             return Err(SparkServiceError::Repository(
                 "Workflow run repository not configured".to_string(),
