@@ -84,8 +84,6 @@ impl SondService {
     }
 
     pub async fn create_form(&self, user_id: Uuid, cmd: CreateFormCommand) -> SondResult<Form> {
-
-
         let domain_cmd = form_domain::CreateFormCommand {
             tenant_id: cmd.tenant_id,
             title: cmd.title,
@@ -164,10 +162,12 @@ impl SondService {
             .ok_or(SondServiceError::FormNotFound)
     }
 
-    pub async fn update_form(&self, user_id: Uuid, tenant_id: TenantId,
-        cmd: ataqu_domain_sond::form::UpdateFormCommand,) -> SondResult<Form> {
-
-
+    pub async fn update_form(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        cmd: ataqu_domain_sond::form::UpdateFormCommand,
+    ) -> SondResult<Form> {
         let current_form = self.get_form(tenant_id, cmd.form_id).await?;
         if current_form.version != cmd.expected_version {
             return Err(SondServiceError::Validation(format!(
@@ -241,18 +241,23 @@ impl SondService {
         Ok(form)
     }
 
-    pub async fn delete_form(&self, user_id: Uuid, tenant_id: TenantId, form_id: Uuid) -> SondResult<()> {
-
-
+    pub async fn delete_form(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        form_id: Uuid,
+    ) -> SondResult<()> {
         self.repo
             .delete_form(tenant_id, form_id)
             .await
             .map_err(|e| SondServiceError::Repository(e.to_string()))
     }
-    pub async fn delete_submission(&self, user_id: Uuid, tenant_id: TenantId,
-        submission_id: Uuid,) -> SondResult<()> {
-
-
+    pub async fn delete_submission(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        submission_id: Uuid,
+    ) -> SondResult<()> {
         self.repo
             .delete_submission(tenant_id, submission_id)
             .await
@@ -260,11 +265,13 @@ impl SondService {
     }
 
     /// Update only the branding field of a form.
-    pub async fn update_form_branding(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form_branding(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
         form_id: Uuid,
-        branding: serde_json::Value,) -> SondResult<Form> {
-
-
+        branding: serde_json::Value,
+    ) -> SondResult<Form> {
         let mut form = self.get_form(tenant_id, form_id).await?;
         form.branding = branding;
         // We need to save the form; we'll use the repository directly to avoid version issues.
@@ -273,11 +280,13 @@ impl SondService {
     }
 
     /// Update the routing rules of a form.
-    pub async fn update_form_routing(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn update_form_routing(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
         form_id: Uuid,
-        rules: serde_json::Value,) -> SondResult<Form> {
-
-
+        rules: serde_json::Value,
+    ) -> SondResult<Form> {
         let mut form = self.get_form(tenant_id, form_id).await?;
         form.routing_rules = Some(rules);
         self.repo.save_form(&form).await?;
@@ -351,7 +360,8 @@ impl SondService {
         });
         // Evaluate routing rules
         if let Some(rules) = &form.routing_rules {
-            self.evaluate_routing_rules(&form, &response, rules, &email, &name).await;
+            self.evaluate_routing_rules(&form, &response, rules, &email, &name)
+                .await;
         }
 
         let payload = serde_json::json!({
@@ -371,8 +381,14 @@ impl SondService {
     }
 
     /// Evaluate routing rules and dispatch actions.
-    async fn evaluate_routing_rules(&self, form: &Form, response: &Response, rules: &serde_json::Value, email: &Option<String>, name: &Option<String>) {
-
+    async fn evaluate_routing_rules(
+        &self,
+        form: &Form,
+        response: &Response,
+        rules: &serde_json::Value,
+        email: &Option<String>,
+        name: &Option<String>,
+    ) {
         // Simple routing rule format: { "conditions": [...], "actions": [...] }
         // Each condition: { "field": "question_id", "operator": "eq|neq|contains", "value": "..." }
         // Each action: { "type": "notify|create_lead|webhook", "target": "..." }
@@ -393,13 +409,24 @@ impl SondService {
             .collect();
 
         for rule in rules_array {
-            let conditions = rule.get("conditions").and_then(|v| v.as_array()).map(|v| v.as_slice()).unwrap_or(&[]);
-            let actions = rule.get("actions").and_then(|v| v.as_array()).map(|v| v.as_slice()).unwrap_or(&[]);
+            let conditions = rule
+                .get("conditions")
+                .and_then(|v| v.as_array())
+                .map(|v| v.as_slice())
+                .unwrap_or(&[]);
+            let actions = rule
+                .get("actions")
+                .and_then(|v| v.as_array())
+                .map(|v| v.as_slice())
+                .unwrap_or(&[]);
 
             // Evaluate conditions
             let all_match = conditions.iter().all(|cond| {
                 let field = cond.get("field").and_then(|v| v.as_str()).unwrap_or("");
-                let operator = cond.get("operator").and_then(|v| v.as_str()).unwrap_or("eq");
+                let operator = cond
+                    .get("operator")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("eq");
                 let value = cond.get("value");
 
                 // Parse field as question_id UUID
@@ -450,7 +477,8 @@ impl SondService {
                     let action_type = action.get("type").and_then(|v| v.as_str()).unwrap_or("");
                     match action_type {
                         "notify" => {
-                            let target = action.get("target").and_then(|v| v.as_str()).unwrap_or("");
+                            let target =
+                                action.get("target").and_then(|v| v.as_str()).unwrap_or("");
                             let payload = serde_json::json!({
                                 "tenant_id": form.tenant_id.as_uuid(),
                                 "form_id": form.id,
@@ -459,12 +487,11 @@ impl SondService {
                                     name.as_deref().unwrap_or("Unknown"),
                                     target),
                             });
-                            if let Err(e) = self.outbox.append(
-                                "dial",
-                                "FormRoutingNotification",
-                                response.id,
-                                &payload,
-                            ).await {
+                            if let Err(e) = self
+                                .outbox
+                                .append("dial", "FormRoutingNotification", response.id, &payload)
+                                .await
+                            {
                                 tracing::error!("Failed to send routing notification: {}", e);
                             }
                         }
@@ -477,12 +504,11 @@ impl SondService {
                                 "form_id": form.id,
                                 "response_id": response.id,
                             });
-                            if let Err(e) = self.outbox.append(
-                                "collab_crm",
-                                "CreateLeadFromForm",
-                                response.id,
-                                &payload,
-                            ).await {
+                            if let Err(e) = self
+                                .outbox
+                                .append("collab_crm", "CreateLeadFromForm", response.id, &payload)
+                                .await
+                            {
                                 tracing::error!("Failed to create lead from form: {}", e);
                             }
                         }
@@ -495,12 +521,11 @@ impl SondService {
                                     "response_id": response.id,
                                     "answers": response.answers,
                                 });
-                                if let Err(e) = self.outbox.append(
-                                    "spark",
-                                    "WebhookTrigger",
-                                    response.id,
-                                    &payload,
-                                ).await {
+                                if let Err(e) = self
+                                    .outbox
+                                    .append("spark", "WebhookTrigger", response.id, &payload)
+                                    .await
+                                {
                                     tracing::error!("Failed to trigger webhook from form: {}", e);
                                 }
                             }
