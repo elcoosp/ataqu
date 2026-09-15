@@ -47,7 +47,9 @@ impl ShopifyService {
         client: &reqwest::Client,
     ) -> Result<(), String> {
         let tenant_id = TenantId::new(integration.tenant_id.as_uuid());
-        let log_id = self.log_repo.log_sync_start(tenant_id, "inventory_sync")
+        let log_id = self
+            .log_repo
+            .log_sync_start(tenant_id, "inventory_sync")
             .await
             .unwrap_or(0);
 
@@ -68,7 +70,11 @@ impl ShopifyService {
 
             if !resp.status().is_success() {
                 let error_msg = format!("Shopify API error: {}", resp.status());
-                if let Err(e) = self.log_repo.log_sync_error(log_id, &error_msg, retry_count + 1).await {
+                if let Err(e) = self
+                    .log_repo
+                    .log_sync_error(log_id, &error_msg, retry_count + 1)
+                    .await
+                {
                     tracing::error!("Failed to log sync error: {}", e);
                 }
                 return Err(error_msg);
@@ -114,21 +120,38 @@ impl ShopifyService {
                                                 .await
                                             {
                                                 tracing::error!(error = %e, sku = %sku, "Failed to update VAULT stock from Shopify");
-                                                if let Err(log_err) = self.log_repo.log_sync_error(
-                                                    log_id,
-                                                    &format!("Stock update failed for SKU {}: {}", sku, e),
-                                                    retry_count + 1,
-                                                ).await {
-                                                    tracing::error!("Failed to log error: {}", log_err);
+                                                if let Err(log_err) = self
+                                                    .log_repo
+                                                    .log_sync_error(
+                                                        log_id,
+                                                        &format!(
+                                                            "Stock update failed for SKU {}: {}",
+                                                            sku, e
+                                                        ),
+                                                        retry_count + 1,
+                                                    )
+                                                    .await
+                                                {
+                                                    tracing::error!(
+                                                        "Failed to log error: {}",
+                                                        log_err
+                                                    );
                                                 }
                                             } else {
                                                 tracing::info!(sku = %sku, delta = %delta, "Updated VAULT inventory from Shopify");
-                                                if let Err(log_err) = self.log_repo.log_sync_success(
-                                                    log_id,
-                                                    Some(vault_variant.id),
-                                                    shopify_id,
-                                                ).await {
-                                                    tracing::error!("Failed to log success: {}", log_err);
+                                                if let Err(log_err) = self
+                                                    .log_repo
+                                                    .log_sync_success(
+                                                        log_id,
+                                                        Some(vault_variant.id),
+                                                        shopify_id,
+                                                    )
+                                                    .await
+                                                {
+                                                    tracing::error!(
+                                                        "Failed to log success: {}",
+                                                        log_err
+                                                    );
                                                 }
                                             }
                                         }
@@ -138,11 +161,18 @@ impl ShopifyService {
                                     }
                                     Err(e) => {
                                         tracing::error!(error = %e, sku = %sku, "Error finding variant in VAULT for Shopify sync");
-                                        if let Err(log_err) = self.log_repo.log_sync_error(
-                                            log_id,
-                                            &format!("Variant lookup failed for SKU {}: {}", sku, e),
-                                            retry_count + 1,
-                                        ).await {
+                                        if let Err(log_err) = self
+                                            .log_repo
+                                            .log_sync_error(
+                                                log_id,
+                                                &format!(
+                                                    "Variant lookup failed for SKU {}: {}",
+                                                    sku, e
+                                                ),
+                                                retry_count + 1,
+                                            )
+                                            .await
+                                        {
                                             tracing::error!("Failed to log error: {}", log_err);
                                         }
                                     }
@@ -157,12 +187,12 @@ impl ShopifyService {
             if let Some(link_header) = link_header_value.as_ref()
                 && let Ok(link_str) = link_header.to_str()
                 && let Some(next) = link_str.split(',').find(|s| s.contains("rel=\"next\""))
-                    && let Some(url_start) = next.find('<')
-                {
-                    let url_end = next.find('>').unwrap_or(next.len());
-                    page_url = next[url_start + 1..url_end].to_string();
-                    continue;
-                }
+                && let Some(url_start) = next.find('<')
+            {
+                let url_end = next.find('>').unwrap_or(next.len());
+                page_url = next[url_start + 1..url_end].to_string();
+                continue;
+            }
             break;
         }
 
