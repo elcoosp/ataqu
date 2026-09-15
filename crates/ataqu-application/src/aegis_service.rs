@@ -139,24 +139,24 @@ fn generate_reset_token(
 /// Constant-time string comparison (used for legacy SHA-256 API-key hashes).
 /// Argon2id verification handles its own constant-time comparison for new keys.
 fn constant_time_eq(a: &str, b: &str) -> bool {
-	if a.len() != b.len() {
-		return false;
-	}
-	let mut result = 0u8;
-	for (x, y) in a.bytes().zip(b.bytes()) {
-		result |= x ^ y;
-	}
-	result == 0
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut result = 0u8;
+    for (x, y) in a.bytes().zip(b.bytes()) {
+        result |= x ^ y;
+    }
+    result == 0
 }
 
 /// Hash an API key with Argon2id (slow, salted KDF). The resulting PHC string
 /// is stored as `key_hash`.
 fn hash_api_key(key: &str) -> Result<String, AegisServiceError> {
-	let salt = SaltString::generate(&mut rand::thread_rng());
-	Argon2::default()
-		.hash_password(key.as_bytes(), &salt)
-		.map_err(|e| AegisServiceError::Internal(format!("API key hashing failed: {e}")))
-		.map(|h| h.to_string())
+    let salt = SaltString::generate(&mut rand::thread_rng());
+    Argon2::default()
+        .hash_password(key.as_bytes(), &salt)
+        .map_err(|e| AegisServiceError::Internal(format!("API key hashing failed: {e}")))
+        .map(|h| h.to_string())
 }
 
 /// Verify a presented API key against a stored `key_hash`. New keys are
@@ -164,17 +164,21 @@ fn hash_api_key(key: &str) -> Result<String, AegisServiceError> {
 /// as 64-char hex SHA-256 and are accepted via the constant-time fallback so
 /// existing keys keep working until rotated.
 fn verify_api_key(key: &str, key_hash: &str) -> bool {
-	let legacy = key_hash.len() == 64 && key_hash.chars().all(|c| c.is_ascii_hexdigit());
-	if legacy {
-		use sha2::{Digest, Sha256};
-		let mut hasher = Sha256::new();
-		hasher.update(key.as_bytes());
-		return constant_time_eq(&format!("{:x}", hasher.finalize()), key_hash);
-	}
-	PasswordHash::new(key_hash)
-		.ok()
-		.map(|parsed| Argon2::default().verify_password(key.as_bytes(), &parsed).is_ok())
-		.unwrap_or(false)
+    let legacy = key_hash.len() == 64 && key_hash.chars().all(|c| c.is_ascii_hexdigit());
+    if legacy {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(key.as_bytes());
+        return constant_time_eq(&format!("{:x}", hasher.finalize()), key_hash);
+    }
+    PasswordHash::new(key_hash)
+        .ok()
+        .map(|parsed| {
+            Argon2::default()
+                .verify_password(key.as_bytes(), &parsed)
+                .is_ok()
+        })
+        .unwrap_or(false)
 }
 
 pub struct RealAegisDomain;
@@ -231,8 +235,8 @@ impl RealAegisDomain {
         clock: &dyn Clock,
     ) -> Result<User, AegisServiceError> {
         if let Some(ref hash) = user.password_hash {
-            let parsed_hash = PasswordHash::new(hash)
-                .map_err(|_| AegisServiceError::AuthenticationFailed)?;
+            let parsed_hash =
+                PasswordHash::new(hash).map_err(|_| AegisServiceError::AuthenticationFailed)?;
             let argon2 = Argon2::default();
             if argon2
                 .verify_password(cmd.password.as_bytes(), &parsed_hash)
@@ -384,7 +388,7 @@ impl AegisService {
         &self,
         cmd: DomainCreateUserCommand,
     ) -> Result<CreateUserResponse, AegisServiceError> {
-    let tenant_id = cmd.tenant_id;
+        let tenant_id = cmd.tenant_id;
         info!("Creating user");
         let (event, user) = self
             .domain
@@ -415,7 +419,11 @@ impl AegisService {
             ("vista", "viewer"),
         ];
         for (app, role) in default_permissions {
-            if let Err(e) = self.repo.upsert_permission(tenant_id, user.id, app.to_string(), role.to_string()).await {
+            if let Err(e) = self
+                .repo
+                .upsert_permission(tenant_id, user.id, app.to_string(), role.to_string())
+                .await
+            {
                 // Log error but continue; we don't want to fail user creation if permission assignment fails.
                 tracing::warn!(error = %e, "Failed to set default permission for user {} on app {}", user.id, app);
             }
@@ -477,8 +485,8 @@ impl AegisService {
         // Check if password_hash is None (SSO-only user)
         if let Some(ref hash) = user.password_hash {
             // Verify password using Argon2
-            let parsed_hash = PasswordHash::new(hash)
-                .map_err(|_| AegisServiceError::AuthenticationFailed)?;
+            let parsed_hash =
+                PasswordHash::new(hash).map_err(|_| AegisServiceError::AuthenticationFailed)?;
             let argon2 = Argon2::default();
             if argon2
                 .verify_password(cmd.password.as_bytes(), &parsed_hash)
@@ -1202,13 +1210,19 @@ impl AegisService {
             ("vista", "viewer"),
         ];
         for (app, role) in default_permissions {
-            if let Err(e) = self.repo.upsert_permission(tenant_id, user_id, app.to_string(), role.to_string()).await {
+            if let Err(e) = self
+                .repo
+                .upsert_permission(tenant_id, user_id, app.to_string(), role.to_string())
+                .await
+            {
                 tracing::warn!(error = %e, "Failed to set default permission for user {} on app {}", user_id, app);
             }
         }
 
         // Generate tokens
-        let email_str = email.reveal(&ataqu_security::PiiAccessKey::new()).to_string();
+        let email_str = email
+            .reveal(&ataqu_security::PiiAccessKey::new())
+            .to_string();
         let (access, refresh) =
             generate_token_pair(&user, &email_str, &self.config, self.clock.as_ref())?;
         Ok(AuthenticateResponse {
@@ -1217,8 +1231,7 @@ impl AegisService {
             user_id,
         })
     }
-
-    }
+}
 
 #[cfg(test)]
 mod api_key_crypto_tests {
