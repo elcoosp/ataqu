@@ -7,9 +7,9 @@ use ataqu_domain_vault::repository::VaultRepository;
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 use crate::outbox::Outbox;
+use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_repositories::vault_transaction_repo::VaultTransactionRepository;
 use sea_orm::DatabaseConnection;
-use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 
 pub use ataqu_domain_vault::inventory::Product;
 pub use ataqu_domain_vault::inventory::Variant;
@@ -130,9 +130,11 @@ impl VaultService {
         }
     }
 
-    pub async fn create_product(&self, user_id: Uuid, cmd: CreateProductCommand) -> VaultResult<Product> {
-
-
+    pub async fn create_product(
+        &self,
+        user_id: Uuid,
+        cmd: CreateProductCommand,
+    ) -> VaultResult<Product> {
         if cmd.name.trim().is_empty() {
             return Err(VaultServiceError::Validation(
                 "Name cannot be empty".to_string(),
@@ -186,9 +188,11 @@ impl VaultService {
         Ok(product)
     }
 
-    pub async fn update_product(&self, user_id: Uuid, cmd: UpdateProductCommand) -> VaultResult<Product> {
-
-
+    pub async fn update_product(
+        &self,
+        user_id: Uuid,
+        cmd: UpdateProductCommand,
+    ) -> VaultResult<Product> {
         let mut product = self.get_product(cmd.tenant_id, cmd.id).await?;
 
         if product.version != cmd.expected_version {
@@ -249,9 +253,12 @@ impl VaultService {
         Ok(product)
     }
 
-    pub async fn delete_product(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
-
-
+    pub async fn delete_product(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> VaultResult<()> {
         self.repo
             .delete_product(&tenant_id, &id)
             .await
@@ -303,9 +310,11 @@ impl VaultService {
         Ok((products, total))
     }
 
-    pub async fn create_variant(&self, user_id: Uuid, cmd: CreateVariantCommand) -> VaultResult<Variant> {
-
-
+    pub async fn create_variant(
+        &self,
+        user_id: Uuid,
+        cmd: CreateVariantCommand,
+    ) -> VaultResult<Variant> {
         if cmd.sku.trim().is_empty() {
             return Err(VaultServiceError::Validation(
                 "SKU cannot be empty".to_string(),
@@ -386,15 +395,17 @@ impl VaultService {
         tenant_id: TenantId,
         sku: String,
     ) -> VaultResult<Option<Variant>> {
-
         self.repo
             .find_variant_by_sku(&tenant_id, &sku)
             .await
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn update_variant(&self, user_id: Uuid, cmd: UpdateVariantCommand) -> VaultResult<Variant> {
-
+    pub async fn update_variant(
+        &self,
+        user_id: Uuid,
+        cmd: UpdateVariantCommand,
+    ) -> VaultResult<Variant> {
         let variant = self.get_variant(cmd.tenant_id, cmd.id).await?;
 
         if variant.version != cmd.expected_version {
@@ -446,8 +457,12 @@ impl VaultService {
         Ok(new_variant)
     }
 
-    pub async fn delete_variant(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
-
+    pub async fn delete_variant(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> VaultResult<()> {
         self.repo
             .delete_variant(&tenant_id, &id)
             .await
@@ -491,13 +506,15 @@ impl VaultService {
         Ok((variants, total))
     }
 
-    pub async fn update_stock(&self, user_id: Uuid, cmd: UpdateStockCommand) -> VaultResult<Variant> {
-
-
+    pub async fn update_stock(
+        &self,
+        user_id: Uuid,
+        cmd: UpdateStockCommand,
+    ) -> VaultResult<Variant> {
         use sea_orm::TransactionTrait;
-        let mut txn = self.db.begin()
-            .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e.to_string())))?;
+        let mut txn = self.db.begin().await.map_err(|e| {
+            VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e.to_string()))
+        })?;
 
         let variant = self.get_variant(cmd.tenant_id, cmd.variant_id).await?;
         if variant.version != cmd.expected_version {
@@ -508,7 +525,8 @@ impl VaultService {
         }
 
         let new_variant = variant.adjust_stock(cmd.delta, self.clock.as_ref())?;
-        self.txn_repo.save_variant_txn(&mut txn, &new_variant)
+        self.txn_repo
+            .save_variant_txn(&mut txn, &new_variant)
             .await
             .map_err(VaultServiceError::Repository)?;
 
@@ -523,13 +541,14 @@ impl VaultService {
             self.id_gen.as_ref(),
             self.clock.as_ref(),
         );
-        self.txn_repo.save_movement_txn(&mut txn, &movement)
+        self.txn_repo
+            .save_movement_txn(&mut txn, &movement)
             .await
             .map_err(VaultServiceError::Repository)?;
 
-        txn.commit()
-            .await
-            .map_err(|e| VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e.to_string())))?;
+        txn.commit().await.map_err(|e| {
+            VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e.to_string()))
+        })?;
 
         let stock_payload = serde_json::json!({
             "variant_id": new_variant.id,
@@ -539,7 +558,12 @@ impl VaultService {
             "reason": movement.reason.clone(),
         });
         self.outbox
-            .append(VAULT_SCHEMA, "StockAdjusted", new_variant.id, &stock_payload)
+            .append(
+                VAULT_SCHEMA,
+                "StockAdjusted",
+                new_variant.id,
+                &stock_payload,
+            )
             .await
             .map_err(|e| {
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
@@ -646,17 +670,19 @@ impl VaultService {
         tenant_id: TenantId,
         threshold: i64,
     ) -> VaultResult<Vec<Variant>> {
-
         self.repo
             .find_low_stock_variants(&tenant_id, threshold)
             .await
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn create_warehouse(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn create_warehouse(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
         name: String,
-        location: Option<String>,) -> VaultResult<Warehouse> {
-
+        location: Option<String>,
+    ) -> VaultResult<Warehouse> {
         let warehouse = Warehouse {
             id: self.id_gen.new_uuid_v7(),
             tenant_id,
@@ -679,7 +705,6 @@ impl VaultService {
             .append(VAULT_SCHEMA, "WarehouseCreated", warehouse.id, &payload)
             .await
             .map_err(|e| {
-
                 VaultServiceError::Repository(ataqu_kernel::RepositoryError::Database(e))
             })?;
 
@@ -693,8 +718,11 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)
     }
 
-    pub async fn update_warehouse(&self, user_id: Uuid, cmd: UpdateWarehouseCommand) -> VaultResult<Warehouse> {
-
+    pub async fn update_warehouse(
+        &self,
+        user_id: Uuid,
+        cmd: UpdateWarehouseCommand,
+    ) -> VaultResult<Warehouse> {
         let mut warehouse = self
             .repo
             .get_warehouse_by_id(&cmd.tenant_id, cmd.id)
@@ -742,14 +770,17 @@ impl VaultService {
         Ok(warehouse)
     }
 
-    pub async fn delete_warehouse(&self, user_id: Uuid, tenant_id: TenantId, id: Uuid) -> VaultResult<()> {
-
+    pub async fn delete_warehouse(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> VaultResult<()> {
         self.repo
             .delete_warehouse(&tenant_id, &id)
             .await
             .map_err(VaultServiceError::Repository)?;
         if let Some(audit_repo) = &self.audit_repo {
-
             audit_repo
                 .append_log(
                     tenant_id,
@@ -769,11 +800,14 @@ impl VaultService {
         Ok(())
     }
 
-    pub async fn reserve_stock(&self, user_id: Uuid, tenant_id: TenantId,
+    pub async fn reserve_stock(
+        &self,
+        user_id: Uuid,
+        tenant_id: TenantId,
         variant_id: Uuid,
         quantity: i64,
-        expected_version: i32,) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {
-
+        expected_version: i32,
+    ) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {
         let variant = self.get_variant(tenant_id, variant_id).await?;
         if variant.version != expected_version {
             return Err(VaultServiceError::Validation(format!(
