@@ -48,6 +48,7 @@ pub mod m20250102_000001_create_sso_states;
 pub mod m20260913_000001_add_missing_columns;
 pub mod m20260913_000002_create_cross_app_support_sales;
 pub mod m20260913_000003_fix_schema_gaps;
+pub mod m20260913_000004_pause_onboarding_columns;
 
 // ---- aegis ----
 pub mod m_aegis;
@@ -109,8 +110,8 @@ pub mod m_vault_add_stock_movements;
 pub mod m_vault_add_warehouses;
 
 // ---- vista ----
-pub mod m_vista_tables;
 pub mod m_vista_add_dashboards;
+pub mod m_vista_tables;
 
 pub struct Migrator;
 
@@ -191,6 +192,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260913_000001_add_missing_columns::Migration),
             Box::new(m20260913_000002_create_cross_app_support_sales::Migration),
             Box::new(m20260913_000003_fix_schema_gaps::Migration),
+            Box::new(m20260913_000004_pause_onboarding_columns::Migration),
         ]
     }
 }
