@@ -190,12 +190,11 @@ impl DialRepository for DialRepositoryImpl {
             let stmt = sea_orm::Statement::from_sql_and_values(
                 sea_orm::DbBackend::Postgres,
                 "INSERT INTO dial.channel_participants (channel_id, user_id, joined_at) VALUES ($1, $2, NOW())",
-                vec![
-                    channel.id.as_uuid().into(),
-                    participant.as_uuid().into(),
-                ],
+                vec![channel.id.as_uuid().into(), participant.as_uuid().into()],
             );
-            self.db.execute_raw(stmt).await
+            self.db
+                .execute_raw(stmt)
+                .await
                 .map_err(|e| DialError::Repository(e.to_string()))?;
         }
         Ok(())
@@ -243,11 +242,15 @@ impl DialRepository for DialRepositoryImpl {
             "SELECT user_id FROM dial.channel_participants WHERE channel_id = $1",
             vec![channel_id.as_uuid().into()],
         );
-        let rows = self.db.query_all_raw(stmt).await
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
         let mut participants = Vec::new();
         for row in rows {
-            let user_id: uuid::Uuid = row.try_get("", "user_id")
+            let user_id: uuid::Uuid = row
+                .try_get("", "user_id")
                 .map_err(|e| DialError::Repository(e.to_string()))?;
             participants.push(UserId::new(user_id));
         }
@@ -284,12 +287,16 @@ impl DialRepository for DialRepositoryImpl {
                 user_b.as_uuid().into(),
             ],
         );
-        let rows = self.db.query_all_raw(stmt).await
+        let rows = self
+            .db
+            .query_all_raw(stmt)
+            .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
         let Some(row) = rows.into_iter().next() else {
             return Ok(None);
         };
-        let channel_id: uuid::Uuid = row.try_get("", "id")
+        let channel_id: uuid::Uuid = row
+            .try_get("", "id")
             .map_err(|e| DialError::Repository(e.to_string()))?;
         let channel = self
             .get_channel(tenant_id, &ChannelId::new(channel_id))
