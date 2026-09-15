@@ -39,11 +39,7 @@ impl SsoStateStore for PostgresSsoStateStore {
             WHERE state = $1 AND expires_at > NOW()
             RETURNING payload
         "#;
-        let stmt = Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            sql,
-            vec![state.into()],
-        );
+        let stmt = Statement::from_sql_and_values(DbBackend::Postgres, sql, vec![state.into()]);
         let row = self
             .db
             .query_one_raw(stmt)
