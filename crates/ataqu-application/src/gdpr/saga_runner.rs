@@ -20,7 +20,11 @@ impl GdprSagaRunner {
         outbox: Arc<dyn Outbox + Send + Sync>,
         s3_service: Arc<S3Service>,
     ) -> Self {
-        Self { db, outbox, s3_service }
+        Self {
+            db,
+            outbox,
+            s3_service,
+        }
     }
 
     pub async fn run(&self) -> ! {
