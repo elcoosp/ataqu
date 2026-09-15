@@ -25,13 +25,16 @@ export function CreateActivityDialog({
 	open,
 	onOpenChange,
 	defaultContactId,
+	defaultDealId,
 }: {
 	open: boolean;
 	onOpenChange: (o: boolean) => void;
 	defaultContactId?: string;
+	defaultDealId?: string;
 }) {
 	const queryClient = useQueryClient();
-	const { data: contacts } = useListContacts({ limit: 1000 });
+	const { data: contactsData } = useListContacts({ limit: 1000 });
+	const contacts = contactsData?.items ?? [];
 	const [contactId, setContactId] = useState(defaultContactId ?? "");
 	const [activityType, setActivityType] =
 		useState<(typeof ACTIVITY_TYPES)[number]>("call");
@@ -60,6 +63,7 @@ export function CreateActivityDialog({
 				contact_id: contactId,
 				activity_type: activityType,
 				description,
+				deal_id: defaultDealId,
 			})
 			.finally(() => setSubmitting(false));
 	};
