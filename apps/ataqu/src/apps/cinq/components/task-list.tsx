@@ -67,10 +67,10 @@ function TaskDetailDialog({
 	);
 }
 
-export function TaskList() {
+export function TaskList({ dealId }: { dealId?: string } = {}) {
 	const _queryClient = useQueryClient();
 	const { data, isLoading } = useListTasks({ limit: 100 });
-	const tasks = data || [];
+	const tasks = (data || []).filter((t) => !dealId || t.deal_id === dealId);
 
 	const updateTaskMutation = useUpdateTask();
 	const deleteTask = useDeleteTask({
