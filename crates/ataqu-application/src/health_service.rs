@@ -1,12 +1,7 @@
 #![allow(unused_variables)]
 use ataqu_domain_health::{
+    ComponentHealth, Components, DbPoolHealth, HealthStatus, SparkWorkflowHealth, SystemHealth,
     classify_outbox,
-    ComponentHealth,
-    Components,
-    DbPoolHealth,
-    HealthStatus,
-    SparkWorkflowHealth,
-    SystemHealth,
 };
 use ataqu_infra_pools::Pools;
 use ataqu_infra_repositories::health_repo::HealthRepository;
