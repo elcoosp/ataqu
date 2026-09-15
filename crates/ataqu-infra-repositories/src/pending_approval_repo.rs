@@ -53,11 +53,19 @@ pub struct PendingApproval {
 #[async_trait]
 pub trait PendingApprovalRepository: Send + Sync {
     async fn create(&self, approval: &PendingApproval) -> Result<(), String>;
-    async fn find_pending(&self, tenant_id: TenantId, limit: u64) -> Result<Vec<PendingApproval>, String>;
+    async fn find_pending(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+    ) -> Result<Vec<PendingApproval>, String>;
     async fn list_all_pending(&self, limit: u64) -> Result<Vec<PendingApproval>, String>;
     async fn approve(&self, id: Uuid, approved_by: Uuid) -> Result<(), String>;
     async fn reject(&self, id: Uuid, approved_by: Uuid) -> Result<(), String>;
-    async fn find_by_run_id(&self, tenant_id: TenantId, run_id: Uuid) -> Result<Option<PendingApproval>, String>;
+    async fn find_by_run_id(
+        &self,
+        tenant_id: TenantId,
+        run_id: Uuid,
+    ) -> Result<Option<PendingApproval>, String>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<PendingApproval>, String>;
 }
 
@@ -95,7 +103,11 @@ impl PendingApprovalRepository for SeaOrmPendingApprovalRepo {
         Ok(())
     }
 
-    async fn find_pending(&self, tenant_id: TenantId, limit: u64) -> Result<Vec<PendingApproval>, String> {
+    async fn find_pending(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+    ) -> Result<Vec<PendingApproval>, String> {
         use pending_approval_entity as entity;
         let models = entity::Entity::find()
             .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
@@ -192,7 +204,11 @@ impl PendingApprovalRepository for SeaOrmPendingApprovalRepo {
         Ok(())
     }
 
-    async fn find_by_run_id(&self, tenant_id: TenantId, run_id: Uuid) -> Result<Option<PendingApproval>, String> {
+    async fn find_by_run_id(
+        &self,
+        tenant_id: TenantId,
+        run_id: Uuid,
+    ) -> Result<Option<PendingApproval>, String> {
         use pending_approval_entity as entity;
         let model = entity::Entity::find()
             .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
