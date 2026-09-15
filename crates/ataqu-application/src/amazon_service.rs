@@ -163,7 +163,10 @@ impl AmazonService {
                         .await
                         .map_err(|e| e.to_string())?;
                 }
-                let _ = self.log_repo.log_sync_success(log_id, Some(variant.id), None).await;
+                let _ = self
+                    .log_repo
+                    .log_sync_success(log_id, Some(variant.id), None)
+                    .await;
                 Ok(())
             }
             Ok(None) => {
