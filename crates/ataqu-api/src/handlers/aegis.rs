@@ -14,7 +14,7 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 use ataqu_application::aegis_service::{AegisServiceError, AuthenticateCommand, CreateUserCommand};
-use ataqu_security::Email;
+use ataqu_security::{Email, PiiAccessKey};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateUserRequest {
@@ -985,7 +985,7 @@ pub async fn invite_user(
             StatusCode::CREATED,
             Json(InviteUserResponse {
                 user_id: resp.user_id,
-                email: resp.email.to_string(),
+                email: resp.email.reveal(&PiiAccessKey::new()).to_string(),
             }),
         )),
         Err(err) => Err(map_aegis_error(err)),
@@ -1063,7 +1063,7 @@ pub async fn get_me(
 ) -> ApiResult<Json<serde_json::Value>> {
     Ok(Json(serde_json::json!({
         "id": auth.user_id,
-        "email": auth.email.to_string(),
+        "email": auth.email.reveal(&PiiAccessKey::new()),
         "name": null,
         "role": auth.roles.first().cloned().unwrap_or_else(|| "member".to_string()),
         "is_active": true,
@@ -1119,7 +1119,7 @@ pub async fn signup(
 	)
 		.bind(user_id)
 		.bind(tenant_id)
-		.bind(email.to_string())
+		.bind(email.reveal(&PiiAccessKey::new()))
 		.bind(password_hash)
 		.bind(req.name.clone())
 		.bind(now)
@@ -1137,7 +1137,7 @@ pub async fn signup(
         Json(serde_json::json!({
             "user_id": user_id,
             "tenant_id": tenant_id,
-            "email": email.to_string(),
+            "email": email.reveal(&PiiAccessKey::new()),
         })),
     ))
 }
