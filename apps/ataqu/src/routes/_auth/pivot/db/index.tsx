@@ -1,14 +1,11 @@
 import { useCreateDatabase, useListDatabases } from "@ataqu/api-client";
 
 import { handleApiError } from "@ataqu/shared-utils";
-import {
- Button 
-} from "@ataqu/ui";
+import { Button, EmptyState } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Database, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "../../../../apps/pivot/components/empty-state";
 
 export const Route = createFileRoute("/_auth/pivot/db/")({
 	component: DatabaseList,

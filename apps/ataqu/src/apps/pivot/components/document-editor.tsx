@@ -1,7 +1,5 @@
 import { useDeleteDocument, useUpdateDocument } from "@ataqu/api-client";
-import {
- Button, cn 
-} from "@ataqu/ui";
+import { Button, cn } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
 import {

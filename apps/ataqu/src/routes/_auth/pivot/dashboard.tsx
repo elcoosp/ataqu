@@ -16,6 +16,7 @@ import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Database, FileText, LayoutGrid, Plus } from "lucide-react";
+import { navigate } from "../../../lib/navigation";
 
 export const Route = createFileRoute("/_auth/pivot/dashboard")({
 	component: PivotDashboard,
@@ -46,7 +47,7 @@ export function MetricCard({
 						{sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
 					</div>
 					<div
-						className={`rounded-full p-2.5 ${color ?? "bg-amber-500/10 text-amber-400"}`}
+						className={`rounded-full p-2.5 ${color ?? "bg-amber/10 text-amber"}`}
 					>
 						<Icon className="h-4 w-4" />
 					</div>
@@ -66,8 +67,8 @@ function DbRow({
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-center gap-3">
-						<div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center">
-							<Database className="h-4 w-4 text-amber-400" />
+						<div className="w-9 h-9 rounded-lg bg-amber/15 flex items-center justify-center">
+							<Database className="h-4 w-4 text-amber" />
 						</div>
 						<div className="flex-1 min-w-0">
 							<h4 className="text-sm font-semibold text-white truncate">
@@ -148,7 +149,7 @@ function PivotDashboard() {
 					value={databases.length}
 					sub={`${templates.length} templates`}
 					icon={Database}
-					color="bg-amber-500/10 text-amber-400"
+					color="bg-amber/10 text-amber"
 				/>
 				<MetricCard
 					label={t`Documents`}
@@ -184,7 +185,7 @@ function PivotDashboard() {
 							</CardTitle>
 							<Link
 								to="/pivot/db"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>
@@ -211,7 +212,7 @@ function PivotDashboard() {
 								icon={Database}
 								action={t`Create Database`}
 								onClick={() => {
-									window.location.href = "/pivot/db";
+									navigate("/pivot/db");
 								}}
 							/>
 						) : (
@@ -246,7 +247,7 @@ function PivotDashboard() {
 								icon={FileText}
 								action={t`Create Template`}
 								onClick={() => {
-									window.location.href = "/pivot/templates";
+									navigate("/pivot/templates");
 								}}
 							/>
 						) : (
@@ -254,7 +255,7 @@ function PivotDashboard() {
 								<Link
 									key={tpl.id}
 									to="/pivot/templates"
-									className="flex items-center justify-between py-2 border-b border-gray-700/30 last:border-0"
+									className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
 								>
 									<span className="text-sm text-white">{tpl.name}</span>
 									<Badge variant="secondary" className="text-xs">

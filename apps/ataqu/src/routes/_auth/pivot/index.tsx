@@ -1,14 +1,12 @@
 import { useCreateDocument, useListDocuments } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import {
- Button 
-} from "@ataqu/ui";
+import { Button, EmptyState } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "../../../apps/pivot/components/empty-state";
 import { SearchBar } from "../../../apps/pivot/components/search-bar";
+import { navigate } from "../../../lib/navigation";
 
 export const Route = createFileRoute("/_auth/pivot/")({
 	component: DocumentList,
@@ -46,7 +44,7 @@ function DocumentList() {
 				className="max-w-sm"
 				onResultClick={(result) => {
 					if (result.type === "document") {
-						window.location.href = `/pivot/doc/${result.id}`;
+						navigate(`/pivot/doc/${result.id}`);
 					}
 				}}
 			/>

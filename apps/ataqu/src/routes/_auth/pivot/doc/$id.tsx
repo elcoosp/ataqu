@@ -4,9 +4,7 @@ import {
 	useGetDocument,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import {
- Button 
-} from "@ataqu/ui";
+import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";

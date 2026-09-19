@@ -1,27 +1,34 @@
 import { useCreateTemplate, useListTemplates } from "@ataqu/api-client";
 
 import { handleApiError } from "@ataqu/shared-utils";
-import {
- Bone, Button, Input 
-} from "@ataqu/ui";
+import { Bone, Button, EmptyState, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 import { FileText, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { EmptyState } from "../../../apps/pivot/components/empty-state";
 
 export const Route = createFileRoute("/_auth/pivot/templates")({
 	component: TemplatesPage,
 });
 
 function TemplatesPage() {
+	const search = Route.useSearch();
+	const navigate = Route.useNavigate();
 	const { data, refetch, error } = useListTemplates();
 
 	if (error) toast.error(handleApiError(error));
 
-	const [showCreator, setShowCreator] = useState(false);
+	const [showCreator, setShowCreator] = useUrlState({
+	search,
+	setSearch: (next) => navigate({ search: next as never }),
+	key: "createOpen",
+	default: false,
+	parse: (raw: unknown) => raw === "1",
+	serialize: (v) => (v ? "1" : undefined),
+});
 	const [name, setName] = useState("");
 	const [content, setContent] = useState("");
 

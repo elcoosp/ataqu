@@ -3,9 +3,7 @@ import {
 	useDeleteRelation,
 	useListRelations,
 } from "@ataqu/api-client";
-import {
- Button, Input, Label 
-} from "@ataqu/ui";
+import { Button, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -83,7 +81,7 @@ export function RelationsPanel({ docId }: { docId: string }) {
 							</span>
 							<button
 								type="button"
-								className="text-red-400 hover:text-red-300 text-xs"
+								className="text-destructive hover:text-destructive text-xs"
 								onClick={() => deleteRelation.mutate(r.id)}
 							>
 								<Trans>Delete</Trans>
