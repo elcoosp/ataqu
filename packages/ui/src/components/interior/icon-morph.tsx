@@ -227,7 +227,7 @@ export function IconMorph({
 			aria-expanded={semantics === "expanded" ? index === 1 : undefined}
 			whileTap={disabled ? undefined : { y: 1 }}
 			transition={transition}
-			className={`inline-flex h-9 shrink-0 select-none items-center justify-center gap-2 rounded-[9px] border border-stone-200 bg-white text-[13px] font-medium text-stone-700 outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:opacity-50 dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:text-stone-200 dark:focus-visible:ring-white/30 ${
+			className={`inline-flex h-9 shrink-0 select-none items-center justify-center gap-2 rounded-[9px] border border-border bg-white text-[13px] font-medium text-secondary-foreground outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:opacity-50 dark:border-white/[0.16] dark:bg-card dark:text-secondary-foreground dark:focus-visible:ring-white/30 ${
 				showLabel ? "px-3" : "w-9"
 			} ${className}`}
 			style={{ touchAction: "manipulation" }}

@@ -207,18 +207,18 @@ export function LongPressButton({
 			initial={false}
 			animate={{ scale: reduced ? 1 : fired ? [1, 1.045, 1] : 1 }}
 			transition={reduced ? INSTANT : POP}
-			className={`group relative inline-flex h-9 select-none items-center rounded-[9px] border px-3.5 text-[13px] font-medium outline-none transition-[border-color,background-color,box-shadow,transform] duration-150 focus-visible:border-[#4568FF] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:focus-visible:border-[#93B0FF] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)] ${
+			className={`group relative inline-flex h-9 select-none items-center rounded-[9px] border px-3.5 text-[13px] font-medium outline-none transition-[border-color,background-color,box-shadow,transform] duration-150 focus-visible:border-[var(--ring)] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:focus-visible:border-[var(--ring)] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)] ${
 				holding
-					? "translate-y-px border-stone-200 bg-stone-100/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.08] dark:bg-[#1D1D1A] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]"
+					? "translate-y-px border-border bg-background/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.08] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]"
 					: fired
-						? "border-[#4568FF] bg-[#4568FF]/[0.07] dark:border-[#93B0FF] dark:bg-[#93B0FF]/[0.12]"
-						: "border-stone-200 bg-white shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] hover:bg-stone-50 dark:border-white/[0.16] dark:bg-[#252522] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)] dark:hover:bg-[#2A2A27]"
+						? "border-[var(--ring)] bg-[var(--ring)]/[0.07] dark:border-[var(--ring)] dark:bg-[var(--ring)]/[0.12]"
+						: "border-border bg-white shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] hover:bg-background dark:border-white/[0.16] dark:bg-muted dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)] dark:hover:bg-accent"
 			} ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${className}`}
 			style={{ touchAction: "manipulation", WebkitTouchCallout: "none" }}
 			{...bind}
 		>
 			<span className="relative grid">
-				<span className="col-start-1 row-start-1 whitespace-nowrap text-stone-700 dark:text-stone-200">
+				<span className="col-start-1 row-start-1 whitespace-nowrap text-secondary-foreground dark:text-secondary-foreground">
 					{children}
 				</span>
 				<motion.span
@@ -228,7 +228,7 @@ export function LongPressButton({
 						clipPath: `inset(0 ${((1 - progress) * 100).toFixed(2)}% 0 0)`,
 					}}
 					transition={reduced ? INSTANT : CELL}
-					className="col-start-1 row-start-1 whitespace-nowrap text-[#4568FF] dark:text-[#93B0FF]"
+					className="col-start-1 row-start-1 whitespace-nowrap text-[var(--ring)] dark:text-[var(--ring)]"
 				>
 					{children}
 				</motion.span>

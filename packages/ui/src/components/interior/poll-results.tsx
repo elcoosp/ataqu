@@ -144,10 +144,10 @@ function Row({
 			onClick={onPick}
 			aria-disabled={revealed}
 			aria-pressed={revealed ? mine : undefined}
-			className={`group relative h-9 w-full overflow-hidden rounded-[8px] border text-left outline-none transition-[border-color,background-color,box-shadow,transform] duration-200 focus-visible:after:pointer-events-none focus-visible:after:absolute focus-visible:after:inset-0 focus-visible:after:rounded-[7px] focus-visible:after:bg-[#4568FF]/[0.06] focus-visible:after:shadow-[inset_0_0_0_1px_#4568FF] dark:focus-visible:after:bg-[#93B0FF]/[0.1] dark:focus-visible:after:shadow-[inset_0_0_0_1px_#93B0FF] ${
+			className={`group relative h-9 w-full overflow-hidden rounded-[8px] border text-left outline-none transition-[border-color,background-color,box-shadow,transform] duration-200 focus-visible:after:pointer-events-none focus-visible:after:absolute focus-visible:after:inset-0 focus-visible:after:rounded-[7px] focus-visible:after:bg-[var(--ring)]/[0.06] focus-visible:after:shadow-[inset_0_0_0_1px_var(--ring)] dark:focus-visible:after:bg-[var(--ring)]/[0.1] dark:focus-visible:after:shadow-[inset_0_0_0_1px_var(--ring)] ${
 				revealed
-					? "cursor-default border-stone-200 bg-stone-100/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.08] dark:bg-[#1D1D1A] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]"
-					: "border-stone-200 bg-white shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] hover:bg-stone-50 active:translate-y-px active:shadow-[inset_0_1px_2px_rgba(28,25,23,0.06)] dark:border-white/[0.16] dark:bg-[#252522] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)] dark:hover:bg-[#2A2A27]"
+					? "cursor-default border-border bg-background/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.08] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]"
+					: "border-border bg-white shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] hover:bg-background active:translate-y-px active:shadow-[inset_0_1px_2px_rgba(28,25,23,0.06)] dark:border-white/[0.16] dark:bg-muted dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)] dark:hover:bg-accent"
 			}`}
 		>
 			<motion.span
@@ -155,16 +155,16 @@ function Row({
 				style={{ clipPath }}
 				className={`absolute inset-[3px] rounded-[5px] ${
 					mine
-						? "bg-[#4568FF]/[0.22] shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(69,104,255,0.28)] dark:bg-[#93B0FF]/[0.26] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(0,0,0,0.3)]"
-						: "bg-stone-800/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.5),inset_0_-1px_0_rgba(28,25,23,0.1)] dark:bg-white/[0.12] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-1px_0_rgba(0,0,0,0.3)]"
+						? "bg-[var(--ring)]/[0.22] shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(69,104,255,0.28)] dark:bg-[var(--ring)]/[0.26] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(0,0,0,0.3)]"
+						: "bg-card/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.5),inset_0_-1px_0_rgba(28,25,23,0.1)] dark:bg-white/[0.12] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-1px_0_rgba(0,0,0,0.3)]"
 				}`}
 			/>
 			<span className="relative flex h-full items-center gap-2 px-3">
 				<span
 					className={`min-w-0 flex-1 truncate text-[13px] transition-[color,font-weight] duration-200 ${
 						revealed && winner
-							? "font-medium text-stone-800 dark:text-stone-100"
-							: "text-stone-600 group-hover:text-stone-800 dark:text-stone-300 dark:group-hover:text-stone-100"
+							? "font-medium text-foreground dark:text-foreground"
+							: "text-secondary-foreground group-hover:text-foreground dark:text-secondary-foreground dark:group-hover:text-foreground"
 					}`}
 				>
 					{label}
@@ -178,7 +178,7 @@ function Row({
 								animate={{ opacity: 1, scale: 1 }}
 								exit={{ opacity: 0, transition: STILL }}
 								transition={reduced ? STILL : POP}
-								className="text-stone-800 dark:text-stone-100"
+								className="text-foreground dark:text-foreground"
 							>
 								{Tick}
 							</motion.span>
@@ -198,7 +198,7 @@ function Row({
 						initial={false}
 						animate={{ opacity: revealed ? 1 : 0 }}
 						transition={reduced ? STILL : ENTER}
-						className="col-start-1 row-start-1 font-mono text-[11px] tabular-nums text-stone-500 dark:text-stone-400"
+						className="col-start-1 row-start-1 font-mono text-[11px] tabular-nums text-muted-foreground dark:text-muted-foreground"
 					>
 						0%
 					</motion.span>
@@ -242,7 +242,7 @@ export function PollResults({
 
 	return (
 		<div role="group" aria-label={label} className={`w-full ${className}`}>
-			<p className="mb-2.5 text-[13px] font-medium text-stone-800 dark:text-stone-100">
+			<p className="mb-2.5 text-[13px] font-medium text-foreground dark:text-foreground">
 				{label}
 			</p>
 			<div className="space-y-1.5">
@@ -259,7 +259,7 @@ export function PollResults({
 					/>
 				))}
 			</div>
-			<p className="mt-2 h-4 font-mono text-[10.5px] tabular-nums text-stone-400 dark:text-stone-500">
+			<p className="mt-2 h-4 font-mono text-[10.5px] tabular-nums text-muted-foreground dark:text-muted-foreground">
 				<motion.span
 					initial={false}
 					animate={{ opacity: poll.revealed ? 1 : 0 }}

@@ -236,7 +236,7 @@ export function WizardSteps({
 			</p>
 			<span
 				aria-hidden
-				className="mb-2 grid select-none text-[13px] font-medium text-stone-700 dark:text-stone-200"
+				className="mb-2 grid select-none text-[13px] font-medium text-secondary-foreground dark:text-secondary-foreground"
 			>
 				{steps.map((s, i) => (
 					<motion.span
@@ -264,10 +264,10 @@ export function WizardSteps({
 							aria-hidden
 							className={`grid size-7 place-items-center rounded-[8px] border text-[11.5px] font-medium tabular-nums shadow-[0_1px_2px_rgba(28,25,23,0.06),0_4px_10px_-8px_rgba(28,25,23,0.45)] transition-colors duration-150 dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] ${
 								done
-									? "border-stone-800 bg-stone-800 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900"
+									? "border-border bg-card text-white dark:border-border dark:bg-background dark:text-foreground"
 									: here
-										? "border-stone-200 bg-white text-stone-700 dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:text-stone-100"
-										: "border-stone-200 bg-white text-stone-400 dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:text-stone-500"
+										? "border-border bg-white text-secondary-foreground dark:border-white/[0.16] dark:bg-card dark:text-foreground"
+										: "border-border bg-white text-muted-foreground dark:border-white/[0.16] dark:bg-card dark:text-muted-foreground"
 							}`}
 							initial={false}
 							animate={{ scale: here ? 1 : 0.92 }}
@@ -313,7 +313,7 @@ export function WizardSteps({
 										intent.current = "list";
 										goTo(i);
 									}}
-									className="rounded-[8px] outline-none focus-visible:shadow-[0_0_0_1.5px_#4568FF] dark:focus-visible:shadow-[0_0_0_1.5px_#93B0FF]"
+									className="rounded-[8px] outline-none focus-visible:shadow-[0_0_0_1.5px_var(--ring)] dark:focus-visible:shadow-[0_0_0_1.5px_var(--ring)]"
 								>
 									{tile}
 								</button>
@@ -327,10 +327,10 @@ export function WizardSteps({
 							{i < total - 1 ? (
 								<span
 									aria-hidden
-									className="relative h-[3px] flex-1 overflow-hidden rounded-[2px] bg-stone-100 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:bg-white/[0.06] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]"
+									className="relative h-[3px] flex-1 overflow-hidden rounded-[2px] bg-background shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:bg-white/[0.06] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]"
 								>
 									<motion.span
-										className="absolute inset-0 origin-left rounded-[2px] bg-stone-800 dark:bg-stone-100"
+										className="absolute inset-0 origin-left rounded-[2px] bg-card dark:bg-background"
 										initial={false}
 										animate={{ scaleX: complete || i < at ? 1 : 0 }}
 										transition={reduced ? { duration: 0 } : RAIL}
@@ -347,7 +347,7 @@ export function WizardSteps({
 				role="group"
 				aria-label={position}
 				style={{ height }}
-				className="relative overflow-hidden rounded-[11px] border border-stone-200 bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_4px_10px_-8px_rgba(28,25,23,0.45)] outline-none transition-[border-color,box-shadow] duration-150 focus-visible:border-[#4568FF] dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] dark:focus-visible:border-[#93B0FF]"
+				className="relative overflow-hidden rounded-[11px] border border-border bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_4px_10px_-8px_rgba(28,25,23,0.45)] outline-none transition-[border-color,box-shadow] duration-150 focus-visible:border-[var(--ring)] dark:border-white/[0.16] dark:bg-card dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] dark:focus-visible:border-[var(--ring)]"
 			>
 				<AnimatePresence initial={false} custom={direction}>
 					<motion.div
@@ -359,14 +359,14 @@ export function WizardSteps({
 						exit="exit"
 						transition={panelTransition}
 						style={{ scrollbarGutter: "stable" }}
-						className="absolute inset-0 overflow-y-auto overscroll-contain p-4 text-[13.5px] leading-relaxed text-stone-700 dark:text-stone-200"
+						className="absolute inset-0 overflow-y-auto overscroll-contain p-4 text-[13.5px] leading-relaxed text-secondary-foreground dark:text-secondary-foreground"
 					>
 						{complete ? (
 							<div className="flex h-full flex-col items-center justify-center gap-1.5">
-								<p className="text-[13px] font-medium text-stone-700 dark:text-stone-100">
+								<p className="text-[13px] font-medium text-secondary-foreground dark:text-foreground">
 									{completeLabel}
 								</p>
-								<p className="text-[12.5px] text-stone-400 dark:text-stone-500">
+								<p className="text-[12.5px] text-muted-foreground dark:text-muted-foreground">
 									{completeHint}
 								</p>
 							</div>
@@ -397,7 +397,7 @@ export function WizardSteps({
 								intent.current = "panel";
 								back();
 							}}
-							className="h-9 rounded-[9px] border border-stone-200 bg-white px-3 text-[13px] font-medium text-stone-700 outline-none transition-[border-color,box-shadow] duration-150 hover:border-stone-300 focus-visible:border-[#4568FF] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:text-stone-200 dark:hover:border-white/20 dark:focus-visible:border-[#93B0FF] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)]"
+							className="h-9 rounded-[9px] border border-border bg-white px-3 text-[13px] font-medium text-secondary-foreground outline-none transition-[border-color,box-shadow] duration-150 hover:border-border focus-visible:border-[var(--ring)] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:border-white/[0.16] dark:bg-card dark:text-secondary-foreground dark:hover:border-white/20 dark:focus-visible:border-[var(--ring)] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)]"
 						>
 							{backLabel}
 						</motion.button>
@@ -423,7 +423,7 @@ export function WizardSteps({
 									: { duration: 0.14, ease: EXIT_EASE },
 							}}
 							transition={reduced ? { duration: 0 } : CROSSFADE}
-							className="ml-auto grid h-9 place-items-center rounded-[9px] bg-stone-800 px-3.5 text-[13px] font-medium text-white outline-none focus-visible:shadow-[inset_0_0_0_1.5px_#93B0FF] dark:bg-stone-100 dark:text-stone-900 dark:focus-visible:shadow-[inset_0_0_0_1.5px_#4568FF]"
+							className="ml-auto grid h-9 place-items-center rounded-[9px] bg-card px-3.5 text-[13px] font-medium text-white outline-none focus-visible:shadow-[inset_0_0_0_1.5px_var(--ring)] dark:bg-background dark:text-foreground dark:focus-visible:shadow-[inset_0_0_0_1.5px_var(--ring)]"
 						>
 							<span aria-hidden className="invisible col-start-1 row-start-1">
 								{finishLabel.length > nextLabel.length

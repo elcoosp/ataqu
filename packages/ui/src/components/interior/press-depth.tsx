@@ -197,7 +197,7 @@ export function PressDepth({
 			<span
 				aria-hidden
 				style={{ top: depth }}
-				className="absolute inset-x-0 bottom-0 rounded-[9px] bg-stone-300 dark:bg-white/25"
+				className="absolute inset-x-0 bottom-0 rounded-[9px] bg-border dark:bg-white/25"
 			/>
 			<motion.span
 				initial={false}
@@ -208,7 +208,7 @@ export function PressDepth({
 				}}
 				transition={reduced ? { duration: 0 } : PRESS}
 				style={{ transformPerspective: 340 }}
-				className={`relative inline-flex h-9 items-center justify-center gap-2 rounded-[9px] border border-stone-200 bg-white px-3.5 text-[13px] font-medium text-stone-700 group-focus-visible:ring-2 group-focus-visible:ring-stone-400 dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:text-stone-200 dark:group-focus-visible:ring-stone-500 ${className}`}
+				className={`relative inline-flex h-9 items-center justify-center gap-2 rounded-[9px] border border-border bg-white px-3.5 text-[13px] font-medium text-secondary-foreground group-focus-visible:ring-2 group-focus-visible:ring-stone-400 dark:border-white/[0.16] dark:bg-card dark:text-secondary-foreground dark:group-focus-visible:ring-stone-500 ${className}`}
 			>
 				<motion.span
 					aria-hidden

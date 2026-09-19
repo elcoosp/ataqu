@@ -195,7 +195,7 @@ export function InlineValidation({
 		<div className={`w-full ${className}`}>
 			<label
 				htmlFor={fieldId}
-				className="block text-[13px] font-medium text-stone-700 dark:text-stone-200"
+				className="block text-[13px] font-medium text-secondary-foreground dark:text-secondary-foreground"
 			>
 				{label}
 			</label>
@@ -215,10 +215,10 @@ export function InlineValidation({
 					aria-describedby={described || undefined}
 					onChange={(e) => onChange(e.target.value)}
 					{...fieldProps}
-					className={`h-10 w-full rounded-[10px] border-2 pl-3 pr-9 text-[13px] text-stone-700 outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-stone-400 focus-visible:outline-none disabled:opacity-50 dark:text-stone-200 dark:placeholder:text-stone-500 ${
+					className={`h-10 w-full rounded-[10px] border-2 pl-3 pr-9 text-[13px] text-secondary-foreground outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-muted-foreground focus-visible:outline-none disabled:opacity-50 dark:text-secondary-foreground dark:placeholder:text-muted-foreground ${
 						invalid
-							? "border-red-500 bg-white dark:border-red-400 dark:bg-[#1D1D1A]"
-							: "border-stone-200 bg-stone-100/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] focus:border-[#4568FF] focus:bg-white focus:shadow-none dark:border-white/[0.08] dark:bg-[#1D1D1A] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] dark:focus:border-[#93B0FF] dark:focus:bg-[#252522]"
+							? "border-destructive bg-white dark:border-destructive dark:bg-card"
+							: "border-border bg-background/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] focus:border-[var(--ring)] focus:bg-white focus:shadow-none dark:border-white/[0.08] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] dark:focus:border-[var(--ring)] dark:focus:bg-muted"
 					}`}
 				/>
 
@@ -231,7 +231,7 @@ export function InlineValidation({
 						width="14"
 						height="14"
 						fill="none"
-						className="col-start-1 row-start-1 text-stone-500 dark:text-stone-400"
+						className="col-start-1 row-start-1 text-muted-foreground dark:text-muted-foreground"
 						initial={false}
 						animate={{ opacity: valid ? 1 : 0, scale: valid ? 1 : 0.7 }}
 						transition={fade}
@@ -249,7 +249,7 @@ export function InlineValidation({
 						width="14"
 						height="14"
 						fill="none"
-						className="col-start-1 row-start-1 text-red-700 dark:text-red-400"
+						className="col-start-1 row-start-1 text-destructive dark:text-destructive"
 						initial={false}
 						animate={{ opacity: invalid ? 1 : 0, scale: invalid ? 1 : 0.7 }}
 						transition={fade}
@@ -280,7 +280,7 @@ export function InlineValidation({
 					<motion.p
 						aria-hidden
 						style={clamp}
-						className="col-start-1 row-start-1 text-[11.5px] leading-[16px] text-stone-500 dark:text-stone-400"
+						className="col-start-1 row-start-1 text-[11.5px] leading-[16px] text-muted-foreground dark:text-muted-foreground"
 						initial={false}
 						animate={{ opacity: invalid ? 0 : 1, y: invalid ? 3 : 0 }}
 						transition={fade}
@@ -292,7 +292,7 @@ export function InlineValidation({
 				<motion.p
 					aria-hidden
 					style={clamp}
-					className="col-start-1 row-start-1 text-[11.5px] leading-[16px] text-red-700 dark:text-red-400"
+					className="col-start-1 row-start-1 text-[11.5px] leading-[16px] text-destructive dark:text-destructive"
 					initial={false}
 					animate={{ opacity: invalid ? 1 : 0, y: invalid ? 0 : -3 }}
 					transition={fade}

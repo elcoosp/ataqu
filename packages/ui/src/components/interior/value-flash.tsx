@@ -143,14 +143,14 @@ export function ValueFlash({
 
 	const tone = flashing
 		? direction === "up"
-			? "text-emerald-600 dark:text-emerald-400"
-			: "text-red-600 dark:text-red-400"
-		: "text-stone-700 dark:text-stone-200";
+			? "text-success dark:text-success"
+			: "text-destructive dark:text-destructive"
+		: "text-secondary-foreground dark:text-secondary-foreground";
 
 	const tint =
 		direction === "up"
-			? "bg-emerald-500/[0.12] dark:bg-emerald-400/[0.14]"
-			: "bg-red-500/[0.12] dark:bg-red-400/[0.14]";
+			? "bg-success/[0.12] dark:bg-success/[0.14]"
+			: "bg-destructive/[0.12] dark:bg-destructive/[0.14]";
 
 	return (
 		<motion.span

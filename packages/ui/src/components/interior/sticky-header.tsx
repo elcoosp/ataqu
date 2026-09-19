@@ -95,7 +95,7 @@ export function StickyHeader({
 
 	return (
 		<div
-			className={`relative overflow-hidden rounded-[14px] border border-stone-200 bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_4px_10px_-8px_rgba(28,25,23,0.45)] dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] ${className}`}
+			className={`relative overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_4px_10px_-8px_rgba(28,25,23,0.45)] dark:border-white/[0.16] dark:bg-card dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] ${className}`}
 		>
 			<div
 				ref={ref}
@@ -104,14 +104,14 @@ export function StickyHeader({
 				role="region"
 				aria-label={title}
 				style={{ maxHeight, scrollPaddingTop: short + 10 }}
-				className="overflow-y-auto overscroll-y-contain outline-none [scrollbar-gutter:stable] focus-visible:bg-[#4568FF]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_#4568FF] dark:focus-visible:bg-[#93B0FF]/[0.06] dark:focus-visible:shadow-[inset_0_0_0_1px_#93B0FF]"
+				className="overflow-y-auto overscroll-y-contain outline-none [scrollbar-gutter:stable] focus-visible:bg-[var(--ring)]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:focus-visible:bg-[var(--ring)]/[0.06] dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]"
 			>
 				<div aria-hidden style={{ height: tall }} />
 				{children}
 
 				<div
 					aria-hidden
-					className="pointer-events-none sticky bottom-0 -mt-6 h-6 bg-gradient-to-t from-white to-transparent dark:from-[#1D1D1A]"
+					className="pointer-events-none sticky bottom-0 -mt-6 h-6 bg-gradient-to-t from-white to-transparent dark:from-card"
 				/>
 			</div>
 			<header
@@ -122,7 +122,7 @@ export function StickyHeader({
 				<motion.div
 					aria-hidden
 					style={{ height: tall, scaleY: plate }}
-					className="absolute inset-x-0 top-0 origin-top bg-white dark:bg-[#1D1D1A]"
+					className="absolute inset-x-0 top-0 origin-top bg-white dark:bg-card"
 				/>
 				<motion.div
 					aria-hidden
@@ -132,12 +132,12 @@ export function StickyHeader({
 				<motion.div
 					aria-hidden
 					style={{ y: edge, opacity: lifted }}
-					className="absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-white to-transparent dark:from-[#1D1D1A]"
+					className="absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-white to-transparent dark:from-card"
 				/>
 				<motion.div
 					aria-hidden
 					style={{ y: edge, opacity: lifted }}
-					className="absolute inset-x-0 top-0 h-px bg-stone-200 dark:bg-white/[0.16]"
+					className="absolute inset-x-0 top-0 h-px bg-muted dark:bg-white/[0.16]"
 				/>
 				<div className="absolute inset-x-0 top-0 flex items-start gap-2.5 px-4 pt-3">
 					{leading ? (
@@ -155,11 +155,11 @@ export function StickyHeader({
 								transformOrigin: "left top",
 							}}
 						>
-							<h2 className="truncate text-[20px] font-medium leading-[1.2] tracking-[-0.03em] text-stone-800 dark:text-stone-100">
+							<h2 className="truncate text-[20px] font-medium leading-[1.2] tracking-[-0.03em] text-foreground dark:text-foreground">
 								{title}
 							</h2>
 							{subtitle ? (
-								<p className="mt-0.5 truncate text-[11.5px] leading-[1.35] text-stone-500 dark:text-stone-400">
+								<p className="mt-0.5 truncate text-[11.5px] leading-[1.35] text-muted-foreground dark:text-muted-foreground">
 									{subtitle}
 								</p>
 							) : null}
@@ -167,7 +167,7 @@ export function StickyHeader({
 						<motion.span
 							aria-hidden
 							style={{ opacity: smallOpacity, y: smallY }}
-							className="absolute inset-x-0 top-[3px] truncate text-[13px] font-medium leading-[1.4] text-stone-700 dark:text-stone-200"
+							className="absolute inset-x-0 top-[3px] truncate text-[13px] font-medium leading-[1.4] text-secondary-foreground dark:text-secondary-foreground"
 						>
 							{title}
 						</motion.span>

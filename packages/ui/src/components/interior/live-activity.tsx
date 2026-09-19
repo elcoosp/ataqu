@@ -313,7 +313,7 @@ export function LiveActivity({
 							if (phase === "running") setHovered(false);
 							else onDismiss?.();
 						}}
-						className="pointer-events-auto relative overflow-hidden rounded-[11px] border border-stone-200 bg-white shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),0_1px_2px_rgba(28,25,23,0.07),0_16px_36px_-18px_rgba(28,25,23,0.5)] dark:border-white/[0.16] dark:bg-[#252522] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_2px_12px_rgba(0,0,0,0.55)]"
+						className="pointer-events-auto relative overflow-hidden rounded-[11px] border border-border bg-white shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),0_1px_2px_rgba(28,25,23,0.07),0_16px_36px_-18px_rgba(28,25,23,0.5)] dark:border-white/[0.16] dark:bg-muted dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_2px_12px_rgba(0,0,0,0.55)]"
 					>
 						<motion.div
 							ref={compactRef}
@@ -326,11 +326,11 @@ export function LiveActivity({
 						>
 							<PhaseGlyph phase={phase} reduced={reduced} />
 							{percent !== null && phase === "running" ? (
-								<span className="font-mono text-[10.5px] tabular-nums text-stone-500 dark:text-stone-400">
+								<span className="font-mono text-[10.5px] tabular-nums text-muted-foreground dark:text-muted-foreground">
 									{percent}%
 								</span>
 							) : (
-								<span className="max-w-[120px] truncate text-[12px] font-medium text-stone-700 dark:text-stone-200">
+								<span className="max-w-[120px] truncate text-[12px] font-medium text-secondary-foreground dark:text-secondary-foreground">
 									{activity.title}
 								</span>
 							)}
@@ -348,7 +348,7 @@ export function LiveActivity({
 						>
 							<div className="flex items-center gap-2">
 								<PhaseGlyph phase={phase} reduced={reduced} />
-								<span className="min-w-0 flex-1 truncate text-[13px] font-medium text-stone-700 dark:text-stone-100">
+								<span className="min-w-0 flex-1 truncate text-[13px] font-medium text-secondary-foreground dark:text-foreground">
 									{activity.title}
 								</span>
 								{activity.action ? (
@@ -356,7 +356,7 @@ export function LiveActivity({
 										type="button"
 										tabIndex={expanded ? 0 : -1}
 										onClick={activity.action.onClick}
-										className="inline-flex h-[24px] shrink-0 select-none items-center whitespace-nowrap rounded-[6px] border border-stone-200 bg-white px-2 text-[11px] font-medium text-stone-700 shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] outline-none transition-[background-color,border-color,box-shadow] duration-150 hover:bg-stone-50 focus-visible:border-[#4568FF] active:translate-y-px dark:border-white/[0.16] dark:bg-[#2A2A27] dark:text-stone-100 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)] dark:hover:bg-[#32322E] dark:focus-visible:border-[#93B0FF]"
+										className="inline-flex h-[24px] shrink-0 select-none items-center whitespace-nowrap rounded-[6px] border border-border bg-white px-2 text-[11px] font-medium text-secondary-foreground shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] outline-none transition-[background-color,border-color,box-shadow] duration-150 hover:bg-background focus-visible:border-[var(--ring)] active:translate-y-px dark:border-white/[0.16] dark:bg-accent dark:text-foreground dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)] dark:hover:bg-accent dark:focus-visible:border-[var(--ring)]"
 									>
 										{activity.action.label}
 									</button>
@@ -367,7 +367,7 @@ export function LiveActivity({
 										tabIndex={expanded ? 0 : -1}
 										aria-label={dismissLabel}
 										onClick={onDismiss}
-										className="grid size-[22px] shrink-0 place-items-center rounded-[6px] text-stone-400 transition-colors duration-150 hover:bg-stone-100 hover:text-stone-700 focus-visible:bg-[#4568FF]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_#4568FF] focus-visible:outline-none dark:text-stone-500 dark:hover:bg-white/10 dark:hover:text-stone-100 dark:focus-visible:bg-[#93B0FF]/[0.1] dark:focus-visible:shadow-[inset_0_0_0_1px_#93B0FF]"
+										className="grid size-[22px] shrink-0 place-items-center rounded-[6px] text-muted-foreground transition-colors duration-150 hover:bg-background hover:text-secondary-foreground focus-visible:bg-[var(--ring)]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] focus-visible:outline-none dark:text-muted-foreground dark:hover:bg-white/10 dark:hover:text-foreground dark:focus-visible:bg-[var(--ring)]/[0.1] dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]"
 									>
 										<svg
 											width="10"
@@ -388,25 +388,25 @@ export function LiveActivity({
 							</div>
 
 							{activity.detail ? (
-								<p className="mt-1 truncate pl-[26px] text-[11.5px] text-stone-500 dark:text-stone-400">
+								<p className="mt-1 truncate pl-[26px] text-[11.5px] text-muted-foreground dark:text-muted-foreground">
 									{activity.detail}
 								</p>
 							) : null}
 
 							{percent !== null && phase !== "error" ? (
 								<div className="mt-2.5 flex items-center gap-2 pl-[26px]">
-									<div className="min-w-0 flex-1 rounded-[4px] bg-stone-200/60 p-[2px] shadow-[inset_0_1px_2px_rgba(28,25,23,0.1)] dark:bg-[#1D1D1A] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]">
+									<div className="min-w-0 flex-1 rounded-[4px] bg-muted/60 p-[2px] shadow-[inset_0_1px_2px_rgba(28,25,23,0.1)] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]">
 										<div className="relative h-[4px] overflow-hidden rounded-[2px]">
 											<motion.span
 												aria-hidden
-												className="absolute inset-0 block origin-left rounded-[2px] bg-[#4568FF] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:bg-[#93B0FF]"
+												className="absolute inset-0 block origin-left rounded-[2px] bg-[var(--ring)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:bg-[var(--ring)]"
 												initial={false}
 												animate={{ scaleX: (percent ?? 0) / 100 }}
 												transition={reduced ? INSTANT : FILL}
 											/>
 										</div>
 									</div>
-									<span className="shrink-0 font-mono text-[10.5px] tabular-nums text-stone-500 dark:text-stone-400">
+									<span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground dark:text-muted-foreground">
 										{percent}%
 									</span>
 								</div>
@@ -449,7 +449,7 @@ function PhaseGlyph({
 							stroke="currentColor"
 							strokeWidth="1.6"
 							fill="none"
-							className="text-stone-400 dark:text-stone-500"
+							className="text-muted-foreground dark:text-muted-foreground"
 							opacity="0.4"
 						/>
 					</svg>
@@ -462,7 +462,7 @@ function PhaseGlyph({
 						style={{ transformOrigin: "50% 50%" }}
 						animate={{ rotate: 360 }}
 						transition={SPIN}
-						className="text-[#4568FF] dark:text-[#93B0FF]"
+						className="text-[var(--ring)] dark:text-[var(--ring)]"
 					>
 						<circle
 							cx="6"
@@ -484,7 +484,7 @@ function PhaseGlyph({
 				)}
 			</motion.span>
 			<motion.span
-				className="col-start-1 row-start-1 flex text-emerald-600 dark:text-emerald-400"
+				className="col-start-1 row-start-1 flex text-success dark:text-success"
 				initial={false}
 				animate={{
 					opacity: phase === "success" ? 1 : 0,
@@ -506,7 +506,7 @@ function PhaseGlyph({
 				</svg>
 			</motion.span>
 			<motion.span
-				className="col-start-1 row-start-1 flex text-red-600 dark:text-red-400"
+				className="col-start-1 row-start-1 flex text-destructive dark:text-destructive"
 				initial={false}
 				animate={{
 					opacity: phase === "error" ? 1 : 0,

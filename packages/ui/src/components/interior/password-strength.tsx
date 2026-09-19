@@ -133,14 +133,17 @@ export type PasswordStrengthProps = {
 
 const TONES = {
 	none: {
-		bar: "bg-stone-300 dark:bg-white/20",
-		text: "text-stone-500 dark:text-stone-400",
+		bar: "bg-border dark:bg-white/20",
+		text: "text-muted-foreground dark:text-muted-foreground",
 	},
-	danger: { bar: "bg-red-500", text: "text-red-600 dark:text-red-400" },
-	caution: { bar: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
+	danger: {
+		bar: "bg-destructive",
+		text: "text-destructive dark:text-destructive",
+	},
+	caution: { bar: "bg-amber", text: "text-amber dark:text-amber" },
 	safe: {
-		bar: "bg-emerald-500",
-		text: "text-emerald-600 dark:text-emerald-400",
+		bar: "bg-success",
+		text: "text-success dark:text-success",
 	},
 } as const;
 
@@ -186,7 +189,7 @@ export function PasswordStrength({
 				{Array.from({ length: max }, (_, i) => (
 					<div
 						key={i}
-						className="relative h-1.5 overflow-hidden rounded-[2px] bg-stone-200 dark:bg-white/12"
+						className="relative h-1.5 overflow-hidden rounded-[2px] bg-muted dark:bg-white/12"
 					>
 						<motion.span
 							className={`absolute inset-0 origin-left rounded-[2px] transition-colors duration-200 ${tone.bar}`}
@@ -220,7 +223,7 @@ export function PasswordStrength({
 
 				<motion.span
 					aria-hidden
-					className="whitespace-nowrap text-[11.5px] leading-5 text-amber-600 dark:text-amber-400"
+					className="whitespace-nowrap text-[11.5px] leading-5 text-amber dark:text-amber"
 					initial={false}
 					animate={{ opacity: guessable ? 1 : 0 }}
 					transition={reduced ? INSTANT : CROSSFADE}
@@ -233,9 +236,9 @@ export function PasswordStrength({
 				<ul className="mt-3 grid gap-1.5">
 					{evaluated.map((rule) => (
 						<li key={rule.id} className="flex items-center gap-2">
-							<span className="relative grid size-[14px] shrink-0 place-items-center rounded-[4px] border border-stone-200 text-white dark:border-white/[0.16] dark:text-stone-900">
+							<span className="relative grid size-[14px] shrink-0 place-items-center rounded-[4px] border border-border text-white dark:border-white/[0.16] dark:text-foreground">
 								<motion.span
-									className="absolute inset-0 rounded-[3px] bg-emerald-500"
+									className="absolute inset-0 rounded-[3px] bg-success"
 									initial={false}
 									animate={{ opacity: rule.met ? 1 : 0 }}
 									transition={reduced ? INSTANT : CROSSFADE}
@@ -264,8 +267,8 @@ export function PasswordStrength({
 							<span
 								className={`text-[12.5px] leading-5 transition-colors duration-200 ${
 									rule.met
-										? "text-stone-700 dark:text-stone-200"
-										: "text-stone-500 dark:text-stone-400"
+										? "text-secondary-foreground dark:text-secondary-foreground"
+										: "text-muted-foreground dark:text-muted-foreground"
 								}`}
 							>
 								{rule.label}

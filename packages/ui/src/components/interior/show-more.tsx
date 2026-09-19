@@ -166,7 +166,7 @@ export function ShowMore({
 
 	return (
 		<div
-			className={`text-[13.5px] leading-relaxed text-stone-700 dark:text-stone-200 ${className}`}
+			className={`text-[13.5px] leading-relaxed text-secondary-foreground dark:text-secondary-foreground ${className}`}
 		>
 			<div className="relative">
 				<motion.div
@@ -184,7 +184,7 @@ export function ShowMore({
 
 						scrollbarGutter: capped ? "stable" : undefined,
 					}}
-					className="overflow-hidden overscroll-contain rounded-[6px] outline-none focus-visible:bg-[#4568FF]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_#4568FF] dark:focus-visible:bg-[#93B0FF]/[0.10] dark:focus-visible:shadow-[inset_0_0_0_1px_#93B0FF]"
+					className="overflow-hidden overscroll-contain rounded-[6px] outline-none focus-visible:bg-[var(--ring)]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:focus-visible:bg-[var(--ring)]/[0.10] dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]"
 				>
 					<div ref={contentRef}>{children}</div>
 				</motion.div>
@@ -203,7 +203,7 @@ export function ShowMore({
 					onClick={press}
 					aria-expanded={open}
 					aria-controls={regionId}
-					className={`inline-flex h-8 select-none items-center gap-2 rounded-[9px] border border-stone-200 bg-white px-2.5 text-[12.5px] font-medium text-stone-700 outline-none transition-[border-color,box-shadow] duration-150 hover:border-stone-300 focus-visible:border-[#4568FF] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:text-stone-200 dark:hover:border-white/20 dark:focus-visible:border-[#93B0FF] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)] ${
+					className={`inline-flex h-8 select-none items-center gap-2 rounded-[9px] border border-border bg-white px-2.5 text-[12.5px] font-medium text-secondary-foreground outline-none transition-[border-color,box-shadow] duration-150 hover:border-border focus-visible:border-[var(--ring)] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:border-white/[0.16] dark:bg-card dark:text-secondary-foreground dark:hover:border-white/20 dark:focus-visible:border-[var(--ring)] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)] ${
 						expandable ? "" : "pointer-events-none invisible"
 					}`}
 				>
@@ -233,7 +233,7 @@ export function ShowMore({
 						height="12"
 						viewBox="0 0 256 256"
 						fill="none"
-						className="text-stone-500 dark:text-stone-400"
+						className="text-muted-foreground dark:text-muted-foreground"
 						initial={false}
 						animate={{ rotate: open ? 180 : 0 }}
 						transition={reduced ? INSTANT : SMALL}

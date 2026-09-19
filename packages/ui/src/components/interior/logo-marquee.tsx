@@ -230,10 +230,10 @@ export type LogoMarqueeProps = {
 };
 
 const FACE =
-	"inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-[9px] px-3 text-[13px] font-medium tracking-[-0.01em] text-stone-500 dark:text-stone-400";
+	"inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-[9px] px-3 text-[13px] font-medium tracking-[-0.01em] text-muted-foreground dark:text-muted-foreground";
 
 const HIT =
-	"outline-none transition-colors duration-150 hover:text-stone-700 focus-visible:bg-[#4568FF]/[0.06] focus-visible:text-stone-700 focus-visible:shadow-[inset_0_0_0_1px_#4568FF] dark:hover:text-stone-200 dark:focus-visible:bg-[#93B0FF]/[0.10] dark:focus-visible:text-stone-200 dark:focus-visible:shadow-[inset_0_0_0_1px_#93B0FF]";
+	"outline-none transition-colors duration-150 hover:text-secondary-foreground focus-visible:bg-[var(--ring)]/[0.06] focus-visible:text-secondary-foreground focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:hover:text-secondary-foreground dark:focus-visible:bg-[var(--ring)]/[0.10] dark:focus-visible:text-secondary-foreground dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]";
 
 function face(item: LogoMarqueeItem) {
 	if (!item.mark) return item.label;
@@ -264,7 +264,7 @@ export function LogoMarquee({
 	return (
 		<section
 			aria-label={label}
-			className={`relative isolate w-full min-w-0 max-w-full overflow-hidden rounded-[14px] border border-stone-200 bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_4px_10px_-8px_rgba(28,25,23,0.45)] dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] ${className}`}
+			className={`relative isolate w-full min-w-0 max-w-full overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_4px_10px_-8px_rgba(28,25,23,0.45)] dark:border-white/[0.16] dark:bg-card dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] ${className}`}
 			{...bind}
 		>
 			<div
@@ -272,7 +272,7 @@ export function LogoMarquee({
 				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
 				tabIndex={reduced ? 0 : undefined}
 				style={{ overflowX: reduced ? "auto" : "hidden" }}
-				className="overflow-y-hidden py-2 outline-none focus-visible:bg-[#4568FF]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_#4568FF] dark:focus-visible:bg-[#93B0FF]/[0.10] dark:focus-visible:shadow-[inset_0_0_0_1px_#93B0FF]"
+				className="overflow-y-hidden py-2 outline-none focus-visible:bg-[var(--ring)]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:focus-visible:bg-[var(--ring)]/[0.10] dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]"
 			>
 				<div
 					ref={trackRef}

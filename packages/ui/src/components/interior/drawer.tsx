@@ -337,7 +337,7 @@ export function Drawer({
 				aria-hidden
 				style={{ opacity: drawer.veil }}
 				onClick={dismissOnScrimClick ? drawer.close : undefined}
-				className="absolute inset-0 bg-stone-900/25 dark:bg-black/55"
+				className="absolute inset-0 bg-background/25 dark:bg-black/55"
 			/>
 			<motion.div
 				ref={drawer.panelRef}
@@ -349,26 +349,26 @@ export function Drawer({
 					maxWidth: "calc(100% - 40px)",
 					touchAction: "pan-y",
 				}}
-				className={`absolute inset-y-0 flex flex-col border-stone-200 bg-white shadow-[0_28px_56px_-24px_rgba(24,22,20,0.45)] outline-none dark:border-white/[0.16] dark:bg-[#1D1D1A] ${edge} ${
+				className={`absolute inset-y-0 flex flex-col border-border bg-white shadow-[0_28px_56px_-24px_rgba(24,22,20,0.45)] outline-none dark:border-white/[0.16] dark:bg-card ${edge} ${
 					drawer.dragging ? "select-none" : ""
 				} ${className}`}
 				{...drawer.panelProps}
 			>
 				<header
 					onPointerDown={drawer.gripProps.onPointerDown}
-					className={`flex select-none items-start gap-3 border-b border-stone-200 px-4 py-3 dark:border-white/[0.16] ${
+					className={`flex select-none items-start gap-3 border-b border-border px-4 py-3 dark:border-white/[0.16] ${
 						drawer.dragging ? "cursor-grabbing" : "cursor-grab"
 					}`}
 				>
 					<div className="min-w-0 flex-1">
 						<h2
 							id={titleId}
-							className="truncate text-[13px] font-medium text-stone-700 dark:text-stone-200"
+							className="truncate text-[13px] font-medium text-secondary-foreground dark:text-secondary-foreground"
 						>
 							{title}
 						</h2>
 						{description ? (
-							<p className="mt-0.5 truncate text-[12.5px] text-stone-500 dark:text-stone-400">
+							<p className="mt-0.5 truncate text-[12.5px] text-muted-foreground dark:text-muted-foreground">
 								{description}
 							</p>
 						) : null}
@@ -378,7 +378,7 @@ export function Drawer({
 						onPointerDown={(e) => e.stopPropagation()}
 						onClick={drawer.close}
 						aria-label={closeLabel}
-						className="-mr-1 grid size-7 shrink-0 place-items-center rounded-[7px] text-stone-400 outline-none transition-colors duration-150 hover:bg-stone-100 hover:text-stone-700 focus-visible:bg-[#4568FF]/[0.06] focus-visible:text-stone-700 focus-visible:shadow-[inset_0_0_0_1px_#4568FF] dark:text-stone-500 dark:hover:bg-white/10 dark:hover:text-stone-100 dark:focus-visible:bg-[#93B0FF]/[0.1] dark:focus-visible:text-stone-100 dark:focus-visible:shadow-[inset_0_0_0_1px_#93B0FF]"
+						className="-mr-1 grid size-7 shrink-0 place-items-center rounded-[7px] text-muted-foreground outline-none transition-colors duration-150 hover:bg-background hover:text-secondary-foreground focus-visible:bg-[var(--ring)]/[0.06] focus-visible:text-secondary-foreground focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:text-muted-foreground dark:hover:bg-white/10 dark:hover:text-foreground dark:focus-visible:bg-[var(--ring)]/[0.1] dark:focus-visible:text-foreground dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]"
 					>
 						{CLOSE_ICON}
 					</button>
@@ -388,7 +388,7 @@ export function Drawer({
 				</div>
 
 				{footer ? (
-					<div className="border-t border-stone-200 px-4 py-3 dark:border-white/[0.16]">
+					<div className="border-t border-border px-4 py-3 dark:border-white/[0.16]">
 						{footer}
 					</div>
 				) : null}

@@ -228,7 +228,7 @@ function Dot({
 
 	return (
 		<motion.span
-			className="block rounded-full bg-stone-500 dark:bg-stone-300"
+			className="block rounded-full bg-background0 dark:bg-border"
 			style={{ width: size, height: size, scale, opacity }}
 		/>
 	);
@@ -296,7 +296,7 @@ export function TypingIndicator({
 						<motion.div
 							key="bubble"
 							aria-hidden
-							className="absolute inset-0 flex items-center justify-center bg-stone-200 dark:bg-white/[0.09]"
+							className="absolute inset-0 flex items-center justify-center bg-muted dark:bg-white/[0.09]"
 							style={{ borderRadius: radius, transformOrigin: "0% 100%", gap }}
 							initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.74 }}
 							animate={
@@ -325,7 +325,7 @@ export function TypingIndicator({
 								reduced ? (
 									<span
 										key={i}
-										className="block rounded-full bg-stone-500 opacity-80 dark:bg-stone-300"
+										className="block rounded-full bg-background0 opacity-80 dark:bg-border"
 										style={{ width: dot, height: dot }}
 									/>
 								) : (
@@ -344,7 +344,7 @@ export function TypingIndicator({
 							<motion.span
 								key={label}
 								aria-hidden
-								className="col-start-1 row-start-1 self-center truncate text-[13px] text-stone-500 dark:text-stone-400"
+								className="col-start-1 row-start-1 self-center truncate text-[13px] text-muted-foreground dark:text-muted-foreground"
 								initial={reduced ? { opacity: 0 } : { opacity: 0, y: 7 }}
 								animate={{ opacity: 1, y: 0 }}
 								exit={reduced ? { opacity: 0 } : { opacity: 0, y: -7 }}

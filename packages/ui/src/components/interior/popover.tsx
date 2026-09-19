@@ -343,7 +343,7 @@ export function Popover({
 				aria-expanded={open}
 				aria-controls={open ? id : undefined}
 				onClick={() => setOpen(!open)}
-				className={`inline-flex h-9 select-none items-center gap-2 rounded-[9px] border border-stone-200 bg-white px-3 text-[13px] font-medium text-stone-700 outline-none transition-[border-color,box-shadow] duration-150 hover:border-stone-300 focus-visible:border-[#4568FF] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:text-stone-200 dark:hover:border-white/20 dark:focus-visible:border-[#93B0FF] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)] ${triggerClassName}`}
+				className={`inline-flex h-9 select-none items-center gap-2 rounded-[9px] border border-border bg-white px-3 text-[13px] font-medium text-secondary-foreground outline-none transition-[border-color,box-shadow] duration-150 hover:border-border focus-visible:border-[var(--ring)] focus-visible:shadow-[0_1px_2px_rgba(28,25,23,0.08),0_10px_20px_-14px_rgba(69,104,255,0.6)] dark:border-white/[0.16] dark:bg-card dark:text-secondary-foreground dark:hover:border-white/20 dark:focus-visible:border-[var(--ring)] dark:focus-visible:shadow-[0_10px_20px_-14px_rgba(147,176,255,0.5)] ${triggerClassName}`}
 			>
 				{trigger}
 			</button>
@@ -390,7 +390,7 @@ export function Popover({
 									? { duration: 0 }
 									: { ...CROSSFADE, opacity: { duration: 0.14, ease: EASE } }
 							}
-							className={`relative rounded-[11px] border border-stone-200 bg-white p-3 shadow-[0_18px_40px_-24px_rgba(28,25,23,0.5)] focus-visible:outline-none dark:border-white/[0.16] dark:bg-[#1D1D1A] dark:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)] ${className}`}
+							className={`relative rounded-[11px] border border-border bg-white p-3 shadow-[0_18px_40px_-24px_rgba(28,25,23,0.5)] focus-visible:outline-none dark:border-white/[0.16] dark:bg-card dark:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)] ${className}`}
 						>
 							<span
 								ref={arrowRef}
@@ -400,7 +400,7 @@ export function Popover({
 									height: arrowSize,
 									transform: "rotate(45deg)",
 								}}
-								className={`absolute block bg-white dark:bg-[#1D1D1A] border-stone-200 dark:border-white/[0.16] ${ARROW_EDGE[at]}`}
+								className={`absolute block bg-white dark:bg-card border-border dark:border-white/[0.16] ${ARROW_EDGE[at]}`}
 							/>
 							<div
 								ref={contentRef}

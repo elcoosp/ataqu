@@ -345,7 +345,7 @@ export function TagInput({
 			{label ? (
 				<label
 					htmlFor={inputId}
-					className="mb-1.5 block text-[12.5px] font-medium text-stone-700 dark:text-stone-200"
+					className="mb-1.5 block text-[12.5px] font-medium text-secondary-foreground dark:text-secondary-foreground"
 				>
 					{label}
 				</label>
@@ -357,7 +357,7 @@ export function TagInput({
 					e.preventDefault();
 					inputRef.current?.focus();
 				}}
-				className="relative flex max-h-[116px] min-h-10 list-none flex-wrap items-center gap-1.5 overflow-y-auto overscroll-contain rounded-[10px] border-2 border-stone-200 bg-stone-100/70 p-[4px] shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] transition-[background-color,border-color,box-shadow] duration-150 focus-within:border-[#4568FF] focus-within:bg-white focus-within:shadow-none dark:border-white/[0.08] dark:bg-[#1D1D1A] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] dark:focus-within:border-[#93B0FF] dark:focus-within:bg-[#252522]"
+				className="relative flex max-h-[116px] min-h-10 list-none flex-wrap items-center gap-1.5 overflow-y-auto overscroll-contain rounded-[10px] border-2 border-border bg-background/70 p-[4px] shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] transition-[background-color,border-color,box-shadow] duration-150 focus-within:border-[var(--ring)] focus-within:bg-white focus-within:shadow-none dark:border-white/[0.08] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] dark:focus-within:border-[var(--ring)] dark:focus-within:bg-muted"
 			>
 				<AnimatePresence initial={false} mode="popLayout">
 					{rows.map(({ tag, key }, index) => {
@@ -377,8 +377,8 @@ export function TagInput({
 								transition={reduced ? INSTANT : { default: CHIP, layout: CHIP }}
 								className={`flex h-6 max-w-full shrink-0 select-none items-center gap-1 rounded-[6px] border pl-2 pr-1.5 text-[12.5px] transition-[background-color,border-color,box-shadow,color] duration-150 ${
 									lit
-										? "border-stone-800 bg-stone-800 text-white shadow-[0_1px_2px_rgba(28,25,23,0.18)] dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
-										: "border-stone-200 bg-white text-stone-800 shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] dark:border-white/[0.16] dark:bg-[#2A2A27] dark:text-stone-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)]"
+										? "border-border bg-card text-white shadow-[0_1px_2px_rgba(28,25,23,0.18)] dark:border-border dark:bg-background dark:text-foreground dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
+										: "border-border bg-white text-foreground shadow-[inset_0_1.5px_0_rgba(255,255,255,0.95),inset_0_-1px_0_rgba(28,25,23,0.06),0_1px_2px_rgba(28,25,23,0.08)] dark:border-white/[0.16] dark:bg-accent dark:text-secondary-foreground dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.4)]"
 								}`}
 							>
 								<span className="truncate">{tag}</span>
@@ -393,8 +393,8 @@ export function TagInput({
 									}}
 									className={`-mr-0.5 grid size-[14px] shrink-0 place-items-center rounded-[5px] transition-colors duration-150 ${
 										lit
-											? "text-white/70 hover:text-white dark:text-stone-900/60 dark:hover:text-stone-900"
-											: "text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+											? "text-white/70 hover:text-white dark:text-foreground/60 dark:hover:text-foreground"
+											: "text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground"
 									}`}
 								>
 									<CloseGlyph />
@@ -428,7 +428,7 @@ export function TagInput({
 						autoCorrect="off"
 						spellCheck={false}
 						enterKeyHint="done"
-						className="absolute inset-0 h-full w-full bg-transparent px-1 text-[12.5px] text-stone-700 outline-none placeholder:text-stone-400 dark:text-stone-200 dark:placeholder:text-stone-500"
+						className="absolute inset-0 h-full w-full bg-transparent px-1 text-[12.5px] text-secondary-foreground outline-none placeholder:text-muted-foreground dark:text-secondary-foreground dark:placeholder:text-muted-foreground"
 					/>
 				</motion.li>
 			</ul>
@@ -440,7 +440,7 @@ export function TagInput({
 						initial={false}
 						animate={{ opacity: showMessage ? 0 : 1 }}
 						transition={reduced ? INSTANT : CROSSFADE}
-						className="col-start-1 row-start-1 truncate text-[11.5px] text-stone-500 dark:text-stone-400"
+						className="col-start-1 row-start-1 truncate text-[11.5px] text-muted-foreground dark:text-muted-foreground"
 					>
 						{hint}
 					</motion.p>
@@ -449,14 +449,14 @@ export function TagInput({
 						initial={false}
 						animate={{ opacity: showMessage ? 1 : 0 }}
 						transition={reduced ? INSTANT : CROSSFADE}
-						className="col-start-1 row-start-1 truncate text-[11.5px] text-stone-700 dark:text-stone-200"
+						className="col-start-1 row-start-1 truncate text-[11.5px] text-secondary-foreground dark:text-secondary-foreground"
 					>
 						{message}
 					</motion.p>
 				</div>
 
 				{max === undefined ? null : (
-					<p className="shrink-0 text-[11.5px] tabular-nums text-stone-500 dark:text-stone-400">
+					<p className="shrink-0 text-[11.5px] tabular-nums text-muted-foreground dark:text-muted-foreground">
 						<span className="inline-grid justify-items-end">
 							<span aria-hidden className="invisible col-start-1 row-start-1">
 								{max}

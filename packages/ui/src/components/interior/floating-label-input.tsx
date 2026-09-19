@@ -191,10 +191,10 @@ export function FloatingLabelInput({
 				<div
 					className={`relative h-10 rounded-[10px] border-2 transition-[background-color,border-color,box-shadow] duration-150 ${
 						invalid
-							? "border-red-500 bg-white dark:border-red-400 dark:bg-[#252522]"
+							? "border-destructive bg-white dark:border-destructive dark:bg-muted"
 							: focused
-								? "border-[#4568FF] bg-white dark:border-[#93B0FF] dark:bg-[#252522]"
-								: "border-stone-200 bg-stone-100/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.08] dark:bg-[#1D1D1A] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]"
+								? "border-[var(--ring)] bg-white dark:border-[var(--ring)] dark:bg-muted"
+								: "border-border bg-background/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.08] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]"
 					} ${disabled ? "opacity-55" : ""}`}
 				>
 					<input
@@ -225,7 +225,7 @@ export function FloatingLabelInput({
 							fieldProps.onChange(event);
 							onChange?.(event.currentTarget.value, event);
 						}}
-						className="absolute inset-0 h-full w-full rounded-[9px] bg-transparent px-3 py-0 text-[13px] leading-[20px] text-stone-700 outline-none focus-visible:outline-none disabled:cursor-not-allowed dark:text-stone-200"
+						className="absolute inset-0 h-full w-full rounded-[9px] bg-transparent px-3 py-0 text-[13px] leading-[20px] text-secondary-foreground outline-none focus-visible:outline-none disabled:cursor-not-allowed dark:text-secondary-foreground"
 					/>
 				</div>
 
@@ -241,17 +241,17 @@ export function FloatingLabelInput({
 					style={{ originX: 0, originY: 0, willChange: "transform" }}
 					className={`absolute left-3 top-[32px] block cursor-text select-none text-[13px] leading-[16px] ${
 						invalid
-							? "text-red-600 dark:text-red-400"
+							? "text-destructive dark:text-destructive"
 							: raised
-								? "text-stone-600 dark:text-stone-300"
-								: "text-stone-400 dark:text-stone-500"
+								? "text-secondary-foreground dark:text-secondary-foreground"
+								: "text-muted-foreground dark:text-muted-foreground"
 					}`}
 				>
 					{label}
 					{required ? (
 						<span
 							aria-hidden
-							className="ml-0.5 text-stone-400 dark:text-stone-500"
+							className="ml-0.5 text-muted-foreground dark:text-muted-foreground"
 						>
 							*
 						</span>
@@ -264,8 +264,8 @@ export function FloatingLabelInput({
 					aria-hidden
 					className={`min-w-0 flex-1 truncate text-[11.5px] leading-[16px] ${
 						invalid
-							? "text-red-600 dark:text-red-400"
-							: "text-stone-500 dark:text-stone-400"
+							? "text-destructive dark:text-destructive"
+							: "text-muted-foreground dark:text-muted-foreground"
 					}`}
 				>
 					{hint}
@@ -274,7 +274,7 @@ export function FloatingLabelInput({
 				{maxLength !== undefined ? (
 					<span
 						aria-hidden
-						className="grid shrink-0 justify-items-end font-mono text-[10.5px] leading-[16px] tabular-nums text-stone-400 dark:text-stone-500"
+						className="grid shrink-0 justify-items-end font-mono text-[10.5px] leading-[16px] tabular-nums text-muted-foreground dark:text-muted-foreground"
 					>
 						<span className="invisible col-start-1 row-start-1">
 							{maxLength} / {maxLength}

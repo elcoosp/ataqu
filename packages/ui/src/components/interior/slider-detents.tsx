@@ -322,7 +322,7 @@ export function SliderDetents({
 			<div className="mb-2.5 flex items-baseline justify-between gap-3">
 				<span
 					id={labelId}
-					className="text-[12.5px] text-stone-500 dark:text-stone-400"
+					className="text-[12.5px] text-muted-foreground dark:text-muted-foreground"
 				>
 					{label}
 				</span>
@@ -335,14 +335,14 @@ export function SliderDetents({
 					</span>
 					<span
 						aria-hidden
-						className="col-start-1 row-start-1 whitespace-pre font-mono text-[11px] tabular-nums text-stone-700 dark:text-stone-200"
+						className="col-start-1 row-start-1 whitespace-pre font-mono text-[11px] tabular-nums text-secondary-foreground dark:text-secondary-foreground"
 					>
 						{format(value)}
 						<motion.span
 							initial={false}
 							animate={{ opacity: suffix ? 1 : 0 }}
 							transition={reduced ? INSTANT : CROSSFADE}
-							className="text-stone-500 dark:text-stone-400"
+							className="text-muted-foreground dark:text-muted-foreground"
 						>
 							{lastLabel.current ? ` · ${lastLabel.current}` : ""}
 						</motion.span>
@@ -352,7 +352,7 @@ export function SliderDetents({
 			<div
 				ref={trackRef}
 				{...trackProps}
-				className={`relative h-9 w-full rounded-[9px] outline-none focus-visible:bg-[#4568FF]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_#4568FF] dark:focus-visible:bg-[#93B0FF]/[0.1] dark:focus-visible:shadow-[inset_0_0_0_1px_#93B0FF] ${
+				className={`relative h-9 w-full rounded-[9px] outline-none focus-visible:bg-[var(--ring)]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:focus-visible:bg-[var(--ring)]/[0.1] dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] ${
 					disabled
 						? "pointer-events-none opacity-50"
 						: dragging
@@ -360,7 +360,7 @@ export function SliderDetents({
 							: "cursor-grab"
 				}`}
 			>
-				<div className="pointer-events-none absolute inset-x-0 top-[9px] h-[10px] overflow-hidden rounded-[5px] bg-stone-200 dark:bg-white/15">
+				<div className="pointer-events-none absolute inset-x-0 top-[9px] h-[10px] overflow-hidden rounded-[5px] bg-muted dark:bg-white/15">
 					<div
 						className="absolute inset-y-0"
 						style={{ left: THUMB / 2, right: THUMB / 2 }}
@@ -369,7 +369,7 @@ export function SliderDetents({
 							className="absolute inset-y-0 left-0 right-0"
 							style={{ x: offset }}
 						>
-							<div className="absolute inset-y-0 right-full w-[2000px] bg-stone-800 dark:bg-stone-100" />
+							<div className="absolute inset-y-0 right-full w-[2000px] bg-card dark:bg-background" />
 						</motion.div>
 					</div>
 				</div>
@@ -381,7 +381,7 @@ export function SliderDetents({
 						<span
 							key={String(d.value)}
 							aria-hidden
-							className="absolute top-[26px] block h-[5px] w-[2px] -translate-x-1/2 bg-stone-800/35 dark:bg-stone-100/35"
+							className="absolute top-[26px] block h-[5px] w-[2px] -translate-x-1/2 bg-card/35 dark:bg-background/35"
 							style={{
 								left: span > 0 ? `${((d.value - min) / span) * 100}%` : "0%",
 							}}
@@ -397,7 +397,7 @@ export function SliderDetents({
 						style={{ x: offset }}
 					>
 						<motion.div
-							className="absolute top-[4px] h-[20px] w-[18px] rounded-[6px] border-2 border-white bg-stone-800 dark:border-stone-900 dark:bg-stone-100"
+							className="absolute top-[4px] h-[20px] w-[18px] rounded-[6px] border-2 border-white bg-card dark:border-border dark:bg-background"
 							style={{ marginLeft: -THUMB / 2 }}
 							initial={false}
 							animate={{ scale: dragging ? 1.08 : 1 }}
