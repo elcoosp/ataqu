@@ -22,7 +22,15 @@ export const listForms = (params?: { limit?: number; offset?: number }) =>
 	api.get<PaginatedResponse<Form>>("/sond/forms", { params });
 export const createForm = (data: CreateFormRequest) =>
 	api.post<Form>("/sond/forms", data);
-export const getForm = (id: UUID) => api.get<Form>(`/sond/forms/${id}`);
+export const getForm = (id: UUID, options?: { skipAuth?: boolean }) =>
+	api.get<Form>(`/sond/forms/${id}`, options);
+/**
+ * Unauthenticated fetch of a published form for the guest funnel
+ * (GET /sond/public/forms/{id} → public_routes mount). Only serves
+ * Published forms; drafts/closed return 404.
+ */
+export const getPublicForm = (id: UUID) =>
+	api.get<Form>(`/sond/public/forms/${id}`, { skipAuth: true });
 export const updateForm = (
 	id: UUID,
 	data: UpdateFormRequest,
@@ -38,8 +46,11 @@ export const listSubmissions = (
 	formId: UUID,
 	params?: { limit?: number; offset?: number },
 ) => api.get<Submission[]>(`/sond/forms/${formId}/submissions`, { params });
+// Public funnel: never send tenant credentials on guest-facing surfaces.
 export const submitForm = (formId: UUID, data: SubmitFormRequest) =>
-	api.post<Submission>(`/sond/forms/${formId}/submissions`, data);
+	api.post<Submission>(`/sond/forms/${formId}/submit`, data, {
+		skipAuth: true,
+	});
 export const submitConversationalStep = (
 	formId: UUID,
 	data: ConversationalStepRequest,
@@ -47,6 +58,7 @@ export const submitConversationalStep = (
 	api.post<ConversationalStepResponse>(
 		`/sond/forms/${formId}/submit/step`,
 		data,
+		{ skipAuth: true },
 	);
 export const exportFormSubmissions = (formId: UUID) =>
 	api.get<Blob>(`/sond/forms/${formId}/export`, { responseType: "blob" });
@@ -63,12 +75,18 @@ export const useListForms = (
 		queryFn: () => listForms(params),
 		...options,
 	});
-export const useGetForm = (id: UUID, options?: UseQueryOptions<Form>) =>
-	useQuery({
-		queryKey: ["sond", "form", id],
-		queryFn: () => getForm(id),
-		...options,
+export const useGetForm = (
+	id: UUID,
+	options?: UseQueryOptions<Form> & { skipAuth?: boolean; public?: boolean },
+) => {
+	const { skipAuth, public: isPublic, ...queryOptions } = options ?? {};
+	return useQuery({
+		queryKey: ["sond", isPublic ? "public-form" : "form", id],
+		queryFn: () =>
+			isPublic ? getPublicForm(id) : getForm(id, { skipAuth }),
+		...queryOptions,
 	});
+};
 export const useListSubmissions = (
 	formId: UUID,
 	params?: { limit?: number; offset?: number },

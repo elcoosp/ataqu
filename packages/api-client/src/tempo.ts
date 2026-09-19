@@ -38,9 +38,9 @@ export const updateEventType = (
 export const deleteEventType = (id: UUID) =>
 	api.delete<void>(`/tempo/event-types/${id}`);
 
-// ---- Public Event Type ----
-export const getPublicEventType = (tenantId: UUID, slug: string) =>
-	api.get<EventType>(`/tempo/public/${tenantId}/event-types/${slug}`);
+// ---- Public Event Type (slug-only, for anonymous public booking pages) ----
+export const resolveEventTypeBySlug = (slug: string) =>
+	api.get<EventType>(`/tempo/public/event-types/${slug}`);
 
 // ---- Availability Slots ----
 export const listAvailabilitySlots = (eventTypeId: UUID) =>
@@ -113,14 +113,13 @@ export const useGetEventType = (
 		queryFn: () => getEventType(id),
 		...options,
 	});
-export const useGetPublicEventType = (
-	tenantId: UUID,
+export const useResolveEventType = (
 	slug: string,
 	options?: UseQueryOptions<EventType>,
 ) =>
 	useQuery({
-		queryKey: ["tempo", "public-event-type", tenantId, slug],
-		queryFn: () => getPublicEventType(tenantId, slug),
+		queryKey: ["tempo", "public-event-type", slug],
+		queryFn: () => resolveEventTypeBySlug(slug),
 		...options,
 	});
 export const useListAvailabilitySlots = (

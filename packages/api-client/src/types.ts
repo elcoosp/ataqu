@@ -620,6 +620,8 @@ export interface Form {
 	questions: FormQuestion[];
 	branding?: Record<string, unknown>;
 	mode: "standard" | "conversational";
+	/** Lifecycle: draft (builder-only), published (public funnel live), closed (archived). */
+	status: "draft" | "published" | "closed";
 	routing_rules?: Array<{
 		conditions: Array<{
 			field: UUID;
@@ -648,6 +650,7 @@ export interface UpdateFormRequest {
 	description?: string | null;
 	questions?: Omit<FormQuestion, "id">[] | null;
 	mode?: "standard" | "conversational" | null;
+	status?: "draft" | "published" | "closed" | null;
 	routing_rules?: Form["routing_rules"] | null;
 }
 
@@ -766,6 +769,10 @@ export interface CreateWorkflowRequest {
 export interface UpdateWorkflowRequest {
 	name?: string | null;
 	is_active?: boolean | null;
+	trigger?: Trigger | null;
+	conditions?: Condition[] | null;
+	actions?: Action[] | null;
+	webhook_secret?: string | null;
 }
 export interface WorkflowRun {
 	id: UUID;
@@ -795,6 +802,7 @@ export interface WorkflowListParams {
 
 export interface EventType {
 	id: UUID;
+	tenant_id: UUID;
 	name: string;
 	slug: string;
 	description?: string;

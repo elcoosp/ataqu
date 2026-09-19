@@ -54,8 +54,11 @@ export const bulkDeleteProducts = (data: BulkDeleteRequest) =>
 
 // ---- Variants ----
 export const listVariants = (
-	params?: { limit?: number; offset?: number },
+	params?: { product_id?: UUID; limit?: number; offset?: number },
 ) => api.get<PaginatedResponse<Variant>>("/vault/variants", { params });
+/** Variants for one product (server-filtered via `product_id`). */
+export const listVariantsForProduct = (productId: UUID) =>
+	listVariants({ product_id: productId, limit: 100, offset: 0 });
 export const createVariant = (data: CreateVariantRequest) =>
 	api.post<Variant>("/vault/variants", data);
 export const getVariant = (id: UUID) =>

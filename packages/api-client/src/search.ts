@@ -65,11 +65,11 @@ function urlFor(app: string, entityType: string, id: UUID): string {
 		case "spark/workflow":
 			return `/spark/workflows/${id}`;
 		case "vista/dashboard":
-			return `/vista/dashboards/${id}`;
+			return `/vista/dashboard/${id}`;
 		case "tempo/event_type":
 			return `/tempo/event-types/${id}`;
 		case "sond/form":
-			return `/sond/forms/${id}`;
+			return `/sond/builder/${id}`;
 		default:
 			return `/`;
 	}
