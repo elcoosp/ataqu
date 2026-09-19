@@ -19,12 +19,17 @@ export function useCinqCommands(): AppCommand[] {
 		{
 			id: "cinq-go-deals",
 			title: "Go to Deals",
-			onSelect: () => navigate({ to: "/cinq/deals" }),
+			onSelect: () =>
+				navigate({
+					to: "/cinq/deals",
+					search: { createOpen: false, stageOpen: false },
+				}),
 		},
 		{
 			id: "cinq-go-tasks",
 			title: "Go to Tasks",
-			onSelect: () => navigate({ to: "/cinq/tasks" }),
+			onSelect: () =>
+				navigate({ to: "/cinq/tasks", search: { createOpen: false } }),
 		},
 		{
 			id: "cinq-go-import",
