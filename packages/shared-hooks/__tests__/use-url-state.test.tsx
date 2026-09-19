@@ -5,11 +5,11 @@ import {
 	enumSearch,
 	intSearch,
 	normalizeSearch,
+	type SearchUpdater,
 	searchSchema,
 	stringSearch,
 	useUrlSearchParam,
 	useUrlState,
-	type SearchUpdater,
 } from "../src/use-url-state";
 
 describe("url-state helpers", () => {
@@ -185,5 +185,58 @@ describe("useUrlSearchParam", () => {
 		expect(result.current.count).toBe(1);
 		expect(result.current.tab).toBe("tasks");
 	});
-});
 
+	it("round-trips a boolean modal flag as ?key=1 and omits it when closed", () => {
+		// The pattern every route uses for modal-open state (brainstorm P1-3).
+		const booleanFlag = {
+			default: false,
+			parse: (v: string | undefined) => v === "1",
+			serialize: (v: boolean) => (v ? "1" : undefined),
+		};
+
+		setQuery("?createOpen=1&filter=company");
+		const { result } = renderHook(() =>
+			useUrlSearchParam("createOpen", booleanFlag),
+		);
+		// Reads a hand-typed "1" back as true without disturbing siblings.
+		expect(result.current[0]).toBe(true);
+		expect(window.location.search).toBe("?createOpen=1&filter=company");
+
+		setQuery("");
+		const closed = renderHook(() =>
+			useUrlSearchParam("createOpen", booleanFlag),
+		);
+		expect(closed.result.current[0]).toBe(false);
+		act(() => closed.result.current[1](true));
+		expect(window.location.search).toBe("?createOpen=1");
+		act(() => closed.result.current[1](false));
+		// Closing removes the key entirely, so clean links stay clean.
+		expect(window.location.search).toBe("");
+		expect(closed.result.current[0]).toBe(false);
+	});
+
+	it("accumulates distinct keys across sibling hooks without clobbering", () => {
+		setQuery("");
+		const { result } = renderHook(() => ({
+			filter: useUrlSearchParam("filter", {
+				default: "all",
+				parse: (v: string | undefined) =>
+					v === "company" || v === "person" ? v : "all",
+				serialize: (v: string) => (v === "all" ? undefined : v),
+			}),
+			sort: useUrlSearchParam("sort", {
+				default: null as string | null,
+				parse: (v: string | undefined) =>
+					v === "name" || v === "email" ? v : null,
+				serialize: (v: string | null) => v ?? undefined,
+			}),
+		}));
+		act(() => result.current.filter[1]("company"));
+		act(() => result.current.sort[1]("email"));
+		// Both writes survive: each hook re-reads window.location before
+		// writing, so it only ever touches its own key.
+		expect(window.location.search).toBe("?filter=company&sort=email");
+		act(() => result.current.filter[1]("all"));
+		expect(window.location.search).toBe("?sort=email");
+	});
+});
