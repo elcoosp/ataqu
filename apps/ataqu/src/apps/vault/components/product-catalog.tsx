@@ -4,7 +4,7 @@ import {
 	useBulkDeleteProducts,
 	useGetLowStockAlerts,
 } from "@ataqu/api-client";
-import { useDebounce } from "@ataqu/shared-hooks";
+import { useDebounce, useUrlSearchParam } from "@ataqu/shared-hooks";
 import {
 	Badge,
 	Bone,
@@ -18,7 +18,7 @@ import {
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { CreateProductForm } from "./create-product-form";
 import { CsvImport } from "./csv-import";
@@ -30,9 +30,20 @@ const escapeCsvValue = (value: string): string =>
 	`"${value.replace(/"/g, '""')}"`;
 
 export function ProductCatalog() {
-	const [search, setSearch] = useState("");
-	const [view, setView] = useState<"list" | "grid">("list");
-	const [showCreateForm, setShowCreateForm] = useState(false);
+	// Search, view mode, and create-form visibility are URL-backed so a
+	// narrowed catalog (or a direct link to the create form) is shareable
+	// and survives reload (brainstorm P1-3).
+	const [search, setSearch] = useUrlSearchParam("q", { default: "" });
+	const [view, setView] = useUrlSearchParam<"list" | "grid">("view", {
+		default: "list",
+		parse: (raw) => (raw === "grid" ? "grid" : "list"),
+		serialize: (v) => (v === "list" ? undefined : v),
+	});
+	const [showCreateForm, setShowCreateForm] = useUrlSearchParam("createOpen", {
+		default: false,
+		parse: (raw) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	const debouncedSearch = useDebounce(search, 300);
 
 	const productsQuery = useQuery({
@@ -163,7 +174,7 @@ export function ProductCatalog() {
 					</Button>
 					<Button
 						type="button"
-						onClick={() => setShowCreateForm((current) => !current)}
+						onClick={() => setShowCreateForm(!showCreateForm)}
 					>
 						{showCreateForm ? (
 							<Trans>Close</Trans>
