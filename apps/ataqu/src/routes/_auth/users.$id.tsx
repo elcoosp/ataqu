@@ -153,11 +153,11 @@ export const Route = createFileRoute("/_auth/users/$id")({
 								<Trans>Status:</Trans>
 							</strong>{" "}
 							{user.is_active ? (
-								<span className="text-green-500 ml-2">
+								<span className="text-success ml-2">
 									<Trans>Active</Trans>
 								</span>
 							) : (
-								<span className="text-red-500 ml-2">
+								<span className="text-destructive ml-2">
 									<Trans>Inactive</Trans>
 								</span>
 							)}

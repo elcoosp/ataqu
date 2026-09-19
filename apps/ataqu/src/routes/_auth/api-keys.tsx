@@ -19,6 +19,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	EmptyState,
 	HoldToConfirm,
 	Input,
 	Label,
@@ -38,7 +39,6 @@ import { Key, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { EmptyState } from "../../components/empty-state";
 
 export const Route = createFileRoute("/_auth/api-keys")({
 	component: () => {
@@ -204,7 +204,7 @@ export const Route = createFileRoute("/_auth/api-keys")({
 														<DialogFooter>
 															<HoldToConfirm
 																onConfirm={() => _deleteMutation.mutate(key.id)}
-																className="w-full bg-red-600 text-white hover:bg-red-500"
+																className="w-full bg-destructive text-white hover:bg-destructive"
 															>
 																<Trans>Revoke key</Trans>
 															</HoldToConfirm>

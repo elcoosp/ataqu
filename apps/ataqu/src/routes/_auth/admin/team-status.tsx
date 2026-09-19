@@ -23,7 +23,7 @@ function TeamStatusPage() {
 
 	if (isLoading) {
 		return (
-			<div className="p-6 text-sm text-gray-400">
+			<div className="p-6 text-sm text-muted-foreground">
 				<Trans>Loading team activation…</Trans>
 			</div>
 		);
@@ -31,7 +31,7 @@ function TeamStatusPage() {
 
 	if (error) {
 		return (
-			<div className="p-6 text-sm text-red-400">
+			<div className="p-6 text-sm text-destructive">
 				<Trans>Failed to load team status.</Trans>
 			</div>
 		);
@@ -48,10 +48,10 @@ function TeamStatusPage() {
 				</h1>
 				<Card className="w-48">
 					<CardContent className="p-3">
-						<p className="text-xs uppercase text-gray-500">
+						<p className="text-xs uppercase text-muted-foreground">
 							<Trans>Activation rate</Trans>
 						</p>
-						<p className="text-2xl font-semibold text-emerald-400">{rate}%</p>
+						<p className="text-2xl font-semibold text-success">{rate}%</p>
 					</CardContent>
 				</Card>
 			</div>
@@ -82,20 +82,24 @@ function TeamStatusPage() {
 							{users.map((u) => (
 								<TableRow key={u.user_id}>
 									<TableCell className="text-white">{u.name ?? "—"}</TableCell>
-									<TableCell className="text-gray-300">{u.email}</TableCell>
-									<TableCell className="text-gray-400">{u.role}</TableCell>
+									<TableCell className="text-secondary-foreground">
+										{u.email}
+									</TableCell>
+									<TableCell className="text-muted-foreground">
+										{u.role}
+									</TableCell>
 									<TableCell>
 										{u.is_active ? (
-											<span className="rounded bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400">
+											<span className="rounded bg-success/15 px-2 py-0.5 text-xs text-success">
 												<Trans>Active</Trans>
 											</span>
 										) : (
-											<span className="rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400">
+											<span className="rounded bg-amber/15 px-2 py-0.5 text-xs text-amber">
 												<Trans>Pending</Trans>
 											</span>
 										)}
 									</TableCell>
-									<TableCell className="text-gray-400">
+									<TableCell className="text-muted-foreground">
 										{u.last_login_at
 											? new Date(u.last_login_at).toLocaleString()
 											: "—"}

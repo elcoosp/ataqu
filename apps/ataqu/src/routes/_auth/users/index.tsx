@@ -1,5 +1,6 @@
 // apps/aegis/src/routes/_auth/users/index.tsx
 
+import { useCreateUser, useInviteUser, useListUsers } from "@ataqu/api-client";
 import {
 	Bone,
 	Button,
@@ -9,6 +10,7 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	EmptyState,
 	Input,
 	Label,
 	Table,
@@ -18,26 +20,29 @@ import {
 	TableHeader,
 	TableRow,
 } from "@ataqu/ui";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
-
-import { EmptyState } from "../../../components/empty-state";
-
-("../../components/empty-state");
-
-import { useCreateUser, useInviteUser, useListUsers } from "@ataqu/api-client";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 export const Route = createFileRoute("/_auth/users/")({
 	component: () => {
+		const search = Route.useSearch();
 		const navigate = useNavigate();
 		const queryClient = useQueryClient();
 
-		const [openInvite, setOpenInvite] = useState(false);
+		const [openInvite, setOpenInvite] = useUrlState({
+	search,
+	setSearch: (next) => navigate({ search: next as never }),
+	key: "inviteOpen",
+	default: false,
+	parse: (raw: unknown) => raw === "1",
+	serialize: (v) => (v ? "1" : undefined),
+});
 		const [openCreate, setOpenCreate] = useState(false);
 
 		const _createUserMutation = useCreateUser({
@@ -169,11 +174,11 @@ export const Route = createFileRoute("/_auth/users/")({
 										<TableCell>{user.role}</TableCell>
 										<TableCell>
 											{user.is_active ? (
-												<span className="text-green-500">
+												<span className="text-success">
 													<Trans>Active</Trans>
 												</span>
 											) : (
-												<span className="text-red-500">
+												<span className="text-destructive">
 													<Trans>Inactive</Trans>
 												</span>
 											)}

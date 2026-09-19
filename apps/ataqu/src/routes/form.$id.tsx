@@ -5,9 +5,7 @@ import {
 	useSubmitForm,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import {
- Bone, Button, Input 
-} from "@ataqu/ui";
+import { Bone, Button, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
@@ -26,6 +24,9 @@ function PublicFormRoute() {
 	const { id } = Route.useParams() as { id: string };
 	const { data: form, isLoading } = useGetForm(id, {
 		queryKey: ["sond", "public-form", id],
+		// Guest-facing surface: unauthenticated public endpoint + no
+		// Authorization header, even if a session token exists.
+		public: true,
 	});
 	const [answers, setAnswers] = useState<Record<string, unknown>>({});
 	const [currentSlide, setCurrentSlide] = useState(0);

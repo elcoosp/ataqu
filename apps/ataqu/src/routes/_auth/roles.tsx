@@ -6,6 +6,7 @@ import {
 	Button,
 	Card,
 	CardContent,
+	EmptyState,
 	Table,
 	TableBody,
 	TableCell,
@@ -20,7 +21,6 @@ import { Plus, Shield } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CreateRoleDialog } from "../../components/create-role-dialog";
-import { EmptyState } from "../../components/empty-state";
 
 export const Route = createFileRoute("/_auth/roles")({
 	component: () => {

@@ -131,7 +131,7 @@ function MigrationWizard() {
 					</div>
 
 					{parseMut.isError ? (
-						<p className="text-sm text-red-500">
+						<p className="text-sm text-destructive">
 							<Trans>Failed to parse file.</Trans>
 						</p>
 					) : null}

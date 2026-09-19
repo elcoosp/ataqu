@@ -90,7 +90,7 @@ export const Route = createFileRoute("/login")({
 
 		return (
 			<AuthLayout>
-				<div className="bg-deep-night/80 p-8 rounded border border-gray-700/40 w-96 space-y-6">
+				<div className="bg-deep-night/80 p-8 rounded border border-border/40 w-96 space-y-6">
 					<h1 className="text-2xl font-heading text-center">
 						{mode === "signup" ? (
 							<Trans>Create your account</Trans>
@@ -112,23 +112,23 @@ export const Route = createFileRoute("/login")({
 					<div className="space-y-3">
 						<Button
 							onClick={() => handleSSO("google")}
-							className="w-full bg-white text-black hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+							className="w-full bg-white text-black hover:bg-background dark:bg-card dark:text-white dark:hover:bg-border"
 						>
 							<Trans>Continue with Google</Trans>
 						</Button>
 						<Button
 							onClick={() => handleSSO("microsoft")}
-							className="w-full bg-[#2f2f2f] text-white hover:bg-[#3f3f3f]"
+							className="w-full bg-secondary text-secondary-foreground hover:bg-border"
 						>
 							<Trans>Continue with Microsoft</Trans>
 						</Button>
 					</div>
 					<div className="relative">
 						<div className="absolute inset-0 flex items-center">
-							<span className="w-full border-t border-gray-700/40" />
+							<span className="w-full border-t border-border/40" />
 						</div>
 						<div className="relative flex justify-center text-xs uppercase">
-							<span className="bg-deep-night/80 px-2 text-gray-400">
+							<span className="bg-deep-night/80 px-2 text-muted-foreground">
 								<Trans>Or</Trans>
 							</span>
 						</div>

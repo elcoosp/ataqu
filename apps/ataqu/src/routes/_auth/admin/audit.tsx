@@ -24,19 +24,69 @@ import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo } from "react";
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
+import { intSearch } from "@ataqu/shared-hooks";
 
 export const Route = createFileRoute("/_auth/admin/audit")({
+	validateSearch: searchSchema({
+		action: stringSearch(""),
+		app: stringSearch(""),
+		from_date: stringSearch(""),
+		to_date: stringSearch(""),
+		offset: intSearch(0, 0),
+	}),
 	component: () => {
 		const _queryClient = useQueryClient();
-		const [filters, setFilters] = useState<{
-			action?: string;
-			app?: string;
-			from_date?: string;
-			to_date?: string;
-		}>({});
-		const [limit, _setLimit] = useState(50);
-		const [offset, setOffset] = useState(0);
+		const search = Route.useSearch();
+		const navigate = Route.useNavigate();
+
+		const [action, setAction] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "action",
+			default: "",
+			parse: stringSearch(""),
+			serialize: (v) => (v === "" ? undefined : v),
+		});
+		const [app, setApp] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "app",
+			default: "",
+			parse: stringSearch(""),
+			serialize: (v) => (v === "" ? undefined : v),
+		});
+		const [fromDate, setFromDate] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "from_date",
+			default: "",
+			parse: stringSearch(""),
+			serialize: (v) => (v === "" ? undefined : v),
+		});
+		const [toDate, setToDate] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "to_date",
+			default: "",
+			parse: stringSearch(""),
+			serialize: (v) => (v === "" ? undefined : v),
+		});
+		const [offset, setOffset] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "offset",
+			default: 0,
+			parse: intSearch(0, 0),
+			serialize: (v) => (v === 0 ? undefined : String(v)),
+		});
+
+		const limit = 50;
+		const filters = useMemo(
+			() => ({ action, app, from_date: fromDate, to_date: toDate }),
+			[action, app, fromDate, toDate],
+		);
 
 		const {
 			data: logs,
@@ -44,10 +94,10 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 			error,
 			refetch,
 		} = useGetAuditLog({
-			action: filters.action || undefined,
-			app: filters.app || undefined,
-			from_date: filters.from_date || undefined,
-			to_date: filters.to_date || undefined,
+			action: action || undefined,
+			app: app || undefined,
+			from_date: fromDate || undefined,
+			to_date: toDate || undefined,
 			limit,
 			offset,
 		});
@@ -55,10 +105,10 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 		const handleExport = () => {
 			// Export CSV
 			const params = new URLSearchParams();
-			if (filters.action) params.append("action", filters.action);
-			if (filters.app) params.append("app", filters.app);
-			if (filters.from_date) params.append("from_date", filters.from_date);
-			if (filters.to_date) params.append("to_date", filters.to_date);
+			if (action) params.append("action", action);
+			if (app) params.append("app", app);
+			if (fromDate) params.append("from_date", fromDate);
+			if (toDate) params.append("to_date", toDate);
 			const qs = params.toString();
 			window.open(
 				`/api/v1/aegis/audit-log/export${qs ? `?${qs}` : ""}`,
@@ -116,9 +166,9 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 						</label>
 						<Input
 							placeholder="e.g., login"
-							value={filters.action || ""}
+							value={action || ""}
 							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setFilters({ ...filters, action: e.target.value })
+								setAction(e.target.value)
 							}
 							className="w-40"
 						/>
@@ -126,9 +176,9 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 					<div>
 						<label className="block text-xs text-muted-foreground">App</label>
 						<Select
-							value={filters.app || ""}
+							value={app || ""}
 							onValueChange={(val) =>
-								setFilters({ ...filters, app: val === "" ? undefined : val })
+								setApp(val === "" ? "" : val)
 							}
 						>
 							<SelectTrigger className="w-32">
@@ -153,9 +203,9 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 						<label className="block text-xs text-muted-foreground">From</label>
 						<Input
 							type="date"
-							value={filters.from_date || ""}
+							value={fromDate || ""}
 							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setFilters({ ...filters, from_date: e.target.value })
+								setFromDate(e.target.value)
 							}
 							className="w-36"
 						/>
@@ -164,9 +214,9 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 						<label className="block text-xs text-muted-foreground">To</label>
 						<Input
 							type="date"
-							value={filters.to_date || ""}
+							value={toDate || ""}
 							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setFilters({ ...filters, to_date: e.target.value })
+								setToDate(e.target.value)
 							}
 							className="w-36"
 						/>

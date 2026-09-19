@@ -1,12 +1,7 @@
-import {
-	useGetCurrentUser,
-	useLogout,
-	useRefreshToken,
-} from "@ataqu/api-client";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-
-import { useEffect, useState } from "react";
+import { useGetCurrentUser, useRefreshToken } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 /**
  * Loads the authenticated user's profile via useGetCurrentUser and pushes it
@@ -39,7 +34,9 @@ function TokenRefresher() {
 	const login = useAuthStore((s) => s.login);
 
 	useEffect(() => {
-		if (!isAuthenticated || !refreshToken || token) return;
+		// Proactive renewal: refresh while a session exists. The old guard
+		// (`|| token` bailed when a token existed) meant sessions never renewed.
+		if (!isAuthenticated || !refreshToken) return;
 		let cancelled = false;
 		const interval = setInterval(
 			async () => {
@@ -67,31 +64,6 @@ function TokenRefresher() {
 	}, [isAuthenticated, refreshToken, token, login, refreshTokenMutation]);
 
 	return null;
-}
-
-/** Logout button wired to useLogout. */
-function LogoutButton() {
-	const logout = useLogout({
-		onSuccess: () => {
-			useAuthStore.getState().logout();
-			window.location.href = "/login";
-		},
-	});
-	const storeLogout = useAuthStore((s) => s.logout);
-
-	return (
-		<button
-			type="button"
-			className="text-sm text-muted-foreground hover:text-foreground"
-			onClick={() => {
-				logout.mutate();
-				storeLogout();
-				window.location.href = "/login";
-			}}
-		>
-			Logout
-		</button>
-	);
 }
 
 export const Route = createFileRoute("/_auth")({
@@ -129,9 +101,6 @@ export const Route = createFileRoute("/_auth")({
 			<>
 				<SessionLoader />
 				<TokenRefresher />
-				<div className="flex justify-end p-2">
-					<LogoutButton />
-				</div>
 				<Outlet />
 			</>
 		);
