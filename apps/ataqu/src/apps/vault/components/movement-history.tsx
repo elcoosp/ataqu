@@ -1,10 +1,11 @@
 import type { StockMovement } from "@ataqu/api-client";
 import { useListMovements } from "@ataqu/api-client";
+import { useUrlSearchParam } from "@ataqu/shared-hooks";
 import { formatDate } from "@ataqu/shared-utils";
 import { Bone, EmptyState, ExpandingSearch, SegmentedControl } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { HistoryIcon } from "./icons";
 
 function MovementsTable({ variantId }: { variantId: string }) {
@@ -12,8 +13,13 @@ function MovementsTable({ variantId }: { variantId: string }) {
 
 	const movements = movementsQuery.data ?? [];
 
-	const [reasonFilter, setReasonFilter] = useState("all");
-	const [query, setQuery] = useState("");
+	// Filter state is URL-backed so a narrowed history is shareable and
+	// survives reload (brainstorm P1-3).
+	const [reasonFilter, setReasonFilter] = useUrlSearchParam("reason", {
+		default: "all",
+		serialize: (v) => (v === "all" ? undefined : v),
+	});
+	const [query, setQuery] = useUrlSearchParam("q", { default: "" });
 
 	const reasons = useMemo(() => {
 		const seen = new Set<string>();
