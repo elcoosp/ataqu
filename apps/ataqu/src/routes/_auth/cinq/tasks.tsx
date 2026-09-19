@@ -1,17 +1,29 @@
+import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
 import { Button, DashboardLayout } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { useState } from "react";
 import { CreateTaskDialog } from "../../../apps/cinq/components/create-task-dialog";
 import { TaskList } from "../../../apps/cinq/components/task-list";
 
 export const Route = createFileRoute("/_auth/cinq/tasks")({
+	validateSearch: searchSchema({
+		createOpen: (raw: unknown) => raw === "1",
+	}),
 	component: TasksPage,
 });
 
 function TasksPage() {
-	const [openCreate, setOpenCreate] = useState(false);
+	const search = Route.useSearch();
+	const navigate = Route.useNavigate();
+	const [openCreate, setOpenCreate] = useUrlState({
+		search,
+		setSearch: (next) => navigate({ search: next as never }),
+		key: "createOpen",
+		default: false,
+		parse: (raw: unknown) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	return (
 		<DashboardLayout>
 			<div className="p-4">
