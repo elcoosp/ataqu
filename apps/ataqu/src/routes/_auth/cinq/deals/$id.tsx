@@ -1,6 +1,11 @@
 import { useGetDeal, useUpdateDeal } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
+	enumSearch,
+	searchSchema,
+	useUrlState,
+} from "@ataqu/shared-hooks";
+import {
 	Bone,
 	Button,
 	Input,
@@ -28,6 +33,9 @@ import { IntegrationToggle } from "../../../../apps/cinq/components/integration-
 import { TaskList } from "../../../../apps/cinq/components/task-list";
 
 export const Route = createFileRoute("/_auth/cinq/deals/$id")({
+	validateSearch: searchSchema({
+		tab: enumSearch(["activities", "tasks", "tracking"], "activities"),
+	}),
 	component: DealDetail,
 });
 
@@ -45,6 +53,16 @@ function DealDetail() {
 	const [status, setStatus] = useState<"open" | "won" | "lost">("open");
 	const [probability, setProbability] = useState("");
 	const [openLogActivity, setOpenLogActivity] = useState(false);
+
+	const search = Route.useSearch();
+	const [tab, setTab] = useUrlState({
+		search,
+		setSearch: (next) => Route.useNavigate()({ search: next as never }),
+		key: "tab",
+		default: "activities",
+		parse: enumSearch(["activities", "tasks", "tracking"], "activities"),
+		serialize: (v) => (v === "activities" ? undefined : v),
+	});
 
 	if (isLoading)
 		return (
@@ -183,7 +201,7 @@ function DealDetail() {
 				/>
 			</div>
 
-			<Tabs defaultValue="activities" className="mt-4">
+			<Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="mt-4">
 				<TabsList>
 					<TabsTrigger value="activities">
 						<Trans>Activities</Trans>

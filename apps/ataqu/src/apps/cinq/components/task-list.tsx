@@ -107,7 +107,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 					</span>
 					<button
 						type="button"
-						className="text-red-400 hover:text-red-300 text-sm"
+						className="text-destructive hover:text-destructive text-sm"
 						onClick={() => bulkDelete.mutate({ ids: selected })}
 					>
 						Delete
@@ -128,7 +128,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 								if (e.target.checked) setSelected((s) => [...s, task.id]);
 								else setSelected((s) => s.filter((id) => id !== task.id));
 							}}
-							className="h-4 w-4 rounded border-gray-600 bg-transparent text-amber focus:ring-amber"
+							className="h-4 w-4 rounded border-border bg-transparent text-amber focus:ring-amber"
 						/>
 						<input
 							type="checkbox"
@@ -141,7 +141,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 									version: task.version,
 								});
 							}}
-							className="h-4 w-4 rounded border-gray-600 bg-transparent text-amber focus:ring-amber"
+							className="h-4 w-4 rounded border-border bg-transparent text-amber focus:ring-amber"
 						/>
 						<span
 							className={
@@ -169,7 +169,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 						<HoldToConfirm
 							onConfirm={() => deleteTask.mutate(task.id)}
 							confirmLabel="Deleted"
-							className="ml-auto bg-red-600 text-white hover:bg-red-500"
+							className="ml-auto bg-destructive text-white hover:bg-destructive"
 						>
 							<Trash2 className="h-4 w-4" />
 						</HoldToConfirm>

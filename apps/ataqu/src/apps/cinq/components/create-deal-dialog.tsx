@@ -3,6 +3,7 @@ import {
 	useListContacts,
 	useListPipelineStages,
 } from "@ataqu/api-client";
+import { useShortcut } from "@ataqu/shared-hooks";
 import {
 	Bone,
 	Button,
@@ -68,6 +69,17 @@ export function CreateDealDialog({
 			})
 			.finally(() => setSubmitting(false));
 	};
+
+	// mod+enter submits from any field inside the open dialog (P2-7); the
+	// engine scopes the binding to open Radix dialogs and fires even while
+	// typing in the inputs.
+	useShortcut(
+		"mod+enter",
+		() => {
+			if (open) handleSubmit();
+		},
+		{ enabled: open },
+	);
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>

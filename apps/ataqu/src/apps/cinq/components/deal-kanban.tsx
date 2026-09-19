@@ -1,17 +1,23 @@
 import type { DealResponse, PipelineStageResponse } from "@ataqu/api-client";
 import {
+	updateDeal as updateDealApi,
 	useDeleteDeal,
 	useDeletePipelineStage,
 	useListDeals,
 	useListPipelineStages,
-	useUpdateDeal,
 	useUpdatePipelineStage,
 } from "@ataqu/api-client";
+import { useOptimisticMutation } from "@ataqu/shared-hooks";
 import {
- Badge, Bone, Button, Input, KanbanBoard, type KanbanColumn
+	Badge,
+	Bone,
+	Button,
+	Input,
+	KanbanBoard,
+	type KanbanColumn,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -49,11 +55,33 @@ export function DealKanban() {
 		onError: () => toast.error(t`Failed to update stage`),
 	});
 
-	const updateDeal = useUpdateDeal({
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
-		},
-		onError: () => toast.error("Failed to move deal"),
+	// A drag paints the new column assignment immediately; the API call and
+	// the version guard (409 on a lost race) happen in the background, and a
+	// rejected move snaps the deal back to its original column.
+	const moveDeal = useOptimisticMutation<
+		DealResponse,
+		{ items: DealResponse[]; total: number } | undefined,
+		{ id: string; newStageId: string; version: number }
+	>({
+		listQueryKey: ["cinq", "deals", { limit: 1000 }],
+		mutationFn: ({ id, newStageId, version }) =>
+			updateDealApi(id, { pipeline_stage_id: newStageId }, version),
+		optimisticUpdate: (old, vars) =>
+			old
+				? {
+						...old,
+						items: old.items.map((deal) =>
+							deal.id === vars.id
+								? {
+										...deal,
+										pipeline_stage_id: vars.newStageId,
+										version: vars.version + 1,
+									}
+								: deal,
+						),
+					}
+				: old,
+		onError: () => toast.error(t`Failed to move deal`),
 	});
 
 	const [editingStageId, setEditingStageId] = useState<string | null>(null);
@@ -96,13 +124,17 @@ export function DealKanban() {
 		const movedDeals = newColumns.flatMap((col) =>
 			col.items
 				.filter((d: DealResponse) => d.pipeline_stage_id !== col.id)
-				.map((d: DealResponse) => ({ dealId: d.id, newStageId: col.id, version: d.version })),
+				.map((d: DealResponse) => ({
+					dealId: d.id,
+					newStageId: col.id,
+					version: d.version,
+				})),
 		);
 		if (movedDeals.length > 0) {
 			movedDeals.forEach(({ dealId, newStageId, version }) => {
 				const originalStage = originalStageByDeal.get(dealId);
 				if (originalStage !== newStageId) {
-					updateDeal.mutate({ id: dealId, data: { pipeline_stage_id: newStageId }, version });
+					moveDeal.mutate({ id: dealId, newStageId, version });
 				}
 			});
 			toast.success("Deal moved");
@@ -111,8 +143,8 @@ export function DealKanban() {
 
 	const renderItem = (deal: DealResponse) => (
 		<div
-			className="relative p-3 bg-deep-night/50 border border-gray-700/40 rounded-lg cursor-pointer hover:border-amber/50 transition-colors"
-			onClick={() => navigate({ to: `/cinq/cinq/deals/${deal.id}` })}
+			className="relative p-3 bg-deep-night/50 border border-border/40 rounded-lg cursor-pointer hover:border-amber/50 transition-colors"
+			onClick={() => navigate({ to: `/cinq/deals/${deal.id}` })}
 			data-tour="deal-card"
 		>
 			<div className="font-medium">{deal.title}</div>
@@ -128,7 +160,7 @@ export function DealKanban() {
 			<button
 				type="button"
 				aria-label="Delete deal"
-				className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+				className="absolute top-2 right-2 text-destructive hover:text-destructive"
 				onClick={(e) => {
 					e.stopPropagation();
 					deleteDeal.mutate(deal.id);
@@ -178,7 +210,7 @@ export function DealKanban() {
 								<Button
 									size="sm"
 									variant="ghost"
-									className="h-7 px-2 text-red-400 hover:text-red-300"
+									className="h-7 px-2 text-destructive hover:text-destructive"
 									onClick={() => deleteStage.mutate(stage.id)}
 									disabled={deleteStage.isPending}
 								>

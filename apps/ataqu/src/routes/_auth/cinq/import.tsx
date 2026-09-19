@@ -1,6 +1,4 @@
-import {
- DashboardLayout 
-} from "@ataqu/ui";
+import { DashboardLayout } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { CsvImport } from "../../../apps/cinq/components/csv-import";

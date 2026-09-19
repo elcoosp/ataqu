@@ -1,8 +1,6 @@
 import { useGetContactTracking, useTrackEmail } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import {
- Badge, Bone, Button 
-} from "@ataqu/ui";
+import { Badge, Bone, Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -70,7 +68,7 @@ export function EmailTrackingTab({ contactId }: { contactId: UUID }) {
 			</div>
 			<div className="overflow-x-auto">
 				<table className="w-full text-sm">
-					<thead className="border-b border-gray-700">
+					<thead className="border-b border-border">
 						<tr>
 							<th className="text-left py-2 px-3">
 								<Trans>Event</Trans>
@@ -85,7 +83,7 @@ export function EmailTrackingTab({ contactId }: { contactId: UUID }) {
 					</thead>
 					<tbody>
 						{events.map((e) => (
-							<tr key={e.id} className="border-b border-gray-700/50">
+							<tr key={e.id} className="border-b border-border/50">
 								<td className="py-2 px-3">{e.event_type}</td>
 								<td className="py-2 px-3">
 									{format(new Date(e.created_at), "PPp")}

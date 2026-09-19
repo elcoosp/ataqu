@@ -1,9 +1,10 @@
-import {
-	useGetContact,
-	useListContactTasks,
-	useUpdateContact,
-} from "@ataqu/api-client";
+import { useGetContact, useListContactTasks, useUpdateContact } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
+import {
+	enumSearch,
+	searchSchema,
+	useUrlState,
+} from "@ataqu/shared-hooks";
 import {
 	Bone,
 	Button,
@@ -44,7 +45,7 @@ function ContactTasks({ contactId }: { contactId: string }) {
 	if (!tasks || tasks.length === 0)
 		return (
 			<p className="text-sm text-muted-foreground">
-				No tasks for this contact.
+				<Trans>No tasks for this contact.</Trans>
 			</p>
 		);
 
@@ -70,7 +71,12 @@ function ContactTasks({ contactId }: { contactId: string }) {
 	);
 }
 
+const CONTACT_TABS = ["activities", "tasks", "customFields", "tracking"] as const;
+
 export const Route = createFileRoute("/_auth/cinq/contacts/$id")({
+	validateSearch: searchSchema({
+		tab: enumSearch(CONTACT_TABS, "activities"),
+	}),
 	component: ContactDetail,
 });
 
@@ -84,6 +90,16 @@ function ContactDetail() {
 
 	const [editing, setEditing] = useState(false);
 	const [openActivity, setOpenActivity] = useState(false);
+
+	const search = Route.useSearch();
+	const [tab, setTab] = useUrlState({
+		search,
+		setSearch: (next) => Route.useNavigate()({ search: next as never }),
+		key: "tab",
+		default: "activities",
+		parse: enumSearch(CONTACT_TABS, "activities"),
+		serialize: (v) => (v === "activities" ? undefined : v),
+	});
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [phone, setPhone] = useState("");
@@ -183,7 +199,7 @@ function ContactDetail() {
 				</div>
 			)}
 
-			<Tabs defaultValue="activities" className="mt-4">
+			<Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="mt-4">
 				<TabsList>
 					<TabsTrigger value="activities">
 						<Trans>Activities</Trans>

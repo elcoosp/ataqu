@@ -64,7 +64,8 @@ export function ActivityTimeline({ dealId }: { dealId: UUID }) {
 		() =>
 			(data?.items ?? []).filter(
 				(a: ActivityResponse) =>
-					a.deal_id === dealId && (typeFilter === "all" || a.activity_type === typeFilter),
+					a.deal_id === dealId &&
+					(typeFilter === "all" || a.activity_type === typeFilter),
 			),
 		[data, dealId, typeFilter],
 	);

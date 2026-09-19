@@ -3,9 +3,8 @@ import {
 	useSearchByCustomField,
 	useSearchCustomFieldsCross,
 } from "@ataqu/api-client";
-import {
- Bone, Button, DashboardLayout, Input, Label 
-} from "@ataqu/ui";
+import { useUrlSearchParam } from "@ataqu/shared-hooks";
+import { Bone, Button, DashboardLayout, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
@@ -14,6 +13,11 @@ import { ContactTable } from "../../../../apps/cinq/components/contact-table";
 import { CreateContactDialog } from "../../../../apps/cinq/components/create-contact-dialog";
 
 export const Route = createFileRoute("/_auth/cinq/contacts/")({
+	// NOTE: intentionally NO `validateSearch` here. Declaring one makes the
+	// route's search schema non-empty, which forces `search` to become a
+	// required prop on every Link/navigate to this route. The URL keys below
+	// are read tolerantly via `useUrlSearchParam` instead (unknown values
+	// fall back to ""), so untyped entry points keep compiling.
 	component: ContactsIndex,
 });
 
@@ -21,9 +25,11 @@ type ContactItem = { id: string; name?: string; email?: string };
 
 function ContactsIndex() {
 	const [openCreate, setOpenCreate] = useState(false);
-	const [field, setField] = useState("");
-	const [value, setValue] = useState("");
-	const [crossQuery, setCrossQuery] = useState("");
+	// Custom-field searches live in the URL so a filtered view is
+	// shareable and survives reload.
+	const [field, setField] = useUrlSearchParam("field", { default: "" });
+	const [value, setValue] = useUrlSearchParam("value", { default: "" });
+	const [crossQuery, setCrossQuery] = useUrlSearchParam("q", { default: "" });
 
 	const fieldSearch = useSearchByCustomField(field, value, {
 		enabled: field.trim().length > 0 && value.trim().length > 0,

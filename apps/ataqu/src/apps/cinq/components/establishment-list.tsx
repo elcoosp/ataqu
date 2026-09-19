@@ -2,9 +2,7 @@ import {
 	useCreateEstablishment,
 	useListEstablishments,
 } from "@ataqu/api-client";
-import {
- Bone, Button, Card, EmptyState, Input, Label 
-} from "@ataqu/ui";
+import { Bone, Button, Card, EmptyState, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";

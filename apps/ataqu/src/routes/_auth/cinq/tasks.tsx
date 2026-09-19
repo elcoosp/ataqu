@@ -1,6 +1,4 @@
-import {
- Button, DashboardLayout 
-} from "@ataqu/ui";
+import { Button, DashboardLayout } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";

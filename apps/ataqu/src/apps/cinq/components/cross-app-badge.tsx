@@ -1,8 +1,6 @@
 import { getCrossAppView } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import {
- Badge, Bone 
-} from "@ataqu/ui";
+import { Badge, Bone } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 

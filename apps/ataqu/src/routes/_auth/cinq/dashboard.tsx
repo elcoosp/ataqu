@@ -25,6 +25,7 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
+import { navigate } from "../../../lib/navigation";
 
 export const Route = createFileRoute("/_auth/cinq/dashboard")({
 	component: CinqDashboard,
@@ -55,7 +56,7 @@ export function MetricCard({
 						{sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
 					</div>
 					<div
-						className={`rounded-full p-2.5 ${color ?? "bg-amber-500/10 text-amber-400"}`}
+						className={`rounded-full p-2.5 ${color ?? "bg-amber/10 text-amber"}`}
 					>
 						<Icon className="h-4 w-4" />
 					</div>
@@ -86,12 +87,12 @@ function DealRow({
 }) {
 	const s =
 		deal.status === "won"
-			? "bg-emerald-500/15 text-emerald-400"
+			? "bg-success/15 text-success"
 			: deal.status === "lost"
-				? "bg-red-500/15 text-red-400"
-				: "bg-amber-500/15 text-amber-400";
+				? "bg-destructive/15 text-destructive"
+				: "bg-amber/15 text-amber";
 	return (
-		<Link to="/cinq/deals/$id" params={{ id: deal.id }} className="block">
+		<Link to="/cinq/deals/$id" params={{ id: deal.id }} search={{ tab: "activities" }} className="block">
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-start justify-between">
@@ -134,12 +135,12 @@ function ContactRow({
 	};
 }) {
 	return (
-		<Link to="/cinq/contacts/$id" params={{ id: contact.id }} className="block">
+		<Link to="/cinq/contacts/$id" params={{ id: contact.id }} search={{ tab: "activities" }} className="block">
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-center gap-3">
-						<div className="w-9 h-9 rounded-full bg-amber-500/15 flex items-center justify-center">
-							<Users className="h-4 w-4 text-amber-400" />
+						<div className="w-9 h-9 rounded-full bg-amber/15 flex items-center justify-center">
+							<Users className="h-4 w-4 text-amber" />
 						</div>
 						<div className="flex-1 min-w-0">
 							<h4 className="text-sm font-semibold text-white truncate">
@@ -178,18 +179,18 @@ function ActivityRow({
 }) {
 	const cls =
 		{
-			call: "bg-emerald-500/10 text-emerald-400",
-			email: "bg-blue-500/10 text-blue-400",
-			meeting: "bg-purple-500/10 text-purple-400",
-			task: "bg-amber-500/10 text-amber-400",
-			note: "bg-gray-500/10 text-gray-400",
-		}[a.activity_type] ?? "bg-gray-500/10 text-gray-400";
+			call: "bg-success/10 text-success",
+			email: "bg-info/10 text-info",
+			meeting: "bg-info/10 text-info",
+			task: "bg-amber/10 text-amber",
+			note: "bg-muted/10 text-muted-foreground",
+		}[a.activity_type] ?? "bg-muted/10 text-muted-foreground";
 	const I =
 		{ call: Search, email: Search, meeting: Clock, task: Plus, note: Clock }[
 			a.activity_type
 		] ?? Clock;
 	return (
-		<div className="flex items-center gap-3 py-2.5 border-b border-gray-700/30 last:border-0">
+		<div className="flex items-center gap-3 py-2.5 border-b border-border/30 last:border-0">
 			<div
 				className={`w-8 h-8 rounded-full flex items-center justify-center ${cls}`}
 			>
@@ -206,8 +207,8 @@ function ActivityRow({
 			</div>
 			<Link
 				to="/cinq/contacts/$id"
-				params={{ id: a.id }}
-				className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+				params={{ id: a.id }} search={{ tab: "activities" }}
+				className="text-xs text-amber hover:text-amber flex items-center gap-1"
 			>
 				View
 			</Link>
@@ -298,7 +299,7 @@ function CinqDashboard() {
 					value={fmtMoney(totalVal)}
 					sub={`${deals.length} deals in pipeline`}
 					icon={DollarSign}
-					color="bg-emerald-500/10 text-emerald-400"
+					color="bg-success/10 text-success"
 				/>
 				<MetricCard
 					label={t`Won Revenue`}
@@ -309,7 +310,7 @@ function CinqDashboard() {
 							: undefined
 					}
 					icon={TrendingUp}
-					color="bg-blue-500/10 text-blue-400"
+					color="bg-info/10 text-info"
 				/>
 				<MetricCard
 					label={t`Open Deals`}
@@ -322,7 +323,7 @@ function CinqDashboard() {
 					value={deals.length > 0 ? Math.round((wonVal / totalVal) * 100) : 0}
 					sub={t`% of pipeline won`}
 					icon={TrendingUp}
-					color="bg-purple-500/10 text-purple-400"
+					color="bg-info/10 text-info"
 				/>
 			</div>
 
@@ -336,7 +337,7 @@ function CinqDashboard() {
 							</CardTitle>
 							<Link
 								to="/cinq/deals"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>
@@ -363,7 +364,7 @@ function CinqDashboard() {
 								icon={DollarSign}
 								action={t`Create Deal`}
 								onClick={() => {
-									window.location.href = "/cinq/deals";
+									navigate("/cinq/deals");
 								}}
 							/>
 						) : (
@@ -380,7 +381,7 @@ function CinqDashboard() {
 							</CardTitle>
 							<Link
 								to="/cinq/contacts"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>
@@ -407,7 +408,7 @@ function CinqDashboard() {
 								icon={Users}
 								action={t`Add Contact`}
 								onClick={() => {
-									window.location.href = "/cinq/contacts";
+									navigate("/cinq/contacts");
 								}}
 							/>
 						) : (
@@ -450,7 +451,7 @@ function CinqDashboard() {
 						</CardTitle>
 						<Link
 							to="/cinq/tasks"
-							className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+							className="text-xs text-amber hover:text-amber flex items-center gap-1"
 						>
 							View all <ArrowRight className="h-3 w-3" />
 						</Link>
