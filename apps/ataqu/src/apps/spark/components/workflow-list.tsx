@@ -1,14 +1,11 @@
 import type { Workflow } from "@ataqu/api-client";
-import {
- Button 
-} from "@ataqu/ui";
+import { Button, EmptyState } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { Link } from "@tanstack/react-router";
 import { Play, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useToggleWorkflow } from "../api/spark-api";
-import { EmptyState } from "./empty-state";
 import { Switch } from "./ui-switch";
 
 interface WorkflowListProps {

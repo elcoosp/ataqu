@@ -1,6 +1,4 @@
-import {
- Button, Input, Label, LoadingButton, ShowMore 
-} from "@ataqu/ui";
+import { Button, Input, Label, LoadingButton, ShowMore } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type { Node } from "@xyflow/react";
 import { X } from "lucide-react";

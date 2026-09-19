@@ -1,6 +1,4 @@
-import {
- Button, Label 
-} from "@ataqu/ui";
+import { Button, Label } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { CheckCircle2, Play, X, XCircle } from "lucide-react";
@@ -76,7 +74,7 @@ export function TestRunModal({ workflowId, onClose }: TestRunModalProps) {
 							spellCheck={false}
 						/>
 						{jsonError && (
-							<p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+							<p className="text-xs text-destructive mt-1 flex items-center gap-1">
 								<XCircle className="h-3 w-3" />
 								{jsonError}
 							</p>
@@ -84,14 +82,14 @@ export function TestRunModal({ workflowId, onClose }: TestRunModalProps) {
 					</div>
 
 					{executeMutation.isSuccess && (
-						<div className="p-3 rounded-md bg-green-500/20 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
+						<div className="p-3 rounded-md bg-success/20 border border-success/30 text-success text-sm flex items-center gap-2">
 							<CheckCircle2 className="h-4 w-4" />
 							<Trans>Test run completed successfully.</Trans>
 						</div>
 					)}
 
 					{executeMutation.isError && (
-						<div className="p-3 rounded-md bg-red-500/20 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+						<div className="p-3 rounded-md bg-destructive/20 border border-destructive/30 text-destructive text-sm flex items-center gap-2">
 							<XCircle className="h-4 w-4" />
 							<Trans>
 								Test run failed. Check the execution history for details.

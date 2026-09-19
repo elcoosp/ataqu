@@ -33,9 +33,9 @@ function TriggerNode({ data }: { data: SparkNodeData }) {
 			<Handle
 				type="source"
 				position={Position.Bottom}
-				className="!bg-green-500 !w-3 !h-3"
+				className="!bg-success !w-3 !h-3"
 			/>
-			<div className="text-xs font-semibold text-green-500 uppercase tracking-wider mb-1">
+			<div className="text-xs font-semibold text-success uppercase tracking-wider mb-1">
 				{data.subtype}
 			</div>
 			<div className="font-medium text-foreground text-sm">{data.label}</div>
@@ -54,14 +54,14 @@ function ActionNode({ data }: { data: SparkNodeData }) {
 			<Handle
 				type="target"
 				position={Position.Top}
-				className="!bg-blue-500 !w-3 !h-3"
+				className="!bg-info !w-3 !h-3"
 			/>
 			<Handle
 				type="source"
 				position={Position.Bottom}
-				className="!bg-blue-500 !w-3 !h-3"
+				className="!bg-info !w-3 !h-3"
 			/>
-			<div className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-1">
+			<div className="text-xs font-semibold text-info uppercase tracking-wider mb-1">
 				{data.subtype}
 			</div>
 			<div className="font-medium text-foreground text-sm">{data.label}</div>
@@ -80,23 +80,23 @@ function ConditionNode({ data }: { data: SparkNodeData }) {
 			<Handle
 				type="target"
 				position={Position.Top}
-				className="!bg-amber-500 !w-3 !h-3"
+				className="!bg-amber !w-3 !h-3"
 			/>
 			<Handle
 				type="source"
 				position={Position.Bottom}
-				className="!bg-amber-500 !w-3 !h-3"
+				className="!bg-amber !w-3 !h-3"
 				id="true"
 				style={{ left: "30%" }}
 			/>
 			<Handle
 				type="source"
 				position={Position.Bottom}
-				className="!bg-red-500 !w-3 !h-3"
+				className="!bg-destructive !w-3 !h-3"
 				id="false"
 				style={{ left: "70%" }}
 			/>
-			<div className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-1">
+			<div className="text-xs font-semibold text-amber uppercase tracking-wider mb-1">
 				{data.subtype}
 			</div>
 			<div className="font-medium text-foreground text-sm">{data.label}</div>
@@ -106,8 +106,8 @@ function ConditionNode({ data }: { data: SparkNodeData }) {
 				</div>
 			)}
 			<div className="flex gap-4 mt-2 text-xs">
-				<span className="text-green-500">✓ True</span>
-				<span className="text-red-500">✗ False</span>
+				<span className="text-success">✓ True</span>
+				<span className="text-destructive">✗ False</span>
 			</div>
 		</div>
 	);
@@ -145,7 +145,7 @@ export function WorkflowCanvas({
 					{
 						...params,
 						animated: true,
-						style: { stroke: "#F59E0B", strokeWidth: 2 },
+						style: { stroke: "var(--amber)", strokeWidth: 2 },
 					},
 					eds,
 				),

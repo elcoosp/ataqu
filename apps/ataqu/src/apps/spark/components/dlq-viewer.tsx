@@ -1,6 +1,4 @@
-import {
- Bone, Button 
-} from "@ataqu/ui";
+import { Bone, Button, EmptyState } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { AlertTriangle, RotateCcw, Trash2 } from "lucide-react";
@@ -8,7 +6,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { DLQEntry } from "../api/spark-api";
 import { useDeleteDLQ, useReplayDLQ } from "../api/spark-api";
-import { EmptyState } from "./empty-state";
 
 interface DLQViewerProps {
 	entries: DLQEntry[];
@@ -57,7 +54,7 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
 					<div className="flex items-start justify-between gap-4">
 						<div className="flex-1 min-w-0">
 							<div className="flex items-center gap-2 mb-2">
-								<span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
+								<span className="px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/20 text-destructive border border-destructive/30">
 									<Trans>Failed</Trans>
 								</span>
 								<span className="text-xs font-mono text-muted-foreground">
@@ -72,7 +69,7 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
 								<label className="text-xs text-muted-foreground block mb-0.5">
 									<Trans>Error</Trans>
 								</label>
-								<p className="text-sm text-red-400 font-mono break-all">
+								<p className="text-sm text-destructive font-mono break-all">
 									{entry.error}
 								</p>
 							</div>

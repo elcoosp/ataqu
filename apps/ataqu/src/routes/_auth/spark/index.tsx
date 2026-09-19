@@ -1,6 +1,4 @@
-import {
- Bone, Button 
-} from "@ataqu/ui";
+import { Bone, Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";

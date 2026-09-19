@@ -24,6 +24,7 @@ import {
 	useListWorkflowRuns,
 	useListWorkflows,
 } from "../../../apps/spark/api/spark-api";
+import { navigate } from "../../../lib/navigation";
 
 export const Route = createFileRoute("/_auth/spark/dashboard")({
 	component: SparkDashboard,
@@ -42,7 +43,7 @@ export function MetricCard({
 	icon: React.ElementType;
 	color?: string;
 }) {
-	const bg = color ?? "bg-amber-500/10 text-amber-400";
+	const bg = color ?? "bg-amber/10 text-amber";
 	return (
 		<Card className="overflow-hidden">
 			<div className="p-5">
@@ -99,10 +100,10 @@ function RunRow({
 }) {
 	const s =
 		r.status === "completed"
-			? "bg-emerald-500/15 text-emerald-400"
+			? "bg-success/15 text-success"
 			: r.status === "failed"
-				? "bg-red-500/15 text-red-400"
-				: "bg-amber-500/15 text-amber-400";
+				? "bg-destructive/15 text-destructive"
+				: "bg-amber/15 text-amber";
 	const I =
 		r.status === "completed"
 			? CheckCircle
@@ -111,7 +112,7 @@ function RunRow({
 				: RefreshCw;
 	const bg2 = `text-xs px-1.5 py-0.5 rounded-full ${s}`;
 	return (
-		<div className="flex items-center justify-between py-2.5 border-b border-gray-700/30 last:border-0">
+		<div className="flex items-center justify-between py-2.5 border-b border-border/30 last:border-0">
 			<div className="flex items-center gap-3">
 				<div
 					className={`w-8 h-8 rounded-full flex items-center justify-center ${s}`}
@@ -171,16 +172,14 @@ function SparkDashboard() {
 			: 100;
 	const col1 =
 		activeWfs > 0
-			? "bg-emerald-500/10 text-emerald-400"
-			: "bg-gray-500/10 text-gray-400";
+			? "bg-success/10 text-success"
+			: "bg-muted/10 text-muted-foreground";
 	const col2 =
-		okRate >= 90
-			? "bg-emerald-500/10 text-emerald-400"
-			: "bg-amber-500/10 text-amber-400";
+		okRate >= 90 ? "bg-success/10 text-success" : "bg-amber/10 text-amber";
 	const col3 =
 		failedRuns > 0
-			? "bg-red-500/10 text-red-400"
-			: "bg-gray-500/10 text-gray-400";
+			? "bg-destructive/10 text-destructive"
+			: "bg-muted/10 text-muted-foreground";
 	return (
 		<div className="space-y-8">
 			<div className="flex items-center justify-between">
@@ -237,21 +236,22 @@ function SparkDashboard() {
 				/>
 			</div>
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<Card className="overflow-hidden">
-					<CardHeader className="pb-3">
-						<div className="flex items-center justify-between">
-							<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
-								<Play className="h-4 w-4 text-amber" />
-								<Trans>Workflows</Trans>
-							</CardTitle>
-							<Link
-								to="/spark"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
-							>
-								View all <ArrowRight className="h-3 w-3" />
-							</Link>
-						</div>
-					</CardHeader>
+			<Card className="overflow-hidden">
+				<CardHeader className="pb-3">
+					<div className="flex items-center justify-between">
+						<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+							<Terminal className="h-4 w-4 text-amber" />
+							<Trans>Recent Runs</Trans>
+						</CardTitle>
+						<Link
+							to="/spark/runs"
+							search={{ runId: "" }}
+							className="text-xs text-amber hover:text-amber flex items-center gap-1"
+						>
+							View all <ArrowRight className="h-3 w-3" />
+						</Link>
+					</div>
+				</CardHeader>
 					<CardContent>
 						{wfL ? (
 							<div className="space-y-2">
@@ -273,7 +273,7 @@ function SparkDashboard() {
 								icon={Play}
 								action={t`Create Workflow`}
 								onClick={() => {
-									window.location.href = "/spark/workflows/new";
+									navigate("/spark/workflows/new");
 								}}
 							/>
 						) : (
@@ -288,14 +288,15 @@ function SparkDashboard() {
 								<Terminal className="h-4 w-4 text-amber" />
 								<Trans>Recent Runs</Trans>
 							</CardTitle>
-							<Link
-								to="/spark/runs"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
-							>
-								View all <ArrowRight className="h-3 w-3" />
-							</Link>
-						</div>
-					</CardHeader>
+						<Link
+							to="/spark/runs"
+							search={{ runId: "" }}
+							className="text-xs text-amber hover:text-amber flex items-center gap-1"
+						>
+							View all <ArrowRight className="h-3 w-3" />
+						</Link>
+					</div>
+				</CardHeader>
 					<CardContent>
 						{rL ? (
 							<div className="space-y-2">

@@ -5,9 +5,7 @@ import type {
 	Trigger,
 	Workflow,
 } from "@ataqu/api-client";
-import {
- Button, Input, OnboardTour 
-} from "@ataqu/ui";
+import { Button, Input, OnboardTour } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -24,7 +22,10 @@ import {
 import { NodeConfigPanel } from "../../../../apps/spark/components/node-config-panel";
 import { NodeSidebar } from "../../../../apps/spark/components/node-sidebar";
 import { TestRunModal } from "../../../../apps/spark/components/test-run-modal";
-import { type SparkNode, WorkflowCanvas } from "../../../../apps/spark/components/workflow-canvas";
+import {
+	type SparkNode,
+	WorkflowCanvas,
+} from "../../../../apps/spark/components/workflow-canvas";
 
 export const Route = createFileRoute("/_auth/spark/workflows/$id")({
 	component: WorkflowDetail,
@@ -120,7 +121,7 @@ function workflowToEdges(wf: Workflow): Edge[] {
 			source: sourceId,
 			target: targetId,
 			animated: true,
-			style: { stroke: "#F59E0B", strokeWidth: 2 },
+			style: { stroke: "var(--amber)", strokeWidth: 2 },
 		});
 	}
 	return edges;

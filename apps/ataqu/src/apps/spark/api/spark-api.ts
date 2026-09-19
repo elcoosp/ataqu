@@ -42,47 +42,53 @@ export interface DLQEntry {
 }
 
 // ---- Raw API functions ----
+const SPARK = "/spark";
 export const listWorkflows = (params?: WorkflowListParams) =>
-	api.get<PaginatedResponse<Workflow>>("/workflows", { params });
+	api.get<PaginatedResponse<Workflow>>(`${SPARK}/workflows`, { params });
 
 export const createWorkflow = (data: CreateWorkflowRequest) =>
-	api.post<Workflow>("/workflows", data);
+	api.post<Workflow>(`${SPARK}/workflows`, data);
 
-export const getWorkflow = (id: UUID) => api.get<Workflow>(`/workflows/${id}`);
+export const getWorkflow = (id: UUID) =>
+	api.get<Workflow>(`${SPARK}/workflows/${id}`);
 
 export const updateWorkflow = (
 	id: UUID,
 	data: UpdateWorkflowRequest,
 	version: number,
 ) =>
-	api.put<Workflow>(`/workflows/${id}`, data, {
+	api.put<Workflow>(`${SPARK}/workflows/${id}`, data, {
 		headers: { "If-Match": `"${version}"` },
 	});
 
 export const deleteWorkflow = (id: UUID) =>
-	api.delete<void>(`/workflows/${id}`);
+	api.delete<void>(`${SPARK}/workflows/${id}`);
 
 export const executeWorkflow = (id: UUID, data: TriggerWorkflowRequest) =>
-	api.post<void>(`/workflows/${id}/execute`, data);
+	api.post<void>(`${SPARK}/workflows/${id}/execute`, data);
 
 export const listWorkflowRuns = (params?: {
 	limit?: number;
 	offset?: number;
 	workflow_id?: UUID;
-}) => api.get<PaginatedResponse<WorkflowRun>>("/workflows/runs", { params });
+}) =>
+	api.get<PaginatedResponse<WorkflowRun>>(`${SPARK}/workflows/runs`, {
+		params,
+	});
 
 export const getWorkflowRun = (runId: UUID) =>
-	api.get<WorkflowRun>(`/workflows/runs/${runId}`);
+	api.get<WorkflowRun>(`${SPARK}/workflows/runs/${runId}`);
 
 export const approveWorkflowRun = (runId: UUID) =>
-	api.post<void>(`/workflows/runs/${runId}/approve`);
+	api.post<void>(`${SPARK}/workflows/runs/${runId}/approve`);
 
 export const listDLQ = (params?: { limit?: number; offset?: number }) =>
-	api.get<PaginatedResponse<DLQEntry>>("/dlq", { params });
+	api.get<PaginatedResponse<DLQEntry>>(`${SPARK}/dlq`, { params });
 
-export const replayDLQ = (id: UUID) => api.post<void>(`/dlq/${id}/replay`);
+export const replayDLQ = (id: UUID) =>
+	api.post<void>(`${SPARK}/dlq/${id}/replay`);
 
-export const deleteDLQ = (id: UUID) => api.delete<void>(`/dlq/${id}`);
+export const deleteDLQ = (id: UUID) => api.delete<void>(`${SPARK}/dlq/${id}`);
 
 // ---- React Query hooks ----
 

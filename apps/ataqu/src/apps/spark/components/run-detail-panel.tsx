@@ -1,7 +1,5 @@
 import type { WorkflowRun } from "@ataqu/api-client";
-import {
- Button 
-} from "@ataqu/ui";
+import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { X } from "lucide-react";
 

@@ -1,13 +1,10 @@
 import type { WorkflowRun } from "@ataqu/api-client";
-import {
- Bone, Button 
-} from "@ataqu/ui";
+import { Bone, Button, EmptyState } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { ChevronRight, History } from "lucide-react";
 import { toast } from "sonner";
 import { useApproveWorkflowRun } from "../api/spark-api";
-import { EmptyState } from "./empty-state";
 
 interface ExecutionHistoryProps {
 	runs: WorkflowRun[];
@@ -16,12 +13,12 @@ interface ExecutionHistoryProps {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-	completed: "bg-green-500/20 text-green-400 border-green-500/30",
-	failed: "bg-red-500/20 text-red-400 border-red-500/30",
-	running: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-	pending_approval: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-	approved: "bg-green-500/20 text-green-400 border-green-500/30",
-	rejected: "bg-red-500/20 text-red-400 border-red-500/30",
+	completed: "bg-success/20 text-success border-success/30",
+	failed: "bg-destructive/20 text-destructive border-destructive/30",
+	running: "bg-info/20 text-info border-info/30",
+	pending_approval: "bg-amber/20 text-amber border-amber/30",
+	approved: "bg-success/20 text-success border-success/30",
+	rejected: "bg-destructive/20 text-destructive border-destructive/30",
 };
 
 const STATUS_LABELS: Record<string, React.ReactNode> = {

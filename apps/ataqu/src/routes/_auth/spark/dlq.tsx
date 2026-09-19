@@ -1,6 +1,4 @@
-import {
- Badge 
-} from "@ataqu/ui";
+import { Badge } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { useListDLQ } from "../../../apps/spark/api/spark-api";

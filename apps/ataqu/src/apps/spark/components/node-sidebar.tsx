@@ -170,7 +170,7 @@ export function NodeSidebar() {
 			</h2>
 
 			<div className="mb-6">
-				<h3 className="text-xs font-semibold text-green-500 uppercase tracking-wider mb-2">
+				<h3 className="text-xs font-semibold text-success uppercase tracking-wider mb-2">
 					<Trans>Triggers</Trans>
 				</h3>
 				<div className="space-y-1.5">
@@ -189,7 +189,7 @@ export function NodeSidebar() {
 			</div>
 
 			<div className="mb-6">
-				<h3 className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2">
+				<h3 className="text-xs font-semibold text-info uppercase tracking-wider mb-2">
 					<Trans>Actions</Trans>
 				</h3>
 				<div className="space-y-1.5">
@@ -208,7 +208,7 @@ export function NodeSidebar() {
 			</div>
 
 			<div>
-				<h3 className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-2">
+				<h3 className="text-xs font-semibold text-amber uppercase tracking-wider mb-2">
 					<Trans>Conditions</Trans>
 				</h3>
 				<div className="space-y-1.5">
