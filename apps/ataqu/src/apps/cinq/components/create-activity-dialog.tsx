@@ -82,63 +82,75 @@ export function CreateActivityDialog({
 					fallback={<div className="h-40 w-full rounded bg-white/5" />}
 				>
 					<div className="space-y-3">
-						<div>
-							<Label>
-								<Trans>Contact</Trans>
-							</Label>
-							<Select value={contactId} onValueChange={setContactId}>
-								<SelectTrigger>
-									<SelectValue placeholder="Select contact" />
-								</SelectTrigger>
-								<SelectContent>
-									{(contacts || []).map((c) => (
-										<SelectItem key={c.id} value={c.id}>
-											{c.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<div>
-							<Label>
-								<Trans>Type</Trans>
-							</Label>
-							<Select
-								value={activityType}
-								onValueChange={(v) =>
-									setActivityType(v as (typeof ACTIVITY_TYPES)[number])
-								}
-							>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{ACTIVITY_TYPES.map((t) => (
-										<SelectItem key={t} value={t}>
-											{t}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<div>
-							<Label>
-								<Trans>Description</Trans>
-							</Label>
-							<Input
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								placeholder="Discussed renewal"
-							/>
-						</div>
-						<div className="flex justify-end gap-2 pt-2">
-							<Button variant="outline" onClick={() => onOpenChange(false)}>
-								<Trans>Cancel</Trans>
-							</Button>
-							<Button onClick={handleSubmit} disabled={submitting}>
-								<Trans>Log</Trans>
-							</Button>
-						</div>
+						<form
+							className="contents"
+							onSubmit={(e) => {
+								e.preventDefault();
+								handleSubmit();
+							}}
+						>
+							<div>
+								<Label>
+									<Trans>Contact</Trans>
+								</Label>
+								<Select value={contactId} onValueChange={setContactId}>
+									<SelectTrigger>
+										<SelectValue placeholder="Select contact" />
+									</SelectTrigger>
+									<SelectContent>
+										{(contacts || []).map((c) => (
+											<SelectItem key={c.id} value={c.id}>
+												{c.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+							<div>
+								<Label>
+									<Trans>Type</Trans>
+								</Label>
+								<Select
+									value={activityType}
+									onValueChange={(v) =>
+										setActivityType(v as (typeof ACTIVITY_TYPES)[number])
+									}
+								>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{ACTIVITY_TYPES.map((t) => (
+											<SelectItem key={t} value={t}>
+												{t}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+							<div>
+								<Label>
+									<Trans>Description</Trans>
+								</Label>
+								<Input
+									value={description}
+									onChange={(e) => setDescription(e.target.value)}
+									placeholder="Discussed renewal"
+								/>
+							</div>
+							<div className="flex justify-end gap-2 pt-2">
+								<Button
+									variant="outline"
+									type="button"
+									onClick={() => onOpenChange(false)}
+								>
+									<Trans>Cancel</Trans>
+								</Button>
+								<Button type="submit" disabled={submitting}>
+									<Trans>Log</Trans>
+								</Button>
+							</div>
+						</form>
 					</div>
 				</Bone>
 			</DialogContent>
