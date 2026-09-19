@@ -4,7 +4,7 @@ import {
 	useGetDatabaseRows,
 	useUpdateDatabaseRow,
 } from "@ataqu/api-client";
-
+import { intSearch, useUrlSearchParam } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, ExpandingSearch, Input, Pagination } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
@@ -32,10 +32,30 @@ export function DatabaseGrid({
 		rowId: string;
 		col: string;
 	} | null>(null);
-	const [sortField, setSortField] = useState<string | null>(null);
-	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-	const [filterText, setFilterText] = useState("");
-	const [page, setPage] = useState(1);
+	// Sort, filter, and page live in the URL so a scrolled/sorted grid is
+	// shareable and survives reload (brainstorm P1-3). The in-flight cell
+	// editor above stays session-only — it is a transient editing affordance.
+	const [sortField, setSortField] = useUrlSearchParam<string | null>("sort", {
+		default: null,
+		parse: (raw) => (raw && raw.trim() !== "" ? raw : null),
+		serialize: (v) => v ?? undefined,
+	});
+	const [sortDirection, setSortDirection] = useUrlSearchParam<"asc" | "desc">(
+		"dir",
+		{
+			default: "asc",
+			parse: (raw) => (raw === "desc" ? "desc" : "asc"),
+			serialize: (v) => (v === "asc" ? undefined : v),
+		},
+	);
+	const [filterText, setFilterText] = useUrlSearchParam("filter", {
+		default: "",
+	});
+	const [page, setPage] = useUrlSearchParam("page", {
+		default: 1,
+		parse: intSearch(1, 1),
+		serialize: (v) => (v === 1 ? undefined : String(v)),
+	});
 	const PAGE_SIZE = 10;
 
 	const { data: rows = [], refetch, error } = useGetDatabaseRows(databaseId);
