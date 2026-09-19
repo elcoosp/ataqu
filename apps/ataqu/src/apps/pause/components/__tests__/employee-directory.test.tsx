@@ -40,9 +40,16 @@ vi.mock("@tanstack/react-router", () => ({
 	useNavigate: () => () => {},
 }));
 
-vi.mock("@ataqu/shared-hooks", () => ({
-	useDebounce: (v: string) => v,
-}));
+vi.mock("@ataqu/shared-hooks", async () => {
+	const React = await vi.importActual<typeof import("react")>("react");
+	return {
+		useDebounce: (v: string) => v,
+		// Minimal stand-in: the real hook reads/writes window.location, which
+		// the assertions here don't exercise.
+		useUrlSearchParam: <T,>(_key: string, opts: { default: T }) =>
+			React.useState<T>(opts.default),
+	};
+});
 
 vi.mock("@tanstack/react-query", () => ({
 	useQueryClient: () => ({
