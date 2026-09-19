@@ -1,3 +1,4 @@
+import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
 import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
@@ -8,11 +9,23 @@ import { RescheduleModal } from "../../../apps/tempo/components/reschedule-modal
 import { UpcomingMeetings } from "../../../apps/tempo/components/upcoming-meetings";
 
 export const Route = createFileRoute("/_auth/tempo/dashboard")({
+	validateSearch: searchSchema({
+		eventTypeForm: (raw: unknown) => raw === "1",
+	}),
 	component: Dashboard,
 });
 
 function Dashboard() {
-	const [showEventTypeForm, setShowEventTypeForm] = useState(false);
+	const search = Route.useSearch();
+	const navigate = Route.useNavigate();
+	const [showEventTypeForm, setShowEventTypeForm] = useUrlState({
+		search,
+		setSearch: (next) => navigate({ search: next as never }),
+		key: "eventTypeForm",
+		default: false,
+		parse: (raw: unknown) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(
 		null,
 	);
