@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import { searchEnriched, type UnifiedSearchResult } from "@ataqu/api-client";
-import { useDebounce } from "@ataqu/shared-hooks";
+import { useDebounce, useShortcut } from "@ataqu/shared-hooks";
 import { useAuthStore } from "@ataqu/shared-stores";
 import {
 	CommandDialog,
@@ -59,16 +59,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 	const { logout } = useAuthStore();
 	const appCommands = useAllCommands();
 
-	useEffect(() => {
-		const down = (e: KeyboardEvent) => {
-			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-				e.preventDefault();
-				setOpen((o) => !o);
-			}
-		};
-		document.addEventListener("keydown", down);
-		return () => document.removeEventListener("keydown", down);
-	}, []);
+	// mod+k toggles the palette via the shared keyboard engine (P2) instead of
+	// an ad-hoc document listener. Modifier chords fire even while typing in
+	// inputs, and Radix dialogs close on Escape natively.
+	useShortcut("mod+k", () => setOpen((o) => !o));
 
 	// Live unified search across all apps.
 	useEffect(() => {

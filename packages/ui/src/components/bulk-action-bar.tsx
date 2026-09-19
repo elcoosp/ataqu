@@ -46,7 +46,7 @@ export function BulkActionBar({ scope, actions }: BulkActionBarProps) {
 						variant={a.variant ?? "outline"}
 						size="sm"
 						onClick={() => a.onClick(ids)}
-						className="border-gray-700/40 text-gray-200 hover:text-white"
+						className="border-border/40 text-secondary-foreground hover:text-white"
 					>
 						{a.icon}
 						{a.label}
@@ -57,7 +57,7 @@ export function BulkActionBar({ scope, actions }: BulkActionBarProps) {
 				variant="ghost"
 				size="sm"
 				onClick={() => clear(scope)}
-				className="ml-auto text-gray-400 hover:text-white"
+				className="ml-auto text-muted-foreground hover:text-white"
 				aria-label="Clear selection"
 			>
 				<X className="h-4 w-4" />

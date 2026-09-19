@@ -39,7 +39,7 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
 
 	return (
 		<div
-			className="fixed z-50 max-w-sm p-4 rounded-lg shadow-lg ataqu-glass border border-gray-700/40"
+			className="fixed z-50 max-w-sm p-4 rounded-lg shadow-lg ataqu-glass border border-border/40"
 			style={{
 				top: "50%",
 				left: "50%",
@@ -52,7 +52,7 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
 					variant="ghost"
 					size="sm"
 					onClick={handleClose}
-					className="text-gray-400 hover:text-white"
+					className="text-muted-foreground hover:text-white"
 				>
 					Skip
 				</Button>

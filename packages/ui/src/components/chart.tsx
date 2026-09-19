@@ -59,14 +59,18 @@ export interface ChartProps {
 	onDataPointClick?: (payload: Record<string, unknown>) => void;
 }
 
+/**
+ * Categorical series palette (P3 #1 — token-derived so charts adapt to the
+ * active theme instead of shipping hardcoded hexes).
+ */
 const CHART_COLORS = [
-	"#F59E0B",
-	"#10B981",
-	"#3B82F6",
-	"#EF4444",
-	"#8B5CF6",
-	"#EC4899",
-	"#14B8A6",
+	"var(--amber)",
+	"var(--success)",
+	"var(--info)",
+	"var(--destructive)",
+	"var(--warning)",
+	"var(--accent-foreground)",
+	"var(--secondary-foreground)",
 ];
 
 export function Chart({
@@ -92,7 +96,7 @@ export function Chart({
 			const { active, payload, label } = props;
 			if (!active || !payload?.length) return null;
 			return (
-				<div className="bg-deep-night/90 backdrop-blur-xl border border-gray-700/40 rounded-lg p-3 shadow-lg text-white">
+				<div className="bg-deep-night/90 backdrop-blur-xl border border-border/40 rounded-lg p-3 shadow-lg text-white">
 					<p className="text-sm font-medium mb-1">{label}</p>
 					{payload.map((entry: any, index: number) => (
 						<p

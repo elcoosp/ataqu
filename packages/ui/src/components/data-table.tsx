@@ -77,7 +77,7 @@ export function DataTable<TData, TValue>({
 				return (
 					<tr
 						key={row?.id || `row-${virtualRow.index}`}
-						className="border-b border-gray-700/40 hover:bg-white/5 transition-colors"
+						className="border-b border-border/40 hover:bg-white/5 transition-colors"
 						style={{
 							height: `${virtualRow.size}px`,
 							transform: `translateY(${virtualRow.start}px)`,
@@ -98,7 +98,7 @@ export function DataTable<TData, TValue>({
 		return rows.map((row, index) => (
 			<tr
 				key={row?.id || `row-${index}`}
-				className="border-b border-gray-700/40 hover:bg-white/5 transition-colors"
+				className="border-b border-border/40 hover:bg-white/5 transition-colors"
 			>
 				{row?.getVisibleCells()?.map((cell) => (
 					<td key={cell.id} className="px-4 py-2 text-sm truncate">
@@ -119,7 +119,7 @@ export function DataTable<TData, TValue>({
 						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 							setGlobalFilter(e.target.value)
 						}
-						className="max-w-sm bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
+						className="max-w-sm bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
 					/>
 				)}
 				<div className="flex items-center gap-2">
@@ -128,11 +128,11 @@ export function DataTable<TData, TValue>({
 						size="sm"
 						onClick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
-						className="border-gray-700/40 text-gray-400 hover:text-white"
+						className="border-border/40 text-muted-foreground hover:text-white"
 					>
 						Previous
 					</Button>
-					<span className="text-sm text-gray-400">
+					<span className="text-sm text-muted-foreground">
 						Page {table.getState().pagination.pageIndex + 1} of{" "}
 						{table.getPageCount()}
 					</span>
@@ -141,7 +141,7 @@ export function DataTable<TData, TValue>({
 						size="sm"
 						onClick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
-						className="border-gray-700/40 text-gray-400 hover:text-white"
+						className="border-border/40 text-muted-foreground hover:text-white"
 					>
 						Next
 					</Button>
@@ -151,7 +151,7 @@ export function DataTable<TData, TValue>({
 			<div
 				ref={parentRef}
 				className={cn(
-					"rounded-md border border-gray-700/40 overflow-auto",
+					"rounded-md border border-border/40 overflow-auto",
 					virtualize && "relative",
 				)}
 				style={
@@ -167,7 +167,7 @@ export function DataTable<TData, TValue>({
 								{headerGroup.headers.map((header) => (
 									<th
 										key={header.id}
-										className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+										className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
 									>
 										{header.isPlaceholder ? null : (
 											<div
@@ -200,7 +200,7 @@ export function DataTable<TData, TValue>({
 							<tr>
 								<td
 									colSpan={columns.length}
-									className="text-center py-8 text-gray-400"
+									className="text-center py-8 text-muted-foreground"
 								>
 									No results found.
 								</td>

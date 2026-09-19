@@ -28,12 +28,12 @@ export function SetupProgressWidget() {
 			<button
 				type="button"
 				onClick={() => setOpen((v) => !v)}
-				className="flex items-center gap-2 rounded-full border border-gray-700/60 px-3 py-1 text-xs text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
+				className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-secondary-foreground hover:text-white hover:border-border transition-colors"
 				aria-label="Setup progress"
 			>
 				<span
 					className={`h-2 w-2 rounded-full ${
-						pct === 100 ? "bg-emerald-400" : "bg-amber"
+						pct === 100 ? "bg-success" : "bg-amber"
 					}`}
 				/>
 				<Trans>
@@ -42,12 +42,12 @@ export function SetupProgressWidget() {
 			</button>
 
 			{open && (
-				<div className="absolute right-0 z-50 mt-2 w-72 rounded-lg border border-gray-700/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass">
+				<div className="absolute right-0 z-50 mt-2 w-72 rounded-lg border border-border/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass">
 					<p className="mb-2 text-sm font-medium text-white">
 						<Trans>Activation checklist</Trans>
 					</p>
 					{isLoading && (
-						<p className="text-xs text-gray-400">
+						<p className="text-xs text-muted-foreground">
 							<Trans>Loading…</Trans>
 						</p>
 					)}
@@ -66,12 +66,12 @@ export function SetupProgressWidget() {
 												if (href) window.location.assign(href);
 											}
 										}}
-										className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-300 hover:bg-white/5"
+										className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-secondary-foreground hover:bg-white/5"
 									>
 										{isDone ? (
-											<Check className="h-4 w-4 text-emerald-400" />
+											<Check className="h-4 w-4 text-success" />
 										) : (
-											<Circle className="h-4 w-4 text-gray-500" />
+											<Circle className="h-4 w-4 text-muted-foreground" />
 										)}
 										<span className={isDone ? "line-through" : ""}>
 											{task.label}
@@ -81,7 +81,7 @@ export function SetupProgressWidget() {
 							);
 						})}
 						{!isLoading && ACTIVATION_TASKS.length === 0 && (
-							<li className="text-xs text-gray-400">
+							<li className="text-xs text-muted-foreground">
 								<Trans>No setup tasks.</Trans>
 							</li>
 						)}

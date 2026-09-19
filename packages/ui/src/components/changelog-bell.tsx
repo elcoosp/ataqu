@@ -5,9 +5,9 @@ import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const CATEGORY_STYLES: Record<string, string> = {
-	New: "bg-emerald-500/15 text-emerald-400",
-	Improved: "bg-amber-500/15 text-amber-400",
-	Fixed: "bg-sky-500/15 text-sky-400",
+	New: "bg-success/15 text-success",
+	Improved: "bg-amber/15 text-amber",
+	Fixed: "bg-info/15 text-info",
 };
 
 /**
@@ -41,22 +41,22 @@ export function ChangelogBell() {
 			<button
 				type="button"
 				onClick={() => setOpen((v) => !v)}
-				className="text-gray-400 hover:text-white transition-colors"
+				className="text-muted-foreground hover:text-white transition-colors"
 				aria-label="Changelog"
 			>
 				<Bell className="h-5 w-5" />
 				{showDot && (
-					<span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500" />
+					<span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-destructive" />
 				)}
 			</button>
 
 			{open && (
-				<div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-gray-700/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass">
+				<div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-border/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass">
 					<p className="mb-2 text-sm font-medium text-white">
 						<Trans>What's new</Trans>
 					</p>
 					{isLoading && (
-						<p className="text-xs text-gray-400">
+						<p className="text-xs text-muted-foreground">
 							<Trans>Loading…</Trans>
 						</p>
 					)}
@@ -74,19 +74,23 @@ export function ChangelogBell() {
 									>
 										{entry.category}
 									</span>
-									<span className="text-xs text-gray-500">{entry.date}</span>
+									<span className="text-xs text-muted-foreground">
+										{entry.date}
+									</span>
 									{entry.breaking_change && (
-										<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase text-red-400">
+										<span className="rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] font-medium uppercase text-destructive">
 											<Trans>Breaking</Trans>
 										</span>
 									)}
 								</div>
 								<p className="mt-1 text-sm text-white">{entry.title}</p>
-								<p className="text-xs text-gray-400">{entry.description}</p>
+								<p className="text-xs text-muted-foreground">
+									{entry.description}
+								</p>
 							</li>
 						))}
 						{!isLoading && entries.length === 0 && (
-							<li className="text-xs text-gray-400">
+							<li className="text-xs text-muted-foreground">
 								<Trans>No updates yet.</Trans>
 							</li>
 						)}

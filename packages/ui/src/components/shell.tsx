@@ -1,9 +1,8 @@
 /// <reference types="vite/client" />
 
-import { Link, useRouterState } from "@tanstack/react-router";
 import { useHealth } from "@ataqu/api-client";
 import { useAuthStore, useUIStore } from "@ataqu/shared-stores";
-import { ThemeToggle } from "./theme-toggle";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
@@ -11,7 +10,10 @@ import { CommandRegistryProvider } from "../command-registry";
 import { Button } from "./button";
 import { ChangelogBell } from "./changelog-bell";
 import { CommandPalette } from "./command-palette";
+import { InboxBell } from "./inbox-bell";
 import { SetupProgressWidget } from "./setup-progress-widget";
+import { ThemeToggle } from "./theme-toggle";
+import { UserMenu } from "./user-menu";
 
 const APP_ICONS: Record<string, string> = {
 	aegis: "/apps/aegis.png",
@@ -94,14 +96,14 @@ export const Shell: React.FC<ShellProps> = ({
 	const appKeys = Object.keys(APP_ICONS);
 
 	return (
-		<div className="flex h-screen bg-[#0A1628] text-white overflow-hidden">
+		<div className="flex h-screen bg-background text-foreground overflow-hidden">
 			{/* Sidebar */}
 			<aside
-				className={`${sidebarOpen ? "w-64" : "w-16"} flex-shrink-0 bg-[#0A1628]/80 border-r border-gray-700/40 transition-all duration-150 ease-out overflow-hidden flex flex-col`}
+				className={`${sidebarOpen ? "w-64" : "w-16"} flex-shrink-0 bg-background/80 border-r border-border transition-all duration-150 ease-out overflow-hidden flex flex-col`}
 			>
-				<div className="flex items-center justify-between h-16 px-4 border-b border-gray-700/40">
+				<div className="flex items-center justify-between h-16 px-4 border-b border-border">
 					{sidebarOpen ? (
-						<span className="font-heading text-xl text-white">Ataqu</span>
+						<span className="font-heading text-xl text-foreground">Ataqu</span>
 					) : (
 						<span className="text-2xl font-heading text-amber">A</span>
 					)}
@@ -109,7 +111,7 @@ export const Shell: React.FC<ShellProps> = ({
 						variant="ghost"
 						size="icon"
 						onClick={toggleSidebar}
-						className="text-gray-400 hover:text-white"
+						className="text-muted-foreground hover:text-foreground"
 					>
 						{sidebarOpen ? (
 							<X className="h-5 w-5" />
@@ -125,7 +127,7 @@ export const Shell: React.FC<ShellProps> = ({
 						<div className="px-4 mb-2">
 							<button
 								onClick={() => setAppsExpanded(!appsExpanded)}
-								className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-400 hover:text-white transition-colors"
+								className="flex items-center justify-between w-full text-left text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
 							>
 								<span>All Apps</span>
 								{appsExpanded ? (
@@ -149,7 +151,7 @@ export const Shell: React.FC<ShellProps> = ({
 									className={`flex items-center px-4 py-3 transition-colors ${
 										isActive
 											? "bg-amber/10 text-amber border-r-2 border-amber"
-											: "text-gray-400 hover:text-white hover:bg-white/5"
+											: "text-muted-foreground hover:text-foreground hover:bg-background/5"
 									}`}
 								>
 									<img
@@ -169,14 +171,12 @@ export const Shell: React.FC<ShellProps> = ({
 					{/* Extra sidebar items – always shown, but only icons when collapsed */}
 					{extraSidebarItems.length > 0 && (
 						<>
-							{sidebarOpen && (
-								<div className="border-t border-gray-700/40 my-2" />
-							)}
+							{sidebarOpen && <div className="border-t border-border my-2" />}
 							{extraSidebarItems.map((item, idx) => (
 								<a
 									key={idx}
 									href={item.href}
-									className={`flex items-center px-4 py-3 transition-colors text-gray-400 hover:text-white hover:bg-white/5 ${
+									className={`flex items-center px-4 py-3 transition-colors text-muted-foreground hover:text-foreground hover:bg-background/5 ${
 										sidebarOpen ? "text-sm" : "justify-center"
 									}`}
 								>
@@ -193,7 +193,7 @@ export const Shell: React.FC<ShellProps> = ({
 				</nav>
 
 				{/* User footer */}
-				<div className="border-t border-gray-700/40 p-4">
+				<div className="border-t border-border p-4">
 					<div className="flex items-center">
 						<div className="h-8 w-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold">
 							{user?.name?.[0] || user?.email?.[0] || "U"}
@@ -203,20 +203,10 @@ export const Shell: React.FC<ShellProps> = ({
 								<p className="text-sm font-medium truncate">
 									{user?.name || "User"}
 								</p>
-								<p className="text-xs text-gray-400 truncate">
+								<p className="text-xs text-muted-foreground truncate">
 									{user?.email || ""}
 								</p>
 							</div>
-						)}
-						{sidebarOpen && (
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={logout}
-								className="text-gray-400 hover:text-white text-xs"
-							>
-								Logout
-							</Button>
 						)}
 					</div>
 				</div>
@@ -225,8 +215,8 @@ export const Shell: React.FC<ShellProps> = ({
 			{/* Main content */}
 			<main className="flex-1 flex flex-col overflow-hidden">
 				{/* Header with app name - no avatar */}
-				<header className="h-16 flex items-center justify-between px-6 border-b border-gray-700/40 bg-[#0A1628]/50">
-					<span className="font-heading text-xl text-white">
+				<header className="h-16 flex items-center justify-between px-6 border-b border-border bg-background/50">
+					<span className="font-heading text-xl text-foreground">
 						{APP_NAMES[routeActiveApp] || "Ataqu"}
 					</span>
 					<div className="flex items-center gap-4">
@@ -240,19 +230,19 @@ export const Shell: React.FC<ShellProps> = ({
 								}`}
 								className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
 									health.status === "Nominal"
-										? "bg-emerald-500/15 text-emerald-400"
+										? "bg-success/15 text-success"
 										: health.status === "Degraded"
-											? "bg-amber-500/15 text-amber-400"
-											: "bg-red-500/15 text-red-400"
+											? "bg-amber/15 text-amber"
+											: "bg-destructive/15 text-destructive"
 								}`}
 							>
 								<span
 									className={`h-2 w-2 rounded-full ${
 										health.status === "Nominal"
-											? "bg-emerald-400"
+											? "bg-success"
 											: health.status === "Degraded"
-												? "bg-amber-400"
-												: "bg-red-400"
+												? "bg-amber"
+												: "bg-destructive"
 									}`}
 								/>
 								{health.status}
@@ -266,38 +256,19 @@ export const Shell: React.FC<ShellProps> = ({
 									new KeyboardEvent("keydown", { key: "k", metaKey: true }),
 								)
 							}
-							className="text-gray-400 hover:text-white text-sm hidden sm:flex items-center gap-2"
+							className="text-muted-foreground hover:text-foreground text-sm hidden sm:flex items-center gap-2"
 						>
 							<span>⌘K</span>
-							<span className="text-xs border border-gray-600 rounded px-1">
+							<span className="text-xs border border-border rounded px-1">
 								Search
 							</span>
 						</Button>
-						<div className="h-8 w-px bg-gray-700 hidden sm:block" />
+						<div className="h-8 w-px bg-border hidden sm:block" />
+						<InboxBell />
 						<ChangelogBell />
-										<ThemeToggle />
-						<div className="h-8 w-px bg-gray-700 hidden sm:block" />
-						<Button
-							variant="ghost"
-							size="icon"
-							className="text-gray-400 hover:text-white"
-							onClick={() => {}}
-						>
-							<span className="sr-only">Notifications</span>
-							<svg
-								className="h-5 w-5"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-								/>
-							</svg>
-						</Button>
+						<ThemeToggle />
+						<div className="h-8 w-px bg-border hidden sm:block" />
+						<UserMenu />
 					</div>
 				</header>
 

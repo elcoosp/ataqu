@@ -32,7 +32,7 @@ export function SelectionCheckbox({
 			onCheckedChange={() => toggle(scope, id)}
 			aria-label={label}
 			className={cn(
-				"h-4 w-4 shrink-0 rounded border border-gray-600 bg-transparent",
+				"h-4 w-4 shrink-0 rounded border border-border bg-transparent",
 				"data-[state=checked]:bg-amber data-[state=checked]:border-amber",
 				"focus:outline-none focus-visible:ring-1 focus-visible:ring-amber",
 				className,
@@ -67,7 +67,7 @@ export function SelectAllCheckbox({
 			onCheckedChange={(v) => selectAllFor(scope, ids, v === true)}
 			aria-label={label}
 			className={cn(
-				"h-4 w-4 shrink-0 rounded border border-gray-600 bg-transparent",
+				"h-4 w-4 shrink-0 rounded border border-border bg-transparent",
 				"data-[state=checked]:bg-amber data-[state=checked]:border-amber",
 				"focus:outline-none focus-visible:ring-1 focus-visible:ring-amber",
 			)}

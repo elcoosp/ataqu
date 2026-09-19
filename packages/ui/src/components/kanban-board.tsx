@@ -173,14 +173,14 @@ export function KanbanBoard<T>({
 				{columns.map((column) => (
 					<div
 						key={column.id}
-						className="flex-shrink-0 w-80 bg-deep-night/50 rounded-lg border border-gray-700/40 flex flex-col max-h-[600px]"
+						className="flex-shrink-0 w-80 bg-deep-night/50 rounded-lg border border-border/40 flex flex-col max-h-[600px]"
 					>
-						<div className="p-3 border-b border-gray-700/40 flex items-center justify-between">
+						<div className="p-3 border-b border-border/40 flex items-center justify-between">
 							<div className="flex items-center gap-2">
 								<span className="font-medium text-white">
 									{renderColumnHeader?.(column) || column.title}
 								</span>
-								<span className="text-xs text-gray-400 bg-gray-700/40 px-2 py-0.5 rounded-full">
+								<span className="text-xs text-muted-foreground bg-border/40 px-2 py-0.5 rounded-full">
 									{column.items.length}
 								</span>
 							</div>
@@ -188,7 +188,7 @@ export function KanbanBoard<T>({
 								<Button
 									variant="ghost"
 									size="icon"
-									className="h-6 w-6 text-gray-400 hover:text-white"
+									className="h-6 w-6 text-muted-foreground hover:text-white"
 									onClick={() => onAddItem(column.id)}
 								>
 									<Plus className="h-4 w-4" />
@@ -211,7 +211,7 @@ export function KanbanBoard<T>({
 								))}
 							</SortableContext>
 							{column.items.length === 0 && (
-								<div className="text-center py-8 text-gray-500 text-sm">
+								<div className="text-center py-8 text-muted-foreground text-sm">
 									Drop items here
 								</div>
 							)}

@@ -56,7 +56,7 @@ export const LoginForm: React.FC = () => {
 
 	return (
 		<AuthLayout>
-			<Card className="w-full max-w-md border-gray-700/40 bg-deep-night/80">
+			<Card className="w-full max-w-md border-border/40 bg-deep-night/80">
 				<CardHeader>
 					<CardTitle className="text-2xl font-heading text-center">
 						<Trans>Sign in to Ataqu</Trans>
@@ -67,7 +67,7 @@ export const LoginForm: React.FC = () => {
 						<div>
 							<label
 								htmlFor="email"
-								className="block text-sm font-medium text-gray-300"
+								className="block text-sm font-medium text-secondary-foreground"
 							>
 								<Trans>Email</Trans>
 							</label>
@@ -76,7 +76,7 @@ export const LoginForm: React.FC = () => {
 								type="email"
 								placeholder="you@example.com"
 								{...register("email")}
-								className="mt-1 bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
+								className="mt-1 bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
 							/>
 							{errors.email && (
 								<p className="mt-1 text-sm text-error">
@@ -88,7 +88,7 @@ export const LoginForm: React.FC = () => {
 						<div>
 							<label
 								htmlFor="password"
-								className="block text-sm font-medium text-gray-300"
+								className="block text-sm font-medium text-secondary-foreground"
 							>
 								<Trans>Password</Trans>
 							</label>
@@ -97,7 +97,7 @@ export const LoginForm: React.FC = () => {
 								type="password"
 								placeholder="••••••••"
 								{...register("password")}
-								className="mt-1 bg-deep-night/50 border-gray-700/40 text-white placeholder-gray-400"
+								className="mt-1 bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
 							/>
 							{errors.password && (
 								<p className="mt-1 text-sm text-error">
@@ -140,7 +140,7 @@ export const LoginForm: React.FC = () => {
 							)}
 						</Button>
 
-						<p className="text-center text-sm text-gray-400">
+						<p className="text-center text-sm text-muted-foreground">
 							<Trans>Don't have an account?</Trans>{" "}
 							<a href="/register" className="text-primary hover:underline">
 								<Trans>Create one</Trans>

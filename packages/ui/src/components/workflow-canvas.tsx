@@ -74,7 +74,7 @@ export function WorkflowCanvas({
 	return (
 		<div
 			className={cn(
-				"w-full rounded-lg border border-gray-700/40 overflow-hidden bg-deep-night",
+				"w-full rounded-lg border border-border/40 overflow-hidden bg-deep-night",
 				className,
 			)}
 			style={{ height }}
@@ -98,11 +98,11 @@ export function WorkflowCanvas({
 					size={1}
 					color="rgba(255,255,255,0.1)"
 				/>
-				<Controls className="bg-deep-night border border-gray-700/40 rounded-lg" />
+				<Controls className="bg-deep-night border border-border/40 rounded-lg" />
 				<MiniMap
-					className="bg-deep-night border border-gray-700/40 rounded-lg"
+					className="bg-deep-night border border-border/40 rounded-lg"
 					maskColor="rgba(0,0,0,0.5)"
-					nodeColor={() => "#F59E0B"}
+					nodeColor={() => "var(--amber)"}
 				/>
 			</ReactFlow>
 		</div>

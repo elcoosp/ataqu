@@ -66,26 +66,26 @@ function SortableField({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className="flex items-center gap-2 p-2 bg-deep-night/50 border border-gray-700/40 rounded-lg"
+			className="flex items-center gap-2 p-2 bg-deep-night/50 border border-border/40 rounded-lg"
 		>
 			<div
 				{...attributes}
 				{...listeners}
-				className="cursor-grab text-gray-400 hover:text-white"
+				className="cursor-grab text-muted-foreground hover:text-white"
 			>
 				<GripVertical className="h-4 w-4" />
 			</div>
 			<div className="flex-1">
 				<div className="flex items-center gap-2">
 					<span className="text-sm font-medium text-white">{field.label}</span>
-					<span className="text-xs text-gray-400">{field.type}</span>
+					<span className="text-xs text-muted-foreground">{field.type}</span>
 					{field.required && <span className="text-xs text-amber">*</span>}
 				</div>
 			</div>
 			<Button
 				variant="ghost"
 				size="icon"
-				className="h-6 w-6 text-gray-400 hover:text-red-400"
+				className="h-6 w-6 text-muted-foreground hover:text-destructive"
 				onClick={() => onDelete(field.id)}
 			>
 				<Trash2 className="h-4 w-4" />
@@ -135,7 +135,7 @@ export function FormBuilder({ fields, onChange, className }: FormBuilderProps) {
 					variant="outline"
 					size="sm"
 					onClick={() => addField("text")}
-					className="border-gray-700/40 text-gray-300"
+					className="border-border/40 text-secondary-foreground"
 				>
 					+ Text
 				</Button>
@@ -143,7 +143,7 @@ export function FormBuilder({ fields, onChange, className }: FormBuilderProps) {
 					variant="outline"
 					size="sm"
 					onClick={() => addField("email")}
-					className="border-gray-700/40 text-gray-300"
+					className="border-border/40 text-secondary-foreground"
 				>
 					+ Email
 				</Button>
@@ -151,7 +151,7 @@ export function FormBuilder({ fields, onChange, className }: FormBuilderProps) {
 					variant="outline"
 					size="sm"
 					onClick={() => addField("select")}
-					className="border-gray-700/40 text-gray-300"
+					className="border-border/40 text-secondary-foreground"
 				>
 					+ Select
 				</Button>
@@ -159,7 +159,7 @@ export function FormBuilder({ fields, onChange, className }: FormBuilderProps) {
 					variant="outline"
 					size="sm"
 					onClick={() => addField("textarea")}
-					className="border-gray-700/40 text-gray-300"
+					className="border-border/40 text-secondary-foreground"
 				>
 					+ Textarea
 				</Button>
@@ -167,14 +167,14 @@ export function FormBuilder({ fields, onChange, className }: FormBuilderProps) {
 					variant="outline"
 					size="sm"
 					onClick={() => addField("number")}
-					className="border-gray-700/40 text-gray-300"
+					className="border-border/40 text-secondary-foreground"
 				>
 					+ Number
 				</Button>
 			</div>
 
 			{fields.length === 0 ? (
-				<div className="text-center py-8 text-gray-400 border border-dashed border-gray-700/40 rounded-lg">
+				<div className="text-center py-8 text-muted-foreground border border-dashed border-border/40 rounded-lg">
 					No fields yet. Add a field above to start building your form.
 				</div>
 			) : (
