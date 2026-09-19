@@ -70,7 +70,13 @@ export function CreateContactDialog({
 					</DialogTitle>
 				</DialogHeader>
 				<SkeletonSwap ready={!submitting} lines={4}>
-					<div className="space-y-3">
+					<form
+						className="space-y-3"
+						onSubmit={(e) => {
+							e.preventDefault();
+							void handleSubmit();
+						}}
+					>
 						<FloatingLabelInput label="Name" value={name} onChange={setName} />
 						<InlineValidation
 							label="Email"
@@ -103,7 +109,11 @@ export function CreateContactDialog({
 							/>
 						</div>
 						<div className="flex justify-end gap-2 pt-2">
-							<Button variant="outline" onClick={() => onOpenChange(false)}>
+							<Button
+								variant="outline"
+								type="button"
+								onClick={() => onOpenChange(false)}
+							>
 								<Trans>Cancel</Trans>
 							</Button>
 							<LoadingButton
@@ -123,7 +133,7 @@ export function CreateContactDialog({
 								Create
 							</LoadingButton>
 						</div>
-					</div>
+					</form>
 				</SkeletonSwap>
 			</DialogContent>
 		</Dialog>
