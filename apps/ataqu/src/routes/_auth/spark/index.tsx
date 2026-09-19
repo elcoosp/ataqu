@@ -25,7 +25,11 @@ function SparkIndex() {
 						</Trans>
 					</p>
 				</div>
-				<Link to="/spark/workflows/$id" params={{ id: "new" }}>
+				<Link
+					to="/spark/workflows/$id"
+					params={{ id: "new" }}
+					search={{ testOpen: false }}
+				>
 					<Button>
 						<Plus className="mr-2 h-4 w-4" />
 						<Trans>Create Workflow</Trans>
