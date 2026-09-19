@@ -3,7 +3,7 @@ import {
 	useListEmployees,
 	useSearchEmployees,
 } from "@ataqu/api-client";
-import { useDebounce } from "@ataqu/shared-hooks";
+import { useDebounce, useUrlSearchParam } from "@ataqu/shared-hooks";
 import {
 	Button,
 	Card,
@@ -25,7 +25,10 @@ export function EmployeeDirectory({
 }: {
 	onAddEmployee: () => void;
 }) {
-	const [search, setSearch] = useState("");
+	// The search text is URL-backed so a filtered directory is shareable
+	// and survives reload (brainstorm P1-3). Row selection stays session —
+	// it is bulk-action context, not navigation state.
+	const [search, setSearch] = useUrlSearchParam("search", { default: "" });
 	const debouncedSearch = useDebounce(search, 300);
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
