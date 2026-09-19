@@ -22,6 +22,7 @@ import {
 	TrendingUp,
 	Users,
 } from "lucide-react";
+import { navigate } from "../../../lib/navigation";
 
 export const Route = createFileRoute("/_auth/vista/dashboard")({
 	component: VistaDashboard,
@@ -152,35 +153,35 @@ function VistaDashboard() {
 						value={fmtMoney(kpis.total_pipeline_value)}
 						sub={`${kpis.total_deals} deals`}
 						icon={DollarSign}
-						color="bg-emerald-500/10 text-emerald-400"
+						color="bg-success/10 text-success"
 					/>
 					<KpiCard
 						label={t`Revenue Won`}
 						value={fmtMoney(kpis.total_revenue)}
 						sub={`${kpis.total_deals_won} won`}
 						icon={TrendingUp}
-						color="bg-blue-500/10 text-blue-400"
+						color="bg-info/10 text-info"
 					/>
 					<KpiCard
 						label={t`Contacts`}
 						value={kpis.total_contacts}
 						sub={t`total contacts`}
 						icon={Users}
-						color="bg-purple-500/10 text-purple-400"
+						color="bg-info/10 text-info"
 					/>
 					<KpiCard
 						label={t`Bookings`}
 						value={kpis.total_bookings}
 						sub={t`upcoming`}
 						icon={Calendar}
-						color="bg-amber-500/10 text-amber-400"
+						color="bg-amber/10 text-amber"
 					/>
 					<KpiCard
 						label={t`Products`}
 						value={kpis.total_products}
 						sub={t`in inventory`}
 						icon={ShoppingCart}
-						color="bg-cyan-500/10 text-cyan-400"
+						color="bg-info/10 text-info"
 					/>
 					<KpiCard
 						label={t`Low Stock`}
@@ -191,8 +192,8 @@ function VistaDashboard() {
 						icon={Package}
 						color={
 							kpis.low_stock_variants > 0
-								? "bg-red-500/10 text-red-400"
-								: "bg-gray-500/10 text-gray-400"
+								? "bg-destructive/10 text-destructive"
+								: "bg-muted/10 text-muted-foreground"
 						}
 					/>
 					<KpiCard
@@ -204,8 +205,8 @@ function VistaDashboard() {
 						icon={Briefcase}
 						color={
 							kpis.pending_leave_requests > 0
-								? "bg-amber-500/10 text-amber-400"
-								: "bg-gray-500/10 text-gray-400"
+								? "bg-amber/10 text-amber"
+								: "bg-muted/10 text-muted-foreground"
 						}
 					/>
 					<KpiCard
@@ -213,7 +214,7 @@ function VistaDashboard() {
 						value={kpis.total_events}
 						sub={t`logged`}
 						icon={BarChart3}
-						color="bg-pink-500/10 text-pink-400"
+						color="bg-info/10 text-info"
 					/>
 				</div>
 			)}
@@ -227,7 +228,7 @@ function VistaDashboard() {
 							</CardTitle>
 							<Link
 								to="/vista"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>
@@ -254,7 +255,7 @@ function VistaDashboard() {
 								icon={BarChart3}
 								action={t`Create Dashboard`}
 								onClick={() => {
-									window.location.href = "/vista";
+									navigate("/vista");
 								}}
 							/>
 						) : (

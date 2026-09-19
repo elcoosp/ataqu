@@ -1,55 +1,10 @@
-import { api } from "@ataqu/api-client";
-import {
- Button, CopyButton 
-} from "@ataqu/ui";
-import { FileSpreadsheet, FileText, Image as ImageIcon } from "lucide-react";
-import type React from "react";
-import { toast } from "sonner";
+import { CopyButton } from "@ataqu/ui";
 
-interface ExportButtonsProps {
-	dashboardId: string;
-}
-
-export const ExportButtons: React.FC<ExportButtonsProps> = ({
-	dashboardId,
-}) => {
-	const handleExport = async (format: "pdf" | "csv" | "png") => {
-		try {
-			const blob = await api.get<Blob>(
-				`/vista/dashboards/${dashboardId}/export`,
-				{
-					params: { format },
-					responseType: "blob",
-				},
-			);
-			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = `dashboard-${dashboardId}.${format}`;
-			a.click();
-			window.URL.revokeObjectURL(url);
-			toast.success("Export ready.");
-		} catch {
-			toast.error("Export failed.");
-		}
-	};
-
+export function ExportButtons({ dashboardId }: { dashboardId: string }) {
 	return (
-		<div className="flex items-center gap-2">
-			<CopyButton
-				value={`${window.location.origin}/vista/dashboards/${dashboardId}`}
-				label="Copy share link"
-				className="variant-outline"
-			/>
-			<Button variant="outline" size="sm" onClick={() => handleExport("pdf")}>
-				<FileText className="h-4 w-4 mr-2" /> PDF
-			</Button>
-			<Button variant="outline" size="sm" onClick={() => handleExport("csv")}>
-				<FileSpreadsheet className="h-4 w-4 mr-2" /> CSV
-			</Button>
-			<Button variant="outline" size="sm" onClick={() => handleExport("png")}>
-				<ImageIcon className="h-4 w-4 mr-2" /> PNG
-			</Button>
-		</div>
+		<CopyButton
+			value={`${window.location.origin}/vista/dashboard/${dashboardId}`}
+			label="Copy dashboard link"
+		/>
 	);
-};
+}

@@ -31,7 +31,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 	}, [team, product, onFilterChange]);
 
 	return (
-		<div className="flex items-center gap-4 p-4 bg-card border-b border-gray-700/40 flex-wrap">
+		<div className="flex items-center gap-4 p-4 bg-card border-b border-border/40 flex-wrap">
 			<Input type="date" className="w-auto bg-deep-night/50" />
 			<Input type="date" className="w-auto bg-deep-night/50" />
 

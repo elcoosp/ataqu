@@ -24,7 +24,7 @@ import { ExportButtons } from "../../../../apps/vista/components/export-buttons"
 import { FilterBar } from "../../../../apps/vista/components/filter-bar";
 import { SseIndicator } from "../../../../apps/vista/components/sse-indicator";
 import { WidgetPicker } from "../../../../apps/vista/components/widget-picker";
-import { useVistaSSE } from "../../../../apps/vista/hooks/use-sse";
+import { useVistaPolling } from "../../../../apps/vista/hooks/use-sse";
 import { useWidgetData } from "../../../../apps/vista/hooks/use-widget-data";
 
 export const Route = createFileRoute("/_auth/vista/dashboard/$id")({
@@ -41,7 +41,7 @@ function DashboardDetailPage() {
 
 	const [isWidgetPickerOpen, setWidgetPickerOpen] = React.useState(false);
 	const [isCombineOpen, setIsCombineOpen] = React.useState(false);
-	const { isConnected } = useVistaSSE(`/api/vista/kpis/${id}/stream`);
+	const { isConnected } = useVistaPolling();
 
 	const config = (dashboard?.config || {}) as { widgets?: Widget[] };
 	const widgets = useWidgetData(
@@ -55,11 +55,11 @@ function DashboardDetailPage() {
 	const tourSteps = [
 		{
 			selector: '[data-tour="kpi-card"]',
-			content: t`No ETL pipelines. This data is live from CINQ, right now.`,
+			content: t`No ETL pipelines. These metrics come from your workspace.`,
 		},
 		{
 			selector: '[data-tour="sse-indicator"]',
-			content: t`When a deal closes, this updates in milliseconds. No refresh button needed.`,
+			content: t`Metrics refresh automatically every 30 seconds.`,
 		},
 	];
 
@@ -103,7 +103,7 @@ function DashboardDetailPage() {
 			<DrillDownPanel />
 			<OnboardTour tourId="vista-dashboard-tour" steps={tourSteps}>
 				<div className="flex flex-col h-full">
-					<div className="flex items-center justify-between p-4 border-b border-gray-700/40">
+					<div className="flex items-center justify-between p-4 border-b border-border/40">
 						<div className="flex items-center gap-4">
 							<Button
 								variant="ghost"
@@ -225,7 +225,7 @@ const CombineDataModal: React.FC<{
 			}}
 		>
 			<div
-				className="w-[425px] bg-card border border-gray-700/40 rounded-lg p-6 flex flex-col gap-4"
+				className="w-[425px] bg-card border border-border/40 rounded-lg p-6 flex flex-col gap-4"
 				onClick={(e: React.MouseEvent) => e.stopPropagation()}
 				onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
 			>
@@ -243,7 +243,7 @@ const CombineDataModal: React.FC<{
 							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setPrimary(e.target.value)
 							}
-							className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
+							className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
 						>
 							<option value="revenue">{t`Revenue`}</option>
 							<option value="support">{t`Support`}</option>
@@ -259,7 +259,7 @@ const CombineDataModal: React.FC<{
 							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setSecondary(e.target.value)
 							}
-							className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
+							className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
 						>
 							<option value="inventory">{t`Inventory`}</option>
 							<option value="sales">{t`Sales`}</option>

@@ -50,7 +50,8 @@ export const useVistaActions = () => {
 			id: `go-to-${d.id}`,
 			label: `Go to Dashboard: ${d.name}`,
 			keywords: `dashboard ${d.name}`,
-			action: () => navigate({ to: "/vista/dashboard/$id", params: { id: d.id } }),
+			action: () =>
+				navigate({ to: "/vista/dashboard/$id", params: { id: d.id } }),
 		}),
 	);
 

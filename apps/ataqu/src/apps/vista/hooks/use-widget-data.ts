@@ -16,16 +16,14 @@ export interface WidgetConfig {
  * data so VISTA charts reflect the live backend.
  */
 export function useWidgetData<T extends WidgetConfig>(widgets: T[]): T[] {
-	const chartWidgets = useMemo(
-		() => widgets.filter((w) => w.type !== "kpi"),
-		[widgets],
-	);
+	const chartWidgets = useMemo(() => widgets, [widgets]);
 
 	const results = useQueries({
 		queries: chartWidgets.map((w) => ({
 			queryKey: ["vista", "data-points", w.dataSource, { limit: 12 }],
 			queryFn: () => getDataPoints(w.dataSource, { limit: 12 }),
 			staleTime: 30_000,
+			refetchInterval: 30_000,
 		})),
 	});
 

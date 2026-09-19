@@ -1,6 +1,4 @@
-import {
- Card, ValueFlash 
-} from "@ataqu/ui";
+import { Card, ValueFlash } from "@ataqu/ui";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import type React from "react";
 
@@ -22,7 +20,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 	const numericValue = typeof value === "number" ? value : Number(value) || 0;
 	return (
 		<Card
-			className={`p-6 bg-card border-gray-700/40 flex flex-col justify-center ${className || ""}`}
+			className={`p-6 bg-card border-border/40 flex flex-col justify-center ${className || ""}`}
 			data-tour="kpi-card"
 		>
 			<div className="flex flex-col space-y-2">

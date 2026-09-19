@@ -1,6 +1,4 @@
-import {
- Button, Drawer 
-} from "@ataqu/ui";
+import { Button, Drawer } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { Download } from "lucide-react";
 import type React from "react";
@@ -57,8 +55,8 @@ export const DrillDownPanel: React.FC = () => {
 				<div className="flex-1 overflow-auto">
 					{loading ? (
 						<div className="animate-pulse space-y-2">
-							<div className="h-8 bg-gray-700/40 rounded"></div>
-							<div className="h-8 bg-gray-700/40 rounded"></div>
+							<div className="h-8 bg-border/40 rounded"></div>
+							<div className="h-8 bg-border/40 rounded"></div>
 						</div>
 					) : data.length > 0 ? (
 						<DrillDownTable data={data} />

@@ -42,7 +42,7 @@ function CrossAppView({ view }: { view: string }) {
 					fallback={<div className="h-24 w-full rounded bg-white/5" />}
 				>
 					{error ? (
-						<p className="text-sm text-red-400">
+						<p className="text-sm text-destructive">
 							<Trans>Unable to load cross-app data.</Trans>
 						</p>
 					) : rows.length === 0 ? (
@@ -104,7 +104,7 @@ function CombineDataPanel() {
 					<select
 						value={primary}
 						onChange={(e) => setPrimary(e.target.value)}
-						className="rounded border border-gray-700 bg-deep-night px-2 py-1 text-sm text-white"
+						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-white"
 					>
 						<option value="cinq">CINQ</option>
 						<option value="vault">VAULT</option>
@@ -115,7 +115,7 @@ function CombineDataPanel() {
 					<select
 						value={secondary}
 						onChange={(e) => setSecondary(e.target.value)}
-						className="rounded border border-gray-700 bg-deep-night px-2 py-1 text-sm text-white"
+						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-white"
 					>
 						<option value="vault">VAULT</option>
 						<option value="cinq">CINQ</option>

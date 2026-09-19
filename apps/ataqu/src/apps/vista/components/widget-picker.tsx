@@ -1,6 +1,4 @@
-import {
- Button, IModal 
-} from "@ataqu/ui";
+import { Button, IModal } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import React from "react";
@@ -34,7 +32,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({
 						onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 							setWidgetType(e.target.value)
 						}
-						className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
+						className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
 					>
 						<option value="kpi">{t`KPI Card`}</option>
 						<option value="bar">{t`Bar Chart`}</option>
@@ -53,7 +51,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({
 						onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 							setDataSource(e.target.value)
 						}
-						className="col-span-3 bg-deep-night/50 p-2 rounded border border-gray-700/40"
+						className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
 					>
 						<option value="revenue">{t`Revenue`}</option>
 						<option value="pipeline">{t`Pipeline`}</option>

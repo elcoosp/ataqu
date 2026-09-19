@@ -11,7 +11,7 @@ function ExplorePage() {
 		<>
 			<VistaCommandRegistrar />
 			<div className="flex flex-col h-full">
-				<div className="p-4 border-b border-gray-700/40">
+				<div className="p-4 border-b border-border/40">
 					<h1 className="text-xl font-heading text-white">Explore Data</h1>
 				</div>
 				<div className="flex-1 overflow-hidden">
