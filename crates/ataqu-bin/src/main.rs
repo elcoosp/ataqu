@@ -125,8 +125,8 @@ async fn main() -> anyhow::Result<()> {
         Some(audit_repo.clone()),
     ));
     // DIAL
-    use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DialRepositoryImpl};
-    let dial_repo = Arc::new(DialRepositoryImpl::new(pools.dial.clone()));
+    use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DbDialRepository};
+    let dial_repo = Arc::new(DbDialRepository::new(pools.dial.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.dial.clone()));
     let dial_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.dial.clone(),
