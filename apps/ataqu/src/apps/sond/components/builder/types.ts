@@ -14,7 +14,7 @@ export type SondForm = Omit<Form, "questions" | "branding" | "mode"> & {
 	questions: SondQuestion[];
 	branding: SondBranding;
 	mode: FormMode;
-	status?: "draft" | "published";
+	status: "draft" | "published" | "closed";
 	submissionCount?: number;
 };
 

@@ -25,6 +25,7 @@ mod form_entity {
         pub questions: serde_json::Value,
         pub branding: serde_json::Value,
         pub routing_rules: Option<serde_json::Value>,
+        pub status: Option<String>,
         pub created_at: DateTime<Utc>,
         pub updated_at: DateTime<Utc>,
         pub version: i32,
@@ -78,10 +79,34 @@ fn map_form_model_to_domain(m: form_entity::Model) -> Form {
         questions: serde_json::from_value(m.questions).unwrap_or_default(),
         branding: m.branding,
         routing_rules: m.routing_rules,
+        status: m.status.as_deref().and_then(parse_form_status).unwrap_or_default(),
         created_at: m.created_at,
         updated_at: m.updated_at,
         version: m.version,
         mode: ataqu_domain_sond::form::FormMode::Standard,
+    }
+}
+
+/// The `status` column does not exist in databases migrated before the
+/// `m_sond_add_status` migration ran; SeaORM still selects it from the row
+/// (it is a compile-time column of the entity), so the migration is a hard
+/// dependency of the current schema — exactly like the earlier `mode` column.
+fn parse_form_status(raw: &str) -> Option<ataqu_domain_sond::form::FormStatus> {
+    use ataqu_domain_sond::form::FormStatus;
+    match raw {
+        "draft" => Some(FormStatus::Draft),
+        "published" => Some(FormStatus::Published),
+        "closed" => Some(FormStatus::Closed),
+        _ => None,
+    }
+}
+
+fn form_status_wire(status: ataqu_domain_sond::form::FormStatus) -> &'static str {
+    use ataqu_domain_sond::form::FormStatus;
+    match status {
+        FormStatus::Draft => "draft",
+        FormStatus::Published => "published",
+        FormStatus::Closed => "closed",
     }
 }
 
@@ -98,11 +123,29 @@ impl SondRepository for SondRepositoryImpl {
             ),
             branding: Set(form.branding.clone()),
             routing_rules: Set(form.routing_rules.clone()),
+            status: Set(Some(form_status_wire(form.status).to_string())),
             created_at: Set(form.created_at),
             updated_at: Set(form.updated_at),
             version: Set(form.version),
         };
         form_entity::Entity::insert(active)
+            .on_conflict(
+                sea_orm::sea_query::OnConflict::column(form_entity::Column::Id)
+                    // UPDATE instead of INSERT-only: this method backs both
+                    // create_form and update_form, so a stale insert would
+                    // silently drop every revision after the first one.
+                    .update_columns([
+                        form_entity::Column::Title,
+                        form_entity::Column::Description,
+                        form_entity::Column::Questions,
+                        form_entity::Column::Branding,
+                        form_entity::Column::RoutingRules,
+                        form_entity::Column::Status,
+                        form_entity::Column::UpdatedAt,
+                        form_entity::Column::Version,
+                    ])
+                    .to_owned(),
+            )
             .exec(&self.db)
             .await
             .map_err(|e| SondError::Repository(e.to_string()))?;

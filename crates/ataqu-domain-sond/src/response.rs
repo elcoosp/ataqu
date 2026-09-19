@@ -346,6 +346,7 @@ mod tests {
             branding: serde_json::json!({}),
             mode: crate::form::FormMode::Standard,
             routing_rules: None,
+            status: crate::form::FormStatus::Published,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             version: 0,

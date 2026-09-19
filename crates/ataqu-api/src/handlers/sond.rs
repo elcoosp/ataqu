@@ -32,8 +32,14 @@ pub struct FormResponse {
     pub description: Option<String>,
     pub questions: Vec<Value>,
     pub mode: ataqu_domain_sond::form::FormMode,
+    pub status: ataqu_domain_sond::form::FormStatus,
+    pub branding: Value,
     pub routing_rules: Option<serde_json::Value>,
     pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+    /// Optimistic-concurrency token: echo back in the `If-Match` header
+    /// on PUT /sond/forms/{id}. Required by the builder save loop.
+    pub version: i32,
 }
 
 impl From<ataqu_application::sond_service::Form> for FormResponse {
@@ -63,10 +69,32 @@ impl From<ataqu_application::sond_service::Form> for FormResponse {
             description: f.description,
             questions,
             mode: f.mode,
+            status: f.status,
+            branding: f.branding,
             routing_rules: f.routing_rules,
             created_at: f.created_at,
+            updated_at: f.updated_at,
+            version: f.version,
         }
     }
+}
+
+/// Public, unauthenticated form fetch for the guest funnel. Only serves
+/// `Published` forms; drafts and closed forms 404 so their existence is
+/// never revealed to anonymous callers.
+pub async fn get_form_public(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<FormResponse>> {
+    let form = state
+        .sond_service
+        .get_form_public(id)
+        .await
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+    if form.status != ataqu_domain_sond::form::FormStatus::Published {
+        return Err(ApiResponseError::not_found("Form not found"));
+    }
+    Ok(Json(form.into()))
 }
 
 pub async fn create_form(
@@ -149,6 +177,7 @@ pub struct UpdateFormRequest {
     pub description: Option<String>,
     pub questions: Option<Vec<ataqu_domain_sond::question::QuestionInput>>,
     pub mode: Option<ataqu_domain_sond::form::FormMode>,
+    pub status: Option<ataqu_domain_sond::form::FormStatus>,
 }
 
 pub async fn update_form(
@@ -173,6 +202,7 @@ pub async fn update_form(
         questions: payload.questions,
         mode: payload.mode,
         routing_rules: None,
+        status: payload.status,
         expected_version: if_match,
     };
 
@@ -233,6 +263,12 @@ pub async fn submit_form(
         .get_form_public(form_id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+    // Public funnel is gated on lifecycle: only published forms accept
+    // anonymous submissions; draft and closed forms return 404 so their
+    // existence is not revealed to unauthenticated callers.
+    if form.status != ataqu_domain_sond::form::FormStatus::Published {
+        return Err(ApiResponseError::not_found("Form not found"));
+    }
     let cmd = SubmitResponseCommand {
         tenant_id: form.tenant_id,
         form_id,
@@ -321,6 +357,11 @@ pub async fn submit_form_step(
         .get_form_public(form_id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+    // Same lifecycle gate as `submit_form`: conversational mode only
+    // accepts step submissions while the form is published.
+    if form.status != ataqu_domain_sond::form::FormStatus::Published {
+        return Err(ApiResponseError::not_found("Form not found"));
+    }
 
     let result = state
         .sond_service
@@ -341,6 +382,7 @@ pub async fn submit_form_step(
 
 pub fn public_routes() -> Router<AppState> {
     Router::new()
+        .route("/forms/{id}", axum::routing::get(get_form_public))
         .route("/forms/{id}/submit", axum::routing::post(submit_form))
         .route(
             "/forms/{id}/submit/step",
@@ -411,6 +453,10 @@ pub async fn update_form_routing(
 
 pub fn routes() -> Router<AppState> {
     Router::new()
+        .route(
+            "/submissions/bulk-delete",
+            axum::routing::post(bulk_delete_submissions),
+        )
         .route("/forms", axum::routing::post(create_form).get(list_forms))
         .route(
             "/forms/{id}",

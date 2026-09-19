@@ -108,6 +108,7 @@ impl SondService {
             branding: event.branding,
             mode: event.mode,
             routing_rules: event.routing_rules,
+            status: event.status,
             created_at: event.created_at,
             updated_at: event.created_at,
             version: 0,
@@ -201,6 +202,9 @@ impl SondService {
         }
         if let Some(rules) = event.routing_rules {
             form.routing_rules = Some(rules);
+        }
+        if let Some(status) = event.status {
+            form.status = status;
         }
         form.updated_at = event.updated_at;
         form.version += 1;

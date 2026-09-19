@@ -12,6 +12,18 @@ pub enum FormMode {
     Conversational,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FormStatus {
+    /// Editable in the builder; never publicly submittable.
+    #[default]
+    Draft,
+    /// Visible to the public; anonymous and conversational submits accepted.
+    Published,
+    /// No longer submittable (superseded, expired, or archived).
+    Closed,
+}
+
 // Form contains TenantId -> no Serialize/Deserialize
 #[derive(Debug, Clone, PartialEq)]
 pub struct Form {
@@ -23,6 +35,7 @@ pub struct Form {
     pub branding: serde_json::Value,
     pub mode: FormMode,
     pub routing_rules: Option<serde_json::Value>,
+    pub status: FormStatus,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
@@ -50,6 +63,7 @@ pub struct FormCreated {
     pub branding: serde_json::Value,
     pub mode: FormMode,
     pub routing_rules: Option<serde_json::Value>,
+    pub status: FormStatus,
     pub created_at: DateTime<Utc>,
 }
 
@@ -62,6 +76,7 @@ pub struct UpdateFormCommand {
     pub questions: Option<Vec<QuestionInput>>,
     pub mode: Option<FormMode>,
     pub routing_rules: Option<serde_json::Value>,
+    pub status: Option<FormStatus>,
     pub expected_version: i32,
 }
 
@@ -75,6 +90,7 @@ pub struct FormUpdated {
     pub question_count: usize,
     pub mode: Option<FormMode>,
     pub routing_rules: Option<serde_json::Value>,
+    pub status: Option<FormStatus>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -115,6 +131,7 @@ pub fn create_form(
         branding: cmd.branding,
         mode,
         routing_rules: None,
+        status: FormStatus::Draft,
         created_at,
     };
     Ok(event)
@@ -156,6 +173,7 @@ pub fn update_form(
         question_count: new_question_count,
         mode: cmd.mode,
         routing_rules: cmd.routing_rules,
+        status: cmd.status,
         updated_at,
     })
 }
@@ -285,6 +303,7 @@ mod tests {
             branding: serde_json::json!({}),
             mode: FormMode::Standard,
             routing_rules: None,
+            status: FormStatus::Draft,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             version: 0,
@@ -296,6 +315,7 @@ mod tests {
             questions: None,
             mode: None,
             routing_rules: None,
+            status: None,
             expected_version: 0,
         };
         let result = update_form(cmd, &form, &id_gen, &clock);
@@ -304,5 +324,60 @@ mod tests {
         assert_eq!(event.title, Some("New Title".to_string()));
         assert_eq!(event.description, Some("New desc".to_string()));
         assert_eq!(event.question_count, 0);
+    }
+
+    #[test]
+    fn form_defaults_to_draft_status() {
+        let id_gen = TestIdGenerator;
+        let clock = TestClock;
+        let cmd = CreateFormCommand {
+            tenant_id: TenantId::new(Uuid::new_v4()),
+            title: "My Form".to_string(),
+            description: None,
+            questions: vec![QuestionInput {
+                label: "Name".to_string(),
+                question_type: QuestionType::Text,
+                required: true,
+                conditions: vec![],
+                page: 1,
+            }],
+            branding: serde_json::json!({}),
+            mode: None,
+        };
+        let event = create_form(cmd, &id_gen, &clock).unwrap();
+        assert_eq!(event.status, FormStatus::Draft);
+    }
+
+    #[test]
+    fn update_form_can_transition_status() {
+        let id_gen = TestIdGenerator;
+        let clock = TestClock;
+        let tenant = TenantId::new(Uuid::new_v4());
+        let form = Form {
+            id: Uuid::new_v4(),
+            tenant_id: tenant,
+            title: "Old".to_string(),
+            description: None,
+            questions: vec![],
+            branding: serde_json::json!({}),
+            mode: FormMode::Standard,
+            routing_rules: None,
+            status: FormStatus::Draft,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            version: 0,
+        };
+        let cmd = UpdateFormCommand {
+            form_id: form.id,
+            title: None,
+            description: None,
+            questions: None,
+            mode: None,
+            routing_rules: None,
+            status: Some(FormStatus::Published),
+            expected_version: 0,
+        };
+        let event = update_form(cmd, &form, &id_gen, &clock).unwrap();
+        assert_eq!(event.status, Some(FormStatus::Published));
     }
 }
