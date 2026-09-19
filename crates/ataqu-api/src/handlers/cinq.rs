@@ -94,8 +94,11 @@ pub struct ContactResponse {
     pub company: Option<String>,
     pub email: ApiEmail,
     pub phone: Option<ApiPhone>,
+    pub custom_fields: serde_json::Value,
+    pub lead_score: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 impl From<Contact> for ContactResponse {
@@ -106,8 +109,11 @@ impl From<Contact> for ContactResponse {
             company: c.company,
             email: ApiEmail(c.email),
             phone: c.phone.map(ApiPhone),
+            custom_fields: c.custom_fields,
+            lead_score: c.lead_score,
             created_at: c.created_at,
             updated_at: c.updated_at,
+            version: c.version,
         }
     }
 }
@@ -146,6 +152,7 @@ pub struct CreateEstablishmentRequest {
 
 #[derive(Debug, Serialize)]
 pub struct DealResponse {
+    pub version: i32,
     pub id: Uuid,
     pub title: String,
     pub amount: Decimal,
@@ -164,6 +171,7 @@ impl From<Deal> for DealResponse {
     fn from(d: Deal) -> Self {
         Self {
             id: d.id,
+            version: d.version,
             title: d.title,
             amount: d.amount,
             status: serde_json::to_string(&d.status)
@@ -889,6 +897,7 @@ pub struct CreateTaskRequest {
 
 #[derive(Debug, Serialize)]
 pub struct TaskResponse {
+    pub version: i32,
     pub id: Uuid,
     pub contact_id: Option<Uuid>,
     pub deal_id: Option<Uuid>,
@@ -905,6 +914,7 @@ impl From<ataqu_domain_cinq::task::Task> for TaskResponse {
     fn from(t: ataqu_domain_cinq::task::Task) -> Self {
         Self {
             id: t.id,
+            version: t.version,
             contact_id: t.contact_id,
             deal_id: t.deal_id,
             assigned_to: t.assigned_to,
