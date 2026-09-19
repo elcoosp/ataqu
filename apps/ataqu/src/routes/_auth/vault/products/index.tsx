@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProductCatalog } from "../../../../apps/vault/components/product-catalog";
-import { ToastViewport } from "../../../../apps/vault/components/toast-viewport";
 
 export const Route = createFileRoute("/_auth/vault/products/")({
 	component: ProductsIndexPage,
@@ -9,7 +8,6 @@ export const Route = createFileRoute("/_auth/vault/products/")({
 function ProductsIndexPage() {
 	return (
 		<>
-			<ToastViewport />
 			<ProductCatalog />
 		</>
 	);

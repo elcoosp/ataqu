@@ -32,7 +32,11 @@ export const getVaultActions = (): VaultAction[] => [
 	},
 	{ id: "go-to-products", label: t`Go to Products`, url: "/vault/products" },
 	{ id: "go-to-movements", label: t`Go to Movements`, url: "/vault/movements" },
-	{ id: "go-to-warehouses", label: t`Go to Warehouses`, url: "/vault/warehouses" },
+	{
+		id: "go-to-warehouses",
+		label: t`Go to Warehouses`,
+		url: "/vault/warehouses",
+	},
 	{
 		id: "go-to-reservations",
 		label: t`Go to Reservations`,

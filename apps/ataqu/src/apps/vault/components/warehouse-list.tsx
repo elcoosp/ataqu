@@ -12,6 +12,7 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	EmptyState,
 	Input,
 	Label,
 } from "@ataqu/ui";
@@ -19,9 +20,8 @@ import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { EmptyState } from "./empty-state";
+import { toast } from "sonner";
 import { WarehouseIcon } from "./icons";
-import { showToast } from "./toast-store";
 
 function WarehouseDetailDialog({
 	warehouseId,
@@ -73,18 +73,13 @@ export function WarehouseList() {
 	const createWarehouse = useCreateWarehouse({
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ["vault", "warehouses"] });
-			showToast({
-				variant: "success",
-				title: <Trans>Warehouse created.</Trans>,
-			});
+			toast.success(<Trans>Warehouse created.</Trans>);
 			setName("");
 			setLocation("");
 			setShowCreateForm(false);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Warehouse creation failed.</Trans>,
+			toast.error(<Trans>Warehouse creation failed.</Trans>, {
 				description: (
 					<Trans>A warehouse with this name may already exist.</Trans>
 				),
@@ -95,33 +90,21 @@ export function WarehouseList() {
 	const updateWarehouse = useUpdateWarehouse({
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ["vault", "warehouses"] });
-			showToast({
-				variant: "success",
-				title: <Trans>Warehouse updated.</Trans>,
-			});
+			toast.success(<Trans>Warehouse updated.</Trans>);
 			setEditingId(null);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Warehouse update failed.</Trans>,
-			});
+			toast.error(<Trans>Warehouse update failed.</Trans>);
 		},
 	});
 
 	const deleteWarehouse = useDeleteWarehouse({
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ["vault", "warehouses"] });
-			showToast({
-				variant: "success",
-				title: <Trans>Warehouse deleted.</Trans>,
-			});
+			toast.success(<Trans>Warehouse deleted.</Trans>);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Warehouse delete failed.</Trans>,
-			});
+			toast.error(<Trans>Warehouse delete failed.</Trans>);
 		},
 	});
 

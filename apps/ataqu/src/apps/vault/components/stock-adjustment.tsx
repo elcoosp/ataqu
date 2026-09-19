@@ -13,7 +13,7 @@ import type { QueryKey } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { showToast } from "./toast-store";
+import { toast } from "sonner";
 
 interface PaginatedVariants {
 	items: Variant[];
@@ -77,19 +77,14 @@ export function StockAdjustment({ variant }: { variant: Variant }) {
 				}
 			}
 
-			showToast({
-				variant: "error",
-				title: <Trans>Stock adjustment failed.</Trans>,
+			toast.error(<Trans>Stock adjustment failed.</Trans>, {
 				description: (
 					<Trans>The stock change was reverted. Please try again.</Trans>
 				),
 			});
 		},
 		onSuccess: () => {
-			showToast({
-				variant: "success",
-				title: <Trans>Stock adjusted.</Trans>,
-			});
+			toast.success(<Trans>Stock adjusted.</Trans>);
 			setDelta("0");
 		},
 		onSettled: () => {

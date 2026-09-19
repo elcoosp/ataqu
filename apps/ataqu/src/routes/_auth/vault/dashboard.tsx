@@ -23,6 +23,7 @@ import {
 	Plus,
 	Warehouse,
 } from "lucide-react";
+import { navigate } from "../../../lib/navigation";
 
 export const Route = createFileRoute("/_auth/vault/dashboard")({
 	component: VaultDashboard,
@@ -42,8 +43,8 @@ function MetricCard({
 	warn?: boolean;
 }) {
 	const col = warn
-		? "bg-red-500/10 text-red-400"
-		: "bg-amber-500/10 text-amber-400";
+		? "bg-destructive/10 text-destructive"
+		: "bg-amber/10 text-amber";
 	return (
 		<Card className="overflow-hidden">
 			<div className="p-5">
@@ -217,7 +218,7 @@ function VaultDashboard() {
 							</CardTitle>
 							<Link
 								to="/vault/products"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>
@@ -244,7 +245,7 @@ function VaultDashboard() {
 								icon={Package}
 								action={t`Add Product`}
 								onClick={() => {
-									window.location.href = "/vault/products";
+									navigate("/vault/products");
 								}}
 							/>
 						) : (
@@ -261,7 +262,7 @@ function VaultDashboard() {
 							</CardTitle>
 							<Link
 								to="/vault/warehouses"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>
@@ -288,7 +289,7 @@ function VaultDashboard() {
 								icon={Warehouse}
 								action={t`Add Warehouse`}
 								onClick={() => {
-									window.location.href = "/vault/warehouses";
+									navigate("/vault/warehouses");
 								}}
 							/>
 						) : (
@@ -298,9 +299,9 @@ function VaultDashboard() {
 				</Card>
 			</div>
 			{lowStock.length > 0 && (
-				<Card className="border-red-500/30">
+				<Card className="border-destructive/30">
 					<CardHeader className="pb-3">
-						<CardTitle className="text-sm font-medium text-red-400 flex items-center gap-2">
+						<CardTitle className="text-sm font-medium text-destructive flex items-center gap-2">
 							<AlertTriangle className="h-4 w-4" />
 							<Trans>Low Stock Alerts</Trans>
 						</CardTitle>
@@ -312,7 +313,7 @@ function VaultDashboard() {
 									key={v.id}
 									to="/vault/products/$id"
 									params={{ id: v.product_id }}
-									className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20"
+									className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs hover:bg-destructive/20"
 								>
 									<Box className="h-3 w-3" />
 									{v.sku} — {v.stock_quantity} left

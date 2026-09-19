@@ -1,19 +1,41 @@
+import type { StockMovement } from "@ataqu/api-client";
 import { useListMovements } from "@ataqu/api-client";
 import { formatDate } from "@ataqu/shared-utils";
-import type { StockMovement } from "@ataqu/api-client";
-import {
-	Bone,
-	ExpandingSearch,
-	SegmentedControl,
-} from "@ataqu/ui";
+import { Bone, EmptyState, ExpandingSearch, SegmentedControl } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMemo, useState } from "react";
-import { EmptyState } from "./empty-state";
 import { HistoryIcon } from "./icons";
 
 function MovementsTable({ variantId }: { variantId: string }) {
 	const movementsQuery = useListMovements(variantId, { limit: 50, offset: 0 });
+
+	const movements = movementsQuery.data ?? [];
+
+	const [reasonFilter, setReasonFilter] = useState("all");
+	const [query, setQuery] = useState("");
+
+	const reasons = useMemo(() => {
+		const seen = new Set<string>();
+		for (const movement of movements) {
+			if (movement.reason) seen.add(movement.reason);
+		}
+		return Array.from(seen);
+	}, [movements]);
+
+	const filteredMovements = useMemo(() => {
+		const needle = query.trim().toLowerCase();
+		return movements.filter((movement: StockMovement) => {
+			if (reasonFilter !== "all" && movement.reason !== reasonFilter)
+				return false;
+			if (!needle) return true;
+			return (
+				(movement.reason ?? "").toLowerCase().includes(needle) ||
+				(movement.reference ?? "").toLowerCase().includes(needle) ||
+				String(movement.quantity).includes(needle)
+			);
+		});
+	}, [movements, query, reasonFilter]);
 
 	if (movementsQuery.isLoading) {
 		return (
@@ -38,32 +60,6 @@ function MovementsTable({ variantId }: { variantId: string }) {
 			/>
 		);
 	}
-
-	const movements = movementsQuery.data ?? [];
-
-	const [reasonFilter, setReasonFilter] = useState("all");
-	const [query, setQuery] = useState("");
-
-	const reasons = useMemo(() => {
-		const seen = new Set<string>();
-		for (const movement of movements) {
-			if (movement.reason) seen.add(movement.reason);
-		}
-		return Array.from(seen);
-	}, [movements]);
-
-	const filteredMovements = useMemo(() => {
-		const needle = query.trim().toLowerCase();
-		return movements.filter((movement: StockMovement) => {
-			if (reasonFilter !== "all" && movement.reason !== reasonFilter) return false;
-			if (!needle) return true;
-			return (
-				(movement.reason ?? "").toLowerCase().includes(needle) ||
-				(movement.reference ?? "").toLowerCase().includes(needle) ||
-				String(movement.quantity).includes(needle)
-			);
-		});
-	}, [movements, query, reasonFilter]);
 
 	if (movements.length === 0) {
 		return (
@@ -103,51 +99,51 @@ function MovementsTable({ variantId }: { variantId: string }) {
 			) : (
 				<div className="overflow-x-auto rounded-lg border border-border">
 					<table className="w-full text-left text-sm">
-				<thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
-					<tr>
-						<th className="px-4 py-3">
-							<Trans>Date</Trans>
-						</th>
-						<th className="px-4 py-3">
-							<Trans>Change</Trans>
-						</th>
-						<th className="px-4 py-3">
-							<Trans>Reason</Trans>
-						</th>
-						<th className="px-4 py-3">
-							<Trans>Reference</Trans>
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{filteredMovements.map((movement) => (
-						<tr
-							key={movement.id}
-							className="border-b border-border last:border-b-0"
-						>
-							<td className="px-4 py-3 text-muted-foreground">
-								{formatDate(movement.timestamp)}
-							</td>
-							<td
-								className={
-									movement.quantity >= 0
-										? "px-4 py-3 font-mono text-success"
-										: "px-4 py-3 font-mono text-destructive"
-								}
-							>
-								{movement.quantity >= 0
-									? `+${movement.quantity}`
-									: movement.quantity}
-							</td>
-							<td className="px-4 py-3">{movement.reason}</td>
-							<td className="px-4 py-3 text-muted-foreground">
-								{movement.reference ?? "—"}
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
-			</div>
+						<thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
+							<tr>
+								<th className="px-4 py-3">
+									<Trans>Date</Trans>
+								</th>
+								<th className="px-4 py-3">
+									<Trans>Change</Trans>
+								</th>
+								<th className="px-4 py-3">
+									<Trans>Reason</Trans>
+								</th>
+								<th className="px-4 py-3">
+									<Trans>Reference</Trans>
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{filteredMovements.map((movement) => (
+								<tr
+									key={movement.id}
+									className="border-b border-border last:border-b-0"
+								>
+									<td className="px-4 py-3 text-muted-foreground">
+										{formatDate(movement.timestamp)}
+									</td>
+									<td
+										className={
+											movement.quantity >= 0
+												? "px-4 py-3 font-mono text-success"
+												: "px-4 py-3 font-mono text-destructive"
+										}
+									>
+										{movement.quantity >= 0
+											? `+${movement.quantity}`
+											: movement.quantity}
+									</td>
+									<td className="px-4 py-3">{movement.reason}</td>
+									<td className="px-4 py-3 text-muted-foreground">
+										{movement.reference ?? "—"}
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
 			)}
 		</div>
 	);

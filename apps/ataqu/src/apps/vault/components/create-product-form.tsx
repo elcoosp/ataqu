@@ -1,14 +1,12 @@
 import type { CreateProductRequest, Product } from "@ataqu/api-client";
 import { createProduct } from "@ataqu/api-client";
-import {
- Button, Input, Label 
-} from "@ataqu/ui";
+import { Button, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import type { QueryKey } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { showToast } from "./toast-store";
+import { toast } from "sonner";
 
 interface PaginatedProducts {
 	items: Product[];
@@ -72,9 +70,7 @@ export function CreateProductForm({ onCreated }: { onCreated?: () => void }) {
 				}
 			}
 
-			showToast({
-				variant: "error",
-				title: <Trans>Product creation failed.</Trans>,
+			toast.error(<Trans>Product creation failed.</Trans>, {
 				description: (
 					<Trans>
 						A product with this SKU may already exist, or the server encountered
@@ -84,10 +80,7 @@ export function CreateProductForm({ onCreated }: { onCreated?: () => void }) {
 			});
 		},
 		onSuccess: () => {
-			showToast({
-				variant: "success",
-				title: <Trans>Product created.</Trans>,
-			});
+			toast.success(<Trans>Product created.</Trans>);
 			setName("");
 			setSku("");
 			setDescription("");

@@ -9,22 +9,17 @@ import {
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-import { showToast } from "../toast-store";
+import { toast } from "sonner";
 
 /** Connect an Amazon Seller Central account via SP-API LWA credentials. */
 export function AmazonConnect() {
 	const { data: status } = useAmazonStatus();
 	const connect = useConnectAmazon({
 		onSuccess: () => {
-			showToast({
-				variant: "success",
-				title: <Trans>Amazon connected.</Trans>,
-			});
+			toast.success(<Trans>Amazon connected.</Trans>);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Amazon connection failed.</Trans>,
+			toast.error(<Trans>Amazon connection failed.</Trans>, {
 				description: <Trans>Check the credentials and try again.</Trans>,
 			});
 		},

@@ -1,7 +1,8 @@
 import {
+	listProducts,
+	searchProducts,
 	useBulkDeleteProducts,
 	useGetLowStockAlerts,
-	useListProducts,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
 import {
@@ -9,17 +10,19 @@ import {
 	Bone,
 	BulkActionBar,
 	Button,
+	EmptyState,
 	Input,
 	SelectAllCheckbox,
 	SelectionCheckbox,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { CreateProductForm } from "./create-product-form";
 import { CsvImport } from "./csv-import";
-import { EmptyState } from "./empty-state";
 import { PackageIcon } from "./icons";
-import { showToast } from "./toast-store";
 
 const SCOPE = "vault:products";
 
@@ -32,7 +35,13 @@ export function ProductCatalog() {
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const debouncedSearch = useDebounce(search, 300);
 
-	const productsQuery = useListProducts({ limit: 100, offset: 0 });
+	const productsQuery = useQuery({
+		queryKey: ["vault", "products", { q: debouncedSearch, limit: 100 }],
+		queryFn: () =>
+			debouncedSearch.trim()
+				? searchProducts(debouncedSearch.trim(), 100)
+				: listProducts({ limit: 100, offset: 0 }),
+	});
 	const lowStockQuery = useGetLowStockAlerts({ threshold: 5 });
 	const bulkDelete = useBulkDeleteProducts();
 
@@ -43,16 +52,7 @@ export function ProductCatalog() {
 		[lowStockQuery.data],
 	);
 
-	const filteredProducts = useMemo(() => {
-		const query = debouncedSearch.trim().toLowerCase();
-		if (query.length === 0) return products;
-
-		return products.filter(
-			(product) =>
-				product.name.toLowerCase().includes(query) ||
-				product.sku.toLowerCase().includes(query),
-		);
-	}, [debouncedSearch, products]);
+	const filteredProducts = products;
 
 	const handleExportCsv = () => {
 		const header = ["id", "name", "sku", "description"];
@@ -75,9 +75,7 @@ export function ProductCatalog() {
 		link.click();
 		URL.revokeObjectURL(url);
 
-		showToast({
-			variant: "success",
-			title: <Trans>Export ready.</Trans>,
+		toast.success(<Trans>Export ready.</Trans>, {
 			description: <Trans>Your product CSV download has started.</Trans>,
 		});
 	};
@@ -115,7 +113,7 @@ export function ProductCatalog() {
 		);
 	}
 
-	if (products.length === 0 && !showCreateForm) {
+	if (products.length === 0 && !search.trim() && !showCreateForm) {
 		return (
 			<EmptyState
 				icon={<PackageIcon />}
@@ -237,12 +235,13 @@ export function ProductCatalog() {
 										<SelectionCheckbox scope={SCOPE} id={product.id} />
 									</td>
 									<td className="px-4 py-3">
-										<a
-											href={`/products/${product.id}`}
+										<Link
+											to="/vault/products/$id"
+											params={{ id: product.id }}
 											className="font-medium text-foreground hover:underline"
 										>
 											{product.name}
-										</a>
+										</Link>
 									</td>
 									<td className="px-4 py-3 font-mono text-xs">{product.sku}</td>
 									<td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
@@ -267,9 +266,10 @@ export function ProductCatalog() {
 			) : (
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{filteredProducts.map((product) => (
-						<a
+						<Link
 							key={product.id}
-							href={`/products/${product.id}`}
+							to="/vault/products/$id"
+							params={{ id: product.id }}
 							className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/40"
 						>
 							<div className="flex items-start justify-between gap-3">
@@ -290,7 +290,7 @@ export function ProductCatalog() {
 							<p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
 								{product.description}
 							</p>
-						</a>
+						</Link>
 					))}
 				</div>
 			)}

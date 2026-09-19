@@ -1,12 +1,10 @@
 import { useCreateVariant } from "@ataqu/api-client";
-import {
- Button, Input, Label 
-} from "@ataqu/ui";
+import { Button, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { showToast } from "./toast-store";
+import { toast } from "sonner";
 
 export function CreateVariantForm({
 	productId,
@@ -33,19 +31,14 @@ export function CreateVariantForm({
 	const createVariant = useCreateVariant({
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ["vault", "variants"] });
-			showToast({
-				variant: "success",
-				title: <Trans>Variant added.</Trans>,
-			});
+			toast.success(<Trans>Variant added.</Trans>);
 			setSku("");
 			setPrice("0");
 			setInitialStock("0");
 			onCreated?.();
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Variant creation failed.</Trans>,
+			toast.error(<Trans>Variant creation failed.</Trans>, {
 				description: (
 					<Trans>The SKU may already exist or the product was not found.</Trans>
 				),

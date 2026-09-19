@@ -1,12 +1,10 @@
 import { api } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import {
- Badge 
-} from "@ataqu/ui";
+import { Badge } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { showToast } from "./toast-store";
+import { toast } from "sonner";
 
 export function IntegrationToggle({ entityId }: { entityId: UUID }) {
 	const queryClient = useQueryClient();
@@ -37,19 +35,16 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
 				queryKey: ["integrations", "cinq", entityId],
 			});
 
-			showToast({
-				variant: "success",
-				title: nextEnabled ? (
+			toast.success(
+				nextEnabled ? (
 					<Trans>VAULT connected to CINQ.</Trans>
 				) : (
 					<Trans>VAULT disconnected from CINQ.</Trans>
 				),
-			});
+			);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Integration update failed.</Trans>,
+			toast.error(<Trans>Integration update failed.</Trans>, {
 				description: (
 					<Trans>
 						Could not toggle the CINQ integration. Check your permissions and

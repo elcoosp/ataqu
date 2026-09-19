@@ -9,27 +9,22 @@ import {
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
 	useShopifyDisconnect,
 	useShopifyIntegrations,
 	useShopifySync,
 } from "../../../../apps/vault/hooks/use-shopify-sync";
 import { useShopifyStore } from "../../../../apps/vault/stores/shopify-store";
-import { showToast } from "../toast-store";
 
 export function ShopifyStatus() {
 	const { data: integrations } = useShopifyIntegrations();
 	const syncMutation = useShopifySync({
 		onSuccess: () => {
-			showToast({
-				variant: "success",
-				title: <Trans>Shopify sync started.</Trans>,
-			});
+			toast.success(<Trans>Shopify sync started.</Trans>);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Shopify sync failed.</Trans>,
+			toast.error(<Trans>Shopify sync failed.</Trans>, {
 				description: (
 					<Trans>The sync request was not accepted. Please try again.</Trans>
 				),
@@ -40,15 +35,10 @@ export function ShopifyStatus() {
 	const disconnectMutation = useShopifyDisconnect({
 		onSuccess: () => {
 			useShopifyStore.getState().setConnection(false, null);
-			showToast({
-				variant: "success",
-				title: <Trans>Shopify disconnected.</Trans>,
-			});
+			toast.success(<Trans>Shopify disconnected.</Trans>);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Shopify disconnect failed.</Trans>,
+			toast.error(<Trans>Shopify disconnect failed.</Trans>, {
 				description: (
 					<Trans>The connection was not removed. Please try again.</Trans>
 				),

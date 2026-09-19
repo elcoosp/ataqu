@@ -1,101 +1,59 @@
-import { api } from "@ataqu/api-client";
-import type { UUID } from "@ataqu/types";
-import {
- CollapsibleBanner, LoadingButton, SliderDetents 
-} from "@ataqu/ui";
+import { useGetLowStockAlerts } from "@ataqu/api-client";
+import { SliderDetents } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { FormEvent } from "react";
 import { useState } from "react";
-import { showToast } from "./toast-store";
 
-export function LowStockAlertForm({ productId }: { productId: UUID }) {
-	const queryClient = useQueryClient();
-	const [threshold, setThreshold] = useState("5");
-
-	const setAlert = useMutation({
-		mutationFn: (value: number) =>
-			api.patch<void>(`/vault/products/${productId}/alerts`, {
-				threshold: value,
-			}),
-		onSuccess: () => {
-			void queryClient.invalidateQueries({
-				queryKey: ["vault", "product", productId],
-			});
-			showToast({
-				variant: "success",
-				title: <Trans>Low stock alert set.</Trans>,
-			});
-		},
-		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Low stock alert update failed.</Trans>,
-				description: (
-					<Trans>
-						The threshold must be a non-negative number. Please check the value
-						and try again.
-					</Trans>
-				),
-			});
-		},
-	});
-
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		const value = Number(threshold);
-		if (Number.isFinite(value) && value >= 0) {
-			setAlert.mutate(value);
-		}
-	};
-
+export function LowStockAlertForm({ productId }: { productId: string }) {
+	const [threshold, setThreshold] = useState(5);
+	const query = useGetLowStockAlerts({ threshold });
+	const variants = (query.data ?? []).filter(
+		(variant) => variant.product_id === productId,
+	);
 	return (
-		<div className="space-y-4">
-			<CollapsibleBanner
-				title={<Trans>About low stock alerts</Trans>}
-				description={
-					<Trans>
-						You'll be notified when any variant's available stock drops to or
-						below the threshold you set here.
-					</Trans>
-				}
+		<section className="space-y-3" aria-label={t`Low stock`}>
+			<p className="text-sm text-muted-foreground">
+				<Trans>
+					Current low-stock variants. This threshold filters the view; it does
+					not configure notifications.
+				</Trans>
+			</p>
+			<SliderDetents
+				label={t`Low stock threshold`}
+				value={threshold}
+				onValueChange={setThreshold}
+				min={0}
+				max={100}
+				step={1}
+				detents={[1, 5, 10, 25]}
 			/>
-			<form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4">
-				<div className="space-y-2">
-					<SliderDetents
-						label={t`Low Stock Threshold`}
-						value={Number.isFinite(Number(threshold)) ? Number(threshold) : 0}
-						onValueChange={(v) => setThreshold(String(v))}
-						min={0}
-						max={100}
-						step={1}
-						detents={[1, 5, 10, 25]}
-					/>
-				</div>
-				<LoadingButton
-					onAction={async () => {
-						await new Promise<void>((resolve, reject) => {
-							try {
-								const value = Number(threshold);
-								if (Number.isFinite(value) && value >= 0) {
-									setAlert.mutate(value, {
-										onSuccess: () => resolve(),
-										onError: () => reject(),
-									});
-								} else {
-									resolve();
-								}
-							} catch (e) {
-								reject(e);
-							}
-						});
-					}}
-					disabled={setAlert.isPending}
-				>
-					Set Low Stock Alert
-				</LoadingButton>
-			</form>
-		</div>
+			{query.isLoading ? (
+				<p role="status">
+					<Trans>Loading stock…</Trans>
+				</p>
+			) : query.isError ? (
+				<p role="alert">
+					<Trans>Unable to load low stock.</Trans>
+				</p>
+			) : variants.length ? (
+				<ul>
+					{variants.map((variant) => (
+						<li
+							key={variant.id}
+							className="flex justify-between border-b border-border py-2"
+						>
+							<span>{variant.sku}</span>
+							<span className="tabular-nums">
+								{variant.stock_quantity - variant.reserved_quantity}
+							</span>
+						</li>
+					))}
+				</ul>
+			) : (
+				<p>
+					<Trans>No variants below this threshold.</Trans>
+				</p>
+			)}
+		</section>
 	);
 }

@@ -14,6 +14,7 @@ import {
 	Bone,
 	Button,
 	CopyButton,
+	EmptyState,
 	HoldToConfirm,
 	Input,
 	Label,
@@ -27,7 +28,6 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CreateVariantForm } from "./create-variant-form";
 import { CrossAppBadge } from "./cross-app-badge";
-import { EmptyState } from "./empty-state";
 import { PackageIcon } from "./icons";
 import { IntegrationToggle } from "./integration-toggle";
 import { LowStockAlertForm } from "./low-stock-alert-form";
@@ -91,33 +91,6 @@ export function ProductDetail({ productId }: { productId: string }) {
 	);
 	const availableStock = totalStock - totalReserved;
 
-	if (productQuery.isLoading || variantsQuery.isLoading) {
-		return (
-			<SkeletonSwap ready={false} lines={6}>
-				<div className="space-y-4">
-					<div className="h-16 w-full" />
-					<div className="h-64 w-full" />
-				</div>
-			</SkeletonSwap>
-		);
-	}
-
-	if (productQuery.isError || variantsQuery.isError) {
-		return (
-			<EmptyState
-				icon={<PackageIcon />}
-				title={<Trans>Unable to load product</Trans>}
-				description={
-					<Trans>Reload the page or try again in a few seconds.</Trans>
-				}
-			/>
-		);
-	}
-
-	const product = productQuery.data;
-
-	if (!product) return null;
-
 	const updateProduct = useUpdateProduct({
 		onSuccess: () => toast.success(t`Product updated`),
 		onError: (err) => toast.error(handleApiError(err)),
@@ -165,6 +138,7 @@ export function ProductDetail({ productId }: { productId: string }) {
 	const [prodSku, setProdSku] = useState("");
 
 	const startEditProduct = () => {
+		if (!product) return;
 		setProdName(product.name);
 		setProdDescription(product.description);
 		setProdSku(product.sku);
@@ -172,6 +146,7 @@ export function ProductDetail({ productId }: { productId: string }) {
 	};
 
 	const saveProduct = () => {
+		if (!product) return;
 		updateProduct.mutate({
 			id: product.id,
 			data: {
@@ -207,6 +182,31 @@ export function ProductDetail({ productId }: { productId: string }) {
 		});
 		setEditingVariant(false);
 	};
+
+	if (productQuery.isLoading || variantsQuery.isLoading) {
+		return (
+			<SkeletonSwap ready={false} lines={6}>
+				<div className="space-y-4">
+					<div className="h-16 w-full" />
+					<div className="h-64 w-full" />
+				</div>
+			</SkeletonSwap>
+		);
+	}
+
+	if (productQuery.isError || variantsQuery.isError) {
+		return (
+			<EmptyState
+				icon={<PackageIcon />}
+				title={<Trans>Unable to load product</Trans>}
+				description={
+					<Trans>Reload the page or try again in a few seconds.</Trans>
+				}
+			/>
+		);
+	}
+
+	const product = productQuery.data;
 
 	if (!product) {
 		return (
@@ -285,7 +285,7 @@ export function ProductDetail({ productId }: { productId: string }) {
 										onConfirm={() => deleteProduct.mutate(product.id)}
 										confirmLabel="Deleted"
 										disabled={deleteProduct.isPending}
-										className="mt-2 bg-red-600 text-white hover:bg-red-500"
+										className="mt-2 bg-destructive text-white hover:bg-destructive"
 									>
 										<Trans>Delete Product</Trans>
 									</HoldToConfirm>

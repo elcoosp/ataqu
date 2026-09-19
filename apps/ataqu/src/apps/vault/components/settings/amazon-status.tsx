@@ -13,39 +13,28 @@ import {
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
-import { showToast } from "../toast-store";
+import { toast } from "sonner";
 
 /** Amazon Seller Central connection status, manual sync and disconnect. */
 export function AmazonStatus() {
 	const { data: status, refetch } = useAmazonStatus();
 	const sync = useSyncAmazon({
 		onSuccess: () => {
-			showToast({
-				variant: "success",
-				title: <Trans>Amazon sync started.</Trans>,
-			});
+			toast.success(<Trans>Amazon sync started.</Trans>);
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Amazon sync failed.</Trans>,
+			toast.error(<Trans>Amazon sync failed.</Trans>, {
 				description: <Trans>The sync request was not accepted.</Trans>,
 			});
 		},
 	});
 	const disconnect = useDisconnectAmazon({
 		onSuccess: () => {
-			showToast({
-				variant: "success",
-				title: <Trans>Amazon disconnected.</Trans>,
-			});
+			toast.success(<Trans>Amazon disconnected.</Trans>);
 			refetch();
 		},
 		onError: () => {
-			showToast({
-				variant: "error",
-				title: <Trans>Amazon disconnect failed.</Trans>,
-			});
+			toast.error(<Trans>Amazon disconnect failed.</Trans>);
 		},
 	});
 
@@ -58,7 +47,7 @@ export function AmazonStatus() {
 			<CardHeader>
 				<CardTitle className="text-foreground flex items-center gap-2">
 					<Trans>Amazon Seller Central</Trans>
-					<Badge variant="outline" className="text-emerald-400">
+					<Badge variant="outline" className="text-success">
 						<Trans>Connected</Trans>
 					</Badge>
 				</CardTitle>

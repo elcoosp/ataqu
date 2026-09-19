@@ -1,13 +1,11 @@
 import { useCreateProduct } from "@ataqu/api-client";
-import {
- Button 
-} from "@ataqu/ui";
+import { Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
-import { showToast } from "./toast-store";
+import { toast } from "sonner";
 
 function parseCsvLine(line: string): string[] {
 	const result: string[] = [];
@@ -59,9 +57,7 @@ export function CsvImport() {
 			const headerLine = lines[0];
 
 			if (!headerLine) {
-				showToast({
-					variant: "error",
-					title: <Trans>CSV import failed.</Trans>,
+				toast.error(<Trans>CSV import failed.</Trans>, {
 					description: <Trans>The selected CSV file is empty.</Trans>,
 				});
 				return;
@@ -75,9 +71,7 @@ export function CsvImport() {
 			const descriptionIndex = header.indexOf("description");
 
 			if (nameIndex === -1 || skuIndex === -1) {
-				showToast({
-					variant: "error",
-					title: <Trans>CSV import failed.</Trans>,
+				toast.error(<Trans>CSV import failed.</Trans>, {
 					description: (
 						<Trans>The CSV must include name and sku columns.</Trans>
 					),
@@ -100,15 +94,11 @@ export function CsvImport() {
 				imported += 1;
 			}
 
-			showToast({
-				variant: "success",
-				title: <Trans>Import complete.</Trans>,
+			toast.success(<Trans>Import complete.</Trans>, {
 				description: t`${imported} products imported.`,
 			});
 		} catch {
-			showToast({
-				variant: "error",
-				title: <Trans>CSV import failed.</Trans>,
+			toast.error(<Trans>CSV import failed.</Trans>, {
 				description: <Trans>The selected file could not be imported.</Trans>,
 			});
 		} finally {
