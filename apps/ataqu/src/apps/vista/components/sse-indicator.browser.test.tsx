@@ -15,6 +15,8 @@ describe("SseIndicator", () => {
 				<SseIndicator isConnected={true} />
 			</LinguiProvider>,
 		);
-		expect(screen.getAllByText("Live dashboard").length).toBeGreaterThan(0);
+		expect(
+			screen.getAllByText("Auto-refresh every 30 seconds").length,
+		).toBeGreaterThan(0);
 	});
 });
