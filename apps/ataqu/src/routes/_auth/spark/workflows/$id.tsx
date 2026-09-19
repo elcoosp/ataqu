@@ -5,6 +5,7 @@ import type {
 	Trigger,
 	Workflow,
 } from "@ataqu/api-client";
+import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
 import { Button, Input, OnboardTour } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -28,6 +29,7 @@ import {
 } from "../../../../apps/spark/components/workflow-canvas";
 
 export const Route = createFileRoute("/_auth/spark/workflows/$id")({
+	validateSearch: searchSchema({ testOpen: (raw: unknown) => raw === "1" }),
 	component: WorkflowDetail,
 });
 
@@ -299,6 +301,8 @@ function nodesToWorkflowRequest(
 function WorkflowDetail() {
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
+	const routeSearch = Route.useSearch();
+	const routeNavigate = Route.useNavigate();
 	const isNew = id === "new";
 
 	const { data: workflow, isLoading } = useGetWorkflow(isNew ? undefined : id);
@@ -310,7 +314,14 @@ function WorkflowDetail() {
 	const [nodes, setNodes] = useState<SparkNode[]>([]);
 	const [edges, setEdges] = useState<Edge[]>([]);
 	const [workflowName, setWorkflowName] = useState("");
-	const [showTestModal, setShowTestModal] = useState(false);
+	const [showTestModal, setShowTestModal] = useUrlState({
+		search: routeSearch,
+		setSearch: (next) => routeNavigate({ search: next as never }),
+		key: "testOpen",
+		default: false,
+		parse: (raw: unknown) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	const [initialized, setInitialized] = useState(false);
 
 	useEffect(() => {
@@ -345,7 +356,11 @@ function WorkflowDetail() {
 			createMutation.mutate(req as CreateWorkflowRequest, {
 				onSuccess: (created) => {
 					toast.success(t`Workflow saved.`);
-					navigate({ to: "/spark/workflows/$id", params: { id: created.id } });
+					navigate({
+						to: "/spark/workflows/$id",
+						params: { id: created.id },
+						search: { testOpen: false },
+					});
 				},
 				onError: () => toast.error(t`Failed to create workflow.`),
 			});
