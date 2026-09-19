@@ -54,6 +54,7 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("@ataqu/ui", () => ({
+	EmptyState: () => <div data-testid="empty-state" />,
 	Button: ({ children }: ComponentProps<"button">) => (
 		<button type="button">{children}</button>
 	),
@@ -84,10 +85,6 @@ vi.mock("@ataqu/ui", () => ({
 			{children}
 		</button>
 	),
-}));
-
-vi.mock("../empty-state", () => ({
-	EmptyState: () => <div data-testid="empty-state" />,
 }));
 
 describe("EmployeeDirectory", () => {

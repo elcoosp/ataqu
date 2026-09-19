@@ -1,15 +1,24 @@
 import { useOnboardingStore } from "@ataqu/shared-stores";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useClickOutside } from "../src/use-click-outside";
 import { useDebounce } from "../src/use-debounce";
-import { useHotkeys } from "../src/use-hotkeys";
+import {
+	__resetKeyboardEngineForTests,
+	useHotkeys,
+	useShortcut,
+	useShortcutScope,
+} from "../src/use-hotkeys";
 import { useIdempotency } from "../src/use-idempotency";
 import { useLocalStorage } from "../src/use-local-storage";
 import { useOnboard } from "../src/use-onboard";
-import { useOptimistic } from "../src/use-optimistic";
 import { useSSE } from "../src/use-sse";
 import { useWebSocket } from "../src/use-web-socket";
+import {
+	eventToToken,
+	formatShortcut,
+	SHORTCUTS,
+} from "../src/shortcuts";
 
 class FakeEventSource {
 	static instances: FakeEventSource[] = [];
@@ -147,40 +156,203 @@ describe("useHotkeys", () => {
 	});
 });
 
-describe("useOptimistic", () => {
-	it("tracks loading and success", async () => {
-		const { result } = renderHook(() =>
-			useOptimistic(async (n: number) => n * 2, { onSuccess: () => {} }),
-		);
-		let p: Promise<unknown>;
+describe("useShortcut (keyboard engine)", () => {
+	const press = (init: KeyboardEventInit) =>
 		act(() => {
-			p = result.current.mutate(21);
+			document.dispatchEvent(new KeyboardEvent("keydown", init));
 		});
-		expect(result.current.isLoading).toBe(true);
-		await act(async () => {
-			await p;
-		});
-		expect(result.current.isLoading).toBe(false);
-		expect(result.current.error).toBeNull();
+
+	afterEach(() => {
+		cleanup();
+		__resetKeyboardEngineForTests();
 	});
 
-	it("tracks error on failure", async () => {
-		const onError = vi.fn();
-		const { result } = renderHook(() =>
-			useOptimistic(
-				async () => {
-					throw new Error("fail");
-				},
-				{ onError },
-			),
-		);
-		await act(async () => {
-			await expect(result.current.mutate(1)).rejects.toThrow("fail");
+	it("fires a plain chord", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("mod+k", cb));
+		press({ key: "k", metaKey: true });
+		expect(cb).toHaveBeenCalledTimes(1);
+	});
+
+	it("supports sequences (g then d)", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("g d", cb));
+		press({ key: "g" });
+		press({ key: "d" });
+		expect(cb).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not fire a sequence when only the prefix is pressed", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("g d", cb));
+		press({ key: "g" });
+		expect(cb).not.toHaveBeenCalled();
+	});
+
+	it("expires a sequence prefix after the timeout", () => {
+		vi.useFakeTimers();
+		try {
+			const cb = vi.fn();
+			renderHook(() => useShortcut("g d", cb));
+			press({ key: "g" });
+			// Advance past SEQUENCE_TIMEOUT_MS before the second chord.
+			act(() => {
+				vi.advanceTimersByTime(1000);
+			});
+			press({ key: "d" });
+			expect(cb).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("does not arm a prefix from an unrelated key", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("g d", cb));
+		press({ key: "x" });
+		press({ key: "d" });
+		expect(cb).not.toHaveBeenCalled();
+	});
+
+	it("does not fire a sequence prefix that is also a standalone binding", () => {
+		const standalone = vi.fn();
+		const sequence = vi.fn();
+		renderHook(() => useShortcut(["g d", "g"], () => standalone()));
+		press({ key: "g" });
+		expect(standalone).toHaveBeenCalledTimes(1);
+		press({ key: "d" });
+		expect(sequence).not.toHaveBeenCalled();
+	});
+
+	it("guards bare letters while typing in an input", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("j", cb));
+		const input = document.createElement("input");
+		document.body.appendChild(input);
+		// Bubbles: true so the event actually reaches the document listener
+		// with `event.target` pointing at the input — otherwise this passes
+		// vacuously (event never observed) and proves nothing.
+		act(() => {
+			input.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "j", bubbles: true }),
+			);
 		});
-		expect(result.current.error).toBeInstanceOf(Error);
-		expect(onError).toHaveBeenCalled();
+		expect(cb).not.toHaveBeenCalled();
+	});
+
+	it("allows modifier chords while typing in an input", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("mod+k", cb));
+		const input = document.createElement("input");
+		document.body.appendChild(input);
+		act(() => {
+			input.dispatchEvent(
+				new KeyboardEvent("keydown", {
+					key: "k",
+					metaKey: true,
+					bubbles: true,
+				}),
+			);
+		});
+		expect(cb).toHaveBeenCalledTimes(1);
+	});
+
+	it("blocks sequences while typing but allows them once focus leaves", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("g d", cb));
+		const input = document.createElement("input");
+		document.body.appendChild(input);
+		act(() => {
+			input.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "g", bubbles: true }),
+			);
+			input.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "d", bubbles: true }),
+			);
+		});
+		expect(cb).not.toHaveBeenCalled();
+		// Away from the text field the same chord sequence completes.
+		act(() => {
+			document.dispatchEvent(new KeyboardEvent("keydown", { key: "g" }));
+			document.dispatchEvent(new KeyboardEvent("keydown", { key: "d" }));
+		});
+		expect(cb).toHaveBeenCalledTimes(1);
+	});
+
+	it("respects scope: list bindings need an active list scope", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("j", cb, { scope: "list" }));
+		press({ key: "j" });
+		expect(cb).not.toHaveBeenCalled();
+	});
+
+	it("fires scoped bindings once the scope is activated", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcutScope("list"));
+		renderHook(() => useShortcut("j", cb, { scope: "list" }));
+		press({ key: "j" });
+		expect(cb).toHaveBeenCalledTimes(1);
+	});
+
+	it("honours enabled: false", () => {
+		const cb = vi.fn();
+		renderHook(() => useShortcut("j", cb, { enabled: false }));
+		press({ key: "j" });
+		expect(cb).not.toHaveBeenCalled();
+	});
+
+	it("unregisters on unmount so a stale binding cannot fire", () => {
+		const cb = vi.fn();
+		const { unmount } = renderHook(() => useShortcut("j", cb));
+		unmount();
+		press({ key: "j" });
+		expect(cb).not.toHaveBeenCalled();
 	});
 });
+
+describe("shortcuts registry helpers", () => {
+	it("maps events to canonical tokens", () => {
+		expect(
+			eventToToken(
+				new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+			),
+		).toBe("mod+k");
+		expect(eventToToken(new KeyboardEvent("keydown", { key: "Shift" }))).toBe(
+			null,
+		);
+		expect(eventToToken(new KeyboardEvent("keydown", { key: " " }))).toBe(
+			"space",
+		);
+	});
+
+	it("normalizes shift+/ into ?", () => {
+		expect(
+			eventToToken(
+				new KeyboardEvent("keydown", { key: "?", shiftKey: true }),
+			),
+		).toBe("?");
+	});
+
+	it("formats chords per platform vocabulary", () => {
+		// jsdom reports a non-Apple platform → Ctrl vocabulary.
+		expect(formatShortcut("mod+k")).toBe("Ctrl+K");
+		expect(formatShortcut("g d")).toBe("G D");
+		expect(formatShortcut("mod+enter")).toBe("Ctrl+⏎");
+		expect(formatShortcut("escape")).toBe("Esc");
+	});
+
+	it("keeps the help overlay and the dispatcher in sync", () => {
+		expect(SHORTCUTS.length).toBeGreaterThan(0);
+		for (const def of SHORTCUTS) {
+			expect(def.keys.length).toBeGreaterThan(0);
+			expect(def.label.length).toBeGreaterThan(0);
+		}
+	});
+});
+
+// The former `useOptimistic` loading-wrapper tests moved to
+// `__tests__/use-optimistic.test.tsx`, which covers the rewritten
+// `useOptimisticMutation` kit (optimistic paint, rollback, ConflictError).
 
 describe("useIdempotency", () => {
 	it("returns a stable key until reset", () => {

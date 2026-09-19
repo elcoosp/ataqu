@@ -37,8 +37,8 @@ vi.mock("@ataqu/api-client", () => ({
 		},
 		isLoading: false,
 	}),
-	useApproveLeaveRequest: () => ({ mutate: vi.fn(), isPending: false }),
-	useRejectLeaveRequest: () => ({ mutate: vi.fn(), isPending: false }),
+	approveLeaveRequest: vi.fn().mockResolvedValue(undefined),
+	rejectLeaveRequest: vi.fn().mockResolvedValue(undefined),
 	useCancelLeaveRequest: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
@@ -48,6 +48,17 @@ vi.mock("@tanstack/react-query", () => ({
 		getQueryData: vi.fn(),
 		setQueryData: vi.fn(),
 		invalidateQueries: vi.fn(),
+	}),
+	useMutation: (options: unknown) => ({
+		mutate: (vars: unknown) => {
+			const opts = options as { mutationFn?: (v: unknown) => Promise<unknown> };
+			opts.mutationFn?.(vars);
+		},
+		mutateAsync: (vars: unknown) =>
+			(
+				options as { mutationFn?: (v: unknown) => Promise<unknown> }
+			).mutationFn?.(vars) ?? Promise.resolve(undefined),
+		isPending: false,
 	}),
 }));
 
