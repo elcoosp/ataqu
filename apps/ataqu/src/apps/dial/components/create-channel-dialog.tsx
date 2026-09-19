@@ -57,7 +57,13 @@ export function CreateChannelDialog() {
 						<Trans>Create Channel</Trans>
 					</DialogTitle>
 				</DialogHeader>
-				<div className="space-y-3">
+				<form
+					className="space-y-3"
+					onSubmit={(e) => {
+						e.preventDefault();
+						handleSubmit();
+					}}
+				>
 					<div>
 						<Label>
 							<Trans>Name</Trans>
@@ -92,14 +98,18 @@ export function CreateChannelDialog() {
 						</div>
 					</div>
 					<div className="flex justify-end gap-2 pt-2">
-						<Button variant="outline" onClick={() => setOpen(false)}>
+						<Button
+							variant="outline"
+							type="button"
+							onClick={() => setOpen(false)}
+						>
 							<Trans>Cancel</Trans>
 						</Button>
-						<Button onClick={handleSubmit} disabled={submitting}>
+						<Button type="submit" disabled={submitting}>
 							<Trans>Create</Trans>
 						</Button>
 					</div>
-				</div>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);
