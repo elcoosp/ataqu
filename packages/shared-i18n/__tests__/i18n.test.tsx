@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { I18nProvider } from "../src/i18n-provider";
 import { messages as enMessages } from "../src/locales/en/messages";
@@ -14,14 +15,25 @@ describe("compiled catalogs", () => {
 });
 
 describe("I18nProvider", () => {
+	it("withholds children until the locale is active (no pre-translation flash)", () => {
+		// Catalog loading runs in an effect. A server render runs no effects,
+		// so nothing may be emitted before the catalogs are ready — this is
+		// the no-FOUC guarantee, and unlike a DOM assertion it does not depend
+		// on whether the catalog glob resolved asynchronously.
+		const html = renderToStaticMarkup(
+			<I18nProvider locale="en">
+				<span>flash</span>
+			</I18nProvider>,
+		);
+		expect(html).toBe("");
+	});
+
 	it("renders children once the locale loads", async () => {
 		render(
 			<I18nProvider locale="en">
 				<span>loaded</span>
 			</I18nProvider>,
 		);
-		// initially null (not loaded)
-		expect(screen.queryByText("loaded")).toBeNull();
 		await waitFor(() => expect(screen.getByText("loaded")).toBeTruthy());
 	});
 
