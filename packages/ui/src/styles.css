@@ -274,43 +274,140 @@
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-/* ---- Motion layer (docs P0-11): tailwindcss-animate-compatible
-   enter/exit primitives + reduced-motion guard. ---- */
+/* Enter/exit keyframes. Declared at top level (not inside `@utility`) so a
+   single pair feeds every enter/exit schedule below. */
 @keyframes ataqu-enter {
-	from {
-		opacity: var(--ataqu-enter-opacity, 1);
-		transform: translate3d(var(--ataqu-enter-translate-x, 0), var(--ataqu-enter-translate-y, 0), 0)
-			scale3d(var(--ataqu-enter-scale, 1), var(--ataqu-enter-scale, 1), 1);
-	}
+  from {
+    opacity: var(--ataqu-enter-opacity, 1);
+    transform: translate3d(
+        var(--ataqu-enter-translate-x, 0),
+        var(--ataqu-enter-translate-y, 0),
+        0
+      )
+      scale3d(var(--ataqu-enter-scale, 1), var(--ataqu-enter-scale, 1), 1);
+  }
 }
 @keyframes ataqu-exit {
-	to {
-		opacity: var(--ataqu-exit-opacity, 1);
-		transform: translate3d(var(--ataqu-exit-translate-x, 0), var(--ataqu-exit-translate-y, 0), 0)
-			scale3d(var(--ataqu-exit-scale, 1), var(--ataqu-exit-scale, 1), 1);
-	}
+  to {
+    opacity: var(--ataqu-exit-opacity, 1);
+    transform: translate3d(
+        var(--ataqu-exit-translate-x, 0),
+        var(--ataqu-exit-translate-y, 0),
+        0
+      )
+      scale3d(var(--ataqu-exit-scale, 1), var(--ataqu-exit-scale, 1), 1);
+  }
 }
-.animate-in {
-	animation: ataqu-enter var(--ataqu-duration, 150ms) var(--ataqu-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+/* ---- Motion layer (docs B11 / P0-11) ----
+   Radix primitives ship shadcn's enter/exit classes (`animate-in`,
+   `zoom-in-95`, `fade-in-0`, `slide-in-from-*`). These MUST be declared as
+   Tailwind `@utility` rules: a plain `.foo` class cannot be variant-prefixed,
+   so `data-[state=open]:animate-in` generated nothing and every modal, menu,
+   and tooltip popped with no transition. Values mirror `tailwindcss-animate`:
+   a bare slide travels 100%, a numeric step is that many 0.25rem units,
+   and brackets/ratios (`[48%]`, `1/2`) are used literally. `duration-*` utilities set
+   `--tw-duration`, which we honour so `duration-200:animate-in` still wins. */
+@utility animate-in {
+  animation: ataqu-enter var(--ataqu-duration, var(--tw-duration, 150ms))
+    var(--ataqu-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
-.animate-out {
-	animation: ataqu-exit var(--ataqu-duration, 150ms) var(--ataqu-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+@utility animate-out {
+  animation: ataqu-exit var(--ataqu-duration, var(--tw-duration, 150ms))
+    var(--ataqu-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
-.fade-in { --ataqu-enter-opacity: 0; }
-.fade-out { --ataqu-exit-opacity: 0; }
-.zoom-in-95 { --ataqu-enter-scale: 0.95; }
-.zoom-in-90 { --ataqu-enter-scale: 0.9; }
-.zoom-out-95 { --ataqu-exit-scale: 0.95; }
-.slide-in-from-bottom-2 { --ataqu-enter-translate-y: 8px; }
-.slide-in-from-bottom-4 { --ataqu-enter-translate-y: 16px; }
-.slide-in-from-top-2 { --ataqu-enter-translate-y: -8px; }
-.slide-in-from-right-2 { --ataqu-enter-translate-x: 8px; }
-.slide-in-from-left-2 { --ataqu-enter-translate-x: -8px; }
-.slide-out-to-top-2 { --ataqu-exit-translate-y: -8px; }
-.slide-out-to-right-2 { --ataqu-exit-translate-x: 8px; }
+@utility fade-in {
+  --ataqu-enter-opacity: 0;
+}
+@utility fade-in-0 {
+  --ataqu-enter-opacity: 0;
+}
+@utility fade-out {
+  --ataqu-exit-opacity: 0;
+}
+@utility fade-out-0 {
+  --ataqu-exit-opacity: 0;
+}
+@utility zoom-in {
+  --ataqu-enter-scale: 0;
+}
+@utility zoom-in-90 {
+  --ataqu-enter-scale: 0.9;
+}
+@utility zoom-in-95 {
+  --ataqu-enter-scale: 0.95;
+}
+@utility zoom-out-95 {
+  --ataqu-exit-scale: 0.95;
+}
+@utility slide-in-from-top {
+  --ataqu-enter-translate-y: -100%;
+}
+@utility slide-in-from-bottom {
+  --ataqu-enter-translate-y: 100%;
+}
+@utility slide-in-from-left {
+  --ataqu-enter-translate-x: -100%;
+}
+@utility slide-in-from-right {
+  --ataqu-enter-translate-x: 100%;
+}
+@utility slide-out-to-top {
+  --ataqu-exit-translate-y: -100%;
+}
+@utility slide-out-to-bottom {
+  --ataqu-exit-translate-y: 100%;
+}
+@utility slide-out-to-left {
+  --ataqu-exit-translate-x: -100%;
+}
+@utility slide-out-to-right {
+  --ataqu-exit-translate-x: 100%;
+}
+/* Step forms: `-2` means two 0.25rem steps; `-[48%]` and `-1/2` are literal.
+   Only the declaration whose `--value()` type matches a given value is
+   emitted, per the `--value()` contract. */
+@utility slide-in-from-top-* {
+  --ataqu-enter-translate-y: calc(var(--spacing) * -1 * --value(integer));
+  --ataqu-enter-translate-y: calc(-1 * --value([percentage], [length]));
+  --ataqu-enter-translate-y: calc(-1 * --value(ratio) * 100%);
+}
+@utility slide-in-from-bottom-* {
+  --ataqu-enter-translate-y: calc(var(--spacing) * --value(integer));
+  --ataqu-enter-translate-y: --value([percentage], [length]);
+  --ataqu-enter-translate-y: calc(--value(ratio) * 100%);
+}
+@utility slide-in-from-left-* {
+  --ataqu-enter-translate-x: calc(var(--spacing) * -1 * --value(integer));
+  --ataqu-enter-translate-x: calc(-1 * --value([percentage], [length]));
+  --ataqu-enter-translate-x: calc(-1 * --value(ratio) * 100%);
+}
+@utility slide-in-from-right-* {
+  --ataqu-enter-translate-x: calc(var(--spacing) * --value(integer));
+  --ataqu-enter-translate-x: --value([percentage], [length]);
+  --ataqu-enter-translate-x: calc(--value(ratio) * 100%);
+}
+@utility slide-out-to-top-* {
+  --ataqu-exit-translate-y: calc(var(--spacing) * -1 * --value(integer));
+  --ataqu-exit-translate-y: calc(-1 * --value([percentage], [length]));
+  --ataqu-exit-translate-y: calc(-1 * --value(ratio) * 100%);
+}
+@utility slide-out-to-bottom-* {
+  --ataqu-exit-translate-y: calc(var(--spacing) * --value(integer));
+  --ataqu-exit-translate-y: --value([percentage], [length]);
+  --ataqu-exit-translate-y: calc(--value(ratio) * 100%);
+}
+@utility slide-out-to-left-* {
+  --ataqu-exit-translate-x: calc(var(--spacing) * -1 * --value(integer));
+  --ataqu-exit-translate-x: calc(-1 * --value([percentage], [length]));
+  --ataqu-exit-translate-x: calc(-1 * --value(ratio) * 100%);
+}
+@utility slide-out-to-right-* {
+  --ataqu-exit-translate-x: calc(var(--spacing) * --value(integer));
+  --ataqu-exit-translate-x: --value([percentage], [length]);
+  --ataqu-exit-translate-x: calc(--value(ratio) * 100%);
+}
 @media (prefers-reduced-motion: reduce) {
-	.animate-in,
-	.animate-out {
-		animation: none;
-	}
+  :where(.animate-in, .animate-out, [class*="animate-in"], [class*="animate-out"]) {
+    animation: none;
+  }
 }
