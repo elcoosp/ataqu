@@ -30,6 +30,7 @@ pub struct CreateEmployeeRequest {
 
 #[derive(Debug, Serialize)]
 pub struct EmployeeResponse {
+    pub version: i32,
     pub id: Uuid,
     pub full_name: String,
     pub email: ApiEmail,
@@ -48,6 +49,7 @@ impl From<Employee> for EmployeeResponse {
     fn from(e: Employee) -> Self {
         Self {
             id: e.id,
+            version: e.version,
             full_name: e.full_name,
             email: ApiEmail(e.email),
             phone: e.phone.map(|p| ApiPhone(PhoneNumber::new(p))),
@@ -84,6 +86,43 @@ pub struct LeaveRequestResponse {
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
+}
+
+/// Shared constructor over the domain request plus the resolved employee name
+/// (the only producer that lacks a name is the employee lookup miss, which the
+/// handlers render as "Unknown"). Centralizing it here — instead of repeating
+/// the stringification across the five construction sites — guarantees every
+/// handler returns the `version` the UI feeds back as `If-Match`.
+pub fn leave_request_response(
+    request: ataqu_domain_pause::leave::LeaveRequest,
+    employee_name: String,
+) -> LeaveRequestResponse {
+    LeaveRequestResponse {
+        id: request.id,
+        employee_id: request.employee_id,
+        employee_name,
+        leave_type: serde_json::to_string(&request.leave_type)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
+        start_date: request.start_date,
+        end_date: request.end_date,
+        reason: request.reason,
+        status: serde_json::to_string(&request.status)
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string(),
+        created_at: request.created_at.into(),
+        updated_at: request.updated_at.into(),
+        version: request.version,
+    }
+}
+
+impl From<(ataqu_domain_pause::leave::LeaveRequest, String)> for LeaveRequestResponse {
+    fn from((request, employee_name): (ataqu_domain_pause::leave::LeaveRequest, String)) -> Self {
+        leave_request_response(request, employee_name)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -202,26 +241,12 @@ pub async fn request_leave(
         .await
         .ok();
 
-    let resp = LeaveRequestResponse {
-        id: request.id,
-        employee_id: request.employee_id,
-        employee_name: employee
+    let resp = leave_request_response(
+        request,
+        employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        start_date: request.start_date,
-        end_date: request.end_date,
-        reason: request.reason,
-        status: serde_json::to_string(&request.status)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        created_at: request.created_at.into(),
-        updated_at: request.updated_at.into(),
-    };
+    );
 
     Ok((StatusCode::CREATED, Json(resp)))
 }
@@ -335,24 +360,7 @@ pub async fn list_leave_requests(
 
     let items = requests_with_names
         .into_iter()
-        .map(|(r, name)| LeaveRequestResponse {
-            id: r.id,
-            employee_id: r.employee_id,
-            employee_name: name,
-            leave_type: serde_json::to_string(&r.leave_type)
-                .unwrap_or_default()
-                .trim_matches('"')
-                .to_string(),
-            start_date: r.start_date,
-            end_date: r.end_date,
-            reason: r.reason,
-            status: serde_json::to_string(&r.status)
-                .unwrap_or_default()
-                .trim_matches('"')
-                .to_string(),
-            created_at: r.created_at.into(),
-            updated_at: r.updated_at.into(),
-        })
+        .map(|(r, name)| leave_request_response(r, name))
         .collect();
 
     Ok(Json(ataqu_contracts::PaginatedResponse {
@@ -393,26 +401,12 @@ pub async fn approve_leave(
         .await
         .ok();
 
-    let resp = LeaveRequestResponse {
-        id: request.id,
-        employee_id: request.employee_id,
-        employee_name: employee
+    let resp = leave_request_response(
+        request,
+        employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        start_date: request.start_date,
-        end_date: request.end_date,
-        reason: request.reason,
-        status: serde_json::to_string(&request.status)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        created_at: request.created_at.into(),
-        updated_at: request.updated_at.into(),
-    };
+    );
     Ok(Json(resp))
 }
 
@@ -446,26 +440,12 @@ pub async fn reject_leave(
         .await
         .ok();
 
-    let resp = LeaveRequestResponse {
-        id: request.id,
-        employee_id: request.employee_id,
-        employee_name: employee
+    let resp = leave_request_response(
+        request,
+        employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        start_date: request.start_date,
-        end_date: request.end_date,
-        reason: request.reason,
-        status: serde_json::to_string(&request.status)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        created_at: request.created_at.into(),
-        updated_at: request.updated_at.into(),
-    };
+    );
     Ok(Json(resp))
 }
 
@@ -499,26 +479,12 @@ pub async fn cancel_leave(
         .await
         .ok();
 
-    let resp = LeaveRequestResponse {
-        id: request.id,
-        employee_id: request.employee_id,
-        employee_name: employee
+    let resp = leave_request_response(
+        request,
+        employee
             .map(|e| e.full_name)
             .unwrap_or_else(|| "Unknown".to_string()),
-        leave_type: serde_json::to_string(&request.leave_type)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        start_date: request.start_date,
-        end_date: request.end_date,
-        reason: request.reason,
-        status: serde_json::to_string(&request.status)
-            .unwrap_or_default()
-            .trim_matches('"')
-            .to_string(),
-        created_at: request.created_at.into(),
-        updated_at: request.updated_at.into(),
-    };
+    );
     Ok(Json(resp))
 }
 
@@ -791,6 +757,14 @@ pub fn routes() -> Router<AppState> {
         .route("/leave-requests/{id}/approve", patch(approve_leave))
         .route("/leave-requests/{id}/reject", patch(reject_leave))
         .route("/leave-requests/{id}/cancel", patch(cancel_leave))
+        .route(
+            "/leave-requests/bulk-approve",
+            post(bulk_approve_leave_requests),
+        )
+        .route(
+            "/leave-requests/bulk-cancel",
+            post(bulk_cancel_leave_requests),
+        )
         .route(
             "/employees/{id}/documents",
             post(upload_document).get(list_documents),
