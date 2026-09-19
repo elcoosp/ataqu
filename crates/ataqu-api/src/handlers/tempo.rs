@@ -468,6 +468,18 @@ pub async fn get_public_event_type(
     Ok(Json(event_type.into()))
 }
 
+pub async fn resolve_public_event_type(
+    State(state): State<AppState>,
+    Path(slug): Path<String>,
+) -> ApiResult<Json<EventTypeResponse>> {
+    let event_type = state
+        .tempo_service
+        .resolve_event_type_by_slug(&slug)
+        .await
+        .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
+    Ok(Json(event_type.into()))
+}
+
 pub fn public_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -477,6 +489,10 @@ pub fn public_routes() -> Router<AppState> {
         .route(
             "/public/{tenant_id}/bookings",
             axum::routing::post(public_create_booking),
+        )
+        .route(
+            "/public/event-types/{slug}",
+            axum::routing::get(resolve_public_event_type),
         )
 }
 

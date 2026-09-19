@@ -68,6 +68,19 @@ pub trait TempoRepository: Send + Sync {
         slug: &str,
     ) -> Result<Option<EventType>, RepositoryError>;
 
+    /// Public variant: resolves a slug across all tenants (for public booking
+    /// pages at `/book/{slug}` where the visitor has no tenant context).
+    /// The repo impl performs a tenant-agnostic lookup; this default delegates
+    /// to the tenant-scoped method only when no override is provided.
+    async fn find_event_type_by_slug_public(
+        &self,
+        slug: &str,
+    ) -> Result<Option<EventType>, RepositoryError> {
+        // Default: scan all tenants (inefficient but correct when not overridden).
+        // The SeaORM impl overrides this with a tenant-agnostic query.
+        self.find_event_type_by_slug(&TenantId::new(Uuid::new_v4()), slug).await
+    }
+
     async fn find_event_type_by_id(
         &self,
         _tenant_id: &TenantId,

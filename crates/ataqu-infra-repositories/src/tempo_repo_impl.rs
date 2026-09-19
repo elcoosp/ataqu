@@ -238,6 +238,30 @@ impl TempoRepository for TempoRepositoryImpl {
         }))
     }
 
+    async fn find_event_type_by_slug_public(
+        &self,
+        slug: &str,
+    ) -> Result<Option<EventType>, RepositoryError> {
+        let model = event_type_entity::Entity::find()
+            .filter(event_type_entity::Column::Slug.eq(slug))
+            .one(&self.db)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
+
+        Ok(model.map(|m| EventType {
+            id: EventTypeId(m.id),
+            tenant_id: TenantId::new(m.tenant_id),
+            name: m.name,
+            slug: m.slug,
+            description: m.description,
+            duration_minutes: m.duration_minutes,
+            is_active: m.is_active,
+            created_at: m.created_at,
+            updated_at: m.updated_at,
+            version: m.version,
+        }))
+    }
+
     async fn update_event_type(&self, event_type: &EventType) -> Result<(), RepositoryError> {
         let active = event_type_entity::ActiveModel {
             id: Set(event_type.id.0),
