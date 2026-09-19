@@ -92,7 +92,12 @@ function DealRow({
 				? "bg-destructive/15 text-destructive"
 				: "bg-amber/15 text-amber";
 	return (
-		<Link to="/cinq/deals/$id" params={{ id: deal.id }} search={{ tab: "activities" }} className="block">
+		<Link
+			to="/cinq/deals/$id"
+			params={{ id: deal.id }}
+			search={{ tab: "activities" }}
+			className="block"
+		>
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-start justify-between">
@@ -135,7 +140,12 @@ function ContactRow({
 	};
 }) {
 	return (
-		<Link to="/cinq/contacts/$id" params={{ id: contact.id }} search={{ tab: "activities" }} className="block">
+		<Link
+			to="/cinq/contacts/$id"
+			params={{ id: contact.id }}
+			search={{ tab: "activities" }}
+			className="block"
+		>
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-center gap-3">
@@ -207,7 +217,8 @@ function ActivityRow({
 			</div>
 			<Link
 				to="/cinq/contacts/$id"
-				params={{ id: a.id }} search={{ tab: "activities" }}
+				params={{ id: a.id }}
+				search={{ tab: "activities" }}
 				className="text-xs text-amber hover:text-amber flex items-center gap-1"
 			>
 				View
@@ -337,6 +348,7 @@ function CinqDashboard() {
 							</CardTitle>
 							<Link
 								to="/cinq/deals"
+								search={{ createOpen: false, stageOpen: false }}
 								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
@@ -451,6 +463,7 @@ function CinqDashboard() {
 						</CardTitle>
 						<Link
 							to="/cinq/tasks"
+							search={{ createOpen: false }}
 							className="text-xs text-amber hover:text-amber flex items-center gap-1"
 						>
 							View all <ArrowRight className="h-3 w-3" />
