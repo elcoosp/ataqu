@@ -1,113 +1,54 @@
 import {
+	approveLeaveRequest,
 	type LeaveRequest,
 	type PaginatedResponse,
-	useApproveLeaveRequest,
+	rejectLeaveRequest,
 	useCancelLeaveRequest,
 	useListLeaveRequests,
-	useRejectLeaveRequest,
 } from "@ataqu/api-client";
-import {
- Badge, Button, DataTable, HoldToConfirm 
-} from "@ataqu/ui";
+import { useOptimisticMutation } from "@ataqu/shared-hooks";
+import { Badge, Button, DataTable, HoldToConfirm } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
-interface OptimisticContext {
-	previousRequests?: PaginatedResponse<LeaveRequest>;
-}
+type LeaveCache = PaginatedResponse<LeaveRequest> | undefined;
+type LeaveVars = { id: string; version: number };
+
+/** Paint a status change onto the cached leave-request list. */
+const setStatus =
+	(status: LeaveRequest["status"]) =>
+	(old: LeaveCache, { id }: LeaveVars): LeaveCache =>
+		old
+			? {
+					...old,
+					items: old.items.map((req) =>
+						req.id === id ? { ...req, status } : req,
+					),
+				}
+			: old;
 
 export function ApprovalDashboard() {
-	const queryClient = useQueryClient();
 	const { data: requests, isLoading } = useListLeaveRequests();
 
-	const approveMutation = useApproveLeaveRequest({
-		onMutate: async ({ id }: { id: string; version: number }) => {
-			await queryClient.cancelQueries({
-				queryKey: ["pause", "leave-requests"],
-			});
-			const previousRequests = queryClient.getQueryData<
-				PaginatedResponse<LeaveRequest>
-			>(["pause", "leave-requests"]);
-			if (previousRequests) {
-				queryClient.setQueryData<PaginatedResponse<LeaveRequest>>(
-					["pause", "leave-requests"],
-					{
-						...previousRequests,
-						items: previousRequests.items.map((req) =>
-							req.id === id ? { ...req, status: "approved" as const } : req,
-						),
-					},
-				);
-			}
-			return { previousRequests };
-		},
-		onError: (
-			_err: Error,
-			_vars: { id: string; version: number },
-			context: unknown,
-		) => {
-			const ctx = context as OptimisticContext | undefined;
-			if (ctx?.previousRequests) {
-				queryClient.setQueryData(
-					["pause", "leave-requests"],
-					ctx.previousRequests,
-				);
-			}
-			toast.error(t`Failed to approve leave.`);
-		},
-		onSuccess: () => {
-			toast.success(t`Leave approved.`);
-		},
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: ["pause", "leave-requests"] });
-		},
+	const approveMutation = useOptimisticMutation<void, LeaveCache, LeaveVars>({
+		listQueryKey: ["pause", "leave-requests"],
+		mutationFn: ({ id, version }) =>
+			approveLeaveRequest(id, version).then(() => undefined),
+		optimisticUpdate: setStatus("approved"),
+		onError: () => toast.error(t`Failed to approve leave.`),
+		onSuccess: () => toast.success(t`Leave approved.`),
 	});
 
-	const rejectMutation = useRejectLeaveRequest({
-		onMutate: async ({ id }: { id: string; version: number }) => {
-			await queryClient.cancelQueries({
-				queryKey: ["pause", "leave-requests"],
-			});
-			const previousRequests = queryClient.getQueryData<
-				PaginatedResponse<LeaveRequest>
-			>(["pause", "leave-requests"]);
-			if (previousRequests) {
-				queryClient.setQueryData<PaginatedResponse<LeaveRequest>>(
-					["pause", "leave-requests"],
-					{
-						...previousRequests,
-						items: previousRequests.items.map((req) =>
-							req.id === id ? { ...req, status: "rejected" as const } : req,
-						),
-					},
-				);
-			}
-			return { previousRequests };
-		},
-		onError: (
-			_err: Error,
-			_vars: { id: string; version: number },
-			context: unknown,
-		) => {
-			const ctx = context as OptimisticContext | undefined;
-			if (ctx?.previousRequests) {
-				queryClient.setQueryData(
-					["pause", "leave-requests"],
-					ctx.previousRequests,
-				);
-			}
-			toast.error(t`Failed to reject leave.`);
-		},
-		onSuccess: () => {
-			toast.success(t`Leave rejected.`);
-		},
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: ["pause", "leave-requests"] });
-		},
+	const rejectMutation = useOptimisticMutation<void, LeaveCache, LeaveVars>({
+		listQueryKey: ["pause", "leave-requests"],
+		mutationFn: ({ id, version }) =>
+			rejectLeaveRequest(id, version).then(() => undefined),
+		optimisticUpdate: setStatus("rejected"),
+		onError: () => toast.error(t`Failed to reject leave.`),
+		onSuccess: () => toast.success(t`Leave rejected.`),
 	});
 
 	const cancelMutation = useCancelLeaveRequest({
@@ -142,10 +83,10 @@ export function ApprovalDashboard() {
 				const status = row.original.status;
 				const color =
 					status === "approved"
-						? "bg-green-500/20 text-green-500"
+						? "bg-success/20 text-success"
 						: status === "rejected"
-							? "bg-red-500/20 text-red-500"
-							: "bg-amber-500/20 text-amber-500";
+							? "bg-destructive/20 text-destructive"
+							: "bg-amber/20 text-amber";
 				return <Badge className={color}>{status}</Badge>;
 			},
 		},
@@ -161,7 +102,7 @@ export function ApprovalDashboard() {
 								approveMutation.mutate({ id: req.id, version: req.version })
 							}
 							disabled={approveMutation.isPending}
-							className="bg-green-600 text-white hover:bg-green-500"
+							className="bg-success text-white hover:bg-success"
 						>
 							<Button
 								size="sm"
@@ -177,7 +118,7 @@ export function ApprovalDashboard() {
 								rejectMutation.mutate({ id: req.id, version: req.version })
 							}
 							disabled={rejectMutation.isPending}
-							className="bg-red-600 text-white hover:bg-red-500"
+							className="bg-destructive text-white hover:bg-destructive"
 						>
 							<X className="h-4 w-4" />
 						</HoldToConfirm>

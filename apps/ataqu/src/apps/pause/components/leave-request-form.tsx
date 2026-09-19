@@ -1,7 +1,5 @@
 import { useCreateLeaveRequest } from "@ataqu/api-client";
-import {
- Input, Label, LoadingButton 
-} from "@ataqu/ui";
+import { Input, Label, LoadingButton } from "@ataqu/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -84,7 +82,7 @@ export function LeaveRequestForm({
 				</Label>
 				<Input id="start_date" type="date" {...register("start_date")} />
 				{errors.start_date && (
-					<p className="text-red-500 text-sm">
+					<p className="text-destructive text-sm">
 						{errors.start_date.message?.toString()}
 					</p>
 				)}
@@ -95,7 +93,7 @@ export function LeaveRequestForm({
 				</Label>
 				<Input id="end_date" type="date" {...register("end_date")} />
 				{errors.end_date && (
-					<p className="text-red-500 text-sm">
+					<p className="text-destructive text-sm">
 						{errors.end_date.message?.toString()}
 					</p>
 				)}

@@ -6,6 +6,7 @@ export interface CommandAction {
 }
 
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
+import { navigate } from "../../lib/navigation";
 
 export const usePauseCommandActions = (callbacks?: {
 	onAddEmployee?: () => void;
@@ -19,59 +20,54 @@ export const usePauseCommandActions = (callbacks?: {
 		{
 			id: "add-employee",
 			label: "Add Employee",
-			run: () =>
-				callbacks?.onAddEmployee?.() ?? window.location.assign("/pause/directory"),
+			run: () => callbacks?.onAddEmployee?.() ?? navigate("/pause/directory"),
 		},
 		{
 			id: "go-directory",
 			label: "Go to Directory",
-			run: () => window.location.assign("/pause/directory"),
+			run: () => navigate("/pause/directory"),
 		},
 		{
 			id: "go-leave",
 			label: "Go to Leave",
-			run: () => window.location.assign("/pause/leave"),
+			run: () => navigate("/pause/leave"),
 		},
 		{
 			id: "go-onboarding",
 			label: "Go to Onboarding",
-			run: () => window.location.assign("/pause/onboarding"),
+			run: () => navigate("/pause/onboarding"),
 		},
 		{
 			id: "go-reports",
 			label: "Go to Reports",
-			run: () => window.location.assign("/pause/reports"),
+			run: () => navigate("/pause/reports"),
 		},
 		{
 			id: "search-employees",
 			label: "Search Employees",
 			run: () =>
-				callbacks?.onSearchEmployees?.() ??
-				window.location.assign("/pause/directory"),
+				callbacks?.onSearchEmployees?.() ?? navigate("/pause/directory"),
 		},
 		{
 			id: "request-leave",
 			label: "Request Leave",
-			run: () =>
-				callbacks?.onRequestLeave?.() ?? window.location.assign("/pause/leave"),
+			run: () => callbacks?.onRequestLeave?.() ?? navigate("/pause/leave"),
 		},
 		{
 			id: "approve-leave",
 			label: "Approve Leave",
-			run: () =>
-				callbacks?.onApproveLeave?.() ?? window.location.assign("/pause/leave"),
+			run: () => callbacks?.onApproveLeave?.() ?? navigate("/pause/leave"),
 		},
 		{
 			id: "reject-leave",
 			label: "Reject Leave",
-			run: () =>
-				callbacks?.onRejectLeave?.() ?? window.location.assign("/pause/leave"),
+			run: () => callbacks?.onRejectLeave?.() ?? navigate("/pause/leave"),
 		},
 		{
 			id: "upload-document",
 			label: "Upload Document",
 			run: () =>
-				callbacks?.onUploadDocument?.() ?? window.location.assign("/pause/directory"),
+				callbacks?.onUploadDocument?.() ?? navigate("/pause/directory"),
 		},
 	];
 

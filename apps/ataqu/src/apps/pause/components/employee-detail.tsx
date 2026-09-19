@@ -172,8 +172,10 @@ export function EmployeeDetail({ id }: { id: string }) {
 								<h1 className="text-3xl font-bold text-white">
 									{employee.full_name}
 								</h1>
-								<p className="text-lg text-gray-400">{employee.job_title}</p>
-								<p className="text-sm text-gray-500">
+								<p className="text-lg text-muted-foreground">
+									{employee.job_title}
+								</p>
+								<p className="text-sm text-muted-foreground">
 									{employee.email} | {employee.phone || t`No phone`}
 								</p>
 								<Button
@@ -191,7 +193,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 				<HoldToConfirm
 					onConfirm={() => deactivateMutation.mutate(employee.id)}
 					disabled={deactivateMutation.isPending}
-					className="bg-red-600 text-white hover:bg-red-500"
+					className="bg-destructive text-white hover:bg-destructive"
 				>
 					<Trans>Offboard</Trans>
 				</HoldToConfirm>
@@ -217,7 +219,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 						</h3>
 						<div className="grid grid-cols-3 gap-4">
 							<div>
-								<p className="text-sm text-gray-400">
+								<p className="text-sm text-muted-foreground">
 									<Trans>Accrued</Trans>
 								</p>
 								<p className="text-2xl font-bold">
@@ -225,7 +227,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 								</p>
 							</div>
 							<div>
-								<p className="text-sm text-gray-400">
+								<p className="text-sm text-muted-foreground">
 									<Trans>Used</Trans>
 								</p>
 								<p className="text-2xl font-bold">
@@ -233,7 +235,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 								</p>
 							</div>
 							<div>
-								<p className="text-sm text-gray-400">
+								<p className="text-sm text-muted-foreground">
 									<Trans>Remaining</Trans>
 								</p>
 								<p className="text-2xl font-bold text-amber">
@@ -286,17 +288,17 @@ export function EmployeeDetail({ id }: { id: string }) {
 								{documents.map((doc: Document) => (
 									<li
 										key={doc.id}
-										className="flex items-center justify-between border-b border-gray-700 pb-2"
+										className="flex items-center justify-between border-b border-border pb-2"
 									>
 										<span>{doc.file_name}</span>
-										<span className="text-xs text-gray-400">
+										<span className="text-xs text-muted-foreground">
 											{doc.doc_type}
 										</span>
 									</li>
 								))}
 							</ul>
 						) : (
-							<p className="text-gray-400">
+							<p className="text-muted-foreground">
 								<Trans>No documents uploaded.</Trans>
 							</p>
 						)}

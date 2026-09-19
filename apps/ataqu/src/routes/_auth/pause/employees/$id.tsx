@@ -9,7 +9,7 @@ function EmployeeDetailPage() {
 	const { id } = Route.useParams();
 	return (
 		<div className="p-8">
-				<EmployeeDetail id={id} />
-			</div>
+			<EmployeeDetail id={id} />
+		</div>
 	);
 }

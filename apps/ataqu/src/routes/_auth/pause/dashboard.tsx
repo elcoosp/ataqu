@@ -48,7 +48,7 @@ export function MetricCard({
 						{sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
 					</div>
 					<div
-						className={`rounded-full p-2.5 ${color ?? "bg-amber-500/10 text-amber-400"}`}
+						className={`rounded-full p-2.5 ${color ?? "bg-amber/10 text-amber"}`}
 					>
 						<Icon className="h-4 w-4" />
 					</div>
@@ -72,10 +72,10 @@ function LeaveRow({
 }) {
 	const s =
 		r.status === "approved"
-			? "bg-emerald-500/15 text-emerald-400"
+			? "bg-success/15 text-success"
 			: r.status === "pending"
-				? "bg-amber-500/15 text-amber-400"
-				: "bg-gray-500/15 text-gray-400";
+				? "bg-amber/15 text-amber"
+				: "bg-muted/15 text-muted-foreground";
 	return (
 		<Link to="/pause/employees/$id" params={{ id: r.id }} className="block">
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
@@ -163,14 +163,14 @@ function PauseDashboard() {
 					value={employees.length}
 					sub={`${activeCount} active`}
 					icon={Users}
-					color="bg-amber-500/10 text-amber-400"
+					color="bg-amber/10 text-amber"
 				/>
 				<MetricCard
 					label={t`Pending Requests`}
 					value={pendingLeaves}
 					sub={`${approvedLeaves} approved`}
 					icon={Calendar}
-					color="bg-blue-500/10 text-blue-400"
+					color="bg-info/10 text-info"
 				/>
 				<MetricCard
 					label={t`Onboarded`}
@@ -182,9 +182,7 @@ function PauseDashboard() {
 					label={t`Review Needed`}
 					value={pendingLeaves}
 					icon={AlertCircle}
-					color={
-						pendingLeaves > 0 ? "bg-amber-500/10 text-amber-400" : undefined
-					}
+					color={pendingLeaves > 0 ? "bg-amber/10 text-amber" : undefined}
 				/>
 			</div>
 
@@ -198,7 +196,7 @@ function PauseDashboard() {
 							</CardTitle>
 							<Link
 								to="/pause/directory"
-								className="text-xs text-amber hover:text-amber-300 flex items-center gap-1"
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>

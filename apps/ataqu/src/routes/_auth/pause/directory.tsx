@@ -11,6 +11,7 @@ import {
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 import { EmployeeDirectory } from "../../../apps/pause/components/employee-directory";
@@ -20,26 +21,35 @@ export const Route = createFileRoute("/_auth/pause/directory")({
 });
 
 function DirectoryPage() {
-	const [isAddOpen, setIsAddOpen] = useState(false);
+	const search = Route.useSearch();
+	const navigate = Route.useNavigate();
+	const [isAddOpen, setIsAddOpen] = useUrlState({
+	search,
+	setSearch: (next) => navigate({ search: next as never }),
+	key: "addOpen",
+	default: false,
+	parse: (raw: unknown) => raw === "1",
+	serialize: (v) => (v ? "1" : undefined),
+});
 
 	return (
 		<div className="p-8">
-				<h1 className="text-2xl font-bold mb-8">
-					<Trans>Employee Directory</Trans>
-				</h1>
-				<EmployeeDirectory onAddEmployee={() => setIsAddOpen(true)} />
+			<h1 className="text-2xl font-bold mb-8">
+				<Trans>Employee Directory</Trans>
+			</h1>
+			<EmployeeDirectory onAddEmployee={() => setIsAddOpen(true)} />
 
-				<Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>
-								<Trans>Add Employee</Trans>
-							</DialogTitle>
-						</DialogHeader>
-						<AddEmployeeForm onClose={() => setIsAddOpen(false)} />
-					</DialogContent>
-				</Dialog>
-			</div>
+			<Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							<Trans>Add Employee</Trans>
+						</DialogTitle>
+					</DialogHeader>
+					<AddEmployeeForm onClose={() => setIsAddOpen(false)} />
+				</DialogContent>
+			</Dialog>
+		</div>
 	);
 }
 

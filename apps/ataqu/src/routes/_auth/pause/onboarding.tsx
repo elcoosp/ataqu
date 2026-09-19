@@ -56,7 +56,7 @@ function OnboardingPage() {
 				<Trans>Onboarding</Trans>
 			</h1>
 			{isLoading ? (
-				<div className="py-16 text-center text-sm text-gray-400">
+				<div className="py-16 text-center text-sm text-muted-foreground">
 					<Trans>Loading…</Trans>
 				</div>
 			) : employees.length === 0 ? (
@@ -64,7 +64,7 @@ function OnboardingPage() {
 					<h3 className="text-lg font-semibold mb-1">
 						<Trans>No active onboarding</Trans>
 					</h3>
-					<p className="text-sm text-gray-400">
+					<p className="text-sm text-muted-foreground">
 						<Trans>New hires will appear here.</Trans>
 					</p>
 				</div>
@@ -80,7 +80,9 @@ function OnboardingPage() {
 							<Card key={emp.id} className="p-4">
 								<div className="flex justify-between items-center mb-2">
 									<h3 className="font-semibold">{emp.full_name}</h3>
-									<span className="text-sm text-gray-400">{emp.job_title}</span>
+									<span className="text-sm text-muted-foreground">
+										{emp.job_title}
+									</span>
 								</div>
 								<TaskSteps
 									steps={ONBOARDING_STEPS.map((s) => ({ ...s }))}
@@ -94,7 +96,7 @@ function OnboardingPage() {
 											label={t`Onboarding progress`}
 										/>
 									</div>
-									<span className="text-xs tabular-nums text-gray-400">
+									<span className="text-xs tabular-nums text-muted-foreground">
 										{pct}%
 									</span>
 								</div>

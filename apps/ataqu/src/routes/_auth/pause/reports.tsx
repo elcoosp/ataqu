@@ -9,10 +9,10 @@ export const Route = createFileRoute("/_auth/pause/reports")({
 function ReportsPage() {
 	return (
 		<div className="p-8">
-				<h1 className="text-2xl font-bold mb-8">
-					<Trans>Reports</Trans>
-				</h1>
-				<ReportsView />
-			</div>
+			<h1 className="text-2xl font-bold mb-8">
+				<Trans>Reports</Trans>
+			</h1>
+			<ReportsView />
+		</div>
 	);
 }

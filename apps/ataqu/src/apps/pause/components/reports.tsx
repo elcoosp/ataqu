@@ -1,7 +1,5 @@
 import { useListEmployees, useListLeaveRequests } from "@ataqu/api-client";
-import {
- Chart 
-} from "@ataqu/ui";
+import { Chart } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMemo } from "react";
@@ -45,7 +43,7 @@ export function ReportsView() {
 	return (
 		<div className="space-y-8">
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-				<div className="bg-deep-night/50 p-6 rounded-lg border border-gray-700/40">
+				<div className="bg-deep-night/50 p-6 rounded-lg border border-border/40">
 					<h3 className="text-lg font-semibold mb-4">
 						<Trans>Headcount by Department</Trans>
 					</h3>
@@ -56,7 +54,7 @@ export function ReportsView() {
 						series={[{ key: "value", name: t`Headcount` }]}
 					/>
 				</div>
-				<div className="bg-deep-night/50 p-6 rounded-lg border border-gray-700/40">
+				<div className="bg-deep-night/50 p-6 rounded-lg border border-border/40">
 					<h3 className="text-lg font-semibold mb-4">
 						<Trans>Turnover Rate</Trans>
 					</h3>
@@ -66,7 +64,7 @@ export function ReportsView() {
 						</span>
 					</div>
 				</div>
-				<div className="bg-deep-night/50 p-6 rounded-lg border border-gray-700/40 md:col-span-2">
+				<div className="bg-deep-night/50 p-6 rounded-lg border border-border/40 md:col-span-2">
 					<h3 className="text-lg font-semibold mb-4">
 						<Trans>Leave Usage Summary</Trans>
 					</h3>

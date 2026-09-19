@@ -7,6 +7,7 @@ import { useDebounce } from "@ataqu/shared-hooks";
 import {
 	Button,
 	Card,
+	EmptyState,
 	ExpandingSearch,
 	HoldToConfirm,
 	SkeletonSwap,
@@ -18,7 +19,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { EmptyState } from "./empty-state";
 
 export function EmployeeDirectory({
 	onAddEmployee,
@@ -58,7 +58,7 @@ export function EmployeeDirectory({
 			},
 		);
 
-	const list = isSearching ? searchResults : employees?.items ?? [];
+	const list = isSearching ? searchResults : (employees?.items ?? []);
 
 	if (isLoading || isSearchLoading) {
 		return (
@@ -109,7 +109,7 @@ export function EmployeeDirectory({
 					<HoldToConfirm
 						onConfirm={() => bulkDeactivate.mutate({ ids: selectedIds })}
 						disabled={bulkDeactivate.isPending}
-						className="bg-red-600 text-white hover:bg-red-500"
+						className="bg-destructive text-white hover:bg-destructive"
 					>
 						<Trans>Deactivate selected</Trans>
 					</HoldToConfirm>
@@ -148,8 +148,8 @@ export function EmployeeDirectory({
 							</div>
 							<div>
 								<h3 className="font-semibold text-white">{emp.full_name}</h3>
-								<p className="text-sm text-gray-400">{emp.job_title}</p>
-								<p className="text-xs text-gray-500">{emp.email}</p>
+								<p className="text-sm text-muted-foreground">{emp.job_title}</p>
+								<p className="text-xs text-muted-foreground">{emp.email}</p>
 							</div>
 						</div>
 					</Card>
