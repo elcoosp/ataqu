@@ -47,6 +47,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 						<Link
 							to="/spark/workflows/$id"
 							params={{ id: wf.id }}
+							search={{ testOpen: false }}
 							className="text-foreground font-medium hover:text-primary transition-colors block truncate"
 						>
 							{wf.name}
@@ -73,7 +74,11 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 					</div>
 
 					<div className="flex items-center gap-3 ml-4">
-						<Link to="/spark/workflows/$id" params={{ id: wf.id }}>
+						<Link
+							to="/spark/workflows/$id"
+							params={{ id: wf.id }}
+							search={{ testOpen: false }}
+						>
 							<Button
 								variant="ghost"
 								size="icon"
