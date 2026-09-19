@@ -34,7 +34,8 @@ export function registerAegisActions(
 			id: "aegis-go-api-keys",
 			label: "Go to API Keys",
 			shortcut: ["g", "k"],
-			action: () => navigate({ to: "/api-keys" }),
+			action: () =>
+				navigate({ to: "/api-keys", search: { createOpen: false } }),
 		},
 		{
 			id: "aegis-create-api-key",
