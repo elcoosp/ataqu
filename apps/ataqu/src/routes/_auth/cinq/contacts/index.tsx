@@ -8,7 +8,6 @@ import { Bone, Button, DashboardLayout, Input, Label } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
-import { useState } from "react";
 import { ContactTable } from "../../../../apps/cinq/components/contact-table";
 import { CreateContactDialog } from "../../../../apps/cinq/components/create-contact-dialog";
 
@@ -24,7 +23,15 @@ export const Route = createFileRoute("/_auth/cinq/contacts/")({
 type ContactItem = { id: string; name?: string; email?: string };
 
 function ContactsIndex() {
-	const [openCreate, setOpenCreate] = useState(false);
+	// Modal-open state lives in the URL too, so a deep link can open the
+	// create dialog directly. This route intentionally has no
+	// `validateSearch` (see note above); `useUrlSearchParam` coerces
+	// tolerantly instead.
+	const [openCreate, setOpenCreate] = useUrlSearchParam("createOpen", {
+		default: false,
+		parse: (raw) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	// Custom-field searches live in the URL so a filtered view is
 	// shareable and survives reload.
 	const [field, setField] = useUrlSearchParam("field", { default: "" });
