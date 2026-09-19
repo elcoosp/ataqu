@@ -24,6 +24,7 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CreateVariantForm } from "./create-variant-form";
@@ -52,12 +53,35 @@ const tourSteps = [
 ];
 
 export function ProductDetail({ productId }: { productId: string }) {
+	// Deep-linkable variant selection + create-variant visibility
+	// (brainstorm P1-3): `?variant=<id>&createVariant=1`. When the id is
+	// absent or unknown, the first variant is the default (same UX as before,
+	// now shareable). Selection context stays component-local; only the
+	// serializable location lives in the URL.
+	const looseSearch = useSearch({
+		strict: false,
+	}) as unknown as Record<string, unknown>;
+	const navigate = useNavigate();
+	const setSearch: (next: Record<string, unknown>) => void = (next) =>
+		navigate({ search: next as never });
+	const variantParam = looseSearch["variant"];
+	const createVariantParam = looseSearch["createVariant"];
+	const variantIdParam =
+		typeof variantParam === "string" && variantParam.length > 0
+			? variantParam
+			: null;
+	const showCreateVariant = createVariantParam === "1";
+	const setShowCreateVariant = (open: boolean) =>
+		setSearch(open ? { createVariant: "1" } : { createVariant: undefined });
 	const productQuery = useGetProduct(productId);
 	const variantsQuery = useListVariants({ limit: 100, offset: 0 });
-	const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
-		null,
-	);
-	const [showCreateVariant, setShowCreateVariant] = useState(false);
+
+	// Selected variant lives in the URL (`?variant=<id>`); unknown or absent
+	// ids fall back to the first variant (same UX as before, now deep-linkable).
+	const selectedVariantId =
+		variantIdParam && variantIdParam.length > 0 ? variantIdParam : null;
+	const setSelectedVariantId = (id: string | null) =>
+		setSearch({ variant: id && id.length > 0 ? id : undefined });
 	const [selectedVariantIds, setSelectedVariantIds] = useState<string[]>([]);
 
 	const bulkDeleteVariants = useBulkDeleteVariants({
@@ -349,7 +373,7 @@ export function ProductDetail({ productId }: { productId: string }) {
 						<Button
 							type="button"
 							variant="outline"
-							onClick={() => setShowCreateVariant((current) => !current)}
+							onClick={() => setShowCreateVariant(!showCreateVariant)}
 						>
 							{showCreateVariant ? (
 								<Trans>Close</Trans>
