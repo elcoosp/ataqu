@@ -6,6 +6,7 @@ import {
 	useDeleteApiKey,
 	useListApiKeys,
 } from "@ataqu/api-client";
+import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
 import {
 	Button,
 	Card,
@@ -41,10 +42,22 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/api-keys")({
+	validateSearch: searchSchema({
+		createOpen: (raw: unknown) => raw === "1",
+	}),
 	component: () => {
+		const search = Route.useSearch();
+		const navigate = Route.useNavigate();
 		const queryClient = useQueryClient();
 
-		const [openCreate, setOpenCreate] = useState(false);
+		const [openCreate, setOpenCreate] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "createOpen",
+			default: false,
+			parse: (raw: unknown) => raw === "1",
+			serialize: (v) => (v ? "1" : undefined),
+		});
 		const [newKey, setNewKey] = useState<{ id: string; key: string } | null>(
 			null,
 		);
