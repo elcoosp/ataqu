@@ -20,11 +20,11 @@ export {
 	useDeleteEventType,
 	useGetBooking,
 	useGetEventType,
-	useGetPublicEventType,
 	useListAvailabilitySlots,
 	useListBookings,
 	useListEventTypes,
 	usePublicCreateBooking,
 	useRescheduleBooking,
+	useResolveEventType,
 	useUpdateEventType,
 } from "@ataqu/api-client";

@@ -1,18 +1,16 @@
-import { useListEventTypes } from "@ataqu/api-client";
-import {
- Button, SegmentedControl 
-} from "@ataqu/ui";
+import { useResolveEventType } from "@ataqu/api-client";
+import { Button, SegmentedControl } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
 
-export function EventTypeSelector() {
-	const { data: eventTypesData } = useListEventTypes();
+export function EventTypeSelector({ slug }: { slug: string }) {
+	const { data: eventTypesData, isLoading } = useResolveEventType(slug);
+	const eventTypes = eventTypesData ? [eventTypesData] : [];
 	const setEventType = useBookingStore((state) => state.setEventType);
 	const [duration, setDuration] = useState("all");
 
-	const eventTypes = eventTypesData?.items ?? [];
 	const filtered = eventTypes.filter((et) =>
 		duration === "all"
 			? true
@@ -21,10 +19,17 @@ export function EventTypeSelector() {
 				: et.duration_minutes > 30,
 	);
 
-	if (eventTypes.length === 0) {
+	if (isLoading) {
 		return (
 			<p className="text-muted-foreground text-center py-8">
-				<Trans>No event types available.</Trans>
+				<Trans>Loading…</Trans>
+			</p>
+		);
+	}
+	if (!eventTypesData) {
+		return (
+			<p className="text-muted-foreground text-center py-8">
+				<Trans>Event type not found.</Trans>
 			</p>
 		);
 	}

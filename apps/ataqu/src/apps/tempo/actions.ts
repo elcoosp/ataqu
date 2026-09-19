@@ -1,4 +1,5 @@
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
+import { navigate } from "../../lib/navigation";
 
 export interface TempoAction {
 	id: string;
@@ -17,21 +18,21 @@ export const tempoActions: TempoAction[] = [
 		id: "go-event-types",
 		label: "Go to Event Types",
 		action: () => {
-			window.location.href = "/tempo/dashboard";
+			navigate("/tempo/dashboard");
 		},
 	},
 	{
 		id: "go-meetings",
 		label: "Go to Meetings",
 		action: () => {
-			window.location.href = "/tempo/dashboard";
+			navigate("/tempo/dashboard");
 		},
 	},
 	{
 		id: "go-calendar-settings",
 		label: "Go to Calendar Settings",
 		action: () => {
-			window.location.href = "/tempo/calendar-settings";
+			navigate("/tempo/calendar-settings");
 		},
 	},
 	{

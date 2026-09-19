@@ -3,13 +3,10 @@ import {
 	useListBookings,
 	useMarkNoShow,
 } from "@ataqu/api-client";
-import {
- Badge, Bone, Button 
-} from "@ataqu/ui";
+import { Badge, Bone, Button, EmptyState } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { EmptyState } from "../../../apps/tempo/components/ui/empty-state";
+import { toast } from "sonner";
 import { useMeetingJoined } from "../../../apps/tempo/hooks/use-meeting-joined";
-import { toast } from "../../../apps/tempo/hooks/use-toast";
 import { NoShowBadge } from "./no-show-badge";
 
 const CalendarIcon = (

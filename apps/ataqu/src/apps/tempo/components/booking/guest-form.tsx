@@ -1,17 +1,13 @@
 import { usePublicCreateBooking } from "@ataqu/api-client";
-import { useAuthStore } from "@ataqu/shared-stores";
-import {
- FloatingLabelInput, InlineValidation, LoadingButton 
-} from "@ataqu/ui";
+import { FloatingLabelInput, InlineValidation, LoadingButton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
 import { useTimezone } from "../../../../apps/tempo/hooks/use-timezone";
-import { toast } from "../../../../apps/tempo/hooks/use-toast";
 
 export function GuestForm() {
 	const timezone = useTimezone();
-	const { tenantId } = useAuthStore();
 	const {
 		eventType,
 		selectedSlot,
@@ -27,7 +23,7 @@ export function GuestForm() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!eventType || !selectedSlot || !tenantId) return false;
+		if (!eventType || !selectedSlot) return false;
 		if (!name.trim() || !email.trim()) {
 			setError("Name and email are required.");
 			return false;
@@ -36,7 +32,7 @@ export function GuestForm() {
 		setError(null);
 		try {
 			const result = await createBookingMutation.mutateAsync({
-				tenantId,
+				tenantId: eventType.tenant_id,
 				data: {
 					slug: eventType.slug,
 					starts_at: selectedSlot,

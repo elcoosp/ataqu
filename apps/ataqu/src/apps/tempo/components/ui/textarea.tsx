@@ -1,6 +1,4 @@
-import {
- cn 
-} from "@ataqu/ui";
+import { cn } from "@ataqu/ui";
 import * as React from "react";
 
 export interface TextareaProps

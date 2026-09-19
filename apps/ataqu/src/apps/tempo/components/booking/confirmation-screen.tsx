@@ -1,6 +1,4 @@
-import {
- Button 
-} from "@ataqu/ui";
+import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
 

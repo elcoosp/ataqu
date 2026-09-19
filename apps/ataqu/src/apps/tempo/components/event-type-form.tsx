@@ -17,8 +17,8 @@ import {
 import { Trans } from "@lingui/react/macro";
 import type React from "react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Textarea } from "../../../apps/tempo/components/ui/textarea";
-import { toast } from "../../../apps/tempo/hooks/use-toast";
 
 interface EventTypeFormProps {
 	eventType?: EventType;
@@ -141,7 +141,11 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
 				</CardHeader>
 				<CardContent>
 					<p className="text-sm text-muted-foreground">
-						<Trans>Advanced scheduling options like location, buffers, and reminders are supported by the backend and will be configurable here in a future update.</Trans>
+						<Trans>
+							Advanced scheduling options like location, buffers, and reminders
+							are supported by the backend and will be configurable here in a
+							future update.
+						</Trans>
 					</p>
 				</CardContent>
 			</Card>

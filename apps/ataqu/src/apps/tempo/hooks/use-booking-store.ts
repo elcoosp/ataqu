@@ -13,6 +13,7 @@ interface SelectedEventType {
 	slug: string;
 	duration_minutes: number;
 	description?: string;
+	tenant_id: UUID;
 }
 
 interface GuestDetails {
