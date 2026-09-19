@@ -1,9 +1,7 @@
 import type { AnswerValue } from "@ataqu/api-client";
 import { useSubmitConversationalStep } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import {
- Bone, Button, Input 
-} from "@ataqu/ui";
+import { Bone, Button, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";

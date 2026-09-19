@@ -12,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Inbox } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { setLeadIntegration } from "../../../../apps/sond/components/integration-rules";
 import { IntegrationToggle } from "../../../../apps/sond/components/integration-toggle";
 import {
 	SubmissionsTable,
@@ -53,14 +54,7 @@ function SubmissionsRoute() {
 		(enabled: boolean) => {
 			setCinqEnabled(enabled);
 			if (form) {
-				const rules = enabled
-					? [
-							{
-								conditions: [],
-								actions: [{ type: "create_lead" as const, target: "cinq" }],
-							},
-						]
-					: [];
+				const rules = setLeadIntegration(form.routing_rules ?? [], enabled);
 				updateFormMutation.mutate({
 					id,
 					data: { routing_rules: rules },
@@ -109,51 +103,51 @@ function SubmissionsRoute() {
 	if (isLoading) {
 		return (
 			<div className="mx-auto max-w-7xl p-8">
-					<SubmissionsTableSkeleton />
-				</div>
+				<SubmissionsTableSkeleton />
+			</div>
 		);
 	}
 
 	return (
 		<div className="mx-auto max-w-7xl space-y-8 p-8">
-				<h1 className="text-3xl font-bold">
-					<Trans>Submissions</Trans>
-				</h1>
+			<h1 className="text-3xl font-bold">
+				<Trans>Submissions</Trans>
+			</h1>
 
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<IntegrationToggle
-						label={t`Create CINQ lead on submission`}
-						enabled={cinqEnabled}
-						onToggle={handleToggleCinq}
-						connectedBadge={t`Connected to CINQ`}
-					/>
-					<IntegrationToggle
-						label={t`Trigger SPARK workflow on submission`}
-						enabled={sparkEnabled}
-						onToggle={handleToggleSpark}
-						connectedBadge={t`Connected to SPARK`}
-					/>
-				</div>
-
-				{submissions.length === 0 ? (
-					<div className="flex flex-col items-center justify-center py-16 text-center">
-						<div className="mb-4 rounded-full bg-muted p-4">
-							<Inbox className="h-8 w-8 text-muted-foreground" />
-						</div>
-						<h3 className="text-lg font-semibold">
-							<Trans>No submissions yet</Trans>
-						</h3>
-						<p className="mt-1 text-sm text-muted-foreground">
-							<Trans>Publish your form to start collecting responses.</Trans>
-						</p>
-					</div>
-				) : (
-					<SubmissionsTable
-						submissions={submissions}
-						onExport={() => exportMutation.mutate()}
-						onRefresh={handleRefresh}
-					/>
-				)}
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+				<IntegrationToggle
+					label={t`Create CINQ lead on submission`}
+					enabled={cinqEnabled}
+					onToggle={handleToggleCinq}
+					connectedBadge={t`Connected to CINQ`}
+				/>
+				<IntegrationToggle
+					label={t`Trigger SPARK workflow on submission`}
+					enabled={sparkEnabled}
+					onToggle={handleToggleSpark}
+					connectedBadge={t`Connected to SPARK`}
+				/>
 			</div>
+
+			{submissions.length === 0 ? (
+				<div className="flex flex-col items-center justify-center py-16 text-center">
+					<div className="mb-4 rounded-full bg-muted p-4">
+						<Inbox className="h-8 w-8 text-muted-foreground" />
+					</div>
+					<h3 className="text-lg font-semibold">
+						<Trans>No submissions yet</Trans>
+					</h3>
+					<p className="mt-1 text-sm text-muted-foreground">
+						<Trans>Publish your form to start collecting responses.</Trans>
+					</p>
+				</div>
+			) : (
+				<SubmissionsTable
+					submissions={submissions}
+					onExport={() => exportMutation.mutate()}
+					onRefresh={handleRefresh}
+				/>
+			)}
+		</div>
 	);
 }

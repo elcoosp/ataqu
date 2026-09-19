@@ -1,7 +1,5 @@
 import type { FormQuestion } from "@ataqu/api-client";
-import {
- Button, cn, ProgressBar, SegmentedControl 
-} from "@ataqu/ui";
+import { Button, cn, ProgressBar, SegmentedControl } from "@ataqu/ui";
 import {
 	DndContext,
 	type DragEndEvent,

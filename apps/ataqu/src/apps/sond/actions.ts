@@ -64,8 +64,9 @@ export const getSondActions = (): SondAction[] => [
 ];
 
 const SOND_NAV: Record<string, string> = {
-	"sond:go-to-forms": "/_auth/",
-	"sond:go-to-submissions": "/_auth/dashboard",
+	"sond:go-to-forms": "/sond",
+	"sond:go-to-submissions": "/sond",
+	"sond:go-to-builder": "/sond/builder",
 };
 
 /** Adapts SOND actions to the unified command-palette contract. */

@@ -1,6 +1,4 @@
-import {
- Badge 
-} from "@ataqu/ui";
+import { Badge } from "@ataqu/ui";
 import { Switch } from "./ui/switch";
 
 interface Props {

@@ -18,8 +18,8 @@ import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Eye, Save, Upload } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Eye, Link, Save, Upload } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { BrandingTab } from "../../../../apps/sond/components/builder/branding-tab";
 import { ConversationalToggle } from "../../../../apps/sond/components/builder/conversational-toggle";
@@ -33,16 +33,36 @@ import type {
 } from "../../../../apps/sond/components/builder/types";
 import { FormPreview } from "../../../../apps/sond/components/preview/form-preview";
 
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 export const Route = createFileRoute("/_auth/sond/builder/$id")({
 	component: FormBuilderRoute,
 });
 
 function FormBuilderRoute() {
+	const search = Route.useSearch();
+	const navigate = Route.useNavigate();
 	const { id } = Route.useParams();
-	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const [previewOpen, setPreviewOpen] = useState(false);
+	const [previewOpen, setPreviewOpen] = useUrlState({
+	search,
+	setSearch: (next) => navigate({ search: next as never }),
+	key: "preview",
+	default: false,
+	parse: (raw: unknown) => raw === "1",
+	serialize: (v) => (v ? "1" : undefined),
+});
 	const [localForm, setLocalForm] = useState<SondForm | null>(null);
+
+	// Public funnel URL, only meaningful once the form is published.
+	const isPublished = localForm?.status === "published";
+	const publicUrl = isPublished
+		? `${window.location.origin}/form/${localForm.id}`
+		: null;
+	const copyPublicUrl = useCallback(() => {
+		if (!publicUrl) return;
+		void navigator.clipboard.writeText(publicUrl);
+		toast.success(t`Public link copied`);
+	}, [publicUrl]);
 
 	const isExisting = id !== "new";
 	const { data: fetchedForm, isLoading } = useGetForm(
@@ -53,7 +73,11 @@ function FormBuilderRoute() {
 	const createMutation = useCreateForm({
 		onSuccess: (data) => {
 			toast.success(t`Form created`);
-			navigate({ to: "/sond/builder/$id", params: { id: data.id }, replace: true });
+			navigate({
+				to: "/sond/builder/$id",
+				params: { id: data.id },
+				replace: true,
+			});
 		},
 		onError: (err) => toast.error(handleApiError(err)),
 	});
@@ -107,50 +131,50 @@ function FormBuilderRoute() {
 	if (id === "new") {
 		return (
 			<div className="p-8">
-					<Bone
-						loading
-						name="_auth-builder-$id-1"
-						fallback={<div className="h-8 w-48 mb-4" />}
-					>
-						{null}
-					</Bone>
-					<Bone
-						loading
-						name="_auth-builder-$id-2"
-						fallback={<div className="h-64 w-full rounded-lg" />}
-					>
-						{null}
-					</Bone>
-				</div>
+				<Bone
+					loading
+					name="_auth-builder-$id-1"
+					fallback={<div className="h-8 w-48 mb-4" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="_auth-builder-$id-2"
+					fallback={<div className="h-64 w-full rounded-lg" />}
+				>
+					{null}
+				</Bone>
+			</div>
 		);
 	}
 
 	if (isLoading && !localForm) {
 		return (
 			<div className="p-8">
-					<Bone
-						loading
-						name="_auth-builder-$id-3"
-						fallback={<div className="h-16 w-full mb-4" />}
-					>
-						{null}
-					</Bone>
-					<Bone
-						loading
-						name="_auth-builder-$id-4"
-						fallback={<div className="h-64 w-full rounded-lg" />}
-					>
-						{null}
-					</Bone>
-				</div>
+				<Bone
+					loading
+					name="_auth-builder-$id-3"
+					fallback={<div className="h-16 w-full mb-4" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="_auth-builder-$id-4"
+					fallback={<div className="h-64 w-full rounded-lg" />}
+				>
+					{null}
+				</Bone>
+			</div>
 		);
 	}
 
 	if (!localForm) {
 		return (
 			<div className="p-8">
-					<Trans>Form not found.</Trans>
-				</div>
+				<Trans>Form not found.</Trans>
+			</div>
 		);
 	}
 
@@ -197,110 +221,123 @@ function FormBuilderRoute() {
 					questions: questionsPayload,
 					mode,
 					branding,
+					// Lifecycle transition: publishing flips the form from
+					// draft to published so the public funnel accepts submits.
+					status: "published",
 				} as UpdateFormRequest,
 				version: localForm.version,
 			},
-			{ onSuccess: () => toast.success(t`Form published`) },
+			{
+				onSuccess: (data) => {
+					setLocalForm((prev) =>
+						prev ? { ...prev, status: data.status } : prev,
+					);
+					toast.success(t`Form published`);
+				},
+			},
 		);
 	}, [localForm, updateMutation]);
 
 	return (
 		<div className="flex h-[calc(100vh-4rem)] flex-col bg-background">
-				<header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
-					<input
-						value={localForm.title}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-							updateTitle(e.target.value)
-						}
-						className="truncate bg-transparent text-xl font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-						aria-label={t`Form title`}
-					/>
-					<div className="flex items-center gap-3">
-						<Button
-							variant="outline"
-							onClick={handleSave}
-							disabled={updateMutation.isPending}
-						>
-							<Save className="mr-2 h-4 w-4" />
-							{updateMutation.isPending ? t`Saving...` : <Trans>Save</Trans>}
-						</Button>
-						<Button variant="outline" onClick={() => setPreviewOpen(true)}>
-							<Eye className="mr-2 h-4 w-4" />
-							<Trans>Preview</Trans>
-						</Button>
-						<Button
-							className="bg-primary text-primary-foreground hover:bg-primary/90"
-							onClick={handlePublish}
-							disabled={updateMutation.isPending}
-						>
-							<Upload className="mr-2 h-4 w-4" />
-							<Trans>Publish</Trans>
-						</Button>
-					</div>
-				</header>
-
-				<Tabs
-					defaultValue="builder"
-					className="flex flex-1 flex-col overflow-hidden"
-				>
-					<TabsList className="mx-6 mt-4 w-fit">
-						<TabsTrigger value="builder">
-							<Trans>Builder</Trans>
-						</TabsTrigger>
-						<TabsTrigger value="settings">
-							<Trans>Settings</Trans>
-						</TabsTrigger>
-						<TabsTrigger value="routing">
-							<Trans>Routing</Trans>
-						</TabsTrigger>
-					</TabsList>
-
-					<TabsContent value="builder" className="mt-0 flex-1 overflow-hidden">
-						<FormBuilder
-							questions={localForm.questions}
-							onUpdate={updateQuestions}
-						/>
-					</TabsContent>
-
-					<TabsContent
-						value="settings"
-						className="mt-0 flex-1 overflow-y-auto p-6"
-					>
-						<div className="mx-auto max-w-2xl space-y-8">
-							<ConversationalToggle
-								mode={localForm.mode}
-								onChange={updateMode}
-							/>
-							<div className="overflow-hidden rounded-lg border border-border bg-card">
-								<div className="border-b border-border p-4 font-medium">
-									<Trans>Branding</Trans>
-								</div>
-								<BrandingTab
-									branding={localForm.branding}
-									onUpdate={updateBranding}
-								/>
-							</div>
-						</div>
-					</TabsContent>
-
-					<TabsContent
-						value="routing"
-						className="mt-0 flex-1 overflow-y-auto p-6"
-					>
-						<div className="mx-auto max-w-2xl">
-							<FormRoutingEditor
-								formId={localForm.id}
-								initialRules={localForm.routing_rules}
-							/>
-						</div>
-					</TabsContent>
-				</Tabs>
-
-				<FormPreview
-					form={localForm}
-					open={previewOpen}
-					onClose={() => setPreviewOpen(false)}
+			<header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+				<input
+					value={localForm.title}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						updateTitle(e.target.value)
+					}
+					className="truncate bg-transparent text-xl font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					aria-label={t`Form title`}
 				/>
-			</div>
+				<div className="flex items-center gap-3">
+					<Button
+						variant="outline"
+						onClick={handleSave}
+						disabled={updateMutation.isPending}
+					>
+						<Save className="mr-2 h-4 w-4" />
+						{updateMutation.isPending ? t`Saving...` : <Trans>Save</Trans>}
+					</Button>
+					<Button variant="outline" onClick={() => setPreviewOpen(true)}>
+						<Eye className="mr-2 h-4 w-4" />
+						<Trans>Preview</Trans>
+					</Button>
+					<Button
+						className="bg-primary text-primary-foreground hover:bg-primary/90"
+						onClick={handlePublish}
+						disabled={updateMutation.isPending}
+					>
+						<Upload className="mr-2 h-4 w-4" />
+						<Trans>Publish</Trans>
+					</Button>
+					{isPublished && (
+						<Button variant="outline" onClick={copyPublicUrl}>
+							<Link className="mr-2 h-4 w-4" />
+							<Trans>Copy link</Trans>
+						</Button>
+					)}
+				</div>
+			</header>
+
+			<Tabs
+				defaultValue="builder"
+				className="flex flex-1 flex-col overflow-hidden"
+			>
+				<TabsList className="mx-6 mt-4 w-fit">
+					<TabsTrigger value="builder">
+						<Trans>Builder</Trans>
+					</TabsTrigger>
+					<TabsTrigger value="settings">
+						<Trans>Settings</Trans>
+					</TabsTrigger>
+					<TabsTrigger value="routing">
+						<Trans>Routing</Trans>
+					</TabsTrigger>
+				</TabsList>
+
+				<TabsContent value="builder" className="mt-0 flex-1 overflow-hidden">
+					<FormBuilder
+						questions={localForm.questions}
+						onUpdate={updateQuestions}
+					/>
+				</TabsContent>
+
+				<TabsContent
+					value="settings"
+					className="mt-0 flex-1 overflow-y-auto p-6"
+				>
+					<div className="mx-auto max-w-2xl space-y-8">
+						<ConversationalToggle mode={localForm.mode} onChange={updateMode} />
+						<div className="overflow-hidden rounded-lg border border-border bg-card">
+							<div className="border-b border-border p-4 font-medium">
+								<Trans>Branding</Trans>
+							</div>
+							<BrandingTab
+								branding={localForm.branding}
+								onUpdate={updateBranding}
+							/>
+						</div>
+					</div>
+				</TabsContent>
+
+				<TabsContent
+					value="routing"
+					className="mt-0 flex-1 overflow-y-auto p-6"
+				>
+					<div className="mx-auto max-w-2xl">
+						<FormRoutingEditor
+							formId={localForm.id}
+							initialRules={localForm.routing_rules}
+						/>
+					</div>
+				</TabsContent>
+			</Tabs>
+
+			<FormPreview
+				form={localForm}
+				open={previewOpen}
+				onClose={() => setPreviewOpen(false)}
+			/>
+		</div>
 	);
 }
