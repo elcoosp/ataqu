@@ -1,16 +1,4 @@
+@import "@ataqu/ui/styles.css";
 @import "tailwindcss";
 
-@theme {
-  --color-deep-night: #0A1628;
-  --color-amber: #F59E0B;
-  --color-success: #10B981;
-  --color-error: #EF4444;
-  --color-warning: #F59E0B;
-
-  --font-heading: Unbounded, system-ui;
-  --font-body: Inter, system-ui;
-  --font-mono: JetBrains Mono, monospace;
-}
-
 @source "../../../packages/ui/src";
-@import "@ataqu/ui/styles.css";

@@ -1,9 +1,9 @@
 // apps/aegis/src/actions.ts
 
+import { useAuthStore } from "@ataqu/shared-stores";
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import type { NavigateOptions } from "@tanstack/react-router";
 import { useNavigate } from "@tanstack/react-router";
-import { useAuthStore } from "@ataqu/shared-stores";
 
 export function registerAegisActions(
 	openInviteModal: () => void,
