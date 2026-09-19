@@ -12,6 +12,7 @@ use ataqu_domain_dial::chat::{
 use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::PresenceStore;
 use ataqu_domain_dial::repository::DialRepository;
+use ataqu_domain_dial::ticket::{CreateTicket, Ticket, TicketMessage, TicketPriority, TicketStatus, UpdateTicket};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 // Re-export domain types for API layer
@@ -966,6 +967,129 @@ impl DialService {
 
         self.repo
             .delete_reaction(&tenant_id, &reaction_id)
+            .await
+            .map_err(DialServiceError::Domain)
+    }
+
+    // ---- Support tickets (docs P0-9) ----
+    pub async fn create_ticket(
+        &self,
+        tenant_id: TenantId,
+        cmd: CreateTicket,
+    ) -> DialResult<Ticket> {
+        let now = chrono::Utc::now();
+        let ticket = Ticket {
+            id: Uuid::new_v4(),
+            tenant_id: tenant_id.as_uuid(),
+            subject: cmd.subject,
+            description: cmd.description,
+            status: TicketStatus::Open,
+            priority: cmd.priority.unwrap_or(TicketPriority::Medium),
+            requester_name: cmd.requester_name.unwrap_or_default(),
+            requester_email: cmd.requester_email.unwrap_or_default(),
+            assignee_id: cmd.assignee_id,
+            channel_type: cmd.channel_type,
+            message_id: cmd.message_id,
+            last_message: None,
+            last_message_at: None,
+            created_at: now,
+            updated_at: now,
+        };
+        self.repo
+            .insert_ticket(&ticket)
+            .await
+            .map_err(DialServiceError::Domain)?;
+        Ok(ticket)
+    }
+
+    pub async fn get_ticket(&self, tenant_id: TenantId, ticket_id: Uuid) -> DialResult<Ticket> {
+        self.repo
+            .get_ticket(&tenant_id, &ticket_id)
+            .await
+            .map_err(DialServiceError::Domain)
+    }
+
+    pub async fn list_tickets(
+        &self,
+        tenant_id: TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> DialResult<(Vec<Ticket>, u64)> {
+        let items = self
+            .repo
+            .list_tickets(&tenant_id, limit, offset)
+            .await
+            .map_err(DialServiceError::Domain)?;
+        let total = self
+            .repo
+            .count_tickets(&tenant_id)
+            .await
+            .map_err(DialServiceError::Domain)?;
+        Ok((items, total))
+    }
+
+    pub async fn update_ticket(
+        &self,
+        tenant_id: TenantId,
+        ticket_id: Uuid,
+        patch: UpdateTicket,
+    ) -> DialResult<Ticket> {
+        // Existence + tenant ownership check first (404 before validation).
+        self.repo
+            .get_ticket(&tenant_id, &ticket_id)
+            .await
+            .map_err(DialServiceError::Domain)?;
+        self.repo
+            .update_ticket(&tenant_id, &ticket_id, &patch, None)
+            .await
+            .map_err(DialServiceError::Domain)?;
+        self.repo
+            .get_ticket(&tenant_id, &ticket_id)
+            .await
+            .map_err(DialServiceError::Domain)
+    }
+
+    pub async fn add_ticket_reply(
+        &self,
+        tenant_id: TenantId,
+        ticket_id: Uuid,
+        from_customer: bool,
+        content: String,
+    ) -> DialResult<TicketMessage> {
+        // Ensure the ticket exists for this tenant.
+        self.repo
+            .get_ticket(&tenant_id, &ticket_id)
+            .await
+            .map_err(DialServiceError::Domain)?;
+        let message = TicketMessage {
+            id: Uuid::new_v4(),
+            tenant_id: tenant_id.as_uuid(),
+            ticket_id,
+            from_customer,
+            content,
+            created_at: chrono::Utc::now(),
+        };
+        self.repo
+            .insert_ticket_message(&message)
+            .await
+            .map_err(DialServiceError::Domain)?;
+        // Refresh the list-view preview.
+        self.repo
+            .update_ticket(&tenant_id, &ticket_id, &UpdateTicket::default(), Some(&message.content))
+            .await
+            .map_err(DialServiceError::Domain)?;
+        Ok(message)
+    }
+
+    pub async fn list_ticket_messages(
+        &self,
+        tenant_id: TenantId,
+        ticket_id: Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> DialResult<Vec<TicketMessage>> {
+        self.repo
+            .list_ticket_messages(&tenant_id, &ticket_id, limit, offset)
             .await
             .map_err(DialServiceError::Domain)
     }

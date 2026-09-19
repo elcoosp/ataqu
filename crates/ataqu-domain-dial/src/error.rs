@@ -33,6 +33,9 @@ pub enum DialError {
     #[error("repository error: {0}")]
     Repository(String),
 
+    #[error("ticket not found")]
+    TicketNotFound,
+
     #[error("presence store error: {0}")]
     Presence(String),
 }

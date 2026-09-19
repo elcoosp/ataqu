@@ -5,7 +5,7 @@ use sea_orm::ConnectionTrait;
 use sea_orm::QuerySelect;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
-    Set,
+    PaginatorTrait, QueryOrder, Set,
 };
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -15,6 +15,7 @@ use ataqu_domain_dial::chat::{
 };
 use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::{PresenceStatus, PresenceStore};
+use ataqu_domain_dial::ticket::{Ticket, TicketMessage, TicketPriority, TicketStatus, UpdateTicket};
 use ataqu_domain_dial::repository::DialRepository;
 use ataqu_kernel::TenantId;
 
@@ -23,6 +24,8 @@ use crate::entities::dial::mention as mention_entity;
 use crate::entities::dial::message as message_entity;
 use crate::entities::dial::presence as presence_entity;
 use crate::entities::dial::thread as thread_entity;
+use crate::entities::dial::ticket as ticket_entity;
+use crate::entities::dial::ticket_message as ticket_message_entity;
 
 // ---------- Conversion helpers ----------
 fn system_time_to_utc(st: SystemTime) -> DateTime<Utc> {
@@ -43,6 +46,68 @@ fn str_to_channel_type(s: &str) -> ChannelType {
         "private" => ChannelType::Private,
         "direct_message" => ChannelType::DirectMessage,
         _ => ChannelType::Public,
+    }
+}
+
+fn ticket_entity_to_domain(m: ticket_entity::Model) -> Ticket {
+    Ticket {
+        id: m.id,
+        tenant_id: m.tenant_id,
+        subject: m.subject,
+        description: m.description.unwrap_or_default(),
+        status: TicketStatus::from_str(&m.status).unwrap_or(TicketStatus::Open),
+        priority: TicketPriority::from_str(&m.priority).unwrap_or(TicketPriority::Medium),
+        requester_name: m.requester_name,
+        requester_email: m.requester_email,
+        assignee_id: m.assignee_id,
+        channel_type: m.channel_type,
+        message_id: m.message_id,
+        last_message: m.last_message,
+        last_message_at: m.last_message_at,
+        created_at: m.created_at,
+        updated_at: m.updated_at,
+    }
+}
+
+fn ticket_domain_to_active(ticket: &Ticket) -> ticket_entity::ActiveModel {
+    ticket_entity::ActiveModel {
+        id: Set(ticket.id),
+        tenant_id: Set(ticket.tenant_id),
+        subject: Set(ticket.subject.clone()),
+        description: Set(Some(ticket.description.clone())),
+        status: Set(ticket.status.as_str().to_string()),
+        priority: Set(ticket.priority.as_str().to_string()),
+        requester_name: Set(ticket.requester_name.clone()),
+        requester_email: Set(ticket.requester_email.clone()),
+        assignee_id: Set(ticket.assignee_id),
+        channel_type: Set(ticket.channel_type.clone()),
+        message_id: Set(ticket.message_id),
+        last_message: Set(ticket.last_message.clone()),
+        last_message_at: Set(ticket.last_message_at),
+        created_at: Set(ticket.created_at),
+        updated_at: Set(ticket.updated_at),
+    }
+}
+
+fn message_entity_to_domain(m: ticket_message_entity::Model) -> TicketMessage {
+    TicketMessage {
+        id: m.id,
+        tenant_id: m.tenant_id,
+        ticket_id: m.ticket_id,
+        from_customer: m.from_customer,
+        content: m.content,
+        created_at: m.created_at,
+    }
+}
+
+fn ticket_message_domain_to_active(message: &TicketMessage) -> ticket_message_entity::ActiveModel {
+    ticket_message_entity::ActiveModel {
+        id: Set(message.id),
+        tenant_id: Set(message.tenant_id),
+        ticket_id: Set(message.ticket_id),
+        from_customer: Set(message.from_customer),
+        content: Set(message.content.clone()),
+        created_at: Set(message.created_at),
     }
 }
 
@@ -145,18 +210,18 @@ fn mention_model_to_domain(model: mention_entity::Model) -> Mention {
     }
 }
 
-pub struct DialRepositoryImpl {
+pub struct DbDialRepository {
     db: DatabaseConnection,
 }
 
-impl DialRepositoryImpl {
+impl DbDialRepository {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
 }
 
 #[async_trait]
-impl DialRepository for DialRepositoryImpl {
+impl DialRepository for DbDialRepository {
     async fn get_reaction(
         &self,
         tenant_id: &TenantId,
@@ -638,9 +703,157 @@ impl DialRepository for DialRepositoryImpl {
             .map_err(|e| ataqu_domain_dial::error::DialError::Repository(e.to_string()))?;
         Ok(())
     }
+
+    // ---- Support tickets (docs P0-9) ----
+    async fn insert_ticket(
+        &self,
+        ticket: &Ticket,
+    ) -> Result<(), DialError> {
+        let active = ticket_entity::ActiveModel {
+            id: Set(ticket.id),
+            tenant_id: Set(ticket.tenant_id),
+            subject: Set(ticket.subject.clone()),
+            description: Set(Some(ticket.description.clone())),
+            status: Set(ticket.status.as_str().to_string()),
+            priority: Set(ticket.priority.as_str().to_string()),
+            requester_name: Set(ticket.requester_name.clone()),
+            requester_email: Set(ticket.requester_email.clone()),
+            assignee_id: Set(ticket.assignee_id),
+            channel_type: Set(ticket.channel_type.clone()),
+            message_id: Set(ticket.message_id),
+            last_message: Set(ticket.last_message.clone()),
+            last_message_at: Set(ticket.last_message_at),
+            created_at: Set(ticket.created_at),
+            updated_at: Set(ticket.updated_at),
+        };
+        ticket_entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn get_ticket(
+        &self,
+        tenant_id: &TenantId,
+        ticket_id: &Uuid,
+    ) -> Result<Ticket, DialError> {
+        let model = ticket_entity::Entity::find()
+            .filter(ticket_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(ticket_entity::Column::Id.eq(*ticket_id))
+            .one(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        model.map(ticket_entity_to_domain)
+            .ok_or_else(|| DialError::TicketNotFound)
+    }
+
+    async fn list_tickets(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Ticket>, DialError> {
+        let models = ticket_entity::Entity::find()
+            .filter(ticket_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .order_by_desc(ticket_entity::Column::CreatedAt)
+            .offset(offset)
+            .limit(limit)
+            .all(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(ticket_entity_to_domain).collect())
+    }
+
+    async fn count_tickets(&self, tenant_id: &TenantId) -> Result<u64, DialError> {
+        let count = ticket_entity::Entity::find()
+            .filter(ticket_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .count(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(count)
+    }
+
+    async fn update_ticket(
+        &self,
+        tenant_id: &TenantId,
+        ticket_id: &Uuid,
+        patch: &UpdateTicket,
+        last_message: Option<&str>,
+    ) -> Result<(), DialError> {
+        let model = ticket_entity::Entity::find()
+            .filter(ticket_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(ticket_entity::Column::Id.eq(*ticket_id))
+            .one(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?
+            .ok_or_else(|| DialError::TicketNotFound)?;
+        let mut active = model.into_active_model();
+        if let Some(ref s) = patch.subject {
+            active.subject = Set(s.clone());
+        }
+        if let Some(ref d) = patch.description {
+            active.description = Set(Some(d.clone()));
+        }
+        if let Some(ref s) = patch.status {
+            active.status = Set(s.as_str().to_string());
+        }
+        if let Some(ref p) = patch.priority {
+            active.priority = Set(p.as_str().to_string());
+        }
+        if let Some(ref a) = patch.assignee_id {
+            active.assignee_id = Set(Some(*a));
+        }
+        if let Some(ref lm) = last_message {
+            active.last_message = Set(Some(lm.to_string()));
+            active.last_message_at = Set(Some(Utc::now()));
+        }
+        active.updated_at = Set(Utc::now());
+        active.update(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn insert_ticket_message(
+        &self,
+        message: &TicketMessage,
+    ) -> Result<(), DialError> {
+        let active = ticket_message_entity::ActiveModel {
+            id: Set(message.id),
+            tenant_id: Set(message.tenant_id),
+            ticket_id: Set(message.ticket_id),
+            from_customer: Set(message.from_customer),
+            content: Set(message.content.clone()),
+            created_at: Set(message.created_at),
+        };
+        ticket_message_entity::Entity::insert(active)
+            .exec(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(())
+    }
+
+    async fn list_ticket_messages(
+        &self,
+        tenant_id: &TenantId,
+        ticket_id: &Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<TicketMessage>, DialError> {
+        let models = ticket_message_entity::Entity::find()
+            .filter(ticket_message_entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(ticket_message_entity::Column::TicketId.eq(*ticket_id))
+            .order_by_asc(ticket_message_entity::Column::CreatedAt)
+            .offset(offset)
+            .limit(limit)
+            .all(&self.db)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(models.into_iter().map(message_entity_to_domain).collect())
+    }
 }
 
-// Presence store implementation remains unchanged
 pub struct DbPresenceStore {
     db: DatabaseConnection,
 }

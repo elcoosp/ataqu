@@ -1,6 +1,7 @@
 use crate::chat::Reaction;
 use crate::chat::{Channel, ChannelId, Mention, Message, MessageId, Thread, ThreadId, UserId};
 use crate::error::DialError;
+use crate::ticket::{Ticket, TicketMessage, UpdateTicket};
 use async_trait::async_trait;
 use ataqu_kernel::TenantId;
 use uuid::Uuid;
@@ -126,4 +127,32 @@ pub trait DialRepository: Send + Sync {
         tenant_id: &TenantId,
         reaction_id: &Uuid,
     ) -> Result<(), DialError>;
+
+    // ---- Support tickets (docs P0-9) ----
+    async fn insert_ticket(&self, ticket: &Ticket) -> Result<(), DialError>;
+    async fn get_ticket(&self, tenant_id: &TenantId, ticket_id: &Uuid) -> Result<Ticket, DialError>;
+    async fn list_tickets(
+        &self,
+        tenant_id: &TenantId,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<Ticket>, DialError>;
+    async fn count_tickets(&self, tenant_id: &TenantId) -> Result<u64, DialError>;
+    /// Applies a partial update; `last_message` additionally refreshes the
+    /// list-view preview + `updated_at`.
+    async fn update_ticket(
+        &self,
+        tenant_id: &TenantId,
+        ticket_id: &Uuid,
+        patch: &UpdateTicket,
+        last_message: Option<&str>,
+    ) -> Result<(), DialError>;
+    async fn insert_ticket_message(&self, message: &TicketMessage) -> Result<(), DialError>;
+    async fn list_ticket_messages(
+        &self,
+        tenant_id: &TenantId,
+        ticket_id: &Uuid,
+        limit: u64,
+        offset: u64,
+    ) -> Result<Vec<TicketMessage>, DialError>;
 }

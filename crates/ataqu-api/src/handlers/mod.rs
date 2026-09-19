@@ -6,6 +6,7 @@ pub mod dial_ws;
 pub mod email_tracking;
 pub mod gdpr;
 pub mod health;
+pub mod inbox;
 pub mod migration;
 pub mod onboarding;
 pub mod pause;

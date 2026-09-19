@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -14,10 +15,14 @@ use crate::middleware::AuthContext;
 use ataqu_application::dial_service::{
     CreateChannelCommand, SendMessageCommand, StartThreadCommand,
 };
+use ataqu_domain_dial::ticket::CreateTicket;
+use ataqu_contracts::PaginatedResponse;
 use ataqu_domain_dial::chat::ChannelType;
 
 #[derive(Debug, Serialize)]
 pub struct ChannelResponse {
+    pub version: i32,
+    pub channel_type: &'static str,
     pub id: Uuid,
     pub name: String,
     pub created_by: Uuid,
@@ -28,6 +33,12 @@ impl From<ataqu_application::dial_service::Channel> for ChannelResponse {
     fn from(c: ataqu_application::dial_service::Channel) -> Self {
         Self {
             id: c.id.as_uuid(),
+            version: c.version,
+            channel_type: match c.channel_type {
+                ChannelType::Public => "public",
+                ChannelType::Private => "private",
+                ChannelType::DirectMessage => "dm",
+            },
             name: c.name,
             created_by: c.created_by.as_uuid(),
             created_at: DateTime::<Utc>::from(c.created_at),
@@ -37,6 +48,7 @@ impl From<ataqu_application::dial_service::Channel> for ChannelResponse {
 
 #[derive(Debug, Serialize)]
 pub struct MessageResponse {
+    pub version: i32,
     pub id: Uuid,
     pub channel_id: Uuid,
     pub author_id: Uuid,
@@ -51,6 +63,7 @@ impl From<ataqu_application::dial_service::Message> for MessageResponse {
     fn from(m: ataqu_application::dial_service::Message) -> Self {
         Self {
             id: m.id.as_uuid(),
+            version: m.version,
             channel_id: m.channel_id.as_uuid(),
             author_id: m.author_id.as_uuid(),
             content: m.content,
@@ -758,6 +771,35 @@ pub async fn bulk_delete_messages(
     }
     Ok(StatusCode::NO_CONTENT)
 }
+pub async fn list_tickets(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<HashMap<String, String>>,
+) -> ApiResult<Json<PaginatedResponse<TicketResponse>>> {
+    let limit = params
+        .get("limit")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(50)
+        .min(100);
+    let offset = params
+        .get("offset")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+
+    let (items, total) = state
+        .dial_service
+        .list_tickets(auth.tenant_id, limit, offset)
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+
+    Ok(Json(PaginatedResponse {
+        items: items.into_iter().map(TicketResponse::from).collect(),
+        total,
+        limit,
+        offset,
+    }))
+}
+
 pub fn routes() -> Router<AppState> {
     use axum::routing::{get, post, put};
     Router::new()
@@ -795,4 +837,250 @@ pub fn routes() -> Router<AppState> {
         .route("/search", get(search_messages))
         .route("/channels/{id}/files", post(upload_file))
         .nest("/ws", super::dial_ws::routes())
+        .route("/tickets", post(create_ticket).get(list_tickets))
+        .route("/tickets/{id}", get(get_ticket).put(update_ticket))
+        .route("/tickets/{id}/replies", post(reply_to_ticket))
+        .route(
+            "/tickets/{id}/messages",
+            get(list_ticket_messages),
+        )
 }
+
+// ---------- Ticket handlers (docs P0-9) ----------
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTicketRequest {
+    pub subject: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub priority: Option<String>,
+    #[serde(default)]
+    pub requester_name: Option<String>,
+    #[serde(default)]
+    pub requester_email: Option<String>,
+    #[serde(default)]
+    pub assignee_id: Option<Uuid>,
+    #[serde(default)]
+    pub channel_type: Option<String>,
+    #[serde(default)]
+    pub message_id: Option<Uuid>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TicketResponse {
+    pub id: Uuid,
+    pub subject: String,
+    pub description: String,
+    pub status: String,
+    pub priority: String,
+    pub requester_name: String,
+    pub requester_email: String,
+    pub assignee_id: Option<Uuid>,
+    pub channel_type: Option<String>,
+    pub message_id: Option<Uuid>,
+    pub last_message: Option<String>,
+    pub last_message_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<ataqu_domain_dial::ticket::Ticket> for TicketResponse {
+    fn from(t: ataqu_domain_dial::ticket::Ticket) -> Self {
+        Self {
+            id: t.id,
+            subject: t.subject,
+            description: t.description,
+            status: t.status.as_str().to_string(),
+            priority: t.priority.as_str().to_string(),
+            requester_name: t.requester_name,
+            requester_email: t.requester_email,
+            assignee_id: t.assignee_id,
+            channel_type: t.channel_type,
+            message_id: t.message_id,
+            last_message: t.last_message,
+            last_message_at: t.last_message_at,
+            created_at: DateTime::<Utc>::from(t.created_at),
+            updated_at: DateTime::<Utc>::from(t.updated_at),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct TicketMessageResponse {
+    pub id: Uuid,
+    pub ticket_id: Uuid,
+    pub from_customer: bool,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<ataqu_domain_dial::ticket::TicketMessage> for TicketMessageResponse {
+    fn from(m: ataqu_domain_dial::ticket::TicketMessage) -> Self {
+        Self {
+            id: m.id,
+            ticket_id: m.ticket_id,
+            from_customer: m.from_customer,
+            content: m.content,
+            created_at: DateTime::<Utc>::from(m.created_at),
+        }
+    }
+}
+
+pub async fn create_ticket(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<CreateTicketRequest>,
+) -> ApiResult<(StatusCode, axum::http::HeaderMap, Json<TicketResponse>)> {
+    let cmd = CreateTicket {
+        subject: payload.subject,
+        description: payload.description,
+        priority: payload
+            .priority
+            .as_deref()
+            .and_then(ataqu_domain_dial::ticket::TicketPriority::from_str),
+        requester_name: payload.requester_name,
+        requester_email: payload.requester_email,
+        assignee_id: payload.assignee_id,
+        channel_type: payload.channel_type,
+        message_id: payload.message_id,
+    };
+
+    let ticket = state
+        .dial_service
+        .create_ticket(auth.tenant_id, cmd)
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::LOCATION,
+        format!("/dial/tickets/{}", ticket.id)
+            .parse()
+            .unwrap(),
+    );
+
+    Ok((
+        StatusCode::CREATED,
+        headers,
+        Json(TicketResponse::from(ticket)),
+    ))
+}
+
+pub async fn get_ticket(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<TicketResponse>> {
+    let ticket = state
+        .dial_service
+        .get_ticket(auth.tenant_id, id)
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+    Ok(Json(TicketResponse::from(ticket)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTicketRequest {
+    pub subject: Option<String>,
+    pub description: Option<String>,
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub assignee_id: Option<Uuid>,
+}
+
+pub async fn update_ticket(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateTicketRequest>,
+) -> ApiResult<Json<TicketResponse>> {
+    let status = payload
+        .status
+        .as_deref()
+        .and_then(ataqu_domain_dial::ticket::TicketStatus::from_str);
+    let priority = payload
+        .priority
+        .as_deref()
+        .and_then(ataqu_domain_dial::ticket::TicketPriority::from_str);
+
+    let patch = ataqu_domain_dial::ticket::UpdateTicket {
+        subject: payload.subject,
+        description: payload.description,
+        status,
+        priority,
+        assignee_id: payload.assignee_id,
+    };
+
+    let ticket = state
+        .dial_service
+        .update_ticket(auth.tenant_id, id, patch)
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+    Ok(Json(TicketResponse::from(ticket)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplyToTicketRequest {
+    pub content: String,
+}
+
+pub async fn reply_to_ticket(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<ReplyToTicketRequest>,
+) -> ApiResult<(StatusCode, Json<TicketMessageResponse>)> {
+    if payload.content.trim().is_empty() {
+        return Err(ApiResponseError::validation("Reply content cannot be empty"));
+    }
+
+    let message = state
+        .dial_service
+        .add_ticket_reply(auth.tenant_id, id, false, payload.content)
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(TicketMessageResponse::from(message)),
+    ))
+}
+
+pub async fn list_ticket_messages(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+    Query(params): Query<HashMap<String, String>>,
+) -> ApiResult<Json<PaginatedResponse<TicketMessageResponse>>> {
+    let limit = params
+        .get("limit")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(50)
+        .min(100);
+    let offset = params
+        .get("offset")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+
+    let messages = state
+        .dial_service
+        .list_ticket_messages(auth.tenant_id, id, limit, offset)
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+
+    // Get total count separately for pagination
+    let (_items, total) = state
+        .dial_service
+        .list_tickets(auth.tenant_id, limit, offset)
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+
+    Ok(Json(PaginatedResponse {
+        items: messages.into_iter().map(TicketMessageResponse::from).collect(),
+        total,
+        limit,
+        offset,
+    }))
+}
+
