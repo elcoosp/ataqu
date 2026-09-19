@@ -9,6 +9,7 @@ import {
 	useDebounce,
 	useShortcut,
 	useShortcutScope,
+	useUrlSearchParam,
 } from "@ataqu/shared-hooks";
 import { useSelectionStore } from "@ataqu/shared-stores";
 import {
@@ -98,7 +99,11 @@ const CONTACTS_FIXTURE = (
 
 export function ContactTable() {
 	const navigate = useNavigate();
-	const [search, setSearch] = useState("");
+	// Search text, filter, and sort live in the URL so a filtered table is
+	// shareable and survives reload (brainstorm P1-3). `useUrlSearchParam`
+	// writes via `history.replaceState`, so typing never pushes a history
+	// entry and the row cursor / toolbar expansion stay session-only below.
+	const [search, setSearch] = useUrlSearchParam("search", { default: "" });
 	const debouncedSearch = useDebounce(search, 300);
 	const queryClient = useQueryClient();
 	const exportCsv = useExportCsv();
@@ -119,11 +124,25 @@ export function ContactTable() {
 		},
 	);
 
-	const [filter, setFilter] = useState("all");
-	const [sortKey, setSortKey] = useState<"name" | "email" | "company" | null>(
-		null,
+	const [filter, setFilter] = useUrlSearchParam<ContactFilter>("filter", {
+		default: "all",
+		parse: (raw) => (raw === "company" || raw === "person" ? raw : "all"),
+		serialize: (v) => (v === "all" ? undefined : v),
+	});
+	const [sortKey, setSortKey] = useUrlSearchParam<ContactSortKey | null>(
+		"sort",
+		{
+			default: null,
+			parse: (raw) =>
+				raw === "name" || raw === "email" || raw === "company" ? raw : null,
+			serialize: (v) => v ?? undefined,
+		},
 	);
-	const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+	const [sortDir, setSortDir] = useUrlSearchParam<"asc" | "desc">("dir", {
+		default: "asc",
+		parse: (raw) => (raw === "desc" ? "desc" : "asc"),
+		serialize: (v) => (v === "asc" ? undefined : v),
+	});
 
 	const { data: searchData, error: searchError } = useSearchContacts(
 		{ q: debouncedSearch, limit: 50 },
@@ -202,8 +221,8 @@ interface ContactTableBodyProps {
 	onSort: (key: "name" | "email" | "company") => void;
 	onBulkDelete: (selected: string[]) => void;
 	onExport: () => void;
-	filter: string;
-	setFilter: (v: string) => void;
+	filter: ContactFilter;
+	setFilter: (v: ContactFilter) => void;
 }
 
 /**
@@ -332,7 +351,11 @@ function ContactTableBody({
 							{ value: "person", label: t`Person` },
 						]}
 						value={filter}
-						onValueChange={setFilter}
+						onValueChange={(v) => {
+							if (v === "all" || v === "company" || v === "person") {
+								setFilter(v);
+							}
+						}}
 					/>
 				</div>
 
@@ -456,9 +479,11 @@ function idsFrom<T extends { id: string }>(rows: T[]): string[] {
 
 type ContactLike = { id: string; company?: string | null };
 
+type ContactFilter = "all" | "company" | "person";
+
 function applyContactFilter<T extends ContactLike>(
 	rows: T[],
-	filter: string,
+	filter: ContactFilter,
 ): T[] {
 	if (filter === "company") return rows.filter((r) => Boolean(r.company));
 	if (filter === "person") return rows.filter((r) => !r.company);
