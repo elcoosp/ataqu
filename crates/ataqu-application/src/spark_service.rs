@@ -34,6 +34,9 @@ pub struct UpdateWorkflowCommand {
     pub id: Uuid,
     pub name: Option<String>,
     pub is_active: Option<bool>,
+    pub trigger: Option<Trigger>,
+    pub conditions: Option<Vec<Condition>>,
+    pub actions: Option<Vec<Action>>,
 }
 
 #[derive(Debug, Clone)]
@@ -190,6 +193,15 @@ impl SparkService {
         }
         if let Some(is_active) = cmd.is_active {
             workflow.is_active = is_active;
+        }
+        if let Some(trigger) = cmd.trigger {
+            workflow.trigger = trigger;
+        }
+        if let Some(conditions) = cmd.conditions {
+            workflow.conditions = conditions;
+        }
+        if let Some(actions) = cmd.actions {
+            workflow.actions = actions;
         }
         workflow.updated_at = self.clock.now();
         workflow.version += 1;

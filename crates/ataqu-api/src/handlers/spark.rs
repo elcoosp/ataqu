@@ -42,6 +42,9 @@ pub struct TriggerWorkflowRequest {
 pub struct UpdateWorkflowRequest {
     pub name: Option<String>,
     pub is_active: Option<bool>,
+    pub trigger: Option<ataqu_domain_spark::Trigger>,
+    pub conditions: Option<Vec<ataqu_domain_spark::Condition>>,
+    pub actions: Option<Vec<ataqu_domain_spark::Action>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -147,6 +150,9 @@ pub async fn update_workflow(
         id,
         name: payload.name,
         is_active: payload.is_active,
+        trigger: payload.trigger,
+        conditions: payload.conditions,
+        actions: payload.actions,
     };
     let workflow = state
         .spark_service
@@ -260,6 +266,7 @@ pub struct WorkflowRunResponse {
 pub struct ListRunsParams {
     pub limit: Option<u64>,
     pub offset: Option<u64>,
+    pub workflow_id: Option<Uuid>,
 }
 
 fn run_to_response(run: ataqu_domain_spark::workflow::WorkflowRun) -> WorkflowRunResponse {
@@ -286,6 +293,16 @@ pub async fn list_workflow_runs(
         .list_runs(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    // Per-workflow history is request-scoped: the repo has no workflow-scoped
+    // list, so filter here. Run volume per tenant is page-bounded, so this
+    // stays linear in the requested page rather than the table.
+    let runs: Vec<_> = match params.workflow_id {
+        Some(workflow_id) => runs
+            .into_iter()
+            .filter(|r| r.workflow_id == workflow_id)
+            .collect(),
+        None => runs,
+    };
     let total = runs.len() as u64;
     let items = runs.into_iter().map(run_to_response).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
