@@ -96,6 +96,27 @@ pub async fn list_dashboards(
     Ok(Json(resp))
 }
 
+pub async fn get_dashboard(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let dashboard = state
+        .vista_service
+        .get_dashboard(auth.tenant_id, id)
+        .await
+        .map_err(ApiResponseError::internal_err)?
+        .ok_or_else(|| ApiResponseError::not_found("Dashboard not found"))?;
+    Ok(Json(serde_json::json!({
+        "id": dashboard.id,
+        "name": dashboard.name,
+        "config": dashboard.config,
+        "created_at": dashboard.created_at,
+        "updated_at": dashboard.updated_at,
+        "version": dashboard.version,
+    })))
+}
+
 pub async fn delete_dashboard(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -288,7 +309,9 @@ pub fn routes() -> Router<AppState> {
         )
         .route(
             "/dashboards/{id}",
-            axum::routing::delete(delete_dashboard).put(update_dashboard),
+            axum::routing::get(get_dashboard)
+                .delete(delete_dashboard)
+                .put(update_dashboard),
         )
         .route(
             "/data-points/{metric}",

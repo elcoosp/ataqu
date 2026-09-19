@@ -188,6 +188,17 @@ impl VistaService {
             .map_err(VistaServiceError::Repository)
     }
 
+    pub async fn get_dashboard(
+        &self,
+        tenant_id: TenantId,
+        id: Uuid,
+    ) -> VistaResult<Option<ataqu_domain_vista::Dashboard>> {
+        self.repo
+            .get_dashboard_by_id(&tenant_id, id)
+            .await
+            .map_err(VistaServiceError::Repository)
+    }
+
     pub async fn delete_dashboard(&self, tenant_id: TenantId, id: Uuid) -> VistaResult<()> {
         self.repo
             .delete_dashboard(&tenant_id, id)
