@@ -74,7 +74,13 @@ export function CreateTaskDialog({
 					name="create-task"
 					fallback={<div className="h-40 w-full rounded bg-white/5" />}
 				>
-					<div className="space-y-3">
+					<form
+						className="space-y-3"
+						onSubmit={(e) => {
+							e.preventDefault();
+							handleSubmit();
+						}}
+					>
 						<div>
 							<Label>
 								<Trans>Title</Trans>
@@ -113,14 +119,18 @@ export function CreateTaskDialog({
 							</Select>
 						</div>
 						<div className="flex justify-end gap-2 pt-2">
-							<Button variant="outline" onClick={() => onOpenChange(false)}>
+							<Button
+								variant="outline"
+								type="button"
+								onClick={() => onOpenChange(false)}
+							>
 								<Trans>Cancel</Trans>
 							</Button>
-							<Button onClick={handleSubmit} disabled={submitting}>
+							<Button type="submit" disabled={submitting}>
 								<Trans>Create</Trans>
 							</Button>
 						</div>
-					</div>
+					</form>
 				</Bone>
 			</DialogContent>
 		</Dialog>
