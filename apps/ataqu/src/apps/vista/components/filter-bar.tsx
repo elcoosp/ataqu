@@ -1,3 +1,4 @@
+import { useUrlSearchParam } from "@ataqu/shared-hooks";
 import {
 	Button,
 	Input,
@@ -21,8 +22,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 	onRefresh,
 	onFilterChange,
 }) => {
-	const [team, setTeam] = React.useState("");
-	const [product, setProduct] = React.useState("");
+	// Dashboard filters are URL-backed so a filtered view is shareable and
+	// survives reload (brainstorm P1-3).
+	const [team, setTeam] = useUrlSearchParam("team", { default: "" });
+	const [product, setProduct] = useUrlSearchParam("product", { default: "" });
 
 	React.useEffect(() => {
 		if (onFilterChange) {
