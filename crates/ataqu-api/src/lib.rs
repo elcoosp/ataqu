@@ -245,6 +245,7 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
             "/api/v1/onboarding/task-complete",
             post(handlers::onboarding::complete_task),
         )
+        .nest("/api/v1/inbox", handlers::inbox::inbox_routes())
         .route("/api/v1/changelog", get(handlers::changelog::get_changelog))
         .route(
             "/api/v1/changelog/unread",
