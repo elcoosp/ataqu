@@ -13,8 +13,10 @@
 		}
 	},
 	"dependencies": {
+		"@ataqu/api-client": "workspace:*",
 		"@ataqu/shared-stores": "workspace:*",
 		"@ataqu/shared-utils": "workspace:*",
+		"@tanstack/react-query": "^5.101.0",
 		"react": "^19.2.7"
 	},
 	"devDependencies": {
