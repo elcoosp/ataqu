@@ -1,6 +1,7 @@
 // apps/aegis/src/routes/_auth/users/index.tsx
 
 import { useCreateUser, useInviteUser, useListUsers } from "@ataqu/api-client";
+import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
 import {
 	Bone,
 	Button,
@@ -27,23 +28,32 @@ import { UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 export const Route = createFileRoute("/_auth/users/")({
+	validateSearch: searchSchema({
+		inviteOpen: (raw: unknown) => raw === "1",
+		createOpen: (raw: unknown) => raw === "1",
+	}),
 	component: () => {
 		const search = Route.useSearch();
 		const navigate = useNavigate();
 		const queryClient = useQueryClient();
 
 		const [openInvite, setOpenInvite] = useUrlState({
-	search,
-	setSearch: (next) => navigate({ search: next as never }),
-	key: "inviteOpen",
-	default: false,
-	parse: (raw: unknown) => raw === "1",
-	serialize: (v) => (v ? "1" : undefined),
-});
-		const [openCreate, setOpenCreate] = useState(false);
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "inviteOpen",
+			default: false,
+			parse: (raw: unknown) => raw === "1",
+			serialize: (v) => (v ? "1" : undefined),
+		});
+		const [openCreate, setOpenCreate] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "createOpen",
+			default: false,
+			parse: (raw: unknown) => raw === "1",
+			serialize: (v) => (v ? "1" : undefined),
+		});
 
 		const _createUserMutation = useCreateUser({
 			onSuccess: () => {
