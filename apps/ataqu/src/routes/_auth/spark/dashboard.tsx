@@ -70,7 +70,12 @@ function WorkflowRow({
 	w: { id: string; name: string; is_active: boolean };
 }) {
 	return (
-		<Link to="/spark/workflows/$id" params={{ id: w.id }} className="block">
+		<Link
+			to="/spark/workflows/$id"
+			params={{ id: w.id }}
+			search={{ testOpen: false }}
+			className="block"
+		>
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-center justify-between">
@@ -193,7 +198,11 @@ function SparkDashboard() {
 				</div>
 				<div className="flex gap-2">
 					<Button size="sm" asChild>
-						<Link to="/spark/workflows/$id" params={{ id: "new" }}>
+						<Link
+							to="/spark/workflows/$id"
+							params={{ id: "new" }}
+							search={{ testOpen: false }}
+						>
 							<Plus className="h-3.5 w-3.5 mr-1.5" />
 							<Trans>New Workflow</Trans>
 						</Link>
@@ -236,22 +245,22 @@ function SparkDashboard() {
 				/>
 			</div>
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-			<Card className="overflow-hidden">
-				<CardHeader className="pb-3">
-					<div className="flex items-center justify-between">
-						<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
-							<Terminal className="h-4 w-4 text-amber" />
-							<Trans>Recent Runs</Trans>
-						</CardTitle>
-						<Link
-							to="/spark/runs"
-							search={{ runId: "" }}
-							className="text-xs text-amber hover:text-amber flex items-center gap-1"
-						>
-							View all <ArrowRight className="h-3 w-3" />
-						</Link>
-					</div>
-				</CardHeader>
+				<Card className="overflow-hidden">
+					<CardHeader className="pb-3">
+						<div className="flex items-center justify-between">
+							<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+								<Terminal className="h-4 w-4 text-amber" />
+								<Trans>Recent Runs</Trans>
+							</CardTitle>
+							<Link
+								to="/spark/runs"
+								search={{ runId: "" }}
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
+							>
+								View all <ArrowRight className="h-3 w-3" />
+							</Link>
+						</div>
+					</CardHeader>
 					<CardContent>
 						{wfL ? (
 							<div className="space-y-2">
@@ -288,15 +297,15 @@ function SparkDashboard() {
 								<Terminal className="h-4 w-4 text-amber" />
 								<Trans>Recent Runs</Trans>
 							</CardTitle>
-						<Link
-							to="/spark/runs"
-							search={{ runId: "" }}
-							className="text-xs text-amber hover:text-amber flex items-center gap-1"
-						>
-							View all <ArrowRight className="h-3 w-3" />
-						</Link>
-					</div>
-				</CardHeader>
+							<Link
+								to="/spark/runs"
+								search={{ runId: "" }}
+								className="text-xs text-amber hover:text-amber flex items-center gap-1"
+							>
+								View all <ArrowRight className="h-3 w-3" />
+							</Link>
+						</div>
+					</CardHeader>
 					<CardContent>
 						{rL ? (
 							<div className="space-y-2">
