@@ -20,6 +20,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	HoldToConfirm,
 	Select,
 	SelectContent,
 	SelectItem,
@@ -34,7 +35,7 @@ import {
 	useParams,
 } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const ROLES = ["admin", "manager", "employee", "viewer"];
@@ -52,7 +53,10 @@ export const Route = createFileRoute("/_auth/users/$id")({
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["aegis", "users"] });
 				toast.success("User deactivated.");
-				navigate({ to: "/users" });
+				navigate({
+					to: "/users",
+					search: { inviteOpen: false, createOpen: false },
+				});
 			},
 			onError: (_err: any) => {
 				toast.error("Failed to deactivate");
@@ -68,7 +72,16 @@ export const Route = createFileRoute("/_auth/users/$id")({
 				toast.error(handleApiError(error ?? new Error("update failed"))),
 		});
 
-		const [role, setRole] = useState<string>(user?.role ?? "viewer");
+		// Seeded from the loaded user, not the (possibly stale) first render:
+		// sync in an effect so the select never shows "viewer" for an admin
+		// while the list is still resolving.
+		const [role, setRole] = useState<string | null>(null);
+		useEffect(() => {
+			if (user && role === null) setRole(user.role ?? "viewer");
+		}, [user, role]);
+		const effectiveRole = role ?? "viewer";
+		const saveDisabled =
+			updateRole.isPending || !user || effectiveRole === user.role;
 
 		if (isLoading) {
 			return (
@@ -99,7 +112,12 @@ export const Route = createFileRoute("/_auth/users/$id")({
 			<div className="p-6">
 				<Button
 					variant="ghost"
-					onClick={() => navigate({ to: "/users" })}
+					onClick={() =>
+						navigate({
+							to: "/users",
+							search: { inviteOpen: false, createOpen: false },
+						})
+					}
 					className="mb-4"
 				>
 					<ArrowLeft className="mr-2 h-4 w-4" />
@@ -121,7 +139,7 @@ export const Route = createFileRoute("/_auth/users/$id")({
 								<Trans>Role:</Trans>
 							</strong>{" "}
 							<div className="mt-1 flex items-center gap-2">
-								<Select value={role} onValueChange={(v) => setRole(v)}>
+								<Select value={effectiveRole} onValueChange={(v) => setRole(v)}>
 									<SelectTrigger className="w-48">
 										<SelectValue />
 									</SelectTrigger>
@@ -138,11 +156,11 @@ export const Route = createFileRoute("/_auth/users/$id")({
 									onClick={() =>
 										updateRole.mutate({
 											userId: id,
-											data: { role },
+											data: { role: effectiveRole },
 											version: user?.version ?? 0,
 										})
 									}
-									disabled={updateRole.isPending || role === user.role}
+									disabled={saveDisabled}
 								>
 									<Trans>Save Role</Trans>
 								</Button>
@@ -205,7 +223,14 @@ export const Route = createFileRoute("/_auth/users/$id")({
 										</DialogDescription>
 									</DialogHeader>
 									<DialogFooter>
-										<Trans>Revoke</Trans>
+										<HoldToConfirm
+											onConfirm={() => _deactivateMutation.mutate(user.id)}
+											confirmLabel="Revoked"
+											disabled={_deactivateMutation.isPending}
+											className="w-full bg-destructive text-white hover:bg-destructive"
+										>
+											<Trans>Revoke access</Trans>
+										</HoldToConfirm>
 									</DialogFooter>
 								</DialogContent>
 							</Dialog>
