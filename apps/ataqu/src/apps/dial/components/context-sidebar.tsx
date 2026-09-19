@@ -1,8 +1,6 @@
 import { useGetChannel, useUpdateChannel } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import {
- Badge, Bone, Button, Input 
-} from "@ataqu/ui";
+import { Badge, Bone, Button, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -118,7 +116,10 @@ export function ContextSidebar({ channelId }: ContextSidebarProps) {
 					<Badge variant="default" className="mb-2">
 						Linked to CINQ
 					</Badge>
-					<Link to={"/dial/dashboard"} className="block text-sm hover:underline">
+					<Link
+						to={"/dial/dashboard"}
+						className="block text-sm hover:underline"
+					>
 						<div className="flex items-center gap-2">
 							<DollarSign className="h-4 w-4" />
 							<span className="font-medium">{cinqContext.name}</span>

@@ -1,36 +1,150 @@
 import type { Message } from "@ataqu/api-client";
-/// <reference types="node" />
 import { useAuthStore } from "@ataqu/shared-stores";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
-import { useDialStore } from "../../../apps/dial/stores/dial-store";
+import { useRef } from "react";
+import { normalizeMessageList } from "../api/envelope";
+import { useDialStore } from "../stores/dial-store";
 
-type WebSocketMessage =
-	| { type: "message"; channelId: string; message: Message }
-	| { type: "presence"; userId: string; status: "online" | "away" | "offline" }
+type DialWsEvent =
+	| { type: "subscribed"; channel_id: string }
+	| { type: "unsubscribed"; channel_id: string }
 	| {
-			type: "reaction";
-			channelId: string;
-			messageId: string;
-			reaction: unknown;
+			type: "message";
+			id: string;
+			channel_id: string;
+			author_id: string;
+			content: string;
+			created_at: string;
+			thread_id?: string | null;
 	  }
-	| { type: "thread"; channelId: string; thread: unknown };
+	| {
+			type: "message_edited";
+			id: string;
+			channel_id: string;
+			content: string;
+			edited_at?: string | null;
+	  }
+	| { type: "message_deleted"; message_id: string; channel_id: string }
+	| { type: "typing"; channel_id: string; user_id: string }
+	| { type: "channel_archived"; channel_id: string }
+	| { type: "channel_updated"; channel_id: string; name?: string }
+	| { type: "presence"; user_id: string; status: "online" | "away" | "offline" }
+	| { type: "error"; message: string };
 
-export const useDialWebSocket = () => {
+const messagesQueryKey = (channelId: string) => ["dial", "messages", channelId];
+
+export function useDialWebSocket() {
 	const wsRef = useRef<WebSocket | null>(null);
 	const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const reconnectAttempts = useRef(0);
 	const { token } = useAuthStore();
-	const { setConnectionState, setPresence, removePresence } = useDialStore();
+	const setConnectionState = useDialStore((s) => s.setConnectionState);
+	const setPresence = useDialStore((s) => s.setPresence);
+	const removePresence = useDialStore((s) => s.removePresence);
 	const queryClient = useQueryClient();
 
-	const connect = useCallback(() => {
-		if (!token) return;
-		const wsUrl =
-			(import.meta as any).env.VITE_WS_BASE_URL || "/ws";
-		const ws = new WebSocket((wsUrl.endsWith('/ws') ? `${wsUrl}?token=${token}` : `${wsUrl}/ws?token=${token}`));
-		wsRef.current = ws;
+	const handleMessage = (raw: string) => {
+		let data: DialWsEvent;
+		try {
+			data = JSON.parse(raw) as DialWsEvent;
+		} catch {
+			return;
+		}
+		const pageKey =
+			"channel_id" in data ? messagesQueryKey(data.channel_id) : null;
+		switch (data.type) {
+			case "message": {
+				if (!pageKey) return;
+				queryClient.setQueriesData({ queryKey: pageKey }, (old: unknown) => {
+					const page = normalizeMessageList<Message>(old);
+					if (page.items.some((m) => m.id === data.id)) return old;
+					const message: Partial<Message> = {
+						id: data.id,
+						channel_id: data.channel_id,
+						author_id: data.author_id,
+						content: data.content,
+						sent_at: data.created_at,
+						thread_id: data.thread_id ?? undefined,
+					};
+					return {
+						...page,
+						items: [...page.items, message],
+						total: page.total + 1,
+					};
+				});
+				break;
+			}
+			case "message_edited": {
+				if (!pageKey) return;
+				queryClient.setQueriesData({ queryKey: pageKey }, (old: unknown) => {
+					const page = normalizeMessageList<Message>(old);
+					return {
+						...page,
+						items: page.items.map((m) =>
+							m.id === data.id
+								? {
+										...m,
+										content: data.content,
+										edited_at: data.edited_at ?? new Date().toISOString(),
+									}
+								: m,
+						),
+					};
+				});
+				break;
+			}
+			case "message_deleted": {
+				if (!pageKey) return;
+				queryClient.setQueriesData({ queryKey: pageKey }, (old: unknown) => {
+					const page = normalizeMessageList<Message>(old);
+					return {
+						...page,
+						items: page.items.filter((m) => m.id !== data.message_id),
+						total: Math.max(0, page.total - 1),
+					};
+				});
+				break;
+			}
+			case "typing":
+				window.dispatchEvent(
+					new CustomEvent("dial:typing", {
+						detail: { channel_id: data.channel_id, user_id: data.user_id },
+					}),
+				);
+				break;
+			case "presence":
+				if (data.status === "offline") removePresence(data.user_id);
+				else setPresence(data.user_id, data.status);
+				break;
+			case "channel_archived":
+			case "channel_updated":
+				void queryClient.invalidateQueries({ queryKey: ["dial", "channels"] });
+				break;
+			default:
+				break;
+		}
+	};
 
+	const send = (payload: Record<string, unknown>) => {
+		if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+			wsRef.current.send(JSON.stringify(payload));
+		}
+	};
+
+	const subscribe = (channelId: string) =>
+		send({ action: "subscribe", channel_id: channelId });
+	const unsubscribe = (channelId: string) =>
+		send({ action: "unsubscribe", channel_id: channelId });
+
+	const connect = () => {
+		if (!token || wsRef.current) return;
+		const base =
+			((import.meta as any).env.VITE_WS_BASE_URL as string | undefined) ?? "";
+		const proto = window.location.protocol === "https:" ? "wss" : "ws";
+		const ws = new WebSocket(
+			`${proto}://${window.location.host}${base}/dial/ws?token=${token}`,
+		);
+		wsRef.current = ws;
 		ws.onopen = () => {
 			setConnectionState("connected");
 			reconnectAttempts.current = 0;
@@ -39,110 +153,28 @@ export const useDialWebSocket = () => {
 				reconnectTimer.current = null;
 			}
 		};
-
-		ws.onmessage = (event) => {
-			try {
-				const data = JSON.parse(event.data) as WebSocketMessage;
-				switch (data.type) {
-					case "message": {
-						// Update messages cache for the channel
-						const queryKey = [
-							"dial",
-							"messages",
-							data.channelId,
-							{ limit: 100, offset: 0 },
-						];
-						queryClient.setQueryData(queryKey, (old: unknown) => {
-							if (!old) return old;
-							// Append new message to the list (or prepend depending on order)
-							// Assuming messages are paginated, we could update the first page
-							return {
-								...old,
-								items: [data.message, ...((old as any).items || [])],
-								total: ((old as any).total || 0) + 1,
-							};
-						});
-						break;
-					}
-					case "presence":
-						if (data.status === "offline") {
-							removePresence(data.userId);
-						} else {
-							setPresence(data.userId, data.status);
-						}
-						break;
-					case "reaction": {
-						// Update reactions cache
-						const queryKey = ["dial", "reactions", data.messageId];
-						queryClient.setQueryData(queryKey, (old: unknown) => {
-							if (!old) return [data.reaction];
-							return [...(old as unknown[]), data.reaction];
-						});
-						break;
-					}
-					case "thread": {
-						// Update thread messages cache
-						// We'll handle this in the thread component with a separate query
-						break;
-					}
-				}
-			} catch (e) {
-				console.warn("Failed to parse WebSocket message", e);
-			}
-		};
-
+		ws.onmessage = (event) => handleMessage(String(event.data));
 		ws.onclose = (event) => {
 			setConnectionState("disconnected");
-			if (!event.wasClean) {
-				// Attempt reconnect with exponential backoff
-				const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30000);
+			wsRef.current = null;
+			if (!event.wasClean && reconnectAttempts.current < 5) {
+				const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30_000);
 				reconnectAttempts.current += 1;
-				if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
-				reconnectTimer.current = setTimeout(() => {
-					connect();
-				}, delay);
+				reconnectTimer.current = setTimeout(connect, delay);
 			}
 		};
+		ws.onerror = () => ws.close();
+	};
 
-		ws.onerror = (error) => {
-			console.warn("WebSocket error", error);
-		};
-	}, [token, setConnectionState, setPresence, removePresence, queryClient]);
-
-	const disconnect = useCallback(() => {
+	const disconnect = () => {
 		if (reconnectTimer.current) {
 			clearTimeout(reconnectTimer.current);
 			reconnectTimer.current = null;
 		}
-		if (wsRef.current) {
-			wsRef.current.close();
-			wsRef.current = null;
-		}
+		wsRef.current?.close();
+		wsRef.current = null;
 		setConnectionState("disconnected");
-	}, [setConnectionState]);
-
-	useEffect(() => {
-		connect();
-		return () => disconnect();
-	}, [connect, disconnect]);
-
-	// Return send function
-	const send = useCallback((data: unknown) => {
-		const _sendStatus = useCallback(
-			(status: "online" | "away" | "offline") => {
-				send({ type: "presence", status });
-			},
-			[send],
-		);
-		if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-			wsRef.current.send(JSON.stringify(data));
-		} else {
-			console.warn("WebSocket not open, message not sent");
-		}
-	}, []);
-
-	return {
-		send,
-		isConnected: useDialStore((s) => s.connectionState === "connected"),
 	};
-};
+
+	return { connect, disconnect, subscribe, unsubscribe, send, handleMessage };
+}

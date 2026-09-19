@@ -1,4 +1,9 @@
 import {
+	useOptimisticMutation,
+	useShortcut,
+	useShortcutScope,
+} from "@ataqu/shared-hooks";
+import {
 	Badge,
 	Bone,
 	Button,
@@ -12,30 +17,70 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 import { toast } from "sonner";
 import { listTickets, type Ticket, updateTicketStatus } from "../api/tickets";
 
 export function TicketList() {
-	const queryClient = useQueryClient();
+	const navigate = useNavigate();
 	const { data, isLoading } = useQuery({
 		queryKey: ["tickets"],
 		queryFn: () => listTickets({ limit: 100, offset: 0 }),
 	});
 
-	const updateStatus = useMutation({
-		mutationFn: ({ id, status }: { id: string; status: string }) =>
+	// Status flips paint optimistically: the row recolours immediately and
+	// rolls back with an error toast if the server rejects the change.
+	const updateStatus = useOptimisticMutation<
+		Ticket,
+		{ items: Ticket[]; total: number } | undefined,
+		{ id: string; status: string }
+	>({
+		listQueryKey: ["tickets"],
+		mutationFn: ({ id, status }) =>
 			updateTicketStatus(id, status as Ticket["status"]),
+		optimisticUpdate: (old, vars) =>
+			old
+				? {
+						...old,
+						items: old.items.map((ticket) =>
+							ticket.id === vars.id
+								? { ...ticket, status: vars.status as Ticket["status"] }
+								: ticket,
+						),
+					}
+				: old,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["tickets"] });
 			toast.success(t`Status updated`);
 		},
 		onError: () => {
 			toast.error(t`Failed to update status`);
 		},
 	});
+
+	const tickets = data?.items ?? [];
+	const [cursor, setCursor] = useState(-1);
+
+	// List keyboard scope (P2): j/k move, Enter opens the ticket.
+	useShortcutScope("list");
+	useShortcut(
+		"j",
+		() => setCursor((c) => Math.min(tickets.length - 1, Math.max(0, c + 1))),
+		{ scope: "list" },
+	);
+	useShortcut("k", () => setCursor((c) => Math.max(0, c - 1)), {
+		scope: "list",
+	});
+	useShortcut(
+		"enter",
+		() => {
+			const row = tickets[cursor];
+			if (row) navigate({ to: `/dial/tickets/${row.id}` });
+		},
+		{ scope: "list" },
+	);
 
 	if (isLoading) {
 		return (
@@ -60,11 +105,11 @@ export function TicketList() {
 	const statusColor = (status: string) => {
 		switch (status) {
 			case "open":
-				return "bg-yellow-500/20 text-yellow-500";
+				return "bg-warning/20 text-warning";
 			case "pending":
-				return "bg-blue-500/20 text-blue-500";
+				return "bg-info/20 text-info";
 			case "closed":
-				return "bg-green-500/20 text-green-500";
+				return "bg-success/20 text-success";
 			default:
 				return "";
 		}
@@ -95,8 +140,11 @@ export function TicketList() {
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{data.items.map((ticket) => (
-					<TableRow key={ticket.id}>
+				{data.items.map((ticket, index) => (
+					<TableRow
+						key={ticket.id}
+						className={cn(index === cursor && "bg-white/10")}
+					>
 						<TableCell>
 							<Link
 								to="/dial/tickets/$id"
@@ -112,11 +160,13 @@ export function TicketList() {
 							</Badge>
 						</TableCell>
 						<TableCell className="capitalize">{ticket.priority}</TableCell>
-						<TableCell>{ticket.customer_email}</TableCell>
+						<TableCell>{ticket.requester_email}</TableCell>
 						<TableCell className="text-sm text-muted-foreground">
-							{formatDistanceToNow(new Date(ticket.last_message_at), {
-								addSuffix: true,
-							})}
+							{ticket.last_message_at
+								? formatDistanceToNow(new Date(ticket.last_message_at), {
+										addSuffix: true,
+									})
+								: "—"}
 						</TableCell>
 						<TableCell>
 							<Button

@@ -1,13 +1,11 @@
-import { useSendMessage } from "@ataqu/api-client";
-import { useIdempotency } from "@ataqu/shared-hooks";
-import {
- Button 
-} from "@ataqu/ui";
+import { type Message, useSendMessage } from "@ataqu/api-client";
+import { useOptimisticMutation } from "@ataqu/shared-hooks";
+import { Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { normalizeMessageList } from "../api/envelope";
 import { FileUpload } from "./file-upload";
 
 interface MessageInputProps {
@@ -16,6 +14,14 @@ interface MessageInputProps {
 	placeholder?: string;
 }
 
+/** Canonical cache key for this channel's message list. */
+const messagesKey = (channelId: string) => [
+	"dial",
+	"messages",
+	channelId,
+	{ limit: 50, offset: 0 },
+];
+
 export function MessageInput({
 	channelId,
 	placeholder = t`Type a message...`,
@@ -23,74 +29,44 @@ export function MessageInput({
 	const [content, setContent] = useState("");
 	const [isSending, setIsSending] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
-	const { resetKey } = useIdempotency();
-	const queryClient = useQueryClient();
 	const sendMessage = useSendMessage();
 
-	const mutation = useMutation({
-		mutationFn: async (data: { content: string }) => {
+	const mutation = useOptimisticMutation<
+		Message,
+		ReturnType<typeof normalizeMessageList<Message>>,
+		{ content: string }
+	>({
+		listQueryKey: messagesKey(channelId),
+		mutationFn: async (data) => {
 			return await sendMessage.mutateAsync({
 				channelId,
 				data,
 			});
 		},
-		onMutate: async (variables) => {
-			// Optimistic update: add message to cache
-			const queryKey = [
-				"dial",
-				"messages",
-				channelId,
-				{ limit: 50, offset: 0 },
-			];
-			await queryClient.cancelQueries({ queryKey });
-			const previous = queryClient.getQueryData(queryKey) as {
-				messages: any[];
-				total: number;
-			};
-			const optimisticMessage = {
+		optimisticUpdate: (old, vars) => {
+			const page = normalizeMessageList<Message>(old);
+			const optimisticMessage: Message = {
 				id: `optimistic-${Date.now()}`,
-				content: variables.content,
+				content: vars.content,
 				author_id: "current-user-id", // will be replaced later
+				version: 0,
 				sent_at: new Date().toISOString(),
 				channel_id: channelId,
-				thread_id: null,
-				edited_at: null,
-				deleted_at: null,
+				thread_id: undefined,
+				edited_at: undefined,
+				deleted_at: undefined,
 			};
-			queryClient.setQueryData(queryKey, {
-				...previous,
-				messages: [optimisticMessage, ...(previous?.messages || [])],
-				total: (previous?.total || 0) + 1,
-			});
-			return { previous, optimisticId: optimisticMessage.id };
+			return {
+				...page,
+				items: [optimisticMessage, ...page.items],
+				total: page.total + 1,
+			};
 		},
-		onError: (_error, _variables, context) => {
-			// Rollback: remove optimistic message
-			const queryKey = [
-				"dial",
-				"messages",
-				channelId,
-				{ limit: 50, offset: 0 },
-			];
-			const previous = context?.previous;
-			if (previous) {
-				queryClient.setQueryData(queryKey, previous);
-			} else {
-				// If we don't have previous state, just refetch
-				queryClient.invalidateQueries({ queryKey });
-			}
+		onError: () => {
 			toast.error(t`Failed to send message`);
 		},
 		onSuccess: () => {
-			// Invalidate to get the real message
-			queryClient.invalidateQueries({
-				queryKey: ["dial", "messages", channelId],
-			});
 			toast.success(t`Message sent`);
-		},
-		onSettled: () => {
-			setIsSending(false);
-			resetKey();
 		},
 	});
 
@@ -99,7 +75,11 @@ export function MessageInput({
 		const trimmed = content.trim();
 		setIsSending(true);
 		setContent("");
-		mutation.mutate({ content: trimmed });
+		try {
+			await mutation.mutateAsync({ content: trimmed });
+		} finally {
+			setIsSending(false);
+		}
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

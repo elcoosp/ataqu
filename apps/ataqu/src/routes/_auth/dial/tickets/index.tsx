@@ -1,7 +1,5 @@
 import { useOnboardingStore } from "@ataqu/shared-stores";
-import {
- OnboardTour 
-} from "@ataqu/ui";
+import { OnboardTour } from "@ataqu/ui";
 import { createFileRoute } from "@tanstack/react-router";
 import { TicketList } from "../../../../apps/dial/components/ticket-list";
 

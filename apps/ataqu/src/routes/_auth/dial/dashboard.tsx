@@ -23,12 +23,15 @@ export const Route = createFileRoute("/_auth/dial/dashboard")({
 function ConnectionPill() {
 	const connectionState = useDialStore((s) => s.connectionState);
 	const map = {
-		connected: { cls: "bg-emerald-500/15 text-emerald-400", label: t`Live` },
+		connected: { cls: "bg-success/15 text-success", label: t`Live` },
 		reconnecting: {
-			cls: "bg-amber-500/15 text-amber-400",
+			cls: "bg-amber/15 text-amber",
 			label: t`Reconnecting`,
 		},
-		disconnected: { cls: "bg-red-500/15 text-red-400", label: t`Offline` },
+		disconnected: {
+			cls: "bg-destructive/15 text-destructive",
+			label: t`Offline`,
+		},
 	} as const;
 	const { cls, label } = map[connectionState];
 	return (
@@ -51,7 +54,7 @@ function CinqContextPanel() {
 
 	if (!activeChannelId) {
 		return (
-			<p className="text-sm text-gray-500">
+			<p className="text-sm text-muted-foreground">
 				<Trans>
 					Select a conversation to see the linked CINQ deal context.
 				</Trans>
@@ -60,13 +63,13 @@ function CinqContextPanel() {
 	}
 	if (isLoading)
 		return (
-			<p className="text-sm text-gray-500">
+			<p className="text-sm text-muted-foreground">
 				<Trans>Loading context…</Trans>
 			</p>
 		);
 	if (!data) {
 		return (
-			<p className="text-sm text-gray-500">
+			<p className="text-sm text-muted-foreground">
 				<Trans>No linked CINQ deal for this conversation.</Trans>
 			</p>
 		);
@@ -74,12 +77,12 @@ function CinqContextPanel() {
 	return (
 		<div className="space-y-1 text-sm">
 			<p className="font-medium text-white">{data.name}</p>
-			<p className="text-gray-400">
+			<p className="text-muted-foreground">
 				{data.contact_name} · {data.contact_email}
 			</p>
 			<div className="flex items-center gap-2 pt-1">
 				<Badge variant="outline">{data.stage}</Badge>
-				<span className="text-gray-400">
+				<span className="text-muted-foreground">
 					{new Intl.NumberFormat(undefined, {
 						style: "currency",
 						currency: "USD",
@@ -95,7 +98,7 @@ function ChannelRow({ channel }: { channel: ChannelSummary }) {
 		<Link
 			to="/dial/channels/$id"
 			params={{ id: channel.id }}
-			className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-700/40"
+			className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-secondary-foreground hover:bg-border/40"
 		>
 			<span className="truncate"># {channel.name}</span>
 		</Link>
@@ -110,12 +113,12 @@ function DashboardPage() {
 
 	return (
 		<div className="h-full overflow-auto">
-			<div className="flex flex-wrap items-center justify-between gap-3 p-6 border-b border-gray-700/40">
+			<div className="flex flex-wrap items-center justify-between gap-3 p-6 border-b border-border/40">
 				<div>
 					<h1 className="text-xl font-heading text-white">
 						<Trans>Support Workspace</Trans>
 					</h1>
-					<div className="mt-1 flex items-center gap-3 text-sm text-gray-400">
+					<div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
 						<ConnectionPill />
 						<span className="flex items-center gap-1">
 							<Users className="h-4 w-4" />
@@ -164,7 +167,7 @@ function DashboardPage() {
 									.slice(0, 8)
 									.map((c) => <ChannelRow key={c.id} channel={c} />)
 							) : (
-								<p className="text-sm text-gray-500">
+								<p className="text-sm text-muted-foreground">
 									<Trans>No channels yet.</Trans>
 								</p>
 							)}

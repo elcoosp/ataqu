@@ -4,9 +4,7 @@ import {
 	useListChannels,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
-import {
- Bone, Button, cn, Input 
-} from "@ataqu/ui";
+import { Bone, Button, cn, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";

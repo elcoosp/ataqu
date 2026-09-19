@@ -1,9 +1,10 @@
 import { useIdempotency } from "@ataqu/shared-hooks";
-import {
- Badge, Bone, Button, cn 
-} from "@ataqu/ui";
+import { Badge, Bone, Button, cn } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+// NOTE (consolidation): was `@/routes/_auth.tickets/$id` (route-type import).
+// Use the router's primitive instead — no route module import needed.
+import { useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,9 +15,6 @@ import {
 	type Ticket,
 	updateTicketStatus,
 } from "../api/tickets";
-// NOTE (consolidation): was `@/routes/_auth.tickets/$id` (route-type import).
-// Use the router's primitive instead — no route module import needed.
-import { useParams } from "@tanstack/react-router";
 
 export function TicketDetail() {
 	// Use the route's useParams to get the id
@@ -95,7 +93,7 @@ export function TicketDetail() {
 					</div>
 				</div>
 				<div className="text-sm text-muted-foreground mt-1">
-					{t`Customer`}: {ticket.customer_email} · {t`Priority`}:{" "}
+					{t`Customer`}: {ticket.requester_email} · {t`Priority`}:{" "}
 					{ticket.priority}
 				</div>
 			</div>
@@ -116,7 +114,7 @@ export function TicketDetail() {
 						>
 							<div className="text-xs text-muted-foreground flex items-center gap-2">
 								<span>
-									{msg.from_customer ? ticket.customer_email : t`Support`}
+									{msg.from_customer ? ticket.requester_email : t`Support`}
 								</span>
 								<span>
 									{formatDistanceToNow(new Date(msg.created_at), {
