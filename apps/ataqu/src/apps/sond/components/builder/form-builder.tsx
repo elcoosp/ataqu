@@ -1,4 +1,5 @@
 import type { FormQuestion } from "@ataqu/api-client";
+import { intSearch, useUrlSearchParam } from "@ataqu/shared-hooks";
 import { Button, cn, ProgressBar, SegmentedControl } from "@ataqu/ui";
 import {
 	DndContext,
@@ -103,7 +104,14 @@ function QuestionCard({
 export function FormBuilder({ questions, onUpdate }: Props) {
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [logicModalOpen, setLogicModalOpen] = useState(false);
-	const [currentPage, setCurrentPage] = useState(1);
+	// Active page is URL-backed so the builder reopens on the page you were
+	// editing (brainstorm P1-3). Selection and the logic modal stay session:
+	// both are transient editor affordances anchored to an in-memory row.
+	const [currentPage, setCurrentPage] = useUrlSearchParam("page", {
+		default: 1,
+		parse: intSearch(1, 1),
+		serialize: (v) => (v === 1 ? undefined : String(v)),
+	});
 	const pages = Array.from(new Set(questions.map((q) => q.page))).sort(
 		(a, b) => a - b,
 	);
