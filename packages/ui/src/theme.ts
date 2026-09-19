@@ -35,11 +35,18 @@ export function toggleTheme(): AtaquTheme {
 }
 
 /** Subscribe to theme changes; returns an unsubscribe fn. Fires synchronously on change. */
-export function onThemeChange(listener: (theme: AtaquTheme) => void): () => void {
+export function onThemeChange(
+	listener: (theme: AtaquTheme) => void,
+): () => void {
 	const observer = new MutationObserver(() => {
-		listener(document.documentElement.classList.contains("dark") ? "dark" : "light");
+		listener(
+			document.documentElement.classList.contains("dark") ? "dark" : "light",
+		);
 	});
-	observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+	observer.observe(document.documentElement, {
+		attributes: true,
+		attributeFilter: ["class"],
+	});
 	listener(getInitialTheme());
 	return () => observer.disconnect();
 }
