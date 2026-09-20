@@ -64,11 +64,7 @@ export function RescheduleModal({
 							selectedSlot={selectedSlot}
 							onSelectSlot={setSelectedSlot}
 						/>
-						<Button
-							type="submit"
-							disabled={!selectedSlot}
-							className="w-full"
-						>
+						<Button type="submit" disabled={!selectedSlot} className="w-full">
 							<Trans>Reschedule</Trans>
 						</Button>
 					</form>
