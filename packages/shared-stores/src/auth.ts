@@ -22,10 +22,16 @@ export const useAuthStore = create<AuthState>()(
 			user: null,
 			tenantId: null,
 			isAuthenticated: false,
-			login: (token: string, refreshOrUser: string | User, maybeUser?: User) => {
+			login: (
+				token: string,
+				refreshOrUser: string | User,
+				maybeUser?: User,
+			) => {
 				const refreshToken =
 					typeof refreshOrUser === "string" ? refreshOrUser : null;
-				const user = (typeof refreshOrUser === "string" ? maybeUser : refreshOrUser) as User;
+				const user = (
+					typeof refreshOrUser === "string" ? maybeUser : refreshOrUser
+				) as User;
 				set({
 					token,
 					refreshToken,
