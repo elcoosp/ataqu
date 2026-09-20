@@ -229,6 +229,17 @@ export const useListWorkflowRuns = (
 		refetchInterval: 10_000,
 		...options,
 	});
+export const useWorkflowRun = (
+	id: UUID | undefined,
+	options?: UseQueryOptions<WorkflowRun>,
+) =>
+	useQuery({
+		queryKey: ["spark", "run", id],
+		queryFn: () => getWorkflowRun(id!),
+		enabled: !!id,
+		refetchInterval: 10_000,
+		...options,
+	});
 
 export const useApproveWorkflowRun = (
 	options?: UseMutationOptions<void, Error, UUID>,
