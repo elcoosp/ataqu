@@ -135,9 +135,7 @@ export function TicketDetail() {
 						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 							setReply(e.target.value)
 						}
-						onKeyDown={(
-							e: React.KeyboardEvent<HTMLTextAreaElement>,
-						) => {
+						onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 							if (
 								e.key === "Enter" &&
 								(e.metaKey || e.ctrlKey) &&
