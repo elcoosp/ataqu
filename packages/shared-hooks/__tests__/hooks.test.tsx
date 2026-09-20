@@ -1,6 +1,7 @@
 import { useOnboardingStore } from "@ataqu/shared-stores";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { eventToToken, formatShortcut, SHORTCUTS } from "../src/shortcuts";
 import { useClickOutside } from "../src/use-click-outside";
 import { useDebounce } from "../src/use-debounce";
 import {
@@ -14,11 +15,6 @@ import { useLocalStorage } from "../src/use-local-storage";
 import { useOnboard } from "../src/use-onboard";
 import { useSSE } from "../src/use-sse";
 import { useWebSocket } from "../src/use-web-socket";
-import {
-	eventToToken,
-	formatShortcut,
-	SHORTCUTS,
-} from "../src/shortcuts";
 
 class FakeEventSource {
 	static instances: FakeEventSource[] = [];
@@ -313,9 +309,7 @@ describe("useShortcut (keyboard engine)", () => {
 describe("shortcuts registry helpers", () => {
 	it("maps events to canonical tokens", () => {
 		expect(
-			eventToToken(
-				new KeyboardEvent("keydown", { key: "k", metaKey: true }),
-			),
+			eventToToken(new KeyboardEvent("keydown", { key: "k", metaKey: true })),
 		).toBe("mod+k");
 		expect(eventToToken(new KeyboardEvent("keydown", { key: "Shift" }))).toBe(
 			null,
@@ -327,9 +321,7 @@ describe("shortcuts registry helpers", () => {
 
 	it("normalizes shift+/ into ?", () => {
 		expect(
-			eventToToken(
-				new KeyboardEvent("keydown", { key: "?", shiftKey: true }),
-			),
+			eventToToken(new KeyboardEvent("keydown", { key: "?", shiftKey: true })),
 		).toBe("?");
 	});
 

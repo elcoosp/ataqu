@@ -1,7 +1,7 @@
-import { act, renderHook } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConflictError } from "@ataqu/api-client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useOptimisticMutation } from "../src/use-optimistic";
 
 type Item = { id: string; done: boolean; version: number };
@@ -129,7 +129,12 @@ describe("useOptimisticMutation", () => {
 		queryClient = qc;
 		qc.setQueryData<Page>(listKey, structuredClone(initialPage));
 
-		const conflict = new ConflictError("stale", "version_conflict", undefined, 9);
+		const conflict = new ConflictError(
+			"stale",
+			"version_conflict",
+			undefined,
+			9,
+		);
 
 		const { result } = renderHook(
 			() =>
