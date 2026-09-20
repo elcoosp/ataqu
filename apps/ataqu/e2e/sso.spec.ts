@@ -83,9 +83,7 @@ test.describe("Consolidated SSO flow", () => {
 		await expect(page).toHaveURL(/\/dashboard/);
 		// …then navigate to CINQ's dashboard without a second login.
 		await page.goto(`${APP_URL}/cinq/dashboard`);
-		await expect(
-			page.getByText(/welcome to your workspace/i),
-		).toBeVisible();
+		await expect(page.getByText(/welcome to your workspace/i)).toBeVisible();
 	});
 
 	test("a failed SSO handshake surfaces an error and stays on login", async ({
