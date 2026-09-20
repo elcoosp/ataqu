@@ -83,7 +83,8 @@ export function MessageInput({
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-		if (e.key === "Enter" && !e.shiftKey) {
+		const modSend = e.key === "Enter" && (e.metaKey || e.ctrlKey);
+		if (modSend || (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey)) {
 			e.preventDefault();
 			handleSend();
 		}

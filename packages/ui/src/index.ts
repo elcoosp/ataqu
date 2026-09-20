@@ -19,6 +19,8 @@ export * from "./components/chart";
 export * from "./components/command-palette";
 export * from "./components/confirm-dialog";
 export * from "./components/data-table";
+export * from "./components/virtual-rows";
+
 export { EmptyState } from "./components/empty-state";
 export * from "./components/form-builder";
 export * from "./components/inbox-bell";

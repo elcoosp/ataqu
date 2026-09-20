@@ -9,12 +9,12 @@ import {
 	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronsUpDown, ChevronUp } from "lucide-react";
 import React from "react";
 import { cn } from "../lib/utils";
 import { Button } from "./button";
 import { Input } from "./input";
+import { VirtualRows } from "./virtual-rows";
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
@@ -32,6 +32,7 @@ export function DataTable<TData, TValue>({
 	data,
 	searchColumn,
 	searchPlaceholder = "Search...",
+	pageSize,
 	virtualize = false,
 	rowHeight = 40,
 	className,
@@ -47,7 +48,7 @@ export function DataTable<TData, TValue>({
 		columns,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
+		getPaginationRowModel: virtualize ? undefined : getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
@@ -57,57 +58,65 @@ export function DataTable<TData, TValue>({
 			globalFilter,
 		},
 		onGlobalFilterChange: setGlobalFilter,
+		initialState: pageSize ? { pagination: { pageSize } } : undefined,
 	});
 
 	const { rows } = table.getRowModel();
 
-	const parentRef = React.useRef<HTMLDivElement>(null);
-	const rowVirtualizer = useVirtualizer({
-		count: rows.length,
-		getScrollElement: () => parentRef.current,
-		estimateSize: () => rowHeight,
-		overscan: 10,
-		enabled: virtualize,
-	});
-
-	const renderRows = () => {
-		if (virtualize) {
-			return rowVirtualizer.getVirtualItems().map((virtualRow) => {
-				const row = rows[virtualRow.index];
-				return (
-					<tr
-						key={row?.id || `row-${virtualRow.index}`}
-						className="border-b border-border/40 hover:bg-white/5 transition-colors"
-						style={{
-							height: `${virtualRow.size}px`,
-							transform: `translateY(${virtualRow.start}px)`,
-							position: "absolute",
-							width: "100%",
-						}}
+	const renderHeaders = () =>
+		table.getHeaderGroups().map((headerGroup) => (
+			<tr key={headerGroup.id}>
+				{headerGroup.headers.map((header) => (
+					<th
+						key={header.id}
+						className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
 					>
-						{row?.getVisibleCells()?.map((cell) => (
-							<td key={cell.id} className="px-4 py-2 text-sm truncate">
-								{flexRender(cell.column.columnDef.cell, cell.getContext())}
-							</td>
-						))}
-					</tr>
-				);
-			});
-		}
-
-		return rows.map((row, index) => (
-			<tr
-				key={row?.id || `row-${index}`}
-				className="border-b border-border/40 hover:bg-white/5 transition-colors"
-			>
-				{row?.getVisibleCells()?.map((cell) => (
-					<td key={cell.id} className="px-4 py-2 text-sm truncate">
-						{flexRender(cell.column.columnDef.cell, cell.getContext())}
-					</td>
+						{header.isPlaceholder ? null : (
+							<div
+								className={cn(
+									"flex items-center gap-1 cursor-pointer select-none",
+									header.column.getCanSort() && "hover:text-white",
+								)}
+								onClick={header.column.getToggleSortingHandler()}
+							>
+								{flexRender(
+									header.column.columnDef.header,
+									header.getContext(),
+								)}
+								{{
+									asc: <ChevronUp className="h-4 w-4" />,
+									desc: <ChevronDown className="h-4 w-4" />,
+								}[header.column.getIsSorted() as string] ??
+									(header.column.getCanSort() && (
+										<ChevronsUpDown className="h-4 w-4 opacity-50" />
+									))}
+							</div>
+						)}
+					</th>
 				))}
 			</tr>
 		));
-	};
+
+	const renderCells = (row: (typeof rows)[number] | undefined) =>
+		row?.getVisibleCells()?.map((cell) => (
+			<td key={cell.id} className="px-4 py-2 text-sm truncate">
+				{flexRender(cell.column.columnDef.cell, cell.getContext())}
+			</td>
+		));
+
+	const emptyRow = (
+		<tr>
+			<td
+				colSpan={columns.length}
+				className="text-center py-8 text-muted-foreground"
+			>
+				No results found.
+			</td>
+		</tr>
+	);
+
+	const rowClasses =
+		"border-b border-border/40 hover:bg-white/5 transition-colors";
 
 	return (
 		<div className={cn("w-full", className)}>
@@ -122,95 +131,101 @@ export function DataTable<TData, TValue>({
 						className="max-w-sm bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
 					/>
 				)}
-				<div className="flex items-center gap-2">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-						className="border-border/40 text-muted-foreground hover:text-white"
-					>
-						Previous
-					</Button>
-					<span className="text-sm text-muted-foreground">
-						Page {table.getState().pagination.pageIndex + 1} of{" "}
-						{table.getPageCount()}
-					</span>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-						className="border-border/40 text-muted-foreground hover:text-white"
-					>
-						Next
-					</Button>
-				</div>
+				{!virtualize && (
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => table.previousPage()}
+							disabled={!table.getCanPreviousPage()}
+							className="border-border/40 text-muted-foreground hover:text-white"
+						>
+							Previous
+						</Button>
+						<span className="text-sm text-muted-foreground">
+							Page {table.getState().pagination.pageIndex + 1} of{" "}
+							{table.getPageCount()}
+						</span>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => table.nextPage()}
+							disabled={!table.getCanNextPage()}
+							className="border-border/40 text-muted-foreground hover:text-white"
+						>
+							Next
+						</Button>
+					</div>
+				)}
 			</div>
 
-			<div
-				ref={parentRef}
-				className={cn(
-					"rounded-md border border-border/40 overflow-auto",
-					virtualize && "relative",
-				)}
-				style={
-					virtualize
-						? { height: `${Math.min(rows.length * rowHeight, 400)}px` }
-						: undefined
-				}
-			>
-				<table className="w-full border-collapse">
-					<thead className="sticky top-0 bg-deep-night/90 z-10">
-						{table.getHeaderGroups().map((headerGroup) => (
-							<tr key={headerGroup.id}>
-								{headerGroup.headers.map((header) => (
-									<th
-										key={header.id}
-										className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-									>
-										{header.isPlaceholder ? null : (
-											<div
-												className={cn(
-													"flex items-center gap-1 cursor-pointer select-none",
-													header.column.getCanSort() && "hover:text-white",
-												)}
-												onClick={header.column.getToggleSortingHandler()}
-											>
-												{flexRender(
-													header.column.columnDef.header,
-													header.getContext(),
-												)}
-												{{
-													asc: <ChevronUp className="h-4 w-4" />,
-													desc: <ChevronDown className="h-4 w-4" />,
-												}[header.column.getIsSorted() as string] ??
-													(header.column.getCanSort() && (
-														<ChevronsUpDown className="h-4 w-4 opacity-50" />
-													))}
-											</div>
+			{virtualize ? (
+				<VirtualRows
+					count={rows.length}
+					estimateSize={rowHeight}
+					overscan={10}
+					maxHeight={400}
+					className="rounded-md border border-border/40"
+				>
+					{({ padTop, padBottom, items, measureElement }) => (
+						<table className="w-full border-collapse">
+							<thead className="sticky top-0 bg-deep-night/90 z-10">
+								{renderHeaders()}
+							</thead>
+							<tbody>
+								{rows.length === 0 ? (
+									emptyRow
+								) : (
+									<>
+										{padTop > 0 && (
+											<tr
+												style={{ height: `${padTop}px` }}
+												aria-hidden="true"
+											/>
 										)}
-									</th>
-								))}
-							</tr>
-						))}
-					</thead>
-					<tbody className={virtualize ? "relative" : ""}>
-						{rows.length === 0 ? (
-							<tr>
-								<td
-									colSpan={columns.length}
-									className="text-center py-8 text-muted-foreground"
-								>
-									No results found.
-								</td>
-							</tr>
-						) : (
-							renderRows()
-						)}
-					</tbody>
-				</table>
-			</div>
+										{items.map((virtualRow) => {
+											const row = rows[virtualRow.index];
+											return (
+												<tr
+													key={row?.id || `row-${virtualRow.index}`}
+													data-index={virtualRow.index}
+													ref={measureElement}
+													className={rowClasses}
+												>
+													{renderCells(row)}
+												</tr>
+											);
+										})}
+										{padBottom > 0 && (
+											<tr
+												style={{ height: `${padBottom}px` }}
+												aria-hidden="true"
+											/>
+										)}
+									</>
+								)}
+							</tbody>
+						</table>
+					)}
+				</VirtualRows>
+			) : (
+				<div className="rounded-md border border-border/40 overflow-auto">
+					<table className="w-full border-collapse">
+						<thead className="sticky top-0 bg-deep-night/90 z-10">
+							{renderHeaders()}
+						</thead>
+						<tbody>
+							{rows.length === 0
+								? emptyRow
+								: rows.map((row, index) => (
+										<tr key={row?.id || `row-${index}`} className={rowClasses}>
+											{renderCells(row)}
+										</tr>
+									))}
+						</tbody>
+					</table>
+				</div>
+			)}
 		</div>
 	);
 }

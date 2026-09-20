@@ -135,7 +135,20 @@ export function TicketDetail() {
 						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
 							setReply(e.target.value)
 						}
-						placeholder={t`Type a reply...`}
+						onKeyDown={(
+							e: React.KeyboardEvent<HTMLTextAreaElement>,
+						) => {
+							if (
+								e.key === "Enter" &&
+								(e.metaKey || e.ctrlKey) &&
+								reply.trim() &&
+								!replyMutation.isPending
+							) {
+								e.preventDefault();
+								replyMutation.mutate(reply);
+							}
+						}}
+						placeholder={t`Type a reply... (⌘⏎ to send)`}
 					/>
 					<Button
 						onClick={() => replyMutation.mutate(reply)}
