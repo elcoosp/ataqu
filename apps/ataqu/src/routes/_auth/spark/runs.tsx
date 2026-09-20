@@ -3,7 +3,10 @@ import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { useListWorkflowRuns } from "../../../apps/spark/api/spark-api";
+import {
+	useListWorkflowRuns,
+	useWorkflowRun,
+} from "../../../apps/spark/api/spark-api";
 import { ExecutionHistory } from "../../../apps/spark/components/execution-history";
 import { RunDetailPanel } from "../../../apps/spark/components/run-detail-panel";
 
