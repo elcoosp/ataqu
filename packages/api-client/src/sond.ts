@@ -82,8 +82,7 @@ export const useGetForm = (
 	const { skipAuth, public: isPublic, ...queryOptions } = options ?? {};
 	return useQuery({
 		queryKey: ["sond", isPublic ? "public-form" : "form", id],
-		queryFn: () =>
-			isPublic ? getPublicForm(id) : getForm(id, { skipAuth }),
+		queryFn: () => (isPublic ? getPublicForm(id) : getForm(id, { skipAuth })),
 		...queryOptions,
 	});
 };
