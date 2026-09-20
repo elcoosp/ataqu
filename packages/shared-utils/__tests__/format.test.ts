@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { handleApiError } from "../src/error";
-import { formatCurrency, formatDate, truncateText } from "../src/format";
+import {
+	formatCurrency,
+	formatDate,
+	formatDateLong,
+	formatDateMedium,
+	formatDateShort,
+	formatDateTime,
+	formatNumber,
+	formatTime,
+	truncateText,
+} from "../src/format";
 import {
 	buildQueryString,
 	deepClone,
@@ -37,6 +47,32 @@ describe("format", () => {
 
 	it("truncateText truncates long text", () => {
 		expect(truncateText("hello world", 5)).toBe("hello…");
+	});
+
+	it("formatDateShort renders month + day", () => {
+		expect(formatDateShort("2026-08-16T12:00:00Z")).toMatch(
+			/^[A-Z][a-z]{2} \d{1,2}$/,
+		);
+	});
+
+	it("formatDateMedium includes a weekday", () => {
+		expect(formatDateMedium("2026-08-16T12:00:00Z")).toMatch(/^[A-Z][a-z]{2},/);
+	});
+
+	it("formatDateLong spells out month and weekday", () => {
+		expect(formatDateLong("2026-08-16T12:00:00Z")).toContain("August");
+	});
+
+	it("formatTime renders an hour + minute clock time", () => {
+		expect(formatTime("2026-08-16T12:00:00Z")).toMatch(/^\d{1,2}:\d{2}/);
+	});
+
+	it("formatDateTime renders date and time parts", () => {
+		expect(formatDateTime("2026-08-16T12:00:00Z")).toMatch(/\d{1,2}:\d{2}/);
+	});
+
+	it("formatNumber groups thousands", () => {
+		expect(formatNumber(1234567)).toBe("1,234,567");
 	});
 });
 
