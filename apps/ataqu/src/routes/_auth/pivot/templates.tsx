@@ -1,11 +1,10 @@
 import { useCreateTemplate, useListTemplates } from "@ataqu/api-client";
-
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Bone, Button, EmptyState, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 import { FileText, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -22,13 +21,13 @@ function TemplatesPage() {
 	if (error) toast.error(handleApiError(error));
 
 	const [showCreator, setShowCreator] = useUrlState({
-	search,
-	setSearch: (next) => navigate({ search: next as never }),
-	key: "createOpen",
-	default: false,
-	parse: (raw: unknown) => raw === "1",
-	serialize: (v) => (v ? "1" : undefined),
-});
+		search,
+		setSearch: (next) => navigate({ search: next as never }),
+		key: "createOpen",
+		default: false,
+		parse: (raw: unknown) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	const [name, setName] = useState("");
 	const [content, setContent] = useState("");
 

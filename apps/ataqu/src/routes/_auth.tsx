@@ -1,5 +1,6 @@
 import { useGetCurrentUser, useRefreshToken } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
+import { SkeletonSwap } from "@ataqu/ui";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -86,9 +87,9 @@ export const Route = createFileRoute("/_auth")({
 
 		if (loading) {
 			return (
-				<div className="flex items-center justify-center h-screen">
-					Loading...
-				</div>
+				<SkeletonSwap ready={false} lines={6} label="Loading application">
+					<div />
+				</SkeletonSwap>
 			);
 		}
 

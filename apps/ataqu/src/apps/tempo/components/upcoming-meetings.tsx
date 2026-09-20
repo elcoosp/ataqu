@@ -3,6 +3,7 @@ import {
 	useListBookings,
 	useMarkNoShow,
 } from "@ataqu/api-client";
+import { formatDateMedium, formatTime } from "@ataqu/shared-utils";
 import { Badge, Bone, Button, EmptyState } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { toast } from "sonner";
@@ -118,16 +119,9 @@ export function UpcomingMeetings({ onReschedule }: UpcomingMeetingsProps) {
 				>
 					<div className="space-y-1">
 						<p className="font-heading text-sm font-semibold text-foreground">
-							{new Date(booking.starts_at).toLocaleDateString(undefined, {
-								weekday: "short",
-								month: "short",
-								day: "numeric",
-							})}{" "}
+							{formatDateMedium(booking.starts_at)}{" "}
 							<span className="font-mono text-muted-foreground">
-								{new Date(booking.starts_at).toLocaleTimeString(undefined, {
-									hour: "2-digit",
-									minute: "2-digit",
-								})}
+								{formatTime(booking.starts_at)}
 							</span>
 						</p>
 						<Badge

@@ -1,4 +1,5 @@
 import { useListAvailabilitySlots } from "@ataqu/api-client";
+import { formatDateMedium, formatTime } from "@ataqu/shared-utils";
 import type { UUID } from "@ataqu/types";
 import { Bone, Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
@@ -104,11 +105,7 @@ export function BookingCalendar({
 					return (
 						<div key={day} className="ataqu-glass rounded-lg p-4">
 							<h3 className="font-heading text-sm font-semibold mb-3 text-foreground">
-								{new Date(day).toLocaleDateString(undefined, {
-									weekday: "long",
-									month: "short",
-									day: "numeric",
-								})}
+								{formatDateMedium(day)}
 							</h3>
 							<div className="grid grid-cols-3 gap-2">
 								{daySlots.map((slot) => {
@@ -125,10 +122,7 @@ export function BookingCalendar({
 											}`}
 											onClick={() => onSelectSlot(slot.start_time)}
 										>
-											{new Date(slot.start_time).toLocaleTimeString(undefined, {
-												hour: "2-digit",
-												minute: "2-digit",
-											})}
+											{formatTime(slot.start_time)}
 										</Button>
 									);
 								})}

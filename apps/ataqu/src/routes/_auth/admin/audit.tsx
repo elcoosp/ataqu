@@ -2,6 +2,13 @@
 
 import { useGetAuditLog } from "@ataqu/api-client";
 import {
+	intSearch,
+	searchSchema,
+	stringSearch,
+	useUrlState,
+} from "@ataqu/shared-hooks";
+import { formatDateTime } from "@ataqu/shared-utils";
+import {
 	Bone,
 	Button,
 	Card,
@@ -20,13 +27,10 @@ import {
 	TableRow,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Search } from "lucide-react";
 import { useMemo } from "react";
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
-import { intSearch } from "@ataqu/shared-hooks";
 
 export const Route = createFileRoute("/_auth/admin/audit")({
 	validateSearch: searchSchema({
@@ -177,9 +181,7 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 						<label className="block text-xs text-muted-foreground">App</label>
 						<Select
 							value={app || ""}
-							onValueChange={(val) =>
-								setApp(val === "" ? "" : val)
-							}
+							onValueChange={(val) => setApp(val === "" ? "" : val)}
 						>
 							<SelectTrigger className="w-32">
 								<SelectValue placeholder="All" />
@@ -267,9 +269,7 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 											<TableCell>{log.user_id}</TableCell>
 											<TableCell>{log.action}</TableCell>
 											<TableCell>{log.app}</TableCell>
-											<TableCell>
-												{new Date(log.created_at).toLocaleString()}
-											</TableCell>
+											<TableCell>{formatDateTime(log.created_at)}</TableCell>
 											<TableCell>{log.ip_address || "—"}</TableCell>
 										</TableRow>
 									))

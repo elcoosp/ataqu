@@ -1,3 +1,4 @@
+import { formatDateTime } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Bone,
@@ -127,7 +128,7 @@ function RunRow({
 				<div>
 					<p className="text-sm text-white">Run #{r.id.slice(0, 8)}</p>
 					<p className="text-xs text-muted-foreground">
-						{new Date(r.created_at).toLocaleString()}
+						{formatDateTime(r.created_at)}
 					</p>
 				</div>
 			</div>

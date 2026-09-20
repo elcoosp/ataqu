@@ -2,6 +2,7 @@
 
 import { useCreateUser, useInviteUser, useListUsers } from "@ataqu/api-client";
 import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
+import { formatDate } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -195,7 +196,7 @@ export const Route = createFileRoute("/_auth/users/")({
 										</TableCell>
 										<TableCell>
 											{user.last_login_at
-												? new Date(user.last_login_at).toLocaleDateString()
+												? formatDate(user.last_login_at)
 												: "—"}
 										</TableCell>
 									</TableRow>

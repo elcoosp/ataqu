@@ -1,4 +1,5 @@
 import type { WorkflowRun } from "@ataqu/api-client";
+import { formatDateTime } from "@ataqu/shared-utils";
 import { Bone, Button, EmptyState } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -91,8 +92,7 @@ export function ExecutionHistory({
 							</span>
 						</div>
 						<div className="text-xs text-muted-foreground mt-1">
-							<Trans>Started:</Trans>{" "}
-							{new Date(run.created_at).toLocaleString()}
+							<Trans>Started:</Trans> {formatDateTime(run.created_at)}
 						</div>
 					</div>
 

@@ -1,4 +1,5 @@
 import { type HealthStatus, useHealth } from "@ataqu/api-client";
+import { formatDateTime } from "@ataqu/shared-utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, RefreshCw, XCircle } from "lucide-react";
 
@@ -113,7 +114,7 @@ function HealthPage() {
 						</div>
 
 						<div className="rounded-lg border border-border/40 bg-deep-night/60 p-4 text-xs text-muted-foreground">
-							Last updated: {new Date(data.timestamp).toLocaleString()}
+							Last updated: {formatDateTime(data.timestamp)}
 						</div>
 					</div>
 				)}

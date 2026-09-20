@@ -4,6 +4,7 @@ import {
 	useListPendingApprovals,
 	useRejectWorkflow,
 } from "@ataqu/api-client";
+import { formatDateTime } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -109,9 +110,7 @@ function ApprovalsPage() {
 											{a.run_id}
 										</TableCell>
 										<TableCell>{a.approver_role}</TableCell>
-										<TableCell>
-											{new Date(a.created_at).toLocaleString()}
-										</TableCell>
+										<TableCell>{formatDateTime(a.created_at)}</TableCell>
 										<TableCell>
 											<div className="flex gap-2">
 												<Button

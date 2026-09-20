@@ -3,6 +3,7 @@ import {
 	useDisconnectAmazon,
 	useSyncAmazon,
 } from "@ataqu/api-client";
+import { formatDateTime } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Button,
@@ -72,7 +73,7 @@ export function AmazonStatus() {
 						</dt>
 						<dd className="text-foreground">
 							{status.last_synced_at
-								? new Date(status.last_synced_at).toLocaleString()
+								? formatDateTime(status.last_synced_at)
 								: "—"}
 						</dd>
 					</div>

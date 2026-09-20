@@ -7,6 +7,7 @@ import {
 	useListApiKeys,
 } from "@ataqu/api-client";
 import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
+import { formatDate } from "@ataqu/shared-utils";
 import {
 	Button,
 	Card,
@@ -170,13 +171,9 @@ export const Route = createFileRoute("/_auth/api-keys")({
 									<TableRow key={key.id}>
 										<TableCell>{key.name}</TableCell>
 										<TableCell>{key.prefix}</TableCell>
+										<TableCell>{formatDate(key.created_at)}</TableCell>
 										<TableCell>
-											{new Date(key.created_at).toLocaleDateString()}
-										</TableCell>
-										<TableCell>
-											{key.last_used_at
-												? new Date(key.last_used_at).toLocaleDateString()
-												: "—"}
+											{key.last_used_at ? formatDate(key.last_used_at) : "—"}
 										</TableCell>
 										<TableCell>
 											<ContextMenu

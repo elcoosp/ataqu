@@ -1,10 +1,12 @@
 import { useGetThread, useListThreadMessages } from "@ataqu/api-client";
+import { formatDateTime } from "@ataqu/shared-utils";
 import {
 	Button,
 	Sheet,
 	SheetContent,
 	SheetHeader,
 	SheetTitle,
+	SkeletonSwap,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { X } from "lucide-react";
@@ -47,7 +49,7 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
 					<SheetTitle>{t`Thread`}</SheetTitle>
 					{thread && (
 						<p className="text-xs text-muted-foreground">
-							{t`Started ${new Date(thread.created_at).toLocaleString()}`}
+							{t`Started ${formatDateTime(thread.created_at)}`}
 						</p>
 					)}
 					<Button
@@ -62,7 +64,9 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
 				<div className="flex flex-col h-full">
 					<div className="flex-1 overflow-y-auto space-y-2 p-2">
 						{isLoading && (
-							<div className="text-center text-muted-foreground">{t`Loading...`}</div>
+							<SkeletonSwap ready={false} lines={5} label="Loading messages">
+								<div />
+							</SkeletonSwap>
 						)}
 						{messages?.map((msg) => (
 							<div key={msg.id} className="text-sm">
@@ -70,7 +74,7 @@ export function ThreadSidebar({ channelId }: ThreadSidebarProps) {
 									<span className="font-medium text-foreground">
 										{msg.author_id}
 									</span>
-									<span>{new Date(msg.sent_at).toLocaleString()}</span>
+									<span>{formatDateTime(msg.sent_at)}</span>
 								</div>
 								<div className="mt-1">{msg.content}</div>
 							</div>

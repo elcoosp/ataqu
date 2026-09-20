@@ -1,6 +1,7 @@
 // apps/aegis/src/routes/_auth/admin/team-status.tsx
 
 import { useTeamStatus } from "@ataqu/api-client";
+import { formatDateTime } from "@ataqu/shared-utils";
 import {
 	Card,
 	CardContent,
@@ -100,9 +101,7 @@ function TeamStatusPage() {
 										)}
 									</TableCell>
 									<TableCell className="text-muted-foreground">
-										{u.last_login_at
-											? new Date(u.last_login_at).toLocaleString()
-											: "—"}
+										{u.last_login_at ? formatDateTime(u.last_login_at) : "—"}
 									</TableCell>
 								</TableRow>
 							))}

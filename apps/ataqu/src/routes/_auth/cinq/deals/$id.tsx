@@ -1,10 +1,6 @@
 import { useGetDeal, useUpdateDeal } from "@ataqu/api-client";
-import { handleApiError } from "@ataqu/shared-utils";
-import {
-	enumSearch,
-	searchSchema,
-	useUrlState,
-} from "@ataqu/shared-hooks";
+import { enumSearch, searchSchema, useUrlState } from "@ataqu/shared-hooks";
+import { formatNumber, handleApiError } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -109,7 +105,7 @@ function DealDetail() {
 				<div>
 					<h1 className="text-2xl font-bold">{deal.title}</h1>
 					<div className="flex gap-4 items-center flex-wrap">
-						<span>${deal.amount.toLocaleString()}</span>
+						<span className="tabular-nums">${formatNumber(deal.amount)}</span>
 						<span className="capitalize">{deal.status}</span>
 						<span>Prob: {deal.probability ?? "—"}%</span>
 					</div>
@@ -201,7 +197,11 @@ function DealDetail() {
 				/>
 			</div>
 
-			<Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="mt-4">
+			<Tabs
+				value={tab}
+				onValueChange={(v) => setTab(v as typeof tab)}
+				className="mt-4"
+			>
 				<TabsList>
 					<TabsTrigger value="activities">
 						<Trans>Activities</Trans>

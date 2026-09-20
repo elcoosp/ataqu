@@ -1,4 +1,5 @@
 import { type Dashboard, useListDashboards } from "@ataqu/api-client";
+import { formatDate } from "@ataqu/shared-utils";
 import { Button, Card, EmptyState } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -43,9 +44,7 @@ function DashboardListPage() {
 									{d.name}
 								</h3>
 								<p className="text-xs text-muted-foreground">
-									<Trans>
-										Last updated: {new Date(d.updated_at).toLocaleDateString()}
-									</Trans>
+									<Trans>Last updated: {formatDate(d.updated_at)}</Trans>
 								</p>
 							</Card>
 						</Link>

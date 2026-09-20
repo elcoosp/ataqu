@@ -22,7 +22,7 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { measureElement, useVirtualizer } from "@tanstack/react-virtual";
 import { formatDistanceToNow } from "date-fns";
 import { Reply } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -199,6 +199,8 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 						return (
 							<div
 								key={message.id}
+								data-index={virtualRow.index}
+								ref={virtualizer.measureElement}
 								className={cn(
 									"flex px-4 py-2 hover:bg-card/50 transition-colors",
 									isOwn ? "justify-end" : "justify-start",
@@ -208,7 +210,6 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 									top: 0,
 									left: 0,
 									width: "100%",
-									height: `${virtualRow.size}px`,
 									transform: `translateY(${virtualRow.start}px)`,
 								}}
 							>

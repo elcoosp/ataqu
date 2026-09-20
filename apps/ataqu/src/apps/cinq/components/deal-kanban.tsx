@@ -8,6 +8,7 @@ import {
 	useUpdatePipelineStage,
 } from "@ataqu/api-client";
 import { useOptimisticMutation } from "@ataqu/shared-hooks";
+import { formatNumber } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Bone,
@@ -148,8 +149,8 @@ export function DealKanban() {
 			data-tour="deal-card"
 		>
 			<div className="font-medium">{deal.title}</div>
-			<div className="text-sm text-muted-foreground">
-				${deal.amount.toLocaleString()}
+			<div className="text-sm text-muted-foreground tabular-nums">
+				${formatNumber(deal.amount)}
 			</div>
 			{deal.probability !== null && deal.probability !== undefined && (
 				<div className="text-xs">Prob: {deal.probability}%</div>

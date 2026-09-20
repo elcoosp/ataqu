@@ -1,3 +1,4 @@
+import { formatDateTime } from "@ataqu/shared-utils";
 import { Bone, Button, EmptyState } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -84,8 +85,7 @@ export function DLQViewer({ entries, isLoading }: DLQViewerProps) {
 							</div>
 
 							<div className="text-xs text-muted-foreground mt-2">
-								<Trans>Created:</Trans>{" "}
-								{new Date(entry.created_at).toLocaleString()}
+								<Trans>Created:</Trans> {formatDateTime(entry.created_at)}
 							</div>
 						</div>
 

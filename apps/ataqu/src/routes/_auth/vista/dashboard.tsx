@@ -1,4 +1,5 @@
 import { useGetKpis, useListDashboards } from "@ataqu/api-client";
+import { formatDate } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -74,8 +75,7 @@ function DashboardRow({
 						<div>
 							<h4 className="text-sm font-semibold text-white">{d.name}</h4>
 							<p className="text-xs text-muted-foreground mt-0.5">
-								<Trans>Updated</Trans>{" "}
-								{new Date(d.updated_at).toLocaleDateString()}
+								<Trans>Updated</Trans> {formatDate(d.updated_at)}
 							</p>
 						</div>
 						<ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

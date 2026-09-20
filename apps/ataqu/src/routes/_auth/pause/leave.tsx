@@ -1,3 +1,4 @@
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 import { useAuthStore } from "@ataqu/shared-stores";
 import {
 	Button,
@@ -8,9 +9,8 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
+import { useState } from "react";
 import { ApprovalDashboard } from "../../../apps/pause/components/approval-dashboard";
 import { LeaveRequestForm } from "../../../apps/pause/components/leave-request-form";
 
@@ -22,13 +22,13 @@ function LeavePage() {
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 	const [isLeaveOpen, setIsLeaveOpen] = useUrlState({
-	search,
-	setSearch: (next) => navigate({ search: next as never }),
-	key: "leaveOpen",
-	default: false,
-	parse: (raw: unknown) => raw === "1",
-	serialize: (v) => (v ? "1" : undefined),
-});
+		search,
+		setSearch: (next) => navigate({ search: next as never }),
+		key: "leaveOpen",
+		default: false,
+		parse: (raw: unknown) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	const user = useAuthStore((s) => s.user);
 
 	return (

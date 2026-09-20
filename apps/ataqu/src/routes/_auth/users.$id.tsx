@@ -5,7 +5,7 @@ import {
 	useListUsers,
 	useUpdateUserRole,
 } from "@ataqu/api-client";
-import { handleApiError } from "@ataqu/shared-utils";
+import { formatDateTime, handleApiError } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -191,16 +191,14 @@ export const Route = createFileRoute("/_auth/users/$id")({
 								<Trans>Last Login:</Trans>
 							</strong>{" "}
 							{user.last_login_at
-								? new Date(user.last_login_at).toLocaleString()
+								? formatDateTime(user.last_login_at)
 								: "Never"}
 						</div>
 						<div>
 							<strong>
 								<Trans>Created:</Trans>
 							</strong>{" "}
-							{user.created_at
-								? new Date(user.created_at).toLocaleString()
-								: "—"}
+							{user.created_at ? formatDateTime(user.created_at) : "—"}
 						</div>
 
 						{user.is_active && (

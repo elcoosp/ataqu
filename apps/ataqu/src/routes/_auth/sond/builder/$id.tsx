@@ -5,6 +5,7 @@ import {
 	useGetForm,
 	useUpdateForm,
 } from "@ataqu/api-client";
+import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Bone,
@@ -19,7 +20,7 @@ import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, Link, Save, Upload } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BrandingTab } from "../../../../apps/sond/components/builder/branding-tab";
 import { ConversationalToggle } from "../../../../apps/sond/components/builder/conversational-toggle";
@@ -32,8 +33,6 @@ import type {
 	SondQuestion,
 } from "../../../../apps/sond/components/builder/types";
 import { FormPreview } from "../../../../apps/sond/components/preview/form-preview";
-
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
 export const Route = createFileRoute("/_auth/sond/builder/$id")({
 	component: FormBuilderRoute,
 });
@@ -44,13 +43,13 @@ function FormBuilderRoute() {
 	const { id } = Route.useParams();
 	const queryClient = useQueryClient();
 	const [previewOpen, setPreviewOpen] = useUrlState({
-	search,
-	setSearch: (next) => navigate({ search: next as never }),
-	key: "preview",
-	default: false,
-	parse: (raw: unknown) => raw === "1",
-	serialize: (v) => (v ? "1" : undefined),
-});
+		search,
+		setSearch: (next) => navigate({ search: next as never }),
+		key: "preview",
+		default: false,
+		parse: (raw: unknown) => raw === "1",
+		serialize: (v) => (v ? "1" : undefined),
+	});
 	const [localForm, setLocalForm] = useState<SondForm | null>(null);
 
 	// Public funnel URL, only meaningful once the form is published.

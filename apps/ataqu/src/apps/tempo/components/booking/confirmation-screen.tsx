@@ -1,3 +1,4 @@
+import { formatDateLong, formatTime } from "@ataqu/shared-utils";
 import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useBookingStore } from "../../../../apps/tempo/hooks/use-booking-store";
@@ -49,15 +50,7 @@ export function ConfirmationScreen() {
 					{eventType.name}
 				</p>
 				<p className="font-mono text-sm text-muted-foreground mb-4">
-					{new Date(selectedSlot).toLocaleDateString(undefined, {
-						weekday: "long",
-						month: "long",
-						day: "numeric",
-					})}{" "}
-					{new Date(selectedSlot).toLocaleTimeString(undefined, {
-						hour: "2-digit",
-						minute: "2-digit",
-					})}
+					{formatDateLong(selectedSlot)} {formatTime(selectedSlot)}
 				</p>
 				<Button
 					onClick={handleAddToCalendar}

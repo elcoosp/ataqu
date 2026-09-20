@@ -4,6 +4,7 @@ import {
 	useListDeals,
 	useListPipelineStages,
 } from "@ataqu/api-client";
+import { formatDateShort } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Bone,
@@ -209,10 +210,7 @@ function ActivityRow({
 			<div className="flex-1 min-w-0">
 				<p className="text-sm text-white truncate">{a.description}</p>
 				<p className="text-xs text-muted-foreground">
-					{new Date(a.created_at).toLocaleDateString("en-US", {
-						month: "short",
-						day: "numeric",
-					})}
+					{formatDateShort(a.created_at)}
 				</p>
 			</div>
 			<Link

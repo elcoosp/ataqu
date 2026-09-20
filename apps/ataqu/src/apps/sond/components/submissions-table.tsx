@@ -4,7 +4,7 @@ import {
 	useBulkDeleteSubmissions,
 } from "@ataqu/api-client";
 import { useSelectionStore } from "@ataqu/shared-stores";
-import { handleApiError } from "@ataqu/shared-utils";
+import { formatDateTime, handleApiError } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -121,9 +121,7 @@ export function SubmissionsTable({
 									<TableCell>
 										<SelectionCheckbox scope={scope} id={s.id} />
 									</TableCell>
-									<TableCell>
-										{new Date(s.submitted_at).toLocaleString()}
-									</TableCell>
+									<TableCell>{formatDateTime(s.submitted_at)}</TableCell>
 									<TableCell>
 										{answers[0] ? answerToString(answers[0]) : "—"}
 									</TableCell>

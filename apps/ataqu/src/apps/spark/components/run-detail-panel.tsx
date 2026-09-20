@@ -1,4 +1,5 @@
 import type { WorkflowRun } from "@ataqu/api-client";
+import { formatDateTime } from "@ataqu/shared-utils";
 import { Button } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { X } from "lucide-react";
@@ -63,7 +64,7 @@ export function RunDetailPanel({ run, onClose }: RunDetailPanelProps) {
 								<Trans>Started</Trans>
 							</label>
 							<p className="text-sm text-foreground">
-								{new Date(run.created_at).toLocaleString()}
+								{formatDateTime(run.created_at)}
 							</p>
 						</div>
 						<div>
@@ -71,7 +72,7 @@ export function RunDetailPanel({ run, onClose }: RunDetailPanelProps) {
 								<Trans>Last Updated</Trans>
 							</label>
 							<p className="text-sm text-foreground">
-								{new Date(run.updated_at).toLocaleString()}
+								{formatDateTime(run.updated_at)}
 							</p>
 						</div>
 					</div>

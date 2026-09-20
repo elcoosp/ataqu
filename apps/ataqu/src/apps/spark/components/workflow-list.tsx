@@ -1,4 +1,5 @@
 import type { Workflow } from "@ataqu/api-client";
+import { formatDate } from "@ataqu/shared-utils";
 import { Button, EmptyState } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -59,8 +60,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 							</span>
 							<span>•</span>
 							<span>
-								<Trans>Last updated:</Trans>{" "}
-								{new Date(wf.updated_at).toLocaleDateString()}
+								<Trans>Last updated:</Trans> {formatDate(wf.updated_at)}
 							</span>
 							{wf.webhook_secret && (
 								<>

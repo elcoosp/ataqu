@@ -7,7 +7,13 @@ import {
 	useListLeaveRequests,
 } from "@ataqu/api-client";
 import { useOptimisticMutation } from "@ataqu/shared-hooks";
-import { Badge, Button, DataTable, HoldToConfirm } from "@ataqu/ui";
+import {
+	Badge,
+	Button,
+	DataTable,
+	HoldToConfirm,
+	SkeletonSwap,
+} from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -138,9 +144,9 @@ export function ApprovalDashboard() {
 
 	if (isLoading)
 		return (
-			<div>
-				<Trans>Loading...</Trans>
-			</div>
+			<SkeletonSwap ready={false} lines={6} label="Loading approvals">
+				<div />
+			</SkeletonSwap>
 		);
 
 	return (

@@ -1,10 +1,10 @@
-import { useGetContact, useListContactTasks, useUpdateContact } from "@ataqu/api-client";
-import { handleApiError } from "@ataqu/shared-utils";
 import {
-	enumSearch,
-	searchSchema,
-	useUrlState,
-} from "@ataqu/shared-hooks";
+	useGetContact,
+	useListContactTasks,
+	useUpdateContact,
+} from "@ataqu/api-client";
+import { enumSearch, searchSchema, useUrlState } from "@ataqu/shared-hooks";
+import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -71,7 +71,12 @@ function ContactTasks({ contactId }: { contactId: string }) {
 	);
 }
 
-const CONTACT_TABS = ["activities", "tasks", "customFields", "tracking"] as const;
+const CONTACT_TABS = [
+	"activities",
+	"tasks",
+	"customFields",
+	"tracking",
+] as const;
 
 export const Route = createFileRoute("/_auth/cinq/contacts/$id")({
 	validateSearch: searchSchema({
@@ -199,7 +204,11 @@ function ContactDetail() {
 				</div>
 			)}
 
-			<Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="mt-4">
+			<Tabs
+				value={tab}
+				onValueChange={(v) => setTab(v as typeof tab)}
+				className="mt-4"
+			>
 				<TabsList>
 					<TabsTrigger value="activities">
 						<Trans>Activities</Trans>

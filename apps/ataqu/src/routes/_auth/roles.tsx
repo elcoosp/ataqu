@@ -1,6 +1,7 @@
 // apps/aegis/src/routes/_auth/roles.tsx
 
 import { useCreateRole, useListRoles } from "@ataqu/api-client";
+import { formatDate } from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
@@ -115,9 +116,7 @@ export const Route = createFileRoute("/_auth/roles")({
 									<TableRow key={role.id}>
 										<TableCell className="font-medium">{role.name}</TableCell>
 										<TableCell>{role.permissions.join(", ") || "—"}</TableCell>
-										<TableCell>
-											{new Date(role.created_at).toLocaleDateString()}
-										</TableCell>
+										<TableCell>{formatDate(role.created_at)}</TableCell>
 									</TableRow>
 								))}
 							</TableBody>

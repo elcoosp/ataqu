@@ -1,3 +1,4 @@
+import { formatNumber } from "@ataqu/shared-utils";
 import { Card, ValueFlash } from "@ataqu/ui";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import type React from "react";
@@ -29,9 +30,9 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 					<ValueFlash
 						value={numericValue}
 						format={(v) =>
-							typeof value === "number" ? v.toLocaleString() : String(value)
+							typeof value === "number" ? formatNumber(v) : String(value)
 						}
-						className="text-3xl font-mono font-bold text-foreground"
+						className="text-3xl font-mono font-bold text-foreground tabular-nums"
 					/>
 					{trend && (
 						<div

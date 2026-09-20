@@ -1,5 +1,5 @@
 import { useGetChannel, useUpdateChannel } from "@ataqu/api-client";
-import { handleApiError } from "@ataqu/shared-utils";
+import { formatDate, handleApiError } from "@ataqu/shared-utils";
 import { Badge, Bone, Button, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQuery } from "@tanstack/react-query";
@@ -107,7 +107,7 @@ export function ContextSidebar({ channelId }: ContextSidebarProps) {
 				</p>
 				<p>
 					<span className="font-medium">{t`Created:`}</span>{" "}
-					{new Date(channel.created_at).toLocaleDateString()}
+					{formatDate(channel.created_at)}
 				</p>
 			</div>
 

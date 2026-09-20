@@ -5,7 +5,7 @@ import {
 	useUpdateDatabaseRow,
 } from "@ataqu/api-client";
 import { intSearch, useUrlSearchParam } from "@ataqu/shared-hooks";
-import { handleApiError } from "@ataqu/shared-utils";
+import { formatNumber, handleApiError } from "@ataqu/shared-utils";
 import { Button, ExpandingSearch, Input, Pagination } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
@@ -194,10 +194,10 @@ export function DatabaseGrid({
 
 		return (
 			<div
-				className="cursor-pointer hover:bg-accent p-1 rounded min-h-[2rem]"
+				className={`cursor-pointer hover:bg-accent p-1 rounded min-h-[2rem] ${col.type === "number" ? "tabular-nums" : ""}`}
 				onClick={() => handleCellEdit(row.id, col.name)}
 			>
-				{col.type === "number" ? Number(value).toLocaleString() : String(value)}
+				{col.type === "number" ? formatNumber(Number(value)) : String(value)}
 			</div>
 		);
 	};

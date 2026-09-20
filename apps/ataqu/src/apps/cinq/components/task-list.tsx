@@ -6,6 +6,7 @@ import {
 	useListTasks,
 	useUpdateTask,
 } from "@ataqu/api-client";
+import { formatDate } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Bone,
@@ -155,7 +156,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 						<Badge variant="outline">{task.status}</Badge>
 						{task.due_date && (
 							<span className="text-sm text-muted-foreground">
-								{new Date(task.due_date).toLocaleDateString()}
+								{formatDate(task.due_date)}
 							</span>
 						)}
 						<button
