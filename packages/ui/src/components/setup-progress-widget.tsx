@@ -6,6 +6,7 @@ import { ACTIVATION_TASKS, activationTaskHref } from "@ataqu/shared-stores";
 import { Trans } from "@lingui/react/macro";
 import { Check, Circle } from "lucide-react";
 import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 /**
  * Persistent onboarding activation widget (spec 2.10). Shows the setup progress
@@ -24,28 +25,31 @@ export function SetupProgressWidget() {
 	const pct = Math.round((done / total) * 100);
 
 	return (
-		<div className="relative">
-			<button
-				type="button"
-				onClick={() => setOpen((v) => !v)}
-				className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-secondary-foreground hover:text-white hover:border-border transition-colors"
-				aria-label="Setup progress"
+		<Popover open={open} onOpenChange={setOpen}>
+			<PopoverTrigger asChild>
+				<button
+					type="button"
+					className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-secondary-foreground hover:text-white hover:border-border transition-colors"
+					aria-label="Setup progress"
+				>
+					<span
+						className={`h-2 w-2 rounded-full ${
+							pct === 100 ? "bg-success" : "bg-amber"
+						}`}
+					/>
+					<Trans>
+						Setup {pct}% ({done}/{total})
+					</Trans>
+				</button>
+			</PopoverTrigger>
+			<PopoverContent
+				side="bottom"
+				align="end"
+				className="w-72 rounded-lg border-border/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass"
 			>
-				<span
-					className={`h-2 w-2 rounded-full ${
-						pct === 100 ? "bg-success" : "bg-amber"
-					}`}
-				/>
-				<Trans>
-					Setup {pct}% ({done}/{total})
-				</Trans>
-			</button>
-
-			{open && (
-				<div className="absolute right-0 z-50 mt-2 w-72 rounded-lg border border-border/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass">
-					<p className="mb-2 text-sm font-medium text-white">
-						<Trans>Activation checklist</Trans>
-					</p>
+				<p className="mb-2 text-sm font-medium text-white">
+					<Trans>Activation checklist</Trans>
+				</p>
 					{isLoading && (
 						<p className="text-xs text-muted-foreground">
 							<Trans>Loading…</Trans>
@@ -86,8 +90,7 @@ export function SetupProgressWidget() {
 							</li>
 						)}
 					</ul>
-				</div>
-			)}
-		</div>
+			</PopoverContent>
+		</Popover>
 	);
 }

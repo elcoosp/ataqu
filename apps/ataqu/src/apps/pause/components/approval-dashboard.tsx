@@ -151,7 +151,7 @@ export function ApprovalDashboard() {
 
 	return (
 		<div data-tour="pending-list">
-			<DataTable columns={columns} data={leaveItems} />
+			<DataTable columns={columns} data={leaveItems} virtualize />
 		</div>
 	);
 }

@@ -16,6 +16,7 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
+	VirtualRows,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -89,64 +90,75 @@ export function SubmissionsTable({
 					<Trans>Export CSV</Trans>
 				</Button>
 			</div>
-			<div className="rounded-md border border-border">
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead className="w-12">
-								<SelectAllCheckbox scope={scope} ids={ids} />
-							</TableHead>
-							<TableHead>
-								<Trans>Submitted At</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Answer 1</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Answer 2</Trans>
-							</TableHead>
-							<TableHead>
-								<Trans>Answer 3</Trans>
-							</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{submissions.map((s) => {
-							const answers = s.answers.slice(0, 3);
-							return (
-								<TableRow
-									key={s.id}
-									data-state={selected?.has(s.id) ? "selected" : undefined}
-								>
-									<TableCell>
-										<SelectionCheckbox scope={scope} id={s.id} />
-									</TableCell>
-									<TableCell>{formatDateTime(s.submitted_at)}</TableCell>
-									<TableCell>
-										{answers[0] ? answerToString(answers[0]) : "—"}
-									</TableCell>
-									<TableCell>
-										{answers[1] ? answerToString(answers[1]) : "—"}
-									</TableCell>
-									<TableCell>
-										{answers[2] ? answerToString(answers[2]) : "—"}
+			<VirtualRows count={submissions.length} estimateSize={40} maxHeight={520}>
+				{({ padTop, padBottom, items, measureElement }) => (
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead className="w-12">
+									<SelectAllCheckbox scope={scope} ids={ids} />
+								</TableHead>
+								<TableHead>
+									<Trans>Submitted At</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Answer 1</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Answer 2</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Answer 3</Trans>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{padTop > 0 && (
+								<tr style={{ height: `${padTop}px` }} aria-hidden="true" />
+							)}
+							{items.map((vRow) => {
+								const s = submissions[vRow.index];
+								const answers = s.answers.slice(0, 3);
+								return (
+									<TableRow
+										key={s.id}
+										data-index={vRow.index}
+										ref={measureElement}
+										data-state={selected?.has(s.id) ? "selected" : undefined}
+									>
+										<TableCell>
+											<SelectionCheckbox scope={scope} id={s.id} />
+										</TableCell>
+										<TableCell>{formatDateTime(s.submitted_at)}</TableCell>
+										<TableCell>
+											{answers[0] ? answerToString(answers[0]) : "—"}
+										</TableCell>
+										<TableCell>
+											{answers[1] ? answerToString(answers[1]) : "—"}
+										</TableCell>
+										<TableCell>
+											{answers[2] ? answerToString(answers[2]) : "—"}
+										</TableCell>
+									</TableRow>
+								);
+							})}
+							{padBottom > 0 && (
+								<tr style={{ height: `${padBottom}px` }} aria-hidden="true" />
+							)}
+							{submissions.length === 0 && (
+								<TableRow>
+									<TableCell
+										colSpan={2 + maxAnswers}
+										className="py-8 text-center text-muted-foreground"
+									>
+										<Trans>No submissions</Trans>
 									</TableCell>
 								</TableRow>
-							);
-						})}
-						{submissions.length === 0 && (
-							<TableRow>
-								<TableCell
-									colSpan={2 + maxAnswers}
-									className="py-8 text-center text-muted-foreground"
-								>
-									<Trans>No submissions</Trans>
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
-			</div>
+							)}
+						</TableBody>
+					</Table>
+				)}
+			</VirtualRows>
 		</div>
 	);
 }

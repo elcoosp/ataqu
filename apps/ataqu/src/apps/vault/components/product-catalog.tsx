@@ -14,6 +14,7 @@ import {
 	Input,
 	SelectAllCheckbox,
 	SelectionCheckbox,
+	VirtualRows,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
@@ -212,68 +213,91 @@ export function ProductCatalog() {
 					onCtaClick={() => setShowCreateForm(true)}
 				/>
 			) : view === "list" ? (
-				<div className="overflow-x-auto rounded-lg border border-border">
-					<table className="w-full text-left text-sm">
-						<thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
-							<tr>
-								<th className="w-10 px-4 py-3">
-									<SelectAllCheckbox
-										scope={SCOPE}
-										ids={filteredProducts.map((p) => p.id)}
-									/>
-								</th>
-								<th className="px-4 py-3">
-									<Trans>Name</Trans>
-								</th>
-								<th className="px-4 py-3">
-									<Trans>SKU</Trans>
-								</th>
-								<th className="px-4 py-3">
-									<Trans>Description</Trans>
-								</th>
-								<th className="px-4 py-3">
-									<Trans>Status</Trans>
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filteredProducts.map((product) => (
-								<tr
-									key={product.id}
-									className="border-b border-border last:border-b-0"
-								>
-									<td className="px-4 py-3" onClick={(e) => e.preventDefault()}>
-										<SelectionCheckbox scope={SCOPE} id={product.id} />
-									</td>
-									<td className="px-4 py-3">
-										<Link
-											to="/vault/products/$id"
-											params={{ id: product.id }}
-											className="font-medium text-foreground hover:underline"
-										>
-											{product.name}
-										</Link>
-									</td>
-									<td className="px-4 py-3 font-mono text-xs">{product.sku}</td>
-									<td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
-										{product.description}
-									</td>
-									<td className="px-4 py-3">
-										{lowStockProductIds.has(product.id) ? (
-											<Badge variant="destructive">
-												<Trans>Low Stock</Trans>
-											</Badge>
-										) : (
-											<Badge variant="secondary">
-												<Trans>In Stock</Trans>
-											</Badge>
-										)}
-									</td>
+				<VirtualRows
+					count={filteredProducts.length}
+					estimateSize={52}
+					maxHeight={600}
+					className="rounded-lg border border-border"
+				>
+					{({ padTop, padBottom, items, measureElement }) => (
+						<table className="w-full text-left text-sm">
+							<thead className="border-b border-border bg-muted/20 text-xs uppercase text-muted-foreground">
+								<tr>
+									<th className="w-10 px-4 py-3">
+										<SelectAllCheckbox
+											scope={SCOPE}
+											ids={filteredProducts.map((p) => p.id)}
+										/>
+									</th>
+									<th className="px-4 py-3">
+										<Trans>Name</Trans>
+									</th>
+									<th className="px-4 py-3">
+										<Trans>SKU</Trans>
+									</th>
+									<th className="px-4 py-3">
+										<Trans>Description</Trans>
+									</th>
+									<th className="px-4 py-3">
+										<Trans>Status</Trans>
+									</th>
 								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
+							</thead>
+							<tbody>
+								{padTop > 0 && (
+									<tr style={{ height: `${padTop}px` }} aria-hidden="true" />
+								)}
+								{items.map((vRow) => {
+									const product = filteredProducts[vRow.index];
+									return (
+										<tr
+											key={product.id}
+											data-index={vRow.index}
+											ref={measureElement}
+											className="border-b border-border last:border-b-0"
+										>
+											<td
+												className="px-4 py-3"
+												onClick={(e) => e.preventDefault()}
+											>
+												<SelectionCheckbox scope={SCOPE} id={product.id} />
+											</td>
+											<td className="px-4 py-3">
+												<Link
+													to="/vault/products/$id"
+													params={{ id: product.id }}
+													className="font-medium text-foreground hover:underline"
+												>
+													{product.name}
+												</Link>
+											</td>
+											<td className="px-4 py-3 font-mono text-xs">
+												{product.sku}
+											</td>
+											<td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
+												{product.description}
+											</td>
+											<td className="px-4 py-3">
+												{lowStockProductIds.has(product.id) ? (
+													<Badge variant="destructive">
+														<Trans>Low Stock</Trans>
+													</Badge>
+												) : (
+													<Badge variant="secondary">
+														<Trans>In Stock</Trans>
+													</Badge>
+												)}
+											</td>
+										</tr>
+									);
+								})}
+								{padBottom > 0 && (
+									<tr style={{ height: `${padBottom}px` }} aria-hidden="true" />
+								)}
+							</tbody>
+						</table>
+					)}
+				</VirtualRows>
 			) : (
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 					{filteredProducts.map((product) => (

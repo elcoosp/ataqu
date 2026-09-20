@@ -2,8 +2,11 @@ import {
 	closestCenter,
 	DndContext,
 	type DragEndEvent,
+	type DragStartEvent,
+	DragOverlay,
 	KeyboardSensor,
 	PointerSensor,
+	useDroppable,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
@@ -15,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Plus } from "lucide-react";
-import type React from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "../lib/utils";
 import { Button } from "./button";
 
@@ -27,11 +30,41 @@ export interface KanbanColumn<T = any> {
 
 export interface KanbanBoardProps<T> {
 	columns: KanbanColumn<T>[];
+	/** Called with the new column arrangement after a drop. */
 	onDragEnd: (columns: KanbanColumn<T>[]) => void;
-	renderItem: (item: T, index: number) => React.ReactNode;
-	renderColumnHeader?: (column: KanbanColumn<T>) => React.ReactNode;
+	renderItem: (item: T, index: number) => ReactNode;
+	renderColumnHeader?: (column: KanbanColumn<T>) => ReactNode;
 	onAddItem?: (columnId: string) => void;
+	/**
+	 * Stable per-item id (defaults to `item.id`). Index-based ids
+	 * (`col-0`, `col-1`, …) shift on every move and corrupt in-flight drags.
+	 */
+	getItemId?: (item: T) => string;
 	className?: string;
+}
+
+const columnDropPrefix = "column-drop:";
+const columnDropId = (columnId: string) => `${columnDropPrefix}${columnId}`;
+
+function ColumnBody({
+	dropId,
+	children,
+}: {
+	dropId: string;
+	children: ReactNode;
+}) {
+	const { setNodeRef, isOver } = useDroppable({ id: dropId });
+	return (
+		<div
+			ref={setNodeRef}
+			className={cn(
+				"flex-1 overflow-y-auto p-2 space-y-2 transition-colors",
+				isOver && "bg-primary/5 ring-1 ring-inset ring-primary/30",
+			)}
+		>
+			{children}
+		</div>
+	);
 }
 
 function SortableItem<T>({
@@ -43,7 +76,7 @@ function SortableItem<T>({
 	id: string;
 	item: T;
 	index: number;
-	renderItem: (item: T, index: number) => React.ReactNode;
+	renderItem: (item: T, index: number) => ReactNode;
 }) {
 	const {
 		attributes,
@@ -57,7 +90,7 @@ function SortableItem<T>({
 	const style = {
 		transform: CSS.Transform.toString(transform),
 		transition,
-		opacity: isDragging ? 0.5 : 1,
+		opacity: isDragging ? 0.4 : 1,
 	};
 
 	return (
@@ -79,8 +112,10 @@ export function KanbanBoard<T>({
 	renderItem,
 	renderColumnHeader,
 	onAddItem,
+	getItemId,
 	className,
 }: KanbanBoardProps<T>) {
+	const [activeItem, setActiveItem] = useState<T | null>(null);
 	const sensors = useSensors(
 		useSensor(PointerSensor),
 		useSensor(KeyboardSensor, {
@@ -88,86 +123,76 @@ export function KanbanBoard<T>({
 		}),
 	);
 
+	const resolveItemId =
+		getItemId ?? ((item: T) => String((item as { id?: unknown }).id));
+
+	const findItemLocation = (
+		cols: KanbanColumn<T>[],
+		itemId: string,
+	): { colIndex: number; itemIndex: number } | null => {
+		for (let i = 0; i < cols.length; i++) {
+			const idx = cols[i]?.items.findIndex(
+				(it) => resolveItemId(it) === itemId,
+			);
+			if (idx !== undefined && idx !== -1) {
+				return { colIndex: i, itemIndex: idx };
+			}
+		}
+		return null;
+	};
+
+	const handleDragStart = (event: DragStartEvent) => {
+		const loc = findItemLocation(columns, String(event.active.id));
+		setActiveItem(
+			loc ? (columns[loc.colIndex]?.items[loc.itemIndex] ?? null) : null,
+		);
+	};
+
 	const handleDragEnd = (event: DragEndEvent) => {
+		setActiveItem(null);
 		const { active, over } = event;
 		if (!over) return;
 
-		const activeId = active.id as string;
-		const overId = over.id as string;
-
+		const activeId = String(active.id);
+		const overId = String(over.id);
 		if (activeId === overId) return;
 
-		let sourceColumnIndex = -1;
-		let targetColumnIndex = -1;
-		let sourceItemIndex = -1;
-		let targetItemIndex = -1;
+		const src = findItemLocation(columns, activeId);
+		if (!src) return;
 
-		for (let i = 0; i < columns.length; i++) {
-			const col = columns[i];
-			const itemIndex =
-				col?.items?.findIndex((_, idx) => `${col.id}-${idx}` === activeId) ??
-				-1;
-			if (itemIndex !== -1) {
-				sourceColumnIndex = i;
-				sourceItemIndex = itemIndex;
-			}
-			const overItemIndex =
-				col?.items?.findIndex((_, idx) => `${col.id}-${idx}` === overId) ?? -1;
-			if (overItemIndex !== -1) {
-				targetColumnIndex = i;
-				targetItemIndex = overItemIndex;
-			}
-		}
-
-		if (sourceColumnIndex === -1 || targetColumnIndex === -1) return;
-
-		const newColumns = [...columns];
-		const [movedItem] =
-			newColumns[sourceColumnIndex]?.items?.splice(sourceItemIndex, 1) ?? [];
-
+		// Shallow copies so the caller can diff / roll back.
+		const newColumns = columns.map((c) => ({ ...c, items: [...c.items] }));
+		const [movedItem] = newColumns[src.colIndex]?.items.splice(
+			src.itemIndex,
+			1,
+		);
 		if (movedItem === undefined) return;
 
-		if (sourceColumnIndex === targetColumnIndex) {
-			newColumns[targetColumnIndex]?.items?.splice(
-				targetItemIndex,
-				0,
-				movedItem,
-			);
-		} else {
-			const isOverColumn = columns.some((col) => col.id === overId);
-			if (isOverColumn) {
-				const targetColIndex = columns.findIndex((col) => col.id === overId);
-				if (targetColIndex !== -1) {
-					newColumns[targetColIndex]?.items?.push(movedItem);
-				}
-			} else {
-				newColumns[targetColumnIndex]?.items?.splice(
-					targetItemIndex,
-					0,
-					movedItem,
-				);
-			}
+		// Dropped on a column body (the only way to hit an empty column).
+		if (overId.startsWith(columnDropPrefix)) {
+			const targetId = overId.slice(columnDropPrefix.length);
+			const ti = newColumns.findIndex((c) => c.id === targetId);
+			if (ti === -1) return;
+			newColumns[ti]?.items.push(movedItem);
+			onDragEnd(newColumns);
+			return;
 		}
 
+		// Dropped on/beside an item: insert at its index in the already-mutated
+		// copy so same-column reorders stay index-correct after the removal.
+		const dst = findItemLocation(newColumns, overId);
+		if (!dst) return;
+		newColumns[dst.colIndex]?.items.splice(dst.itemIndex, 0, movedItem);
 		onDragEnd(newColumns);
-	};
-
-	const getItemId = (colId: string, index: number) => `${colId}-${index}`;
-	const _getItems = () => {
-		const items: string[] = [];
-		for (const col of columns) {
-			for (let i = 0; i < col.items.length; i++) {
-				items.push(getItemId(col.id, i));
-			}
-		}
-		return items;
 	};
 
 	return (
 		<DndContext
 			sensors={sensors}
 			collisionDetection={closestCenter}
+			onDragStart={handleDragStart}
 			onDragEnd={handleDragEnd}
+			onDragCancel={() => setActiveItem(null)}
 		>
 			<div className={cn("flex gap-4 overflow-x-auto p-4", className)}>
 				{columns.map((column) => (
@@ -195,15 +220,15 @@ export function KanbanBoard<T>({
 								</Button>
 							)}
 						</div>
-						<div className="flex-1 overflow-y-auto p-2 space-y-2">
+						<ColumnBody dropId={columnDropId(column.id)}>
 							<SortableContext
-								items={column.items.map((_, idx) => getItemId(column.id, idx))}
+								items={column.items.map(resolveItemId)}
 								strategy={verticalListSortingStrategy}
 							>
 								{column.items.map((item, index) => (
 									<SortableItem
-										key={getItemId(column.id, index)}
-										id={getItemId(column.id, index)}
+										key={resolveItemId(item)}
+										id={resolveItemId(item)}
 										item={item}
 										index={index}
 										renderItem={renderItem}
@@ -215,10 +240,15 @@ export function KanbanBoard<T>({
 									Drop items here
 								</div>
 							)}
-						</div>
+						</ColumnBody>
 					</div>
 				))}
 			</div>
+			<DragOverlay>
+				{activeItem ? (
+					<div className="shadow-lg">{renderItem(activeItem, -1)}</div>
+				) : null}
+			</DragOverlay>
 		</DndContext>
 	);
 }

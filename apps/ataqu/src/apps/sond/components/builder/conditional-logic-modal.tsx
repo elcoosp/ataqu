@@ -77,7 +77,13 @@ export function ConditionalLogicModal({
 						<Trans>Add Conditional Logic</Trans>
 					</DialogTitle>
 				</DialogHeader>
-				<div className="space-y-4 py-4">
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						handleSave();
+					}}
+				>
+					<div className="space-y-4 py-4">
 					<div className="flex items-center gap-2">
 						<span className="text-sm font-medium">
 							<Trans>If</Trans>
@@ -142,14 +148,15 @@ export function ConditionalLogicModal({
 						</Trans>
 					</p>
 				</div>
-				<DialogFooter>
-					<Button variant="outline" onClick={onClose}>
-						<Trans>Cancel</Trans>
-					</Button>
-					<Button onClick={handleSave}>
-						<Trans>Save Logic</Trans>
-					</Button>
-				</DialogFooter>
+					<DialogFooter>
+						<Button variant="outline" onClick={onClose}>
+							<Trans>Cancel</Trans>
+						</Button>
+						<Button type="submit">
+							<Trans>Save Logic</Trans>
+						</Button>
+					</DialogFooter>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);

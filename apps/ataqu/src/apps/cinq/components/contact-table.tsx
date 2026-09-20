@@ -24,6 +24,7 @@ import {
 	SelectAllCheckbox,
 	SelectionCheckbox,
 	ValueFlash,
+	VirtualRows,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
@@ -383,90 +384,111 @@ function ContactTableBody({
 						<Trans>No contacts yet. Create one to get started.</Trans>
 					</div>
 				) : (
-					<div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-border/40 rounded-lg">
-						<table className="w-full text-sm">
-							<thead className="sticky top-0 bg-deep-night/90 z-10 border-b border-border">
-								<tr>
-									<th className="w-10 py-2 px-3">
-										<SelectAllCheckbox scope={SCOPE} ids={ids} />
-									</th>
-									<SortableHead
-										label={<Trans>Name</Trans>}
-										sortKey="name"
-										activeKey={sortKey}
-										sortDir={sortDir}
-										onSort={onSort}
-									/>
-									<SortableHead
-										label={<Trans>Email</Trans>}
-										sortKey="email"
-										activeKey={sortKey}
-										sortDir={sortDir}
-										onSort={onSort}
-									/>
-									<th className="text-left py-2 px-3 font-medium text-muted-foreground">
-										<Trans>Phone</Trans>
-									</th>
-									<SortableHead
-										label={<Trans>Company</Trans>}
-										sortKey="company"
-										activeKey={sortKey}
-										sortDir={sortDir}
-										onSort={onSort}
-									/>
-									<th className="text-left py-2 px-3 font-medium text-muted-foreground">
-										<Trans>Custom</Trans>
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{contacts.map((contact, index) => (
-									<tr
-										key={contact.id}
-										className={cn(
-											"border-b border-border/50 hover:bg-white/5 cursor-pointer transition-colors",
-											index === cursor && "bg-white/10",
-										)}
-										onClick={() => onOpen(contact.id)}
-									>
-										<td
-											className="py-2 px-3"
-											onClick={(e) => e.stopPropagation()}
-										>
-											<SelectionCheckbox scope={scope} id={contact.id} />
-										</td>
-										<td className="py-2 px-3">{contact.name}</td>
-										<td className="py-2 px-3 flex items-center gap-2">
-											<span>{contact.email}</span>
-											<CopyButton
-												value={contact.email}
-												label="Copy"
-												copiedLabel="Copied"
-												className="h-6 px-1.5 text-[11px]"
-											/>
-										</td>
-										<td className="py-2 px-3">{contact.phone}</td>
-										<td className="py-2 px-3">{contact.company}</td>
-										<td className="py-2 px-3">
-											{Object.entries(contact.custom_fields || {})
-												.slice(0, 2)
-												.map(([k, v]) => `${k}: ${v}`)
-												.join(", ")}
-										</td>
-										<td className="py-2 px-3 text-right">
-											<HoldToConfirm
-												onConfirm={() => onDelete(contact.id)}
-												confirmLabel="Deleted"
-												className="h-7 px-2 text-[12px] border-destructive/40 text-destructive hover:bg-destructive/10"
-											>
-												Delete
-											</HoldToConfirm>
-										</td>
+					<VirtualRows
+						count={contacts.length}
+						estimateSize={44}
+						maxHeight={600}
+						className="border border-border/40 rounded-lg"
+					>
+						{({ padTop, padBottom, items, measureElement }) => (
+							<table className="w-full text-sm">
+								<thead className="sticky top-0 bg-deep-night/90 z-10 border-b border-border">
+									<tr>
+										<th className="w-10 py-2 px-3">
+											<SelectAllCheckbox scope={SCOPE} ids={ids} />
+										</th>
+										<SortableHead
+											label={<Trans>Name</Trans>}
+											sortKey="name"
+											activeKey={sortKey}
+											sortDir={sortDir}
+											onSort={onSort}
+										/>
+										<SortableHead
+											label={<Trans>Email</Trans>}
+											sortKey="email"
+											activeKey={sortKey}
+											sortDir={sortDir}
+											onSort={onSort}
+										/>
+										<th className="text-left py-2 px-3 font-medium text-muted-foreground">
+											<Trans>Phone</Trans>
+										</th>
+										<SortableHead
+											label={<Trans>Company</Trans>}
+											sortKey="company"
+											activeKey={sortKey}
+											sortDir={sortDir}
+											onSort={onSort}
+										/>
+										<th className="text-left py-2 px-3 font-medium text-muted-foreground">
+											<Trans>Custom</Trans>
+										</th>
 									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+								</thead>
+								<tbody>
+									{padTop > 0 && (
+										<tr style={{ height: `${padTop}px` }} aria-hidden="true" />
+									)}
+									{items.map((vRow) => {
+										const contact = contacts[vRow.index];
+										return (
+											<tr
+												key={contact.id}
+												data-index={vRow.index}
+												ref={measureElement}
+												className={cn(
+													"border-b border-border/50 hover:bg-white/5 cursor-pointer transition-colors",
+													vRow.index === cursor && "bg-white/10",
+												)}
+												onClick={() => onOpen(contact.id)}
+											>
+												<td
+													className="py-2 px-3"
+													onClick={(e) => e.stopPropagation()}
+												>
+													<SelectionCheckbox scope={scope} id={contact.id} />
+												</td>
+												<td className="py-2 px-3">{contact.name}</td>
+												<td className="py-2 px-3 flex items-center gap-2">
+													<span>{contact.email}</span>
+													<CopyButton
+														value={contact.email}
+														label="Copy"
+														copiedLabel="Copied"
+														className="h-6 px-1.5 text-[11px]"
+													/>
+												</td>
+												<td className="py-2 px-3">{contact.phone}</td>
+												<td className="py-2 px-3">{contact.company}</td>
+												<td className="py-2 px-3">
+													{Object.entries(contact.custom_fields || {})
+														.slice(0, 2)
+														.map(([k, v]) => `${k}: ${v}`)
+														.join(", ")}
+												</td>
+												<td className="py-2 px-3 text-right">
+													<HoldToConfirm
+														onConfirm={() => onDelete(contact.id)}
+														confirmLabel="Deleted"
+														className="h-7 px-2 text-[12px] border-destructive/40 text-destructive hover:bg-destructive/10"
+													>
+														Delete
+													</HoldToConfirm>
+												</td>
+											</tr>
+										);
+									})}
+									{padBottom > 0 && (
+										<tr
+											style={{ height: `${padBottom}px` }}
+											aria-hidden="true"
+										/>
+									)}
+								</tbody>
+							</table>
+						)}
+					</VirtualRows>
 				)}
 			</div>
 		</BoneSuspense>

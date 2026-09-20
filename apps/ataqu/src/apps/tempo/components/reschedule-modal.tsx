@@ -53,18 +53,25 @@ export function RescheduleModal({
 					</DialogTitle>
 				</DialogHeader>
 				<div className="space-y-4">
-					<BookingCalendar
-						eventTypeId={eventTypeId}
-						selectedSlot={selectedSlot}
-						onSelectSlot={setSelectedSlot}
-					/>
-					<Button
-						onClick={handleReschedule}
-						disabled={!selectedSlot}
-						className="w-full"
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							handleReschedule();
+						}}
 					>
-						<Trans>Reschedule</Trans>
-					</Button>
+						<BookingCalendar
+							eventTypeId={eventTypeId}
+							selectedSlot={selectedSlot}
+							onSelectSlot={setSelectedSlot}
+						/>
+						<Button
+							type="submit"
+							disabled={!selectedSlot}
+							className="w-full"
+						>
+							<Trans>Reschedule</Trans>
+						</Button>
+					</form>
 				</div>
 			</DialogContent>
 		</Dialog>
