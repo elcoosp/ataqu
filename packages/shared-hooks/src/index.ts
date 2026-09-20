@@ -1,3 +1,4 @@
+export * from "./shortcuts";
 export * from "./use-click-outside";
 export * from "./use-debounce";
 export * from "./use-hotkeys";
@@ -8,4 +9,3 @@ export * from "./use-optimistic";
 export * from "./use-sse";
 export * from "./use-url-state";
 export * from "./use-web-socket";
-export * from "./shortcuts";
