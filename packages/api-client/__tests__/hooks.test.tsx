@@ -120,7 +120,9 @@ describe("api-client hooks render", () => {
 
 	it("renders health / search / migration hooks", () => {
 		fetchMock.mockResolvedValue(
-			jsonResponse([{ app: "cinq", entity_type: "contact", id: "1", title: "A" }]),
+			jsonResponse([
+				{ app: "cinq", entity_type: "contact", id: "1", title: "A" },
+			]),
 		);
 		const rendered: string[] = [];
 		const cases: Array<[string, () => unknown]> = [
