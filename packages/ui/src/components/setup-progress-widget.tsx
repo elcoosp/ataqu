@@ -50,46 +50,46 @@ export function SetupProgressWidget() {
 				<p className="mb-2 text-sm font-medium text-white">
 					<Trans>Activation checklist</Trans>
 				</p>
-					{isLoading && (
-						<p className="text-xs text-muted-foreground">
-							<Trans>Loading…</Trans>
-						</p>
-					)}
-					<ul className="space-y-1">
-						{ACTIVATION_TASKS.map((task) => {
-							const isDone = completed.has(task.id);
-							return (
-								<li key={task.id}>
-									<button
-										type="button"
-										onClick={() => {
-											if (!isDone) {
-												completeTask.mutate(task.id);
-											} else {
-												const href = activationTaskHref(task.id);
-												if (href) window.location.assign(href);
-											}
-										}}
-										className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-secondary-foreground hover:bg-white/5"
-									>
-										{isDone ? (
-											<Check className="h-4 w-4 text-success" />
-										) : (
-											<Circle className="h-4 w-4 text-muted-foreground" />
-										)}
-										<span className={isDone ? "line-through" : ""}>
-											{task.label}
-										</span>
-									</button>
-								</li>
-							);
-						})}
-						{!isLoading && ACTIVATION_TASKS.length === 0 && (
-							<li className="text-xs text-muted-foreground">
-								<Trans>No setup tasks.</Trans>
+				{isLoading && (
+					<p className="text-xs text-muted-foreground">
+						<Trans>Loading…</Trans>
+					</p>
+				)}
+				<ul className="space-y-1">
+					{ACTIVATION_TASKS.map((task) => {
+						const isDone = completed.has(task.id);
+						return (
+							<li key={task.id}>
+								<button
+									type="button"
+									onClick={() => {
+										if (!isDone) {
+											completeTask.mutate(task.id);
+										} else {
+											const href = activationTaskHref(task.id);
+											if (href) window.location.assign(href);
+										}
+									}}
+									className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-secondary-foreground hover:bg-white/5"
+								>
+									{isDone ? (
+										<Check className="h-4 w-4 text-success" />
+									) : (
+										<Circle className="h-4 w-4 text-muted-foreground" />
+									)}
+									<span className={isDone ? "line-through" : ""}>
+										{task.label}
+									</span>
+								</button>
 							</li>
-						)}
-					</ul>
+						);
+					})}
+					{!isLoading && ACTIVATION_TASKS.length === 0 && (
+						<li className="text-xs text-muted-foreground">
+							<Trans>No setup tasks.</Trans>
+						</li>
+					)}
+				</ul>
 			</PopoverContent>
 		</Popover>
 	);
