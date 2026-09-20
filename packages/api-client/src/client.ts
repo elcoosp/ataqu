@@ -71,11 +71,7 @@ export class RateLimitedError extends ApiError {
 
 /** 422 — validation failure; carries the server's field details. */
 export class ValidationError extends ApiError {
-	constructor(
-		message: string,
-		code?: string,
-		details?: unknown,
-	) {
+	constructor(message: string, code?: string, details?: unknown) {
 		super(422, message, code, details);
 		this.name = "ApiError";
 	}
@@ -133,7 +129,8 @@ async function request<T>(
 ): Promise<T> {
 	const token = useAuthStore.getState().token;
 	const headers = new Headers(options.headers);
-	if (token && !options.skipAuth) headers.set("Authorization", `Bearer ${token}`);
+	if (token && !options.skipAuth)
+		headers.set("Authorization", `Bearer ${token}`);
 	const isMutation = Boolean(
 		options.method &&
 			["POST", "PUT", "PATCH", "DELETE"].includes(options.method.toUpperCase()),
