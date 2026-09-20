@@ -19,8 +19,6 @@ export * from "./components/chart";
 export * from "./components/command-palette";
 export * from "./components/confirm-dialog";
 export * from "./components/data-table";
-export * from "./components/virtual-rows";
-
 export { EmptyState } from "./components/empty-state";
 export * from "./components/form-builder";
 export * from "./components/inbox-bell";
@@ -53,6 +51,7 @@ export * from "./components/ui/table";
 export * from "./components/ui/tabs";
 export * from "./components/ui/tooltip";
 export * from "./components/user-menu";
+export * from "./components/virtual-rows";
 export * from "./components/workflow-canvas";
 export * from "./lib/utils";
 export * from "./theme";
