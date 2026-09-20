@@ -84,70 +84,73 @@ export function ConditionalLogicModal({
 					}}
 				>
 					<div className="space-y-4 py-4">
-					<div className="flex items-center gap-2">
-						<span className="text-sm font-medium">
-							<Trans>If</Trans>
-						</span>
-						<Select
-							value={conditionQuestionId}
-							onValueChange={setConditionQuestionId}
-						>
-							<SelectTrigger className="w-40">
-								<SelectValue placeholder={t`Question`} />
-							</SelectTrigger>
-							<SelectContent>
-								{availableQuestions.map((q) => (
-									<SelectItem key={q.id} value={q.id}>
-										{q.label || t`Untitled`}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						<Select
-							value={operator}
-							onValueChange={(v: string) => setOperator(v as ConditionOperator)}
-						>
-							<SelectTrigger className="w-32">
-								<SelectValue placeholder={t`Operator`} />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="equals">
-									<Trans>equals</Trans>
-								</SelectItem>
-								<SelectItem value="not_equals">
-									<Trans>not equals</Trans>
-								</SelectItem>
-								<SelectItem value="contains">
-									<Trans>contains</Trans>
-								</SelectItem>
-								<SelectItem value="not_contains">
-									<Trans>not contains</Trans>
-								</SelectItem>
-								<SelectItem value="is_empty">
-									<Trans>is empty</Trans>
-								</SelectItem>
-								<SelectItem value="is_not_empty">
-									<Trans>is not empty</Trans>
-								</SelectItem>
-							</SelectContent>
-						</Select>
-						{!disableValue && (
-							<Input
-								value={value}
-								onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-									setValue(e.target.value)
+						<div className="flex items-center gap-2">
+							<span className="text-sm font-medium">
+								<Trans>If</Trans>
+							</span>
+							<Select
+								value={conditionQuestionId}
+								onValueChange={setConditionQuestionId}
+							>
+								<SelectTrigger className="w-40">
+									<SelectValue placeholder={t`Question`} />
+								</SelectTrigger>
+								<SelectContent>
+									{availableQuestions.map((q) => (
+										<SelectItem key={q.id} value={q.id}>
+											{q.label || t`Untitled`}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Select
+								value={operator}
+								onValueChange={(v: string) =>
+									setOperator(v as ConditionOperator)
 								}
-								className="w-40"
-								placeholder={t`Value`}
-							/>
-						)}
+							>
+								<SelectTrigger className="w-32">
+									<SelectValue placeholder={t`Operator`} />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="equals">
+										<Trans>equals</Trans>
+									</SelectItem>
+									<SelectItem value="not_equals">
+										<Trans>not equals</Trans>
+									</SelectItem>
+									<SelectItem value="contains">
+										<Trans>contains</Trans>
+									</SelectItem>
+									<SelectItem value="not_contains">
+										<Trans>not contains</Trans>
+									</SelectItem>
+									<SelectItem value="is_empty">
+										<Trans>is empty</Trans>
+									</SelectItem>
+									<SelectItem value="is_not_empty">
+										<Trans>is not empty</Trans>
+									</SelectItem>
+								</SelectContent>
+							</Select>
+							{!disableValue && (
+								<Input
+									value={value}
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+										setValue(e.target.value)
+									}
+									className="w-40"
+									placeholder={t`Value`}
+								/>
+							)}
+						</div>
+						<p className="text-sm text-muted-foreground">
+							<Trans>
+								This question will be shown only when the condition above is
+								met.
+							</Trans>
+						</p>
 					</div>
-					<p className="text-sm text-muted-foreground">
-						<Trans>
-							This question will be shown only when the condition above is met.
-						</Trans>
-					</p>
-				</div>
 					<DialogFooter>
 						<Button variant="outline" onClick={onClose}>
 							<Trans>Cancel</Trans>
