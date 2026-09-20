@@ -91,8 +91,7 @@ export function intSearch(fallback: number, min = 0) {
 
 /** Declarative route `validateSearch` helper for free-text query strings. */
 export function stringSearch(fallback = "") {
-	return (raw: unknown): string =>
-		typeof raw === "string" ? raw : fallback;
+	return (raw: unknown): string => (typeof raw === "string" ? raw : fallback);
 }
 
 /**
@@ -108,10 +107,12 @@ export function stringSearch(fallback = "") {
  *     component: ContactsPage,
  *   });
  */
-export function searchSchema<T extends Record<string, (raw: unknown) => unknown>>(
-	coercers: T,
-) {
-	return (raw: Record<string, unknown>): { [K in keyof T]: ReturnType<T[K]> } => {
+export function searchSchema<
+	T extends Record<string, (raw: unknown) => unknown>,
+>(coercers: T) {
+	return (
+		raw: Record<string, unknown>,
+	): { [K in keyof T]: ReturnType<T[K]> } => {
 		const out: Record<string, unknown> = { ...raw };
 		for (const key of Object.keys(coercers)) {
 			out[key] = coercers[key]?.(raw[key]);
@@ -150,8 +151,7 @@ export function useUrlState<TSearch extends Record<string, unknown>, T>({
 					? undefined
 					: String(next);
 			setSearch((prev) => {
-				const prevValue =
-					prev[key] === undefined ? fallback : (prev[key] as T);
+				const prevValue = prev[key] === undefined ? fallback : (prev[key] as T);
 				// Reference check: enum strings are cheap to compare; objects
 				// must implement their own equality via serialize/parse.
 				if (prevValue === next) return {};

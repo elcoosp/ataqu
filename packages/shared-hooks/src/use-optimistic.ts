@@ -1,11 +1,15 @@
-import {
-	useMutation,
-	type UseMutationResult,
-} from "@tanstack/react-query";
 import type { QueryKey } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+	type UseMutationResult,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 
-export interface OptimisticMutationOptions<TData, TOld = unknown, TVars = TData> {
+export interface OptimisticMutationOptions<
+	TData,
+	TOld = unknown,
+	TVars = TData,
+> {
 	/** Query key whose cached value this mutation paints optimistically. */
 	listQueryKey: readonly unknown[];
 	/** Returns the optimistic next state from the previous cache value. */
@@ -32,11 +36,7 @@ export interface OptimisticMutationOptions<TData, TOld = unknown, TVars = TData>
  *
  * Replaces ad-hoc onMutate/onError cache juggling per domain.
  */
-export function useOptimisticMutation<
-	TData,
-	TOld = unknown,
-	TVars = TData,
->({
+export function useOptimisticMutation<TData, TOld = unknown, TVars = TData>({
 	listQueryKey,
 	optimisticUpdate,
 	mutationFn,
