@@ -25,16 +25,12 @@ import type {
 } from "./types";
 
 // ---- Products ----
-export const listProducts = (
-	params?: { limit?: number; offset?: number },
-) =>
+export const listProducts = (params?: { limit?: number; offset?: number }) =>
 	api.get<PaginatedResponse<Product>>("/vault/products", { params });
-export const searchProducts = (
-	q: string,
-	limit = 10,
-) => api.get<PaginatedResponse<Product>>("/vault/products", {
-	params: { q, limit },
-});
+export const searchProducts = (q: string, limit = 10) =>
+	api.get<PaginatedResponse<Product>>("/vault/products", {
+		params: { q, limit },
+	});
 export const createProduct = (data: CreateProductRequest) =>
 	api.post<Product>("/vault/products", data);
 export const getProduct = (id: UUID) =>
@@ -53,9 +49,11 @@ export const bulkDeleteProducts = (data: BulkDeleteRequest) =>
 	api.post<void>("/vault/products/bulk-delete", data);
 
 // ---- Variants ----
-export const listVariants = (
-	params?: { product_id?: UUID; limit?: number; offset?: number },
-) => api.get<PaginatedResponse<Variant>>("/vault/variants", { params });
+export const listVariants = (params?: {
+	product_id?: UUID;
+	limit?: number;
+	offset?: number;
+}) => api.get<PaginatedResponse<Variant>>("/vault/variants", { params });
 /** Variants for one product (server-filtered via `product_id`). */
 export const listVariantsForProduct = (productId: UUID) =>
 	listVariants({ product_id: productId, limit: 100, offset: 0 });
