@@ -102,7 +102,7 @@ export function Chart({
 						<p
 							key={index}
 							className="text-xs"
-							style={{ color: entry.color || "#fff" }}
+							style={{ color: entry.color || "hsl(var(--foreground))" }}
 						>
 							{entry.name}: {entry.value}
 						</p>
@@ -234,7 +234,9 @@ export function Chart({
 						))}
 					</Pie>
 					{showTooltip && <Tooltip content={<TooltipContent />} />}
-					{showLegend && <Legend wrapperStyle={{ color: "#fff" }} />}
+					{showLegend && (
+						<Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
+					)}
 				</PieChart>
 			);
 		};
@@ -264,7 +266,9 @@ export function Chart({
 					tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }}
 				/>
 				{showTooltip && <Tooltip content={<TooltipContent />} />}
-				{showLegend && <Legend wrapperStyle={{ color: "#fff" }} />}
+				{showLegend && (
+					<Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
+				)}
 				{seriesElements}
 			</ChartComponent>
 		);
