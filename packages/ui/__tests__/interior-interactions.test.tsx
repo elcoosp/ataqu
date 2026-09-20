@@ -2,8 +2,6 @@ import { useAuthStore } from "@ataqu/shared-stores";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Providers, stubFetch, jsonResponse } from "./helpers";
-
 import { Accordion } from "../src/components/interior/accordion";
 import { CollapsibleBanner } from "../src/components/interior/collapsible-banner";
 import { Drawer } from "../src/components/interior/drawer";
@@ -24,6 +22,7 @@ import { TooltipGroup } from "../src/components/interior/tooltip-group";
 import { TreeView } from "../src/components/interior/tree-view";
 import { WizardSteps } from "../src/components/interior/wizard-steps";
 import { SetupProgressWidget } from "../src/components/setup-progress-widget";
+import { jsonResponse, Providers, stubFetch } from "./helpers";
 
 vi.mock("@ataqu/api-client", () => ({
 	useOnboardingStatus: vi.fn(() => ({

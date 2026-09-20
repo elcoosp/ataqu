@@ -7,8 +7,8 @@ import { Dropdown } from "../src/components/interior/dropdown";
 import { Lightbox } from "../src/components/interior/lightbox";
 import { Modal } from "../src/components/interior/modal";
 import { Popover } from "../src/components/interior/popover";
-import { SetupProgressWidget } from "../src/components/setup-progress-widget";
 import { SortableTable } from "../src/components/interior/sortable-table";
+import { SetupProgressWidget } from "../src/components/setup-progress-widget";
 import { jsonResponse, Providers, stubFetch } from "./helpers";
 
 const GIF =

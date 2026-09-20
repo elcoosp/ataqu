@@ -20,12 +20,10 @@ function Rig({
 							<tr style={{ height: `${padTop}px` }} aria-hidden="true" />
 						)}
 						{items.map((vRow) => (
-							<tr
-								key={vRow.index}
-								data-index={vRow.index}
-								ref={measureElement}
-							>
-								<td>{renderItem ? renderItem(vRow.index) : `row ${vRow.index}`}</td>
+							<tr key={vRow.index} data-index={vRow.index} ref={measureElement}>
+								<td>
+									{renderItem ? renderItem(vRow.index) : `row ${vRow.index}`}
+								</td>
 							</tr>
 						))}
 						{padBottom > 0 && (
@@ -74,9 +72,7 @@ describe("VirtualRows", () => {
 		function MeasureRig() {
 			return (
 				<VirtualRows count={2}>
-					{({ measureElement }) => (
-						<div ref={spy || measureElement} />
-					)}
+					{({ measureElement }) => <div ref={spy || measureElement} />}
 				</VirtualRows>
 			);
 		}

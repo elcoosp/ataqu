@@ -175,7 +175,10 @@ describe("ui render sweep 6 (interior batch 1)", () => {
 	it("renders PollResults", () => {
 		render(
 			<Providers>
-				<PollResults options={[{ id: "a", label: "A", votes: 1 }]} label="Vote" />
+				<PollResults
+					options={[{ id: "a", label: "A", votes: 1 }]}
+					label="Vote"
+				/>
 			</Providers>,
 		);
 		expect(screen.getAllByText("A").length).toBeGreaterThan(0);
