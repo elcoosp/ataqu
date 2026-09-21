@@ -1,0 +1,7 @@
+/* Graph visualizer — CSS variables are inherited from @ataqu/ui.
+ *
+ * Consumers should import this CSS alongside @ataqu/ui/styles.css.
+ * All visual styling uses Tailwind classes + the design-system tokens
+ * (hsl(var(--accent)), hsl(var(--border)), etc.), so this package
+ * itself needs no additional CSS of its own.
+ */
