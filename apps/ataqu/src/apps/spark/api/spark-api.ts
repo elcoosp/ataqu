@@ -226,7 +226,10 @@ export const useListWorkflowRuns = (
 	useQuery({
 		queryKey: ["spark", "runs", params],
 		queryFn: () => listWorkflowRuns(params),
-		refetchInterval: 10_000,
+		refetchInterval: (query) => {
+			const items = query.state.data?.items ?? [];
+			return items.some((run) => run.status === "running") ? 3_000 : 10_000;
+		},
 		...options,
 	});
 export const useWorkflowRun = (
@@ -237,7 +240,8 @@ export const useWorkflowRun = (
 		queryKey: ["spark", "run", id],
 		queryFn: () => getWorkflowRun(id!),
 		enabled: !!id,
-		refetchInterval: 10_000,
+		refetchInterval: (query) =>
+			query.state.data?.status === "running" ? 3_000 : false,
 		...options,
 	});
 
