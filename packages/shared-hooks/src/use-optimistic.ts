@@ -26,8 +26,12 @@ export interface OptimisticMutationOptions<
 	invalidateKeys?: unknown[][];
 	/** Called after rollback on failure — surface a toast here. */
 	onError?: (error: unknown, vars: TVars) => void;
-	/** Called after commit on success. */
-	onSuccess?: (data: TData, vars: TVars) => void;
+	/** Called after commit on success. Receives the snapshot context from onMutate. */
+	onSuccess?: (
+		data: TData,
+		vars: TVars,
+		context: { previous: TOld | undefined } | undefined,
+	) => void;
 }
 
 /**
@@ -71,13 +75,13 @@ export function useOptimisticMutation<TData, TOld = unknown, TVars = TData>({
 			}
 			onError?.(error, vars);
 		},
-		onSuccess: (data, vars) => {
+		onSuccess: (data, vars, context) => {
 			if (mergeServer) {
 				queryClient.setQueryData(listQueryKey, (old: TOld | undefined) =>
 					old === undefined ? old : mergeServer(old, data),
 				);
 			}
-			onSuccess?.(data, vars);
+			onSuccess?.(data, vars, context);
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: listQueryKey });
