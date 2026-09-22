@@ -6,7 +6,7 @@ import {
 	useListTasks,
 	useUpdateTask,
 } from "@ataqu/api-client";
-import { formatDate } from "@ataqu/shared-utils";
+import { formatDate, handleApiError } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Bone,
@@ -71,23 +71,72 @@ function TaskDetailDialog({
 export function TaskList({ dealId }: { dealId?: string } = {}) {
 	const _queryClient = useQueryClient();
 	const { data, isLoading } = useListTasks({ limit: 100 });
-	const tasks = (data || []).filter((t) => !dealId || t.deal_id === dealId);
+	const tasks = (data || []).filter((t: any) => !dealId || t.deal_id === dealId);
 
 	const updateTaskMutation = useUpdateTask();
 	const deleteTask = useDeleteTask({
-		onSuccess: () => {
-			_queryClient.invalidateQueries({ queryKey: ["cinq", "tasks"] });
-			toast.success("Task deleted.");
+		onMutate: async (id) => {
+			const pre = _queryClient.getQueryData(["cinq", "tasks", { limit: 100 }]);
+			_queryClient.setQueryData(
+				["cinq", "tasks", { limit: 100 }],
+				(old: any) => (old ? { ...old, items: old.items.filter((t: any) => t.id !== id) } : old),
+			);
+			return { preSnapshot: pre };
 		},
-		onError: () => toast.error("Delete failed"),
+		onSuccess: (_data, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			toast.success("Task deleted.", {
+				action: {
+					label: "Undo",
+					onClick: () => {
+						if (pre) {
+							_queryClient.setQueryData(["cinq", "tasks", { limit: 100 }], pre);
+							toast.dismiss();
+						}
+					},
+				},
+			});
+		},
+		onError: (_err, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			if (pre) {
+				_queryClient.setQueryData(["cinq", "tasks", { limit: 100 }], pre);
+			}
+			toast.error("Delete failed");
+		},
 	});
 	const bulkDelete = useBulkDeleteTasks({
-		onSuccess: () => {
-			_queryClient.invalidateQueries({ queryKey: ["cinq", "tasks"] });
-			toast.success("Tasks deleted.");
-			setSelected([]);
+		onMutate: async ({ ids }: { ids: string[] }) => {
+			const pre = _queryClient.getQueryData(["cinq", "tasks", { limit: 100 }]);
+			_queryClient.setQueryData(
+				["cinq", "tasks", { limit: 100 }],
+				(old: any) =>
+					old ? { ...old, items: old.items.filter((t: any) => !ids.includes(t.id)) } : old,
+			);
+			return { preSnapshot: pre };
 		},
-		onError: () => toast.error("Bulk delete failed"),
+		onSuccess: (_data, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			setSelected([]);
+			toast.success("Tasks deleted.", {
+				action: {
+					label: "Undo",
+					onClick: () => {
+						if (pre) {
+							_queryClient.setQueryData(["cinq", "tasks", { limit: 100 }], pre);
+							toast.dismiss();
+						}
+					},
+				},
+			});
+		},
+		onError: (_err, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			if (pre) {
+				_queryClient.setQueryData(["cinq", "tasks", { limit: 100 }], pre);
+			}
+			toast.error("Bulk delete failed");
+		},
 	});
 	const [selected, setSelected] = useState<string[]>([]);
 	const [detailId, setDetailId] = useState<string | null>(null);
