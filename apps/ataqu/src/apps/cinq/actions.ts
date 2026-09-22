@@ -1,14 +1,20 @@
 // apps/cinq/src/actions.ts
 
+import { requestIntent } from "@ataqu/shared-stores";
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { useNavigate } from "@tanstack/react-router";
+import { navigate as navigateTo } from "../../lib/navigation";
 
-/** Builds the CINQ command set for the global command palette. */
+/**
+ * CINQ commands (brainstorm P2-2).
+ *
+ * Create commands navigate to the URL-driven dialog flag (`?createOpen=1`), so
+ * they work from any app; export/search target the contacts surface and are
+ * delivered to the component that owns it through the typed intent bus — the
+ * previous `CustomEvent`s had no listener at all.
+ */
 export function useCinqCommands(): AppCommand[] {
 	const navigate = useNavigate();
-
-	const dispatch = (name: string) => () =>
-		window.dispatchEvent(new CustomEvent(name));
 
 	return [
 		{
@@ -39,22 +45,22 @@ export function useCinqCommands(): AppCommand[] {
 		{
 			id: "cinq-create-contact",
 			title: "Create Contact",
-			onSelect: dispatch("cinq:create-contact"),
+			onSelect: () => navigateTo("/cinq/contacts?createOpen=1"),
 		},
 		{
 			id: "cinq-create-deal",
 			title: "Create Deal",
-			onSelect: dispatch("cinq:create-deal"),
+			onSelect: () => navigateTo("/cinq/deals?createOpen=1"),
 		},
 		{
 			id: "cinq-export-contacts",
 			title: "Export Contacts CSV",
-			onSelect: dispatch("cinq:export-contacts"),
+			onSelect: () => requestIntent("cinq", "contacts.export"),
 		},
 		{
 			id: "cinq-search-contacts",
 			title: "Search Contacts",
-			onSelect: dispatch("cinq:focus-search"),
+			onSelect: () => requestIntent("cinq", "search.focus"),
 		},
 	];
 }
