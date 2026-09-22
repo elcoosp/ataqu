@@ -368,7 +368,13 @@ function WorkflowDetail() {
 			updateMutation.mutate(
 				{
 					id: workflow.id,
-					data: { name: req.name, is_active: workflow.is_active },
+					data: {
+						name: req.name,
+						is_active: workflow.is_active,
+						trigger: req.trigger,
+						conditions: req.conditions,
+						actions: req.actions,
+					},
 					version: workflow.version,
 				},
 				{
