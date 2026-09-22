@@ -139,7 +139,8 @@ export function useDialWebSocket() {
 	const connect = () => {
 		if (!token || wsRef.current) return;
 		const base =
-			((import.meta as any).env.VITE_WS_BASE_URL as string | undefined) ?? "";
+			((import.meta as any).env.VITE_WS_BASE_URL as string | undefined) ??
+			"/api";
 		const proto = window.location.protocol === "https:" ? "wss" : "ws";
 		const ws = new WebSocket(
 			`${proto}://${window.location.host}${base}/dial/ws?token=${token}`,
