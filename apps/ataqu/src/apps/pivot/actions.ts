@@ -1,8 +1,6 @@
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { useNavigate } from "@tanstack/react-router";
-
-const dispatch = (type: string) => () =>
-	window.dispatchEvent(new CustomEvent(type));
+import { requestIntent } from "@ataqu/shared-stores";
 
 /** Builds PIVOT's command-palette entries against the live router. */
 export function usePivotCommands(): AppCommand[] {
@@ -33,23 +31,20 @@ export function usePivotCommands(): AppCommand[] {
 		{
 			id: "pivot-create-doc",
 			title: "Create Document",
-			shortcut: "c d",
 			keywords: "new doc file add",
-			onSelect: dispatch("pivot:create-doc"),
+			onSelect: () => requestIntent("pivot", "doc.create"),
 		},
 		{
 			id: "pivot-create-db",
 			title: "Create Database",
-			shortcut: "c b",
 			keywords: "new db add",
-			onSelect: dispatch("pivot:create-db"),
+			onSelect: () => requestIntent("pivot", "db.create"),
 		},
 		{
 			id: "pivot-focus-search",
 			title: "Search Documents",
-			shortcut: "/pivot",
 			keywords: "find filter query",
-			onSelect: dispatch("pivot:focus-search"),
+			onSelect: () => navigate({ to: "/pivot" }),
 		},
 	];
 }
