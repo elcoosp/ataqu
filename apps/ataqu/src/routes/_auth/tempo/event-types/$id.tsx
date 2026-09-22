@@ -1,7 +1,7 @@
 import { useGetEventType } from "@ataqu/api-client";
-import { Bone, Button, Input } from "@ataqu/ui";
+import { Bone, Button, Input, PageHeader } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { EventTypeForm } from "../../../../apps/tempo/components/event-type-form";
 
@@ -43,21 +43,34 @@ function EventTypeDetail() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-				<h1 className="text-2xl font-heading font-bold text-foreground">
-					{eventType.name}
-				</h1>
-				<div className="flex gap-2 items-center w-full sm:w-auto">
-					<Input
-						value={`https://ataqu.com/book/${eventType.slug}`}
-						readOnly
-						className="w-full sm:w-64 font-mono text-xs"
-					/>
-					<Button variant="outline" onClick={handleCopyLink}>
-						<Trans>Copy Link</Trans>
-					</Button>
-				</div>
-			</div>
+			<PageHeader
+				title={eventType.name}
+				breadcrumbs={[
+					{ label: "TEMPO", to: "/tempo/dashboard" },
+					{ label: eventType.name },
+				]}
+				actions={
+					<>
+						<Button variant="outline" asChild>
+							<Link
+								to="/tempo/availability"
+								search={{ eventType: eventType.id }}
+							>
+								<Trans>Manage availability</Trans>
+							</Link>
+						</Button>
+						<Input
+							value={`https://ataqu.com/book/${eventType.slug}`}
+							readOnly
+							className="w-full font-mono text-xs sm:w-64"
+							aria-label="Booking link"
+						/>
+						<Button variant="outline" onClick={handleCopyLink}>
+							<Trans>Copy Link</Trans>
+						</Button>
+					</>
+				}
+			/>
 
 			<EventTypeForm eventType={eventType} />
 		</div>
