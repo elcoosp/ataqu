@@ -4,6 +4,7 @@ import { useAuthStore } from "@ataqu/shared-stores";
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import type { NavigateOptions } from "@tanstack/react-router";
 import { useNavigate } from "@tanstack/react-router";
+import { navigate as navigateTo } from "./lib/navigation";
 
 export function registerAegisActions(
 	openInviteModal: () => void,
@@ -82,10 +83,13 @@ export function registerAegisActions(
 /** Adapts AEGIS actions to the unified command-palette contract. */
 export function useAegisCommands(): AppCommand[] {
 	const navigate = useNavigate();
+	// "Open the invite / key / role dialog" is a navigation to the URL-backed
+	// dialog flag, so the command works from any app (brainstorm P2-2). These
+	// previously dispatched `aegis:open-*` CustomEvents that had no listener.
 	const actions = registerAegisActions(
-		() => window.dispatchEvent(new CustomEvent("aegis:open-invite")),
-		() => window.dispatchEvent(new CustomEvent("aegis:open-api-key")),
-		() => window.dispatchEvent(new CustomEvent("aegis:open-role")),
+		() => navigateTo("/users?inviteOpen=1"),
+		() => navigateTo("/api-keys?createOpen=1"),
+		() => navigateTo("/roles?createOpen=1"),
 		(o) => navigate(o),
 	);
 	return actions.map((a) => ({
