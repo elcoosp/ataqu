@@ -11,18 +11,18 @@ export interface ActivationTask {
  * `useOnboardingStatus()`; these entries provide labels and deep links.
  */
 export const ACTIVATION_TASKS: ActivationTask[] = [
-	{ id: "import-contacts", label: "Import 10 contacts", href: "/contacts" },
-	{ id: "connect-cinq-dial", label: "Connect CINQ to DIAL", href: "/channels" },
+	{ id: "import-contacts", label: "Import 10 contacts", href: "/cinq/contacts" },
+	{ id: "connect-cinq-dial", label: "Connect CINQ to DIAL", href: "/dial" },
 	{
 		id: "create-workflow",
 		label: "Create your first SPARK workflow",
-		href: "/workflows",
+		href: "/spark/workflows",
 	},
 	{ id: "invite-team", label: "Invite 2 team members", href: "/users" },
 	{
 		id: "create-dashboard",
 		label: "Create a VISTA dashboard",
-		href: "/dashboards",
+		href: "/vista",
 	},
 ];
 
