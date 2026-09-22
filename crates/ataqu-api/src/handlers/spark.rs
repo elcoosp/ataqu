@@ -22,6 +22,7 @@ pub struct WorkflowResponse {
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub version: i32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -65,7 +66,7 @@ pub async fn list_workflows(
         .list_workflows(auth.tenant_id, limit, offset)
         .await
         .map_err(ApiResponseError::internal_err)?;
-    let items = workflows
+        let items = workflows
         .into_iter()
         .map(|w| WorkflowResponse {
             id: w.id,
@@ -73,6 +74,7 @@ pub async fn list_workflows(
             is_active: w.is_active,
             created_at: w.created_at.into(),
             updated_at: w.updated_at.into(),
+            version: w.version,
         })
         .collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
@@ -107,6 +109,7 @@ pub async fn create_workflow(
         is_active: workflow.is_active,
         created_at: workflow.created_at.into(),
         updated_at: workflow.updated_at.into(),
+        version: workflow.version,
     };
     Ok((StatusCode::CREATED, Json(resp)))
 }
@@ -127,6 +130,7 @@ pub async fn get_workflow(
         is_active: workflow.is_active,
         created_at: workflow.created_at.into(),
         updated_at: workflow.updated_at.into(),
+        version: workflow.version,
     };
     Ok(Json(resp))
 }
@@ -165,6 +169,7 @@ pub async fn update_workflow(
         is_active: workflow.is_active,
         created_at: workflow.created_at.into(),
         updated_at: workflow.updated_at.into(),
+        version: workflow.version,
     };
     Ok(Json(resp))
 }
