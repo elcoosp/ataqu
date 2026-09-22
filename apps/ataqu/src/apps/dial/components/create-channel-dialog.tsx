@@ -1,4 +1,5 @@
 import { useCreateChannel } from "@ataqu/api-client";
+import { useIntent } from "@ataqu/shared-stores";
 import {
 	Button,
 	Dialog,
@@ -9,7 +10,7 @@ import {
 	Label,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export function CreateChannelDialog() {
@@ -20,11 +21,14 @@ export function CreateChannelDialog() {
 	);
 	const [submitting, setSubmitting] = useState(false);
 
-	useEffect(() => {
-		const handler = () => setOpen(true);
-		window.addEventListener("openCreateChannelDialog", handler);
-		return () => window.removeEventListener("openCreateChannelDialog", handler);
-	}, []);
+	// Palette commands ("Create Channel" / "Create Private Channel") open this
+	// dialog through the typed intent bus, pre-selecting the visibility
+	// (brainstorm P2-2 — the private variant previously dispatched an event
+	// that no listener matched, so it did nothing).
+	useIntent("dial", "channel.create", (payload) => {
+		setChannelType(payload?.public === false ? "private" : "public");
+		setOpen(true);
+	});
 
 	const createChannel = useCreateChannel({
 		onSuccess: () => {
