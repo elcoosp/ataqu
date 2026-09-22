@@ -1,4 +1,5 @@
 import { useCreateDocument, useListDocuments } from "@ataqu/api-client";
+import { useIntent } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, EmptyState } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
@@ -27,6 +28,11 @@ function DocumentList() {
 	const handleCreate = () => {
 		createMutation.mutate({ title: "Untitled", content: "" });
 	};
+
+	// ⌘K "Create Document" (brainstorm P2-2 context scope).
+	useIntent("pivot", "doc.create", () => {
+		handleCreate();
+	});
 
 	return (
 		<div className="space-y-4">
