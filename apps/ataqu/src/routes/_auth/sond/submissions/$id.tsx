@@ -14,6 +14,8 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { setLeadIntegration } from "../../../../apps/sond/components/integration-rules";
 import { IntegrationToggle } from "../../../../apps/sond/components/integration-toggle";
+import { useIntent } from "@ataqu/shared-stores";
+import { useRegisterCommands } from "@ataqu/ui";
 import {
 	SubmissionsTable,
 	SubmissionsTableSkeleton,
@@ -49,6 +51,27 @@ function SubmissionsRoute() {
 		},
 		onError: (err) => toast.error(handleApiError(err)),
 	});
+
+	// ⌘K "Export Submissions CSV" acts on the form being viewed (P2-2): the
+	// palette raises `sond:submissions.export` and this screen is the only one
+	// that can answer it for this form. This replaces the CustomEvent
+	// dispatched under `sond:export-csv`, which had no listener.
+	useIntent("sond", "submissions.export", () => {
+		exportMutation.mutate();
+	});
+
+	// Form-scoped export: visible in ⌘K only while THIS form's submissions
+	// screen is mounted, so the label means exactly what it says (P2 context
+	// scope). The bus intent above is the same action for programmatic
+	// callers.
+	useRegisterCommands([
+		{
+			id: `sond:${id}:export`,
+			title: t`Export submissions CSV`,
+			keywords: "download csv export",
+			onSelect: () => exportMutation.mutate(),
+		},
+	]);
 
 	const handleToggleCinq = useCallback(
 		(enabled: boolean) => {
