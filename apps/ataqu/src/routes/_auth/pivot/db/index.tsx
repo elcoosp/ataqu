@@ -1,4 +1,5 @@
 import { useCreateDatabase, useListDatabases } from "@ataqu/api-client";
+import { useIntent } from "@ataqu/shared-stores";
 
 import { handleApiError } from "@ataqu/shared-utils";
 import { Button, EmptyState } from "@ataqu/ui";
@@ -27,6 +28,11 @@ function DatabaseList() {
 	const handleCreate = () => {
 		createMutation.mutate({ name: "New Database" });
 	};
+
+	// ⌘K "Create Database" (brainstorm P2-2 context scope).
+	useIntent("pivot", "db.create", () => {
+		handleCreate();
+	});
 
 	return (
 		<div className="space-y-4">
