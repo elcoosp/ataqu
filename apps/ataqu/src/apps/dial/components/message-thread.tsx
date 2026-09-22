@@ -45,7 +45,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const currentUserId = useAuthStore((s) => s.user?.id);
 
-	const allMessages = (messagesData?.items ?? []).filter((m) => m != null);
+	const allMessages = (messagesData?.items ?? []).filter((m: any) => m != null);
 
 	// Handle reactions
 	const addReactionMutation = useAddReaction();
@@ -62,8 +62,8 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	const channelParticipants = Array.from(
 		new Map(
 			allMessages
-				.filter((m) => m.author_id !== currentUserId)
-				.map((m) => [
+				.filter((m: any) => m.author_id !== currentUserId)
+				.map((m: any) => [
 					m.author_id,
 					{ id: m.author_id, name: m.author_id.slice(0, 8) },
 				]),
@@ -71,17 +71,92 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	).slice(0, 6);
 
 	const deleteMessage = useDeleteMessage({
-		onSuccess: () => toast.success(t`Message deleted`),
-		onError: (err) => toast.error(handleApiError(err)),
+		onMutate: async (messageId) => {
+			const key = ["dial", "messages", channelId, { limit: 50, offset: 0 }];
+			const pre = queryClient.getQueryData(key);
+			queryClient.setQueryData(
+				key,
+				(old: any) =>
+					old
+						? {
+								...old,
+								messages: old.items.filter((m: any) => m.id !== messageId),
+							}
+						: old,
+			);
+			return { preSnapshot: pre };
+		},
+		onSuccess: (_data, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			toast.success(t`Message deleted`, {
+				action: {
+					label: "Undo",
+					onClick: () => {
+						if (pre) {
+							queryClient.setQueryData(
+								["dial", "messages", channelId, { limit: 50, offset: 0 }],
+								pre,
+							);
+							toast.dismiss();
+						}
+					},
+				},
+			});
+		},
+		onError: (err, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			if (pre) {
+				queryClient.setQueryData(
+					["dial", "messages", channelId, { limit: 50, offset: 0 }],
+					pre,
+				);
+			}
+			toast.error(handleApiError(err));
+		},
 	});
 	const bulkDeleteMessages = useBulkDeleteMessages({
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["dial", "messages", channelId],
-			});
-			toast.success("Messages deleted.");
+		onMutate: async ({ ids }: { ids: string[] }) => {
+			const key = ["dial", "messages", channelId, { limit: 50, offset: 0 }];
+			const pre = queryClient.getQueryData(key);
+			queryClient.setQueryData(
+				key,
+				(old: any) =>
+					old
+						? {
+								...old,
+								messages: old.items.filter((m: any) => !ids.includes(m.id)),
+							}
+						: old,
+			);
+			return { preSnapshot: pre };
 		},
-		onError: () => toast.error("Delete failed"),
+		onSuccess: (_data, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			toast.success(t`Messages deleted.`, {
+				action: {
+					label: "Undo",
+					onClick: () => {
+						if (pre) {
+							queryClient.setQueryData(
+								["dial", "messages", channelId, { limit: 50, offset: 0 }],
+								pre,
+							);
+							toast.dismiss();
+						}
+					},
+				},
+			});
+		},
+		onError: (err, _vars, context: any) => {
+			const pre = context?.preSnapshot;
+			if (pre) {
+				queryClient.setQueryData(
+					["dial", "messages", channelId, { limit: 50, offset: 0 }],
+					pre,
+				);
+			}
+			toast.error(handleApiError(err));
+		},
 	});
 	const startThread = useStartThread({
 		onSuccess: () => {
@@ -99,7 +174,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 	useListMentions(); // mentions fetched for potential UI display
 
 	const displayedMessages = searchQuery.trim()
-		? (searchResults?.messages ?? []).filter((m) => m != null)
+		? (searchResults?.messages ?? []).filter((m: any) => m != null)
 		: allMessages;
 
 	// Virtualization
@@ -176,7 +251,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 				<HoldToConfirm
 					onConfirm={() => {
 						bulkDeleteMessages.mutate({
-							ids: displayedMessages.map((m) => m.id),
+							ids: displayedMessages.map((m: any) => m.id),
 						});
 					}}
 					disabled={
