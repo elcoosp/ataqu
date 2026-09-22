@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import { searchEnriched, type UnifiedSearchResult } from "@ataqu/api-client";
-import { useDebounce, useShortcut } from "@ataqu/shared-hooks";
+import { GO_TO_TARGETS, useDebounce, useShortcut } from "@ataqu/shared-hooks";
 import { useAuthStore } from "@ataqu/shared-stores";
 import {
 	CommandDialog,
@@ -58,6 +58,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 	const navigate = useNavigate();
 	const { logout } = useAuthStore();
 	const appCommands = useAllCommands();
+	// The `g <letter>` map is the only real app-switcher binding (see the
+	// shared shortcut registry): the palette must label switches with those
+	// chords, not with `⌘<first letter>`, which nothing binds (brainstorm
+	// P2-2 — "kill the fake ⌘D/⌘S/⌘<letter> labels").
+	const toLetter = (targetName: string): string | undefined => {
+		for (const [letter, target] of Object.entries(GO_TO_TARGETS)) {
+			if (target.toLowerCase() === targetName.toLowerCase()) return letter;
+		}
+		return undefined;
+	};
+	const appCount = Object.keys(APP_HOME).length;
 
 	// mod+k toggles the palette via the shared keyboard engine (P2) instead of
 	// an ad-hoc document listener. Modifier chords fire even while typing in
@@ -121,7 +132,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 				<CommandEmpty>
 					{loading ? "Searching..." : "No results found."}
 				</CommandEmpty>
-				<CommandGroup heading="Switch App">
+				<CommandGroup heading={`Switch App (${appCount} apps)`}>
 					{Object.keys(APP_HOME).map((app) => (
 						<CommandItem
 							key={app}
@@ -135,9 +146,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 								className="h-5 w-5 mr-2"
 							/>
 							<span>{APP_NAMES[app]}</span>
-							<span className="ml-auto text-xs text-muted-foreground">
-								⌘{app[0]}
-							</span>
+								{(() => {
+									const letter = toLetter(APP_NAMES[app]);
+									return letter ? (
+										<span className="ml-auto text-xs text-muted-foreground">
+											g {letter}
+										</span>
+									) : null;
+								})()}
 						</CommandItem>
 					))}
 				</CommandGroup>
@@ -192,12 +208,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 					>
 						<Home className="mr-2 h-4 w-4" />
 						<span>Dashboard</span>
-						<span className="ml-auto text-xs text-muted-foreground">⌘D</span>
+						<span className="ml-auto text-xs text-muted-foreground">g d</span>
 					</CommandItem>
 					<CommandItem onSelect={() => handleSelect(focusSearch)}>
 						<Search className="mr-2 h-4 w-4" />
 						<span>Global Search</span>
-						<span className="ml-auto text-xs text-muted-foreground">⌘S</span>
 					</CommandItem>
 				</CommandGroup>
 				<CommandGroup heading="Account">
