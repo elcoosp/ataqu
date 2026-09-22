@@ -1,7 +1,11 @@
 import { type ChannelSummary, useListChannels } from "@ataqu/api-client";
+import { requestIntent } from "@ataqu/shared-stores";
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { useNavigate } from "@tanstack/react-router";
-import { useDialStore } from "../../apps/dial/stores/dial-store";
+import {
+	type PresenceStatus,
+	useDialStore,
+} from "../../apps/dial/stores/dial-store";
 
 export interface CommandAction {
 	id: string;
@@ -13,22 +17,28 @@ export interface CommandAction {
 export function useDialActions() {
 	const navigate = useNavigate();
 	const { toggleFocusMode } = useDialStore();
+	const setStatus = useDialStore((s) => s.setStatus);
 	const { data: channels } = useListChannels();
+
+	const setPresenceStatus = (status: PresenceStatus) => () => {
+		// Presence is local state until the WS protocol grows a presence frame
+		// (`dial_ws.rs` accepts subscribe/unsubscribe/message/typing only), so
+		// the command mutates the persisted dial store instead of dispatching a
+		// CustomEvent nobody listened for (brainstorm P2-2).
+		setStatus(status);
+	};
 
 	const actions: CommandAction[] = [
 		{
 			id: "create-channel",
 			title: "Create Channel",
-			onSelect: () => {
-				window.dispatchEvent(new CustomEvent("openCreateChannelDialog"));
-			},
+			onSelect: () => requestIntent("dial", "channel.create", { public: true }),
 		},
 		{
 			id: "create-private-channel",
 			title: "Create Private Channel",
-			onSelect: () => {
-				window.dispatchEvent(new CustomEvent("openCreatePrivateChannelDialog"));
-			},
+			onSelect: () =>
+				requestIntent("dial", "channel.create", { public: false }),
 		},
 		{
 			id: "go-to-threads",
@@ -46,59 +56,29 @@ export function useDialActions() {
 			onSelect: () => navigate({ to: "/dial/dashboard" }),
 		},
 		{
-			id: "search-messages",
-			title: "Search Messages",
-			onSelect: () => {
-				// Focus search input
-			},
-		},
-		{
 			id: "toggle-focus-mode",
 			title: "Toggle Focus Mode",
 			onSelect: toggleFocusMode,
 		},
 		{
-			id: "mark-all-read",
-			title: "Mark All Read",
-			onSelect: () => {
-				// Call API to mark all read, optimistic update
-				console.log("Mark all read");
-			},
-		},
-		{
 			id: "set-status-online",
 			title: "Set Status: Online",
-			onSelect: () => {
-				// Update presence via WebSocket – we'll dispatch an event and let the WebSocket hook handle it
-				window.dispatchEvent(
-					new CustomEvent("setPresence", { detail: { status: "online" } }),
-				);
-			},
+			onSelect: setPresenceStatus("online"),
 		},
 		{
 			id: "set-status-away",
 			title: "Set Status: Away",
-			onSelect: () => {
-				window.dispatchEvent(
-					new CustomEvent("setPresence", { detail: { status: "away" } }),
-				);
-			},
+			onSelect: setPresenceStatus("away"),
 		},
 		{
 			id: "set-status-offline",
 			title: "Set Status: Offline",
-			onSelect: () => {
-				window.dispatchEvent(
-					new CustomEvent("setPresence", { detail: { status: "offline" } }),
-				);
-			},
+			onSelect: setPresenceStatus("offline"),
 		},
 		{
 			id: "connect-to-cinq",
 			title: "Connect to CINQ",
-			onSelect: () => {
-				navigate({ to: "/dial/dashboard" });
-			},
+			onSelect: () => navigate({ to: "/dial/dashboard" }),
 		},
 	];
 
