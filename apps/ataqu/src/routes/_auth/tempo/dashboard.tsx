@@ -1,7 +1,8 @@
 import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
-import { Button } from "@ataqu/ui";
+import { useIntent } from "@ataqu/shared-stores";
+import { Button, PageHeader } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ErrorBoundary } from "../../../apps/tempo/components/error-boundary";
 import { EventTypeForm } from "../../../apps/tempo/components/event-type-form";
@@ -36,6 +37,11 @@ function Dashboard() {
 		null,
 	);
 
+	// Palette/`c`-key intent: "Create Event Type" must open THIS screen's form
+	// instead of a no-op (brainstorm P2-2 — the command used to dispatch an
+	// event nobody listened for).
+	useIntent("tempo", "event-type.create", () => setShowEventTypeForm(true));
+
 	const handleReschedule = (
 		bookingId: string,
 		eventTypeId: string,
@@ -49,19 +55,27 @@ function Dashboard() {
 	return (
 		<ErrorBoundary>
 			<div className="space-y-8">
-				<div className="flex justify-between items-center">
-					<h1 className="text-2xl font-heading font-bold text-foreground">
-						<Trans>Dashboard</Trans>
-					</h1>
-					<div className="flex gap-2">
-						<Button onClick={() => setShowEventTypeForm(true)}>
-							<Trans>Create Event Type</Trans>
-						</Button>
-						<Button variant="outline">
-							<Trans>Connect Calendar</Trans>
-						</Button>
-					</div>
-				</div>
+				<PageHeader
+					title={<Trans>Dashboard</Trans>}
+					breadcrumbs={[{ label: "TEMPO", to: "/tempo/dashboard" }]}
+					actions={
+						<>
+							<Button variant="outline" asChild>
+								<Link to="/tempo/calendar-settings">
+									<Trans>Connect Calendar</Trans>
+								</Link>
+							</Button>
+							<Button variant="outline" asChild>
+								<Link to="/tempo/availability">
+									<Trans>Manage availability</Trans>
+								</Link>
+							</Button>
+							<Button onClick={() => setShowEventTypeForm(true)}>
+								<Trans>Create Event Type</Trans>
+							</Button>
+						</>
+					}
+				/>
 
 				{showEventTypeForm && (
 					<div className="ataqu-glass rounded-lg p-6">
