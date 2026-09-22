@@ -4,6 +4,7 @@ import {
 	useListChannels,
 } from "@ataqu/api-client";
 import { useDebounce } from "@ataqu/shared-hooks";
+import { requestIntent } from "@ataqu/shared-stores";
 import { Bone, Button, cn, Input } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -48,7 +49,7 @@ export function ChannelList() {
 	);
 
 	const handleCreateChannel = () => {
-		window.dispatchEvent(new CustomEvent("openCreateChannelDialog"));
+		requestIntent("dial", "channel.create", { public: true });
 	};
 
 	if (isLoading) {
