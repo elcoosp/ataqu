@@ -19,6 +19,8 @@ import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useIntent } from "@ataqu/shared-stores";
+import { useRegisterCommands } from "@ataqu/ui";
 import { Eye, Link, Save, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -236,6 +238,25 @@ function FormBuilderRoute() {
 			},
 		);
 	}, [localForm, updateMutation]);
+
+	// Builder-local commands: registered with the form in context and also
+	// consumable through the intent bus (brainstorm P2-2 context scope). The
+	// global registrar never sees these ids, so ⌘K elsewhere can't publish an
+	// unrelated form.
+	useRegisterCommands(
+		localForm
+			? [
+					{
+						id: `sond:${localForm.id}:publish`,
+						title: t`Publish this form`,
+						onSelect: () => handlePublish(),
+					},
+				]
+			: [],
+	);
+	useIntent("sond", "form.publish", () => {
+		handlePublish();
+	});
 
 	return (
 		<div className="flex h-[calc(100vh-4rem)] flex-col bg-background">
