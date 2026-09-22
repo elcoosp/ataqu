@@ -1,3 +1,4 @@
+import { requestIntent } from "@ataqu/shared-stores";
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { navigate } from "../../lib/navigation";
 
@@ -8,37 +9,46 @@ export interface TempoAction {
 	action: () => void;
 }
 
+/**
+ * TEMPO actions (brainstorm P2-2 — "make every command real").
+ *
+ * Previously half of this list was `action: () => {}` (silent no-op) and the
+ * rest dispatched `CustomEvent`s nobody listened for. Every entry below now
+ * either navigates to a route that exists or raises an intent the owning
+ * screen consumes.
+ */
 export const tempoActions: TempoAction[] = [
 	{
 		id: "create-event-type",
 		label: "Create Event Type",
-		action: () => {},
+		action: () => requestIntent("tempo", "event-type.create"),
 	},
 	{
 		id: "go-event-types",
 		label: "Go to Event Types",
-		action: () => {
-			navigate("/tempo/dashboard");
-		},
+		action: () => navigate("/tempo/dashboard"),
+	},
+	{
+		id: "go-availability",
+		label: "Manage Availability",
+		action: () => navigate("/tempo/availability"),
 	},
 	{
 		id: "go-meetings",
 		label: "Go to Meetings",
-		action: () => {
-			navigate("/tempo/dashboard");
-		},
+		action: () => navigate("/tempo/dashboard"),
 	},
 	{
 		id: "go-calendar-settings",
 		label: "Go to Calendar Settings",
-		action: () => {
-			navigate("/tempo/calendar-settings");
-		},
+		action: () => navigate("/tempo/calendar-settings"),
 	},
 	{
 		id: "connect-google",
 		label: "Connect Google Calendar",
 		action: () => {
+			// OAuth consent must be a full document navigation: the provider
+			// redirects back to the API and the session cookie is set there.
 			window.location.href = "/api/v1/tempo/oauth/google";
 		},
 	},
@@ -48,26 +58,6 @@ export const tempoActions: TempoAction[] = [
 		action: () => {
 			window.location.href = "/api/v1/tempo/oauth/outlook";
 		},
-	},
-	{
-		id: "create-booking-link",
-		label: "Create Booking Link",
-		action: () => {},
-	},
-	{
-		id: "search-meetings",
-		label: "Search Meetings",
-		action: () => {},
-	},
-	{
-		id: "cancel-meeting",
-		label: "Cancel Meeting",
-		action: () => {},
-	},
-	{
-		id: "reschedule-meeting",
-		label: "Reschedule Meeting",
-		action: () => {},
 	},
 ];
 
