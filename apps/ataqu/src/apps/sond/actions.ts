@@ -1,6 +1,7 @@
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useNavigate } from "@tanstack/react-router";
+import { navigate as navigateTo } from "../../lib/navigation";
 
 export interface SondAction {
 	id: string;
@@ -63,28 +64,58 @@ export const getSondActions = (): SondAction[] => [
 	},
 ];
 
+// The global registry intentionally carries only commands the shell can
+// execute from anywhere (brainstorm P2-2 context scope):
+//  - navigation targets,
+//  - the create-form funnel,
+//  - the forms-list export shortcut (navigates to the forms list).
+// Form-local actions (add question / conditional logic / publish / per-form
+// integrations) are registered by the builder and submissions screens with
+// the viewed form in context, where they can actually run.
 const SOND_NAV: Record<string, string> = {
 	"sond:go-to-forms": "/sond",
 	"sond:go-to-submissions": "/sond",
 	"sond:go-to-builder": "/sond/builder",
 };
 
+const GLOBAL_SOND_IDS = new Set([
+	"sond:create-form",
+	"sond:go-to-forms",
+	"sond:go-to-submissions",
+	"sond:export-csv",
+]);
+
 /** Adapts SOND actions to the unified command-palette contract. */
 export function useSondCommands(): AppCommand[] {
 	const navigate = useNavigate();
-	const actions = getSondActions();
-	return actions.map((a) => {
-		const to = SOND_NAV[a.id];
-		const onSelect = to
-			? () => navigate({ to })
-			: () => window.dispatchEvent(new CustomEvent(a.id));
-		return {
-			id: a.id,
-			title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
-			shortcut: a.shortcut,
-			onSelect,
-		};
-	});
+	// The submissions export is context-scoped: it exports the form being
+	// viewed. When the palette is opened somewhere else there is no form in
+	// view, so the command navigates to the forms list — where the user picks
+	// a form and the per-form "exports" command becomes available.
+	return getSondActions()
+		.filter((a) => GLOBAL_SOND_IDS.has(a.id))
+		.map((a) => {
+			if (a.id === "sond:create-form") {
+				return {
+					id: a.id,
+					title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
+					onSelect: () => navigateTo("/sond/builder/new"),
+				};
+			}
+			if (a.id === "sond:export-csv") {
+				return {
+					id: a.id,
+					title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
+					onSelect: () => navigateTo("/sond"),
+				};
+			}
+			const to = SOND_NAV[a.id];
+			return {
+				id: a.id,
+				title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
+				onSelect: to ? () => navigate({ to }) : () => navigateTo("/sond"),
+			};
+		});
 }
 
 /** Registers SOND commands into the global palette for the app's lifetime. */
