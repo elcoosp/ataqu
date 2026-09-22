@@ -1,5 +1,6 @@
 // apps/aegis/src/routes/_auth/roles.tsx
 
+import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
 import { useCreateRole, useListRoles } from "@ataqu/api-client";
 import { formatDate } from "@ataqu/shared-utils";
 import {
@@ -19,15 +20,28 @@ import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Shield } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { CreateRoleDialog } from "../../components/create-role-dialog";
 
 export const Route = createFileRoute("/_auth/roles")({
+	// `?createOpen=1` opens the create dialog (brainstorm P1-3), which is what
+	// makes the "Create Role" palette command work from any app (P2-2).
+	validateSearch: searchSchema({
+		createOpen: (raw: unknown) => raw === "1",
+	}),
 	component: () => {
 		const queryClient = useQueryClient();
+		const search = Route.useSearch();
+		const navigate = Route.useNavigate();
 
-		const [openCreate, setOpenCreate] = useState(false);
+		const [openCreate, setOpenCreate] = useUrlState({
+			search,
+			setSearch: (next) => navigate({ search: next as never }),
+			key: "createOpen",
+			default: false,
+			parse: (raw: unknown) => raw === "1",
+			serialize: (v) => (v ? "1" : undefined),
+		});
 
 		const { data, isLoading, error } = useListRoles();
 
