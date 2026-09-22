@@ -41,7 +41,7 @@ export function getSparkActions(opts: {
 			label: "Create Workflow",
 			shortcut: "N",
 			when: "always",
-			perform: () => navigate("/workflows/new"),
+			perform: () => navigate("/spark/workflows/new"),
 		},
 		{
 			id: "spark-list",
@@ -53,7 +53,7 @@ export function getSparkActions(opts: {
 			id: "spark-runs",
 			label: "Go to Runs",
 			when: "always",
-			perform: () => navigate("/runs"),
+			perform: () => navigate("/spark/runs"),
 		},
 		{
 			id: "spark-search",
@@ -66,7 +66,7 @@ export function getSparkActions(opts: {
 			id: "spark-dlq",
 			label: "View DLQ",
 			when: "always",
-			perform: () => navigate("/dlq"),
+			perform: () => navigate("/spark/dlq"),
 		},
 	];
 
