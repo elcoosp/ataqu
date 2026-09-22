@@ -1,6 +1,6 @@
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
-import { useNavigate } from "@tanstack/react-router";
+import { navigate as navigateTo } from "../../lib/navigation";
 
 export interface VaultAction {
 	id: string;
@@ -17,18 +17,16 @@ export interface VaultCommandItem {
 	url: string;
 }
 
+// Every entry below points at a route that exists and a search flag a screen
+// actually reads (brainstorm P2-2 — "make every command real"). The previous
+// list mixed `?create=product`, `?sync=shopify`, `/reservations?reserve=...`
+// style targets that no screen ever read: the command navigated somewhere and
+// then did nothing.
 export const getVaultActions = (): VaultAction[] => [
 	{
 		id: "create-product",
 		label: t`Create Product`,
-		shortcut: "⌘P",
-		url: "/vault/products?create=product",
-	},
-	{
-		id: "create-variant",
-		label: t`Create Variant`,
-		context: "product-detail",
-		url: "/vault/products?create=variant",
+		url: "/vault/products?createOpen=1",
 	},
 	{ id: "go-to-products", label: t`Go to Products`, url: "/vault/products" },
 	{ id: "go-to-movements", label: t`Go to Movements`, url: "/vault/movements" },
@@ -45,37 +43,14 @@ export const getVaultActions = (): VaultAction[] => [
 	{
 		id: "search-products",
 		label: t`Search Products`,
-		shortcut: "⌘S",
-		url: "/vault/products?focus=search",
+		url: "/vault/products",
 	},
 	{
-		id: "adjust-stock",
-		label: t`Adjust Stock`,
-		context: "product-detail",
-		url: "/vault/products?adjust=stock",
+		id: "import-products-csv",
+		label: t`Import Products CSV`,
+		url: "/vault/products",
 	},
-	{
-		id: "set-low-stock-alert",
-		label: t`Set Low Stock Alert`,
-		context: "product-detail",
-		url: "/vault/products?set-low-stock-alert=true",
-	},
-	{
-		id: "reserve-stock-for-deal",
-		label: t`Reserve Stock for Deal [ID]`,
-		url: "/reservations?reserve=stock",
-	},
-	{
-		id: "connect-to-cinq",
-		label: t`Connect to CINQ`,
-		url: "/products?connect=cinq",
-	},
-	{
-		id: "export-products-csv",
-		label: t`Export Products CSV`,
-		url: "/products?export=csv",
-	},
-	{ id: "sync-shopify", label: t`Sync Shopify`, url: "/products?sync=shopify" },
+	{ id: "sync-shopify", label: t`Sync Shopify`, url: "/vault/products" },
 ];
 
 export const searchVaultActions = async (
@@ -93,25 +68,18 @@ export const searchVaultActions = async (
 };
 
 export const useVaultActions = () => {
-	const navigate = useNavigate();
 	return getVaultActions().map((action) => ({
 		...action,
-		handler: () => navigate({ to: action.url }),
+		handler: () => navigateTo(action.url),
 	}));
 };
 
 /** Adapts VAULT actions to the unified command-palette contract. */
 export const useVaultCommands = (): AppCommand[] => {
-	const navigate = useNavigate();
 	return getVaultActions().map((action) => ({
 		id: action.id,
 		title: action.label,
-		shortcut: action.shortcut,
-		onSelect: action.url
-			? () => navigate({ to: action.url })
-			: action.handler
-				? action.handler
-				: () => window.dispatchEvent(new CustomEvent(`vault:${action.id}`)),
+		onSelect: () => navigateTo(action.url),
 	}));
 };
 
