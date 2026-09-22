@@ -21,25 +21,47 @@ import { t } from "@lingui/core/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 export function DealKanban() {
 	const queryClient = useQueryClient();
-	const deleteDeal = useDeleteDeal({
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
-			toast.success("Deal deleted.");
+	const deleteDealPreRef = useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
+	const deleteStagePreRef = useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
+	const deleteDealOpts = {
+		onMutate: async (id) => {
+			const pre = queryClient.getQueryData(["cinq", "deals", { limit: 1000 }]);
+			deleteDealPreRef.current = pre;
+			queryClient.setQueryData(["cinq", "deals", { limit: 1000 }], (old: any) =>
+				old ? { ...old, items: old.items.filter((d: any) => d.id !== id) } : old,
+			);
+			return { preSnapshot: pre };
 		},
-		onError: () => toast.error("Delete failed"),
-	});
-	const deleteStage = useDeletePipelineStage({
-		onSuccess: () => {
+		onSettled: (_data: unknown, _error: unknown, _vars: unknown, context: any) => {
+			if (context?.preSnapshot !== undefined && _error) {
+				queryClient.setQueryData(["cinq", "deals", { limit: 1000 }], context.preSnapshot);
+			}
+			queryClient.invalidateQueries({ queryKey: ["cinq", "deals", { limit: 1000 }] });
+		},
+	};
+	const deleteDeal = useDeleteDeal(deleteDealOpts);
+	const deleteStageOpts = {
+		onMutate: async (id) => {
+			const pre = queryClient.getQueryData(["cinq", "pipeline"]);
+			deleteStagePreRef.current = pre;
+			queryClient.setQueryData(["cinq", "pipeline"], (old: any) =>
+				old ? old.filter((s: any) => s.id !== id) : old,
+			);
+			return { preSnapshot: pre };
+		},
+		onSettled: (_data: unknown, _error: unknown, _vars: unknown, context: any) => {
+			if (context?.preSnapshot !== undefined && _error) {
+				queryClient.setQueryData(["cinq", "pipeline"], context.preSnapshot);
+			}
 			queryClient.invalidateQueries({ queryKey: ["cinq", "pipeline"] });
-			toast.success("Stage deleted.");
 		},
-		onError: () => toast.error("Delete failed"),
-	});
+	};
+	const deleteStage = useDeletePipelineStage(deleteStageOpts);
 	const navigate = useNavigate();
 
 	const { data: stages, isLoading: stagesLoading } = useListPipelineStages();
@@ -120,7 +142,7 @@ export function DealKanban() {
 
 	const handleDragEnd = (newColumns: KanbanColumn<DealResponse>[]) => {
 		const originalStageByDeal = new Map<string, string>(
-			(deals?.items ?? []).map((d) => [d.id, d.pipeline_stage_id]),
+			(deals?.items ?? []).map((d: any) => [d.id, d.pipeline_stage_id]),
 		);
 		const movedDeals = newColumns.flatMap((col) =>
 			col.items
