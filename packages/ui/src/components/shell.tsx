@@ -61,6 +61,102 @@ export interface SidebarItem {
 	icon?: React.ReactNode;
 }
 
+/**
+ * Per-app sub-navigation (brainstorm P3-7, "sidebar: per-app sub-nav slots").
+ *
+ * The shell only ever listed the 10 apps: every second-level surface (dial
+ * tickets, tempo availability/calendar, vault movements/reservations, vista
+ * explore/health, aegis admin pages…) was reachable *only* by typing the URL
+ * or through ⌘K. These slots fix that with the routes that actually exist.
+ */
+export const APP_SUB_NAV: Record<string, SidebarItem[]> = {
+	aegis: [
+		{ label: "Dashboard", href: "/dashboard" },
+		{ label: "Users", href: "/users" },
+		{ label: "Roles", href: "/roles" },
+		{ label: "API keys", href: "/api-keys" },
+		{ label: "Audit log", href: "/admin/audit" },
+		{ label: "Access matrix", href: "/admin/access-matrix" },
+		{ label: "Approvals", href: "/admin/approvals" },
+		{ label: "Team status", href: "/admin/team-status" },
+		{ label: "Migration", href: "/admin/migration" },
+		{ label: "Settings", href: "/settings" },
+	],
+	cinq: [
+		{ label: "Dashboard", href: "/cinq/dashboard" },
+		{ label: "Contacts", href: "/cinq/contacts" },
+		{ label: "Deals", href: "/cinq/deals" },
+		{ label: "Tasks", href: "/cinq/tasks" },
+		{ label: "Establishments", href: "/cinq/establishments" },
+		{ label: "Import", href: "/cinq/import" },
+	],
+	dial: [
+		{ label: "Channels", href: "/dial" },
+		{ label: "Tickets", href: "/dial/tickets" },
+		{ label: "Dashboard", href: "/dial/dashboard" },
+	],
+	pause: [
+		{ label: "Dashboard", href: "/pause/dashboard" },
+		{ label: "Directory", href: "/pause/directory" },
+		{ label: "Leave", href: "/pause/leave" },
+		{ label: "Onboarding", href: "/pause/onboarding" },
+		{ label: "Reports", href: "/pause/reports" },
+	],
+	pivot: [
+		{ label: "Documents", href: "/pivot" },
+		{ label: "Databases", href: "/pivot/db" },
+		{ label: "Templates", href: "/pivot/templates" },
+		{ label: "Dashboard", href: "/pivot/dashboard" },
+	],
+	sond: [
+		{ label: "Forms", href: "/sond" },
+		{ label: "Dashboard", href: "/sond/dashboard" },
+	],
+	spark: [
+		{ label: "Workflows", href: "/spark" },
+		{ label: "Runs", href: "/spark/runs" },
+		{ label: "DLQ", href: "/spark/dlq" },
+		{ label: "Dashboard", href: "/spark/dashboard" },
+	],
+	tempo: [
+		{ label: "Dashboard", href: "/tempo/dashboard" },
+		{ label: "Availability", href: "/tempo/availability" },
+		{ label: "Calendar", href: "/tempo/calendar-settings" },
+	],
+	vault: [
+		{ label: "Products", href: "/vault/products" },
+		{ label: "Movements", href: "/vault/movements" },
+		{ label: "Reservations", href: "/vault/reservations" },
+		{ label: "Warehouses", href: "/vault/warehouses" },
+		{ label: "Dashboard", href: "/vault/dashboard" },
+	],
+	vista: [
+		{ label: "Dashboards", href: "/vista" },
+		{ label: "Explore", href: "/vista/explore" },
+		{ label: "Health", href: "/vista/health" },
+		{ label: "Dashboard", href: "/vista/dashboard" },
+	],
+};
+
+/**
+ * Longest-matching sub-nav href for the current path, so `/dial/tickets/42`
+ * highlights "Tickets" rather than the broader `/dial` entry.
+ */
+export function activeSubNavHref(
+	items: SidebarItem[],
+	pathname: string,
+): string | undefined {
+	let best: string | undefined;
+	for (const item of items) {
+		const matches =
+			pathname === item.href || pathname.startsWith(`${item.href}/`);
+		if (matches && (best === undefined || item.href.length > best.length)) {
+			best = item.href;
+		}
+	}
+	return best;
+}
+
 export interface ShellProps {
 	activeApp: string;
 	children: React.ReactNode;
@@ -94,6 +190,11 @@ export const Shell: React.FC<ShellProps> = ({
 	}
 
 	const appKeys = Object.keys(APP_ICONS);
+
+	// Per-app sub-nav for the app in view (P3-7). Collapsed sidebar keeps the
+	// divider only, so the icon rail stays uncluttered.
+	const subNav = APP_SUB_NAV[routeActiveApp] ?? [];
+	const subNavActive = activeSubNavHref(subNav, pathname);
 
 	return (
 		<div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -168,7 +269,40 @@ export const Shell: React.FC<ShellProps> = ({
 							);
 						})}
 
-					{/* Extra sidebar items – always shown, but only icons when collapsed */}
+					{/* Per-app sub-navigation for the app currently in view (P3-7). */}
+				{subNav.length > 0 && subNavActive && (
+					<>
+						{sidebarOpen ? (
+							<div className="mt-2 border-t border-border pt-2">
+								<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									{APP_NAMES[routeActiveApp] ?? routeActiveApp}
+								</div>
+								{subNav.map((item) => {
+									const isActive = item.href === subNavActive;
+									return (
+										<Link
+											key={item.href}
+											to={item.href}
+											className={`block px-4 py-2 text-sm transition-colors ${
+												isActive
+													? "text-amber border-r-2 border-amber"
+													: "text-muted-foreground hover:text-foreground hover:bg-background/5"
+											}`}
+											data-sub-nav={item.href}
+											aria-current={isActive ? "page" : undefined}
+										>
+											{item.label}
+										</Link>
+									);
+								})}
+							</div>
+						) : (
+							<div className="mt-2 border-t border-border pt-2" />
+						)}
+					</>
+				)}
+
+				{/* Extra sidebar items – always shown, but only icons when collapsed */}
 					{extraSidebarItems.length > 0 && (
 						<>
 							{sidebarOpen && <div className="border-t border-border my-2" />}
