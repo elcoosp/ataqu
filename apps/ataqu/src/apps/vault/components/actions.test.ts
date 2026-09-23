@@ -21,10 +21,13 @@ import { getVaultActions, searchVaultActions } from "../actions";
 describe("vaultActions", () => {
 	it("registers the full command palette surface", async () => {
 		const actions = getVaultActions();
-		expect(actions).toHaveLength(13);
+		// Every command points at a real route + a search flag a screen reads
+		// (brainstorm P2-2); the stale entries that did nothing were removed,
+		// so the surface is 8 commands, not the old 13.
+		expect(actions).toHaveLength(8);
 
 		const results = await searchVaultActions("");
-		expect(results).toHaveLength(13);
+		expect(results).toHaveLength(8);
 		expect(results.some((result) => result.id === "sync-shopify")).toBe(true);
 	});
 
@@ -38,6 +41,6 @@ describe("vaultActions", () => {
 
 	it("returns all actions for empty query", async () => {
 		const results = await searchVaultActions("");
-		expect(results).toHaveLength(13);
+		expect(results).toHaveLength(8);
 	});
 });
