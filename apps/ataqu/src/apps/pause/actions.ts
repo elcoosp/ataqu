@@ -82,6 +82,8 @@ export function usePauseCommands(): AppCommand[] {
 		title: a.label,
 		shortcut: a.shortcut,
 		onSelect: a.run,
+		scope: "pause",
+		createName: a.id === "add-employee" ? "Employee" : undefined,
 	}));
 }
 
