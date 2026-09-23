@@ -27,8 +27,6 @@ export function TemplatePicker({
 	const [open, setOpen] = useState(false);
 	const { data: templates, isLoading, error } = useListTemplates();
 
-	if (error) toast.error(handleApiError(error));
-
 	const applyMutation = useApplyTemplateToDoc(documentId, {
 		onSuccess: () => {
 			toast.success(<Trans>Template applied.</Trans>);
@@ -47,30 +45,37 @@ export function TemplatePicker({
 						<Trans>Apply Template</Trans>
 					</DialogTitle>
 				</DialogHeader>
-				<div className="grid grid-cols-2 gap-4 mt-4">
-					<Bone
-						loading={isLoading}
-						name="templates"
-						fallback={
-							<p>
-								<Trans>Loading templates…</Trans>
-							</p>
-						}
-					>
-						{templates?.map((t: any) => (
-							<div
-								key={t.id}
-								className="border border-border rounded p-3 hover:border-primary cursor-pointer"
-								onClick={() => applyMutation.mutate(t.id)}
-							>
-								<h4 className="font-medium">{t.name}</h4>
-								<p className="text-sm text-muted-foreground truncate">
-									{t.content}
-								</p>
-							</div>
-						))}
-					</Bone>
-				</div>
+				{error ? (
+					<div className="py-6 text-center text-sm text-destructive">
+						<Trans>Couldn't load templates.</Trans>
+					</div>
+				) : (
+					<div className="grid grid-cols-2 gap-4 mt-4">
+						<Bone
+							loading={isLoading}
+							name="templates"
+							fallback={
+								<div className="col-span-2 grid grid-cols-2 gap-4">
+									<div className="h-20 rounded border border-border" />
+									<div className="h-20 rounded border border-border" />
+								</div>
+							}
+						>
+							{templates?.map((t: any) => (
+								<div
+									key={t.id}
+									className="border border-border rounded p-3 hover:border-primary cursor-pointer"
+									onClick={() => applyMutation.mutate(t.id)}
+								>
+									<h4 className="font-medium">{t.name}</h4>
+									<p className="text-sm text-muted-foreground truncate">
+										{t.content}
+									</p>
+								</div>
+							))}
+						</Bone>
+					</div>
+				)}
 			</DialogContent>
 		</Dialog>
 	);
