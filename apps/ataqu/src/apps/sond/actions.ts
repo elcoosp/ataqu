@@ -92,30 +92,42 @@ export function useSondCommands(): AppCommand[] {
 	// viewed. When the palette is opened somewhere else there is no form in
 	// view, so the command navigates to the forms list — where the user picks
 	// a form and the per-form "exports" command becomes available.
-	return getSondActions()
-		.filter((a) => GLOBAL_SOND_IDS.has(a.id))
-		.map((a) => {
-			if (a.id === "sond:create-form") {
+	return (
+		getSondActions()
+			.filter((a) => GLOBAL_SOND_IDS.has(a.id))
+			.map((a) => {
+				if (a.id === "sond:create-form") {
+					return {
+						id: a.id,
+						title:
+							typeof a.label === "string" ? a.label : String(a.label ?? a.id),
+						onSelect: () => navigateTo("/sond/builder/new"),
+					};
+				}
+				if (a.id === "sond:export-csv") {
+					return {
+						id: a.id,
+						title:
+							typeof a.label === "string" ? a.label : String(a.label ?? a.id),
+						onSelect: () => navigateTo("/sond"),
+					};
+				}
+				const to = SOND_NAV[a.id];
 				return {
 					id: a.id,
-					title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
-					onSelect: () => navigateTo("/sond/builder/new"),
+					title:
+						typeof a.label === "string" ? a.label : String(a.label ?? a.id),
+					onSelect: to ? () => navigate({ to }) : () => navigateTo("/sond"),
 				};
-			}
-			if (a.id === "sond:export-csv") {
-				return {
-					id: a.id,
-					title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
-					onSelect: () => navigateTo("/sond"),
-				};
-			}
-			const to = SOND_NAV[a.id];
-			return {
-				id: a.id,
-				title: typeof a.label === "string" ? a.label : String(a.label ?? a.id),
-				onSelect: to ? () => navigate({ to }) : () => navigateTo("/sond"),
-			};
-		});
+			})
+			// Scope every entry to SOND for the palette's context group (P2-1)
+			// plus the Create group (F3: creating a form lives in the builder).
+			.map((c) => ({
+				...c,
+				scope: "sond",
+				createName: c.id === "sond:create-form" ? "Form" : undefined,
+			}))
+	);
 }
 
 /** Registers SOND commands into the global palette for the app's lifetime. */
