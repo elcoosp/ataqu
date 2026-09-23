@@ -19,10 +19,36 @@ use ataqu_application::spark_service::{CreateWorkflowCommand, TriggerWorkflowCom
 pub struct WorkflowResponse {
     pub id: Uuid,
     pub name: String,
+    pub trigger: ataqu_domain_spark::Trigger,
+    pub conditions: Vec<ataqu_domain_spark::Condition>,
+    pub actions: Vec<ataqu_domain_spark::Action>,
     pub is_active: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub webhook_secret: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub version: i32,
+}
+
+/// The editor (`workflowToNodes`) and the TS `Workflow` type both require the
+/// full definition; the previous response only carried the 6 scalar fields, so
+/// `GET /spark/workflows/{id}` returned objects without `trigger` and the
+/// detail page crashed on first paint.
+impl From<ataqu_domain_spark::Workflow> for WorkflowResponse {
+    fn from(w: ataqu_domain_spark::Workflow) -> Self {
+        Self {
+            id: w.id,
+            name: w.name,
+            trigger: w.trigger,
+            conditions: w.conditions,
+            actions: w.actions,
+            is_active: w.is_active,
+            webhook_secret: w.webhook_secret,
+            created_at: w.created_at.into(),
+            updated_at: w.updated_at.into(),
+            version: w.version,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -66,17 +92,7 @@ pub async fn list_workflows(
         .list_workflows(auth.tenant_id, limit, offset)
         .await
         .map_err(ApiResponseError::internal_err)?;
-        let items = workflows
-        .into_iter()
-        .map(|w| WorkflowResponse {
-            id: w.id,
-            name: w.name,
-            is_active: w.is_active,
-            created_at: w.created_at.into(),
-            updated_at: w.updated_at.into(),
-            version: w.version,
-        })
-        .collect();
+    let items: Vec<WorkflowResponse> = workflows.into_iter().map(WorkflowResponse::from).collect();
     Ok(Json(ataqu_contracts::PaginatedResponse {
         items,
         total,
@@ -103,15 +119,7 @@ pub async fn create_workflow(
         .create_workflow(cmd)
         .await
         .map_err(ApiResponseError::internal_err)?;
-    let resp = WorkflowResponse {
-        id: workflow.id,
-        name: workflow.name,
-        is_active: workflow.is_active,
-        created_at: workflow.created_at.into(),
-        updated_at: workflow.updated_at.into(),
-        version: workflow.version,
-    };
-    Ok((StatusCode::CREATED, Json(resp)))
+    Ok((StatusCode::CREATED, Json(WorkflowResponse::from(workflow))))
 }
 
 pub async fn get_workflow(
@@ -124,15 +132,7 @@ pub async fn get_workflow(
         .get_workflow(auth.tenant_id, id)
         .await
         .map_err(|e| ApiResponseError::not_found(&e.to_string()))?;
-    let resp = WorkflowResponse {
-        id: workflow.id,
-        name: workflow.name,
-        is_active: workflow.is_active,
-        created_at: workflow.created_at.into(),
-        updated_at: workflow.updated_at.into(),
-        version: workflow.version,
-    };
-    Ok(Json(resp))
+    Ok(Json(WorkflowResponse::from(workflow)))
 }
 
 pub async fn update_workflow(
@@ -163,15 +163,7 @@ pub async fn update_workflow(
         .update_workflow(cmd, if_match)
         .await
         .map_err(ApiResponseError::internal_err)?;
-    let resp = WorkflowResponse {
-        id: workflow.id,
-        name: workflow.name,
-        is_active: workflow.is_active,
-        created_at: workflow.created_at.into(),
-        updated_at: workflow.updated_at.into(),
-        version: workflow.version,
-    };
-    Ok(Json(resp))
+    Ok(Json(WorkflowResponse::from(workflow)))
 }
 
 pub async fn delete_workflow(
