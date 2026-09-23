@@ -1,5 +1,5 @@
 import { useCreateTemplate, useListTemplates } from "@ataqu/api-client";
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
+import { useUrlState } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
 import { Bone, Button, EmptyState, Input } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
@@ -17,8 +17,6 @@ function TemplatesPage() {
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 	const { data, refetch, error } = useListTemplates();
-
-	if (error) toast.error(handleApiError(error));
 
 	const [showCreator, setShowCreator] = useUrlState({
 		search,
@@ -95,7 +93,11 @@ function TemplatesPage() {
 					</div>
 				}
 			>
-				{data?.length === 0 ? (
+				{error ? (
+					<div className="py-8 text-center text-sm text-destructive">
+						<Trans>Couldn't load templates.</Trans>
+					</div>
+				) : data?.length === 0 ? (
 					<EmptyState
 						icon={FileText}
 						title={<Trans>No templates</Trans>}
