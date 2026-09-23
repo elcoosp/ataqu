@@ -6,6 +6,7 @@ import {
 	useUpdateForm,
 } from "@ataqu/api-client";
 import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
+import { useIntent } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Bone,
@@ -14,13 +15,12 @@ import {
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	useRegisterCommands,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useIntent } from "@ataqu/shared-stores";
-import { useRegisterCommands } from "@ataqu/ui";
 import { Eye, Link, Save, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
