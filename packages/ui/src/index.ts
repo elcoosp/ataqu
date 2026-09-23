@@ -18,6 +18,7 @@ export * from "./components/changelog-bell";
 export * from "./components/chart";
 export * from "./components/command-palette";
 export * from "./components/confirm-dialog";
+export * from "./components/conflict-dialog";
 export * from "./components/data-table";
 export { EmptyState } from "./components/empty-state";
 export * from "./components/form-builder";
