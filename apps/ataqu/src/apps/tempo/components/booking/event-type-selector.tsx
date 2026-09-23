@@ -1,5 +1,5 @@
 import { useResolveEventType } from "@ataqu/api-client";
-import { Button, SegmentedControl } from "@ataqu/ui";
+import { Button, SegmentedControl, Skeleton } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
@@ -21,9 +21,15 @@ export function EventTypeSelector({ slug }: { slug: string }) {
 
 	if (isLoading) {
 		return (
-			<p className="text-muted-foreground text-center py-8">
-				<Trans>Loading…</Trans>
-			</p>
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+				{["a", "b", "c"].map((key) => (
+					<div key={key} className="border border-border rounded p-4">
+						<Skeleton className="h-5 w-1/2" />
+						<Skeleton className="mt-2 h-3 w-1/4" />
+						<Skeleton className="mt-4 h-9 w-24" />
+					</div>
+				))}
+			</div>
 		);
 	}
 	if (!eventTypesData) {
