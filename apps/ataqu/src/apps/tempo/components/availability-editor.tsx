@@ -126,6 +126,7 @@ export function AvailabilityEditor({
 	const timezone = useTimezone();
 	const slotsQuery = useListAvailabilitySlots(activeId ?? "", {
 		enabled: Boolean(activeId),
+		queryKey: ["tempo", "availability-slots", activeId ?? ""],
 	});
 
 	const createSlot = useCreateAvailabilitySlot();
@@ -295,9 +296,14 @@ export function AvailabilityEditor({
 						</div>
 						<div className="flex items-center justify-between gap-3 sm:col-span-2 lg:col-span-4">
 							<p className="text-xs text-muted-foreground">
-								<Trans>Times are entered in {timezone} and stored as UTC.</Trans>
+								<Trans>
+									Times are entered in {timezone} and stored as UTC.
+								</Trans>
 							</p>
-							<Button type="submit" disabled={createSlot.isPending || !activeId}>
+							<Button
+								type="submit"
+								disabled={createSlot.isPending || !activeId}
+							>
 								<Plus className="mr-2 h-4 w-4" aria-hidden="true" />
 								{createSlot.isPending ? (
 									<Trans>Adding...</Trans>
@@ -373,4 +379,3 @@ export function AvailabilityEditor({
 		</div>
 	);
 }
-
