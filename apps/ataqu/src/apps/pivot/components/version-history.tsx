@@ -33,8 +33,6 @@ export function VersionHistory({
 		error,
 	} = useListDocumentVersions(documentId);
 
-	if (error) toast.error(handleApiError(error));
-
 	const updateMutation = useMutation({
 		mutationFn: (data: { title: string; content: string; version: number }) =>
 			updateDocument(documentId, data),
@@ -68,38 +66,46 @@ export function VersionHistory({
 					</SheetTitle>
 				</SheetHeader>
 				<div className="mt-4 space-y-2">
-					<Bone
-						loading={isLoading}
-						name="versions"
-						fallback={
-							<p>
-								<Trans>Loading…</Trans>
-							</p>
-						}
-					>
-						{versions?.map((v: any) => (
-							<div
-								key={v.id}
-								className="flex items-center justify-between p-2 border-b border-border"
-							>
-								<div>
-									<p className="text-sm font-medium">{v.title}</p>
-									<p className="text-xs text-muted-foreground">
-										{formatDate(v.created_at)} • v{v.version}
-									</p>
+					{error ? (
+						<div className="py-6 text-center text-sm text-destructive">
+							<Trans>Couldn't load versions.</Trans>
+						</div>
+					) : (
+						<Bone
+							loading={isLoading}
+							name="versions"
+							fallback={
+								<div className="space-y-2">
+									<div className="h-10 rounded border border-border" />
+									<div className="h-10 rounded border border-border" />
+									<div className="h-10 rounded border border-border" />
 								</div>
-								{v.version !== currentVersion && (
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => handleRestore(v)}
-									>
-										<Trans>Restore</Trans>
-									</Button>
-								)}
-							</div>
-						))}
-					</Bone>
+							}
+						>
+							{versions?.map((v: any) => (
+								<div
+									key={v.id}
+									className="flex items-center justify-between p-2 border-b border-border"
+								>
+									<div>
+										<p className="text-sm font-medium">{v.title}</p>
+										<p className="text-xs text-muted-foreground">
+											{formatDate(v.created_at)} • v{v.version}
+										</p>
+									</div>
+									{v.version !== currentVersion && (
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => handleRestore(v)}
+										>
+											<Trans>Restore</Trans>
+										</Button>
+									)}
+								</div>
+							))}
+						</Bone>
+					)}
 				</div>
 			</SheetContent>
 		</Sheet>
