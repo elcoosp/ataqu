@@ -15,6 +15,7 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@ataqu/ui";
+import { isConflictError, useConflict } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
@@ -88,9 +89,19 @@ export const Route = createFileRoute("/_auth/cinq/contacts/$id")({
 function ContactDetail() {
 	const { id } = Route.useParams();
 	const { data: contact, isLoading } = useGetContact(id);
+	// Conflict UX (F6): the optimistic form edit rolls back on 409/412, so
+	// surface the dialog instead of a bare error toast — the user reloads to
+	// see the other editor's version or keeps theirs and retries.
+	const handleConflict = useConflict();
 	const updateMutation = useUpdateContact({
 		onSuccess: () => toast.success(t`Contact updated`),
-		onError: (err) => toast.error(handleApiError(err)),
+		onError: (err) => {
+			if (isConflictError(err)) {
+				void handleConflict({ entity: "Contact" });
+				return;
+			}
+			toast.error(handleApiError(err));
+		},
 	});
 
 	const [editing, setEditing] = useState(false);
