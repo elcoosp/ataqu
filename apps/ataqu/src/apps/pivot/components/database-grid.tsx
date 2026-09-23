@@ -60,8 +60,6 @@ export function DatabaseGrid({
 
 	const { data: rows = [], refetch, error } = useGetDatabaseRows(databaseId);
 
-	if (error) toast.error(handleApiError(error));
-
 	const createRowMutation = useCreateDatabaseRow(databaseId, {
 		onSuccess: () => {
 			toast.success(<Trans>Row added.</Trans>);
@@ -223,6 +221,15 @@ export function DatabaseGrid({
 					<Trans>{rows.length} rows</Trans>
 				</span>
 			</div>
+
+			{error && (
+				// Render-time error banner instead of a toast fired during render
+				// (P1-5): the old `if (error) toast.error(...)` re-fired on every
+				// re-render.
+				<div className="rounded border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+					<Trans>Couldn't refresh rows.</Trans>
+				</div>
+			)}
 
 			<div className="border border-border rounded overflow-x-auto">
 				<table className="w-full text-sm">
