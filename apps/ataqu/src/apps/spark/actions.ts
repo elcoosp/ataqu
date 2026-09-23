@@ -56,13 +56,6 @@ export function getSparkActions(opts: {
 			perform: () => navigate("/spark/runs"),
 		},
 		{
-			id: "spark-search",
-			label: "Search Workflows",
-			shortcut: "/spark",
-			when: "always",
-			perform: () => {},
-		},
-		{
 			id: "spark-dlq",
 			label: "View DLQ",
 			when: "always",
@@ -145,14 +138,17 @@ export function useSparkCommands(): AppCommand[] {
 		routerNavigate({ to });
 	};
 	const actions = getSparkActions({ navigate: nav });
-	return actions
-		.filter((a) => a.when === "always" || a.when === undefined)
-		.map((a) => ({
-			id: a.id,
-			title: a.label,
-			shortcut: a.shortcut,
-			onSelect: a.perform,
-		}));
+	// No `when` filter: contextual actions (run/duplicate/add-node) are only
+	// built when the caller passes a workflow context, and the palette's
+	// context-scope group (P2-1) is where they belong when it does.
+	return actions.map((a) => ({
+		id: a.id,
+		title: a.label,
+		shortcut: a.shortcut,
+		onSelect: a.perform,
+		scope: "spark",
+		createName: a.id === "spark-create" ? "Workflow" : undefined,
+	}));
 }
 
 /** Registers SPARK commands into the global palette for the app's lifetime. */
