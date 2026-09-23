@@ -1,4 +1,3 @@
-import { searchSchema } from "@ataqu/shared-hooks";
 import { PageHeader } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
@@ -8,11 +7,13 @@ import { AvailabilityEditor } from "../../../apps/tempo/components/availability-
  * TEMPO availability editor (brainstorm P0 §5.1-7).
  *
  * `?eventType=<id>` is URL state so the event-type detail page can deep-link
- * straight into the right slot list, and so the selection is shareable.
+ * straight into the right slot list, and so the selection is shareable. The
+ * param is optional (`eventType?: string`) so plain links to the page type-check
+ * without a `search` prop.
  */
 export const Route = createFileRoute("/_auth/tempo/availability")({
-	validateSearch: searchSchema({
-		eventType: (raw: unknown) => (typeof raw === "string" ? raw : undefined),
+	validateSearch: (raw: Record<string, unknown>): { eventType?: string } => ({
+		eventType: typeof raw.eventType === "string" ? raw.eventType : undefined,
 	}),
 	component: AvailabilityPage,
 });
