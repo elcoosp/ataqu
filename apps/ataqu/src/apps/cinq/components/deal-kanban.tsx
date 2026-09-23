@@ -26,27 +26,43 @@ import { toast } from "sonner";
 
 export function DealKanban() {
 	const queryClient = useQueryClient();
-	const deleteDealPreRef = useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
-	const deleteStagePreRef = useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
+	const deleteDealPreRef =
+		useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
+	const deleteStagePreRef =
+		useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
 	const deleteDealOpts = {
-		onMutate: async (id) => {
+		onMutate: async (id: string) => {
 			const pre = queryClient.getQueryData(["cinq", "deals", { limit: 1000 }]);
 			deleteDealPreRef.current = pre;
-			queryClient.setQueryData(["cinq", "deals", { limit: 1000 }], (old: any) =>
-				old ? { ...old, items: old.items.filter((d: any) => d.id !== id) } : old,
+			queryClient.setQueryData(
+				["cinq", "deals", { limit: 1000 }],
+				(old: any) =>
+					old
+						? { ...old, items: old.items.filter((d: any) => d.id !== id) }
+						: old,
 			);
 			return { preSnapshot: pre };
 		},
-		onSettled: (_data: unknown, _error: unknown, _vars: unknown, context: any) => {
+		onSettled: (
+			_data: unknown,
+			_error: unknown,
+			_vars: unknown,
+			context: any,
+		) => {
 			if (context?.preSnapshot !== undefined && _error) {
-				queryClient.setQueryData(["cinq", "deals", { limit: 1000 }], context.preSnapshot);
+				queryClient.setQueryData(
+					["cinq", "deals", { limit: 1000 }],
+					context.preSnapshot,
+				);
 			}
-			queryClient.invalidateQueries({ queryKey: ["cinq", "deals", { limit: 1000 }] });
+			queryClient.invalidateQueries({
+				queryKey: ["cinq", "deals", { limit: 1000 }],
+			});
 		},
 	};
 	const deleteDeal = useDeleteDeal(deleteDealOpts);
 	const deleteStageOpts = {
-		onMutate: async (id) => {
+		onMutate: async (id: string) => {
 			const pre = queryClient.getQueryData(["cinq", "pipeline"]);
 			deleteStagePreRef.current = pre;
 			queryClient.setQueryData(["cinq", "pipeline"], (old: any) =>
@@ -54,7 +70,12 @@ export function DealKanban() {
 			);
 			return { preSnapshot: pre };
 		},
-		onSettled: (_data: unknown, _error: unknown, _vars: unknown, context: any) => {
+		onSettled: (
+			_data: unknown,
+			_error: unknown,
+			_vars: unknown,
+			context: any,
+		) => {
 			if (context?.preSnapshot !== undefined && _error) {
 				queryClient.setQueryData(["cinq", "pipeline"], context.preSnapshot);
 			}
