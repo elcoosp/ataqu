@@ -12,6 +12,7 @@ import {
 	useUrlSearchParam,
 } from "@ataqu/shared-hooks";
 import { useIntents, useSelectionStore } from "@ataqu/shared-stores";
+import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Bone,
 	BoneSuspense,
@@ -111,27 +112,37 @@ export function ContactTable() {
 
 	// Pre-snapshot refs captured in onMutate so the Undo action wired at each
 	// call site via \`toast.promise\` (not here) can restore the pre-mutation cache.
-	const deleteContactPreRef = useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
-	const bulkDeletePreRef = useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
+	const deleteContactPreRef =
+		useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
+	const bulkDeletePreRef =
+		useRef<ReturnType<typeof queryClient.getQueryData>>(undefined);
 
 	// Options are extracted into named variables so the call sites can drive
 	// toasts via \`toast.promise\` instead of \`onSuccess\`/\`onError\`. The options
 	// only handle optimistic cache painting (onMutate) plus rollback on error and
 	// invalidation on settle (onSettled) — no toast side-effects.
 	const deleteContactOpts = {
-		onMutate: async (id) => {
+		onMutate: async (id: string) => {
 			const pre = queryClient.getQueryData(["cinq", "contacts", "list"]);
 			deleteContactPreRef.current = pre;
-			queryClient.setQueryData(
-				["cinq", "contacts", "list"],
-				(old: any) =>
-					old ? { ...old, items: old.items.filter((c: any) => c.id !== id) } : old,
+			queryClient.setQueryData(["cinq", "contacts", "list"], (old: any) =>
+				old
+					? { ...old, items: old.items.filter((c: any) => c.id !== id) }
+					: old,
 			);
 			return { preSnapshot: pre };
 		},
-		onSettled: (_data: unknown, _error: unknown, _vars: unknown, context: any) => {
+		onSettled: (
+			_data: unknown,
+			_error: unknown,
+			_vars: unknown,
+			context: any,
+		) => {
 			if (context?.preSnapshot !== undefined && _error) {
-				queryClient.setQueryData(["cinq", "contacts", "list"], context.preSnapshot);
+				queryClient.setQueryData(
+					["cinq", "contacts", "list"],
+					context.preSnapshot,
+				);
 			}
 			queryClient.invalidateQueries({ queryKey: ["cinq", "contacts", "list"] });
 		},
@@ -142,16 +153,24 @@ export function ContactTable() {
 		onMutate: async ({ ids }: { ids: string[] }) => {
 			const pre = queryClient.getQueryData(["cinq", "contacts", "list"]);
 			bulkDeletePreRef.current = pre;
-			queryClient.setQueryData(
-				["cinq", "contacts", "list"],
-				(old: any) =>
-					old ? { ...old, items: old.items.filter((c: any) => !ids.includes(c.id)) } : old,
+			queryClient.setQueryData(["cinq", "contacts", "list"], (old: any) =>
+				old
+					? { ...old, items: old.items.filter((c: any) => !ids.includes(c.id)) }
+					: old,
 			);
 			return { preSnapshot: pre, ids };
 		},
-		onSettled: (_data: unknown, _error: unknown, _vars: unknown, context: any) => {
+		onSettled: (
+			_data: unknown,
+			_error: unknown,
+			_vars: unknown,
+			context: any,
+		) => {
 			if (context?.preSnapshot !== undefined && _error) {
-				queryClient.setQueryData(["cinq", "contacts", "list"], context.preSnapshot);
+				queryClient.setQueryData(
+					["cinq", "contacts", "list"],
+					context.preSnapshot,
+				);
 			}
 			queryClient.invalidateQueries({ queryKey: ["cinq", "contacts", "list"] });
 		},
@@ -227,39 +246,54 @@ export function ContactTable() {
 			search={search}
 			setSearch={setSearch}
 			onOpen={(id) => navigate({ to: `/cinq/contacts/${id}` })}
-			onDelete={(id) => toast.promise(deleteContact.mutateAsync(id), {
-				loading: "Deleting contact...",
-				success: {
-					title: "Contact deleted.",
-					action: {
-						label: "Undo",
-						onClick: () => {
-							if (deleteContactPreRef.current) {
-								queryClient.setQueryData(["cinq", "contacts", "list"], deleteContactPreRef.current);
-								toast.dismiss();
-							}
+			onDelete={(id) =>
+				toast.promise(deleteContact.mutateAsync(id), {
+					loading: "Deleting contact...",
+					success: {
+						message: "Contact deleted.",
+						action: {
+							label: "Undo",
+							onClick: () => {
+								if (deleteContactPreRef.current) {
+									queryClient.setQueryData(
+										["cinq", "contacts", "list"],
+										deleteContactPreRef.current,
+									);
+									toast.dismiss();
+								}
+							},
 						},
 					},
-				},
-				error: (err) => handleApiError(err),
-			})}
-			onBulkDelete={(selected) => toast.promise(bulkDelete.mutateAsync({ ids: selected }), {
-				loading: "Deleting contacts...",
-				success: {
-					title: "Contacts deleted.",
-					action: {
-						label: "Undo",
-						onClick: () => {
-							if (bulkDeletePreRef.current) {
-								queryClient.setQueryData(["cinq", "contacts", "list"], bulkDeletePreRef.current);
-								toast.dismiss();
-							}
+					error: (err) => handleApiError(err),
+				})
+			}
+			onBulkDelete={(selected) =>
+				toast.promise(bulkDelete.mutateAsync({ ids: selected }), {
+					loading: "Deleting contacts...",
+					success: {
+						message: "Contacts deleted.",
+						action: {
+							label: "Undo",
+							onClick: () => {
+								if (bulkDeletePreRef.current) {
+									queryClient.setQueryData(
+										["cinq", "contacts", "list"],
+										bulkDeletePreRef.current,
+									);
+									toast.dismiss();
+								}
+							},
 						},
 					},
-				},
-				error: (err) => handleApiError(err),
-			})}
+					error: (err) => handleApiError(err),
+				})
+			}
 			onExport={() => exportCsv.mutate()}
+			scope={SCOPE}
+			ids={ids}
+			sortKey={sortKey}
+			sortDir={sortDir}
+			onSort={toggleSort}
 			filter={filter}
 			setFilter={setFilter}
 		/>
