@@ -1,6 +1,7 @@
 import "./index.css";
 import {
 	ConfirmProvider,
+	ConflictProvider,
 	initTheme,
 	ShortcutHelpProvider,
 	Toaster,
@@ -39,10 +40,18 @@ setRouterRef(router);
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<ConfirmProvider>
-			<GlobalShortcuts />
-			<RouterProvider router={router} />
-			<Toaster richColors position="bottom-right" />
-			<ShortcutHelpProvider />
+			<ConflictProvider
+				onReload={() => {
+					// The authoritative version changed out from under the user:
+					// drop every cached response so the next paint is the truth.
+					void router.invalidate();
+				}}
+			>
+				<GlobalShortcuts />
+				<RouterProvider router={router} />
+				<Toaster richColors position="bottom-right" />
+				<ShortcutHelpProvider />
+			</ConflictProvider>
 		</ConfirmProvider>
 	</React.StrictMode>,
 );
