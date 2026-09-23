@@ -66,9 +66,10 @@ export function RelationsPanel({ docId }: { docId: string }) {
 				<Trans>Relations</Trans>
 			</h3>
 			{isLoading ? (
-				<p className="text-sm text-muted-foreground">
-					<Trans>Loading…</Trans>
-				</p>
+				<div className="space-y-2">
+					<div className="h-9 rounded border border-border" />
+					<div className="h-9 rounded border border-border" />
+				</div>
 			) : (
 				<ul className="space-y-1">
 					{(relations || []).map((r) => (
