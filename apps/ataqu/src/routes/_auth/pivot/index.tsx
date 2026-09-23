@@ -1,7 +1,7 @@
 import { useCreateDocument, useListDocuments } from "@ataqu/api-client";
 import { useIntent } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, EmptyState } from "@ataqu/ui";
+import { Button, EmptyState, Skeleton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Plus } from "lucide-react";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_auth/pivot/")({
 });
 
 function DocumentList() {
-	const { data, refetch, error } = useListDocuments();
+	const { data, refetch, error, isLoading } = useListDocuments();
 	const createMutation = useCreateDocument({
 		onSuccess: () => {
 			toast.success(<Trans>Document created.</Trans>);
@@ -22,8 +22,6 @@ function DocumentList() {
 		},
 		onError: (err) => toast.error(handleApiError(err)),
 	});
-
-	if (error) toast.error(handleApiError(error));
 
 	const handleCreate = () => {
 		createMutation.mutate({ title: "Untitled", content: "" });
@@ -55,7 +53,23 @@ function DocumentList() {
 				}}
 			/>
 
-			{data?.length === 0 ? (
+			{isLoading ? (
+				// Skeleton parity (P1-4): never render "empty" while the list is
+				// still in flight — the old `data?.length === 0` check fell through
+				// to an empty grid on first paint.
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+					{["a", "b", "c", "d", "e", "f"].map((key) => (
+						<div key={key} className="border border-border rounded p-4">
+							<Skeleton className="h-4 w-2/3" />
+							<Skeleton className="mt-2 h-3 w-full" />
+						</div>
+					))}
+				</div>
+			) : error ? (
+				<div className="py-8 text-center text-sm text-destructive">
+					<Trans>Couldn't load documents.</Trans>
+				</div>
+			) : (data ?? []).length === 0 ? (
 				<EmptyState
 					icon={FileText}
 					title={<Trans>No documents</Trans>}
