@@ -1,9 +1,7 @@
 import { useGetDatabase } from "@ataqu/api-client";
-import { handleApiError } from "@ataqu/shared-utils";
-import { Button } from "@ataqu/ui";
+import { Button, Skeleton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { DatabaseGrid } from "../../../../apps/pivot/components/database-grid";
 
 export const Route = createFileRoute("/_auth/pivot/db/$id")({
@@ -13,13 +11,19 @@ export const Route = createFileRoute("/_auth/pivot/db/$id")({
 function DatabaseDetail() {
 	const { id } = Route.useParams();
 	const navigate = useNavigate();
-	const { data, error } = useGetDatabase(id);
+	const { data, error, isLoading } = useGetDatabase(id);
 
-	if (error) toast.error(handleApiError(error));
-	if (!data)
+	if (error)
 		return (
-			<div>
-				<Trans>Loading…</Trans>
+			<div className="py-8 text-center text-sm text-destructive">
+				<Trans>Couldn't load this database.</Trans>
+			</div>
+		);
+	if (isLoading || !data)
+		return (
+			<div className="space-y-3">
+				<Skeleton className="h-6 w-1/3" />
+				<Skeleton className="h-40 w-full" />
 			</div>
 		);
 
