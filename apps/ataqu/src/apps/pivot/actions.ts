@@ -1,11 +1,12 @@
+import { requestIntent } from "@ataqu/shared-stores";
 import { type AppCommand, useRegisterCommands } from "@ataqu/ui";
 import { useNavigate } from "@tanstack/react-router";
-import { requestIntent } from "@ataqu/shared-stores";
 
 /** Builds PIVOT's command-palette entries against the live router. */
 export function usePivotCommands(): AppCommand[] {
 	const navigate = useNavigate();
 
+	// The literal is closed with `].map(...)` below to stamp the PIVOT scope.
 	return [
 		{
 			id: "pivot-go-documents",
@@ -32,12 +33,14 @@ export function usePivotCommands(): AppCommand[] {
 			id: "pivot-create-doc",
 			title: "Create Document",
 			keywords: "new doc file add",
+			createName: "Document",
 			onSelect: () => requestIntent("pivot", "doc.create"),
 		},
 		{
 			id: "pivot-create-db",
 			title: "Create Database",
 			keywords: "new db add",
+			createName: "Database",
 			onSelect: () => requestIntent("pivot", "db.create"),
 		},
 		{
@@ -46,7 +49,8 @@ export function usePivotCommands(): AppCommand[] {
 			keywords: "find filter query",
 			onSelect: () => navigate({ to: "/pivot" }),
 		},
-	];
+		// Scope every entry to PIVOT for the palette's context group (P2-1).
+	].map((c) => ({ ...c, scope: "pivot" }));
 }
 
 /** Registers PIVOT commands into the global palette for the app's lifetime. */
