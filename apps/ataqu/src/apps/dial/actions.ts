@@ -102,6 +102,15 @@ export function useDialCommands(): AppCommand[] {
 		title: a.title,
 		onSelect: a.onSelect,
 		icon: a.icon,
+		scope: "dial",
+		// Cross-app Create group (F3): both dial creates are contextual to the
+		// dialogs the channel list owns.
+		createName:
+			a.id === "create-channel"
+				? "Channel"
+				: a.id === "create-private-channel"
+					? "Private Channel"
+					: undefined,
 	}));
 }
 
