@@ -18,6 +18,18 @@ export interface AppCommand {
 	shortcut?: string;
 	/** Extra searchable keywords (beyond the title). */
 	keywords?: string;
+	/**
+	 * App or view this command belongs to (e.g. `"cinq"`). The palette renders
+	 * commands whose scope matches the current route's app in a leading
+	 * "In <APP>" group (brainstorm P2-1 — context scope).
+	 */
+	scope?: string;
+	/**
+	 * When set, the command is a cross-app Create entry (brainstorm F3):
+	 * `createName` is the display noun shown in the palette's "Create" group
+	 * ("Contact", "Workflow") while `title`/`onSelect` stay as-is.
+	 */
+	createName?: string;
 }
 
 interface CommandRegistryValue {
