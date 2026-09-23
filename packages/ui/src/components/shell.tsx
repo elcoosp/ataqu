@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import { useHealth } from "@ataqu/api-client";
-import { useAuthStore, useUIStore } from "@ataqu/shared-stores";
+import { useAuthStore, useRecentStore, useUIStore } from "@ataqu/shared-stores";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import type React from "react";
@@ -191,6 +191,22 @@ export const Shell: React.FC<ShellProps> = ({
 
 	const appKeys = Object.keys(APP_ICONS);
 
+	// Recents in the app switcher (brainstorm F2). Derived from the palette's
+	// persisted recent store so the sidebar and ⌘K share one memory: take the
+	// most recent distinct apps (command entries carry the id prefix instead
+	// of an app key) and drop the app already in view.
+	const recents = useRecentStore((s) => s.recents);
+	const recentApps: string[] = [];
+	for (const entry of recents) {
+		const owner = APP_NAMES[entry.app]
+			? entry.app
+			: appKeys.find((app) => entry.intent.startsWith(`${app}-`));
+		if (!owner || owner === routeActiveApp || recentApps.includes(owner))
+			continue;
+		recentApps.push(owner);
+		if (recentApps.length === 4) break;
+	}
+
 	// Per-app sub-nav for the app in view (P3-7). Collapsed sidebar keeps the
 	// divider only, so the icon rail stays uncluttered.
 	const subNav = APP_SUB_NAV[routeActiveApp] ?? [];
@@ -223,6 +239,31 @@ export const Shell: React.FC<ShellProps> = ({
 				</div>
 
 				<nav className="flex-1 py-4 overflow-y-auto">
+					{/* Recent apps (F2) — fastest path back to what you were doing. */}
+					{sidebarOpen && recentApps.length > 0 && (
+						<div className="mb-2">
+							<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+								Recent
+							</div>
+							{recentApps.map((app) => (
+								<Link
+									key={app}
+									to={APP_HOME[app] ?? "/"}
+									className="flex items-center px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-background/5 hover:text-foreground"
+									data-recent-app={app}
+								>
+									<img
+										src={APP_ICONS[app]}
+										alt=""
+										className="h-5 w-5 flex-shrink-0 object-contain"
+									/>
+									<span className="ml-3">{APP_NAMES[app]}</span>
+								</Link>
+							))}
+							<div className="mx-4 mt-2 border-t border-border" />
+						</div>
+					)}
+
 					{/* All Apps collapsible section – only when expanded */}
 					{sidebarOpen && (
 						<div className="px-4 mb-2">
@@ -270,39 +311,39 @@ export const Shell: React.FC<ShellProps> = ({
 						})}
 
 					{/* Per-app sub-navigation for the app currently in view (P3-7). */}
-				{subNav.length > 0 && subNavActive && (
-					<>
-						{sidebarOpen ? (
-							<div className="mt-2 border-t border-border pt-2">
-								<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-									{APP_NAMES[routeActiveApp] ?? routeActiveApp}
+					{subNav.length > 0 && subNavActive && (
+						<>
+							{sidebarOpen ? (
+								<div className="mt-2 border-t border-border pt-2">
+									<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+										{APP_NAMES[routeActiveApp] ?? routeActiveApp}
+									</div>
+									{subNav.map((item) => {
+										const isActive = item.href === subNavActive;
+										return (
+											<Link
+												key={item.href}
+												to={item.href}
+												className={`block px-4 py-2 text-sm transition-colors ${
+													isActive
+														? "text-amber border-r-2 border-amber"
+														: "text-muted-foreground hover:text-foreground hover:bg-background/5"
+												}`}
+												data-sub-nav={item.href}
+												aria-current={isActive ? "page" : undefined}
+											>
+												{item.label}
+											</Link>
+										);
+									})}
 								</div>
-								{subNav.map((item) => {
-									const isActive = item.href === subNavActive;
-									return (
-										<Link
-											key={item.href}
-											to={item.href}
-											className={`block px-4 py-2 text-sm transition-colors ${
-												isActive
-													? "text-amber border-r-2 border-amber"
-													: "text-muted-foreground hover:text-foreground hover:bg-background/5"
-											}`}
-											data-sub-nav={item.href}
-											aria-current={isActive ? "page" : undefined}
-										>
-											{item.label}
-										</Link>
-									);
-								})}
-							</div>
-						) : (
-							<div className="mt-2 border-t border-border pt-2" />
-						)}
-					</>
-				)}
+							) : (
+								<div className="mt-2 border-t border-border pt-2" />
+							)}
+						</>
+					)}
 
-				{/* Extra sidebar items – always shown, but only icons when collapsed */}
+					{/* Extra sidebar items – always shown, but only icons when collapsed */}
 					{extraSidebarItems.length > 0 && (
 						<>
 							{sidebarOpen && <div className="border-t border-border my-2" />}
