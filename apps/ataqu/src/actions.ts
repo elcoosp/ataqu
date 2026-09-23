@@ -97,6 +97,16 @@ export function useAegisCommands(): AppCommand[] {
 		title: a.label,
 		shortcut: Array.isArray(a.shortcut) ? a.shortcut.join(" ") : a.shortcut,
 		onSelect: a.action,
+		scope: "aegis",
+		// Cross-app Create group (F3): inviting a member plus scoped creates.
+		createName:
+			a.id === "aegis-invite-user"
+				? "Team Member"
+				: a.id === "aegis-create-api-key"
+					? "API Key"
+					: a.id === "aegis-create-role"
+						? "Role"
+						: undefined,
 	}));
 }
 
