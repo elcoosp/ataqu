@@ -2,7 +2,7 @@ import { useCreateDatabase, useListDatabases } from "@ataqu/api-client";
 import { useIntent } from "@ataqu/shared-stores";
 
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, EmptyState } from "@ataqu/ui";
+import { Button, EmptyState, Skeleton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Database, Plus } from "lucide-react";
@@ -13,9 +13,7 @@ export const Route = createFileRoute("/_auth/pivot/db/")({
 });
 
 function DatabaseList() {
-	const { data, refetch, error } = useListDatabases();
-
-	if (error) toast.error(handleApiError(error));
+	const { data, refetch, error, isLoading } = useListDatabases();
 
 	const createMutation = useCreateDatabase({
 		onSuccess: () => {
@@ -45,7 +43,21 @@ function DatabaseList() {
 					<Trans>Create Database</Trans>
 				</Button>
 			</div>
-			{data?.length === 0 ? (
+			{isLoading ? (
+				// Skeleton parity (P1-4): the old `data?.length === 0` check
+				// rendered an empty grid while the list was still in flight.
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+					{["a", "b", "c", "d", "e", "f"].map((key) => (
+						<div key={key} className="border border-border rounded p-4">
+							<Skeleton className="h-4 w-1/2" />
+						</div>
+					))}
+				</div>
+			) : error ? (
+				<div className="py-8 text-center text-sm text-destructive">
+					<Trans>Couldn't load databases.</Trans>
+				</div>
+			) : data?.length === 0 ? (
 				<EmptyState
 					icon={Database}
 					title={<Trans>No databases</Trans>}
