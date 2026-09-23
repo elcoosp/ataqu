@@ -3,7 +3,7 @@ import {
 	useListEmployees,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button, Card, ProgressBar, TaskSteps } from "@ataqu/ui";
+import { Button, Card, ProgressBar, Skeleton, TaskSteps } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
@@ -56,8 +56,14 @@ function OnboardingPage() {
 				<Trans>Onboarding</Trans>
 			</h1>
 			{isLoading ? (
-				<div className="py-16 text-center text-sm text-muted-foreground">
-					<Trans>Loading…</Trans>
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+					{["a", "b", "c"].map((key) => (
+						<div key={key} className="border border-border rounded p-4">
+							<Skeleton className="h-4 w-1/2" />
+							<Skeleton className="mt-2 h-3 w-1/3" />
+							<Skeleton className="mt-4 h-8 w-24" />
+						</div>
+					))}
 				</div>
 			) : employees.length === 0 ? (
 				<div className="flex flex-col items-center justify-center py-16 text-center">
