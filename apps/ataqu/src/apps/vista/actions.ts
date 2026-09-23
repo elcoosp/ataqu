@@ -68,6 +68,8 @@ export function useVistaCommands(): AppCommand[] {
 		onSelect: () => {
 			void a.action();
 		},
+		scope: "vista",
+		createName: a.id === "create-dashboard" ? "Dashboard" : undefined,
 	}));
 }
 
