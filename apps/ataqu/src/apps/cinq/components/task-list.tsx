@@ -71,7 +71,9 @@ function TaskDetailDialog({
 export function TaskList({ dealId }: { dealId?: string } = {}) {
 	const _queryClient = useQueryClient();
 	const { data, isLoading } = useListTasks({ limit: 100 });
-	const tasks = (data || []).filter((t: any) => !dealId || t.deal_id === dealId);
+	const tasks = (data || []).filter(
+		(t: any) => !dealId || t.deal_id === dealId,
+	);
 
 	const updateTaskMutation = useUpdateTask();
 	const deleteTask = useDeleteTask({
@@ -79,7 +81,10 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 			const pre = _queryClient.getQueryData(["cinq", "tasks", { limit: 100 }]);
 			_queryClient.setQueryData(
 				["cinq", "tasks", { limit: 100 }],
-				(old: any) => (old ? { ...old, items: old.items.filter((t: any) => t.id !== id) } : old),
+				(old: any) =>
+					old
+						? { ...old, items: old.items.filter((t: any) => t.id !== id) }
+						: old,
 			);
 			return { preSnapshot: pre };
 		},
@@ -111,7 +116,12 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 			_queryClient.setQueryData(
 				["cinq", "tasks", { limit: 100 }],
 				(old: any) =>
-					old ? { ...old, items: old.items.filter((t: any) => !ids.includes(t.id)) } : old,
+					old
+						? {
+								...old,
+								items: old.items.filter((t: any) => !ids.includes(t.id)),
+							}
+						: old,
 			);
 			return { preSnapshot: pre };
 		},
