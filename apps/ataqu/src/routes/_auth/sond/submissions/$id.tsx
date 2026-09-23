@@ -4,7 +4,9 @@ import {
 	useListSubmissions,
 	useUpdateForm,
 } from "@ataqu/api-client";
+import { useIntent } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
+import { useRegisterCommands } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,8 +16,6 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { setLeadIntegration } from "../../../../apps/sond/components/integration-rules";
 import { IntegrationToggle } from "../../../../apps/sond/components/integration-toggle";
-import { useIntent } from "@ataqu/shared-stores";
-import { useRegisterCommands } from "@ataqu/ui";
 import {
 	SubmissionsTable,
 	SubmissionsTableSkeleton,
