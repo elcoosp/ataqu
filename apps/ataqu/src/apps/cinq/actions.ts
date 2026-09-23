@@ -16,6 +16,7 @@ import { navigate as navigateTo } from "../../lib/navigation";
 export function useCinqCommands(): AppCommand[] {
 	const navigate = useNavigate();
 
+	// The literal is closed with `].map(...)` below to stamp the CINQ scope.
 	return [
 		{
 			id: "cinq-go-contacts",
@@ -45,11 +46,13 @@ export function useCinqCommands(): AppCommand[] {
 		{
 			id: "cinq-create-contact",
 			title: "Create Contact",
+			createName: "Contact",
 			onSelect: () => navigateTo("/cinq/contacts?createOpen=1"),
 		},
 		{
 			id: "cinq-create-deal",
 			title: "Create Deal",
+			createName: "Deal",
 			onSelect: () => navigateTo("/cinq/deals?createOpen=1"),
 		},
 		{
@@ -62,7 +65,9 @@ export function useCinqCommands(): AppCommand[] {
 			title: "Search Contacts",
 			onSelect: () => requestIntent("cinq", "search.focus"),
 		},
-	];
+		// Scope every entry to CINQ so the palette can lead with the
+		// context group when the user is inside the app (P2-1).
+	].map((c) => ({ ...c, scope: "cinq" }));
 }
 
 /** Registers CINQ commands into the global palette for the app's lifetime. */
