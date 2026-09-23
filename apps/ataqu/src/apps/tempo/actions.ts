@@ -68,6 +68,8 @@ export function useTempoCommands(): AppCommand[] {
 		title: a.label,
 		shortcut: a.shortcut,
 		onSelect: a.action,
+		scope: "tempo",
+		createName: a.id === "create-event-type" ? "Event Type" : undefined,
 	}));
 }
 
