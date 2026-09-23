@@ -4,7 +4,7 @@ import {
 	useGetDocument,
 } from "@ataqu/api-client";
 import { handleApiError } from "@ataqu/shared-utils";
-import { Button } from "@ataqu/ui";
+import { Button, Skeleton } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -36,7 +36,19 @@ function DocumentDetail() {
 		onError: (err) => toast.error(handleApiError(err)),
 	});
 
-	if (error) toast.error(handleApiError(error));
+	if (error)
+		return (
+			<div className="space-y-2 p-4">
+				<div className="py-8 text-center text-sm text-destructive">
+					<Trans>Couldn't load this document.</Trans>
+				</div>
+				<div className="text-center">
+					<Button variant="outline" size="sm" onClick={() => refetch()}>
+						<Trans>Retry</Trans>
+					</Button>
+				</div>
+			</div>
+		);
 
 	const handleDelete = () => {
 		deleteMutation.mutate(id);
@@ -53,8 +65,9 @@ function DocumentDetail() {
 
 	if (!data)
 		return (
-			<div>
-				<Trans>Loading…</Trans>
+			<div className="space-y-3 p-4">
+				<Skeleton className="h-6 w-1/4" />
+				<Skeleton className="h-64 w-full" />
 			</div>
 		);
 
