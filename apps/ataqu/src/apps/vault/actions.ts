@@ -80,6 +80,8 @@ export const useVaultCommands = (): AppCommand[] => {
 		id: action.id,
 		title: action.label,
 		onSelect: () => navigateTo(action.url),
+		scope: "vault",
+		createName: action.id === "create-product" ? "Product" : undefined,
 	}));
 };
 
