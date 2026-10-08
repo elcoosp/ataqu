@@ -27,7 +27,7 @@ impl TicketStatus {
         }
     }
 
-    pub fn from_str(raw: &str) -> Option<Self> {
+    pub fn parse_opt(raw: &str) -> Option<Self> {
         match raw {
             "open" => Some(Self::Open),
             "pending" => Some(Self::Pending),
@@ -57,7 +57,7 @@ impl TicketPriority {
         }
     }
 
-    pub fn from_str(raw: &str) -> Option<Self> {
+    pub fn parse_opt(raw: &str) -> Option<Self> {
         match raw {
             "low" => Some(Self::Low),
             "medium" => Some(Self::Medium),
@@ -142,7 +142,7 @@ mod tests {
     fn ticket_status_round_trips() {
         assert_eq!(TicketStatus::Open.as_str(), "open");
         assert_eq!(
-            TicketStatus::from_str("in_progress"),
+            TicketStatus::parse_opt("in_progress"),
             None,
             "status parsing is honest, no silent fallback"
         );
@@ -152,7 +152,7 @@ mod tests {
     fn ticket_priority_round_trips() {
         assert_eq!(TicketPriority::Urgent.as_str(), "urgent");
         assert_eq!(
-            TicketPriority::from_str("urgent"),
+            TicketPriority::parse_opt("urgent"),
             Some(TicketPriority::Urgent)
         );
     }

@@ -897,8 +897,8 @@ impl From<ataqu_domain_dial::ticket::Ticket> for TicketResponse {
             message_id: t.message_id,
             last_message: t.last_message,
             last_message_at: t.last_message_at,
-            created_at: DateTime::<Utc>::from(t.created_at),
-            updated_at: DateTime::<Utc>::from(t.updated_at),
+            created_at: t.created_at,
+            updated_at: t.updated_at,
         }
     }
 }
@@ -919,7 +919,7 @@ impl From<ataqu_domain_dial::ticket::TicketMessage> for TicketMessageResponse {
             ticket_id: m.ticket_id,
             from_customer: m.from_customer,
             content: m.content,
-            created_at: DateTime::<Utc>::from(m.created_at),
+            created_at: m.created_at,
         }
     }
 }
@@ -935,7 +935,7 @@ pub async fn create_ticket(
         priority: payload
             .priority
             .as_deref()
-            .and_then(ataqu_domain_dial::ticket::TicketPriority::from_str),
+            .and_then(ataqu_domain_dial::ticket::TicketPriority::parse_opt),
         requester_name: payload.requester_name,
         requester_email: payload.requester_email,
         assignee_id: payload.assignee_id,
@@ -993,11 +993,11 @@ pub async fn update_ticket(
     let status = payload
         .status
         .as_deref()
-        .and_then(ataqu_domain_dial::ticket::TicketStatus::from_str);
+        .and_then(ataqu_domain_dial::ticket::TicketStatus::parse_opt);
     let priority = payload
         .priority
         .as_deref()
-        .and_then(ataqu_domain_dial::ticket::TicketPriority::from_str);
+        .and_then(ataqu_domain_dial::ticket::TicketPriority::parse_opt);
 
     let patch = ataqu_domain_dial::ticket::UpdateTicket {
         subject: payload.subject,

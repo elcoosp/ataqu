@@ -57,8 +57,8 @@ fn ticket_entity_to_domain(m: ticket_entity::Model) -> Ticket {
         tenant_id: m.tenant_id,
         subject: m.subject,
         description: m.description.unwrap_or_default(),
-        status: TicketStatus::from_str(&m.status).unwrap_or(TicketStatus::Open),
-        priority: TicketPriority::from_str(&m.priority).unwrap_or(TicketPriority::Medium),
+        status: TicketStatus::parse_opt(&m.status).unwrap_or(TicketStatus::Open),
+        priority: TicketPriority::parse_opt(&m.priority).unwrap_or(TicketPriority::Medium),
         requester_name: m.requester_name,
         requester_email: m.requester_email,
         assignee_id: m.assignee_id,
@@ -708,23 +708,7 @@ impl DialRepository for DbDialRepository {
 
     // ---- Support tickets (docs P0-9) ----
     async fn insert_ticket(&self, ticket: &Ticket) -> Result<(), DialError> {
-        let active = ticket_entity::ActiveModel {
-            id: Set(ticket.id),
-            tenant_id: Set(ticket.tenant_id),
-            subject: Set(ticket.subject.clone()),
-            description: Set(Some(ticket.description.clone())),
-            status: Set(ticket.status.as_str().to_string()),
-            priority: Set(ticket.priority.as_str().to_string()),
-            requester_name: Set(ticket.requester_name.clone()),
-            requester_email: Set(ticket.requester_email.clone()),
-            assignee_id: Set(ticket.assignee_id),
-            channel_type: Set(ticket.channel_type.clone()),
-            message_id: Set(ticket.message_id),
-            last_message: Set(ticket.last_message.clone()),
-            last_message_at: Set(ticket.last_message_at),
-            created_at: Set(ticket.created_at),
-            updated_at: Set(ticket.updated_at),
-        };
+        let active = ticket_domain_to_active(ticket);
         ticket_entity::Entity::insert(active)
             .exec(&self.db)
             .await
@@ -745,7 +729,7 @@ impl DialRepository for DbDialRepository {
             .map_err(|e| DialError::Repository(e.to_string()))?;
         model
             .map(ticket_entity_to_domain)
-            .ok_or_else(|| DialError::TicketNotFound)
+            .ok_or(DialError::TicketNotFound)
     }
 
     async fn list_tickets(
@@ -787,7 +771,7 @@ impl DialRepository for DbDialRepository {
             .one(&self.db)
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?
-            .ok_or_else(|| DialError::TicketNotFound)?;
+            .ok_or(DialError::TicketNotFound)?;
         let mut active = model.into_active_model();
         if let Some(ref s) = patch.subject {
             active.subject = Set(s.clone());
@@ -817,14 +801,7 @@ impl DialRepository for DbDialRepository {
     }
 
     async fn insert_ticket_message(&self, message: &TicketMessage) -> Result<(), DialError> {
-        let active = ticket_message_entity::ActiveModel {
-            id: Set(message.id),
-            tenant_id: Set(message.tenant_id),
-            ticket_id: Set(message.ticket_id),
-            from_customer: Set(message.from_customer),
-            content: Set(message.content.clone()),
-            created_at: Set(message.created_at),
-        };
+        let active = ticket_message_domain_to_active(message);
         ticket_message_entity::Entity::insert(active)
             .exec(&self.db)
             .await

@@ -33,25 +33,25 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, Statu
     }
 
     // Defense-in-depth: if an Origin is supplied, it must match the Host.
-    if let Some(origin) = headers.get("origin").and_then(|v| v.to_str().ok()) {
-        if let Some(host) = headers.get("host").and_then(|v| v.to_str().ok()) {
-            let Ok(origin_url) = url::Url::parse(origin) else {
-                return Err(StatusCode::FORBIDDEN);
-            };
-            let Some(origin_host) = origin_url.host_str() else {
-                return Err(StatusCode::FORBIDDEN);
-            };
-            // `Url::port()` is None for default ports, matching a Host header without a port.
-            let origin_authority = match origin_url.port() {
-                Some(port) => format!("{origin_host}:{port}"),
-                None => origin_host.to_string(),
-            };
-            let o = origin_authority.to_ascii_lowercase();
-            let h = host.to_ascii_lowercase();
-            let same_origin = o == h || o.ends_with(&format!(".{h}"));
-            if !same_origin {
-                return Err(StatusCode::FORBIDDEN);
-            }
+    if let Some(origin) = headers.get("origin").and_then(|v| v.to_str().ok())
+        && let Some(host) = headers.get("host").and_then(|v| v.to_str().ok())
+    {
+        let Ok(origin_url) = url::Url::parse(origin) else {
+            return Err(StatusCode::FORBIDDEN);
+        };
+        let Some(origin_host) = origin_url.host_str() else {
+            return Err(StatusCode::FORBIDDEN);
+        };
+        // `Url::port()` is None for default ports, matching a Host header without a port.
+        let origin_authority = match origin_url.port() {
+            Some(port) => format!("{origin_host}:{port}"),
+            None => origin_host.to_string(),
+        };
+        let o = origin_authority.to_ascii_lowercase();
+        let h = host.to_ascii_lowercase();
+        let same_origin = o == h || o.ends_with(&format!(".{h}"));
+        if !same_origin {
+            return Err(StatusCode::FORBIDDEN);
         }
     }
 

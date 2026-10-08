@@ -16,16 +16,25 @@ vi.mock("../src/components/command-palette", () => ({
 	CommandPalette: () => <div data-testid="command-palette-mock" />,
 }));
 
-// Mock auth store to provide a user so sidebar renders
+// Mock auth store to provide a user so sidebar renders.
+// api-client hooks call the zustand static API (`useAuthStore.getState()`),
+// so the mock must provide it alongside the hook itself.
 vi.mock("@ataqu/shared-stores", async () => {
 	const actual = await vi.importActual("@ataqu/shared-stores");
+	const authState = {
+		user: { name: "Test User", email: "test@test.com" },
+		token: "fake-token",
+		isAuthenticated: true,
+		logout: vi.fn(),
+	};
+	const useAuthStoreMock = Object.assign(vi.fn(() => authState), {
+		getState: () => authState,
+		setState: vi.fn(),
+		subscribe: vi.fn(() => () => {}),
+	});
 	return {
 		...actual,
-		useAuthStore: vi.fn(() => ({
-			user: { name: "Test User", email: "test@test.com" },
-			token: "fake-token",
-			logout: vi.fn(),
-		})),
+		useAuthStore: useAuthStoreMock,
 		useUIStore: vi.fn(() => ({
 			sidebarOpen: true,
 			toggleSidebar: vi.fn(),

@@ -73,7 +73,6 @@ impl AmazonRepository for AmazonRepositoryImpl {
             refresh_token: Set(encrypted),
             last_synced_at: Set(integration.last_synced_at),
             created_at: Set(integration.created_at),
-            ..Default::default()
         };
         entity::Entity::insert(active)
             .exec(&self.db)
