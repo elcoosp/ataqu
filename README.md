@@ -88,7 +88,7 @@ Each app is an independent Vite + React 19 SPA with TanStack Router, sharing a u
 - **Native integrations, no Zapier** — DIAL (chat), CINQ (CRM), and VAULT (inventory) sync via a shared PostgreSQL outbox — when a deal is won, other apps react instantly without webhook glue.
 - **i18n first** — Lingui v6 with `en` and `fr` locales extracted via macros, compiled to message catalogs.
 - **Type safety end-to-end** — Zod schemas on the frontend (`@ataqu/shared-schemas`) mirror Rust domain types. The API client in `packages/api-client` is regenerated from Rust with `pnpm generate:api`.
-- **Security in depth** — Tenant isolation enforced at the database level (schemas + roles + RLS), compile-time PII redaction via redacting newtypes, CSRF double-submit protection for cookie-auth flows, and per-tenant IP allowlists.
+- **Security in depth** — Tenant isolation via tenant_id-scoped queries + audit (per-domain Postgres roles + RLS planned), compile-time PII redaction via redacting newtypes, CSRF double-submit protection for cookie-auth flows, and per-tenant IP allowlists.
 - **Observability built-in** — `/metrics` (Prometheus), `x-request-id` tracing, structured audit logs, and a system health endpoint exposing outbox lag, DLQ depth, and connection pool stats.
 - **Quality gates** — Biome 2.5 linter/formatter, Vitest 4 unit tests (80% line/function/statement, 60% branch thresholds enforced in CI), Playwright 1.62 E2E tests, `cargo clippy` + `cargo test` for the Rust side.
 
@@ -128,7 +128,7 @@ docker run -d \
   --name ataqu-postgres-dev \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=ataqu_test \
+  -e POSTGRES_DB=ataqu \
   -p 5433:5432 \
   postgres:18-alpine
 
@@ -224,7 +224,7 @@ ataqu-suite/
 ## What makes it different
 
 - **One database, one binary, ten apps.** No microservices. No Kafka. PostgreSQL `LISTEN/NOTIFY` is the event bus.
-- **Bounded contexts enforced by the database itself.** Each domain gets a schema and a PostgreSQL role; RLS policies prevent cross-domain event spoofing at the query planner.
+- **Bounded contexts, one schema per domain.** Each domain gets a PostgreSQL schema with tenant_id-scoped queries; per-domain roles + RLS policies are planned (see roadmap).
 - **Exactly-once, not at-least-once.** Advisory locks + `core.idempotency_records` give deterministic request replay with 2⁻⁶⁴ collision risk.
 - **PII cannot leak by accident.** `Email` and `PhoneNumber` don't implement `Serialize`; they're wrapped in `ApiEmail`/`ApiPhone` at the API boundary, and `Debug`/`Display` redact.
 - **Escape hatch, not lock-in.** 1-click cancellation, CSV/JSON export from every app, and 30-day data deletion.

@@ -37,7 +37,13 @@ impl S3Service {
         let region = std::env::var("AWS_REGION").unwrap_or_else(|_| "us-east-1".to_string());
 
         let config = aws_config::load_defaults(BehaviorVersion::latest()).await;
-        let client = Client::new(&config);
+        let force_path_style = std::env::var("S3_FORCE_PATH_STYLE")
+            .map(|v| v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        let s3_config = aws_sdk_s3::config::Builder::from(&config)
+            .force_path_style(force_path_style)
+            .build();
+        let client = Client::from_conf(s3_config);
 
         info!(bucket = %bucket, region = %region, "S3Service initialized");
 
@@ -104,14 +110,18 @@ impl S3Service {
         prefix: &str,
         continuation_token: Option<&str>,
     ) -> Result<ListObjectsResult> {
-        let mut req = self.client.list_objects_v2()
+        let mut req = self
+            .client
+            .list_objects_v2()
             .bucket(&self.bucket)
             .prefix(prefix)
             .max_keys(1000);
         if let Some(token) = continuation_token {
             req = req.continuation_token(token);
         }
-        let resp = req.send().await
+        let resp = req
+            .send()
+            .await
             .map_err(|e| S3Error::List(format!("{e:?}")))?;
         let mut keys = Vec::new();
         for obj in resp.contents() {
@@ -120,7 +130,10 @@ impl S3Service {
             }
         }
         let next_token = resp.next_continuation_token().map(|t| t.to_string());
-        Ok(ListObjectsResult { keys, next_continuation_token: next_token })
+        Ok(ListObjectsResult {
+            keys,
+            next_continuation_token: next_token,
+        })
     }
 
     pub async fn delete_object(&self, key: &str) -> Result<()> {

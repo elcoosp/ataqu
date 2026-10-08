@@ -6,6 +6,7 @@
 mod event_registry;
 use ataqu_api::{AppState, create_router};
 use ataqu_application::aegis_service::{AegisConfig, AegisService, RealAegisDomain};
+use ataqu_application::amazon_service::AmazonService;
 use ataqu_application::changelog_service::ChangelogService;
 use ataqu_application::cinq_service::CinqService;
 use ataqu_application::dial_service::DialService;
@@ -14,9 +15,6 @@ use ataqu_application::onboarding_service::OnboardingService;
 use ataqu_application::pause_service::PauseService;
 use ataqu_application::pivot_service::PivotService;
 use ataqu_application::shopify_service::ShopifyService;
-use ataqu_application::amazon_service::AmazonService;
-use ataqu_infra_repositories::amazon_repo_impl::AmazonRepositoryImpl;
-use ataqu_infra_repositories::amazon_sync_log_repo::AmazonSyncLogRepo;
 use ataqu_application::sond_service::SondService;
 use ataqu_application::spark_service::SparkService;
 use ataqu_application::tempo_service::TempoService;
@@ -24,6 +22,8 @@ use ataqu_application::vault_service::VaultService;
 use ataqu_application::vista_service::VistaService;
 use ataqu_domain_aegis::repository::AuditRepositoryTrait;
 use ataqu_infra_pools::Pools;
+use ataqu_infra_repositories::amazon_repo_impl::AmazonRepositoryImpl;
+use ataqu_infra_repositories::amazon_sync_log_repo::AmazonSyncLogRepo;
 use ataqu_infra_repositories::cinq_repo_impl::CinqEstablishmentRepository;
 use ataqu_infra_repositories::shopify_repo_impl::ShopifyRepositoryImpl;
 use ataqu_infra_storage::s3_service::S3Service;
@@ -37,6 +37,7 @@ use tracing::info;
 use tracing_appender::non_blocking;
 use tracing_appender::rolling;
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::writer::MakeWriterExt as _;
 use uuid::Uuid;
 // use sea_orm::DatabaseConnection;
 // ----------------------------------------------------------------------------
@@ -48,9 +49,11 @@ async fn main() -> anyhow::Result<()> {
     let file_appender = rolling::daily("./logs", "ataqu.log");
     let (non_blocking_file, _guard) = non_blocking(file_appender);
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env())
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
         .with_target(true)
-        .with_writer(non_blocking_file)
+        .with_writer(non_blocking_file.and(std::io::stdout))
         .init();
     info!("Starting Ataqu unified server...");
     let db_url = std::env::var("DATABASE_URL")
@@ -125,7 +128,7 @@ async fn main() -> anyhow::Result<()> {
         Some(audit_repo.clone()),
     ));
     // DIAL
-    use ataqu_infra_repositories::dial_repo_impl::{DbPresenceStore, DbDialRepository};
+    use ataqu_infra_repositories::dial_repo_impl::{DbDialRepository, DbPresenceStore};
     let dial_repo = Arc::new(DbDialRepository::new(pools.dial.clone()));
     let dial_presence = Arc::new(DbPresenceStore::new(pools.dial.clone()));
     let dial_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
@@ -670,8 +673,7 @@ async fn main() -> anyhow::Result<()> {
     ));
     // Email tracking writer
     let email_spill_dir = std::path::PathBuf::from(
-        std::env::var("EMAIL_SPILL_DIR")
-            .unwrap_or_else(|_| "/tmp/ataqu_email_spill".to_string()),
+        std::env::var("EMAIL_SPILL_DIR").unwrap_or_else(|_| "/tmp/ataqu_email_spill".to_string()),
     );
     if let Err(e) = std::fs::create_dir_all(&email_spill_dir) {
         tracing::error!(
@@ -701,18 +703,17 @@ async fn main() -> anyhow::Result<()> {
     let conn_index = Arc::new(DashMap::new());
     let presence_counts = Arc::new(DashMap::new());
     let sso_states: Arc<dyn ataqu_application::sso_state_store::SsoStateStore + Send + Sync> =
-        Arc::new(ataqu_application::sso_state_store::PostgresSsoStateStore::new(
-            pools.core.clone(),
-        ));
+        Arc::new(
+            ataqu_application::sso_state_store::PostgresSsoStateStore::new(pools.core.clone()),
+        );
     let allowlist_cache = moka::sync::Cache::<String, Vec<String>>::builder()
         .time_to_live(Duration::from_secs(60))
         .build();
     let trusted_proxies = ataqu_api::middleware::client_ip::TrustedProxies::from_env_value(
         &std::env::var("TRUSTED_PROXIES").unwrap_or_default(),
     );
-    let csrf_protector = std::sync::Arc::new(
-        ataqu_api::middleware::csrf_token::CsrfProtector::from_env()?,
-    );
+    let csrf_protector =
+        std::sync::Arc::new(ataqu_api::middleware::csrf_token::CsrfProtector::from_env()?);
     let rate_limiter = ataqu_api::middleware::rate_limit::RateLimiter::new(
         100,
         Duration::from_secs(60),
@@ -770,10 +771,8 @@ async fn main() -> anyhow::Result<()> {
         }
     });
     // Shopify worker
-    let shopify_repo = Arc::new(
-        ShopifyRepositoryImpl::new(pools.vault.clone())
-            .map_err(|e| anyhow::anyhow!(e))?,
-    );
+    let shopify_repo =
+        Arc::new(ShopifyRepositoryImpl::new(pools.vault.clone()).map_err(|e| anyhow::anyhow!(e))?);
     let shopify_log_repo = Arc::new(
         ataqu_infra_repositories::shopify_sync_log_repo::ShopifySyncLogRepo::new(
             pools.vault.clone(),
@@ -795,10 +794,8 @@ async fn main() -> anyhow::Result<()> {
         }
     });
     // Amazon Seller Central worker (spec 9 — Amazon Sync, P1)
-    let amazon_repo = Arc::new(
-        AmazonRepositoryImpl::new(pools.vault.clone())
-            .map_err(|e| anyhow::anyhow!(e))?,
-    );
+    let amazon_repo =
+        Arc::new(AmazonRepositoryImpl::new(pools.vault.clone()).map_err(|e| anyhow::anyhow!(e))?);
     let amazon_log_repo = Arc::new(AmazonSyncLogRepo::new(pools.vault.clone()));
     let amazon_service = Arc::new(AmazonService::new(
         amazon_repo,
@@ -885,7 +882,11 @@ async fn main() -> anyhow::Result<()> {
             return Err(anyhow::anyhow!("Failed to bind admin UDS"));
         }
     };
-    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or_default();
+    let admin_token =
+        std::env::var("ADMIN_TOKEN").map_err(|_| anyhow::anyhow!("ADMIN_TOKEN must be set"))?;
+    if admin_token.len() < 16 {
+        anyhow::bail!("ADMIN_TOKEN must be at least 16 characters");
+    }
     let health_service_for_admin = health_service.clone();
     let audit_repo_for_admin = audit_repo.clone();
     tokio::spawn(async move {
@@ -903,7 +904,15 @@ async fn main() -> anyhow::Result<()> {
                         let mut line = String::new();
                         if reader.read_line(&mut line).await.is_ok() {
                             let parts: Vec<&str> = line.trim().splitn(2, ' ').collect();
-                            if parts.len() == 2 && parts[0] == admin_token {
+                            let token_ok = parts.len() == 2 && {
+                                let (a, b) = (parts[0].as_bytes(), admin_token.as_bytes());
+                                a.len() == b.len()
+                                    && a.iter()
+                                        .zip(b.iter())
+                                        .fold(0u8, |acc, (x, y)| acc | (x ^ y))
+                                        == 0
+                            };
+                            if token_ok {
                                 let cmd = parts[1].trim();
                                 let _ = audit_repo
                                     .append_log(
