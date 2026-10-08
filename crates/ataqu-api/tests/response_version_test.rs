@@ -19,8 +19,8 @@ fn deal_response_preserves_version_for_if_match() {
         updated_at: now,
         version,
     };
-    let response = serde_json::to_value(ataqu_api::handlers::cinq::DealResponse::from(deal))
-        .unwrap();
+    let response =
+        serde_json::to_value(ataqu_api::handlers::cinq::DealResponse::from(deal)).unwrap();
     assert_eq!(
         response["version"],
         json!(version),
@@ -78,23 +78,51 @@ fn contact_response_preserves_lead_score_and_custom_fields() {
 #[test]
 fn deal_and_task_responses_preserve_versions() {
     use ataqu_api::handlers::cinq::{DealResponse, TaskResponse};
-    use ataqu_domain_cinq::{deal::{Deal, DealStatus}, task::{Task, TaskStatus}};
+    use ataqu_domain_cinq::{
+        deal::{Deal, DealStatus},
+        task::{Task, TaskStatus},
+    };
     let now = Utc::now();
     for version in [0, 1, 7] {
         let deal = Deal {
-            id: Uuid::new_v4(), tenant_id: TenantId::new(Uuid::new_v4()),
-            contact_id: Uuid::new_v4(), title: "Deal".into(), pipeline_stage_id: Uuid::new_v4(),
-            amount: 12.into(), status: DealStatus::Open, owner_id: None, probability: None,
-            variant_id: None, quantity: None, establishment_id: None,
-            created_at: now, updated_at: now, version,
+            id: Uuid::new_v4(),
+            tenant_id: TenantId::new(Uuid::new_v4()),
+            contact_id: Uuid::new_v4(),
+            title: "Deal".into(),
+            pipeline_stage_id: Uuid::new_v4(),
+            amount: 12.into(),
+            status: DealStatus::Open,
+            owner_id: None,
+            probability: None,
+            variant_id: None,
+            quantity: None,
+            establishment_id: None,
+            created_at: now,
+            updated_at: now,
+            version,
         };
         let task = Task {
-            id: Uuid::new_v4(), tenant_id: deal.tenant_id, contact_id: None, deal_id: None,
-            assigned_to: None, title: "Task".into(), description: None, due_date: None,
-            status: TaskStatus::Pending, created_at: now, updated_at: now, version,
+            id: Uuid::new_v4(),
+            tenant_id: deal.tenant_id,
+            contact_id: None,
+            deal_id: None,
+            assigned_to: None,
+            title: "Task".into(),
+            description: None,
+            due_date: None,
+            status: TaskStatus::Pending,
+            created_at: now,
+            updated_at: now,
+            version,
         };
-        assert_eq!(serde_json::to_value(DealResponse::from(deal)).unwrap()["version"], version);
-        assert_eq!(serde_json::to_value(TaskResponse::from(task)).unwrap()["version"], version);
+        assert_eq!(
+            serde_json::to_value(DealResponse::from(deal)).unwrap()["version"],
+            version
+        );
+        assert_eq!(
+            serde_json::to_value(TaskResponse::from(task)).unwrap()["version"],
+            version
+        );
     }
 }
 
@@ -103,12 +131,23 @@ fn channel_response_preserves_type_and_version() {
     use ataqu_api::handlers::dial::ChannelResponse;
     use ataqu_domain_dial::chat::{Channel, ChannelType};
     let now = std::time::SystemTime::now();
-    for (channel_type, wire_type) in [(ChannelType::Public, "public"), (ChannelType::Private, "private"), (ChannelType::DirectMessage, "dm")] {
+    for (channel_type, wire_type) in [
+        (ChannelType::Public, "public"),
+        (ChannelType::Private, "private"),
+        (ChannelType::DirectMessage, "dm"),
+    ] {
         for version in [0, 1, 7] {
             let channel = Channel {
-                id: Uuid::new_v4().into(), tenant_id: TenantId::new(Uuid::new_v4()),
-                name: "Channel".into(), channel_type, created_by: Uuid::new_v4().into(),
-                participants: vec![], created_at: now, updated_at: now, archived_at: None, version,
+                id: Uuid::new_v4().into(),
+                tenant_id: TenantId::new(Uuid::new_v4()),
+                name: "Channel".into(),
+                channel_type,
+                created_by: Uuid::new_v4().into(),
+                participants: vec![],
+                created_at: now,
+                updated_at: now,
+                archived_at: None,
+                version,
             };
             let value = serde_json::to_value(ChannelResponse::from(channel)).unwrap();
             assert_eq!(value["channel_type"], wire_type);
@@ -123,13 +162,22 @@ fn message_response_preserves_version_in_paginated_envelope() {
     use ataqu_domain_dial::chat::Message;
     for version in [0, 1, 7] {
         let message = Message {
-            id: Uuid::new_v4().into(), tenant_id: TenantId::new(Uuid::new_v4()),
-            channel_id: Uuid::new_v4().into(), thread_id: None, author_id: Uuid::new_v4().into(),
-            content: "Hello".into(), created_at: std::time::SystemTime::now(),
-            edited_at: None, deleted_at: None, version,
+            id: Uuid::new_v4().into(),
+            tenant_id: TenantId::new(Uuid::new_v4()),
+            channel_id: Uuid::new_v4().into(),
+            thread_id: None,
+            author_id: Uuid::new_v4().into(),
+            content: "Hello".into(),
+            created_at: std::time::SystemTime::now(),
+            edited_at: None,
+            deleted_at: None,
+            version,
         };
         let page = ataqu_contracts::PaginatedResponse {
-            items: vec![MessageResponse::from(message)], total: 11, limit: 1, offset: 3,
+            items: vec![MessageResponse::from(message)],
+            total: 11,
+            limit: 1,
+            offset: 3,
         };
         let value = serde_json::to_value(page).unwrap();
         assert_eq!(value["items"][0]["version"], version);
@@ -147,11 +195,24 @@ fn employee_response_preserves_version() {
     let now = std::time::SystemTime::now();
     for version in [0, 1, 7] {
         let employee = Employee {
-            id: Uuid::new_v4(), tenant_id: TenantId::new(Uuid::new_v4()), full_name: "Alice".into(),
-            email: Email::new("alice@example.com".into()), phone: None, job_title: "Engineer".into(),
-            department: None, hire_date: Utc::now().date_naive(), is_active: true,
-            created_at: now, updated_at: now, version, onboarding_tasks: vec![], onboarding_completed_at: None,
+            id: Uuid::new_v4(),
+            tenant_id: TenantId::new(Uuid::new_v4()),
+            full_name: "Alice".into(),
+            email: Email::new("alice@example.com".into()),
+            phone: None,
+            job_title: "Engineer".into(),
+            department: None,
+            hire_date: Utc::now().date_naive(),
+            is_active: true,
+            created_at: now,
+            updated_at: now,
+            version,
+            onboarding_tasks: vec![],
+            onboarding_completed_at: None,
         };
-        assert_eq!(serde_json::to_value(EmployeeResponse::from(employee)).unwrap()["version"], version);
+        assert_eq!(
+            serde_json::to_value(EmployeeResponse::from(employee)).unwrap()["version"],
+            version
+        );
     }
 }

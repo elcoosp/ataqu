@@ -79,7 +79,11 @@ fn map_form_model_to_domain(m: form_entity::Model) -> Form {
         questions: serde_json::from_value(m.questions).unwrap_or_default(),
         branding: m.branding,
         routing_rules: m.routing_rules,
-        status: m.status.as_deref().and_then(parse_form_status).unwrap_or_default(),
+        status: m
+            .status
+            .as_deref()
+            .and_then(parse_form_status)
+            .unwrap_or_default(),
         created_at: m.created_at,
         updated_at: m.updated_at,
         version: m.version,

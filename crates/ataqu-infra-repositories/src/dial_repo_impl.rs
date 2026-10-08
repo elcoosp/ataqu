@@ -4,8 +4,8 @@ use chrono::{DateTime, Utc};
 use sea_orm::ConnectionTrait;
 use sea_orm::QuerySelect;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
-    PaginatorTrait, QueryOrder, Set,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel,
+    PaginatorTrait, QueryFilter, QueryOrder, Set,
 };
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -15,8 +15,10 @@ use ataqu_domain_dial::chat::{
 };
 use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::{PresenceStatus, PresenceStore};
-use ataqu_domain_dial::ticket::{Ticket, TicketMessage, TicketPriority, TicketStatus, UpdateTicket};
 use ataqu_domain_dial::repository::DialRepository;
+use ataqu_domain_dial::ticket::{
+    Ticket, TicketMessage, TicketPriority, TicketStatus, UpdateTicket,
+};
 use ataqu_kernel::TenantId;
 
 use crate::entities::dial::channel as channel_entity;
@@ -705,10 +707,7 @@ impl DialRepository for DbDialRepository {
     }
 
     // ---- Support tickets (docs P0-9) ----
-    async fn insert_ticket(
-        &self,
-        ticket: &Ticket,
-    ) -> Result<(), DialError> {
+    async fn insert_ticket(&self, ticket: &Ticket) -> Result<(), DialError> {
         let active = ticket_entity::ActiveModel {
             id: Set(ticket.id),
             tenant_id: Set(ticket.tenant_id),
@@ -744,7 +743,8 @@ impl DialRepository for DbDialRepository {
             .one(&self.db)
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
-        model.map(ticket_entity_to_domain)
+        model
+            .map(ticket_entity_to_domain)
             .ok_or_else(|| DialError::TicketNotFound)
     }
 
@@ -809,16 +809,14 @@ impl DialRepository for DbDialRepository {
             active.last_message_at = Set(Some(Utc::now()));
         }
         active.updated_at = Set(Utc::now());
-        active.update(&self.db)
+        active
+            .update(&self.db)
             .await
             .map_err(|e| DialError::Repository(e.to_string()))?;
         Ok(())
     }
 
-    async fn insert_ticket_message(
-        &self,
-        message: &TicketMessage,
-    ) -> Result<(), DialError> {
+    async fn insert_ticket_message(&self, message: &TicketMessage) -> Result<(), DialError> {
         let active = ticket_message_entity::ActiveModel {
             id: Set(message.id),
             tenant_id: Set(message.tenant_id),

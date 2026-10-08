@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ataqu
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.prod}
+      POSTGRES_DB: ataqu
+    volumes: [pgdata:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ataqu -d ataqu"]
+      interval: 5s
+      retries: 10
+  backend:
+    build: .
+    restart: unless-stopped
+    depends_on: { postgres: { condition: service_healthy } }
+    env_file: .env.prod
+    environment:
+      DATABASE_URL: postgres://ataqu:${POSTGRES_PASSWORD}@postgres:5432/ataqu
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+    volumes: [logs:/var/ataqu/logs]
+  web:
+    build: { context: ., dockerfile: Dockerfile.web }
+    restart: unless-stopped
+    depends_on: [backend]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    ports: ["80:80", "443:443"]
+volumes:
+  pgdata:
+  logs:

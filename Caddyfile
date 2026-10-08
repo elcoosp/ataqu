@@ -1,0 +1,13 @@
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+	@api path /api/* /ws/* /health /ready
+	handle @api {
+		reverse_proxy backend:3000
+	}
+	# /metrics is intentionally NOT proxied
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

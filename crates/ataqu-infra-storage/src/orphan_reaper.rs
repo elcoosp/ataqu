@@ -2,14 +2,11 @@
 use crate::s3_service::S3Service;
 use chrono::{DateTime, Utc};
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, Statement};
-use tracing::{info, error};
+use tracing::{error, info};
 
 const TTL_HOURS: i64 = 24;
 
-pub async fn reap_orphans(
-    s3: &S3Service,
-    db: &DatabaseConnection,
-) -> Result<(), String> {
+pub async fn reap_orphans(s3: &S3Service, db: &DatabaseConnection) -> Result<(), String> {
     const PREFIX: &str = "uploads/";
 
     info!("Starting S3 orphan reaper scan");
@@ -19,7 +16,8 @@ pub async fn reap_orphans(
     let mut kept = 0;
 
     loop {
-        let objects = s3.list_objects_with_token(PREFIX, continuation_token.as_deref())
+        let objects = s3
+            .list_objects_with_token(PREFIX, continuation_token.as_deref())
             .await
             .map_err(|e| format!("S3 list failed: {}", e))?;
 
@@ -30,7 +28,10 @@ pub async fn reap_orphans(
                 "SELECT 1 FROM core.file_references WHERE file_key = $1 AND status = 'referenced'",
                 [key.clone().into()],
             );
-            let rows = db.query_all_raw(stmt).await.map_err(|e| format!("DB query failed: {}", e))?;
+            let rows = db
+                .query_all_raw(stmt)
+                .await
+                .map_err(|e| format!("DB query failed: {}", e))?;
 
             if !rows.is_empty() {
                 kept += 1;
@@ -43,7 +44,10 @@ pub async fn reap_orphans(
                 "SELECT created_at FROM core.file_references WHERE file_key = $1 AND status = 'pending'",
                 [key.clone().into()],
             );
-            let row = db.query_one_raw(stmt2).await.map_err(|e| format!("DB query failed: {}", e))?;
+            let row = db
+                .query_one_raw(stmt2)
+                .await
+                .map_err(|e| format!("DB query failed: {}", e))?;
 
             if let Some(row) = row {
                 let created_at: DateTime<Utc> = row

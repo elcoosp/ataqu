@@ -130,7 +130,8 @@ pub trait DialRepository: Send + Sync {
 
     // ---- Support tickets (docs P0-9) ----
     async fn insert_ticket(&self, ticket: &Ticket) -> Result<(), DialError>;
-    async fn get_ticket(&self, tenant_id: &TenantId, ticket_id: &Uuid) -> Result<Ticket, DialError>;
+    async fn get_ticket(&self, tenant_id: &TenantId, ticket_id: &Uuid)
+    -> Result<Ticket, DialError>;
     async fn list_tickets(
         &self,
         tenant_id: &TenantId,

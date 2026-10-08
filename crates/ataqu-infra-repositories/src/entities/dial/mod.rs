@@ -4,6 +4,6 @@ pub mod mention;
 pub mod message;
 pub mod presence;
 pub mod reaction;
+pub mod thread;
 pub mod ticket;
 pub mod ticket_message;
-pub mod thread;

@@ -58,9 +58,8 @@ fn inbox_routes_are_mounted() {
         lib.contains("handlers::inbox::inbox_routes"),
         "expected the inbox router to be mounted on the authenticated router"
     );
-    let mods =
-        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/src/handlers/mod.rs"))
-            .unwrap();
+    let mods = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/src/handlers/mod.rs"))
+        .unwrap();
     assert!(
         mods.contains("pub mod inbox;"),
         "expected the inbox handler module to be exported"

@@ -15,9 +15,9 @@ use crate::middleware::AuthContext;
 use ataqu_application::dial_service::{
     CreateChannelCommand, SendMessageCommand, StartThreadCommand,
 };
-use ataqu_domain_dial::ticket::CreateTicket;
 use ataqu_contracts::PaginatedResponse;
 use ataqu_domain_dial::chat::ChannelType;
+use ataqu_domain_dial::ticket::CreateTicket;
 
 #[derive(Debug, Serialize)]
 pub struct ChannelResponse {
@@ -840,10 +840,7 @@ pub fn routes() -> Router<AppState> {
         .route("/tickets", post(create_ticket).get(list_tickets))
         .route("/tickets/{id}", get(get_ticket).put(update_ticket))
         .route("/tickets/{id}/replies", post(reply_to_ticket))
-        .route(
-            "/tickets/{id}/messages",
-            get(list_ticket_messages),
-        )
+        .route("/tickets/{id}/messages", get(list_ticket_messages))
 }
 
 // ---------- Ticket handlers (docs P0-9) ----------
@@ -955,9 +952,7 @@ pub async fn create_ticket(
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::LOCATION,
-        format!("/dial/tickets/{}", ticket.id)
-            .parse()
-            .unwrap(),
+        format!("/dial/tickets/{}", ticket.id).parse().unwrap(),
     );
 
     Ok((
@@ -1032,7 +1027,9 @@ pub async fn reply_to_ticket(
     Json(payload): Json<ReplyToTicketRequest>,
 ) -> ApiResult<(StatusCode, Json<TicketMessageResponse>)> {
     if payload.content.trim().is_empty() {
-        return Err(ApiResponseError::validation("Reply content cannot be empty"));
+        return Err(ApiResponseError::validation(
+            "Reply content cannot be empty",
+        ));
     }
 
     let message = state
@@ -1077,10 +1074,12 @@ pub async fn list_ticket_messages(
         .map_err(ApiResponseError::internal_err)?;
 
     Ok(Json(PaginatedResponse {
-        items: messages.into_iter().map(TicketMessageResponse::from).collect(),
+        items: messages
+            .into_iter()
+            .map(TicketMessageResponse::from)
+            .collect(),
         total,
         limit,
         offset,
     }))
 }
-

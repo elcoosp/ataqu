@@ -533,10 +533,7 @@ impl TempoService {
 
     /// Public variant: resolves an event type by slug without a tenant context
     /// (for public booking pages at `/book/{slug}` where the visitor is anonymous).
-    pub async fn resolve_event_type_by_slug(
-        &self,
-        slug: &str,
-    ) -> TempoResult<EventType> {
+    pub async fn resolve_event_type_by_slug(&self, slug: &str) -> TempoResult<EventType> {
         self.repo
             .find_event_type_by_slug_public(slug)
             .await

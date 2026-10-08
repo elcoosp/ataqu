@@ -10,11 +10,19 @@ fn leave_response_preserves_version_and_employee_name() {
     let now = std::time::SystemTime::now();
     for version in [0, 1, 7] {
         let request = LeaveRequest {
-            id: Uuid::new_v4(), tenant_id: TenantId::new(Uuid::new_v4()),
-            employee_id: Uuid::new_v4(), leave_type: LeaveType::Annual,
-            start_date: Utc::now().date_naive(), end_date: Utc::now().date_naive(),
-            reason: None, status: LeaveStatus::Pending, reviewer_id: None,
-            reviewed_at: None, created_at: now, updated_at: now, version,
+            id: Uuid::new_v4(),
+            tenant_id: TenantId::new(Uuid::new_v4()),
+            employee_id: Uuid::new_v4(),
+            leave_type: LeaveType::Annual,
+            start_date: Utc::now().date_naive(),
+            end_date: Utc::now().date_naive(),
+            reason: None,
+            status: LeaveStatus::Pending,
+            reviewer_id: None,
+            reviewed_at: None,
+            created_at: now,
+            updated_at: now,
+            version,
         };
         let response = LeaveRequestResponse::from((request, "Alice".to_owned()));
         let value = serde_json::to_value(response).unwrap();
@@ -26,7 +34,9 @@ fn leave_response_preserves_version_and_employee_name() {
 
 #[test]
 fn workflow_run_filter_rejects_invalid_workflow_id() {
-    assert!(serde_json::from_value::<ListRunsParams>(json!({"workflow_id": "not-a-uuid"})).is_err());
+    assert!(
+        serde_json::from_value::<ListRunsParams>(json!({"workflow_id": "not-a-uuid"})).is_err()
+    );
 }
 
 // Registration checks complement serializer/service tests without building the

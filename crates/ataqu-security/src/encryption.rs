@@ -58,8 +58,8 @@ impl Encryptor {
     }
 
     fn key_from_env(var: &str) -> Result<[u8; 32], String> {
-        let raw = std::env::var(var)
-            .map_err(|_| format!("{var} must be set (32 bytes, base64)"))?;
+        let raw =
+            std::env::var(var).map_err(|_| format!("{var} must be set (32 bytes, base64)"))?;
         Self::decode_key(&raw)
     }
 
@@ -80,8 +80,7 @@ impl Encryptor {
         let nonce = Nonce::from_slice(&nonce_bytes);
         let ciphertext = cipher.encrypt(nonce, plaintext.as_bytes()).unwrap();
 
-        let mut combined =
-            Vec::with_capacity(VERSION_LEN + NONCE_LEN + ciphertext.len());
+        let mut combined = Vec::with_capacity(VERSION_LEN + NONCE_LEN + ciphertext.len());
         combined.push(0u8); // version of the primary key
         combined.extend_from_slice(&nonce_bytes);
         combined.extend_from_slice(&ciphertext);
@@ -98,16 +97,18 @@ impl Encryptor {
         if combined.len() > VERSION_LEN + NONCE_LEN {
             let version = combined[0] as usize;
             if version < self.keys.len()
-                && let Ok(pt) = self.decrypt_with(version, &combined[VERSION_LEN..]) {
-                    return Ok(pt);
-                }
+                && let Ok(pt) = self.decrypt_with(version, &combined[VERSION_LEN..])
+            {
+                return Ok(pt);
+            }
         }
 
         // Fall back to the legacy `nonce || ciphertext` layout (primary key).
         if combined.len() >= NONCE_LEN
-            && let Ok(pt) = self.decrypt_with(0, &combined) {
-                return Ok(pt);
-            }
+            && let Ok(pt) = self.decrypt_with(0, &combined)
+        {
+            return Ok(pt);
+        }
 
         Err("Decryption failed".to_string())
     }

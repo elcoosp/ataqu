@@ -12,7 +12,9 @@ use ataqu_domain_dial::chat::{
 use ataqu_domain_dial::error::DialError;
 use ataqu_domain_dial::presence::PresenceStore;
 use ataqu_domain_dial::repository::DialRepository;
-use ataqu_domain_dial::ticket::{CreateTicket, Ticket, TicketMessage, TicketPriority, TicketStatus, UpdateTicket};
+use ataqu_domain_dial::ticket::{
+    CreateTicket, Ticket, TicketMessage, TicketPriority, TicketStatus, UpdateTicket,
+};
 use ataqu_kernel::{Clock, IdGenerator, TenantId};
 
 // Re-export domain types for API layer
@@ -1075,7 +1077,12 @@ impl DialService {
             .map_err(DialServiceError::Domain)?;
         // Refresh the list-view preview.
         self.repo
-            .update_ticket(&tenant_id, &ticket_id, &UpdateTicket::default(), Some(&message.content))
+            .update_ticket(
+                &tenant_id,
+                &ticket_id,
+                &UpdateTicket::default(),
+                Some(&message.content),
+            )
             .await
             .map_err(DialServiceError::Domain)?;
         Ok(message)
