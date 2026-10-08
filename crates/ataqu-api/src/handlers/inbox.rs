@@ -203,7 +203,7 @@ pub async fn get_inbox(
 
 /// Authenticated inbox routes.
 pub fn inbox_routes() -> Router<AppState> {
-    Router::new().route("/inbox", get(get_inbox))
+    Router::new().route("/", get(get_inbox))
 }
 
 #[cfg(test)]

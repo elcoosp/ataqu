@@ -382,7 +382,7 @@ pub async fn submit_form_step(
 
 pub fn public_routes() -> Router<AppState> {
     Router::new()
-        .route("/forms/{id}", axum::routing::get(get_form_public))
+        .route("/public/forms/{id}", axum::routing::get(get_form_public))
         .route("/forms/{id}/submit", axum::routing::post(submit_form))
         .route(
             "/forms/{id}/submit/step",

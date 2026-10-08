@@ -81,6 +81,36 @@ pub async fn toggle_integration(
     }))
 }
 
+pub async fn get_integration_status(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Path(integration): Path<String>,
+) -> ApiResult<Json<IntegrationStatus>> {
+    use sqlx::Row;
+    let pool = state.db.get_postgres_connection_pool();
+    let row = sqlx::query(
+        "SELECT enabled, updated_at FROM collab_crm.integrations WHERE tenant_id = $1 AND integration = $2",
+    )
+    .bind(auth.tenant_id.as_uuid())
+    .bind(&integration)
+    .fetch_optional(pool)
+    .await
+    .map_err(|_| ApiResponseError::internal("Failed to read integration"))?;
+    let status = match row {
+        Some(r) => IntegrationStatus {
+            integration,
+            enabled: r.get::<bool, _>("enabled"),
+            updated_at: r.get::<DateTime<Utc>, _>("updated_at"),
+        },
+        None => IntegrationStatus {
+            integration,
+            enabled: false,
+            updated_at: Utc::now(),
+        },
+    };
+    Ok(Json(status))
+}
+
 #[derive(Debug, Deserialize, Default)]
 pub struct PaginationParams {
     pub limit: Option<u64>,
@@ -1282,6 +1312,7 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/contacts/bulk-delete", post(bulk_delete_contacts))
         .route("/deals/bulk-delete", post(bulk_delete_deals))
+        .route("/tasks/bulk-delete", post(bulk_delete_tasks))
         .route("/deals", post(create_deal).get(list_deals))
         .route(
             "/deals/{id}",
@@ -1315,6 +1346,7 @@ pub fn routes() -> Router<AppState> {
         .route("/deals/export", get(export_deals))
         .route("/email/track", post(track_email))
         .route("/integrations/toggle", post(toggle_integration))
+        .route("/integrations/{integration}", get(get_integration_status))
         .route(
             "/establishments",
             get(list_establishments).post(create_establishment),

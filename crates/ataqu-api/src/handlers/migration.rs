@@ -201,6 +201,6 @@ pub async fn import_data(
 pub fn routes() -> axum::Router<crate::AppState> {
     use axum::routing::post;
     axum::Router::new()
-        .route("/migration/parse", post(parse_file))
-        .route("/migration/import", post(import_data))
+        .route("/parse", post(parse_file))
+        .route("/import", post(import_data))
 }

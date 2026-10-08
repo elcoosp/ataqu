@@ -860,6 +860,53 @@ pub struct TenantSettingsResponse {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TenantOverviewResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub plan: String,
+    pub user_count: i64,
+    pub api_key_count: i64,
+}
+
+pub async fn get_tenant_overview(
+    State(state): State<crate::AppState>,
+    auth: AuthContext,
+) -> ApiResult<Json<TenantOverviewResponse>> {
+    let pool = state.db.get_postgres_connection_pool();
+    let tenant_id = auth.tenant_id.as_uuid();
+
+    let name: Option<String> =
+        sqlx::query_scalar("SELECT name FROM core.tenant_settings WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|_| ApiResponseError::internal("Failed to read tenant"))?;
+
+    let user_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core.users WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_one(pool)
+            .await
+            .map_err(|_| ApiResponseError::internal("Failed to count users"))?;
+
+    let api_key_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core.api_keys WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_one(pool)
+            .await
+            .map_err(|_| ApiResponseError::internal("Failed to count API keys"))?;
+
+    Ok(Json(TenantOverviewResponse {
+        id: tenant_id,
+        name: name.unwrap_or_default(),
+        plan: "standard".to_string(),
+        user_count,
+        api_key_count,
+    }))
+}
+
 pub async fn get_tenant_settings(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -1147,6 +1194,8 @@ pub fn routes() -> axum::Router<crate::AppState> {
     axum::Router::new()
         .route("/me", get(get_me))
         .route("/audit-log", get(get_audit_log))
+        .route("/audit-log/export", get(export_audit_log))
+        .route("/tenant", get(get_tenant_overview))
         .route("/users", post(create_user).get(list_users))
         .route("/users/{id}/role", patch(update_user_role))
         .route("/users/{id}/deactivate", post(deactivate_user))
