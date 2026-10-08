@@ -2,13 +2,9 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 
 export function CalendarSettings() {
-	const handleConnectGoogle = () => {
-		window.location.href = "/api/v1/tempo/oauth/google";
-	};
-
-	const handleConnectOutlook = () => {
-		window.location.href = "/api/v1/tempo/oauth/outlook";
-	};
+	// Calendar OAuth has no backend yet (plan C4) — buttons stay disabled.
+	const handleConnectGoogle = () => {};
+	const handleConnectOutlook = () => {};
 
 	return (
 		<div className="space-y-6">
@@ -23,6 +19,8 @@ export function CalendarSettings() {
 						onClick={handleConnectGoogle}
 						variant="outline"
 						className="w-full"
+						disabled
+						title="Coming soon"
 					>
 						<Trans>Connect Google Calendar</Trans>
 					</Button>
@@ -30,9 +28,14 @@ export function CalendarSettings() {
 						onClick={handleConnectOutlook}
 						variant="outline"
 						className="w-full"
+						disabled
+						title="Coming soon"
 					>
 						<Trans>Connect Outlook Calendar</Trans>
 					</Button>
+					<p className="text-sm text-muted-foreground">
+						<Trans>Coming soon</Trans>
+					</p>
 				</CardContent>
 			</Card>
 

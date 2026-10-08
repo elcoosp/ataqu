@@ -1,3 +1,5 @@
+import { PageLayout } from "@ataqu/ui";
+import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { VistaCommandRegistrar } from "../../../apps/vista/actions";
 import { SqlEditor } from "../../../apps/vista/components/sql-editor";
@@ -8,16 +10,17 @@ export const Route = createFileRoute("/_auth/vista/explore")({
 
 function ExplorePage() {
 	return (
-		<>
+		<PageLayout
+			title={<Trans>Explore data</Trans>}
+			breadcrumbs={[
+				{ label: "VISTA", to: "/vista/dashboard" },
+				{ label: "Explore" },
+			]}
+		>
 			<VistaCommandRegistrar />
-			<div className="flex flex-col h-full">
-				<div className="p-4 border-b border-border/40">
-					<h1 className="text-xl font-heading text-foreground">Explore Data</h1>
-				</div>
-				<div className="flex-1 overflow-hidden">
-					<SqlEditor />
-				</div>
+			<div className="h-[calc(100vh-12rem)]">
+				<SqlEditor />
 			</div>
-		</>
+		</PageLayout>
 	);
 }

@@ -1,42 +1,6 @@
-import { getCrossAppView } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
-import { Badge, Bone } from "@ataqu/ui";
-import { Trans } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
 
-export function CrossAppBadge({ entityId }: { entityId: UUID }) {
-	const { data, isLoading } = useQuery({
-		queryKey: ["cinq", "crossApp", entityId],
-		queryFn: () => getCrossAppView({ view: "relations" }),
-	});
-
-	if (isLoading)
-		return (
-			<Bone
-				loading
-				name="cross-app-badge-1"
-				fallback={<div className="h-6 w-24" />}
-			>
-				{null}
-			</Bone>
-		);
-	if (!data || (data as any[]).length === 0) return null;
-
-	const relations = data as any[];
-	const vaultRelation = relations.find((r) => r.app === "vault");
-	if (!vaultRelation) return null;
-
-	return (
-		<Badge variant="outline" className="gap-1">
-			<Trans>Stock reserved in VAULT</Trans>
-			<a
-				href={vaultRelation.link}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="underline"
-			>
-				{vaultRelation.label}
-			</a>
-		</Badge>
-	);
+// TODO(C3): re-enable when GET /cross-app/relations ships (see ATAQU_COMPLETION_PLAN.md C3).
+export function CrossAppBadge(_props: { entityId: UUID }) {
+	return null;
 }

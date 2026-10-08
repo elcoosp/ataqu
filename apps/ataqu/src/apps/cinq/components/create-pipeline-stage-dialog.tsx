@@ -59,7 +59,7 @@ export function CreatePipelineStageDialog({
 				<Bone
 					loading={submitting}
 					name="create-stage"
-					fallback={<div className="h-32 w-full rounded bg-white/5" />}
+					fallback={<div className="h-32 w-full rounded bg-card/5" />}
 				>
 					<form
 						className="space-y-3"

@@ -13,6 +13,8 @@ local.db
 coverage/
 coverage-browser/
 **/__screenshots__/
+screenshots/
+apps/ataqu/e2e/.auth/
 .vitest-attachments/
 reddit-session.json
 tsconfig.tsbuildinfo

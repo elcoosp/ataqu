@@ -10,6 +10,8 @@
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test apps/ataqu/e2e",
+		"test:shots": "playwright test apps/ataqu/e2e/screenshots.spec.ts",
+		"check:contract": "node scripts/check-api-contract.mjs",
 		"lint": "biome check --write --unsafe .",
 		"extract": "pnpm -r extract",
 		"compile": "pnpm -r compile",

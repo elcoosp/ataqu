@@ -13,8 +13,25 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: ids.length
+#: src/components/bulk-action-bar.tsx
+msgid "{0} selected"
+msgstr ""
+
+#: src/components/setup-progress-widget.tsx
+msgid "Activation checklist"
+msgstr ""
+
 #: src/components/auth/RegisterForm.tsx
 msgid "Already have an account?"
+msgstr ""
+
+#: src/components/inbox-bell.tsx
+msgid "Auto-refreshes every 30s"
+msgstr ""
+
+#: src/components/changelog-bell.tsx
+msgid "Breaking"
 msgstr ""
 
 #: src/components/auth/RegisterForm.tsx
@@ -46,9 +63,35 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
+#: src/components/inbox-bell.tsx
+msgid "Inbox"
+msgstr ""
+
+#: src/components/changelog-bell.tsx
+#: src/components/inbox-bell.tsx
+#: src/components/setup-progress-widget.tsx
+msgid "Loading…"
+msgstr ""
+
+#: src/components/user-menu.tsx
+msgid "Log out"
+msgstr ""
+
+#: src/components/setup-progress-widget.tsx
+msgid "No setup tasks."
+msgstr ""
+
+#: src/components/changelog-bell.tsx
+msgid "No updates yet."
+msgstr ""
+
 #: src/components/auth/LoginForm.tsx
 #: src/components/auth/RegisterForm.tsx
 msgid "Password"
+msgstr ""
+
+#: src/components/setup-progress-widget.tsx
+msgid "Setup {pct}% ({done}/{total})"
 msgstr ""
 
 #: src/components/auth/LoginForm.tsx
@@ -62,4 +105,12 @@ msgstr ""
 
 #: src/components/auth/LoginForm.tsx
 msgid "Signing in…"
+msgstr ""
+
+#: src/components/changelog-bell.tsx
+msgid "What's new"
+msgstr ""
+
+#: src/components/inbox-bell.tsx
+msgid "You're all caught up."
 msgstr ""

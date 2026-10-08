@@ -1,0 +1,2 @@
+# Known debt (plan C3): endpoint does not exist yet; callers degrade silently.
+/api/dial/channels/{}/cinq-context

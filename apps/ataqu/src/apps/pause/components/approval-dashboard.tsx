@@ -7,6 +7,7 @@ import {
 	useListLeaveRequests,
 } from "@ataqu/api-client";
 import { useOptimisticMutation } from "@ataqu/shared-hooks";
+import { handleApiError } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Button,
@@ -16,11 +17,10 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { handleApiError } from "@ataqu/shared-utils";
 
 type LeaveCache = PaginatedResponse<LeaveRequest> | undefined;
 type LeaveVars = { id: string; version: number };
@@ -183,14 +183,9 @@ export function ApprovalDashboard() {
 							disabled={approveMutation.isPending}
 							className="bg-success text-foreground hover:bg-success"
 						>
-							<Button
-								size="sm"
-								variant="ghost"
-								className="h-full w-full"
-								disabled={approveMutation.isPending}
-							>
+							<span className="inline-flex h-8 w-8 items-center justify-center">
 								<Check className="h-4 w-4" />
-							</Button>
+							</span>
 						</HoldToConfirm>
 						<HoldToConfirm
 							onConfirm={() =>

@@ -43,22 +43,6 @@ export const tempoActions: TempoAction[] = [
 		label: "Go to Calendar Settings",
 		action: () => navigate("/tempo/calendar-settings"),
 	},
-	{
-		id: "connect-google",
-		label: "Connect Google Calendar",
-		action: () => {
-			// OAuth consent must be a full document navigation: the provider
-			// redirects back to the API and the session cookie is set there.
-			window.location.href = "/api/v1/tempo/oauth/google";
-		},
-	},
-	{
-		id: "connect-outlook",
-		label: "Connect Outlook Calendar",
-		action: () => {
-			window.location.href = "/api/v1/tempo/oauth/outlook";
-		},
-	},
 ];
 
 /** Adapts TEMPO actions to the unified command-palette contract. */

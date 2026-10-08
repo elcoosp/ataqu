@@ -75,12 +75,12 @@ export const Route = createFileRoute("/login")({
 		};
 
 		const fillDemoCredentials = () => {
-		setMode("login");
-		setEmail("demo@ataqu.com");
-		setPassword("demo1234");
-	};
+			setMode("login");
+			setEmail("demo@ataqu.com");
+			setPassword("demo1234");
+		};
 
-	const handlePasswordLogin = (e: React.FormEvent) => {
+		const handlePasswordLogin = (e: React.FormEvent) => {
 			e.preventDefault();
 			if (mode === "signup") {
 				signupMutation.mutate({ email, password, name: name || undefined });
@@ -117,7 +117,7 @@ export const Route = createFileRoute("/login")({
 					<div className="space-y-3">
 						<Button
 							onClick={() => handleSSO("google")}
-							className="w-full bg-white text-black hover:bg-background dark:bg-card dark:text-foreground dark:hover:bg-border"
+							className="w-full bg-card text-black hover:bg-background dark:bg-card dark:text-foreground dark:hover:bg-border"
 						>
 							<Trans>Continue with Google</Trans>
 						</Button>

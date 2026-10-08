@@ -1,5 +1,5 @@
 import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
-import { Button, DashboardLayout } from "@ataqu/ui";
+import { Button, PageLayout } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
@@ -25,20 +25,21 @@ function TasksPage() {
 		serialize: (v) => (v ? "1" : undefined),
 	});
 	return (
-		<DashboardLayout>
-			<div className="p-4">
-				<div className="flex items-center justify-between mb-4">
-					<h1 className="text-2xl font-bold">
-						<Trans>Tasks</Trans>
-					</h1>
-					<Button size="sm" onClick={() => setOpenCreate(true)}>
-						<Plus className="h-4 w-4 mr-1" />
-						<Trans>New Task</Trans>
-					</Button>
-				</div>
-				<TaskList />
-			</div>
+		<PageLayout
+			title={<Trans>Tasks</Trans>}
+			breadcrumbs={[
+				{ label: "CINQ", to: "/cinq/dashboard" },
+				{ label: "Tasks" },
+			]}
+			actions={
+				<Button size="sm" onClick={() => setOpenCreate(true)}>
+					<Plus className="mr-1 h-4 w-4" />
+					<Trans>New Task</Trans>
+				</Button>
+			}
+		>
+			<TaskList />
 			<CreateTaskDialog open={openCreate} onOpenChange={setOpenCreate} />
-		</DashboardLayout>
+		</PageLayout>
 	);
 }

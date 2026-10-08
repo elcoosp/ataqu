@@ -39,7 +39,7 @@ function CrossAppView({ view }: { view: string }) {
 				<Bone
 					loading={isLoading}
 					name="cross-app-view"
-					fallback={<div className="h-24 w-full rounded bg-white/5" />}
+					fallback={<div className="h-24 w-full rounded bg-card/5" />}
 				>
 					{error ? (
 						<p className="text-sm text-destructive">

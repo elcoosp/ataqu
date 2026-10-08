@@ -92,7 +92,7 @@ export function CreateDealDialog({
 				<Bone
 					loading={submitting}
 					name="create-deal"
-					fallback={<div className="h-48 w-full rounded bg-white/5" />}
+					fallback={<div className="h-48 w-full rounded bg-card/5" />}
 				>
 					<form
 						className="space-y-3"

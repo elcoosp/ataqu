@@ -44,11 +44,15 @@ import { StockAdjustment } from "./stock-adjustment";
 const tourSteps = [
 	{
 		selector: '[data-tour="stock-display"]',
-		content: t`Real-time stock. Zero race conditions.`,
+		content: <Trans>Real-time stock. Zero race conditions.</Trans>,
 	},
 	{
 		selector: '[data-tour="adjust-stock"]',
-		content: t`Adjust it. The math is protected at the database level. No overselling.`,
+		content: (
+			<Trans>
+				Adjust it. The math is protected at the database level. No overselling.
+			</Trans>
+		),
 	},
 ];
 

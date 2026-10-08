@@ -3,8 +3,15 @@
  * establishments, email tracking, CSV import/export, integration toggles.
  * Mirrors crates/ataqu-api handlers/cinq.rs.
  */
-import { http, HttpResponse, type HttpHandler } from "msw";
-import { audit, bump, db, nextId, type MockContact, type MockDeal } from "../db";
+import { type HttpHandler, HttpResponse, http } from "msw";
+import {
+	audit,
+	bump,
+	db,
+	type MockContact,
+	type MockDeal,
+	nextId,
+} from "../db";
 import {
 	apiError,
 	bare,
@@ -24,10 +31,13 @@ import {
 export const cinqHandlers: HttpHandler[] = [
 	// -------------------------------------------------------------- contacts
 	http.get("/api/cinq/contacts", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const url = new URL(request.url);
 		const qs = url.searchParams.get("q");
-		let rows = [...db.contacts].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+		let rows = [...db.contacts].sort((a, b) =>
+			a.created_at < b.created_at ? 1 : -1,
+		);
 		if (qs) {
 			rows = rows.filter(
 				(c) =>
@@ -60,12 +70,15 @@ export const cinqHandlers: HttpHandler[] = [
 			version: 1,
 		};
 		db.contacts.push(contact);
-		audit(actor, "contact.create", "cinq", "contact", contact.id, { name: contact.name });
+		audit(actor, "contact.create", "cinq", "contact", contact.id, {
+			name: contact.name,
+		});
 		return created(contact as unknown as Record<string, unknown>);
 	}),
 
 	http.get("/api/cinq/contacts/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const contact = db.contacts.find((c) => c.id === params.id);
 		return contact ? ok(contact) : notFound("Contact");
 	}),
@@ -79,11 +92,15 @@ export const cinqHandlers: HttpHandler[] = [
 		if (conflictResp) return conflictResp;
 		const body = await jsonBody<Partial<MockContact>>(request);
 		if (body.name !== undefined && body.name !== null) contact.name = body.name;
-		if (body.email !== undefined && body.email !== null) contact.email = body.email;
+		if (body.email !== undefined && body.email !== null)
+			contact.email = body.email;
 		if (body.phone !== undefined) contact.phone = body.phone ?? undefined;
 		if (body.company !== undefined) contact.company = body.company ?? undefined;
 		if (body.custom_fields !== undefined && body.custom_fields !== null) {
-			contact.custom_fields = { ...contact.custom_fields, ...body.custom_fields };
+			contact.custom_fields = {
+				...contact.custom_fields,
+				...body.custom_fields,
+			};
 		}
 		if (body.lead_score !== undefined && body.lead_score !== null) {
 			contact.lead_score = body.lead_score;
@@ -109,18 +126,25 @@ export const cinqHandlers: HttpHandler[] = [
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const { ids } = await jsonBody<{ ids: string[] }>(request);
 		db.contacts = db.contacts.filter((c) => !ids?.includes(c.id));
-		audit(actor, "contact.bulk_delete", "cinq", "contact", undefined, { count: ids?.length ?? 0 });
+		audit(actor, "contact.bulk_delete", "cinq", "contact", undefined, {
+			count: ids?.length ?? 0,
+		});
 		return noContent();
 	}),
 
 	// ----------------------------------------------------------------- deals
 	http.get("/api/cinq/deals", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const url = new URL(request.url);
 		const qs = url.searchParams.get("q");
-		let rows = [...db.deals].sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1));
+		let rows = [...db.deals].sort((a, b) =>
+			a.updated_at < b.updated_at ? 1 : -1,
+		);
 		if (qs) {
-			rows = rows.filter((d) => d.title.toLowerCase().includes(qs.toLowerCase()));
+			rows = rows.filter((d) =>
+				d.title.toLowerCase().includes(qs.toLowerCase()),
+			);
 		}
 		return page(rows, listParams(request, 1000));
 	}),
@@ -153,7 +177,8 @@ export const cinqHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/cinq/deals/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const deal = db.deals.find((d) => d.id === params.id);
 		return deal ? ok(deal) : notFound("Deal");
 	}),
@@ -170,7 +195,8 @@ export const cinqHandlers: HttpHandler[] = [
 		if (body.amount != null) deal.amount = body.amount;
 		if (body.status != null) deal.status = body.status;
 		if (body.contact_id != null) deal.contact_id = body.contact_id;
-		if (body.pipeline_stage_id != null) deal.pipeline_stage_id = body.pipeline_stage_id;
+		if (body.pipeline_stage_id != null)
+			deal.pipeline_stage_id = body.pipeline_stage_id;
 		if (body.owner_id !== undefined) deal.owner_id = body.owner_id ?? undefined;
 		if (body.probability != null) deal.probability = body.probability;
 		if (body.quantity != null) deal.quantity = body.quantity;
@@ -195,13 +221,16 @@ export const cinqHandlers: HttpHandler[] = [
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const { ids } = await jsonBody<{ ids: string[] }>(request);
 		db.deals = db.deals.filter((d) => !ids?.includes(d.id));
-		audit(actor, "deal.bulk_delete", "cinq", "deal", undefined, { count: ids?.length ?? 0 });
+		audit(actor, "deal.bulk_delete", "cinq", "deal", undefined, {
+			count: ids?.length ?? 0,
+		});
 		return noContent();
 	}),
 
 	// -------------------------------------------------------------- pipeline
 	http.get("/api/cinq/pipeline/stages", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return ok([...db.stages].sort((a, b) => a.order - b.order));
 	}),
 
@@ -217,7 +246,9 @@ export const cinqHandlers: HttpHandler[] = [
 			version: 1,
 		};
 		db.stages.push(stage);
-		audit(actor, "stage.create", "cinq", "stage", stage.id, { name: stage.name });
+		audit(actor, "stage.create", "cinq", "stage", stage.id, {
+			name: stage.name,
+		});
 		return created(stage as unknown as Record<string, unknown>);
 	}),
 
@@ -248,9 +279,12 @@ export const cinqHandlers: HttpHandler[] = [
 
 	// ------------------------------------------------------------ activities
 	http.get("/api/cinq/activities", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const contactId = new URL(request.url).searchParams.get("contact_id");
-		let rows = [...db.activities].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+		let rows = [...db.activities].sort((a, b) =>
+			a.created_at < b.created_at ? 1 : -1,
+		);
 		if (contactId) rows = rows.filter((a) => a.contact_id === contactId);
 		return page(rows, listParams(request, 100));
 	}),
@@ -283,15 +317,21 @@ export const cinqHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/cinq/activities/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const activity = db.activities.find((a) => a.id === params.id);
 		return activity ? ok(activity) : notFound("Activity");
 	}),
 
 	// ----------------------------------------------------------------- tasks
 	http.get("/api/cinq/tasks", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		return bare([...db.tasks].sort((a, b) => (a.due_date ?? "") > (b.due_date ?? "") ? 1 : -1));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		return bare(
+			[...db.tasks].sort((a, b) =>
+				(a.due_date ?? "") > (b.due_date ?? "") ? 1 : -1,
+			),
+		);
 	}),
 
 	http.post("/api/cinq/tasks", async ({ request }) => {
@@ -299,10 +339,15 @@ export const cinqHandlers: HttpHandler[] = [
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const body = await jsonBody<Record<string, never>>(request);
 		const payload = body as unknown as {
-			title: string; description?: string; due_date?: string;
-			contact_id?: string; deal_id?: string; assigned_to?: string;
+			title: string;
+			description?: string;
+			due_date?: string;
+			contact_id?: string;
+			deal_id?: string;
+			assigned_to?: string;
 		};
-		if (!payload.title?.trim()) return validationError("Task title is required");
+		if (!payload.title?.trim())
+			return validationError("Task title is required");
 		const now = new Date().toISOString();
 		const task = {
 			id: nextId("tsk"),
@@ -323,7 +368,8 @@ export const cinqHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/cinq/tasks/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const task = db.tasks.find((t) => t.id === params.id);
 		return task ? ok(task) : notFound("Task");
 	}),
@@ -337,8 +383,10 @@ export const cinqHandlers: HttpHandler[] = [
 		if (conflictResp) return conflictResp;
 		const body = await jsonBody<Record<string, unknown>>(request);
 		if (body.title != null) task.title = body.title as string;
-		if (body.description !== undefined) task.description = (body.description as string) ?? undefined;
-		if (body.due_date !== undefined) task.due_date = (body.due_date as string) ?? undefined;
+		if (body.description !== undefined)
+			task.description = (body.description as string) ?? undefined;
+		if (body.due_date !== undefined)
+			task.due_date = (body.due_date as string) ?? undefined;
 		if (body.status != null) task.status = body.status as typeof task.status;
 		task.updated_at = new Date().toISOString();
 		const v = bump(task);
@@ -361,18 +409,22 @@ export const cinqHandlers: HttpHandler[] = [
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const { ids } = await jsonBody<{ ids: string[] }>(request);
 		db.tasks = db.tasks.filter((t) => !ids?.includes(t.id));
-		audit(actor, "task.bulk_delete", "cinq", "task", undefined, { count: ids?.length ?? 0 });
+		audit(actor, "task.bulk_delete", "cinq", "task", undefined, {
+			count: ids?.length ?? 0,
+		});
 		return noContent();
 	}),
 
 	http.get("/api/cinq/contacts/:contactId/tasks", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return bare(db.tasks.filter((t) => t.contact_id === params.contactId));
 	}),
 
 	// --------------------------------------------------------------- search
 	http.get("/api/cinq/search", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const qs = new URL(request.url).searchParams.get("q") ?? "";
 		return bare(
 			db.contacts.filter(
@@ -385,20 +437,26 @@ export const cinqHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/cinq/search/custom", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const url = new URL(request.url);
 		const field = url.searchParams.get("field") ?? "";
 		const value = (url.searchParams.get("value") ?? "").toLowerCase();
 		return bare(
 			db.contacts.filter((c) =>
-				String(c.custom_fields?.[field] ?? "").toLowerCase().includes(value),
+				String(c.custom_fields?.[field] ?? "")
+					.toLowerCase()
+					.includes(value),
 			),
 		);
 	}),
 
 	http.get("/api/cinq/search/custom/cross", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const value = (new URL(request.url).searchParams.get("q") ?? "").toLowerCase();
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const value = (
+			new URL(request.url).searchParams.get("q") ?? ""
+		).toLowerCase();
 		if (!value) return bare([]);
 		return bare(
 			db.contacts.filter((c) =>
@@ -415,10 +473,13 @@ export const cinqHandlers: HttpHandler[] = [
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const form = await request.formData();
 		const file = form.get("file");
-		if (!(file instanceof File)) return validationError("A CSV file is required");
+		if (!(file instanceof File))
+			return validationError("A CSV file is required");
 		const text = await file.text();
 		const lines = text.split(/\r?\n/).filter(Boolean);
-		const header = (lines[0] ?? "").split(",").map((h) => h.trim().toLowerCase());
+		const header = (lines[0] ?? "")
+			.split(",")
+			.map((h) => h.trim().toLowerCase());
 		const nameIdx = header.indexOf("name");
 		const emailIdx = header.indexOf("email");
 		const companyIdx = header.indexOf("company");
@@ -447,20 +508,31 @@ export const cinqHandlers: HttpHandler[] = [
 			});
 			imported += 1;
 		});
-		audit(actor, "contact.csv_import", "cinq", "contact", undefined, { imported, failed });
+		audit(actor, "contact.csv_import", "cinq", "contact", undefined, {
+			imported,
+			failed,
+		});
 		return ok({ imported, failed, failed_rows: failedRows });
 	}),
 
 	http.get("/api/cinq/csv/export", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return csvResponse(
 			["name", "email", "company", "phone", "lead_score"],
-			db.contacts.map((c) => [c.name, c.email, c.company ?? "", c.phone ?? "", String(c.lead_score ?? "")]),
+			db.contacts.map((c) => [
+				c.name,
+				c.email,
+				c.company ?? "",
+				c.phone ?? "",
+				String(c.lead_score ?? ""),
+			]),
 		);
 	}),
 
 	http.get("/api/cinq/deals/export", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return csvResponse(
 			["title", "amount", "status", "stage"],
 			db.deals.map((d) => [
@@ -495,7 +567,8 @@ export const cinqHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/cinq/contacts/:contactId/tracking", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const rows = db.tracking
 			.filter((t) => t.contact_id === params.contactId)
 			.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
@@ -504,29 +577,63 @@ export const cinqHandlers: HttpHandler[] = [
 	}),
 
 	// ---------------------------------------------------------- integrations
+	http.get("/api/cinq/integrations/:integration", ({ request, params }) => {
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const integration = String(params.integration);
+		const existing = db.integrationToggles.find(
+			(t) => t.integration === integration,
+		);
+		return ok({
+			integration,
+			enabled: existing?.enabled ?? false,
+			updated_at: new Date().toISOString(),
+		});
+	}),
 	http.post("/api/cinq/integrations/toggle", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ integration: string; enabled: boolean }>(request);
+		const body = await jsonBody<{ integration: string; enabled: boolean }>(
+			request,
+		);
 		if (!body.integration) return validationError("integration is required");
-		const existing = db.integrationToggles.find((t) => t.integration === body.integration);
+		const existing = db.integrationToggles.find(
+			(t) => t.integration === body.integration,
+		);
 		if (existing) existing.enabled = body.enabled;
-		else db.integrationToggles.push({ integration: body.integration, enabled: body.enabled });
-		audit(actor, "integration.toggle", "cinq", "integration", body.integration, body);
+		else
+			db.integrationToggles.push({
+				integration: body.integration,
+				enabled: body.enabled,
+			});
+		audit(
+			actor,
+			"integration.toggle",
+			"cinq",
+			"integration",
+			body.integration,
+			body,
+		);
 		return ok({ integration: body.integration, enabled: body.enabled });
 	}),
 
 	// -------------------------------------------------------- establishments
 	http.get("/api/cinq/establishments", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return bare(db.establishments);
 	}),
 
 	http.post("/api/cinq/establishments", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ company_name: string; siret?: string; address?: string }>(request);
-		if (!body.company_name?.trim()) return validationError("Company name is required");
+		const body = await jsonBody<{
+			company_name: string;
+			siret?: string;
+			address?: string;
+		}>(request);
+		if (!body.company_name?.trim())
+			return validationError("Company name is required");
 		const now = new Date().toISOString();
 		const establishment = {
 			id: nextId("est"),
@@ -537,7 +644,13 @@ export const cinqHandlers: HttpHandler[] = [
 			updated_at: now,
 		};
 		db.establishments.push(establishment);
-		audit(actor, "establishment.create", "cinq", "establishment", establishment.id);
+		audit(
+			actor,
+			"establishment.create",
+			"cinq",
+			"establishment",
+			establishment.id,
+		);
 		return created(establishment as unknown as Record<string, unknown>);
 	}),
 ];
@@ -548,7 +661,10 @@ type MockActivity2 = {
 };
 
 function csvResponse(headers: string[], rows: string[][]) {
-	const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(","))].join("\n");
+	const csv = [
+		headers.join(","),
+		...rows.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(",")),
+	].join("\n");
 	return new HttpResponse(csv, {
 		headers: {
 			"Content-Type": "text/csv; charset=utf-8",

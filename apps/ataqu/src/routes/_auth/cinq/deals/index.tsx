@@ -1,16 +1,17 @@
 import {
 	type DealResponse,
+	exportDealsCsv,
 	useBulkDeleteDeals,
 	useListDeals,
 } from "@ataqu/api-client";
 import { searchSchema, useUrlState } from "@ataqu/shared-hooks";
-import { handleApiError } from "@ataqu/shared-utils";
-import { Button, DashboardLayout, OnboardTour, useConfirm } from "@ataqu/ui";
+import { downloadBlob, handleApiError } from "@ataqu/shared-utils";
+import { Button, OnboardTour, PageLayout, useConfirm } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { CreateDealDialog } from "../../../../apps/cinq/components/create-deal-dialog";
@@ -89,47 +90,62 @@ function DealsIndex() {
 	}, [confirm, allDealIds, bulkDeleteDeals]);
 	return (
 		<OnboardTour tourId="cinq-kanban-tour" steps={tourSteps}>
-			<DashboardLayout>
-				<div className="p-4">
-					<div className="flex items-center justify-between mb-4">
-						<h1 className="text-2xl font-bold">
-							<Trans>Deals</Trans>
-						</h1>
-						<div className="flex gap-2">
+			<PageLayout
+				title={<Trans>Deals</Trans>}
+				breadcrumbs={[
+					{ label: "CINQ", to: "/cinq/dashboard" },
+					{ label: "Deals" },
+				]}
+				actions={
+					<>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={async () => {
+								try {
+									downloadBlob(await exportDealsCsv(), "deals.csv");
+								} catch (e) {
+									toast.error(handleApiError(e));
+								}
+							}}
+						>
+							<Download className="mr-1 h-4 w-4" />
+							<Trans>Export CSV</Trans>
+						</Button>
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={() => setOpenStage(true)}
+						>
+							<Plus className="h-4 w-4 mr-1" />
+							<Trans>New Stage</Trans>
+						</Button>
+						<Button size="sm" onClick={() => setOpenCreate(true)}>
+							<Plus className="h-4 w-4 mr-1" />
+							<Trans>New Deal</Trans>
+						</Button>
+						{allDealIds.length > 0 && (
 							<Button
 								size="sm"
-								variant="outline"
-								onClick={() => setOpenStage(true)}
+								variant="destructive"
+								onClick={() => {
+									void handleDeleteAll();
+								}}
 							>
-								<Plus className="h-4 w-4 mr-1" />
-								<Trans>New Stage</Trans>
+								<Trash2 className="h-4 w-4 mr-1" />
+								<Trans>Delete all</Trans>
 							</Button>
-							<Button size="sm" onClick={() => setOpenCreate(true)}>
-								<Plus className="h-4 w-4 mr-1" />
-								<Trans>New Deal</Trans>
-							</Button>
-							{allDealIds.length > 0 && (
-								<Button
-									size="sm"
-									variant="destructive"
-									onClick={() => {
-										void handleDeleteAll();
-									}}
-								>
-									<Trash2 className="h-4 w-4 mr-1" />
-									<Trans>Delete all</Trans>
-								</Button>
-							)}
-						</div>
-					</div>
-					<DealKanban />
-				</div>
+						)}
+					</>
+				}
+			>
+				<DealKanban />
 				<CreateDealDialog open={openCreate} onOpenChange={setOpenCreate} />
 				<CreatePipelineStageDialog
 					open={openStage}
 					onOpenChange={setOpenStage}
 				/>
-			</DashboardLayout>
+			</PageLayout>
 		</OnboardTour>
 	);
 }

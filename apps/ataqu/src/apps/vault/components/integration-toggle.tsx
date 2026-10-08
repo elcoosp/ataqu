@@ -6,16 +6,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
+const INTEGRATION = "vault";
+
 export function IntegrationToggle({ entityId }: { entityId: UUID }) {
 	const queryClient = useQueryClient();
 	const [localEnabled, setLocalEnabled] = useState(false);
 
 	const { data: status } = useQuery({
-		queryKey: ["integrations", "cinq", entityId],
+		queryKey: ["integrations", INTEGRATION],
 		queryFn: () =>
-			api.get<{ enabled: boolean }>("/api/v1/integrations/status", {
-				params: { sourceApp: "cinq", targetApp: "vault", entityId },
-			}),
+			api.get<{ enabled: boolean }>(`/cinq/integrations/${INTEGRATION}`),
 		retry: false,
 	});
 
@@ -23,16 +23,14 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
 
 	const toggleIntegration = useMutation({
 		mutationFn: (nextEnabled: boolean) =>
-			api.post<void>("/api/v1/integrations/toggle", {
-				sourceApp: "cinq",
-				targetApp: "vault",
-				entityId,
+			api.post<void>("/cinq/integrations/toggle", {
+				integration: INTEGRATION,
 				enabled: nextEnabled,
 			}),
 		onSuccess: (_data, nextEnabled) => {
 			setLocalEnabled(nextEnabled);
 			void queryClient.invalidateQueries({
-				queryKey: ["integrations", "cinq", entityId],
+				queryKey: ["integrations", INTEGRATION],
 			});
 
 			toast.success(
@@ -85,6 +83,7 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
 						<Trans>Connected to CINQ</Trans>
 					</Badge>
 				) : null}
+				<span className="sr-only">{entityId}</span>
 			</div>
 		</div>
 	);

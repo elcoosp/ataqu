@@ -84,15 +84,15 @@ function SortableHead({
 
 const CONTACTS_FIXTURE = (
 	<div className="space-y-2">
-		<div className="h-6 w-40 rounded bg-muted dark:bg-white/10" />
+		<div className="h-6 w-40 rounded bg-muted dark:bg-card/10" />
 		{Array.from({ length: 6 }).map((_, i) => (
 			<div
 				key={i}
 				className="flex items-center gap-3 rounded border border-border/40 p-2"
 			>
 				<div className="h-4 w-4 rounded" />
-				<div className="h-4 w-40 rounded bg-muted dark:bg-white/10" />
-				<div className="h-4 w-52 rounded bg-muted dark:bg-white/10" />
+				<div className="h-4 w-40 rounded bg-muted dark:bg-card/10" />
+				<div className="h-4 w-52 rounded bg-muted dark:bg-card/10" />
 				<div className="h-7 w-16 rounded border border-destructive/40" />
 			</div>
 		))}
@@ -545,8 +545,8 @@ function ContactTableBody({
 												data-index={vRow.index}
 												ref={measureElement}
 												className={cn(
-													"border-b border-border/50 hover:bg-white/5 cursor-pointer transition-colors",
-													vRow.index === cursor && "bg-white/10",
+													"border-b border-border/50 hover:bg-card/5 cursor-pointer transition-colors",
+													vRow.index === cursor && "bg-card/10",
 												)}
 												onClick={() => onOpen(contact.id)}
 											>

@@ -143,7 +143,7 @@ export function TicketList() {
 				{data.items.map((ticket, index) => (
 					<TableRow
 						key={ticket.id}
-						className={cn(index === cursor && "bg-white/10")}
+						className={cn(index === cursor && "bg-card/10")}
 					>
 						<TableCell>
 							<Link

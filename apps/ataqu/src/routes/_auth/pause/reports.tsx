@@ -1,3 +1,4 @@
+import { PageLayout } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
 import { ReportsView } from "../../../apps/pause/components/reports";
@@ -8,11 +9,14 @@ export const Route = createFileRoute("/_auth/pause/reports")({
 
 function ReportsPage() {
 	return (
-		<div className="p-8">
-			<h1 className="text-2xl font-bold mb-8">
-				<Trans>Reports</Trans>
-			</h1>
+		<PageLayout
+			title={<Trans>Reports</Trans>}
+			breadcrumbs={[
+				{ label: "PAUSE", to: "/pause/dashboard" },
+				{ label: "Reports" },
+			]}
+		>
 			<ReportsView />
-		</div>
+		</PageLayout>
 	);
 }

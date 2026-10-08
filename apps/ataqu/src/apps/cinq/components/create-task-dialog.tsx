@@ -72,7 +72,7 @@ export function CreateTaskDialog({
 				<Bone
 					loading={submitting}
 					name="create-task"
-					fallback={<div className="h-40 w-full rounded bg-white/5" />}
+					fallback={<div className="h-40 w-full rounded bg-card/5" />}
 				>
 					<form
 						className="space-y-3"

@@ -13,9 +13,26 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: ids.length
+#: src/components/bulk-action-bar.tsx
+msgid "{0} selected"
+msgstr "{0} selected"
+
+#: src/components/setup-progress-widget.tsx
+msgid "Activation checklist"
+msgstr "Activation checklist"
+
 #: src/components/auth/RegisterForm.tsx
 msgid "Already have an account?"
 msgstr "Already have an account?"
+
+#: src/components/inbox-bell.tsx
+msgid "Auto-refreshes every 30s"
+msgstr "Auto-refreshes every 30s"
+
+#: src/components/changelog-bell.tsx
+msgid "Breaking"
+msgstr "Breaking"
 
 #: src/components/auth/RegisterForm.tsx
 msgid "Confirm password"
@@ -46,10 +63,36 @@ msgstr "Don't have an account?"
 msgid "Email"
 msgstr "Email"
 
+#: src/components/inbox-bell.tsx
+msgid "Inbox"
+msgstr "Inbox"
+
+#: src/components/changelog-bell.tsx
+#: src/components/inbox-bell.tsx
+#: src/components/setup-progress-widget.tsx
+msgid "Loading…"
+msgstr "Loading…"
+
+#: src/components/user-menu.tsx
+msgid "Log out"
+msgstr "Log out"
+
+#: src/components/setup-progress-widget.tsx
+msgid "No setup tasks."
+msgstr "No setup tasks."
+
+#: src/components/changelog-bell.tsx
+msgid "No updates yet."
+msgstr "No updates yet."
+
 #: src/components/auth/LoginForm.tsx
 #: src/components/auth/RegisterForm.tsx
 msgid "Password"
 msgstr "Password"
+
+#: src/components/setup-progress-widget.tsx
+msgid "Setup {pct}% ({done}/{total})"
+msgstr "Setup {pct}% ({done}/{total})"
 
 #: src/components/auth/LoginForm.tsx
 #: src/components/auth/RegisterForm.tsx
@@ -63,3 +106,11 @@ msgstr "Sign in to Ataqu"
 #: src/components/auth/LoginForm.tsx
 msgid "Signing in…"
 msgstr "Signing in…"
+
+#: src/components/changelog-bell.tsx
+msgid "What's new"
+msgstr "What's new"
+
+#: src/components/inbox-bell.tsx
+msgid "You're all caught up."
+msgstr "You're all caught up."

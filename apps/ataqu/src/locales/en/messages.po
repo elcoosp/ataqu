@@ -13,31 +13,445 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. js-lingui-explicit-id
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Template name"
+msgstr "Template name"
+
+#. js-lingui-explicit-id
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Template content (markdown)"
+msgstr "Template content (markdown)"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Header row comma-separated, then one row per line with |"
+msgstr "Header row comma-separated, then one row per line with |"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/block-editor.tsx
+msgid "[ ] unchecked / [x] checked, one per line"
+msgstr "[ ] unchecked / [x] checked, one per line"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Filter expression"
+msgstr "Filter expression"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Markdown text"
+msgstr "Markdown text"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Block saved."
+msgstr "Block saved."
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Block added."
+msgstr "Block added."
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/database-grid.tsx
+msgid "Search…"
+msgstr "Search…"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/database-grid.tsx
+msgid "Filter rows…"
+msgstr "Filter rows…"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Failed to save."
+msgstr "Failed to save."
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Failed to delete."
+msgstr "Failed to delete."
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Document title"
+msgstr "Document title"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Write…"
+msgstr "Write…"
+
+#. js-lingui-explicit-id
+#: src/apps/pivot/components/search-bar.tsx
+msgid "Search documents, databases, rows…"
+msgstr "Search documents, databases, rows…"
+
+#. placeholder {0}: q.labelKey
+#: src/apps/sond/components/builder/question-palette.tsx
+msgid "{0}"
+msgstr "{0}"
+
+#. placeholder {0}: allDealIds.length
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "{0} deals will be permanently removed. This cannot be undone."
+msgstr "{0} deals will be permanently removed. This cannot be undone."
+
+#. placeholder {0}: rows.length
+#: src/apps/pivot/components/database-grid.tsx
+msgid "{0} rows"
+msgstr "{0} rows"
+
+#. placeholder {0}: selected?.size ?? 0
+#: src/apps/sond/components/submissions-table.tsx
+msgid "{0} submission(s) deleted"
+msgstr "{0} submission(s) deleted"
+
+#: src/apps/vault/components/csv-import.tsx
+msgid "{imported} products imported."
+msgstr "{imported} products imported."
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "{weeks} slots added."
+msgstr "{weeks} slots added."
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "% of pipeline won"
+msgstr "% of pipeline won"
+
+#: src/apps/tempo/components/booking/event-type-selector.tsx
+msgid "> 30 min"
+msgstr "> 30 min"
+
+#: src/apps/tempo/components/booking/event-type-selector.tsx
+msgid "≤ 30 min"
+msgstr "≤ 30 min"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "1 warehouse"
+msgstr "1 warehouse"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "10d"
+msgstr "10d"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "15 minutes"
+msgstr "15 minutes"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "15d"
+msgstr "15d"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "30 minutes"
+msgstr "30 minutes"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "5d"
+msgstr "5d"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "60 minutes"
+msgstr "60 minutes"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "A booked slot cannot be removed"
+msgstr "A booked slot cannot be removed"
+
+#. placeholder {0}: guestDetails?.email
+#: src/apps/tempo/components/booking/confirmation-screen.tsx
+msgid "A confirmation email has been sent to {0}."
+msgstr "A confirmation email has been sent to {0}."
+
+#: src/apps/vault/components/create-product-form.tsx
+msgid "A product with this SKU may already exist, or the server encountered an error."
+msgstr "A product with this SKU may already exist, or the server encountered an error."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "A warehouse with this name may already exist."
+msgstr "A warehouse with this name may already exist."
+
 #: src/routes/_auth/admin/access-matrix.tsx
 #: src/routes/_auth/dashboard.tsx
 msgid "Access Matrix"
 msgstr "Access Matrix"
 
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Accrued"
+msgstr "Accrued"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "across all databases"
+msgstr "across all databases"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "across all products"
+msgstr "across all products"
+
 #: src/routes/_auth/admin/audit.tsx
 msgid "Action"
 msgstr "Action"
 
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "action needed"
+msgstr "action needed"
+
+#: src/apps/dial/components/ticket-list.tsx
+#: src/apps/pause/components/approval-dashboard.tsx
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+#: src/apps/spark/components/node-sidebar.tsx
+#: src/routes/_auth/admin/approvals.tsx
 #: src/routes/_auth/api-keys.tsx
 msgid "Actions"
 msgstr "Actions"
 
+#: src/routes/_auth/admin/team-status.tsx
+msgid "Activation rate"
+msgstr "Activation rate"
+
+#: src/apps/spark/components/workflow-list.tsx
+#: src/routes/_auth/admin/team-status.tsx
 #: src/routes/_auth/users.$id.tsx
 #: src/routes/_auth/users/index.tsx
 msgid "Active"
 msgstr "Active"
 
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Activities"
+msgstr "Activities"
+
 #: src/components/create-role-dialog.tsx
+#: src/routes/_auth/settings.tsx
 msgid "Add"
 msgstr "Add"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Add a slot above: the public booking page serves exactly these times."
+msgstr "Add a slot above: the public booking page serves exactly these times."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Add a variant to start tracking stock and movements."
+msgstr "Add a variant to start tracking stock and movements."
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Add availability"
+msgstr "Add availability"
+
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Add block"
+msgstr "Add block"
+
+#: src/apps/sond/actions.ts
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Add Conditional Logic"
+msgstr "Add Conditional Logic"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Add Contact"
+msgstr "Add Contact"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Add contacts to start building your pipeline."
+msgstr "Add contacts to start building your pipeline."
+
+#: src/apps/pause/components/employee-directory.tsx
+#: src/routes/_auth/pause/dashboard.tsx
+#: src/routes/_auth/pause/directory.tsx
+msgid "Add Employee"
+msgstr "Add Employee"
+
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "Add Establishment"
+msgstr "Add Establishment"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Add Option"
+msgstr "Add Option"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Add Page Break"
+msgstr "Add Page Break"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Add Product"
+msgstr "Add Product"
+
+#: src/apps/sond/actions.ts
+msgid "Add Question"
+msgstr "Add Question"
+
+#: src/apps/pivot/components/relations-panel.tsx
+msgid "Add relation"
+msgstr "Add relation"
+
+#: src/apps/pivot/components/database-grid.tsx
+msgid "Add Row"
+msgstr "Add Row"
+
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+msgid "Add Rule"
+msgstr "Add Rule"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Add slot"
+msgstr "Add slot"
+
+#: src/apps/tempo/components/booking/confirmation-screen.tsx
+msgid "Add to Calendar"
+msgstr "Add to Calendar"
+
+#: src/apps/vault/components/create-variant-form.tsx
+#: src/apps/vault/components/product-detail.tsx
+msgid "Add Variant"
+msgstr "Add Variant"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Add Warehouse"
+msgstr "Add Warehouse"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Add warehouses to track stock locations."
+msgstr "Add warehouses to track stock locations."
+
+#: src/apps/vista/components/widget-picker.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Add Widget"
+msgstr "Add Widget"
+
+#: src/apps/pause/components/employee-directory.tsx
+msgid "Add your first employee to get started."
+msgstr "Add your first employee to get started."
+
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "Add your first establishment to organize multi-site operations."
+msgstr "Add your first establishment to organize multi-site operations."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Add your first location."
+msgstr "Add your first location."
+
+#: src/apps/tempo/components/availability-editor.tsx
+#: src/apps/vault/components/create-variant-form.tsx
+msgid "Adding..."
+msgstr "Adding..."
+
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "Address"
+msgstr "Address"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Adjust it. The math is protected at the database level. No overselling."
+msgstr "Adjust it. The math is protected at the database level. No overselling."
+
+#: src/apps/vault/components/movement-history.tsx
+#: src/routes/_auth/vault/movements.tsx
+msgid "Adjust stock to see history."
+msgstr "Adjust stock to see history."
+
+#: src/apps/vault/components/stock-adjustment.tsx
+msgid "Adjustment amount"
+msgstr "Adjustment amount"
 
 #: src/components/invite-dialog.tsx
 msgid "Admin"
 msgstr "Admin"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "Advanced scheduling options like location, buffers, and reminders are supported by the backend and will be configurable here in a future update."
+msgstr "Advanced scheduling options like location, buffers, and reminders are supported by the backend and will be configurable here in a future update."
+
+#: src/apps/cinq/components/activity-timeline.tsx
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/tempo/components/booking/event-type-selector.tsx
+#: src/apps/vault/components/movement-history.tsx
+msgid "All"
+msgstr "All"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "All child conditions must be true (AND logic)"
+msgstr "All child conditions must be true (AND logic)"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "all clear"
+msgstr "all clear"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "all onboarding complete"
+msgstr "all onboarding complete"
+
+#: src/routes/_auth/vault/dashboard.tsx
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "all stocked"
+msgstr "all stocked"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "All workflows are healthy."
+msgstr "All workflows are healthy."
+
+#: src/routes/login.tsx
+msgid "Already have an account? Sign in"
+msgstr "Already have an account? Sign in"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Amazon"
+msgstr "Amazon"
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Amazon connected."
+msgstr "Amazon connected."
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Amazon connection failed."
+msgstr "Amazon connection failed."
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Amazon disconnect failed."
+msgstr "Amazon disconnect failed."
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Amazon disconnected."
+msgstr "Amazon disconnected."
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Amazon Seller Central"
+msgstr "Amazon Seller Central"
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Amazon sync failed."
+msgstr "Amazon sync failed."
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Amazon sync started."
+msgstr "Amazon sync started."
+
+#: src/apps/cinq/components/create-deal-dialog.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Amount"
+msgstr "Amount"
+
+#: src/apps/tempo/components/error-boundary.tsx
+msgid "An unexpected error occurred. Please try again."
+msgstr "An unexpected error occurred. Please try again."
+
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Annual"
+msgstr "Annual"
+
+#: src/apps/sond/components/submissions-table.tsx
+msgid "Answer 1"
+msgstr "Answer 1"
+
+#: src/apps/sond/components/submissions-table.tsx
+msgid "Answer 2"
+msgstr "Answer 2"
+
+#: src/apps/sond/components/submissions-table.tsx
+msgid "Answer 3"
+msgstr "Answer 3"
 
 #: src/components/create-api-key-dialog.tsx
 #: src/routes/_auth/api-keys.tsx
@@ -57,26 +471,426 @@ msgstr "API Keys"
 msgid "App"
 msgstr "App"
 
+#: src/apps/vista/components/cross-app-section.tsx
+msgid "App Data Graph"
+msgstr "App Data Graph"
+
+#: src/apps/pivot/components/template-picker.tsx
+#: src/routes/_auth/pivot/doc/$id.tsx
+msgid "Apply Template"
+msgstr "Apply Template"
+
+#: src/apps/spark/components/execution-history.tsx
+#: src/routes/_auth/admin/approvals.tsx
+msgid "Approve"
+msgstr "Approve"
+
+#: src/routes/_auth/pause/leave.tsx
+msgid "Approve here, and their system access updates automatically via AEGIS."
+msgstr "Approve here, and their system access updates automatically via AEGIS."
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Approved"
+msgstr "Approved"
+
+#: src/apps/vista/components/cross-app-section.tsx
+msgid "Apps"
+msgstr "Apps"
+
+#: src/routes/_auth/sond/index.tsx
+msgid "Are you sure you want to delete \"{title}\"? This cannot be undone."
+msgstr "Are you sure you want to delete \"{title}\"? This cannot be undone."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Are you sure you want to disconnect Shopify?"
+msgstr "Are you sure you want to disconnect Shopify?"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Assign mentor"
+msgstr "Assign mentor"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "At least one child condition must be true (OR logic)"
+msgstr "At least one child condition must be true (OR logic)"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "Attempts:"
+msgstr "Attempts:"
+
 #: src/routes/_auth/admin/audit.tsx
 #: src/routes/_auth/dashboard.tsx
 msgid "Audit Log"
 msgstr "Audit Log"
 
+#: src/apps/vista/components/sse-indicator.tsx
+msgid "Auto-refresh every 30 seconds"
+msgstr "Auto-refresh every 30 seconds"
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Automation"
+msgstr "Automation"
+
+#: src/routes/_auth/tempo/availability.tsx
+msgid "Availability"
+msgstr "Availability"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Availability belongs to an event type. Create one first, then share its booking link."
+msgstr "Availability belongs to an event type. Create one first, then share its booking link."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Available"
+msgstr "Available"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "average per database"
+msgstr "average per database"
+
+#: src/apps/sond/components/preview/form-preview.tsx
+#: src/routes/_auth/pivot/db/$id.tsx
+#: src/routes/_auth/pivot/doc/$id.tsx
+msgid "Back"
+msgstr "Back"
+
+#: src/routes/$.tsx
+msgid "Back to dashboard"
+msgstr "Back to dashboard"
+
 #: src/routes/_auth/users.$id.tsx
 msgid "Back to Users"
 msgstr "Back to Users"
 
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Bar Chart"
+msgstr "Bar Chart"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "Basic Information"
+msgstr "Basic Information"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "below threshold"
+msgstr "below threshold"
+
+#: src/apps/tempo/components/booking/confirmation-screen.tsx
+msgid "Book another meeting"
+msgstr "Book another meeting"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Booked"
+msgstr "Booked"
+
+#: src/apps/vista/components/widget-picker.tsx
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Bookings"
+msgstr "Bookings"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Bookings can only land on a published slot."
+msgstr "Bookings can only land on a published slot."
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Bounced"
+msgstr "Bounced"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Branding"
+msgstr "Branding"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Browse Employees"
+msgstr "Browse Employees"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Build cross-app dashboards to spot trends across your workspace."
+msgstr "Build cross-app dashboards to spot trends across your workspace."
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Builder"
+msgstr "Builder"
+
+#: src/apps/vault/components/stock-adjustment.tsx
+msgid "Bulk Adjust"
+msgstr "Bulk Adjust"
+
+#: src/routes/_auth/tempo/calendar-settings.tsx
+msgid "Calendar Settings"
+msgstr "Calendar Settings"
+
+#: src/apps/cinq/components/activity-timeline.tsx
+msgid "Calls"
+msgstr "Calls"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Calls, emails, and meetings will appear here."
+msgstr "Calls, emails, and meetings will appear here."
+
+#: src/apps/cinq/components/create-activity-dialog.tsx
+#: src/apps/cinq/components/create-contact-dialog.tsx
+#: src/apps/cinq/components/create-deal-dialog.tsx
+#: src/apps/cinq/components/create-pipeline-stage-dialog.tsx
+#: src/apps/cinq/components/create-task-dialog.tsx
+#: src/apps/dial/components/create-channel-dialog.tsx
+#: src/apps/dial/components/message-thread.tsx
+#: src/apps/pause/components/approval-dashboard.tsx
+#: src/apps/pause/components/employee-detail.tsx
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+#: src/apps/spark/components/dlq-viewer.tsx
+#: src/apps/spark/components/test-run-modal.tsx
+#: src/apps/tempo/components/upcoming-meetings.tsx
+#: src/apps/vault/components/product-detail.tsx
+#: src/apps/vault/components/settings/shopify-status.tsx
+#: src/apps/vault/components/warehouse-list.tsx
+#: src/apps/vista/components/widget-picker.tsx
 #: src/components/create-api-key-dialog.tsx
 #: src/components/create-role-dialog.tsx
 #: src/components/invite-dialog.tsx
 #: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+#: src/routes/_auth/pivot/templates.tsx
 #: src/routes/_auth/users/index.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
+#: src/apps/vault/components/movement-history.tsx
+msgid "Change"
+msgstr "Change"
+
+#: src/apps/vault/components/stock-adjustment.tsx
+msgid "Change amount"
+msgstr "Change amount"
+
+#: src/apps/dial/components/context-sidebar.tsx
+msgid "Channel Info"
+msgstr "Channel Info"
+
+#: src/apps/dial/components/context-sidebar.tsx
+msgid "Channel renamed"
+msgstr "Channel renamed"
+
+#: src/apps/dial/components/channel-list.tsx
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Channels"
+msgstr "Channels"
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Check the credentials and try again."
+msgstr "Check the credentials and try again."
+
+#: src/routes/_auth/admin/migration.tsx
+msgid "Choose file (CSV / JSON)"
+msgstr "Choose file (CSV / JSON)"
+
+#: src/apps/cinq/components/integration-toggle.tsx
+msgid "CINQ connected to {targetApp}"
+msgstr "CINQ connected to {targetApp}"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "CINQ Context"
+msgstr "CINQ Context"
+
+#: src/apps/cinq/components/integration-toggle.tsx
+msgid "CINQ disconnected from {targetApp}"
+msgstr "CINQ disconnected from {targetApp}"
+
+#: src/apps/pause/components/employee-directory.tsx
+#: src/apps/vault/components/product-detail.tsx
+msgid "Clear"
+msgstr "Clear"
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Clicked"
+msgstr "Clicked"
+
+#: src/apps/cinq/components/establishment-list.tsx
+#: src/apps/dial/components/ticket-detail.tsx
+#: src/apps/dial/components/ticket-list.tsx
+#: src/apps/vault/components/product-catalog.tsx
+#: src/apps/vault/components/product-detail.tsx
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Close"
+msgstr "Close"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Closed won deals"
+msgstr "Closed won deals"
+
+#: src/apps/vault/components/settings/shopify-error-log.tsx
+msgid "Collapse"
+msgstr "Collapse"
+
+#: src/apps/cinq/components/csv-import.tsx
+msgid "Column Mapping"
+msgstr "Column Mapping"
+
+#: src/apps/vista/components/cross-app-section.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Combine"
+msgstr "Combine"
+
+#: src/apps/vista/components/cross-app-section.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Combine Data"
+msgstr "Combine Data"
+
+#: src/apps/tempo/components/calendar-settings.tsx
+msgid "Coming soon"
+msgstr "Coming soon"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "Coming Soon"
+msgstr "Coming Soon"
+
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/cinq/components/csv-import.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+msgid "Company"
+msgstr "Company"
+
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "Company name"
+msgstr "Company name"
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Completed"
+msgstr "Completed"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Conditional logic saved"
+msgstr "Conditional logic saved"
+
+#: src/apps/spark/components/node-sidebar.tsx
+msgid "Conditions"
+msgstr "Conditions"
+
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+msgid "Conditions (all must match)"
+msgstr "Conditions (all must match)"
+
 #: src/routes/_auth/settings.tsx
-msgid "Configure (Coming Soon)"
-msgstr "Configure (Coming Soon)"
+#~ msgid "Configure (Coming Soon)"
+#~ msgstr "Configure (Coming Soon)"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Configure Action"
+msgstr "Configure Action"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Configure Condition"
+msgstr "Configure Condition"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Configure Trigger"
+msgstr "Configure Trigger"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "Confirm"
+msgstr "Confirm"
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Confirm disconnect"
+msgstr "Confirm disconnect"
+
+#: src/apps/cinq/components/integration-toggle.tsx
+msgid "Connect"
+msgstr "Connect"
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Connect Amazon"
+msgstr "Connect Amazon"
+
+#: src/routes/_auth/tempo/dashboard.tsx
+msgid "Connect Calendar"
+msgstr "Connect Calendar"
+
+#: src/apps/tempo/components/calendar-settings.tsx
+msgid "Connect Calendars"
+msgstr "Connect Calendars"
+
+#: src/apps/dial/components/channel-list.tsx
+msgid "Connect DIAL to CINQ, or create your first channel."
+msgstr "Connect DIAL to CINQ, or create your first channel."
+
+#: src/apps/tempo/components/calendar-settings.tsx
+msgid "Connect Google Calendar"
+msgstr "Connect Google Calendar"
+
+#: src/apps/tempo/components/calendar-settings.tsx
+msgid "Connect Outlook Calendar"
+msgstr "Connect Outlook Calendar"
+
+#: src/apps/vault/components/settings/shopify-connect.tsx
+msgid "Connect Shopify"
+msgstr "Connect Shopify"
+
+#: src/apps/sond/actions.ts
+msgid "Connect to CINQ"
+msgstr "Connect to CINQ"
+
+#: src/apps/sond/actions.ts
+msgid "Connect to SPARK"
+msgstr "Connect to SPARK"
+
+#: src/apps/cinq/components/integration-toggle.tsx
+#: src/apps/vault/components/settings/amazon-status.tsx
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Connected"
+msgstr "Connected"
+
+#: src/apps/tempo/components/calendar-settings.tsx
+msgid "Connected Calendars"
+msgstr "Connected Calendars"
+
+#: src/apps/cinq/components/integration-toggle.tsx
+msgid "Connected to {targetApp}"
+msgstr "Connected to {targetApp}"
+
+#: src/apps/vault/components/integration-toggle.tsx
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Connected to CINQ"
+msgstr "Connected to CINQ"
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Connected to SPARK"
+msgstr "Connected to SPARK"
+
+#: src/apps/vault/components/settings/shopify-connect.tsx
+msgid "Connecting..."
+msgstr "Connecting..."
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Connecting…"
+msgstr "Connecting…"
+
+#: src/apps/cinq/components/create-activity-dialog.tsx
+#: src/apps/cinq/components/create-deal-dialog.tsx
+#: src/apps/cinq/components/create-task-dialog.tsx
+msgid "Contact"
+msgstr "Contact"
+
+#: src/routes/_auth/cinq/contacts/$id.tsx
+msgid "Contact not found"
+msgstr "Contact not found"
+
+#: src/routes/_auth/cinq/contacts/$id.tsx
+msgid "Contact updated"
+msgstr "Contact updated"
+
+#: src/apps/cinq/components/contact-table.tsx
+#: src/routes/_auth/cinq/contacts/index.tsx
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Contacts"
+msgstr "Contacts"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "contains"
+msgstr "contains"
+
+#: src/apps/tempo/components/booking/time-slot-picker.tsx
+msgid "Continue"
+msgstr "Continue"
 
 #: src/routes/login.tsx
 msgid "Continue with Google"
@@ -86,6 +900,22 @@ msgstr "Continue with Google"
 msgid "Continue with Microsoft"
 msgstr "Continue with Microsoft"
 
+#: src/routes/_auth/sond/index.tsx
+msgid "Conversational"
+msgstr "Conversational"
+
+#: src/apps/sond/components/builder/conversational-toggle.tsx
+msgid "Conversational (One per slide)"
+msgstr "Conversational (One per slide)"
+
+#: src/apps/sond/components/builder/conversational-toggle.tsx
+msgid "Conversational mode shows one question at a time — higher completion rates."
+msgstr "Conversational mode shows one question at a time — higher completion rates."
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Conversion"
+msgstr "Conversion"
+
 #: src/components/create-api-key-dialog.tsx
 msgid "Copied!"
 msgstr "Copied!"
@@ -94,73 +924,1022 @@ msgstr "Copied!"
 msgid "Copy"
 msgstr "Copy"
 
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Copy link"
+msgstr "Copy link"
+
+#: src/routes/_auth/tempo/event-types/$id.tsx
+msgid "Copy Link"
+msgstr "Copy Link"
+
 #: src/components/create-api-key-dialog.tsx
 #: src/routes/_auth/api-keys.tsx
 msgid "Copy this key now. You won't be able to see it again."
 msgstr "Copy this key now. You won't be able to see it again."
 
+#: src/routes/_auth/inbox.tsx
+msgid "Could not load your inbox."
+msgstr "Could not load your inbox."
+
+#: src/apps/vault/components/integration-toggle.tsx
+msgid "Could not toggle the CINQ integration. Check your permissions and try again."
+msgstr "Could not toggle the CINQ integration. Check your permissions and try again."
+
+#: src/routes/_auth/pivot/db/index.tsx
+msgid "Couldn't load databases."
+msgstr "Couldn't load databases."
+
+#: src/routes/_auth/pivot/index.tsx
+msgid "Couldn't load documents."
+msgstr "Couldn't load documents."
+
+#: src/apps/pivot/components/template-picker.tsx
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Couldn't load templates."
+msgstr "Couldn't load templates."
+
+#: src/routes/_auth/pivot/db/$id.tsx
+msgid "Couldn't load this database."
+msgstr "Couldn't load this database."
+
+#: src/routes/_auth/pivot/doc/$id.tsx
+msgid "Couldn't load this document."
+msgstr "Couldn't load this document."
+
+#: src/apps/pivot/components/version-history.tsx
+msgid "Couldn't load versions."
+msgstr "Couldn't load versions."
+
+#: src/apps/pivot/components/database-grid.tsx
+msgid "Couldn't refresh rows."
+msgstr "Couldn't refresh rows."
+
+#: src/apps/cinq/components/create-deal-dialog.tsx
+#: src/apps/cinq/components/create-pipeline-stage-dialog.tsx
+#: src/apps/cinq/components/create-task-dialog.tsx
+#: src/apps/dial/components/create-channel-dialog.tsx
 #: src/components/create-api-key-dialog.tsx
 #: src/components/create-role-dialog.tsx
-#: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/users/index.tsx
 msgid "Create"
 msgstr "Create"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "Create a database to start organizing your data."
+msgstr "Create a database to start organizing your data."
+
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Create a template to reuse document structures."
+msgstr "Create a template to reuse document structures."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Create account"
+msgstr "Create account"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Create an event type first."
+msgstr "Create an event type first."
 
 #: src/components/create-api-key-dialog.tsx
 #: src/routes/_auth/api-keys.tsx
 msgid "Create API Key"
 msgstr "Create API Key"
 
+#: src/apps/dial/components/channel-list.tsx
+#: src/apps/dial/components/create-channel-dialog.tsx
+msgid "Create Channel"
+msgstr "Create Channel"
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Create CINQ lead on submission"
+msgstr "Create CINQ lead on submission"
+
+#: src/routes/_auth/vista/dashboard.tsx
+#: src/routes/_auth/vista/index.tsx
+msgid "Create Dashboard"
+msgstr "Create Dashboard"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+#: src/routes/_auth/pivot/db/index.tsx
+msgid "Create Database"
+msgstr "Create Database"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Create Deal"
+msgstr "Create Deal"
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Create DIAL channel on won"
+msgstr "Create DIAL channel on won"
+
+#: src/routes/_auth/pivot/index.tsx
+msgid "Create Document"
+msgstr "Create Document"
+
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "Create Establishment"
+msgstr "Create Establishment"
+
+#: src/routes/_auth/tempo/dashboard.tsx
+msgid "Create Event Type"
+msgstr "Create Event Type"
+
 #: src/components/create-api-key-dialog.tsx
 #: src/components/create-role-dialog.tsx
 msgid "Create failed"
 msgstr "Create failed"
 
+#: src/apps/sond/actions.ts
+#: src/routes/_auth/sond/index.tsx
+msgid "Create Form"
+msgstr "Create Form"
+
 #: src/routes/_auth/api-keys.tsx
 msgid "Create Key"
 msgstr "Create Key"
+
+#: src/routes/_auth/sond/index.tsx
+msgid "Create one to start collecting responses. No response limits."
+msgstr "Create one to start collecting responses. No response limits."
+
+#: src/apps/vault/actions.ts
+#: src/apps/vault/components/create-product-form.tsx
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Create Product"
+msgstr "Create Product"
 
 #: src/components/create-role-dialog.tsx
 #: src/routes/_auth/roles.tsx
 msgid "Create Role"
 msgstr "Create Role"
 
+#: src/routes/_auth/pivot/dashboard.tsx
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Create Template"
+msgstr "Create Template"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "Create templates to speed up document creation."
+msgstr "Create templates to speed up document creation."
+
+#: src/routes/_auth/users/index.tsx
+msgid "Create User"
+msgstr "Create User"
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Create Warehouse"
+msgstr "Create Warehouse"
+
+#: src/routes/_auth/spark/dashboard.tsx
+#: src/routes/_auth/spark/index.tsx
+msgid "Create Workflow"
+msgstr "Create Workflow"
+
+#: src/routes/login.tsx
+msgid "Create your account"
+msgstr "Create your account"
+
+#: src/routes/_auth/pivot/db/index.tsx
+msgid "Create your first database to start storing structured data."
+msgstr "Create your first database to start storing structured data."
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Create your first deal to start tracking your pipeline."
+msgstr "Create your first deal to start tracking your pipeline."
+
+#: src/routes/_auth/pivot/index.tsx
+msgid "Create your first document, or link it to a CINQ deal."
+msgstr "Create your first document, or link it to a CINQ deal."
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Create your first workflow to automate tasks."
+msgstr "Create your first workflow to automate tasks."
+
+#: src/routes/_auth/admin/approvals.tsx
 #: src/routes/_auth/api-keys.tsx
 #: src/routes/_auth/roles.tsx
 msgid "Created"
 msgstr "Created"
 
+#: src/apps/dial/components/context-sidebar.tsx
+#: src/apps/spark/components/dlq-viewer.tsx
 #: src/routes/_auth/users.$id.tsx
 msgid "Created:"
 msgstr "Created:"
 
+#: src/apps/cinq/components/establishment-list.tsx
+#: src/apps/vault/components/create-product-form.tsx
+#: src/apps/vault/components/warehouse-list.tsx
 #: src/components/create-api-key-dialog.tsx
 #: src/components/create-role-dialog.tsx
-#: src/routes/_auth/api-keys.tsx
 msgid "Creating..."
 msgstr "Creating..."
 
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Cron Expression"
+msgstr "Cron Expression"
+
+#: src/apps/vista/components/cross-app-section.tsx
+msgid "Cross-App Dashboards"
+msgstr "Cross-App Dashboards"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Cross-App View"
+msgstr "Cross-App View"
+
+#: src/routes/_auth/cinq/contacts/index.tsx
+msgid "Cross-field search"
+msgstr "Cross-field search"
+
+#: src/apps/vault/components/csv-import.tsx
+msgid "CSV import failed."
+msgstr "CSV import failed."
+
+#. placeholder {0}: data.imported
+#. placeholder {1}: data.failed
+#: src/apps/cinq/components/csv-import.tsx
+msgid "CSV imported: {0} contacts. Failed: {1}"
+msgstr "CSV imported: {0} contacts. Failed: {1}"
+
+#: src/apps/vault/components/low-stock-alert-form.tsx
+msgid "Current low-stock variants. This threshold filters the view; it does not configure notifications."
+msgstr "Current low-stock variants. This threshold filters the view; it does not configure notifications."
+
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/cinq/components/csv-import.tsx
+msgid "Custom"
+msgstr "Custom"
+
+#: src/apps/cinq/components/custom-fields-tab.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+msgid "Custom Fields"
+msgstr "Custom Fields"
+
+#: src/apps/dial/components/ticket-detail.tsx
+#: src/apps/dial/components/ticket-list.tsx
+msgid "Customer"
+msgstr "Customer"
+
 #: src/routes/_auth/dashboard.tsx
+#: src/routes/_auth/tempo/dashboard.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
 msgid "Dashboard"
 msgstr "Dashboard"
+
+#: src/routes/_auth/vista/dashboard.tsx
+#: src/routes/_auth/vista/index.tsx
+msgid "Dashboards"
+msgstr "Dashboards"
+
+#: src/routes/_auth/vista/index.tsx
+msgid "Dashboards are empty because you haven't connected CINQ and VAULT yet. 1 click to connect."
+msgstr "Dashboards are empty because you haven't connected CINQ and VAULT yet. 1 click to connect."
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Data combined successfully."
+msgstr "Data combined successfully."
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Data Points (revenue)"
+msgstr "Data Points (revenue)"
+
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Data Source"
+msgstr "Data Source"
+
+#: src/routes/_auth/pivot/db/index.tsx
+msgid "Database created."
+msgstr "Database created."
+
+#: src/routes/_auth/pivot/dashboard.tsx
+#: src/routes/_auth/pivot/db/index.tsx
+msgid "Databases"
+msgstr "Databases"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "Databases, documents, and relations in one workspace."
+msgstr "Databases, documents, and relations in one workspace."
+
+#: src/apps/tempo/components/availability-editor.tsx
+#: src/apps/vault/components/movement-history.tsx
+msgid "Date"
+msgstr "Date"
+
+#: src/apps/pause/components/employee-directory.tsx
+msgid "Deactivate selected"
+msgstr "Deactivate selected"
+
+#: src/routes/_auth/spark/dlq.tsx
+msgid "Dead Letter Queue"
+msgstr "Dead Letter Queue"
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Deal not found"
+msgstr "Deal not found"
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Deal updated"
+msgstr "Deal updated"
+
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "Deals"
+msgstr "Deals"
+
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "Deals deleted"
+msgstr "Deals deleted"
+
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+msgid "Define conditions to route submissions automatically — notify a team, create a lead in CINQ, or call a webhook."
+msgstr "Define conditions to route submissions automatically — notify a team, create a lead in CINQ, or call a webhook."
+
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/cinq/components/deal-kanban.tsx
+#: src/apps/dial/components/message-thread.tsx
+#: src/apps/pivot/components/relations-panel.tsx
+#: src/apps/spark/components/dlq-viewer.tsx
+#: src/apps/vault/components/product-catalog.tsx
+#: src/apps/vault/components/warehouse-list.tsx
+#: src/routes/_auth/sond/index.tsx
+#: src/routes/_auth/spark/workflows/$id.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Delete"
+msgstr "Delete"
+
+#. placeholder {0}: selectedIds.length
+#: src/apps/sond/components/submissions-table.tsx
+msgid "Delete {0} selected"
+msgstr "Delete {0} selected"
+
+#: src/apps/dial/components/message-thread.tsx
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "Delete all"
+msgstr "Delete all"
+
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "Delete all deals?"
+msgstr "Delete all deals?"
+
+#: src/routes/_auth/sond/index.tsx
+msgid "Delete form"
+msgstr "Delete form"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Delete Product"
+msgstr "Delete Product"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Delete question"
+msgstr "Delete question"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Delete selected"
+msgstr "Delete selected"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Delete Variant"
+msgstr "Delete Variant"
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Delivered"
+msgstr "Delivered"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Department"
+msgstr "Department"
+
+#: src/apps/cinq/components/create-activity-dialog.tsx
+#: src/apps/cinq/components/create-task-dialog.tsx
+#: src/apps/tempo/components/event-type-form.tsx
+#: src/apps/vault/components/create-product-form.tsx
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Description"
+msgstr "Description"
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Details"
+msgstr "Details"
+
+#: src/apps/dial/components/channel-list.tsx
+msgid "Direct Messages"
+msgstr "Direct Messages"
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Disable workflow"
+msgstr "Disable workflow"
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Disconnect"
+msgstr "Disconnect"
+
+#: src/routes/_auth/inbox.tsx
+msgid "Dismiss"
+msgstr "Dismiss"
+
+#: src/apps/sond/components/builder/conversational-toggle.tsx
+msgid "Display mode"
+msgstr "Display mode"
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "DLQ"
+msgstr "DLQ"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "DLQ entry deleted."
+msgstr "DLQ entry deleted."
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "Docs / DB"
+msgstr "Docs / DB"
+
+#: src/routes/_auth/pivot/index.tsx
+msgid "Document created."
+msgstr "Document created."
+
+#: src/apps/pivot/components/document-editor.tsx
+#: src/routes/_auth/pivot/doc/$id.tsx
+msgid "Document deleted."
+msgstr "Document deleted."
+
+#: src/routes/_auth/pivot/doc/$id.tsx
+msgid "Document duplicated."
+msgstr "Document duplicated."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Document uploaded."
+msgstr "Document uploaded."
+
+#: src/apps/pause/components/employee-detail.tsx
+#: src/routes/_auth/pivot/dashboard.tsx
+#: src/routes/_auth/pivot/index.tsx
+msgid "Documents"
+msgstr "Documents"
 
 #: src/components/create-api-key-dialog.tsx
 #: src/routes/_auth/api-keys.tsx
 msgid "Done"
 msgstr "Done"
 
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Drag it here. Connect it to an action. You're done."
+msgstr "Drag it here. Connect it to an action. You're done."
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Drag questions here to build your form"
+msgstr "Drag questions here to build your form"
+
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "Drag this to 'Won' to trigger native automations across the OS."
+msgstr "Drag this to 'Won' to trigger native automations across the OS."
+
+#: src/apps/cinq/components/csv-import.tsx
+msgid "Drop your CSV here or click to browse"
+msgstr "Drop your CSV here or click to browse"
+
+#: src/routes/_auth/pivot/doc/$id.tsx
+msgid "Duplicate"
+msgstr "Duplicate"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "Duration"
+msgstr "Duration"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "e.g., What is your name?"
+msgstr "e.g., What is your name?"
+
+#: src/apps/cinq/components/deal-kanban.tsx
+#: src/apps/dial/components/context-sidebar.tsx
+#: src/apps/dial/components/message-thread.tsx
+#: src/apps/vault/components/warehouse-list.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Edit"
+msgstr "Edit"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Edit Product"
+msgstr "Edit Product"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Edit Profile"
+msgstr "Edit Profile"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Edit Variant"
+msgstr "Edit Variant"
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Edit workflow"
+msgstr "Edit workflow"
+
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/cinq/components/csv-import.tsx
 #: src/components/invite-dialog.tsx
+#: src/routes/_auth/admin/team-status.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/pause/directory.tsx
 #: src/routes/_auth/users/index.tsx
 msgid "Email"
 msgstr "Email"
+
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Email Tracking"
+msgstr "Email Tracking"
 
 #: src/routes/_auth/users.$id.tsx
 msgid "Email:"
 msgstr "Email:"
 
+#: src/apps/cinq/components/activity-timeline.tsx
+msgid "Emails"
+msgstr "Emails"
+
+#: src/apps/pause/components/approval-dashboard.tsx
+#: src/routes/_auth/pause/employees/$id.tsx
+msgid "Employee"
+msgstr "Employee"
+
+#: src/routes/_auth/pause/directory.tsx
+msgid "Employee added."
+msgstr "Employee added."
+
+#: src/routes/_auth/pause/directory.tsx
+msgid "Employee Directory"
+msgstr "Employee Directory"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Employee offboarded. AEGIS access revoked."
+msgstr "Employee offboarded. AEGIS access revoked."
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Employee time-off requests will appear here."
+msgstr "Employee time-off requests will appear here."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Employee updated."
+msgstr "Employee updated."
+
+#: src/apps/pause/components/employee-directory.tsx
+msgid "Employees deactivated."
+msgstr "Employees deactivated."
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Enable workflow"
+msgstr "Enable workflow"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "End"
+msgstr "End"
+
+#: src/apps/pause/components/approval-dashboard.tsx
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "End Date"
+msgstr "End Date"
+
+#: src/apps/tempo/components/booking/guest-form.tsx
+msgid "Enter your details"
+msgstr "Enter your details"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "equals"
+msgstr "equals"
+
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Equipment"
+msgstr "Equipment"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Error"
+msgstr "Error"
+
+#: src/apps/cinq/components/contact-table.tsx
+msgid "Error loading contacts"
+msgstr "Error loading contacts"
+
+#: src/apps/cinq/components/establishment-list.tsx
+#: src/routes/_auth/cinq/establishments.tsx
+msgid "Establishments"
+msgstr "Establishments"
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Event"
+msgstr "Event"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "Event replayed."
+msgstr "Event replayed."
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Event type"
+msgstr "Event type"
+
+#: src/apps/tempo/components/booking/event-type-selector.tsx
+#: src/routes/_auth/tempo/event-types/$id.tsx
+msgid "Event type not found."
+msgstr "Event type not found."
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Events"
+msgstr "Events"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Example: Every weekday at 9:00 AM"
+msgstr "Example: Every weekday at 9:00 AM"
+
+#: src/routes/_auth/spark/runs.tsx
+msgid "Execution History"
+msgstr "Execution History"
+
+#: src/apps/vault/components/settings/shopify-error-log.tsx
+msgid "Expand"
+msgstr "Expand"
+
+#: src/routes/_auth/vista/explore.tsx
+msgid "Explore data"
+msgstr "Explore data"
+
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Export"
+msgstr "Export"
+
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/dial/components/message-thread.tsx
+#: src/apps/sond/components/submissions-table.tsx
+#: src/apps/vault/components/product-catalog.tsx
+#: src/apps/vista/components/dashboard/drill-down-panel.tsx
+#: src/routes/_auth/admin/audit.tsx
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "Export CSV"
+msgstr "Export CSV"
+
+#: src/apps/dial/components/message-thread.tsx
+msgid "Export PDF"
+msgstr "Export PDF"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Export ready."
+msgstr "Export ready."
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Export submissions CSV"
+msgstr "Export submissions CSV"
+
+#: src/apps/sond/actions.ts
+msgid "Export Submissions CSV"
+msgstr "Export Submissions CSV"
+
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Exported."
+msgstr "Exported."
+
+#: src/apps/spark/components/dlq-viewer.tsx
+#: src/apps/spark/components/execution-history.tsx
+msgid "Failed"
+msgstr "Failed"
+
+#: src/routes/_auth/spark/dlq.tsx
+msgid "Failed events that need attention. Replay or delete them."
+msgstr "Failed events that need attention. Replay or delete them."
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Failed Runs"
+msgstr "Failed Runs"
+
+#: src/routes/_auth/pause/directory.tsx
+msgid "Failed to add employee."
+msgstr "Failed to add employee."
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Failed to add widget."
+msgstr "Failed to add widget."
+
+#: src/apps/pause/components/approval-dashboard.tsx
+msgid "Failed to approve leave."
+msgstr "Failed to approve leave."
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Failed to approve run."
+msgstr "Failed to approve run."
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Failed to combine data."
+msgstr "Failed to combine data."
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Failed to create workflow."
+msgstr "Failed to create workflow."
+
+#: src/apps/pause/components/employee-directory.tsx
+msgid "Failed to deactivate employees."
+msgstr "Failed to deactivate employees."
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "Failed to delete entry."
+msgstr "Failed to delete entry."
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Failed to delete workflow."
+msgstr "Failed to delete workflow."
+
+#: src/routes/_auth/admin/team-status.tsx
+msgid "Failed to load team status."
+msgstr "Failed to load team status."
+
+#: src/apps/cinq/components/deal-kanban.tsx
+msgid "Failed to move deal"
+msgstr "Failed to move deal"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Failed to offboard employee."
+msgstr "Failed to offboard employee."
+
+#: src/routes/_auth/admin/migration.tsx
+msgid "Failed to parse file."
+msgstr "Failed to parse file."
+
+#: src/apps/pause/components/approval-dashboard.tsx
+msgid "Failed to reject leave."
+msgstr "Failed to reject leave."
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "Failed to replay event."
+msgstr "Failed to replay event."
+
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Failed to request leave."
+msgstr "Failed to request leave."
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Failed to save workflow."
+msgstr "Failed to save workflow."
+
+#: src/apps/dial/components/message-input.tsx
+msgid "Failed to send message"
+msgstr "Failed to send message"
+
+#: src/apps/dial/components/ticket-detail.tsx
+msgid "Failed to send reply"
+msgstr "Failed to send reply"
+
+#: src/apps/cinq/components/integration-toggle.tsx
+msgid "Failed to toggle integration"
+msgstr "Failed to toggle integration"
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Failed to toggle workflow."
+msgstr "Failed to toggle workflow."
+
+#: src/apps/cinq/components/deal-kanban.tsx
+msgid "Failed to update stage"
+msgstr "Failed to update stage"
+
+#: src/apps/dial/components/ticket-detail.tsx
+#: src/apps/dial/components/ticket-list.tsx
+msgid "Failed to update status"
+msgstr "Failed to update status"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Failed to upload document."
+msgstr "Failed to upload document."
+
+#: src/apps/dial/components/file-upload.tsx
+msgid "Failed to upload file"
+msgstr "Failed to upload file"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Field Path"
+msgstr "Field Path"
+
+#: src/apps/dial/components/file-upload.tsx
+msgid "File uploaded"
+msgstr "File uploaded"
+
+#: src/apps/cinq/components/csv-import.tsx
+msgid "File:"
+msgstr "File:"
+
+#: src/routes/_auth/admin/audit.tsx
+msgid "Filter"
+msgstr "Filter"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Filter (JSON, optional)"
+msgstr "Filter (JSON, optional)"
+
+#: src/apps/cinq/components/activity-timeline.tsx
+msgid "Filter activities"
+msgstr "Filter activities"
+
+#: src/apps/tempo/components/booking/event-type-selector.tsx
+msgid "Filter by duration"
+msgstr "Filter by duration"
+
+#: src/apps/vista/components/filter-bar.tsx
+msgid "Filter by Product"
+msgstr "Filter by Product"
+
+#: src/apps/vista/components/filter-bar.tsx
+msgid "Filter by Team"
+msgstr "Filter by Team"
+
+#: src/apps/cinq/components/contact-table.tsx
+msgid "Filter contacts"
+msgstr "Filter contacts"
+
+#: src/apps/vault/components/movement-history.tsx
+msgid "Filter movements"
+msgstr "Filter movements"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Focus mode"
+msgstr "Focus mode"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Focus mode on"
+msgstr "Focus mode on"
+
+#: src/apps/sond/components/builder/branding-tab.tsx
+msgid "Font Family"
+msgstr "Font Family"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Form created"
+msgstr "Form created"
+
+#: src/routes/_auth/sond/index.tsx
+msgid "Form deleted"
+msgstr "Form deleted"
+
+#: src/routes/form.$id.tsx
+msgid "Form not found"
+msgstr "Form not found"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Form not found."
+msgstr "Form not found."
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Form page"
+msgstr "Form page"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Form published"
+msgstr "Form published"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Form saved"
+msgstr "Form saved"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Form title"
+msgstr "Form title"
+
+#: src/routes/_auth/sond/index.tsx
+msgid "Forms"
+msgstr "Forms"
+
+#: src/apps/pivot/components/relations-panel.tsx
+msgid "From block"
+msgstr "From block"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Full name"
+msgstr "Full name"
+
+#: src/routes/_auth/pause/directory.tsx
+msgid "Full Name"
+msgstr "Full Name"
+
+#: src/apps/sond/actions.ts
+msgid "Go to Forms"
+msgstr "Go to Forms"
+
+#: src/apps/vault/actions.ts
+msgid "Go to Movements"
+msgstr "Go to Movements"
+
+#: src/apps/vault/actions.ts
+msgid "Go to Products"
+msgstr "Go to Products"
+
+#: src/apps/vault/actions.ts
+msgid "Go to Reservations"
+msgstr "Go to Reservations"
+
+#: src/apps/sond/actions.ts
+msgid "Go to Submissions"
+msgstr "Go to Submissions"
+
+#: src/apps/vault/actions.ts
+msgid "Go to Warehouses"
+msgstr "Go to Warehouses"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Grid"
+msgstr "Grid"
+
+#: src/apps/pause/components/reports.tsx
+msgid "Headcount"
+msgstr "Headcount"
+
+#: src/apps/pause/components/reports.tsx
+msgid "Headcount by Department"
+msgstr "Headcount by Department"
+
+#: src/routes/_auth/pause/directory.tsx
+msgid "Hire Date"
+msgstr "Hire Date"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "If"
+msgstr "If"
+
+#: src/apps/cinq/components/csv-import.tsx
+msgid "Ignore"
+msgstr "Ignore"
+
+#: src/apps/cinq/components/csv-import.tsx
+#: src/routes/_auth/admin/migration.tsx
+msgid "Import"
+msgstr "Import"
+
+#: src/apps/vault/components/csv-import.tsx
+msgid "Import complete."
+msgstr "Import complete."
+
+#: src/apps/vault/components/csv-import.tsx
+#: src/routes/_auth/cinq/import.tsx
+msgid "Import CSV"
+msgstr "Import CSV"
+
+#: src/apps/cinq/components/csv-import.tsx
+msgid "Import failed"
+msgstr "Import failed"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Import from Shopify or add your first product."
+msgstr "Import from Shopify or add your first product."
+
+#: src/apps/vault/actions.ts
+msgid "Import Products CSV"
+msgstr "Import Products CSV"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Import your product catalog from CSV, or add your first product."
+msgstr "Import your product catalog from CSV, or add your first product."
+
+#: src/apps/vault/components/csv-import.tsx
+#: src/routes/_auth/admin/migration.tsx
+msgid "Importing..."
+msgstr "Importing..."
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "in inventory"
+msgstr "in inventory"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "In Stock"
+msgstr "In Stock"
+
+#: src/apps/spark/components/workflow-list.tsx
 #: src/routes/_auth/users.$id.tsx
 #: src/routes/_auth/users/index.tsx
 msgid "Inactive"
 msgstr "Inactive"
+
+#: src/routes/_auth/inbox.tsx
+msgid "Inbox"
+msgstr "Inbox"
+
+#: src/apps/vault/components/create-variant-form.tsx
+msgid "Initial stock"
+msgstr "Initial stock"
+
+#: src/apps/vault/components/integration-toggle.tsx
+msgid "Integration update failed."
+msgstr "Integration update failed."
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Integration updated"
+msgstr "Integration updated"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Integrations"
+msgstr "Integrations"
+
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Invalid JSON"
+msgstr "Invalid JSON"
+
+#: src/routes/_auth/vault/dashboard.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Inventory"
+msgstr "Inventory"
 
 #: src/components/invite-dialog.tsx
 #: src/routes/_auth/users/index.tsx
@@ -189,17 +1968,213 @@ msgstr "IP"
 msgid "IP Allowlist"
 msgstr "IP Allowlist"
 
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "is empty"
+msgstr "is empty"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "is not empty"
+msgstr "is not empty"
+
+#: src/routes/_auth/inbox.tsx
+msgid "j/k to move · Enter to open · e to dismiss"
+msgstr "j/k to move · Enter to open · e to dismiss"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Job title"
+msgstr "Job title"
+
+#: src/routes/_auth/pause/directory.tsx
+msgid "Job Title"
+msgstr "Job Title"
+
+#: src/apps/vista/components/widget-picker.tsx
+msgid "KPI Card"
+msgstr "KPI Card"
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "KPI Summary"
+msgstr "KPI Summary"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "KPIs and dashboards across every app."
+msgstr "KPIs and dashboards across every app."
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Label"
+msgstr "Label"
+
 #: src/routes/_auth/users/index.tsx
 msgid "Last Active"
 msgstr "Last Active"
+
+#: src/routes/_auth/admin/team-status.tsx
+msgid "Last login"
+msgstr "Last login"
 
 #: src/routes/_auth/users.$id.tsx
 msgid "Last Login:"
 msgstr "Last Login:"
 
+#: src/apps/dial/components/ticket-list.tsx
+msgid "Last Message"
+msgstr "Last Message"
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Last sync:"
+msgstr "Last sync:"
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Last synced"
+msgstr "Last synced"
+
+#: src/apps/spark/components/run-detail-panel.tsx
+msgid "Last Updated"
+msgstr "Last Updated"
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Last updated:"
+msgstr "Last updated:"
+
+#. placeholder {0}: formatDate(d.updated_at)
+#: src/routes/_auth/vista/index.tsx
+msgid "Last updated: {0}"
+msgstr "Last updated: {0}"
+
 #: src/routes/_auth/api-keys.tsx
 msgid "Last Used"
 msgstr "Last Used"
+
+#: src/apps/pause/components/approval-dashboard.tsx
+msgid "Leave approved."
+msgstr "Leave approved."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Leave Balance"
+msgstr "Leave Balance"
+
+#: src/apps/pause/components/reports.tsx
+msgid "Leave Days"
+msgstr "Leave Days"
+
+#: src/apps/pause/components/approval-dashboard.tsx
+msgid "Leave rejected."
+msgstr "Leave rejected."
+
+#: src/apps/pause/components/approval-dashboard.tsx
+msgid "Leave request cancelled."
+msgstr "Leave request cancelled."
+
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Leave requested."
+msgstr "Leave requested."
+
+#: src/routes/_auth/pause/leave.tsx
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Leave Requests"
+msgstr "Leave Requests"
+
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Leave Type"
+msgstr "Leave Type"
+
+#: src/apps/pause/components/reports.tsx
+msgid "Leave Usage Summary"
+msgstr "Leave Usage Summary"
+
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Line Chart"
+msgstr "Line Chart"
+
+#: src/apps/pivot/components/relation-cell.tsx
+msgid "Link {app}"
+msgstr "Link {app}"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "List"
+msgstr "List"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Live"
+msgstr "Live"
+
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Loading blocks…"
+msgstr "Loading blocks…"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Loading context…"
+msgstr "Loading context…"
+
+#: src/apps/vault/components/low-stock-alert-form.tsx
+#: src/apps/vault/components/reservation-list.tsx
+msgid "Loading stock…"
+msgstr "Loading stock…"
+
+#: src/routes/_auth/admin/team-status.tsx
+msgid "Loading team activation…"
+msgstr "Loading team activation…"
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Loading workflow..."
+msgstr "Loading workflow..."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Location"
+msgstr "Location"
+
+#: src/apps/cinq/components/create-activity-dialog.tsx
+msgid "Log"
+msgstr "Log"
+
+#: src/apps/cinq/components/create-activity-dialog.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Log Activity"
+msgstr "Log Activity"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "logged"
+msgstr "logged"
+
+#: src/apps/sond/components/builder/branding-tab.tsx
+msgid "Logo URL"
+msgstr "Logo URL"
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Lost"
+msgstr "Lost"
+
+#: src/apps/vault/components/low-stock-alert-form.tsx
+msgid "Low stock"
+msgstr "Low stock"
+
+#: src/apps/vault/components/product-catalog.tsx
+#: src/routes/_auth/vault/dashboard.tsx
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Low Stock"
+msgstr "Low Stock"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Low Stock Alerts"
+msgstr "Low Stock Alerts"
+
+#: src/apps/vault/components/low-stock-alert-form.tsx
+msgid "Low stock threshold"
+msgstr "Low stock threshold"
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "LWA Refresh Token"
+msgstr "LWA Refresh Token"
+
+#: src/routes/_auth/tempo/dashboard.tsx
+#: src/routes/_auth/tempo/event-types/$id.tsx
+msgid "Manage availability"
+msgstr "Manage availability"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Manage employees, leave requests, and onboarding."
+msgstr "Manage employees, leave requests, and onboarding."
 
 #: src/routes/_auth/dashboard.tsx
 msgid "Manage Roles"
@@ -209,34 +2184,613 @@ msgstr "Manage Roles"
 msgid "Manage Users"
 msgstr "Manage Users"
 
+#: src/routes/_auth/admin/migration.tsx
+msgid "Map columns"
+msgstr "Map columns"
+
+#. placeholder {0}: ONBOARDING_STEPS[done]?.label
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Mark “{0}” done"
+msgstr "Mark “{0}” done"
+
+#: src/apps/tempo/components/upcoming-meetings.tsx
+msgid "Mark no-show"
+msgstr "Mark no-show"
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Marketplace"
+msgstr "Marketplace"
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Marketplace ID"
+msgstr "Marketplace ID"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Maximum rating"
+msgstr "Maximum rating"
+
+#: src/apps/tempo/components/booking/confirmation-screen.tsx
+msgid "Meeting booked!"
+msgstr "Meeting booked!"
+
+#: src/apps/cinq/components/activity-timeline.tsx
+msgid "Meetings"
+msgstr "Meetings"
+
 #: src/components/invite-dialog.tsx
 msgid "Member"
 msgstr "Member"
+
+#: src/apps/dial/components/message-thread.tsx
+msgid "Message deleted"
+msgstr "Message deleted"
+
+#: src/apps/dial/components/message-thread.tsx
+msgid "Message edited"
+msgstr "Message edited"
+
+#: src/apps/dial/components/message-input.tsx
+msgid "Message sent"
+msgstr "Message sent"
+
+#: src/apps/dial/components/message-thread.tsx
+msgid "Messages deleted."
+msgstr "Messages deleted."
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Metrics refresh automatically every 30 seconds."
+msgstr "Metrics refresh automatically every 30 seconds."
 
 #: src/routes/_auth/users.$id.tsx
 msgid "MFA Enabled:"
 msgstr "MFA Enabled:"
 
+#: src/routes/_auth/admin/migration.tsx
+msgid "Migration Wizard"
+msgstr "Migration Wizard"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Minimum rating"
+msgstr "Minimum rating"
+
+#: src/routes/_auth/spark/runs.tsx
+msgid "Monitor all workflow runs across your workspace."
+msgstr "Monitor all workflow runs across your workspace."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Movement history"
+msgstr "Movement history"
+
 #: src/routes/_auth/settings.tsx
 msgid "Multi-Factor Authentication (MFA)"
 msgstr "Multi-Factor Authentication (MFA)"
 
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/cinq/components/create-pipeline-stage-dialog.tsx
+#: src/apps/cinq/components/csv-import.tsx
+#: src/apps/dial/components/create-channel-dialog.tsx
+#: src/apps/tempo/components/event-type-form.tsx
+#: src/apps/vault/components/create-product-form.tsx
+#: src/apps/vault/components/product-catalog.tsx
+#: src/apps/vault/components/product-detail.tsx
+#: src/apps/vault/components/warehouse-list.tsx
 #: src/components/create-api-key-dialog.tsx
 #: src/components/create-role-dialog.tsx
+#: src/routes/_auth/admin/team-status.tsx
 #: src/routes/_auth/api-keys.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
 #: src/routes/_auth/roles.tsx
 #: src/routes/_auth/users/index.tsx
 msgid "Name"
 msgstr "Name"
 
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Name is required."
+msgstr "Name is required."
+
+#: src/apps/dial/components/context-sidebar.tsx
+msgid "Name:"
+msgstr "Name:"
+
+#: src/routes/_auth/spark/index.tsx
+msgid "Native automation triggers and actions. Zero per-task fees."
+msgstr "Native automation triggers and actions. Zero per-task fees."
+
 #: src/routes/login.tsx
-msgid "No password needed. SSO only."
-msgstr "No password needed. SSO only."
+msgid "Need an account? Sign up"
+msgstr "Need an account? Sign up"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "needs attention"
+msgstr "needs attention"
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Never"
+msgstr "Never"
+
+#: src/apps/pivot/components/block-editor.tsx
+msgid "New block type"
+msgstr "New block type"
+
+#: src/apps/cinq/components/create-contact-dialog.tsx
+#: src/routes/_auth/cinq/contacts/index.tsx
+msgid "New Contact"
+msgstr "New Contact"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "New Dashboard"
+msgstr "New Dashboard"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "New Database"
+msgstr "New Database"
+
+#: src/apps/cinq/components/create-deal-dialog.tsx
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "New Deal"
+msgstr "New Deal"
+
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "New hires will appear here."
+msgstr "New hires will appear here."
+
+#: src/apps/cinq/components/create-pipeline-stage-dialog.tsx
+msgid "New Pipeline Stage"
+msgstr "New Pipeline Stage"
+
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "New Stage"
+msgstr "New Stage"
+
+#: src/apps/cinq/components/create-task-dialog.tsx
+#: src/routes/_auth/cinq/tasks.tsx
+msgid "New Task"
+msgstr "New Task"
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "New Workflow"
+msgstr "New Workflow"
+
+#: src/apps/sond/components/preview/conversational-slide.tsx
+#: src/apps/sond/components/preview/form-preview.tsx
+#: src/routes/_auth/admin/audit.tsx
+#: src/routes/form.$id.tsx
+msgid "Next"
+msgstr "Next"
+
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "No active onboarding"
+msgstr "No active onboarding"
+
+#: src/apps/cinq/components/activity-timeline.tsx
+msgid "No activities yet"
+msgstr "No activities yet"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "No activity yet"
+msgstr "No activity yet"
+
+#: src/routes/_auth/admin/audit.tsx
+msgid "No audit logs found."
+msgstr "No audit logs found."
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "No availability yet"
+msgstr "No availability yet"
+
+#: src/apps/tempo/components/booking-calendar.tsx
+msgid "No available times. Check back soon."
+msgstr "No available times. Check back soon."
+
+#: src/apps/pivot/components/block-editor.tsx
+msgid "No blocks for this document."
+msgstr "No blocks for this document."
+
+#: src/apps/tempo/components/calendar-settings.tsx
+msgid "No calendars connected yet."
+msgstr "No calendars connected yet."
+
+#: src/apps/dial/components/channel-list.tsx
+msgid "No channels yet"
+msgstr "No channels yet"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "No channels yet."
+msgstr "No channels yet."
+
+#: src/apps/vista/components/cross-app-section.tsx
+msgid "No combined data yet — connect the source apps."
+msgstr "No combined data yet — connect the source apps."
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "No contacts yet"
+msgstr "No contacts yet"
+
+#: src/apps/cinq/components/contact-table.tsx
+msgid "No contacts yet. Create one to get started."
+msgstr "No contacts yet. Create one to get started."
+
+#: src/apps/cinq/components/custom-fields-tab.tsx
+msgid "No custom fields"
+msgstr "No custom fields"
+
+#: src/routes/_auth/vista/dashboard.tsx
+#: src/routes/_auth/vista/index.tsx
+msgid "No dashboards"
+msgstr "No dashboards"
+
+#: src/apps/vista/components/dashboard/drill-down-panel.tsx
+msgid "No data found for this selection."
+msgstr "No data found for this selection."
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "No data points."
+msgstr "No data points."
+
+#: src/routes/_auth/pivot/dashboard.tsx
+#: src/routes/_auth/pivot/db/index.tsx
+msgid "No databases"
+msgstr "No databases"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "No dead-letter events"
+msgstr "No dead-letter events"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "No deals yet"
+msgstr "No deals yet"
+
+#: src/routes/_auth/pivot/index.tsx
+msgid "No documents"
+msgstr "No documents"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "No documents uploaded."
+msgstr "No documents uploaded."
+
+#: src/apps/pause/components/employee-directory.tsx
+msgid "No employees"
+msgstr "No employees"
+
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "No establishments yet"
+msgstr "No establishments yet"
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "No ETL pipelines. These metrics come from your workspace."
+msgstr "No ETL pipelines. These metrics come from your workspace."
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "No event types yet"
+msgstr "No event types yet"
+
+#: src/routes/_auth/sond/index.tsx
+msgid "No forms"
+msgstr "No forms"
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "No KPIs available."
+msgstr "No KPIs available."
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "No leave requests"
+msgstr "No leave requests"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "No linked CINQ deal for this conversation."
+msgstr "No linked CINQ deal for this conversation."
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "No matching products"
+msgstr "No matching products"
+
+#: src/apps/dial/components/message-thread.tsx
+msgid "No messages yet. Say hello!"
+msgstr "No messages yet. Say hello!"
+
+#: src/apps/vault/components/movement-history.tsx
+msgid "No movements match this filter."
+msgstr "No movements match this filter."
+
+#: src/apps/vault/components/movement-history.tsx
+#: src/routes/_auth/vault/movements.tsx
+msgid "No movements yet"
+msgstr "No movements yet"
+
+#: src/routes/login.tsx
+#~ msgid "No password needed. SSO only."
+#~ msgstr "No password needed. SSO only."
+
+#: src/routes/_auth/pause/leave.tsx
+msgid "No payroll bloat. Just leave tracking."
+msgstr "No payroll bloat. Just leave tracking."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "No phone"
+msgstr "No phone"
+
+#: src/apps/vault/components/product-catalog.tsx
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "No products"
+msgstr "No products"
+
+#: src/apps/pivot/components/relations-panel.tsx
+msgid "No relations yet."
+msgstr "No relations yet."
+
+#: src/apps/vault/components/reservation-list.tsx
+msgid "No reserved stock in these variants."
+msgstr "No reserved stock in these variants."
+
+#: src/routes/_auth/settings.tsx
+msgid "No restrictions — all IPs allowed."
+msgstr "No restrictions — all IPs allowed."
+
+#: src/apps/pivot/components/relation-cell.tsx
+msgid "No results"
+msgstr "No results"
+
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+msgid "No routing rules yet."
+msgstr "No routing rules yet."
+
+#: src/apps/pivot/components/database-grid.tsx
+msgid "No rows. Add one above."
+msgstr "No rows. Add one above."
+
+#: src/apps/spark/components/execution-history.tsx
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "No runs yet"
+msgstr "No runs yet"
+
+#: src/apps/sond/components/submissions-table.tsx
+msgid "No submissions"
+msgstr "No submissions"
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "No submissions yet"
+msgstr "No submissions yet"
+
+#: src/apps/cinq/components/task-list.tsx
+msgid "No tasks"
+msgstr "No tasks"
+
+#: src/routes/_auth/cinq/contacts/$id.tsx
+msgid "No tasks for this contact."
+msgstr "No tasks for this contact."
+
+#: src/routes/_auth/pivot/dashboard.tsx
+#: src/routes/_auth/pivot/templates.tsx
+msgid "No templates"
+msgstr "No templates"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "No variants"
+msgstr "No variants"
+
+#: src/apps/vault/components/low-stock-alert-form.tsx
+msgid "No variants below this threshold."
+msgstr "No variants below this threshold."
+
+#: src/apps/vault/components/warehouse-list.tsx
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "No warehouses"
+msgstr "No warehouses"
+
+#: src/apps/spark/components/workflow-list.tsx
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "No workflows"
+msgstr "No workflows"
+
+#: src/apps/tempo/components/no-show-badge.tsx
+msgid "No-show detected"
+msgstr "No-show detected"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "not contains"
+msgstr "not contains"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "not equals"
+msgstr "not equals"
+
+#: src/apps/cinq/components/activity-timeline.tsx
+msgid "Notes"
+msgstr "Notes"
+
+#: src/routes/_auth/inbox.tsx
+msgid "Nothing needs your attention."
+msgstr "Nothing needs your attention."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Offboard"
+msgstr "Offboard"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Offline"
+msgstr "Offline"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Onboarded"
+msgstr "Onboarded"
+
+#: src/apps/pause/components/employee-detail.tsx
+#: src/routes/_auth/pause/dashboard.tsx
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Onboarding"
+msgstr "Onboarding"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Onboarding Checklist"
+msgstr "Onboarding Checklist"
+
+#. placeholder {0}: employee.full_name
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Onboarding complete for {0}"
+msgstr "Onboarding complete for {0}"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "onboarding in progress"
+msgstr "onboarding in progress"
+
+#: src/apps/pause/components/employee-detail.tsx
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Onboarding progress"
+msgstr "Onboarding progress"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "online"
+msgstr "online"
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Open"
+msgstr "Open"
+
+#: src/apps/vista/components/sql-editor.tsx
+msgid "Open dashboards"
+msgstr "Open dashboards"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Open Deals"
+msgstr "Open Deals"
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Opened"
+msgstr "Opened"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "Operator"
+msgstr "Operator"
+
+#. placeholder {0}: (question.options || []).length + 1
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Option {0}"
+msgstr "Option {0}"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Option 1"
+msgstr "Option 1"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Option: {opt}"
+msgstr "Option: {opt}"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Options"
+msgstr "Options"
+
+#: src/routes/login.tsx
+msgid "Or"
+msgstr "Or"
+
+#: src/apps/cinq/components/create-pipeline-stage-dialog.tsx
+msgid "Order"
+msgstr "Order"
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Outbox Event"
+msgstr "Outbox Event"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Outbox Event Type"
+msgstr "Outbox Event Type"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Page"
+msgstr "Page"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Page {p}"
+msgstr "Page {p}"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Page break added"
+msgstr "Page break added"
+
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Paperwork"
+msgstr "Paperwork"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Parameters (JSON)"
+msgstr "Parameters (JSON)"
+
+#: src/routes/_auth/users/index.tsx
+msgid "Password"
+msgstr "Password"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+#: src/apps/spark/components/run-detail-panel.tsx
+msgid "Payload"
+msgstr "Payload"
+
+#: src/routes/_auth/admin/team-status.tsx
+msgid "Pending"
+msgstr "Pending"
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Pending Approval"
+msgstr "Pending Approval"
+
+#: src/routes/_auth/admin/approvals.tsx
+msgid "Pending Approvals"
+msgstr "Pending Approvals"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Pending Requests"
+msgstr "Pending Requests"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "pending review"
+msgstr "pending review"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "People"
+msgstr "People"
 
 #: src/components/create-role-dialog.tsx
 #: src/routes/_auth/roles.tsx
 msgid "Permissions"
 msgstr "Permissions"
+
+#: src/apps/cinq/components/contact-table.tsx
+msgid "Person"
+msgstr "Person"
+
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Personal"
+msgstr "Personal"
+
+#: src/apps/cinq/components/contact-table.tsx
+#: src/apps/cinq/components/csv-import.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+msgid "Phone"
+msgstr "Phone"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Pick a valid date and time."
+msgstr "Pick a valid date and time."
+
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Pie Chart"
+msgstr "Pie Chart"
+
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Pipeline"
+msgstr "Pipeline"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Pipeline Stages"
+msgstr "Pipeline Stages"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Pipeline Value"
+msgstr "Pipeline Value"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "Pivot"
+msgstr "Pivot"
 
 #: src/routes/_auth/settings.tsx
 msgid "Plan"
@@ -250,22 +2804,384 @@ msgstr "Plan:"
 msgid "Prefix"
 msgstr "Prefix"
 
+#: src/apps/cinq/components/csv-import.tsx
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Preview"
+msgstr "Preview"
+
+#: src/routes/_auth/admin/audit.tsx
+msgid "Previous"
+msgstr "Previous"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Price"
+msgstr "Price"
+
+#: src/apps/vault/components/create-variant-form.tsx
+msgid "Price (cents)"
+msgstr "Price (cents)"
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Primary"
+msgstr "Primary"
+
+#: src/apps/sond/components/builder/branding-tab.tsx
+msgid "Primary Color"
+msgstr "Primary Color"
+
+#: src/apps/dial/components/ticket-detail.tsx
+#: src/apps/dial/components/ticket-list.tsx
+msgid "Priority"
+msgstr "Priority"
+
+#: src/apps/dial/components/channel-list.tsx
+#: src/apps/dial/components/create-channel-dialog.tsx
+msgid "Private"
+msgstr "Private"
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Probability (%)"
+msgstr "Probability (%)"
+
+#: src/apps/vista/components/filter-bar.tsx
+msgid "Product 1"
+msgstr "Product 1"
+
+#: src/apps/vista/components/filter-bar.tsx
+msgid "Product 2"
+msgstr "Product 2"
+
+#: src/apps/vault/components/create-product-form.tsx
+msgid "Product created."
+msgstr "Product created."
+
+#: src/apps/vault/components/create-product-form.tsx
+msgid "Product creation failed."
+msgstr "Product creation failed."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Product deleted"
+msgstr "Product deleted"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Product not found"
+msgstr "Product not found"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Product updated"
+msgstr "Product updated"
+
+#: src/routes/_auth/vault/dashboard.tsx
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Products"
+msgstr "Products"
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Products synced:"
+msgstr "Products synced:"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Products, variants, stock, and warehouses."
+msgstr "Products, variants, stock, and warehouses."
+
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Progress saved ({pct}%)"
+msgstr "Progress saved ({pct}%)"
+
+#: src/apps/dial/components/create-channel-dialog.tsx
+msgid "Public"
+msgstr "Public"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Public link copied"
+msgstr "Public link copied"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Publish"
+msgstr "Publish"
+
+#: src/apps/sond/actions.ts
+msgid "Publish Form"
+msgstr "Publish Form"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Publish this form"
+msgstr "Publish this form"
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Publish your form to start collecting responses."
+msgstr "Publish your form to start collecting responses."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Quantity to reserve"
+msgstr "Quantity to reserve"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Question"
+msgstr "Question"
+
+#. placeholder {0}: currentSlide + 1
+#. placeholder {1}: visibleQuestions.length
+#: src/routes/form.$id.tsx
+msgid "Question {0} of {1}"
+msgstr "Question {0} of {1}"
+
+#: src/apps/sond/components/preview/conversational-slide.tsx
+msgid "Question {current} of {total}"
+msgstr "Question {current} of {total}"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Question added"
+msgstr "Question added"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Question deleted"
+msgstr "Question deleted"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Question Text"
+msgstr "Question Text"
+
+#: src/apps/sond/components/builder/question-palette.tsx
+msgid "Question Types"
+msgstr "Question Types"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Quick Actions"
+msgstr "Quick Actions"
+
 #: src/routes/_auth/dashboard.tsx
 msgid "Quick Links"
 msgstr "Quick Links"
 
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Rating"
+msgstr "Rating"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Rating Scale"
+msgstr "Rating Scale"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Real-time stock. Zero race conditions."
+msgstr "Real-time stock. Zero race conditions."
+
+#: src/apps/pause/components/leave-request-form.tsx
+#: src/apps/vault/components/movement-history.tsx
+msgid "Reason"
+msgstr "Reason"
+
+#: src/apps/vault/components/stock-adjustment.tsx
+msgid "Reason for adjustment"
+msgstr "Reason for adjustment"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Recent Activity"
+msgstr "Recent Activity"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Recent Contacts"
+msgstr "Recent Contacts"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Recent Deals"
+msgstr "Recent Deals"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Recent Leave Requests"
+msgstr "Recent Leave Requests"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Recent Products"
+msgstr "Recent Products"
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Recent Runs"
+msgstr "Recent Runs"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Reconnecting"
+msgstr "Reconnecting"
+
+#: src/routes/_auth/admin/migration.tsx
+msgid "records imported"
+msgstr "records imported"
+
+#: src/apps/vault/components/movement-history.tsx
+msgid "Reference"
+msgstr "Reference"
+
+#: src/apps/vista/components/filter-bar.tsx
+msgid "Refresh Dashboard"
+msgstr "Refresh Dashboard"
+
+#: src/routes/_auth/admin/approvals.tsx
+msgid "Reject"
+msgstr "Reject"
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Rejected"
+msgstr "Rejected"
+
+#: src/apps/pivot/components/relations-panel.tsx
+msgid "Relations"
+msgstr "Relations"
+
+#: src/apps/cinq/components/establishment-list.tsx
+#: src/apps/vault/components/movement-history.tsx
+#: src/apps/vault/components/product-catalog.tsx
+#: src/apps/vault/components/product-detail.tsx
+#: src/apps/vault/components/warehouse-list.tsx
+#: src/routes/_auth/vault/movements.tsx
+msgid "Reload the page or try again in a few seconds."
+msgstr "Reload the page or try again in a few seconds."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Remaining"
+msgstr "Remaining"
+
 #: src/components/create-role-dialog.tsx
+#: src/routes/_auth/settings.tsx
 msgid "Remove"
 msgstr "Remove"
 
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Remove slot"
+msgstr "Remove slot"
+
+#: src/apps/dial/components/ticket-detail.tsx
+#: src/apps/dial/components/ticket-list.tsx
+msgid "Reopen"
+msgstr "Reopen"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Repeat weekly"
+msgstr "Repeat weekly"
+
+#: src/apps/spark/components/dlq-viewer.tsx
+msgid "Replay"
+msgstr "Replay"
+
+#: src/apps/dial/components/ticket-detail.tsx
+msgid "Reply"
+msgstr "Reply"
+
+#: src/apps/dial/components/thread-sidebar.tsx
+msgid "Reply in thread..."
+msgstr "Reply in thread..."
+
+#: src/apps/dial/components/ticket-detail.tsx
+msgid "Reply sent"
+msgstr "Reply sent"
+
+#: src/routes/_auth/pause/dashboard.tsx
+#: src/routes/_auth/pause/reports.tsx
+msgid "Reports"
+msgstr "Reports"
+
+#: src/routes/_auth/pause/leave.tsx
+msgid "Request Leave"
+msgstr "Request Leave"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Required"
+msgstr "Required"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Required params:"
+msgstr "Required params:"
+
+#: src/apps/tempo/components/reschedule-modal.tsx
+#: src/apps/tempo/components/upcoming-meetings.tsx
+msgid "Reschedule"
+msgstr "Reschedule"
+
+#: src/apps/tempo/components/reschedule-modal.tsx
+msgid "Reschedule Meeting"
+msgstr "Reschedule Meeting"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Reserve"
+msgstr "Reserve"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Reserve Stock"
+msgstr "Reserve Stock"
+
+#: src/apps/vault/components/integration-toggle.tsx
+msgid "Reserve stock automatically when CINQ deal is won."
+msgstr "Reserve stock automatically when CINQ deal is won."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Reserved"
+msgstr "Reserved"
+
+#: src/apps/vault/components/reservation-list.tsx
+msgid "Reserved quantities for the first 100 variants. Reservation history and release are not available. Open a product to reserve stock."
+msgstr "Reserved quantities for the first 100 variants. Reservation history and release are not available. Open a product to reserve stock."
+
+#: src/apps/vault/components/reservation-list.tsx
+msgid "Reserved quantity"
+msgstr "Reserved quantity"
+
+#: src/apps/vault/components/reservation-list.tsx
+msgid "Reserved stock"
+msgstr "Reserved stock"
+
+#: src/apps/sond/components/preview/form-preview.tsx
+msgid "Response submitted"
+msgstr "Response submitted"
+
+#: src/routes/form.$id.tsx
+msgid "Response submitted successfully"
+msgstr "Response submitted successfully"
+
+#: src/apps/pivot/components/version-history.tsx
+msgid "Restore"
+msgstr "Restore"
+
 #: src/routes/_auth/settings.tsx
-msgid "Restrict access to your tenant to specific IP addresses. (P1 feature - coming soon)"
-msgstr "Restrict access to your tenant to specific IP addresses. (P1 feature - coming soon)"
+msgid "Restrict access to your tenant to specific IP addresses or CIDR ranges. Leave empty to allow all. Changes take effect immediately."
+msgstr "Restrict access to your tenant to specific IP addresses or CIDR ranges. Leave empty to allow all. Changes take effect immediately."
+
+#: src/routes/_auth/settings.tsx
+#~ msgid "Restrict access to your tenant to specific IP addresses. (P1 feature - coming soon)"
+#~ msgstr "Restrict access to your tenant to specific IP addresses. (P1 feature - coming soon)"
+
+#: src/routes/_auth/inbox.tsx
+#: src/routes/_auth/pivot/doc/$id.tsx
+msgid "Retry"
+msgstr "Retry"
+
+#: src/routes/_auth/pivot/dashboard.tsx
+msgid "reusable templates"
+msgstr "reusable templates"
+
+#: src/apps/vista/components/widget-picker.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Revenue"
+msgstr "Revenue"
+
+#: src/apps/vista/components/cross-app-section.tsx
+msgid "Revenue + Inventory"
+msgstr "Revenue + Inventory"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Revenue Won"
+msgstr "Revenue Won"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Review Needed"
+msgstr "Review Needed"
 
 #: src/routes/_auth/api-keys.tsx
-#: src/routes/_auth/users.$id.tsx
 msgid "Revoke"
 msgstr "Revoke"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Revoke access"
+msgstr "Revoke access"
 
 #: src/routes/_auth/users.$id.tsx
 msgid "Revoke Access"
@@ -275,7 +3191,13 @@ msgstr "Revoke Access"
 msgid "Revoke API Key"
 msgstr "Revoke API Key"
 
+#: src/routes/_auth/api-keys.tsx
+msgid "Revoke key"
+msgstr "Revoke key"
+
 #: src/components/invite-dialog.tsx
+#: src/routes/_auth/admin/approvals.tsx
+#: src/routes/_auth/admin/team-status.tsx
 #: src/routes/_auth/users/index.tsx
 msgid "Role"
 msgstr "Role"
@@ -292,27 +3214,222 @@ msgstr "Role:"
 msgid "Roles"
 msgstr "Roles"
 
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Routing"
+msgstr "Routing"
+
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+msgid "Routing rules saved"
+msgstr "Routing rules saved"
+
+#: src/apps/pivot/components/database-grid.tsx
+msgid "Row added."
+msgstr "Row added."
+
+#. placeholder {0}: i + 1
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+msgid "Rule {0}"
+msgstr "Rule {0}"
+
+#: src/routes/_auth/admin/approvals.tsx
+msgid "Run"
+msgstr "Run"
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Run approved."
+msgstr "Run approved."
+
+#: src/apps/spark/components/run-detail-panel.tsx
+msgid "Run Details"
+msgstr "Run Details"
+
+#: src/apps/spark/components/run-detail-panel.tsx
+msgid "Run ID"
+msgstr "Run ID"
+
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Run Test"
+msgstr "Run Test"
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Running"
+msgstr "Running"
+
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Running..."
+msgstr "Running..."
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Runs Today"
+msgstr "Runs Today"
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Sales"
+msgstr "Sales"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Sales Pipeline"
+msgstr "Sales Pipeline"
+
+#: src/routes/_auth/admin/migration.tsx
+msgid "Sample"
+msgstr "Sample"
+
+#: src/apps/cinq/components/deal-kanban.tsx
+#: src/apps/dial/components/context-sidebar.tsx
+#: src/apps/dial/components/message-thread.tsx
+#: src/apps/pause/components/employee-detail.tsx
+#: src/apps/vault/components/product-detail.tsx
+#: src/apps/vault/components/warehouse-list.tsx
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+#: src/routes/_auth/pause/directory.tsx
+#: src/routes/_auth/pivot/templates.tsx
 #: src/routes/_auth/settings.tsx
+#: src/routes/_auth/sond/builder/$id.tsx
+#: src/routes/_auth/spark/workflows/$id.tsx
 msgid "Save"
 msgstr "Save"
 
+#: src/apps/pivot/components/block-editor.tsx
+msgid "Save Block"
+msgstr "Save Block"
+
+#: src/apps/tempo/components/event-type-form.tsx
+msgid "Save Event Type"
+msgstr "Save Event Type"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "Save Logic"
+msgstr "Save Logic"
+
+#: src/routes/_auth/users.$id.tsx
+msgid "Save Role"
+msgstr "Save Role"
+
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+msgid "Save Routing"
+msgstr "Save Routing"
+
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Saved."
+msgstr "Saved."
+
+#: src/apps/sond/components/builder/form-routing-editor.tsx
+#: src/apps/tempo/components/event-type-form.tsx
 #: src/routes/_auth/settings.tsx
+#: src/routes/_auth/sond/builder/$id.tsx
 msgid "Saving..."
 msgstr "Saving..."
+
+#: src/apps/pivot/components/document-editor.tsx
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Saving…"
+msgstr "Saving…"
 
 #: src/routes/_auth/settings.tsx
 msgid "Scan this QR code with your authenticator app, then enter the 6-digit code below to verify."
 msgstr "Scan this QR code with your authenticator app, then enter the 6-digit code below to verify."
 
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Schedule"
+msgstr "Schedule"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Search"
+msgstr "Search"
+
+#: src/routes/_auth/cinq/contacts/index.tsx
+msgid "Search by custom field"
+msgstr "Search by custom field"
+
+#: src/apps/vault/components/movement-history.tsx
+msgid "Search by reason, reference, or quantity..."
+msgstr "Search by reason, reference, or quantity..."
+
+#: src/apps/dial/components/channel-list.tsx
+msgid "Search channels..."
+msgstr "Search channels..."
+
+#: src/apps/cinq/components/contact-table.tsx
+msgid "Search contacts..."
+msgstr "Search contacts..."
+
+#: src/apps/pause/components/employee-directory.tsx
+msgid "Search employees..."
+msgstr "Search employees..."
+
+#: src/apps/sond/actions.ts
+msgid "Search Forms"
+msgstr "Search Forms"
+
+#: src/apps/dial/components/message-thread.tsx
+msgid "Search messages..."
+msgstr "Search messages..."
+
+#: src/apps/vault/actions.ts
+msgid "Search Products"
+msgstr "Search Products"
+
+#: src/apps/pivot/components/relation-cell.tsx
+msgid "Searching…"
+msgstr "Searching…"
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Secondary"
+msgstr "Secondary"
+
 #: src/routes/_auth/settings.tsx
 msgid "Secure your account with TOTP MFA. You'll need an authenticator app like Google Authenticator or Authy."
 msgstr "Secure your account with TOTP MFA. You'll need an authenticator app like Google Authenticator or Authy."
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Secured"
+msgstr "Secured"
+
+#: src/apps/tempo/components/booking/event-type-selector.tsx
+msgid "Select"
+msgstr "Select"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Select a conversation to see the linked CINQ deal context."
+msgstr "Select a conversation to see the linked CINQ deal context."
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "Select a question to configure"
+msgstr "Select a question to configure"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Select an event..."
+msgstr "Select an event..."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Selected variant"
+msgstr "Selected variant"
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Seller"
+msgstr "Seller"
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Seller ID"
+msgstr "Seller ID"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Send as X-Webhook-Secret header"
+msgstr "Send as X-Webhook-Secret header"
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Sent"
+msgstr "Sent"
 
 #: src/routes/_auth/settings.tsx
 msgid "Setting up..."
 msgstr "Setting up..."
 
+#: src/apps/sond/components/builder/question-config-panel.tsx
 #: src/routes/_auth/settings.tsx
+#: src/routes/_auth/sond/builder/$id.tsx
 msgid "Settings"
 msgstr "Settings"
 
@@ -320,17 +3437,306 @@ msgstr "Settings"
 msgid "Setup MFA"
 msgstr "Setup MFA"
 
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Setup workspace"
+msgstr "Setup workspace"
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Shop:"
+msgstr "Shop:"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Shopify"
+msgstr "Shopify"
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Shopify Connection"
+msgstr "Shopify Connection"
+
+#: src/apps/vault/components/settings/shopify-connect.tsx
+msgid "Shopify connection failed."
+msgstr "Shopify connection failed."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Shopify disconnect failed."
+msgstr "Shopify disconnect failed."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Shopify disconnected."
+msgstr "Shopify disconnected."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+#: src/apps/vault/components/shopify-sync-button.tsx
+msgid "Shopify sync failed."
+msgstr "Shopify sync failed."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+#: src/apps/vault/components/shopify-sync-button.tsx
+msgid "Shopify sync started."
+msgstr "Shopify sync started."
+
+#: src/apps/tempo/components/booking-calendar.tsx
+msgid "Show more dates"
+msgstr "Show more dates"
+
+#: src/apps/vista/components/dashboard/drill-down-panel.tsx
+msgid "Showing raw data for {dimension}: {value}"
+msgstr "Showing raw data for {dimension}: {value}"
+
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Sick"
+msgstr "Sick"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Sign contract"
+msgstr "Sign contract"
+
 #: src/routes/login.tsx
 msgid "Sign in to Ataqu"
 msgstr "Sign in to Ataqu"
 
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "SIRET"
+msgstr "SIRET"
+
+#: src/apps/vault/components/create-product-form.tsx
+#: src/apps/vault/components/create-variant-form.tsx
+#: src/apps/vault/components/product-catalog.tsx
+#: src/apps/vault/components/product-detail.tsx
+#: src/apps/vault/components/reservation-list.tsx
+msgid "SKU"
+msgstr "SKU"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Slot added."
+msgstr "Slot added."
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Slot removed."
+msgstr "Slot removed."
+
+#: src/apps/tempo/components/error-boundary.tsx
+msgid "Something went wrong"
+msgstr "Something went wrong"
+
+#: src/routes/_auth/admin/migration.tsx
+msgid "Source column"
+msgstr "Source column"
+
+#: src/apps/vista/components/sql-editor.tsx
+msgid "SQL exploration is not available"
+msgstr "SQL exploration is not available"
+
+#: src/apps/cinq/components/create-deal-dialog.tsx
+msgid "Stage"
+msgstr "Stage"
+
+#: src/apps/cinq/components/deal-kanban.tsx
+msgid "Stage updated"
+msgstr "Stage updated"
+
+#: src/routes/_auth/sond/index.tsx
+msgid "Standard"
+msgstr "Standard"
+
+#: src/apps/sond/components/builder/conversational-toggle.tsx
+msgid "Standard (All on one page)"
+msgstr "Standard (All on one page)"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Start"
+msgstr "Start"
+
+#: src/apps/pause/components/approval-dashboard.tsx
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Start Date"
+msgstr "Start Date"
+
+#: src/apps/spark/components/run-detail-panel.tsx
+msgid "Started"
+msgstr "Started"
+
+#. placeholder {0}: formatDateTime(thread.created_at)
+#: src/apps/dial/components/thread-sidebar.tsx
+msgid "Started {0}"
+msgstr "Started {0}"
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Started:"
+msgstr "Started:"
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+#: src/apps/dial/components/ticket-list.tsx
+#: src/apps/pause/components/approval-dashboard.tsx
+#: src/apps/spark/components/run-detail-panel.tsx
+#: src/apps/vault/components/product-catalog.tsx
+#: src/routes/_auth/admin/team-status.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
 #: src/routes/_auth/users/index.tsx
 msgid "Status"
 msgstr "Status"
 
+#: src/apps/dial/components/ticket-detail.tsx
+#: src/apps/dial/components/ticket-list.tsx
+msgid "Status updated"
+msgstr "Status updated"
+
 #: src/routes/_auth/users.$id.tsx
 msgid "Status:"
 msgstr "Status:"
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Step 1: Choose a trigger"
+msgstr "Step 1: Choose a trigger"
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Step 2: Build your workflow"
+msgstr "Step 2: Build your workflow"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Stock"
+msgstr "Stock"
+
+#: src/apps/vault/components/stock-adjustment.tsx
+msgid "Stock adjusted."
+msgstr "Stock adjusted."
+
+#: src/apps/vault/components/stock-adjustment.tsx
+msgid "Stock adjustment failed."
+msgstr "Stock adjustment failed."
+
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Stock Levels"
+msgstr "Stock Levels"
+
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "stock locations"
+msgstr "stock locations"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Stock reserved"
+msgstr "Stock reserved"
+
+#: src/apps/pivot/components/document-editor.tsx
+msgid "Structured blocks"
+msgstr "Structured blocks"
+
+#: src/apps/dial/components/ticket-list.tsx
+msgid "Subject"
+msgstr "Subject"
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Submissions"
+msgstr "Submissions"
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Submissions exported"
+msgstr "Submissions exported"
+
+#: src/apps/sond/components/preview/conversational-slide.tsx
+#: src/apps/sond/components/preview/form-preview.tsx
+#: src/routes/form.$id.tsx
+msgid "Submit"
+msgstr "Submit"
+
+#: src/apps/sond/components/submissions-table.tsx
+msgid "Submitted At"
+msgstr "Submitted At"
+
+#: src/routes/form.$id.tsx
+msgid "Submitting..."
+msgstr "Submitting..."
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Success Rate"
+msgstr "Success Rate"
+
+#: src/apps/dial/components/ticket-detail.tsx
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Support"
+msgstr "Support"
+
+#: src/apps/vista/components/cross-app-section.tsx
+msgid "Support + Sales"
+msgstr "Support + Sales"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Support Workspace"
+msgstr "Support Workspace"
+
+#: src/apps/vault/components/settings/shopify-error-log.tsx
+msgid "Sync Errors"
+msgstr "Sync Errors"
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Sync now"
+msgstr "Sync now"
+
+#: src/apps/vault/actions.ts
+#: src/apps/vault/components/shopify-sync-button.tsx
+msgid "Sync Shopify"
+msgstr "Sync Shopify"
+
+#: src/apps/vault/components/settings/amazon-connect.tsx
+msgid "Sync your Amazon Seller Central inventory with VAULT by SKU."
+msgstr "Sync your Amazon Seller Central inventory with VAULT by SKU."
+
+#: src/apps/vault/components/settings/shopify-connect.tsx
+msgid "Sync your Shopify products and inventory with VAULT."
+msgstr "Sync your Shopify products and inventory with VAULT."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+#: src/apps/vault/components/shopify-sync-button.tsx
+msgid "Syncing..."
+msgstr "Syncing..."
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "Syncing…"
+msgstr "Syncing…"
+
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Table"
+msgstr "Table"
+
+#: src/routes/_auth/admin/migration.tsx
+msgid "Target app"
+msgstr "Target app"
+
+#: src/routes/_auth/admin/migration.tsx
+msgid "Target field"
+msgstr "Target field"
+
+#: src/routes/_auth/cinq/contacts/$id.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+#: src/routes/_auth/cinq/tasks.tsx
+msgid "Tasks"
+msgstr "Tasks"
+
+#: src/apps/vista/components/filter-bar.tsx
+msgid "Team A"
+msgstr "Team A"
+
+#: src/routes/_auth/admin/team-status.tsx
+msgid "Team activation"
+msgstr "Team activation"
+
+#: src/apps/vista/components/filter-bar.tsx
+msgid "Team B"
+msgstr "Team B"
+
+#: src/apps/pivot/components/template-picker.tsx
+msgid "Template applied."
+msgstr "Template applied."
+
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Template created."
+msgstr "Template created."
+
+#: src/routes/_auth/pivot/dashboard.tsx
+#: src/routes/_auth/pivot/templates.tsx
+msgid "Templates"
+msgstr "Templates"
 
 #: src/routes/_auth/dashboard.tsx
 msgid "Tenant"
@@ -344,17 +3750,317 @@ msgstr "Tenant Information"
 msgid "Tenant Name"
 msgstr "Tenant Name"
 
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Test Payload (JSON)"
+msgstr "Test Payload (JSON)"
+
+#: src/apps/spark/components/test-run-modal.tsx
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Test Run"
+msgstr "Test Run"
+
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Test run completed successfully."
+msgstr "Test run completed successfully."
+
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Test run completed."
+msgstr "Test run completed."
+
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Test run failed."
+msgstr "Test run failed."
+
+#: src/apps/spark/components/test-run-modal.tsx
+msgid "Test run failed. Check the execution history for details."
+msgstr "Test run failed. Check the execution history for details."
+
+#: src/apps/spark/components/execution-history.tsx
+msgid "Test your workflow to see execution history."
+msgstr "Test your workflow to see execution history."
+
+#: src/apps/sond/components/preview/form-preview.tsx
+#: src/routes/form.$id.tsx
+msgid "Thank you!"
+msgstr "Thank you!"
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "The connection was not removed. Please try again."
+msgstr "The connection was not removed. Please try again."
+
+#: src/apps/vault/components/csv-import.tsx
+msgid "The CSV must include name and sku columns."
+msgstr "The CSV must include name and sku columns."
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "The end time must be after the start time."
+msgstr "The end time must be after the start time."
+
+#: src/apps/vault/components/settings/shopify-connect.tsx
+msgid "The OAuth flow could not be started. Please try again."
+msgstr "The OAuth flow could not be started. Please try again."
+
+#: src/apps/vault/components/csv-import.tsx
+msgid "The selected CSV file is empty."
+msgstr "The selected CSV file is empty."
+
+#: src/apps/vault/components/csv-import.tsx
+msgid "The selected file could not be imported."
+msgstr "The selected file could not be imported."
+
+#: src/apps/vault/components/create-variant-form.tsx
+msgid "The SKU may already exist or the product was not found."
+msgstr "The SKU may already exist or the product was not found."
+
+#: src/apps/vault/components/stock-adjustment.tsx
+msgid "The stock change was reverted. Please try again."
+msgstr "The stock change was reverted. Please try again."
+
+#: src/apps/vault/components/settings/amazon-status.tsx
+msgid "The sync request was not accepted."
+msgstr "The sync request was not accepted."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+#: src/apps/vault/components/shopify-sync-button.tsx
+msgid "The sync request was not accepted. Please try again."
+msgstr "The sync request was not accepted. Please try again."
+
 #: src/routes/_auth/api-keys.tsx
 msgid "This action cannot be undone. Any services using this key will lose access."
 msgstr "This action cannot be undone. Any services using this key will lose access."
+
+#: src/apps/sond/components/preview/conversational-slide.tsx
+#: src/routes/form.$id.tsx
+msgid "This field is required"
+msgstr "This field is required"
+
+#: src/routes/form.$id.tsx
+msgid "This form does not exist or has been removed."
+msgstr "This form does not exist or has been removed."
+
+#: src/routes/_auth/cinq/deals/index.tsx
+msgid "This is your revenue engine. No 3‑year lock‑in, just deals."
+msgstr "This is your revenue engine. No 3‑year lock‑in, just deals."
+
+#: src/routes/$.tsx
+msgid "This page does not exist or has been moved."
+msgstr "This page does not exist or has been moved."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "This product may have been deleted."
+msgstr "This product may have been deleted."
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "This question will be shown only when the condition above is met."
+msgstr "This question will be shown only when the condition above is met."
 
 #: src/routes/_auth/users.$id.tsx
 msgid "This will deactivate the user and revoke all sessions. This action can be undone by an admin."
 msgstr "This will deactivate the user and revoke all sessions. This action can be undone by an admin."
 
+#: src/apps/dial/components/thread-sidebar.tsx
+msgid "Thread"
+msgstr "Thread"
+
+#: src/routes/_auth/dial/dashboard.tsx
+msgid "Ticket Inbox"
+msgstr "Ticket Inbox"
+
+#: src/apps/dial/components/ticket-detail.tsx
+msgid "Ticket not found"
+msgstr "Ticket not found"
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Time"
+msgstr "Time"
+
+#: src/apps/tempo/components/availability-editor.tsx
+msgid "Times are entered in {timezone} and stored as UTC."
+msgstr "Times are entered in {timezone} and stored as UTC."
+
 #: src/routes/_auth/admin/audit.tsx
 msgid "Timestamp"
 msgstr "Timestamp"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Timezone"
+msgstr "Timezone"
+
+#: src/apps/cinq/components/create-deal-dialog.tsx
+#: src/apps/cinq/components/create-task-dialog.tsx
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Title"
+msgstr "Title"
+
+#: src/apps/sond/components/builder/question-config-panel.tsx
+msgid "to"
+msgstr "to"
+
+#: src/apps/pivot/components/relations-panel.tsx
+msgid "To block"
+msgstr "To block"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "total contacts"
+msgstr "total contacts"
+
+#: src/routes/_auth/pause/dashboard.tsx
+msgid "Total Employees"
+msgstr "Total Employees"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Total Pipeline"
+msgstr "Total Pipeline"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Total stock"
+msgstr "Total stock"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Track deals, contacts, and activity across your pipeline."
+msgstr "Track deals, contacts, and activity across your pipeline."
+
+#: src/apps/cinq/components/email-tracking-tab.tsx
+msgid "Track event"
+msgstr "Track event"
+
+#: src/routes/_auth/pause/onboarding.tsx
+msgid "Training"
+msgstr "Training"
+
+#: src/routes/_auth/sond/submissions/$id.tsx
+msgid "Trigger SPARK workflow on submission"
+msgstr "Trigger SPARK workflow on submission"
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Trigger SPARK workflow on won"
+msgstr "Trigger SPARK workflow on won"
+
+#: src/apps/spark/components/node-sidebar.tsx
+msgid "Triggers"
+msgstr "Triggers"
+
+#: src/apps/tempo/components/error-boundary.tsx
+msgid "Try again"
+msgstr "Try again"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Try another search term or create a new product."
+msgstr "Try another search term or create a new product."
+
+#: src/apps/pause/components/reports.tsx
+msgid "Turnover Rate"
+msgstr "Turnover Rate"
+
+#: src/apps/cinq/components/create-activity-dialog.tsx
+#: src/apps/dial/components/create-channel-dialog.tsx
+#: src/apps/pause/components/approval-dashboard.tsx
+#: src/apps/pivot/components/relations-panel.tsx
+#: src/apps/vista/components/widget-picker.tsx
+msgid "Type"
+msgstr "Type"
+
+#: src/apps/dial/components/message-input.tsx
+msgid "Type a message..."
+msgstr "Type a message..."
+
+#: src/apps/dial/components/ticket-detail.tsx
+msgid "Type a reply... (⌘⏎ to send)"
+msgstr "Type a reply... (⌘⏎ to send)"
+
+#: src/apps/dial/components/context-sidebar.tsx
+msgid "Type:"
+msgstr "Type:"
+
+#: src/apps/vista/components/cross-app-section.tsx
+msgid "Unable to load cross-app data."
+msgstr "Unable to load cross-app data."
+
+#: src/apps/cinq/components/establishment-list.tsx
+msgid "Unable to load establishments"
+msgstr "Unable to load establishments"
+
+#: src/apps/vault/components/low-stock-alert-form.tsx
+msgid "Unable to load low stock."
+msgstr "Unable to load low stock."
+
+#: src/apps/vault/components/movement-history.tsx
+#: src/routes/_auth/vault/movements.tsx
+msgid "Unable to load movements"
+msgstr "Unable to load movements"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Unable to load product"
+msgstr "Unable to load product"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Unable to load products"
+msgstr "Unable to load products"
+
+#: src/apps/vault/components/reservation-list.tsx
+msgid "Unable to load reserved stock."
+msgstr "Unable to load reserved stock."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Unable to load warehouses"
+msgstr "Unable to load warehouses"
+
+#: src/apps/pause/components/reports.tsx
+msgid "Unassigned"
+msgstr "Unassigned"
+
+#: src/apps/pause/components/leave-request-form.tsx
+msgid "Unpaid"
+msgstr "Unpaid"
+
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+msgid "Untitled"
+msgstr "Untitled"
+
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Untitled Form"
+msgstr "Untitled Form"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+msgid "Untitled question"
+msgstr "Untitled question"
+
+#: src/apps/sond/components/builder/form-builder.tsx
+#: src/routes/_auth/sond/builder/$id.tsx
+msgid "Untitled Question"
+msgstr "Untitled Question"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "upcoming"
+msgstr "upcoming"
+
+#: src/routes/_auth/vista/dashboard.tsx
+msgid "Updated"
+msgstr "Updated"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Upload Document"
+msgstr "Upload Document"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Upload failed"
+msgstr "Upload failed"
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Uploading..."
+msgstr "Uploading..."
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Use {{payload.field}} for dynamic values"
+msgstr "Use {{payload.field}} for dynamic values"
+
+#: src/apps/vista/components/sql-editor.tsx
+msgid "Use dashboard widgets to explore the metrics available from your workspace."
+msgstr "Use dashboard widgets to explore the metrics available from your workspace."
+
+#: src/apps/pause/components/employee-detail.tsx
+msgid "Used"
+msgstr "Used"
 
 #: src/routes/_auth/admin/access-matrix.tsx
 #: src/routes/_auth/admin/audit.tsx
@@ -370,6 +4076,44 @@ msgstr "User invited."
 msgid "Users"
 msgstr "Users"
 
+#: src/apps/sond/components/builder/conditional-logic-modal.tsx
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Value"
+msgstr "Value"
+
+#: src/routes/_auth/vault/movements.tsx
+msgid "Variant"
+msgstr "Variant"
+
+#: src/apps/vault/components/create-variant-form.tsx
+msgid "Variant added."
+msgstr "Variant added."
+
+#: src/apps/vault/components/create-variant-form.tsx
+msgid "Variant creation failed."
+msgstr "Variant creation failed."
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Variant deleted"
+msgstr "Variant deleted"
+
+#: src/apps/vault/components/product-detail.tsx
+msgid "Variant updated"
+msgstr "Variant updated"
+
+#: src/apps/vault/components/product-detail.tsx
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Variants"
+msgstr "Variants"
+
+#: src/apps/vault/components/integration-toggle.tsx
+msgid "VAULT connected to CINQ."
+msgstr "VAULT connected to CINQ."
+
+#: src/apps/vault/components/integration-toggle.tsx
+msgid "VAULT disconnected from CINQ."
+msgstr "VAULT disconnected from CINQ."
+
 #: src/routes/_auth/settings.tsx
 msgid "Verify"
 msgstr "Verify"
@@ -378,10 +4122,145 @@ msgstr "Verify"
 msgid "Verifying..."
 msgstr "Verifying..."
 
+#: src/apps/pivot/components/version-history.tsx
+msgid "Version History"
+msgstr "Version History"
+
+#: src/apps/pivot/components/version-history.tsx
+msgid "Version restored."
+msgstr "Version restored."
+
 #: src/components/invite-dialog.tsx
 msgid "Viewer"
 msgstr "Viewer"
 
+#: src/apps/vista/components/sse-indicator.tsx
+msgid "Waiting for data — retrying every 30 seconds"
+msgstr "Waiting for data — retrying every 30 seconds"
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Warehouse created."
+msgstr "Warehouse created."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Warehouse creation failed."
+msgstr "Warehouse creation failed."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Warehouse delete failed."
+msgstr "Warehouse delete failed."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Warehouse deleted."
+msgstr "Warehouse deleted."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Warehouse update failed."
+msgstr "Warehouse update failed."
+
+#: src/apps/vault/components/warehouse-list.tsx
+msgid "Warehouse updated."
+msgstr "Warehouse updated."
+
+#: src/apps/vault/components/warehouse-list.tsx
+#: src/routes/_auth/vault/dashboard.tsx
+msgid "Warehouses"
+msgstr "Warehouses"
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Webhook"
+msgstr "Webhook"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Webhook Secret (optional)"
+msgstr "Webhook Secret (optional)"
+
+#: src/apps/spark/components/node-config-panel.tsx
+msgid "Webhook URL"
+msgstr "Webhook URL"
+
 #: src/routes/_auth/dashboard.tsx
 #~ msgid "Welcome to your workspace"
 #~ msgstr "Welcome to your workspace"
+
+#: src/routes/_auth/vista/dashboard/$id.tsx
+msgid "Widget added."
+msgstr "Widget added."
+
+#: src/routes/_auth/cinq/deals/$id.tsx
+msgid "Won"
+msgstr "Won"
+
+#: src/routes/_auth/cinq/dashboard.tsx
+msgid "Won Revenue"
+msgstr "Won Revenue"
+
+#: src/routes/_auth/admin/approvals.tsx
+msgid "Workflow"
+msgstr "Workflow"
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Workflow deleted."
+msgstr "Workflow deleted."
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Workflow disabled."
+msgstr "Workflow disabled."
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Workflow enabled."
+msgstr "Workflow enabled."
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Workflow executions will appear here."
+msgstr "Workflow executions will appear here."
+
+#: src/apps/spark/components/run-detail-panel.tsx
+msgid "Workflow ID"
+msgstr "Workflow ID"
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Workflow name"
+msgstr "Workflow name"
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Workflow name is required."
+msgstr "Workflow name is required."
+
+#: src/apps/spark/components/node-sidebar.tsx
+msgid "Workflow Nodes"
+msgstr "Workflow Nodes"
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Workflow saved."
+msgstr "Workflow saved."
+
+#: src/routes/_auth/spark/dashboard.tsx
+#: src/routes/_auth/spark/index.tsx
+msgid "Workflows"
+msgstr "Workflows"
+
+#: src/routes/_auth/spark/dashboard.tsx
+msgid "Workflows, runs, and delivery reliability."
+msgstr "Workflows, runs, and delivery reliability."
+
+#: src/apps/vault/components/settings/shopify-status.tsx
+msgid "Yes, disconnect"
+msgstr "Yes, disconnect"
+
+#: src/apps/vault/components/product-catalog.tsx
+msgid "Your product CSV download has started."
+msgstr "Your product CSV download has started."
+
+#: src/apps/sond/components/preview/form-preview.tsx
+#: src/routes/form.$id.tsx
+msgid "Your response has been recorded."
+msgstr "Your response has been recorded."
+
+#: src/routes/_auth/spark/workflows/$id.tsx
+msgid "Zapier charges per task. We charge $0. Pick a trigger."
+msgstr "Zapier charges per task. We charge $0. Pick a trigger."
+
+#: src/apps/spark/components/workflow-list.tsx
+msgid "Zapier would charge you $30/mo for this. Turn on your first native trigger."
+msgstr "Zapier would charge you $30/mo for this. Turn on your first native trigger."

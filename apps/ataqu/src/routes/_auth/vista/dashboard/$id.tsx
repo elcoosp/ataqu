@@ -295,7 +295,7 @@ function KpiSummaryPanel() {
 				<Bone
 					loading={kpisLoading}
 					name="kpi-summary"
-					fallback={<div className="h-20 w-full rounded bg-white/5" />}
+					fallback={<div className="h-20 w-full rounded bg-card/5" />}
 				>
 					<ul className="space-y-1 text-sm text-foreground/90">
 						{(kpis
@@ -327,7 +327,7 @@ function KpiSummaryPanel() {
 				<Bone
 					loading={dpLoading}
 					name="datapoints"
-					fallback={<div className="h-20 w-full rounded bg-white/5" />}
+					fallback={<div className="h-20 w-full rounded bg-card/5" />}
 				>
 					<div className="overflow-x-auto">
 						<table className="w-full text-sm">

@@ -47,16 +47,18 @@ export const defineViteConfig = (options: { appName: string }): UserConfig => {
 			port: APP_PORTS[options.appName] || 5173,
 			strictPort: true,
 			proxy: {
-				"/api": "http://127.0.0.1:3000",
-				"/ws": { target: "ws://127.0.0.1:3000", ws: true },
+				// Anchored: "/api" as a prefix would also proxy the SPA route
+				// "/api-keys" to the backend (502 in dev).
+				"^/api/.*": "http://127.0.0.1:3000",
+				"^/ws/.*": { target: "ws://127.0.0.1:3000", ws: true },
 			},
 		},
 		preview: {
 			port: APP_PORTS[options.appName] || 5173,
 			strictPort: true,
 			proxy: {
-				"/api": "http://127.0.0.1:3000",
-				"/ws": { target: "ws://127.0.0.1:3000", ws: true },
+				"^/api/.*": "http://127.0.0.1:3000",
+				"^/ws/.*": { target: "ws://127.0.0.1:3000", ws: true },
 			},
 		},
 		build: {

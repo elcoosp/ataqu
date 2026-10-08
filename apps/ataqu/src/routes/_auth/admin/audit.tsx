@@ -1,19 +1,24 @@
 // apps/aegis/src/routes/_auth/admin/audit.tsx
 
-import { useGetAuditLog } from "@ataqu/api-client";
+import { api, useGetAuditLog } from "@ataqu/api-client";
 import {
 	intSearch,
 	searchSchema,
 	stringSearch,
 	useUrlState,
 } from "@ataqu/shared-hooks";
-import { formatDateTime } from "@ataqu/shared-utils";
+import {
+	downloadBlob,
+	formatDateTime,
+	handleApiError,
+} from "@ataqu/shared-utils";
 import {
 	Bone,
 	Button,
 	Card,
 	CardContent,
 	Input,
+	PageLayout,
 	Select,
 	SelectContent,
 	SelectItem,
@@ -30,7 +35,7 @@ import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Search } from "lucide-react";
-import { useMemo } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/admin/audit")({
 	validateSearch: searchSchema({
@@ -87,10 +92,6 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 		});
 
 		const limit = 50;
-		const filters = useMemo(
-			() => ({ action, app, from_date: fromDate, to_date: toDate }),
-			[action, app, fromDate, toDate],
-		);
 
 		const {
 			data: logs,
@@ -106,18 +107,21 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 			offset,
 		});
 
-		const handleExport = () => {
-			// Export CSV
-			const params = new URLSearchParams();
-			if (action) params.append("action", action);
-			if (app) params.append("app", app);
-			if (fromDate) params.append("from_date", fromDate);
-			if (toDate) params.append("to_date", toDate);
-			const qs = params.toString();
-			window.open(
-				`/api/v1/aegis/audit-log/export${qs ? `?${qs}` : ""}`,
-				"_blank",
-			);
+		const handleExport = async () => {
+			try {
+				const blob = await api.get<Blob>("/aegis/audit-log/export", {
+					params: {
+						action: action || undefined,
+						app: app || undefined,
+						from_date: fromDate || undefined,
+						to_date: toDate || undefined,
+					},
+					responseType: "blob",
+				});
+				downloadBlob(blob, "audit_log.csv");
+			} catch (e) {
+				toast.error(handleApiError(e));
+			}
 		};
 
 		if (isLoading) {
@@ -158,11 +162,22 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 		const auditLogs = logs || [];
 
 		return (
-			<div className="p-6">
-				<h1 className="text-2xl font-heading mb-4">
-					<Trans>Audit Log</Trans>
-				</h1>
-
+			<PageLayout
+				title={<Trans>Audit Log</Trans>}
+				breadcrumbs={[
+					{ label: "Admin", to: "/admin/audit" },
+					{ label: "Audit log" },
+				]}
+				actions={
+					<Button
+						onClick={() => void handleExport()}
+						size="sm"
+						variant="outline"
+					>
+						<Download className="h-4 w-4 mr-1" /> <Trans>Export CSV</Trans>
+					</Button>
+				}
+			>
 				<div className="flex flex-wrap gap-2 mb-4 items-end">
 					<div>
 						<label className="block text-xs text-muted-foreground">
@@ -224,10 +239,7 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 						/>
 					</div>
 					<Button onClick={() => refetch()} size="sm">
-						<Search className="h-4 w-4 mr-1" /> Filter
-					</Button>
-					<Button onClick={handleExport} size="sm" variant="outline">
-						<Download className="h-4 w-4 mr-1" /> Export CSV
+						<Search className="h-4 w-4 mr-1" /> <Trans>Filter</Trans>
 					</Button>
 				</div>
 
@@ -260,7 +272,7 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 											colSpan={5}
 											className="text-center text-muted-foreground"
 										>
-											No audit logs found.
+											<Trans>No audit logs found.</Trans>
 										</TableCell>
 									</TableRow>
 								) : (
@@ -290,7 +302,7 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 							onClick={() => setOffset(Math.max(0, offset - limit))}
 							disabled={offset === 0}
 						>
-							Previous
+							<Trans>Previous</Trans>
 						</Button>
 						<Button
 							variant="outline"
@@ -298,11 +310,11 @@ export const Route = createFileRoute("/_auth/admin/audit")({
 							onClick={() => setOffset(offset + limit)}
 							disabled={auditLogs.length < limit}
 						>
-							Next
+							<Trans>Next</Trans>
 						</Button>
 					</div>
 				</div>
-			</div>
+			</PageLayout>
 		);
 	},
 });

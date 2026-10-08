@@ -15,13 +15,13 @@ export const Route = createFileRoute("/_auth/pause/onboarding")({
 	component: OnboardingPage,
 });
 
-const ONBOARDING_STEPS = [
-	{ id: "paperwork", label: t`Paperwork` },
-	{ id: "equipment", label: t`Equipment` },
-	{ id: "training", label: t`Training` },
-] as const;
-
 function OnboardingPage() {
+	// Built at render time (not module scope): `t` needs an activated locale.
+	const ONBOARDING_STEPS = [
+		{ id: "paperwork", label: t`Paperwork` },
+		{ id: "equipment", label: t`Equipment` },
+		{ id: "training", label: t`Training` },
+	] as const;
 	const queryClient = useQueryClient();
 	const { data: employeesData, isLoading } = useListEmployees();
 	const employees = (employeesData?.items ?? []).filter((e) => e.is_active);

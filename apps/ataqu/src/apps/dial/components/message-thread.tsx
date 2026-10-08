@@ -1,4 +1,6 @@
 import {
+	exportChannelCsv,
+	exportChannelPdf,
 	useAddReaction,
 	useBulkDeleteMessages,
 	useDeleteMessage,
@@ -9,7 +11,7 @@ import {
 	useStartThread,
 } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
-import { handleApiError } from "@ataqu/shared-utils";
+import { downloadBlob, handleApiError } from "@ataqu/shared-utils";
 import {
 	Avatar,
 	AvatarFallback,
@@ -74,15 +76,13 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 		onMutate: async (messageId) => {
 			const key = ["dial", "messages", channelId, { limit: 50, offset: 0 }];
 			const pre = queryClient.getQueryData(key);
-			queryClient.setQueryData(
-				key,
-				(old: any) =>
-					old
-						? {
-								...old,
-								items: old.items.filter((m: any) => m.id !== messageId),
-							}
-						: old,
+			queryClient.setQueryData(key, (old: any) =>
+				old
+					? {
+							...old,
+							items: old.items.filter((m: any) => m.id !== messageId),
+						}
+					: old,
 			);
 			return { preSnapshot: pre };
 		},
@@ -118,15 +118,13 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 		onMutate: async ({ ids }: { ids: string[] }) => {
 			const key = ["dial", "messages", channelId, { limit: 50, offset: 0 }];
 			const pre = queryClient.getQueryData(key);
-			queryClient.setQueryData(
-				key,
-				(old: any) =>
-					old
-						? {
-								...old,
-								items: old.items.filter((m: any) => !ids.includes(m.id)),
-							}
-						: old,
+			queryClient.setQueryData(key, (old: any) =>
+				old
+					? {
+							...old,
+							items: old.items.filter((m: any) => !ids.includes(m.id)),
+						}
+					: old,
 			);
 			return { preSnapshot: pre };
 		},
@@ -235,16 +233,32 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 				<Button
 					variant="outline"
 					size="sm"
-					onClick={() => window.open(`/api/dial/channels/${channelId}/export`)}
+					onClick={async () => {
+						try {
+							downloadBlob(
+								await exportChannelCsv(channelId),
+								`channel-${channelId}.csv`,
+							);
+						} catch (e) {
+							toast.error(handleApiError(e));
+						}
+					}}
 				>
 					{t`Export CSV`}
 				</Button>
 				<Button
 					variant="outline"
 					size="sm"
-					onClick={() =>
-						window.open(`/api/dial/channels/${channelId}/export/pdf`)
-					}
+					onClick={async () => {
+						try {
+							downloadBlob(
+								await exportChannelPdf(channelId),
+								`channel-${channelId}.pdf`,
+							);
+						} catch (e) {
+							toast.error(handleApiError(e));
+						}
+					}}
 				>
 					{t`Export PDF`}
 				</Button>

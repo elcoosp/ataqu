@@ -1,4 +1,4 @@
-import { api } from "@ataqu/api-client";
+import { ApiError, api } from "@ataqu/api-client";
 import type { UUID } from "@ataqu/types";
 
 export interface CinqDealContext {
@@ -10,5 +10,13 @@ export interface CinqDealContext {
 	contact_email: string;
 }
 
-export const getCinqContext = (channelId: UUID) =>
-	api.get<CinqDealContext | null>(`/dial/channels/${channelId}/cinq-context`);
+export const getCinqContext = async (channelId: UUID) => {
+	try {
+		return await api.get<CinqDealContext | null>(
+			`/dial/channels/${channelId}/cinq-context`,
+		);
+	} catch (e) {
+		if (e instanceof ApiError && e.status === 404) return null;
+		throw e;
+	}
+};

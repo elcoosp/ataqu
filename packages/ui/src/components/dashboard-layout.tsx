@@ -1,3 +1,4 @@
+/** KPI card grid — NOT a page wrapper. Use PageLayout. */
 export const DashboardLayout = ({
 	children,
 }: {

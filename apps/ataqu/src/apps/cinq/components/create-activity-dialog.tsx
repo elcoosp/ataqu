@@ -79,7 +79,7 @@ export function CreateActivityDialog({
 				<Bone
 					loading={submitting}
 					name="create-activity"
-					fallback={<div className="h-40 w-full rounded bg-white/5" />}
+					fallback={<div className="h-40 w-full rounded bg-card/5" />}
 				>
 					<div className="space-y-3">
 						<form
