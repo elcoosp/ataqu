@@ -30,7 +30,7 @@ export function CrossAppBadge({ entityId }: { entityId: UUID }) {
 
 	const href =
 		cinqRelation.url ??
-		(cinqRelation.deal_id ? `/crm/deals/${cinqRelation.deal_id}` : "/crm");
+		(cinqRelation.deal_id ? `/cinq/deals/${cinqRelation.deal_id}` : "/crm");
 
 	return (
 		<Badge variant="secondary" className="bg-info/10 text-info border-info/20">
