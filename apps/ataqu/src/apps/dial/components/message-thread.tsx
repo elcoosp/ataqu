@@ -80,7 +80,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 					old
 						? {
 								...old,
-								messages: old.items.filter((m: any) => m.id !== messageId),
+								items: old.items.filter((m: any) => m.id !== messageId),
 							}
 						: old,
 			);
@@ -124,7 +124,7 @@ export function MessageThread({ channelId }: MessageThreadProps) {
 					old
 						? {
 								...old,
-								messages: old.items.filter((m: any) => !ids.includes(m.id)),
+								items: old.items.filter((m: any) => !ids.includes(m.id)),
 							}
 						: old,
 			);
