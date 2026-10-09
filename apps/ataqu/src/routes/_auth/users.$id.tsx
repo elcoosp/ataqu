@@ -225,7 +225,7 @@ export const Route = createFileRoute("/_auth/users/$id")({
 											onConfirm={() => _deactivateMutation.mutate(user.id)}
 											confirmLabel="Revoked"
 											disabled={_deactivateMutation.isPending}
-											className="w-full bg-destructive text-white hover:bg-destructive"
+											className="w-full bg-destructive text-foreground hover:bg-destructive"
 										>
 											<Trans>Revoke access</Trans>
 										</HoldToConfirm>
