@@ -81,12 +81,12 @@ export function DatabaseGrid({
 		columns.forEach((col) => {
 			emptyValues[col.name] = col.type === "number" ? 0 : "";
 		});
-		createRowMutation.mutate({ values: emptyValues });
+		createRowMutation.mutate(emptyValues);
 	};
 
 	const handleCellChange = (rowId: string, col: string, value: any) => {
 		setEditingCell(null);
-		updateRowMutation.mutate({ rowId, values: { [col]: value } });
+		updateRowMutation.mutate({ rowId, values: { [col]: value } }); // kept: handler unwraps `values`
 	};
 
 	const handleCellEdit = (rowId: string, col: string) => {
