@@ -258,6 +258,15 @@
     );
 }
 
+/* Controlled frosted surface for heads-up chrome (bells, popovers, bars).
+   Token-driven translucency — never raw white/black, so it reads correctly
+   in both themes. */
+@utility ataqu-glass {
+  background-color: color-mix(in oklab, var(--color-popover) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  border: 1px solid color-mix(in oklab, var(--color-border) 85%, transparent);
+}
+
 /* Hairline top-light for elevated surfaces (reads on dark, dissolves on light). */
 @utility shadow-card {
   box-shadow: var(--shadow-card);
