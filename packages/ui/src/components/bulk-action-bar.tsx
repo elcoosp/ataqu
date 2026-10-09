@@ -36,7 +36,7 @@ export function BulkActionBar({ scope, actions }: BulkActionBarProps) {
 
 	return (
 		<div className="flex items-center gap-3 rounded-lg border border-amber/40 bg-deep-night/80 px-4 py-2 backdrop-blur ataqu-glass">
-			<span className="text-sm font-medium text-white">
+			<span className="text-sm font-medium text-foreground">
 				<Trans>{ids.length} selected</Trans>
 			</span>
 			<div className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export function BulkActionBar({ scope, actions }: BulkActionBarProps) {
 						variant={a.variant ?? "outline"}
 						size="sm"
 						onClick={() => a.onClick(ids)}
-						className="border-border/40 text-secondary-foreground hover:text-white"
+						className="border-border/40 text-secondary-foreground hover:text-foreground"
 					>
 						{a.icon}
 						{a.label}
@@ -57,7 +57,7 @@ export function BulkActionBar({ scope, actions }: BulkActionBarProps) {
 				variant="ghost"
 				size="sm"
 				onClick={() => clear(scope)}
-				className="ml-auto text-muted-foreground hover:text-white"
+				className="ml-auto text-muted-foreground hover:text-foreground"
 				aria-label="Clear selection"
 			>
 				<X className="h-4 w-4" />
