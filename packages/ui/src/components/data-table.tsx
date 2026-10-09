@@ -75,7 +75,7 @@ export function DataTable<TData, TValue>({
 							<div
 								className={cn(
 									"flex items-center gap-1 cursor-pointer select-none",
-									header.column.getCanSort() && "hover:text-white",
+									header.column.getCanSort() && "hover:text-foreground",
 								)}
 								onClick={header.column.getToggleSortingHandler()}
 							>
@@ -128,7 +128,7 @@ export function DataTable<TData, TValue>({
 						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 							setGlobalFilter(e.target.value)
 						}
-						className="max-w-sm bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
+						className="max-w-sm bg-deep-night/50 border-border/40 text-foreground placeholder-gray-400"
 					/>
 				)}
 				{!virtualize && (
@@ -138,7 +138,7 @@ export function DataTable<TData, TValue>({
 							size="sm"
 							onClick={() => table.previousPage()}
 							disabled={!table.getCanPreviousPage()}
-							className="border-border/40 text-muted-foreground hover:text-white"
+							className="border-border/40 text-muted-foreground hover:text-foreground"
 						>
 							Previous
 						</Button>
@@ -151,7 +151,7 @@ export function DataTable<TData, TValue>({
 							size="sm"
 							onClick={() => table.nextPage()}
 							disabled={!table.getCanNextPage()}
-							className="border-border/40 text-muted-foreground hover:text-white"
+							className="border-border/40 text-muted-foreground hover:text-foreground"
 						>
 							Next
 						</Button>
