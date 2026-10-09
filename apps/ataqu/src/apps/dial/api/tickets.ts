@@ -38,7 +38,7 @@ export const updateTicket = (
 	patch: Partial<
 		Pick<Ticket, "status" | "priority" | "subject" | "assignee_id">
 	>,
-) => api.patch<Ticket>(`/dial/tickets/${id}`, patch);
+) => api.put<Ticket>(`/dial/tickets/${id}`, patch);
 
 export const updateTicketStatus = (id: UUID, status: Ticket["status"]) =>
 	updateTicket(id, { status });
