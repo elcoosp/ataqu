@@ -129,67 +129,8 @@ function FormBuilderRoute() {
 		}
 	}, [id, createMutation, localForm]);
 
-	if (id === "new") {
-		return (
-			<div className="p-8">
-				<Bone
-					loading
-					name="_auth-builder-$id-1"
-					fallback={<div className="h-8 w-48 mb-4" />}
-				>
-					{null}
-				</Bone>
-				<Bone
-					loading
-					name="_auth-builder-$id-2"
-					fallback={<div className="h-64 w-full rounded-lg" />}
-				>
-					{null}
-				</Bone>
-			</div>
-		);
-	}
-
-	if (isLoading && !localForm) {
-		return (
-			<div className="p-8">
-				<Bone
-					loading
-					name="_auth-builder-$id-3"
-					fallback={<div className="h-16 w-full mb-4" />}
-				>
-					{null}
-				</Bone>
-				<Bone
-					loading
-					name="_auth-builder-$id-4"
-					fallback={<div className="h-64 w-full rounded-lg" />}
-				>
-					{null}
-				</Bone>
-			</div>
-		);
-	}
-
-	if (!localForm) {
-		return (
-			<div className="p-8">
-				<Trans>Form not found.</Trans>
-			</div>
-		);
-	}
-
-	const updateQuestions = (questions: SondQuestion[]) =>
-		setLocalForm((f) => (f ? { ...f, questions } : f));
-	const updateMode = (mode: FormMode) =>
-		setLocalForm((f) => (f ? { ...f, mode } : f));
-	const updateBranding = (branding: Partial<SondBranding>) =>
-		setLocalForm((f) =>
-			f ? { ...f, branding: { ...f.branding, ...branding } } : f,
-		);
-	const updateTitle = (title: string) =>
-		setLocalForm((f) => (f ? { ...f, title } : f));
-
+		// NOTE: every hook must run before the early returns below — React's
+		// rules of hooks forbid conditional hook counts across renders.
 	const handleSave = useCallback(() => {
 		if (!localForm) return;
 		const { id: formId, questions, title, mode, branding } = localForm;
@@ -257,6 +198,68 @@ function FormBuilderRoute() {
 	useIntent("sond", "form.publish", () => {
 		handlePublish();
 	});
+
+	if (id === "new") {
+		return (
+			<div className="p-8">
+				<Bone
+					loading
+					name="_auth-builder-$id-1"
+					fallback={<div className="h-8 w-48 mb-4" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="_auth-builder-$id-2"
+					fallback={<div className="h-64 w-full rounded-lg" />}
+				>
+					{null}
+				</Bone>
+			</div>
+		);
+	}
+
+	if (isLoading && !localForm) {
+		return (
+			<div className="p-8">
+				<Bone
+					loading
+					name="_auth-builder-$id-3"
+					fallback={<div className="h-16 w-full mb-4" />}
+				>
+					{null}
+				</Bone>
+				<Bone
+					loading
+					name="_auth-builder-$id-4"
+					fallback={<div className="h-64 w-full rounded-lg" />}
+				>
+					{null}
+				</Bone>
+			</div>
+		);
+	}
+
+	if (!localForm) {
+		return (
+			<div className="p-8">
+				<Trans>Form not found.</Trans>
+			</div>
+		);
+	}
+
+	const updateQuestions = (questions: SondQuestion[]) =>
+		setLocalForm((f) => (f ? { ...f, questions } : f));
+	const updateMode = (mode: FormMode) =>
+		setLocalForm((f) => (f ? { ...f, mode } : f));
+	const updateBranding = (branding: Partial<SondBranding>) =>
+		setLocalForm((f) =>
+			f ? { ...f, branding: { ...f.branding, ...branding } } : f,
+		);
+	const updateTitle = (title: string) =>
+		setLocalForm((f) => (f ? { ...f, title } : f));
+
 
 	return (
 		<div className="flex h-[calc(100vh-4rem)] flex-col bg-background">
