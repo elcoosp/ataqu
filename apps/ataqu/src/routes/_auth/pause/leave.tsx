@@ -58,7 +58,7 @@ function LeavePage() {
 						</DialogTrigger>
 						<DialogContent>
 							<LeaveRequestForm
-								employeeId={user?.id || "unknown"}
+								employeeId={user?.id || "unknown"} // demo admin maps to employee emp id
 								onClose={() => setIsLeaveOpen(false)}
 							/>
 						</DialogContent>
