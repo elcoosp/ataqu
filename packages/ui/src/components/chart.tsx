@@ -96,7 +96,7 @@ export function Chart({
 			const { active, payload, label } = props;
 			if (!active || !payload?.length) return null;
 			return (
-				<div className="bg-deep-night/90 backdrop-blur-xl border border-border/40 rounded-lg p-3 shadow-lg text-white">
+				<div className="bg-popover/95 backdrop-blur-xl border border-border rounded-lg p-3 shadow-lg text-popover-foreground">
 					<p className="text-sm font-medium mb-1">{label}</p>
 					{payload.map((entry: any, index: number) => (
 						<p
@@ -254,16 +254,16 @@ export function Chart({
 		return (
 			<ChartComponent {...commonProps}>
 				{showGrid && (
-					<CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+					<CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
 				)}
 				<XAxis
 					dataKey={xAxisKey}
-					stroke="rgba(255,255,255,0.3)"
-					tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }}
+					stroke="var(--color-muted-foreground)"
+					tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
 				/>
 				<YAxis
-					stroke="rgba(255,255,255,0.3)"
-					tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }}
+					stroke="var(--color-muted-foreground)"
+					tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
 				/>
 				{showTooltip && <Tooltip content={<TooltipContent />} />}
 				{showLegend && (
