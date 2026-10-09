@@ -235,7 +235,7 @@ function ContactDetail() {
 					</TabsTrigger>
 				</TabsList>
 				<TabsContent value="activities">
-					<ActivityTimeline dealId={id} />
+					<ActivityTimeline contactId={id} />
 				</TabsContent>
 				<TabsContent value="tasks">
 					<ContactTasks contactId={id} />
