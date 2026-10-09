@@ -68,7 +68,7 @@ export const RegisterForm: React.FC = () => {
 								type="email"
 								placeholder="you@example.com"
 								{...register("email")}
-								className="mt-1 bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
+								className="mt-1 bg-deep-night/50 border-border/40 text-foreground placeholder-gray-400"
 							/>
 							{errors.email && (
 								<p className="mt-1 text-sm text-error">
@@ -89,7 +89,7 @@ export const RegisterForm: React.FC = () => {
 								type="password"
 								placeholder="••••••••"
 								{...register("password")}
-								className="mt-1 bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
+								className="mt-1 bg-deep-night/50 border-border/40 text-foreground placeholder-gray-400"
 							/>
 							{errors.password && (
 								<p className="mt-1 text-sm text-error">
@@ -110,7 +110,7 @@ export const RegisterForm: React.FC = () => {
 								type="password"
 								placeholder="••••••••"
 								{...register("confirmPassword")}
-								className="mt-1 bg-deep-night/50 border-border/40 text-white placeholder-gray-400"
+								className="mt-1 bg-deep-night/50 border-border/40 text-foreground placeholder-gray-400"
 							/>
 							{errors.confirmPassword && (
 								<p className="mt-1 text-sm text-error">
