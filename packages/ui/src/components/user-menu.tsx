@@ -36,7 +36,7 @@ export function UserMenu() {
 			<DropdownMenuTrigger asChild>
 				<button
 					type="button"
-					className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white/5 text-xs font-medium text-white transition-colors hover:border-border"
+					className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white/5 text-xs font-medium text-foreground transition-colors hover:border-border"
 					aria-label="Account menu"
 				>
 					{initial}
@@ -44,7 +44,7 @@ export function UserMenu() {
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-56">
 				<DropdownMenuLabel className="font-normal">
-					<p className="truncate text-sm text-white">{email}</p>
+					<p className="truncate text-sm text-foreground">{email}</p>
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem
