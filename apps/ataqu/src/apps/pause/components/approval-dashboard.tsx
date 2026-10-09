@@ -181,7 +181,7 @@ export function ApprovalDashboard() {
 								approveMutation.mutate({ id: req.id, version: req.version })
 							}
 							disabled={approveMutation.isPending}
-							className="bg-success text-white hover:bg-success"
+							className="bg-success text-foreground hover:bg-success"
 						>
 							<Button
 								size="sm"
@@ -197,7 +197,7 @@ export function ApprovalDashboard() {
 								rejectMutation.mutate({ id: req.id, version: req.version })
 							}
 							disabled={rejectMutation.isPending}
-							className="bg-destructive text-white hover:bg-destructive"
+							className="bg-destructive text-foreground hover:bg-destructive"
 						>
 							<X className="h-4 w-4" />
 						</HoldToConfirm>
