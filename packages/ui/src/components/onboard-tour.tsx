@@ -46,13 +46,13 @@ const TourContent: React.FC<{ tourId: string }> = ({ tourId }) => {
 				transform: "translate(-50%, -50%)",
 			}}
 		>
-			<div className="text-white">{content}</div>
+			<div className="text-foreground">{content}</div>
 			<div className="flex justify-end gap-2 mt-4">
 				<Button
 					variant="ghost"
 					size="sm"
 					onClick={handleClose}
-					className="text-muted-foreground hover:text-white"
+					className="text-muted-foreground hover:text-foreground"
 				>
 					Skip
 				</Button>
