@@ -44,7 +44,7 @@ export function ChangelogBell() {
 			<PopoverTrigger asChild>
 				<button
 					type="button"
-					className="text-muted-foreground hover:text-white transition-colors"
+					className="text-muted-foreground hover:text-foreground transition-colors"
 					aria-label="Changelog"
 				>
 					<Bell className="h-5 w-5" />
@@ -60,7 +60,7 @@ export function ChangelogBell() {
 				align="end"
 				className="w-80 rounded-lg border-border/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass"
 			>
-				<p className="mb-2 text-sm font-medium text-white">
+				<p className="mb-2 text-sm font-medium text-foreground">
 					<Trans>What's new</Trans>
 				</p>
 				{isLoading && (
@@ -91,7 +91,7 @@ export function ChangelogBell() {
 									</span>
 								)}
 							</div>
-							<p className="mt-1 text-sm text-white">{entry.title}</p>
+							<p className="mt-1 text-sm text-foreground">{entry.title}</p>
 							<p className="text-xs text-muted-foreground">
 								{entry.description}
 							</p>
