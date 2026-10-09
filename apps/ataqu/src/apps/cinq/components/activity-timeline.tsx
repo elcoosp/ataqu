@@ -55,7 +55,13 @@ function ActivityDetailDialog({
 	);
 }
 
-export function ActivityTimeline({ dealId }: { dealId: UUID }) {
+export function ActivityTimeline({
+	dealId,
+	contactId,
+}: {
+	dealId?: UUID;
+	contactId?: UUID;
+}) {
 	const [detailId, setDetailId] = useState<string | null>(null);
 	const [typeFilter, setTypeFilter] = useState("all");
 	const { data, isLoading } = useListActivities({ limit: 50 });
@@ -64,7 +70,7 @@ export function ActivityTimeline({ dealId }: { dealId: UUID }) {
 		() =>
 			(data?.items ?? []).filter(
 				(a: ActivityResponse) =>
-					a.deal_id === dealId &&
+					(contactId ? a.contact_id === contactId : a.deal_id === dealId) &&
 					(typeFilter === "all" || a.activity_type === typeFilter),
 			),
 		[data, dealId, typeFilter],
