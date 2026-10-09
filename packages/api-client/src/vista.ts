@@ -5,6 +5,7 @@ import type {
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./client";
+import { useAuthStore } from "@ataqu/shared-stores";
 import type {
 	CombineDataRequest,
 	CreateDashboardRequest,
@@ -57,6 +58,7 @@ export const useListDashboards = (options?: UseQueryOptions<Dashboard[]>) =>
 	useQuery({
 		queryKey: ["vista", "dashboards"],
 		queryFn: listDashboards,
+		enabled: useAuthStore.getState().isAuthenticated,
 		...options,
 	});
 export const useGetDashboard = (
