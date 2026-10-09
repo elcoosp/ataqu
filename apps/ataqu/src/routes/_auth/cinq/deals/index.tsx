@@ -68,7 +68,8 @@ function DealsIndex() {
 		onSuccess: () => {
 			// Re-fetch in place instead of window.location.reload() so the
 			// removal is a real cache update (no full app remount).
-			void queryClient.invalidateQueries({ queryKey: ["deals"] });
+			void queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
+			void queryClient.invalidateQueries({ queryKey: ["cinq", "pipeline"] });
 			toast.success(t`Deals deleted`);
 		},
 		onError: (error) => toast.error(handleApiError(error)),
