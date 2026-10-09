@@ -40,7 +40,7 @@ function MetricCard({
 			? "text-destructive"
 			: status === "Degraded"
 				? "text-amber"
-				: "text-white";
+				: "text-foreground";
 	return (
 		<div className="rounded-lg border border-border/40 bg-deep-night/60 p-4">
 			<p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -61,7 +61,7 @@ function HealthPage() {
 		<div className="flex flex-col h-full overflow-auto">
 			<div className="flex items-center justify-between p-6 border-b border-border/40">
 				<div>
-					<h1 className="text-xl font-heading text-white">System Health</h1>
+					<h1 className="text-xl font-heading text-foreground">System Health</h1>
 					<p className="text-sm text-muted-foreground">
 						Live status of the Ataqu platform components.
 					</p>
