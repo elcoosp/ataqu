@@ -33,7 +33,12 @@ export const Route = createFileRoute("/_auth/spark/workflows/$id")({
 	component: WorkflowDetail,
 });
 
-const TOUR_STEPS = [
+/**
+ * Tour steps are built lazily — module-level `t` calls execute when this
+ * code-split chunk loads, which can happen before Lingui activates a locale
+ * (intent prefetch) and would throw at import time.
+ */
+const getTourSteps = () => [
 	{
 		selector: '[data-tour="trigger-sidebar"]',
 		content: t`Zapier charges per task. We charge $0. Pick a trigger.`,
@@ -492,7 +497,7 @@ function WorkflowDetail() {
 
 	if (isNew) {
 		return (
-			<OnboardTour tourId="spark-workflow-tour" steps={TOUR_STEPS}>
+			<OnboardTour tourId="spark-workflow-tour" steps={getTourSteps()}>
 				{content}
 			</OnboardTour>
 		);
