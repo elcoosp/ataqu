@@ -49,6 +49,7 @@ export const useOnboardingStatus = () =>
 	useQuery({
 		queryKey: ["onboarding-status"],
 		queryFn: getOnboardingStatus,
+		enabled: useAuthStore.getState().isAuthenticated,
 		staleTime: 30_000,
 	});
 
