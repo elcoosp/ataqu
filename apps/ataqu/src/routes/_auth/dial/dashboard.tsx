@@ -76,7 +76,7 @@ function CinqContextPanel() {
 	}
 	return (
 		<div className="space-y-1 text-sm">
-			<p className="font-medium text-white">{data.name}</p>
+			<p className="font-medium text-foreground">{data.name}</p>
 			<p className="text-muted-foreground">
 				{data.contact_name} · {data.contact_email}
 			</p>
@@ -115,7 +115,7 @@ function DashboardPage() {
 		<div className="h-full overflow-auto">
 			<div className="flex flex-wrap items-center justify-between gap-3 p-6 border-b border-border/40">
 				<div>
-					<h1 className="text-xl font-heading text-white">
+					<h1 className="text-xl font-heading text-foreground">
 						<Trans>Support Workspace</Trans>
 					</h1>
 					<div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
@@ -142,7 +142,7 @@ function DashboardPage() {
 				<section className="lg:col-span-2">
 					<div className="mb-3 flex items-center gap-2">
 						<Radio className="h-5 w-5 text-amber" />
-						<h2 className="text-lg font-heading text-white">
+						<h2 className="text-lg font-heading text-foreground">
 							<Trans>Ticket Inbox</Trans>
 						</h2>
 					</div>
