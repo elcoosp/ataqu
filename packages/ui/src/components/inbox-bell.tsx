@@ -61,7 +61,7 @@ export function InboxBell() {
 			<button
 				type="button"
 				onClick={() => setOpen((v) => !v)}
-				className="text-muted-foreground hover:text-white transition-colors"
+				className="text-muted-foreground hover:text-foreground transition-colors"
 				aria-label="Inbox"
 			>
 				<Bell className="h-5 w-5" />
@@ -73,7 +73,7 @@ export function InboxBell() {
 			{open && (
 				<div className="absolute right-0 z-50 mt-2 w-96 rounded-lg border border-border/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass">
 					<div className="mb-2 flex items-center justify-between">
-						<p className="text-sm font-medium text-white">
+						<p className="text-sm font-medium text-foreground">
 							<Trans>Inbox</Trans>
 						</p>
 						<p className="text-[10px] text-muted-foreground">
@@ -108,7 +108,7 @@ export function InboxBell() {
 											{new Date(item.created_at).toLocaleTimeString()}
 										</span>
 									</div>
-									<p className="mt-1 text-sm text-white">{item.title}</p>
+									<p className="mt-1 text-sm text-foreground">{item.title}</p>
 									{item.subtitle && (
 										<p className="text-xs text-muted-foreground">
 											{item.subtitle}
