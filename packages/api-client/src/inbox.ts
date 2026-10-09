@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@ataqu/shared-stores";
+
 import { api } from "./client";
 
 // ----------------------------------------------------------------------------
@@ -51,6 +53,7 @@ export const useInbox = (limit = 50, refetchIntervalMs = 30_000) =>
 	useQuery({
 		queryKey: ["inbox", limit],
 		queryFn: () => getInbox(limit),
+		enabled: useAuthStore.getState().isAuthenticated,
 		refetchInterval: refetchIntervalMs,
 		staleTime: refetchIntervalMs / 2,
 	});
