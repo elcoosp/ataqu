@@ -93,7 +93,8 @@ export function DealKanban() {
 
 	const updateStage = useUpdatePipelineStage({
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["cinq", "pipelineStages"] });
+			queryClient.invalidateQueries({ queryKey: ["cinq", "pipeline"] });
+			queryClient.invalidateQueries({ queryKey: ["cinq", "deals"] });
 			toast.success(t`Stage updated`);
 		},
 		onError: () => toast.error(t`Failed to update stage`),
