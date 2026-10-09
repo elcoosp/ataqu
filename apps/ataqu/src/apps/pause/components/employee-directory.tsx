@@ -112,7 +112,7 @@ export function EmployeeDirectory({
 					<HoldToConfirm
 						onConfirm={() => bulkDeactivate.mutate({ ids: selectedIds })}
 						disabled={bulkDeactivate.isPending}
-						className="bg-destructive text-white hover:bg-destructive"
+						className="bg-destructive text-foreground hover:bg-destructive"
 					>
 						<Trans>Deactivate selected</Trans>
 					</HoldToConfirm>
@@ -150,7 +150,7 @@ export function EmployeeDirectory({
 								{emp.full_name.charAt(0)}
 							</div>
 							<div>
-								<h3 className="font-semibold text-white">{emp.full_name}</h3>
+								<h3 className="font-semibold text-foreground">{emp.full_name}</h3>
 								<p className="text-sm text-muted-foreground">{emp.job_title}</p>
 								<p className="text-xs text-muted-foreground">{emp.email}</p>
 							</div>
