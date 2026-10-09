@@ -50,7 +50,7 @@ function KpiCard({
 						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 							{label}
 						</p>
-						<p className="text-2xl font-bold text-white mt-1">{value}</p>
+						<p className="text-2xl font-bold text-foreground mt-1">{value}</p>
 						{sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
 					</div>
 					<div className={color}>
@@ -73,7 +73,7 @@ function DashboardRow({
 				<CardContent className="p-4">
 					<div className="flex items-center justify-between">
 						<div>
-							<h4 className="text-sm font-semibold text-white">{d.name}</h4>
+							<h4 className="text-sm font-semibold text-foreground">{d.name}</h4>
 							<p className="text-xs text-muted-foreground mt-0.5">
 								<Trans>Updated</Trans> {formatDate(d.updated_at)}
 							</p>
@@ -104,7 +104,7 @@ function EmptyBox({
 			<div className="mb-3 rounded-full bg-muted p-3">
 				<Icon className="h-5 w-5 text-muted-foreground" />
 			</div>
-			<p className="text-sm font-medium text-white">{title}</p>
+			<p className="text-sm font-medium text-foreground">{title}</p>
 			<p className="text-xs text-muted-foreground mt-1 max-w-xs">{desc}</p>
 			{action && onClick && (
 				<Button className="mt-4" size="sm" onClick={onClick}>
@@ -132,7 +132,7 @@ function VistaDashboard() {
 		<div className="space-y-8">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-heading font-bold text-white">
+					<h1 className="text-2xl font-heading font-bold text-foreground">
 						<Trans>Cross-App View</Trans>
 					</h1>
 					<p className="text-sm text-muted-foreground mt-1">
@@ -222,7 +222,7 @@ function VistaDashboard() {
 				<Card className="overflow-hidden">
 					<CardHeader className="pb-3">
 						<div className="flex items-center justify-between">
-							<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+							<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
 								<BarChart3 className="h-4 w-4 text-amber" />
 								<Trans>Dashboards</Trans>
 							</CardTitle>
