@@ -71,13 +71,13 @@ function SortableField({
 			<div
 				{...attributes}
 				{...listeners}
-				className="cursor-grab text-muted-foreground hover:text-white"
+				className="cursor-grab text-muted-foreground hover:text-foreground"
 			>
 				<GripVertical className="h-4 w-4" />
 			</div>
 			<div className="flex-1">
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium text-white">{field.label}</span>
+					<span className="text-sm font-medium text-foreground">{field.label}</span>
 					<span className="text-xs text-muted-foreground">{field.type}</span>
 					{field.required && <span className="text-xs text-amber">*</span>}
 				</div>
