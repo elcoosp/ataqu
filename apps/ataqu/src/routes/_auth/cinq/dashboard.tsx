@@ -53,7 +53,7 @@ export function MetricCard({
 						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 							{label}
 						</p>
-						<p className="text-2xl font-bold text-white mt-1">{value}</p>
+						<p className="text-2xl font-bold text-foreground mt-1">{value}</p>
 						{sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
 					</div>
 					<div
@@ -103,7 +103,7 @@ function DealRow({
 				<CardContent className="p-4">
 					<div className="flex items-start justify-between">
 						<div className="flex-1 min-w-0">
-							<h4 className="text-sm font-semibold text-white truncate">
+							<h4 className="text-sm font-semibold text-foreground truncate">
 								{deal.title}
 							</h4>
 							<p
@@ -113,7 +113,7 @@ function DealRow({
 							</p>
 						</div>
 						<div className="text-right">
-							<p className="text-sm font-bold text-white">
+							<p className="text-sm font-bold text-foreground">
 								{fmtMoney(deal.amount)}
 							</p>
 							{deal.probability !== undefined && (
@@ -154,7 +154,7 @@ function ContactRow({
 							<Users className="h-4 w-4 text-amber" />
 						</div>
 						<div className="flex-1 min-w-0">
-							<h4 className="text-sm font-semibold text-white truncate">
+							<h4 className="text-sm font-semibold text-foreground truncate">
 								{contact.name}
 							</h4>
 							<p className="text-xs text-muted-foreground truncate">
@@ -186,6 +186,8 @@ function ActivityRow({
 		activity_type: string;
 		description: string;
 		created_at: string;
+		deal_id?: string;
+		contact_id: string;
 	};
 }) {
 	const cls =
@@ -208,14 +210,14 @@ function ActivityRow({
 				<I className="h-3.5 w-3.5" />
 			</div>
 			<div className="flex-1 min-w-0">
-				<p className="text-sm text-white truncate">{a.description}</p>
+				<p className="text-sm text-foreground truncate">{a.description}</p>
 				<p className="text-xs text-muted-foreground">
 					{formatDateShort(a.created_at)}
 				</p>
 			</div>
 			<Link
-				to="/cinq/contacts/$id"
-				params={{ id: a.id }}
+				to={a.deal_id ? "/cinq/deals/$id" : "/cinq/contacts/$id"}
+				params={{ id: a.deal_id ?? a.contact_id }}
 				search={{ tab: "activities" }}
 				className="text-xs text-amber hover:text-amber flex items-center gap-1"
 			>
@@ -243,7 +245,7 @@ function EmptyBox({
 			<div className="mb-3 rounded-full bg-muted p-3">
 				<Icon className="h-5 w-5 text-muted-foreground" />
 			</div>
-			<p className="text-sm font-medium text-white">{title}</p>
+			<p className="text-sm font-medium text-foreground">{title}</p>
 			<p className="text-xs text-muted-foreground mt-1 max-w-xs">{desc}</p>
 			{action && onClick && (
 				<Button className="mt-4" size="sm" onClick={onClick}>
@@ -255,8 +257,8 @@ function EmptyBox({
 }
 
 function CinqDashboard() {
-	const { data: dealsData, isLoading: dL } = useListDeals({ limit: 5 });
-	const { data: contactsData, isLoading: cL } = useListContacts({ limit: 5 });
+	const { data: dealsData, isLoading: dL } = useListDeals({ limit: 100 });
+	const { data: contactsData, isLoading: cL } = useListContacts({ limit: 100 });
 	const { data: pipelineData } = useListPipelineStages();
 	const { data: activitiesData, isLoading: aL } = useListActivities({
 		limit: 8,
@@ -277,7 +279,7 @@ function CinqDashboard() {
 		<div className="space-y-8">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-heading font-bold text-white">
+					<h1 className="text-2xl font-heading font-bold text-foreground">
 						<Trans>Sales Pipeline</Trans>
 					</h1>
 					<p className="text-sm text-muted-foreground mt-1">
@@ -340,7 +342,7 @@ function CinqDashboard() {
 				<Card className="overflow-hidden">
 					<CardHeader className="pb-3">
 						<div className="flex items-center justify-between">
-							<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+							<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
 								<DollarSign className="h-4 w-4 text-amber" />
 								<Trans>Recent Deals</Trans>
 							</CardTitle>
@@ -385,7 +387,7 @@ function CinqDashboard() {
 				<Card className="overflow-hidden">
 					<CardHeader className="pb-3">
 						<div className="flex items-center justify-between">
-							<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+							<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
 								<Users className="h-4 w-4 text-amber" />
 								<Trans>Recent Contacts</Trans>
 							</CardTitle>
@@ -431,7 +433,7 @@ function CinqDashboard() {
 			{stages.length > 0 && (
 				<Card>
 					<CardHeader className="pb-3">
-						<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+						<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
 							<TrendingUp className="h-4 w-4 text-amber" />
 							<Trans>Pipeline Stages</Trans>
 						</CardTitle>
@@ -455,7 +457,7 @@ function CinqDashboard() {
 			<Card className="overflow-hidden">
 				<CardHeader className="pb-3">
 					<div className="flex items-center justify-between">
-						<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+						<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
 							<Clock className="h-4 w-4 text-amber" />
 							<Trans>Recent Activity</Trans>
 						</CardTitle>
