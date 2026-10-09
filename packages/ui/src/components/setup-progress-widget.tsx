@@ -29,7 +29,7 @@ export function SetupProgressWidget() {
 			<PopoverTrigger asChild>
 				<button
 					type="button"
-					className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-secondary-foreground hover:text-white hover:border-border transition-colors"
+					className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-secondary-foreground hover:text-foreground hover:border-border transition-colors"
 					aria-label="Setup progress"
 				>
 					<span
@@ -47,7 +47,7 @@ export function SetupProgressWidget() {
 				align="end"
 				className="w-72 rounded-lg border-border/60 bg-deep-night/95 p-3 shadow-xl backdrop-blur ataqu-glass"
 			>
-				<p className="mb-2 text-sm font-medium text-white">
+				<p className="mb-2 text-sm font-medium text-foreground">
 					<Trans>Activation checklist</Trans>
 				</p>
 				{isLoading && (
