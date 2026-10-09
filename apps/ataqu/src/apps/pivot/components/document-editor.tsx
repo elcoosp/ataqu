@@ -23,7 +23,6 @@ import {
 	PlateElement,
 	PlateLeaf,
 	useEditorRef,
-	useEditorValue,
 	usePath,
 	usePlateEditor,
 } from "platejs/react";
@@ -169,6 +168,9 @@ export function DocumentEditor({
 			toast.error(error.message || i18n._("Failed to delete.")),
 	});
 
+	// The editor value is tracked locally via the canonical onChange option;
+	// useEditorValue() would require a <Plate> provider above this component.
+	const valueRef = useRef<unknown>(null);
 	const editor = usePlateEditor({
 		plugins: [
 			MarkdownPlugin,
@@ -210,7 +212,7 @@ export function DocumentEditor({
 	};
 
 	// Autosave whenever the editor content changes.
-	const value = useEditorValue();
+	const value = valueRef.current;
 	const persist = useCallback(() => {
 		setSaveStatus("saving");
 		updateMutation.mutate({
@@ -273,7 +275,12 @@ export function DocumentEditor({
 					className="mb-4 w-full bg-transparent text-2xl font-semibold outline-none"
 					placeholder={i18n._("Document title")}
 				/>
-				<Plate editor={editor}>
+				<Plate
+					editor={editor}
+					onChange={({ value }: { value: unknown }) => {
+						valueRef.current = value;
+					}}
+				>
 					<PlateContent
 						className="prose prose-sm prose-invert max-w-none focus:outline-none"
 						placeholder={i18n._("Write…")}
