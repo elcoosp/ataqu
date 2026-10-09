@@ -44,7 +44,7 @@ export function MetricCard({
 						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 							{label}
 						</p>
-						<p className="text-2xl font-bold text-white mt-1">{value}</p>
+						<p className="text-2xl font-bold text-foreground mt-1">{value}</p>
 						{sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
 					</div>
 					<div
@@ -63,6 +63,7 @@ function LeaveRow({
 }: {
 	r: {
 		id: string;
+		employee_id?: string;
 		employee_name?: string;
 		leave_type: string;
 		start_date: string;
@@ -77,12 +78,12 @@ function LeaveRow({
 				? "bg-amber/15 text-amber"
 				: "bg-muted/15 text-muted-foreground";
 	return (
-		<Link to="/pause/employees/$id" params={{ id: r.id }} className="block">
+		<Link to="/pause/employees/$id" params={{ id: r.employee_id ?? r.id }} className="block">
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium text-white">
+							<p className="text-sm font-medium text-foreground">
 								{r.employee_name ?? r.id.slice(0, 8)}
 							</p>
 							<p className="text-xs text-muted-foreground">
@@ -117,7 +118,7 @@ function EmptyBox({
 			<div className="mb-3 rounded-full bg-muted p-3">
 				<Icon className="h-5 w-5 text-muted-foreground" />
 			</div>
-			<p className="text-sm font-medium text-white">{title}</p>
+			<p className="text-sm font-medium text-foreground">{title}</p>
 			<p className="text-xs text-muted-foreground mt-1 max-w-xs">{desc}</p>
 			{action && onClick && (
 				<Button className="mt-4" size="sm" onClick={onClick}>
@@ -142,7 +143,7 @@ function PauseDashboard() {
 		<div className="space-y-8">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-heading font-bold text-white">
+					<h1 className="text-2xl font-heading font-bold text-foreground">
 						<Trans>People</Trans>
 					</h1>
 					<p className="text-sm text-muted-foreground mt-1">
@@ -190,7 +191,7 @@ function PauseDashboard() {
 				<Card className="overflow-hidden">
 					<CardHeader className="pb-3">
 						<div className="flex items-center justify-between">
-							<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+							<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
 								<Calendar className="h-4 w-4 text-amber" />
 								<Trans>Recent Leave Requests</Trans>
 							</CardTitle>
@@ -229,7 +230,7 @@ function PauseDashboard() {
 				</Card>
 				<Card className="overflow-hidden">
 					<CardHeader className="pb-3">
-						<CardTitle className="text-sm font-medium text-white">
+						<CardTitle className="text-sm font-medium text-foreground">
 							<Trans>Quick Actions</Trans>
 						</CardTitle>
 					</CardHeader>
