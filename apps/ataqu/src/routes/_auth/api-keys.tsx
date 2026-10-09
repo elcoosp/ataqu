@@ -214,7 +214,7 @@ export const Route = createFileRoute("/_auth/api-keys")({
 														<DialogFooter>
 															<HoldToConfirm
 																onConfirm={() => _deleteMutation.mutate(key.id)}
-																className="w-full bg-destructive text-white hover:bg-destructive"
+																className="w-full bg-destructive text-foreground hover:bg-destructive"
 															>
 																<Trans>Revoke key</Trans>
 															</HoldToConfirm>
