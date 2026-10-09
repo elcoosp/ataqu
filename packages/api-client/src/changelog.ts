@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
+import { useAuthStore } from "@ataqu/shared-stores";
 
 export type ChangelogCategory = "New" | "Improved" | "Fixed";
 
@@ -28,6 +29,7 @@ export const useChangelog = () =>
 	useQuery({
 		queryKey: ["changelog"],
 		queryFn: getChangelog,
+		enabled: useAuthStore.getState().isAuthenticated,
 		staleTime: 60_000,
 	});
 
