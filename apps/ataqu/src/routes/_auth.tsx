@@ -17,6 +17,7 @@ function SessionLoader() {
 			setUser({
 				id: me.id,
 				email: me.email,
+				name: me.name,
 				tenantId: (me as unknown as { tenant_id?: string }).tenant_id ?? "",
 				roles: me.role ? [me.role] : [],
 			});
