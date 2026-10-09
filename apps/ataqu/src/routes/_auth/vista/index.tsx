@@ -20,7 +20,7 @@ function DashboardListPage() {
 	return (
 		<div className="p-8">
 			<div className="flex justify-between items-center mb-8">
-				<h1 className="text-2xl font-heading text-white">
+				<h1 className="text-2xl font-heading text-foreground">
 					<Trans>Dashboards</Trans>
 				</h1>
 				<Button onClick={() => void createAction?.action()}>
@@ -40,7 +40,7 @@ function DashboardListPage() {
 					{dashboards.map((d: Dashboard) => (
 						<Link to="/vista/dashboard/$id" params={{ id: d.id }} key={d.id}>
 							<Card className="p-6 hover:border-amber transition-colors cursor-pointer h-full">
-								<h3 className="text-lg font-medium text-white mb-2">
+								<h3 className="text-lg font-medium text-foreground mb-2">
 									{d.name}
 								</h3>
 								<p className="text-xs text-muted-foreground">
