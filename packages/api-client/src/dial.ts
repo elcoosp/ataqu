@@ -5,6 +5,7 @@ import type {
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./client";
+import { useAuthStore } from "@ataqu/shared-stores";
 import type {
 	AddReactionRequest,
 	BulkDeleteRequest,
@@ -117,6 +118,7 @@ export const useListChannels = (
 	useQuery({
 		queryKey: ["dial", "channels"],
 		queryFn: listChannels,
+		enabled: useAuthStore.getState().isAuthenticated,
 		...options,
 	});
 export const useGetChannel = (id: UUID, options?: UseQueryOptions<Channel>) =>
