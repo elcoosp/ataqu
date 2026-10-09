@@ -45,7 +45,7 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
 					key={w.i}
 					className="bg-card border border-border/40 rounded-lg p-4 overflow-hidden relative"
 				>
-					<div className="drag-handle absolute top-2 left-2 cursor-move text-muted-foreground hover:text-white z-10">
+					<div className="drag-handle absolute top-2 left-2 cursor-move text-muted-foreground hover:text-foreground z-10">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="16"
