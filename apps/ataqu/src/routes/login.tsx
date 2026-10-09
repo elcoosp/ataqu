@@ -33,7 +33,7 @@ export const Route = createFileRoute("/login")({
 
 		const loginMutation = useLogin({
 			onSuccess: (res) => {
-				login(res.access_token, {
+				login(res.access_token, res.refresh_token, {
 					id: res.user_id,
 					email,
 					tenantId: "",
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/login")({
 		useEffect(() => {
 			if (search.token && search.refreshToken && search.user_id) {
 				const user = { id: search.user_id, email: "", tenantId: "", roles: [] };
-				login(search.token, user);
+				login(search.token, search.refreshToken, user);
 				navigate({ to: "/dashboard" });
 			}
 			// Depend on the primitive search fields, not the `search` object itself
@@ -74,7 +74,13 @@ export const Route = createFileRoute("/login")({
 			}
 		};
 
-		const handlePasswordLogin = (e: React.FormEvent) => {
+		const fillDemoCredentials = () => {
+		setMode("login");
+		setEmail("demo@ataqu.com");
+		setPassword("demo1234");
+	};
+
+	const handlePasswordLogin = (e: React.FormEvent) => {
 			e.preventDefault();
 			if (mode === "signup") {
 				signupMutation.mutate({ email, password, name: name || undefined });
@@ -83,10 +89,9 @@ export const Route = createFileRoute("/login")({
 			loginMutation.mutate({ email, password });
 		};
 
-		if (token) {
-			navigate({ to: "/dashboard" });
-			return null;
-		}
+		useEffect(() => {
+			if (token) void navigate({ to: "/dashboard" });
+		}, [token, navigate]);
 
 		return (
 			<AuthLayout>
@@ -112,7 +117,7 @@ export const Route = createFileRoute("/login")({
 					<div className="space-y-3">
 						<Button
 							onClick={() => handleSSO("google")}
-							className="w-full bg-white text-black hover:bg-background dark:bg-card dark:text-white dark:hover:bg-border"
+							className="w-full bg-white text-black hover:bg-background dark:bg-card dark:text-foreground dark:hover:bg-border"
 						>
 							<Trans>Continue with Google</Trans>
 						</Button>
