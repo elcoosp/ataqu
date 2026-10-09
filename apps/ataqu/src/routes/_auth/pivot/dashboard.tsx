@@ -43,7 +43,7 @@ export function MetricCard({
 						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 							{label}
 						</p>
-						<p className="text-2xl font-bold text-white mt-1">{value}</p>
+						<p className="text-2xl font-bold text-foreground mt-1">{value}</p>
 						{sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
 					</div>
 					<div
@@ -71,7 +71,7 @@ function DbRow({
 							<Database className="h-4 w-4 text-amber" />
 						</div>
 						<div className="flex-1 min-w-0">
-							<h4 className="text-sm font-semibold text-white truncate">
+							<h4 className="text-sm font-semibold text-foreground truncate">
 								{db.name}
 							</h4>
 							{db.description && (
@@ -106,7 +106,7 @@ function EmptyBox({
 			<div className="mb-3 rounded-full bg-muted p-3">
 				<Icon className="h-5 w-5 text-muted-foreground" />
 			</div>
-			<p className="text-sm font-medium text-white">{title}</p>
+			<p className="text-sm font-medium text-foreground">{title}</p>
 			<p className="text-xs text-muted-foreground mt-1 max-w-xs">{desc}</p>
 			{action && onClick && (
 				<Button className="mt-4" size="sm" onClick={onClick}>
@@ -128,7 +128,7 @@ function PivotDashboard() {
 		<div className="space-y-8">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-heading font-bold text-white">
+					<h1 className="text-2xl font-heading font-bold text-foreground">
 						<Trans>Pivot</Trans>
 					</h1>
 					<p className="text-sm text-muted-foreground mt-1">
@@ -179,7 +179,7 @@ function PivotDashboard() {
 				<Card className="overflow-hidden">
 					<CardHeader className="pb-3">
 						<div className="flex items-center justify-between">
-							<CardTitle className="text-sm font-medium text-white flex items-center gap-2">
+							<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
 								<Database className="h-4 w-4 text-amber" />
 								<Trans>Databases</Trans>
 							</CardTitle>
@@ -222,7 +222,7 @@ function PivotDashboard() {
 				</Card>
 				<Card className="overflow-hidden">
 					<CardHeader className="pb-3">
-						<CardTitle className="text-sm font-medium text-white">
+						<CardTitle className="text-sm font-medium text-foreground">
 							<Trans>Templates</Trans>
 						</CardTitle>
 					</CardHeader>
@@ -257,7 +257,7 @@ function PivotDashboard() {
 									to="/pivot/templates"
 									className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
 								>
-									<span className="text-sm text-white">{tpl.name}</span>
+									<span className="text-sm text-foreground">{tpl.name}</span>
 									<Badge variant="secondary" className="text-xs">
 										used
 									</Badge>
