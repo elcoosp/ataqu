@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { normalizeMessageList } from "../api/envelope";
 import { FileUpload } from "./file-upload";
+import { useAuthStore } from "@ataqu/shared-stores";
 
 interface MessageInputProps {
 	channelId: string;
@@ -48,7 +49,7 @@ export function MessageInput({
 			const optimisticMessage: Message = {
 				id: `optimistic-${Date.now()}`,
 				content: vars.content,
-				author_id: "current-user-id", // will be replaced later
+				author_id: useAuthStore.getState().user?.id ?? "",
 				version: 0,
 				sent_at: new Date().toISOString(),
 				channel_id: channelId,
