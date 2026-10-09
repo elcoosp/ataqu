@@ -22,7 +22,7 @@ export interface Template {
 
 export interface DatabaseRow {
 	id: string;
-	values: Record<string, any>;
+	data: Record<string, any>;
 	created_at?: string;
 	updated_at?: string;
 }
