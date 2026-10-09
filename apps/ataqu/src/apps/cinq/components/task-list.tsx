@@ -229,7 +229,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 						<HoldToConfirm
 							onConfirm={() => deleteTask.mutate(task.id)}
 							confirmLabel="Deleted"
-							className="ml-auto bg-destructive text-white hover:bg-destructive"
+							className="ml-auto bg-destructive text-foreground hover:bg-destructive"
 						>
 							<Trash2 className="h-4 w-4" />
 						</HoldToConfirm>
