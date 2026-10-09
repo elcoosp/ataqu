@@ -44,7 +44,7 @@ function TeamStatusPage() {
 	return (
 		<div className="space-y-4 p-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-lg font-semibold text-white">
+				<h1 className="text-lg font-semibold text-foreground">
 					<Trans>Team activation</Trans>
 				</h1>
 				<Card className="w-48">
@@ -82,7 +82,7 @@ function TeamStatusPage() {
 						<TableBody>
 							{users.map((u) => (
 								<TableRow key={u.user_id}>
-									<TableCell className="text-white">{u.name ?? "—"}</TableCell>
+									<TableCell className="text-foreground">{u.name ?? "—"}</TableCell>
 									<TableCell className="text-secondary-foreground">
 										{u.email}
 									</TableCell>
