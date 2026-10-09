@@ -434,7 +434,7 @@ function ContactTableBody({
 		>
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-heading text-white">
+					<h2 className="text-lg font-heading text-foreground">
 						<Trans>Contacts</Trans>{" "}
 						<span className="text-sm text-muted-foreground">
 							(
