@@ -11,11 +11,18 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { GlobalShortcuts } from "./components/global-shortcuts";
 import { setRouterRef } from "./lib/navigation";
+import { enableMocking } from "./mocks";
 import { routeTree } from "./routeTree.gen";
 
 // Restore persisted theme before first paint (complements the inline
 // bootstrap in index.html; keeps SPA navigations consistent).
 initTheme();
+
+// Boot the mock API layer (MSW + seeded demo database) before React renders
+// so every query is served from the first tick. No-ops when
+// VITE_ENABLE_MOCKS=false — see src/mocks/index.ts. Top-level await keeps the
+// ordering guarantee without wrapping the app in an extra async boundary.
+await enableMocking();
 
 declare module "@tanstack/react-router" {
 	interface Register {
