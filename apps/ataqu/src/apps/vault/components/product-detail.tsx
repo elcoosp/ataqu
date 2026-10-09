@@ -309,7 +309,7 @@ export function ProductDetail({ productId }: { productId: string }) {
 										onConfirm={() => deleteProduct.mutate(product.id)}
 										confirmLabel="Deleted"
 										disabled={deleteProduct.isPending}
-										className="mt-2 bg-destructive text-white hover:bg-destructive"
+										className="mt-2 bg-destructive text-foreground hover:bg-destructive"
 									>
 										<Trans>Delete Product</Trans>
 									</HoldToConfirm>
