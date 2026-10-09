@@ -169,7 +169,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 							</div>
 						) : (
 							<>
-								<h1 className="text-3xl font-bold text-white">
+								<h1 className="text-3xl font-bold text-foreground">
 									{employee.full_name}
 								</h1>
 								<p className="text-lg text-muted-foreground">
@@ -193,7 +193,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 				<HoldToConfirm
 					onConfirm={() => deactivateMutation.mutate(employee.id)}
 					disabled={deactivateMutation.isPending}
-					className="bg-destructive text-white hover:bg-destructive"
+					className="bg-destructive text-foreground hover:bg-destructive"
 				>
 					<Trans>Offboard</Trans>
 				</HoldToConfirm>
