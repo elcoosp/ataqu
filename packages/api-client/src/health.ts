@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@ataqu/shared-stores";
+
 import { api } from "./client";
 
 export type HealthStatus = "Nominal" | "Degraded" | "Critical";
@@ -45,6 +47,7 @@ export const useHealth = (refetchIntervalMs = 30_000) =>
 	useQuery({
 		queryKey: ["system-health"],
 		queryFn: getHealth,
+		enabled: useAuthStore.getState().isAuthenticated,
 		refetchInterval: refetchIntervalMs,
 		staleTime: refetchIntervalMs / 2,
 	});
