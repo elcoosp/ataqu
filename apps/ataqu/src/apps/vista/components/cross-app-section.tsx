@@ -27,7 +27,7 @@ function CrossAppView({ view }: { view: string }) {
 	return (
 		<Card className="h-full">
 			<CardHeader>
-				<CardTitle className="text-white">
+				<CardTitle className="text-foreground">
 					{view === "revenue-inventory" ? (
 						<Trans>Revenue + Inventory</Trans>
 					) : (
@@ -66,7 +66,7 @@ function CrossAppView({ view }: { view: string }) {
 										{rows.map((r, i) => (
 											<tr key={i} className="border-t border-white/5">
 												{Object.values(r).map((v, j) => (
-													<td key={j} className="px-2 py-1 text-white/90">
+													<td key={j} className="px-2 py-1 text-foreground/90">
 														{String(v)}
 													</td>
 												))}
@@ -95,7 +95,7 @@ function CombineDataPanel() {
 	return (
 		<Card className="h-full">
 			<CardHeader>
-				<CardTitle className="text-white">
+				<CardTitle className="text-foreground">
 					<Trans>Combine Data</Trans>
 				</CardTitle>
 			</CardHeader>
@@ -104,7 +104,7 @@ function CombineDataPanel() {
 					<select
 						value={primary}
 						onChange={(e) => setPrimary(e.target.value)}
-						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-white"
+						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-foreground"
 					>
 						<option value="cinq">CINQ</option>
 						<option value="vault">VAULT</option>
@@ -115,7 +115,7 @@ function CombineDataPanel() {
 					<select
 						value={secondary}
 						onChange={(e) => setSecondary(e.target.value)}
-						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-white"
+						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-foreground"
 					>
 						<option value="vault">VAULT</option>
 						<option value="cinq">CINQ</option>
@@ -153,7 +153,7 @@ function CombineDataPanel() {
 								{result.map((r, i) => (
 									<tr key={i} className="border-t border-white/5">
 										{Object.values(r).map((v, j) => (
-											<td key={j} className="px-2 py-1 text-white/90">
+											<td key={j} className="px-2 py-1 text-foreground/90">
 												{String(v)}
 											</td>
 										))}
@@ -183,12 +183,12 @@ export function CrossAppSection() {
 	];
 	return (
 		<div className="space-y-4">
-			<h2 className="text-lg font-heading text-white">
+			<h2 className="text-lg font-heading text-foreground">
 				<Trans>Cross-App Dashboards</Trans>
 			</h2>
 			<Card className="h-full">
 				<CardHeader>
-					<CardTitle className="text-white">
+					<CardTitle className="text-foreground">
 						<Trans>App Data Graph</Trans>
 					</CardTitle>
 				</CardHeader>
