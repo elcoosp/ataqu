@@ -112,7 +112,7 @@ function DashboardDetailPage() {
 							>
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
-							<h1 className="text-xl font-heading text-white">
+							<h1 className="text-xl font-heading text-foreground">
 								{dashboard?.name || <Trans>Dashboard</Trans>}
 							</h1>
 							<SseIndicator isConnected={isConnected} />
@@ -289,7 +289,7 @@ function KpiSummaryPanel() {
 	return (
 		<div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
 			<Card className="p-4">
-				<CardTitle className="text-white mb-3">
+				<CardTitle className="text-foreground mb-3">
 					<Trans>KPI Summary</Trans>
 				</CardTitle>
 				<Bone
@@ -297,7 +297,7 @@ function KpiSummaryPanel() {
 					name="kpi-summary"
 					fallback={<div className="h-20 w-full rounded bg-white/5" />}
 				>
-					<ul className="space-y-1 text-sm text-white/90">
+					<ul className="space-y-1 text-sm text-foreground/90">
 						{(kpis
 							? [
 									["Total Revenue", kpis.total_revenue],
@@ -321,7 +321,7 @@ function KpiSummaryPanel() {
 				</Bone>
 			</Card>
 			<Card className="p-4">
-				<CardTitle className="text-white mb-3">
+				<CardTitle className="text-foreground mb-3">
 					<Trans>Data Points (revenue)</Trans>
 				</CardTitle>
 				<Bone
@@ -337,7 +337,7 @@ function KpiSummaryPanel() {
 										<td className="px-2 py-1 text-muted-foreground">
 											{dp.metric_name}
 										</td>
-										<td className="px-2 py-1 text-white/90">
+										<td className="px-2 py-1 text-foreground/90">
 											{String(dp.value)}
 										</td>
 									</tr>
