@@ -109,6 +109,18 @@ impl ShopifySyncLogRepo {
         Ok(())
     }
 
+    /// Total number of failed sync log entries for a tenant (pagination).
+    pub async fn count_failed_logs(&self, tenant_id: TenantId) -> Result<u64, String> {
+        use sea_orm::{ColumnTrait, PaginatorTrait, QueryFilter};
+        use shopify_sync_log_entity as entity;
+        entity::Entity::find()
+            .filter(entity::Column::TenantId.eq(tenant_id.as_uuid()))
+            .filter(entity::Column::Status.eq("failed"))
+            .count(&self.db)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
     /// Returns failed sync log entries ordered newest-first, paginated.
     pub async fn list_failed_logs(
         &self,
