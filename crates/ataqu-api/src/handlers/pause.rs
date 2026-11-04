@@ -146,13 +146,18 @@ pub async fn create_employee(
         department: req.department.clone(),
         hire_date: req.hire_date,
     };
-    let command_id = headers
+    // SECURITY (fixed in audit): the raw client-supplied UUID was used as the
+    // global idempotency command id — tenant B sending tenant A's key received
+    // A's cached response (and B's row was never created). The key is now
+    // namespaced by tenant (same derivation as the shared idempotency
+    // extractor), and any string key is accepted, not just UUIDs.
+    let idem_key = headers
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok())
         .ok_or_else(|| {
             ApiResponseError::Validation("Idempotency-Key header required".to_string())
         })?;
+    let command_id = derive_idempotency_command_id(auth.tenant_id.as_uuid(), idem_key);
 
     let employee_id = state
         .pause_service
@@ -203,13 +208,16 @@ pub async fn request_leave(
         end_date: req.end_date,
         reason: req.reason.clone(),
     };
-    let command_id = headers
+    // SECURITY (fixed in audit): tenant-namespaced derivation, same as the
+    // create-employee path (raw client UUID previously collided across
+    // tenants).
+    let idem_key = headers
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok())
         .ok_or_else(|| {
             ApiResponseError::Validation("Idempotency-Key header required".to_string())
         })?;
+    let command_id = derive_idempotency_command_id(auth.tenant_id.as_uuid(), idem_key);
     let request_id = state
         .pause_service
         .request_leave(
@@ -554,6 +562,26 @@ pub async fn upload_document(
             "Manager or Admin access required".to_string(),
         ));
     }
+    // IDOR (fixed in audit): the employee was never checked to belong to the
+    // caller's tenant — a manager could attach documents to ANY tenant's
+    // employee id.
+    let employee = state
+        .pause_service
+        .find_employee(&auth.tenant_id, employee_id)
+        .await;
+    if employee.is_err() {
+        return Err(ApiResponseError::not_found("Employee not found"));
+    }
+    // METADATA INTEGRITY (fixed in audit): `file_url` was accepted verbatim;
+    // it must reference the presigned upload path for this exact employee —
+    // anything else is rejected (prevents pointing the document row at an
+    // object outside the tenant's prefix).
+    let expected_prefix = format!("pause/{}/{}", auth.tenant_id.as_uuid(), employee_id);
+    if !payload.file_url.starts_with(&expected_prefix) {
+        return Err(ApiResponseError::validation(
+            "file_url must be the key returned by the presigned upload for this employee",
+        ));
+    }
     let cmd = ataqu_domain_pause::CreateDocumentCommand {
         tenant_id: auth.tenant_id,
         employee_id,
@@ -773,4 +801,38 @@ pub fn routes() -> Router<AppState> {
             "/employees/{id}/presigned-url",
             post(presign_document_upload),
         )
+}
+
+/// Derive the tenant-scoped idempotency command id from a raw
+/// `Idempotency-Key` header value. MUST match the derivation used by
+/// [`crate::extractors::idempotency`] so both paths land on the same durable
+/// `core.idempotency_records` namespace.
+fn derive_idempotency_command_id(tenant_id: uuid::Uuid, raw_key: &str) -> uuid::Uuid {
+    uuid::Uuid::new_v5(
+        &uuid::Uuid::NAMESPACE_DNS,
+        format!("{tenant_id}/{raw_key}").as_bytes(),
+    )
+}
+
+#[cfg(test)]
+mod idempotency_key_tests {
+    use super::derive_idempotency_command_id;
+
+    #[test]
+    fn key_is_tenant_scoped() {
+        let t1 = uuid::Uuid::new_v4();
+        let t2 = uuid::Uuid::new_v4();
+        let k = "11111111-1111-1111-1111-111111111111";
+        let a = derive_idempotency_command_id(t1, k);
+        let b = derive_idempotency_command_id(t2, k);
+        assert_ne!(a, b, "same raw key in different tenants must not collide");
+    }
+
+    #[test]
+    fn key_is_deterministic() {
+        let t = uuid::Uuid::new_v4();
+        let a = derive_idempotency_command_id(t, "abc");
+        let b = derive_idempotency_command_id(t, "abc");
+        assert_eq!(a, b);
+    }
 }
