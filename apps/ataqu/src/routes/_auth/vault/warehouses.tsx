@@ -6,9 +6,5 @@ export const Route = createFileRoute("/_auth/vault/warehouses")({
 });
 
 function WarehousesPage() {
-	return (
-		<>
-			<WarehouseList />
-		</>
-	);
+	return <WarehouseList />;
 }
