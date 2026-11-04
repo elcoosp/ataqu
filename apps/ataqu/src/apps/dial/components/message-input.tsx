@@ -1,5 +1,6 @@
 import { type Message, useSendMessage } from "@ataqu/api-client";
 import { useOptimisticMutation } from "@ataqu/shared-hooks";
+import { useAuthStore } from "@ataqu/shared-stores";
 import { Button } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Loader2, Send } from "lucide-react";
@@ -7,7 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { normalizeMessageList } from "../api/envelope";
 import { FileUpload } from "./file-upload";
-import { useAuthStore } from "@ataqu/shared-stores";
 
 interface MessageInputProps {
 	channelId: string;
