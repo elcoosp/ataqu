@@ -7,12 +7,12 @@
     <script>
       // Theme bootstrap: runs before first paint to avoid FOUC (docs B11).
       try {
-        var t = localStorage.getItem("ataqu-theme");
-        var root = document.documentElement;
+        const t = localStorage.getItem("ataqu-theme");
+        const root = document.documentElement;
         if (t === "light") root.classList.remove("dark");
         else root.classList.add("dark");
         root.style.colorScheme = t === "light" ? "light" : "dark";
-      } catch (e) {}
+      } catch (_e) {}
     </script>
   </head>
   <body>
