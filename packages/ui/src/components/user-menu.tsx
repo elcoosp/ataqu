@@ -1,7 +1,6 @@
 import { useLogout } from "@ataqu/api-client";
 import { useAuthStore } from "@ataqu/shared-stores";
 import { Trans } from "@lingui/react/macro";
-import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
