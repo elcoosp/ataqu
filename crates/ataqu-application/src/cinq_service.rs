@@ -637,6 +637,7 @@ impl CinqService {
             )));
         }
 
+        let previous_status = deal.status;
         let domain_cmd = DomainUpdateDeal {
             id: cmd.id,
             tenant_id: cmd.tenant_id,
@@ -653,14 +654,53 @@ impl CinqService {
             expected_version: cmd.expected_version,
         };
         let event = deal_domain::update_deal(domain_cmd, self.clock.as_ref())?;
-        if let Some(contact_id) = event.contact_id {
-            deal.contact_id = contact_id;
+        // SECURITY (fixed in audit): update_deal validated the referenced
+        // contact only on create — a PATCH could point the deal at ANOTHER
+        // TENANT's contact/pipeline stage/variant. Re-validate every supplied
+        // reference against cmd.tenant_id.
+        if let Some(new_contact) = event.contact_id {
+            let contact = self
+                .get_contact(cmd.tenant_id, new_contact)
+                .await
+                .map_err(|_| {
+                    CinqServiceError::Validation("Referenced contact not found".to_string())
+                })?;
+            let _ = contact;
+            deal.contact_id = new_contact;
+        }
+        if let Some(stage_id) = event.pipeline_stage_id {
+            let stage = self
+                .stage_repo
+                .find_pipeline_stage_by_id(&cmd.tenant_id, stage_id)
+                .await
+                .map_err(|e| CinqServiceError::Repository(e.to_string()))?;
+            if stage.is_none() {
+                return Err(CinqServiceError::Validation(
+                    "Referenced pipeline stage not found".to_string(),
+                ));
+            }
+            deal.pipeline_stage_id = stage_id;
+        }
+        // establishment_id is a double-Option on the command (not part of the
+        // domain event): `Some(Some(x))` sets, `Some(None)` clears, `None`
+        // leaves unchanged. FIXED IN AUDIT: `Some(None)` used to be treated as
+        // a no-op, making an explicit clear impossible. New values are
+        // validated against the tenant.
+        if let Some(establishment_update) = &cmd.establishment_id {
+            if let Some(est_id) = establishment_update {
+                let _ = self
+                    .get_establishment(cmd.tenant_id, *est_id)
+                    .await
+                    .map_err(|_| {
+                        CinqServiceError::Validation(
+                            "Referenced establishment not found".to_string(),
+                        )
+                    })?;
+            }
+            deal.establishment_id = *establishment_update;
         }
         if let Some(title) = event.title {
             deal.title = title;
-        }
-        if let Some(stage_id) = event.pipeline_stage_id {
-            deal.pipeline_stage_id = stage_id;
         }
         if let Some(amount) = event.amount {
             deal.amount = amount;
@@ -674,14 +714,8 @@ impl CinqService {
         if let Some(probability) = event.probability {
             deal.probability = probability;
         }
-        if let Some(variant_id) = event.variant_id {
-            deal.variant_id = variant_id;
-        }
         if let Some(quantity) = event.quantity {
             deal.quantity = quantity;
-        }
-        if let Some(establishment_id) = cmd.establishment_id {
-            deal.establishment_id = establishment_id;
         }
         deal.updated_at = event.updated_at;
         deal.version = event.version;
@@ -690,7 +724,13 @@ impl CinqService {
             audit_repo.append_log(deal.tenant_id, user_id, "update_deal", "cinq", Some("deal"), Some(deal.id), None, Some(serde_json::json!({"title": deal.title, "status": format!("{:?}", deal.status)})), None, None).await.ok();
         }
 
-        if let Some(DealStatus::Won) = event.status {
+        // RELIABILITY (fixed in audit): `DealWon` was re-emitted on EVERY
+        // PATCH carrying status=won (the domain echoes the status even when
+        // unchanged), double-counting revenue in VISTA. Emit only on the
+        // actual transition into Won.
+        if let Some(DealStatus::Won) = event.status
+            && previous_status != DealStatus::Won
+        {
             let payload = serde_json::json!({
                 "deal_id": deal.id,
                 "tenant_id": deal.tenant_id.as_uuid(),
@@ -1232,9 +1272,11 @@ impl CinqService {
                     .has_headers(is_first)
                     .from_writer(Vec::new());
                 for c in contacts {
+                    // CSV injection defence (fixed in audit): name/phone are
+                    // tenant input and could carry spreadsheet formulas.
                     let record = vec![
                         c.id.to_string(),
-                        c.name.clone(),
+                        ataqu_security::csv::sanitize_csv_field(&c.name),
                         c.email
                             .reveal(&ataqu_security::PiiAccessKey::new())
                             .to_string(),
