@@ -247,15 +247,26 @@ impl SparkService {
             .await?
             .ok_or(SparkServiceError::WorkflowNotFound)?;
 
-        if let Some(expected_secret) = &workflow.webhook_secret {
-            match webhook_secret {
-                Some(provided) if provided == *expected_secret => {}
-                _ => {
-                    return Err(SparkServiceError::Validation(
-                        "Invalid or missing webhook secret".to_string(),
-                    ));
-                }
-            }
+        // SECURITY (fixed in audit): a workflow WITHOUT a `webhook_secret` was
+        // triggerable by anyone who learned the (tenant_id, workflow_id) pair
+        // — the `if let Some(expected)` shape made "no secret configured"
+        // equivalent to "no check". Public triggering now REQUIRES a secret,
+        // and the comparison is constant-time (the previous `==` leaked the
+        // secret length/prefix through timing).
+        use subtle::ConstantTimeEq;
+        let Some(expected_secret) = &workflow.webhook_secret else {
+            return Err(SparkServiceError::Validation(
+                "This workflow cannot be triggered publicly (no webhook secret configured)"
+                    .to_string(),
+            ));
+        };
+        let provided = webhook_secret.ok_or_else(|| {
+            SparkServiceError::Validation("Invalid or missing webhook secret".to_string())
+        })?;
+        if !bool::from(provided.as_bytes().ct_eq(expected_secret.as_bytes())) {
+            return Err(SparkServiceError::Validation(
+                "Invalid or missing webhook secret".to_string(),
+            ));
         }
 
         if !evaluate_conditions(&workflow.conditions, &payload) {
@@ -330,6 +341,7 @@ impl SparkService {
         tenant_id: TenantId,
         run_id: Uuid,
         approved_by: Uuid,
+        approver_roles: &[String],
     ) -> SparkResult<()> {
         let Some(run_repo) = self.run_repo.as_ref() else {
             return Err(SparkServiceError::Repository(
@@ -343,6 +355,26 @@ impl SparkService {
         if run.status != WorkflowRunStatus::PendingApproval {
             return Err(SparkServiceError::Validation(format!(
                 "Workflow run {run_id} is not pending approval"
+            )));
+        }
+
+        // SECURITY (fixed in audit): the workflow's required `approver_role`
+        // was recorded but never checked — any tenant member could approve
+        // runs gated on "admin"/"manager". Verify the acting user holds the
+        // required role before recording the approval.
+        let required_role: Option<String> = match self.approval_repo.as_ref() {
+            Some(repo) => match repo.find_by_run_id(tenant_id, run_id).await {
+                Ok(Some(approval)) => Some(approval.approver_role),
+                Ok(None) => None,
+                Err(e) => return Err(SparkServiceError::Repository(e)),
+            },
+            None => None,
+        };
+        if let Some(required) = required_role
+            && !approver_roles.iter().any(|r| r == &required)
+        {
+            return Err(SparkServiceError::Validation(format!(
+                "Approval requires the '{required}' role"
             )));
         }
 
@@ -387,6 +419,7 @@ impl SparkService {
         tenant_id: TenantId,
         run_id: Uuid,
         rejected_by: Uuid,
+        approver_roles: &[String],
     ) -> SparkResult<()> {
         let Some(run_repo) = self.run_repo.as_ref() else {
             return Err(SparkServiceError::Repository(
@@ -400,6 +433,23 @@ impl SparkService {
         if run.status != WorkflowRunStatus::PendingApproval {
             return Err(SparkServiceError::Validation(format!(
                 "Workflow run {run_id} is not pending approval"
+            )));
+        }
+
+        // Same role gate as approve (fixed in audit).
+        let required_role: Option<String> = match self.approval_repo.as_ref() {
+            Some(repo) => match repo.find_by_run_id(tenant_id, run_id).await {
+                Ok(Some(approval)) => Some(approval.approver_role),
+                Ok(None) => None,
+                Err(e) => return Err(SparkServiceError::Repository(e)),
+            },
+            None => None,
+        };
+        if let Some(required) = required_role
+            && !approver_roles.iter().any(|r| r == &required)
+        {
+            return Err(SparkServiceError::Validation(format!(
+                "Approval requires the '{required}' role"
             )));
         }
 
