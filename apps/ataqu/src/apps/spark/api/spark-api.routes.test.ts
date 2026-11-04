@@ -88,7 +88,7 @@ export function runsPayload(items: Array<{ id: string; status: string }>) {
 	return { items, total: items.length, limit: 50, offset: 0 };
 }
 
-function wrapper() {
+function _wrapper() {
 	const client = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});
