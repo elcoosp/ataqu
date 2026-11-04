@@ -40,8 +40,31 @@ impl Pools {
     }
 
     pub async fn new(db_url: &str) -> anyhow::Result<Self> {
+        // HARDENING (fixed in audit): the pools had no acquire timeout, no
+        // max lifetime and no statement/idle-in-transaction timeouts — one
+        // slow query or leaked transaction stalled every waiter for the
+        // sqlx default 30s and cascaded into pool exhaustion.
         let mut db_options = sea_orm::ConnectOptions::new(db_url.to_string());
         db_options.max_connections(5);
+        db_options.min_connections(1);
+        // Bound how long a request waits for a free connection.
+        db_options.acquire_timeout(std::time::Duration::from_secs(3));
+        // Recycle connections so Postgres-side bloat and failovers are bounded.
+        db_options.max_lifetime(std::time::Duration::from_secs(30 * 60));
+        db_options.idle_timeout(std::time::Duration::from_secs(5 * 60));
+        // Server-side guards: kill runaway statements and abandoned
+        // transactions instead of pinning a pool slot forever (dispatcher
+        // pool; the guarded URL appends libpq `options`).
+        db_options.sqlx_logging(false);
+        let guarded_url = if db_url.contains('?') {
+            format!(
+                "{db_url}&options=-c%20statement_timeout%3D15s%20-c%20idle_in_transaction_session_timeout%3D30s"
+            )
+        } else {
+            format!(
+                "{db_url}?options=-c%20statement_timeout%3D15s%20-c%20idle_in_transaction_session_timeout%3D30s"
+            )
+        };
 
         let core = sea_orm::Database::connect(db_options.clone()).await?;
         let admin = sea_orm::Database::connect(db_options.clone()).await?;
@@ -54,7 +77,18 @@ impl Pools {
 
         let dispatcher = sqlx::postgres::PgPoolOptions::new()
             .max_connections(3)
-            .connect_lazy(db_url)?;
+            .acquire_timeout(std::time::Duration::from_secs(3))
+            .max_lifetime(std::time::Duration::from_secs(30 * 60))
+            .idle_timeout(std::time::Duration::from_secs(5 * 60))
+            .after_connect(|conn, _| {
+                Box::pin(async move {
+                    sqlx::query("SET statement_timeout = '15s'; SET idle_in_transaction_session_timeout = '30s';")
+                        .execute(conn)
+                        .await?;
+                    Ok(())
+                })
+            })
+            .connect_lazy(&guarded_url)?;
 
         Ok(Self {
             core,
