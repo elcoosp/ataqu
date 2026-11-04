@@ -6,7 +6,13 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**", "!**/dist", "!**/.next", "!**/routeTree.gen.ts"]
+		"includes": [
+			"**",
+			"!**/dist",
+			"!**/.next",
+			"!**/routeTree.gen.ts",
+			"!**/mockServiceWorker.js"
+		]
 	},
 	"css": {
 		"linter": {
