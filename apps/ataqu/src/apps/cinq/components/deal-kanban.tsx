@@ -18,7 +18,7 @@ import {
 	type KanbanColumn,
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
