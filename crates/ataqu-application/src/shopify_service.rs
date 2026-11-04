@@ -183,15 +183,31 @@ impl ShopifyService {
                 }
             }
 
-            // Check for next page link
+            // Check for next page link. SECURITY: the URL from the `Link`
+            // header is only followed when it points at the SAME shop domain
+            // we are syncing (it is otherwise attacker-influenceable via a
+            // forged/misbehaving host, and the request carries the store's
+            // access token).
             if let Some(link_header) = link_header_value.as_ref()
                 && let Ok(link_str) = link_header.to_str()
                 && let Some(next) = link_str.split(',').find(|s| s.contains("rel=\"next\""))
                 && let Some(url_start) = next.find('<')
             {
                 let url_end = next.find('>').unwrap_or(next.len());
-                page_url = next[url_start + 1..url_end].to_string();
-                continue;
+                let candidate = next[url_start + 1..url_end].to_string();
+                let same_host = url::Url::parse(&candidate)
+                    .ok()
+                    .and_then(|u| u.host_str().map(|h| h == integration.shop_domain))
+                    .unwrap_or(false);
+                if same_host {
+                    page_url = candidate;
+                    continue;
+                }
+                tracing::warn!(
+                    url = %candidate,
+                    shop = %integration.shop_domain,
+                    "Ignoring Shopify Link header pointing at a different host"
+                );
             }
             break;
         }
