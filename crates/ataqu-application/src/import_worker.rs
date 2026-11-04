@@ -40,14 +40,33 @@ impl ImportWorker {
             .and_then(|s| s.parse::<uuid::Uuid>().ok())
             .unwrap_or(uuid::Uuid::nil());
 
-        // Download file
-        let response = reqwest::get(&file_url)
-            .await
-            .map_err(|e| format!("Failed to download file: {}", e))?;
-        let csv_content = response
-            .text()
+        // Download file through the SSRF-guarded executor (fixed in audit:
+        // `reqwest::get` had no scheme/host checks, no timeout, and buffered
+        // an unbounded response into memory). The body is additionally capped
+        // at 20 MB before parsing.
+        let guard = ataqu_security::egress::GuardedHttpClient::new()?;
+        let response = guard.execute("GET", &file_url, None, &[]).await?;
+        if !response.status().is_success() {
+            return Err(format!("File download returned HTTP {}", response.status()));
+        }
+        const MAX_IMPORT_BYTES: usize = 20 * 1024 * 1024;
+        let content_length = response.content_length().unwrap_or(0);
+        if content_length > MAX_IMPORT_BYTES as u64 {
+            return Err(format!(
+                "Import file too large: {content_length} bytes (max {MAX_IMPORT_BYTES})"
+            ));
+        }
+        let bytes = response
+            .bytes()
             .await
             .map_err(|e| format!("Failed to read CSV: {}", e))?;
+        if bytes.len() > MAX_IMPORT_BYTES {
+            return Err(format!(
+                "Import file too large: {} bytes (max {MAX_IMPORT_BYTES})",
+                bytes.len()
+            ));
+        }
+        let csv_content = String::from_utf8_lossy(&bytes).into_owned();
 
         // Parse CSV
         let mut reader = csv::Reader::from_reader(csv_content.as_bytes());
