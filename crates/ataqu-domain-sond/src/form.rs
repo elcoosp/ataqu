@@ -117,7 +117,7 @@ pub fn create_form(
 
     let mut questions = Vec::with_capacity(cmd.questions.len());
     for q_input in cmd.questions {
-        let q = q_input.into_question(id_gen);
+        let q = q_input.into_question(id_gen, None);
         questions.push(q);
     }
 
@@ -235,6 +235,7 @@ mod tests {
             title: "My Form".to_string(),
             description: Some("Test".to_string()),
             questions: vec![QuestionInput {
+                id: None,
                 label: "Name".to_string(),
                 question_type: QuestionType::Text,
                 required: true,
@@ -260,6 +261,7 @@ mod tests {
             title: "   ".to_string(),
             description: None,
             questions: vec![QuestionInput {
+                id: None,
                 label: "Name".to_string(),
                 question_type: QuestionType::Text,
                 required: true,
@@ -335,6 +337,7 @@ mod tests {
             title: "My Form".to_string(),
             description: None,
             questions: vec![QuestionInput {
+                id: None,
                 label: "Name".to_string(),
                 question_type: QuestionType::Text,
                 required: true,
