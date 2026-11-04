@@ -10,5 +10,6 @@ pub use availability::{AvailabilitySlot, CreateAvailabilitySlotCommand};
 pub use event_type::{CreateEventTypeCommand, EventType};
 pub use repository::TempoRepository;
 pub use schedule::{
-    Booking, BookingId, BookingStatus, EventTypeId, create_booking, evaluate_no_show,
+    Booking, BookingId, BookingStatus, EventTypeId, MAX_DURATION_MINUTES, MAX_END_SECS,
+    check_overlap, create_booking, evaluate_no_show,
 };
