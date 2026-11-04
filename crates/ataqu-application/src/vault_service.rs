@@ -808,6 +808,15 @@ impl VaultService {
         quantity: i64,
         expected_version: i32,
     ) -> VaultResult<(Variant, ataqu_domain_vault::stock::Reservation)> {
+        // VALIDATION (fixed in audit): negative/zero quantities were accepted —
+        // `available() < quantity` passes for negatives, and
+        // `reserved_quantity += quantity` then INCREASED availability. Zero is
+        // a meaningless reservation.
+        if quantity <= 0 {
+            return Err(VaultServiceError::Validation(
+                "Reservation quantity must be positive".to_string(),
+            ));
+        }
         let variant = self.get_variant(tenant_id, variant_id).await?;
         if variant.version != expected_version {
             return Err(VaultServiceError::Validation(format!(
@@ -842,7 +851,11 @@ impl VaultService {
             .map_err(VaultServiceError::Repository)?;
 
         let mut new_variant = variant.clone();
-        new_variant.reserved_quantity += quantity;
+        // OVERFLOW FIX (audit): checked_add so a hostile quantity near i64::MAX
+        // cannot wrap reserved_quantity negative.
+        new_variant.reserved_quantity = new_variant.reserved_quantity.checked_add(quantity).ok_or(
+            VaultServiceError::Validation("Reservation quantity overflow".to_string()),
+        )?;
         new_variant.updated_at = self.clock.now();
         new_variant.version += 1;
         self.repo
