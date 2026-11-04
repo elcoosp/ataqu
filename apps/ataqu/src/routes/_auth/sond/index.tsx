@@ -40,7 +40,7 @@ function FormsIndex() {
 		[confirm, deleteMutation],
 	);
 
-	const searchForms = useCallback(
+	const _searchForms = useCallback(
 		async (q: string) => {
 			if (!q.trim()) return [];
 			const lower = q.toLowerCase();
