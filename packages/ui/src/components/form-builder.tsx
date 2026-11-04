@@ -77,7 +77,9 @@ function SortableField({
 			</div>
 			<div className="flex-1">
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium text-foreground">{field.label}</span>
+					<span className="text-sm font-medium text-foreground">
+						{field.label}
+					</span>
 					<span className="text-xs text-muted-foreground">{field.type}</span>
 					{field.required && <span className="text-xs text-amber">*</span>}
 				</div>
