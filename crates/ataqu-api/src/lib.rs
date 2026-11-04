@@ -2,7 +2,7 @@
 
 //! Ataqu API layer – Axum handlers, middleware, and shared state.
 
-use crate::error::ApiResponseError;
+use crate::error::{ApiResponseError, ApiResult};
 use axum::{
     Router,
     extract::State,
@@ -133,8 +133,19 @@ async fn health_check() -> impl axum::response::IntoResponse {
     }))
 }
 
-async fn metrics_handler(State(state): State<AppState>) -> String {
-    state.metrics_handle.render()
+async fn metrics_handler(
+    State(state): State<AppState>,
+    auth: crate::middleware::AuthContext,
+) -> ApiResult<String> {
+    // SECURITY (fixed in audit): Prometheus output lists internal route paths,
+    // auth-failure reasons and infra gauges — operational recon for any
+    // authenticated user. Admin-only.
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    Ok(state.metrics_handle.render())
 }
 
 async fn readiness_check(State(state): State<AppState>) -> impl axum::response::IntoResponse {
@@ -222,6 +233,7 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
         .nest("/api/tempo", handlers::tempo::public_routes())
         .nest("/api/cinq", handlers::cinq::public_routes())
         .nest("/api/spark", handlers::spark::public_routes())
+        .nest("/api/vault", handlers::vault::public_routes())
         .nest("/api/aegis", handlers::aegis::public_routes())
         .route("/api/v1/csrf-token", get(issue_csrf_token))
         .layer(axum::middleware::from_fn(
@@ -231,12 +243,12 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
             state.rate_limiter.clone(),
             crate::middleware::rate_limit::rate_limit_middleware,
         ))
+        // SECURITY (fixed in audit): public JSON responses (sond public forms,
+        // tempo public booking pages, spark webhooks) previously lacked the
+        // security headers that the private router already sets.
+        .layer(axum::middleware::from_fn(security_headers_middleware))
         .layer(axum::middleware::from_fn(request_id_middleware));
     let private_routes = Router::new()
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            crate::middleware::audit::audit_middleware,
-        ))
         .route(
             "/api/v1/onboarding/status",
             get(handlers::onboarding::get_status),
@@ -280,7 +292,25 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
             "/api/v1/onboarding/team-status",
             get(handlers::onboarding::team_status),
         )
-        // Idempotency is now handled by the IdempotencyContext extractor
+        // Middleware order matters. In axum, `layer` only wraps routes already
+        // registered, and the LAST layer added is the OUTERMOST (runs first).
+        // Request execution order is therefore:
+        //   request-id → auth → security-headers → rate-limit → csrf-double-submit
+        //   → csrf → idempotency → audit → handler
+        //
+        // - `auth` must run before everything that needs `AuthContext`.
+        // - `audit` and `idempotency` are registered AFTER the routes (so they
+        //   actually wrap them — a layer added to an empty router wraps
+        //   nothing, which silently disabled auditing before this fix) and
+        //   BEFORE auth in the chain (i.e. added earlier), so they can read
+        //   the authenticated context.
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            crate::middleware::audit::audit_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            crate::middleware::idempotency::idempotency_middleware,
+        ))
         .layer(axum::middleware::from_fn(
             crate::middleware::csrf::csrf_middleware,
         ))
@@ -304,9 +334,6 @@ pub fn create_router(state: AppState) -> IntoMakeServiceWithConnectInfo<Router, 
         .route("/admin/health", axum::routing::get(health_check))
         .merge(public_routes)
         .merge(private_routes)
-        .layer(axum::middleware::from_fn(
-            crate::middleware::idempotency::idempotency_middleware,
-        ))
         .with_state(state)
         .into_make_service_with_connect_info::<SocketAddr>()
 }
