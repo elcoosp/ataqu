@@ -527,7 +527,7 @@ pub async fn list_thread_messages(
 ) -> ApiResult<Json<Vec<MessageResponse>>> {
     let msgs = state
         .dial_service
-        .list_thread_messages(auth.tenant_id, thread_id, 100, 0)
+        .list_thread_messages(auth.tenant_id, auth.user_id, thread_id, 100, 0)
         .await
         .map_err(ApiResponseError::internal_err)?;
     Ok(Json(msgs.into_iter().map(|m| m.into()).collect()))
@@ -736,6 +736,21 @@ pub async fn upload_file(
     Json(payload): Json<UploadFileRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let tenant_id = auth.tenant_id.as_uuid();
+    // SECURITY: presigning is only meaningful for channels the caller can
+    // write to. Without this check any tenant member could obtain upload
+    // URLs for arbitrary channel keys (and enumerate channel ids).
+    if state
+        .dial_service
+        .get_channel(auth.tenant_id, channel_id, auth.user_id)
+        .await
+        .is_err()
+    {
+        return Err(ApiResponseError::Forbidden(
+            "Not authorized to upload to this channel".to_string(),
+        ));
+    }
+    // Keep the object key extension-less and server-generated: the filename
+    // is metadata only and never part of the storage path.
     let file_id = Uuid::new_v4();
     let key = format!("dial/{}/{}/{}", tenant_id, channel_id, file_id);
     let url = state
