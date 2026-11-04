@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+subtle = "2"
+url = "2"
+urlencoding = "2.1"
 uuid = { version = "1.24.0", features = ["v4", "v7", "serde"] }
 thiserror = "2.0.18"
 serde = { version = "1.0.229", features = ["derive"] }
