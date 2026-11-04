@@ -69,9 +69,12 @@ where
     match result {
         Ok(value) => {
             let response = Json(value).into_response();
-            // Extract status and body for caching
+            // Extract status and body for caching. MEMORY (fixed in audit):
+            // `usize::MAX` buffered ANY response size; cap at 1 MB (matching
+            // the middleware) and skip caching oversized bodies.
+            const MAX_CACHED_BODY: usize = 1024 * 1024;
             let status = response.status();
-            let body_bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            let body_bytes = axum::body::to_bytes(response.into_body(), MAX_CACHED_BODY)
                 .await
                 .map_err(|e| {
                     ApiResponseError::internal(&format!("Failed to read response body: {}", e))
