@@ -5,7 +5,7 @@ import {
 	useGetForm,
 	useUpdateForm,
 } from "@ataqu/api-client";
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
+import { useUrlState } from "@ataqu/shared-hooks";
 import { useIntent } from "@ataqu/shared-stores";
 import { handleApiError } from "@ataqu/shared-utils";
 import {
@@ -20,7 +20,7 @@ import {
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Eye, Link, Save, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -129,8 +129,8 @@ function FormBuilderRoute() {
 		}
 	}, [id, createMutation, localForm]);
 
-		// NOTE: every hook must run before the early returns below — React's
-		// rules of hooks forbid conditional hook counts across renders.
+	// NOTE: every hook must run before the early returns below — React's
+	// rules of hooks forbid conditional hook counts across renders.
 	const handleSave = useCallback(() => {
 		if (!localForm) return;
 		const { id: formId, questions, title, mode, branding } = localForm;
@@ -259,7 +259,6 @@ function FormBuilderRoute() {
 		);
 	const updateTitle = (title: string) =>
 		setLocalForm((f) => (f ? { ...f, title } : f));
-
 
 	return (
 		<div className="flex h-[calc(100vh-4rem)] flex-col bg-background">
