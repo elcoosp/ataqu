@@ -5,6 +5,7 @@ use sqlx::postgres::PgListener;
 use sqlx::types::Json;
 use sqlx::{PgPool, Postgres, Row, Transaction};
 use std::future::Future;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::select;
 use tracing::{debug, error, info, warn};
@@ -18,7 +19,7 @@ where
     F: Future<Output = Result<()>> + Send,
 {
     pool: PgPool,
-    handler: H,
+    handler: Arc<H>,
     poll_interval: Duration,
 }
 
@@ -30,7 +31,7 @@ where
     pub fn new(pool: PgPool, handler: H) -> Self {
         Self {
             pool,
-            handler,
+            handler: Arc::new(handler),
             poll_interval: Duration::from_secs(5),
         }
     }
@@ -185,7 +186,31 @@ where
         txn: &mut Transaction<'_, Postgres>,
         event: &OutboxEvent,
     ) -> Result<()> {
-        (self.handler)(event.clone()).await?;
+        // RELIABILITY (fixed in audit): a panicking handler used to unwind
+        // through this spawned dispatcher task, killing it for the process
+        // lifetime (no supervisor) AND rolling back the transaction so the
+        // attempt counter never incremented — the same event would then crash
+        // the dispatcher again on every restart, an infinite crash-loop with
+        // no DLQ. The handler now runs in an isolated task; a panic is
+        // converted into a normal error so attempts increment and the event
+        // eventually dead-letters.
+        let event_clone = event.clone();
+        let handler = Arc::clone(&self.handler);
+        let handler_result = tokio::spawn(async move { (handler)(event_clone).await }).await;
+        match handler_result {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => return Err(e),
+            Err(join_err) if join_err.is_panic() => {
+                let msg = format!("event handler panicked: {join_err}");
+                error!("Event {} {}", event.id, msg);
+                return Err(DispatcherError::Handler(msg));
+            }
+            Err(join_err) => {
+                return Err(DispatcherError::Handler(format!(
+                    "handler task failed: {join_err}"
+                )));
+            }
+        }
         sqlx::query(
             r#"
             UPDATE core.outbox
