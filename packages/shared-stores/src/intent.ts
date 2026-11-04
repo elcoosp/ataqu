@@ -162,13 +162,10 @@ export const useIntent = (
 	}, [handler]);
 
 	useEffect(() => {
-		const mine = requests.filter(
-			(r) => r.app === app && r.intent === intent,
-		);
+		const mine = requests.filter((r) => r.app === app && r.intent === intent);
 		if (mine.length === 0) return;
 		consume(mine.map((r) => r.id));
-		for (const request of mine)
-			handlerRef.current(request.payload);
+		for (const request of mine) handlerRef.current(request.payload);
 	}, [requests, app, intent, consume]);
 };
 
@@ -214,14 +211,10 @@ export const useRecentStore = create<{
 				at: Date.now(),
 			};
 			seen.set(fresh.id, fresh);
-			const ordered = Array.from(seen.values()).sort(
-				(a, b) => b.at - a.at,
-			);
+			const ordered = Array.from(seen.values()).sort((a, b) => b.at - a.at);
 			return {
 				recents:
-					ordered.length > MAX_RECENT
-						? ordered.slice(0, MAX_RECENT)
-						: ordered,
+					ordered.length > MAX_RECENT ? ordered.slice(0, MAX_RECENT) : ordered,
 			};
 		}),
 	clear: () => set({ recents: [] }),
@@ -249,22 +242,18 @@ if (typeof window !== "undefined") {
 	}
 	// Persist recents to localStorage on every change (zustand v4 subscribe
 	// API: single (state, prevState) => void callback).
-	useRecentStore.subscribe(
-		(state, prevState) => {
-			if (state.recents !== prevState.recents) {
-				try {
-					localStorage.setItem(
-						RECENT_KEY,
-						JSON.stringify(
-							state.recents as readonly RecentActivity[],
-						),
-					);
-				} catch {
-					/* QuotaExceededError is harmless. */
-				}
+	useRecentStore.subscribe((state, prevState) => {
+		if (state.recents !== prevState.recents) {
+			try {
+				localStorage.setItem(
+					RECENT_KEY,
+					JSON.stringify(state.recents as readonly RecentActivity[]),
+				);
+			} catch {
+				/* QuotaExceededError is harmless. */
 			}
-		},
-	);
+		}
+	});
 }
 
 /**
