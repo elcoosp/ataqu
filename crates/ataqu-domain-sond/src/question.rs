@@ -48,6 +48,14 @@ pub struct Question {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct QuestionInput {
+    /// Existing question id, when editing a question of an already-persisted
+    /// form. FIXED IN AUDIT (M-21): the field did not exist, so EVERY update
+    /// regenerated ALL question ids — previous responses, routing rules and
+    /// conditions that referenced the old uuids silently broke. The service
+    /// only honours ids that already exist on the form; new/unknown ids get a
+    /// fresh one.
+    #[serde(default)]
+    pub id: Option<Uuid>,
     pub label: String,
     pub question_type: QuestionType,
     pub required: bool,
@@ -87,9 +95,11 @@ impl QuestionInput {
         Ok(())
     }
 
-    pub fn into_question(self, id_gen: &dyn IdGenerator) -> Question {
+    pub fn into_question(self, id_gen: &dyn IdGenerator, existing_id: Option<Uuid>) -> Question {
         Question {
-            id: id_gen.new_uuid_v7(),
+            // Preserve the id of an existing question so responses, routing
+            // rules and conditions keep referencing it (see field docs).
+            id: existing_id.unwrap_or_else(|| id_gen.new_uuid_v7()),
             label: self.label,
             question_type: self.question_type,
             required: self.required,
@@ -111,9 +121,15 @@ pub fn is_question_visible(
         answers.iter().map(|a| (a.question_id, &a.value)).collect();
 
     for cond in &question.conditions {
-        let answer_val = answer_map.get(&cond.question_id).ok_or_else(|| {
-            SondError::ConditionError(format!("Question {} not answered", cond.question_id))
-        })?;
+        // FORM-BUILDER BUG (fixed in audit): an unanswered condition-target
+        // question used to make `is_question_visible` return Err, which
+        // `validate_answers` propagated — so ANY conditional question broke
+        // the whole submission until every earlier question was answered. The
+        // correct semantics: no answer ⇒ the condition is not satisfied ⇒ the
+        // question is hidden (evaluated with the other conditions below).
+        let Some(answer_val) = answer_map.get(&cond.question_id) else {
+            return Ok(false);
+        };
 
         let satisfied = match &cond.operator {
             ConditionOperator::Equals => match (answer_val, &cond.value) {
@@ -254,6 +270,7 @@ mod tests {
     #[test]
     fn validate_question_label_empty() {
         let input = QuestionInput {
+            id: None,
             label: "   ".to_string(),
             question_type: QuestionType::Text,
             required: false,
@@ -269,6 +286,7 @@ mod tests {
     #[test]
     fn validate_choice_empty_options() {
         let input = QuestionInput {
+            id: None,
             label: "Q".to_string(),
             question_type: QuestionType::Choice { options: vec![] },
             required: false,
@@ -284,6 +302,7 @@ mod tests {
     #[test]
     fn validate_rating_range() {
         let input = QuestionInput {
+            id: None,
             label: "Q".to_string(),
             question_type: QuestionType::Rating { min: 0, max: 10 },
             required: false,
