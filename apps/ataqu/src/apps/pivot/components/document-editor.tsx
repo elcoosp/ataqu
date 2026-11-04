@@ -1,4 +1,5 @@
 import { useDeleteDocument, useUpdateDocument } from "@ataqu/api-client";
+import { sanitizeMarkdownLinks } from "@ataqu/shared-utils";
 import { Button, cn } from "@ataqu/ui";
 import { i18n } from "@lingui/core";
 import { Trans } from "@lingui/react/macro";
@@ -196,7 +197,13 @@ export function DocumentEditor({
 			const md = initialDoc.content?.trim();
 			if (!md) return [{ children: [{ text: "" }], type: "p" }];
 			try {
-				return e.getApi(MarkdownPlugin).markdown.deserialize(md);
+				// Deserialized markdown can carry arbitrary link targets
+				// (e.g. `[x](javascript:…)`) — sanitize every url/href in the
+				// produced tree before it reaches an <a href> (see
+				// @ataqu/shared-utils/sanitizeUrl).
+				return sanitizeMarkdownLinks(
+					e.getApi(MarkdownPlugin).markdown.deserialize(md),
+				);
 			} catch {
 				return [{ children: [{ text: md }], type: "p" }];
 			}
