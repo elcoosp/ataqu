@@ -97,7 +97,7 @@ impl SondService {
         let questions: Vec<ataqu_domain_sond::question::Question> = cmd
             .questions
             .into_iter()
-            .map(|qi| qi.into_question(self.id_gen.as_ref()))
+            .map(|qi| qi.into_question(self.id_gen.as_ref(), None))
             .collect();
         let form = Form {
             id: event.id,
@@ -192,9 +192,19 @@ impl SondService {
             form.description = Some(desc);
         }
         if let Some(qs) = questions_clone {
+            // Preserve ids of questions that already exist on the form (fixed
+            // in audit: every update used to regenerate ALL ids, breaking
+            // past responses, routing rules and conditions). A submitted id is
+            // honoured only when it matches an existing question id — unknown
+            // ids are treated as new questions.
+            let existing_ids: std::collections::HashSet<Uuid> =
+                form.questions.iter().map(|q| q.id).collect();
             form.questions = qs
                 .into_iter()
-                .map(|qi| qi.into_question(self.id_gen.as_ref()))
+                .map(|qi| {
+                    let existing = qi.id.filter(|id| existing_ids.contains(id));
+                    qi.into_question(self.id_gen.as_ref(), existing)
+                })
                 .collect();
         }
         if let Some(mode) = event.mode {
@@ -519,10 +529,22 @@ impl SondService {
                         "webhook" => {
                             let url = action.get("url").and_then(|v| v.as_str()).unwrap_or("");
                             if !url.is_empty() {
+                                // Fixed in audit: the URL (and method) from the
+                                // routing rule were read but never put into the
+                                // payload, so the `WebhookTrigger` handler
+                                // always failed with "Missing url" (and after
+                                // the error-propagation fix would have
+                                // dead-lettered every submission).
+                                let method = action
+                                    .get("method")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("POST");
                                 let payload = serde_json::json!({
                                     "tenant_id": form.tenant_id.as_uuid(),
                                     "form_id": form.id,
                                     "response_id": response.id,
+                                    "url": url,
+                                    "method": method,
                                     "answers": response.answers,
                                 });
                                 if let Err(e) = self
