@@ -6,9 +6,5 @@ export const Route = createFileRoute("/_auth/vault/products/")({
 });
 
 function ProductsIndexPage() {
-	return (
-		<>
-			<ProductCatalog />
-		</>
-	);
+	return <ProductCatalog />;
 }
