@@ -78,7 +78,11 @@ function LeaveRow({
 				? "bg-amber/15 text-amber"
 				: "bg-muted/15 text-muted-foreground";
 	return (
-		<Link to="/pause/employees/$id" params={{ id: r.employee_id ?? r.id }} className="block">
+		<Link
+			to="/pause/employees/$id"
+			params={{ id: r.employee_id ?? r.id }}
+			className="block"
+		>
 			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-center justify-between">
