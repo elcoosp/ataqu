@@ -74,7 +74,7 @@ if (existsSync(inbox))
 	for (const m of readFileSync(inbox, "utf8").matchAll(
 		/\.route\(\s*"([^"]+)"/g,
 	))
-		backend.add(norm("/api/v1/inbox" + m[1]));
+		backend.add(norm(`/api/v1/inbox${m[1]}`));
 // dial websocket lives under /ws (proxy) — ignore.
 
 // ---------- frontend ----------
@@ -119,7 +119,7 @@ for (const f of files) {
 	for (const m of src.matchAll(
 		/const\s+([A-Z][A-Z0-9_]*)\s*=\s*["'](\/[^"']*)["']/g,
 	)) {
-		src = src.split("${" + m[1] + "}").join(m[2]);
+		src = src.split(`\${${m[1]}}`).join(m[2]);
 	}
 	for (const m of src.matchAll(callRe)) {
 		const p = m[3];
@@ -127,7 +127,7 @@ for (const f of files) {
 			problems.push(`${rel}: double /api prefix -> ${p}`);
 			continue;
 		}
-		const full = norm("/api" + p);
+		const full = norm(`/api${p}`);
 		if (!backend.has(full) && !ALLOW.has(full))
 			problems.push(
 				`${rel}: no backend route for ${m[1].toUpperCase()} ${full}`,
@@ -145,7 +145,7 @@ const uniq = [...new Set(problems)].sort();
 if (uniq.length) {
 	console.error(
 		`API contract: ${uniq.length} problem(s)\n` +
-			uniq.map((p) => "  " + p).join("\n"),
+			uniq.map((p) => `  ${p}`).join("\n"),
 	);
 	process.exit(1);
 }
