@@ -1,3 +1,4 @@
+import { useAuthStore } from "@ataqu/shared-stores";
 import type { UUID } from "@ataqu/types";
 import type {
 	UseMutationOptions,
@@ -5,7 +6,6 @@ import type {
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./client";
-import { useAuthStore } from "@ataqu/shared-stores";
 import type {
 	AddReactionRequest,
 	BulkDeleteRequest,
