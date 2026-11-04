@@ -1,4 +1,4 @@
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
+import { useUrlState } from "@ataqu/shared-hooks";
 import { useAuthStore } from "@ataqu/shared-stores";
 import {
 	Button,
@@ -10,7 +10,6 @@ import {
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { ApprovalDashboard } from "../../../apps/pause/components/approval-dashboard";
 import { LeaveRequestForm } from "../../../apps/pause/components/leave-request-form";
 
