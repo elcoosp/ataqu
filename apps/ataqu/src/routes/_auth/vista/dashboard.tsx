@@ -73,7 +73,9 @@ function DashboardRow({
 				<CardContent className="p-4">
 					<div className="flex items-center justify-between">
 						<div>
-							<h4 className="text-sm font-semibold text-foreground">{d.name}</h4>
+							<h4 className="text-sm font-semibold text-foreground">
+								{d.name}
+							</h4>
 							<p className="text-xs text-muted-foreground mt-0.5">
 								<Trans>Updated</Trans> {formatDate(d.updated_at)}
 							</p>
