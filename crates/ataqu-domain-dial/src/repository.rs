@@ -8,6 +8,10 @@ use uuid::Uuid;
 
 #[async_trait]
 pub trait DialRepository: Send + Sync {
+    /// True when the user id belongs to the tenant (core.users row exists).
+    /// Used by `send_direct_message` so DMs cannot be opened to arbitrary
+    /// foreign uuids (fixed in audit).
+    async fn user_exists(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<bool, DialError>;
     async fn save_channel(&self, channel: &Channel) -> Result<(), DialError>;
     async fn archive_channel(
         &self,
