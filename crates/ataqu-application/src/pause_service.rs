@@ -168,10 +168,35 @@ impl PauseService {
             }
             AcquireOutcome::Proceed(guard) => {
                 let result = async {
+                    // VALIDATION (fixed in audit): leave dates were never
+                    // checked — end_date before start_date (and absurd
+                    // horizons) were accepted silently.
+                    if command.end_date < command.start_date {
+                        return Err(PauseServiceError::Validation(
+                            "Leave end date must be on or after the start date".to_string(),
+                        ));
+                    }
+                    let horizon = command
+                        .start_date
+                        .signed_duration_since(chrono::Utc::now().date_naive());
+                    if horizon > chrono::Duration::days(366) {
+                        return Err(PauseServiceError::Validation(
+                            "Leave cannot start more than one year in advance".to_string(),
+                        ));
+                    }
                     let event = ataqu_domain_pause::leave::request_leave(command, id_gen, clock);
                     self.leave_request_repo.insert(tenant_id, &event).await?;
-                    let payload = serde_json::to_value(&event)
+                    let mut payload = serde_json::to_value(&event)
                         .map_err(|e| PauseServiceError::Outbox(e.to_string()))?;
+                    // PRIVACY (fixed in audit): the leave reason is HR/medical
+                    // PII — it must not be broadcast through the outbox (VISTA
+                    // only needs the status counters).
+                    if let Some(obj) = payload.as_object_mut() {
+                        obj.insert(
+                            "reason".to_string(),
+                            serde_json::Value::String("[REDACTED]".to_string()),
+                        );
+                    }
                     self.outbox
                         .append(
                             PAUSE_SCHEMA,
