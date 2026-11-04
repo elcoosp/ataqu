@@ -1,7 +1,7 @@
 "use client";
 
-import type React from "react";
 import { CircleAlert } from "lucide-react";
+import type React from "react";
 import {
 	createContext,
 	useCallback,
@@ -120,9 +120,9 @@ export const ConflictProvider: React.FC<{
 						</DialogTitle>
 						<DialogDescription>
 							{options?.lastWriter ? `${options.lastWriter}. ` : ""}
-							Someone else saved a newer version while you were editing.
-							Your optimistic edit was rolled back. Reload to see their
-							version, or keep yours and inspect before retrying.
+							Someone else saved a newer version while you were editing. Your
+							optimistic edit was rolled back. Reload to see their version, or
+							keep yours and inspect before retrying.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
@@ -176,6 +176,8 @@ export const isConflictError = (error: unknown): boolean => {
 	if (anyErr.status === 409 || anyErr.status === 412) return true;
 	return (
 		typeof (error as { message?: unknown })?.message === "string" &&
-		/Android|version conflict|If-Match|412/.test((error as { message: string }).message)
+		/Android|version conflict|If-Match|412/.test(
+			(error as { message: string }).message,
+		)
 	);
 };
