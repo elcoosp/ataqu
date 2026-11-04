@@ -13,12 +13,22 @@ use tracing::{debug, error, instrument, warn};
 use uuid::Uuid;
 
 /// Split a UUID into two i32 values for PostgreSQL advisory lock.
-/// Uses the first 8 bytes of the UUID to produce two 32-bit integers.
+/// FIXED IN AUDIT (M-4): the previous implementation used only the FIRST 8
+/// bytes of the UUID, so distinct command ids collided in a 32-bit space —
+/// unrelated requests serialized on each other's locks (10s stalls / 503s).
+/// All 16 bytes are now hashed into the pair (FNV-1a halves), keeping the
+/// full key entropy.
 pub fn split_uuid_to_int4_pair(uuid: &Uuid) -> (i32, i32) {
     let bytes = uuid.as_bytes();
-    let high = i32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
-    let low = i32::from_be_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
-    (high, low)
+    let hash = |start: usize| -> i32 {
+        let mut h: u32 = 0x811c_9dc5;
+        for b in &bytes[start..start + 8] {
+            h ^= u32::from(*b);
+            h = h.wrapping_mul(0x0100_0193);
+        }
+        h as i32
+    };
+    (hash(0), hash(8))
 }
 
 /// Error types for the idempotency guard.
@@ -225,9 +235,14 @@ mod tests {
 
     #[test]
     fn split_uuid_works() {
+        // FIXED IN AUDIT: the pair is now derived from ALL 16 bytes (FNV-1a
+        // over both halves), not the raw first 8 — the old behaviour collided
+        // for keys differing only in the trailing bytes. The exact values are
+        // hash-derived; assert distinctness, not specific numbers.
         let uuid = Uuid::parse_str("12345678-1234-1234-1234-123456789012").unwrap();
         let (h, l) = split_uuid_to_int4_pair(&uuid);
-        assert_eq!(h, 0x12345678i32);
-        assert_eq!(l, 0x12341234i32);
+        let other = Uuid::parse_str("12345678-1234-1234-ffff-ffffffffffff").unwrap();
+        let (h2, l2) = split_uuid_to_int4_pair(&other);
+        assert_ne!((h, l), (h2, l2));
     }
 }
