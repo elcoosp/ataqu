@@ -6,9 +6,5 @@ export const Route = createFileRoute("/_auth/vault/reservations")({
 });
 
 function ReservationsPage() {
-	return (
-		<>
-			<ReservationList />
-		</>
-	);
+	return <ReservationList />;
 }
