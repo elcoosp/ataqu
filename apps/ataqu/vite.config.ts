@@ -1,5 +1,5 @@
-import { defineConfig, type UserConfig } from "vite";
 import { defineViteConfig } from "@ataqu/vite-preset";
+import { defineConfig, type UserConfig } from "vite";
 import { dialWsMockPlugin } from "./src/mocks/vite/dial-ws-mock.ts";
 
 /**
@@ -14,13 +14,13 @@ import { dialWsMockPlugin } from "./src/mocks/vite/dial-ws-mock.ts";
 const base: UserConfig = defineViteConfig({ appName: "ataqu" });
 
 export default defineConfig({
-        ...base,
-        plugins: [...(base.plugins ?? []), dialWsMockPlugin()],
-        server: {
-                ...base.server,
-                proxy: {
-                        "/api/dial/ws": { target: "ws://127.0.0.1:5174", ws: true },
-                        ...(base.server?.proxy ?? {}),
-                },
-        },
+	...base,
+	plugins: [...(base.plugins ?? []), dialWsMockPlugin()],
+	server: {
+		...base.server,
+		proxy: {
+			"/api/dial/ws": { target: "ws://127.0.0.1:5174", ws: true },
+			...(base.server?.proxy ?? {}),
+		},
+	},
 });
