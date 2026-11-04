@@ -224,6 +224,21 @@ impl DbDialRepository {
 
 #[async_trait]
 impl DialRepository for DbDialRepository {
+    async fn user_exists(&self, tenant_id: &TenantId, user_id: &UserId) -> Result<bool, DialError> {
+        // core.users is the source of truth for tenant membership.
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            sea_orm::DbBackend::Postgres,
+            "SELECT 1 AS one FROM core.users WHERE id = $1 AND tenant_id = $2 AND is_active LIMIT 1",
+            vec![user_id.as_uuid().into(), tenant_id.as_uuid().into()],
+        );
+        let row = self
+            .db
+            .query_one_raw(stmt)
+            .await
+            .map_err(|e| DialError::Repository(e.to_string()))?;
+        Ok(row.is_some())
+    }
+
     async fn get_reaction(
         &self,
         tenant_id: &TenantId,
