@@ -1,5 +1,5 @@
 import { useCreateEmployee } from "@ataqu/api-client";
-import { searchSchema, stringSearch, useUrlState } from "@ataqu/shared-hooks";
+import { useUrlState } from "@ataqu/shared-hooks";
 import {
 	Button,
 	Dialog,
@@ -12,7 +12,6 @@ import {
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { toast } from "sonner";
 import { EmployeeDirectory } from "../../../apps/pause/components/employee-directory";
 
