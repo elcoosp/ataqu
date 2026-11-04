@@ -8,13 +8,7 @@ import {
 } from "@ataqu/api-client";
 import { useOptimisticMutation } from "@ataqu/shared-hooks";
 import { handleApiError } from "@ataqu/shared-utils";
-import {
-	Badge,
-	Button,
-	DataTable,
-	HoldToConfirm,
-	SkeletonSwap,
-} from "@ataqu/ui";
+import { Badge, DataTable, HoldToConfirm, SkeletonSwap } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
