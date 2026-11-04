@@ -63,6 +63,20 @@ pub fn create_employee(
     id_gen: &dyn IdGenerator,
     clock: &dyn Clock,
 ) -> Result<EmployeeCreatedEvent, PauseDomainError> {
+    // VALIDATION (fixed in audit): create_employee performed ZERO validation —
+    // empty names, arbitrary hire dates and unvalidated emails were accepted
+    // (despite `validate_employee_email` existing below).
+    if cmd.full_name.trim().is_empty() {
+        return Err(PauseDomainError::Validation(
+            "Employee name cannot be empty".to_string(),
+        ));
+    }
+    if cmd.full_name.len() > 200 {
+        return Err(PauseDomainError::Validation(
+            "Employee name too long".to_string(),
+        ));
+    }
+    validate_employee_email(&cmd.email)?;
     let id = id_gen.new_uuid_v7();
     let now = clock.now();
     Ok(EmployeeCreatedEvent {
