@@ -6,7 +6,7 @@ import {
 	useListTasks,
 	useUpdateTask,
 } from "@ataqu/api-client";
-import { formatDate, handleApiError } from "@ataqu/shared-utils";
+import { formatDate } from "@ataqu/shared-utils";
 import {
 	Badge,
 	Bone,
