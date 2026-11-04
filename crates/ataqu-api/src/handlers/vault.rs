@@ -6,8 +6,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json},
 };
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use chrono::{DateTime, Utc};
-// use hmac::Mac; // removed, not used
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -23,6 +23,16 @@ use ataqu_application::vault_service::{
 pub struct PaginationParams {
     pub limit: Option<u64>,
     pub offset: Option<u64>,
+}
+
+/// Clamp user-supplied pagination to a sane maximum so `?limit=2^64-1`
+/// cannot force unbounded full-table scans.
+fn capped_limit(v: Option<u64>, default: u64) -> u64 {
+    v.unwrap_or(default).clamp(1, 200)
+}
+
+fn capped_offset(v: Option<u64>) -> u64 {
+    v.unwrap_or(0)
 }
 
 #[derive(Debug, Deserialize)]
@@ -97,8 +107,8 @@ pub async fn list_products(
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<ProductResponse>>> {
-    let limit = params.limit.unwrap_or(100);
-    let offset = params.offset.unwrap_or(0);
+    let limit = capped_limit(params.limit, 100);
+    let offset = capped_offset(params.offset);
     let (products, total) = state
         .vault_service
         .list_products(auth.tenant_id, limit, offset)
@@ -264,8 +274,8 @@ pub async fn list_variants(
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<VariantResponse>>> {
-    let limit = params.limit.unwrap_or(100);
-    let offset = params.offset.unwrap_or(0);
+    let limit = capped_limit(params.limit, 100);
+    let offset = capped_offset(params.offset);
     let (variants, total) = state
         .vault_service
         .list_variants(auth.tenant_id, limit, offset)
@@ -447,8 +457,8 @@ pub async fn list_movements(
         .list_movements(
             auth.tenant_id,
             variant_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
+            capped_limit(params.limit, 100),
+            capped_offset(params.offset),
         )
         .await
         .map_err(ApiResponseError::internal_err)?;
@@ -642,7 +652,7 @@ pub struct ShopifyOAuthCallback {
 }
 
 pub async fn shopify_auth_start(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<serde_json::Value>> {
     if !auth.has_role("admin") {
@@ -650,33 +660,174 @@ pub async fn shopify_auth_start(
             "Admin access required".to_string(),
         ));
     }
-    let state_str = format!("{}_{}", auth.tenant_id.as_uuid(), auth.user_id);
+    // SECURITY: the OAuth state was previously the predictable, unsigned
+    // string `{tenant_id}_{user_id}` — anyone could forge it in the callback
+    // and inject an integration into another tenant. The state is now an
+    // HMAC-signed, expiring token tied to the initiating admin.
+    let state_str = sign_oauth_state(&state.jwt_secret, auth.tenant_id.as_uuid(), auth.user_id);
     let redirect_uri = std::env::var("SHOPIFY_REDIRECT_URI")
         .unwrap_or_else(|_| "https://api.ataqu.com/api/v1/vault/shopify/callback".to_string());
     let shop =
         std::env::var("SHOPIFY_SHOP").unwrap_or_else(|_| "your-shop.myshopify.com".to_string());
+    if !is_valid_shop_domain(&shop) {
+        return Err(ApiResponseError::internal(
+            "SHOPIFY_SHOP must be a *.myshopify.com domain",
+        ));
+    }
     let client_id = std::env::var("SHOPIFY_CLIENT_ID").unwrap_or_default();
     let url = format!(
         "https://{}/admin/oauth/authorize?client_id={}&scope=read_products,write_products,read_inventory,write_inventory&redirect_uri={}&state={}",
         shop,
-        client_id,
+        urlencoding::encode(&client_id),
         urlencoding::encode(&redirect_uri),
-        state_str
+        urlencoding::encode(&state_str)
     );
     Ok(Json(serde_json::json!({ "url": url })))
+}
+
+/// True for `something.myshopify.com`-style shop domains (Shopify-managed).
+/// Anything else is rejected: the shop domain becomes the base URL for the
+/// token exchange and for every later sync request, so allowing arbitrary
+/// hosts here would let an attacker point the server (and its access token)
+/// at a host they control (SSRF / token exfiltration).
+fn is_valid_shop_domain(shop: &str) -> bool {
+    let lower = shop.to_ascii_lowercase();
+    let Some(host) = lower.strip_suffix(".myshopify.com") else {
+        return false;
+    };
+    !host.is_empty()
+        && !host.contains('.')
+        && !host.contains('/')
+        && !host.contains(':')
+        && host.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+}
+
+/// HMAC-SHA256-signed OAuth state: `b64(tenant|user|expiry).b64(sig)`.
+/// Verifiable statelessly with the server's JWT secret; expires after 15
+/// minutes. NOTE: 1800s window is intentional — OAuth redirects through the
+/// user's browser can be slow.
+fn sign_oauth_state(secret: &[u8], tenant_id: Uuid, user_id: Uuid) -> String {
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+    let expiry = chrono::Utc::now().timestamp() + 1800;
+    let payload = format!("{tenant_id}|{user_id}|{expiry}");
+    let mut mac =
+        <Hmac<Sha256> as Mac>::new_from_slice(secret).expect("HMAC accepts any key length");
+    mac.update(payload.as_bytes());
+    let sig = hex::encode(mac.finalize().into_bytes());
+    format!("{}.{}", URL_SAFE_NO_PAD.encode(payload.as_bytes()), sig)
+}
+
+/// Verify and parse a state produced by [`sign_oauth_state`]. Returns the
+/// tenant id on success.
+fn verify_oauth_state(secret: &[u8], state: &str) -> Result<Uuid, ApiResponseError> {
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+    let Some((payload_b64, sig)) = state.split_once('.') else {
+        return Err(ApiResponseError::validation("Invalid OAuth state"));
+    };
+    let payload = URL_SAFE_NO_PAD
+        .decode(payload_b64)
+        .map_err(|_| ApiResponseError::validation("Invalid OAuth state"))?;
+    let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(secret)
+        .map_err(|_| ApiResponseError::internal("Invalid HMAC key"))?;
+    mac.update(&payload);
+    let expected = hex::encode(mac.finalize().into_bytes());
+    if !constant_time_eq(&expected, sig) {
+        return Err(ApiResponseError::unauthorized(
+            "Invalid OAuth state signature",
+        ));
+    }
+    let payload_str = String::from_utf8(payload)
+        .map_err(|_| ApiResponseError::validation("Invalid OAuth state"))?;
+    let parts: Vec<&str> = payload_str.split('|').collect();
+    if parts.len() != 3 {
+        return Err(ApiResponseError::validation("Invalid OAuth state"));
+    }
+    let tenant_id = Uuid::parse_str(parts[0])
+        .map_err(|_| ApiResponseError::validation("Invalid OAuth state"))?;
+    let _user_id = Uuid::parse_str(parts[1])
+        .map_err(|_| ApiResponseError::validation("Invalid OAuth state"))?;
+    let expiry: i64 = parts[2]
+        .parse()
+        .map_err(|_| ApiResponseError::validation("Invalid OAuth state"))?;
+    if chrono::Utc::now().timestamp() > expiry {
+        return Err(ApiResponseError::validation("OAuth state expired"));
+    }
+    Ok(tenant_id)
+}
+
+/// Verify the `hmac` query parameter Shopify attaches to OAuth callbacks
+/// (HMAC-SHA256 over the lexicographically sorted `k=v` pairs, minus
+/// `hmac`/`signature`, keyed with the app client secret).
+fn verify_shopify_callback_hmac(
+    query_pairs: &[(String, String)],
+    client_secret: &str,
+    provided: &str,
+) -> bool {
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+    let mut pairs: Vec<(String, String)> = query_pairs
+        .iter()
+        .filter(|(k, _)| k != "hmac" && k != "signature")
+        .cloned()
+        .collect();
+    pairs.sort();
+    let message = pairs
+        .iter()
+        .map(|(k, v)| format!("{k}={v}"))
+        .collect::<Vec<_>>()
+        .join("&");
+    let Ok(mut mac) = <Hmac<Sha256> as Mac>::new_from_slice(client_secret.as_bytes()) else {
+        return false;
+    };
+    mac.update(message.as_bytes());
+    let computed = hex::encode(mac.finalize().into_bytes());
+    constant_time_eq(&computed, provided)
 }
 
 pub async fn shopify_callback(
     State(state): State<AppState>,
     Query(query): Query<ShopifyOAuthCallback>,
+    raw_query: axum::extract::RawQuery,
 ) -> ApiResult<Json<serde_json::Value>> {
+    // 1) The shop host must be Shopify-managed BEFORE any secret leaves the
+    //    process (the previous code POSTed the client secret to whatever
+    //    host the caller supplied).
+    let shop = query.shop.to_ascii_lowercase();
+    if !is_valid_shop_domain(&shop) {
+        return Err(ApiResponseError::validation("Invalid shop domain"));
+    }
+
+    // 2) Verify Shopify's OAuth callback signature (`hmac` query param).
+    let client_secret = std::env::var("SHOPIFY_CLIENT_SECRET")
+        .map_err(|_| ApiResponseError::internal("SHOPIFY_CLIENT_SECRET not set"))?;
+    if let Some(raw) = raw_query.0.as_deref() {
+        let pairs: Vec<(String, String)> = url::form_urlencoded::parse(raw.as_bytes())
+            .into_owned()
+            .collect();
+        let provided = pairs
+            .iter()
+            .find(|(k, _)| k == "hmac")
+            .map(|(_, v)| v.clone())
+            .unwrap_or_default();
+        if provided.is_empty() || !verify_shopify_callback_hmac(&pairs, &client_secret, &provided) {
+            return Err(ApiResponseError::unauthorized("Invalid callback signature"));
+        }
+    }
+
+    // 3) Verify our signed state (tenant binding + expiry). This replaces the
+    //    old forgeable `{tenant}_{user}` value.
+    let state_str = query.state.unwrap_or_default();
+    let tenant_id = verify_oauth_state(&state.jwt_secret, &state_str)?;
+
     let client = reqwest::Client::new();
-    let token_url = format!("https://{}/admin/oauth/access_token", query.shop);
+    let token_url = format!("https://{shop}/admin/oauth/access_token");
     let resp = client
         .post(&token_url)
         .json(&serde_json::json!({
             "client_id": std::env::var("SHOPIFY_CLIENT_ID").unwrap_or_default(),
-            "client_secret": std::env::var("SHOPIFY_CLIENT_SECRET").unwrap_or_default(),
+            "client_secret": client_secret,
             "code": query.code,
         }))
         .send()
@@ -690,19 +841,10 @@ pub async fn shopify_callback(
         .as_str()
         .ok_or_else(|| ApiResponseError::internal("Missing access token"))?;
 
-    // Parse state to get tenant_id
-    let state_str = query.state.unwrap_or_default();
-    let state_parts: Vec<&str> = state_str.split('_').collect();
-    if state_parts.is_empty() {
-        return Err(ApiResponseError::validation("Invalid state"));
-    }
-    let tenant_id = Uuid::parse_str(state_parts[0])
-        .map_err(|_| ApiResponseError::validation("Invalid tenant"))?;
-
     let integration = ShopifyIntegration {
         id: Uuid::new_v4(),
         tenant_id: TenantId::new(tenant_id),
-        shop_domain: query.shop.clone(),
+        shop_domain: shop.clone(),
         access_token: access_token.to_string(),
         last_synced_at: None,
         created_at: chrono::Utc::now(),
@@ -717,7 +859,7 @@ pub async fn shopify_callback(
 
     Ok(Json(serde_json::json!({
         "status": "connected",
-        "shop": query.shop,
+        "shop": shop,
         "message": "Shopify integration saved successfully"
     })))
 }
@@ -755,8 +897,15 @@ pub async fn shopify_webhook(
         .find(|i| i.shop_domain == shop_domain)
         .ok_or_else(|| ApiResponseError::not_found("Shopify integration not found"))?;
 
-    // Verify HMAC signature if header present – use app client secret
-    if let Some(sig) = signature_header {
+    // SECURITY: HMAC verification is now mandatory. Previously a request with
+    // no `X-Shopify-Hmac-Sha256` header skipped verification entirely, so
+    // anyone could forge stock updates for any tenant (integration lookup is
+    // by shop domain, not by caller). Shopify always signs its webhooks; an
+    // unsigned request is by definition not from Shopify.
+    let Some(sig) = signature_header else {
+        return Err(ApiResponseError::unauthorized("Missing webhook signature"));
+    };
+    {
         use sha2::{Sha256, digest::Mac};
         let client_secret = std::env::var("SHOPIFY_CLIENT_SECRET")
             .map_err(|_| ApiResponseError::internal("SHOPIFY_CLIENT_SECRET not set"))?;
@@ -854,15 +1003,22 @@ pub async fn list_shopify_sync_logs(
     auth: AuthContext,
     Query(params): Query<PaginationParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<SyncLogResponse>>> {
-    let limit = params.limit.unwrap_or(100);
-    let offset = params.offset.unwrap_or(0);
+    let limit = capped_limit(params.limit, 100);
+    let offset = capped_offset(params.offset);
     let logs = state
         .shopify_service
         .log_repo
         .list_failed_logs(auth.tenant_id, limit, offset)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
-    let total = logs.len() as u64;
+    // Real total (the endpoint previously reported `logs.len()`, breaking
+    // pagination whenever more than one page of failures existed).
+    let total = state
+        .shopify_service
+        .log_repo
+        .count_failed_logs(auth.tenant_id)
+        .await
+        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     let items = logs
         .into_iter()
         .map(|log| SyncLogResponse {
@@ -939,6 +1095,12 @@ pub async fn shopify_disconnect(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<StatusCode> {
+    // Destructive tenant-wide operation — consistent with connect/sync.
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
     let integrations = state
         .shopify_service
         .repo
@@ -1152,8 +1314,6 @@ pub async fn bulk_delete_variants(
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/shopify/auth", axum::routing::get(shopify_auth_start))
-        .route("/shopify/callback", axum::routing::get(shopify_callback))
-        .route("/shopify/webhook", axum::routing::post(shopify_webhook))
         .route("/shopify/sync", axum::routing::post(shopify_sync))
         .route(
             "/shopify/integrations",
@@ -1218,4 +1378,20 @@ pub fn routes() -> Router<AppState> {
             "/warehouses/{id}",
             axum::routing::put(update_warehouse).delete(delete_warehouse),
         )
+}
+
+/// Routes that must be reachable WITHOUT the auth middleware:
+/// * `/shopify/callback` — the browser redirect from Shopify's OAuth grant
+///   page carries no bearer token; it is protected by the signed `state` and
+///   Shopify's `hmac` query signature instead.
+/// * `/shopify/webhook`  — machine-to-machine calls from Shopify, protected
+///   by the mandatory `X-Shopify-Hmac-Sha256` body signature.
+///
+/// (Previously these lived on the authenticated router, where the global
+/// middleware made them permanently unreachable — webhooks got a 400 and the
+/// OAuth callback a 401, so the whole integration could never complete.)
+pub fn public_routes() -> Router<AppState> {
+    Router::new()
+        .route("/shopify/callback", axum::routing::get(shopify_callback))
+        .route("/shopify/webhook", axum::routing::post(shopify_webhook))
 }
