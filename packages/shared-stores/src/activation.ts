@@ -11,7 +11,11 @@ export interface ActivationTask {
  * `useOnboardingStatus()`; these entries provide labels and deep links.
  */
 export const ACTIVATION_TASKS: ActivationTask[] = [
-	{ id: "import-contacts", label: "Import 10 contacts", href: "/cinq/contacts" },
+	{
+		id: "import-contacts",
+		label: "Import 10 contacts",
+		href: "/cinq/contacts",
+	},
 	{ id: "connect-cinq-dial", label: "Connect CINQ to DIAL", href: "/dial" },
 	{
 		id: "create-workflow",
