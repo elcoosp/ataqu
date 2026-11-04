@@ -3,7 +3,7 @@
  * SPA calls), DLQ. Mirrors crates/ataqu-api handlers/spark.rs plus the
  * `/workflows/runs/:runId/approve` route the SPA expects.
  */
-import { http, type HttpHandler } from "msw";
+import { type HttpHandler, http } from "msw";
 import { audit, db, nextId } from "../db";
 import {
 	apiError,
@@ -21,8 +21,11 @@ import {
 
 export const sparkHandlers: HttpHandler[] = [
 	http.get("/api/spark/workflows", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = [...db.workflows].sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const rows = [...db.workflows].sort((a, b) =>
+			a.updated_at < b.updated_at ? 1 : -1,
+		);
 		return page(rows, listParams(request, 100));
 	}),
 
@@ -31,7 +34,12 @@ export const sparkHandlers: HttpHandler[] = [
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const body = await jsonBody<{
 			name: string;
-			trigger: { type: string; path?: string; cron?: string; event_type?: string };
+			trigger: {
+				type: string;
+				path?: string;
+				cron?: string;
+				event_type?: string;
+			};
 			conditions?: unknown[];
 			actions?: unknown[];
 		}>(request);
@@ -46,28 +54,37 @@ export const sparkHandlers: HttpHandler[] = [
 			conditions: (body.conditions ?? []) as never[],
 			actions: (body.actions ?? []) as never[],
 			is_active: false,
-			webhook_secret: body.trigger.type === "webhook" ? `whsec_${Math.floor(Math.random() * 10 ** 6)}` : undefined,
+			webhook_secret:
+				body.trigger.type === "webhook"
+					? `whsec_${Math.floor(Math.random() * 10 ** 6)}`
+					: undefined,
 			created_at: now,
 			updated_at: now,
 			version: 1,
 		};
 		db.workflows.push(workflow);
-		audit(actor, "workflow.create", "spark", "workflow", workflow.id, { name: workflow.name });
+		audit(actor, "workflow.create", "spark", "workflow", workflow.id, {
+			name: workflow.name,
+		});
 		return created(workflow);
 	}),
 
 	http.get("/api/spark/workflows/runs", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const url = new URL(request.url);
 		const workflowId = url.searchParams.get("workflow_id");
-		let rows = [...db.runs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+		let rows = [...db.runs].sort((a, b) =>
+			a.created_at < b.created_at ? 1 : -1,
+		);
 		if (workflowId) rows = rows.filter((r) => r.workflow_id === workflowId);
 		return page(rows, listParams(request, 50));
 	}),
 
 	// NOTE: /runs must be registered before /:id so "runs" is not eaten as an id.
 	http.get("/api/spark/workflows/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const workflow = db.workflows.find((w) => w.id === params.id);
 		return workflow ? ok(workflow) : notFound("Workflow");
 	}),
@@ -82,14 +99,20 @@ export const sparkHandlers: HttpHandler[] = [
 		const body = await jsonBody<{
 			name?: string;
 			is_active?: boolean;
-			trigger?: { type: string; path?: string; cron?: string; event_type?: string };
+			trigger?: {
+				type: string;
+				path?: string;
+				cron?: string;
+				event_type?: string;
+			};
 			conditions?: unknown[];
 			actions?: unknown[];
 		}>(request);
 		if (body.name != null) workflow.name = body.name;
 		if (body.is_active != null) workflow.is_active = body.is_active;
 		if (body.trigger != null) workflow.trigger = normalizeTrigger(body.trigger);
-		if (body.conditions != null) workflow.conditions = body.conditions as never[];
+		if (body.conditions != null)
+			workflow.conditions = body.conditions as never[];
 		if (body.actions != null) workflow.actions = body.actions as never[];
 		workflow.updated_at = new Date().toISOString();
 		workflow.version += 1;
@@ -113,12 +136,16 @@ export const sparkHandlers: HttpHandler[] = [
 		const workflow = db.workflows.find((w) => w.id === params.id);
 		if (!workflow) return notFound("Workflow");
 		const body = await jsonBody<{ payload?: Record<string, unknown> }>(request);
-		const needsApproval = workflow.actions.some((a) => a.type === "request_approval");
+		const needsApproval = workflow.actions.some(
+			(a) => a.type === "request_approval",
+		);
 		const now = new Date().toISOString();
 		const run = {
 			id: nextId("run"),
 			workflow_id: workflow.id,
-			status: needsApproval ? ("pending_approval" as const) : ("running" as const),
+			status: needsApproval
+				? ("pending_approval" as const)
+				: ("running" as const),
 			payload: body.payload ?? {},
 			created_at: now,
 			updated_at: now,
@@ -140,27 +167,34 @@ export const sparkHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/spark/workflows/runs/:runId", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const run = db.runs.find((r) => r.id === params.runId);
 		return run ? ok(run) : notFound("Run");
 	}),
 
-	http.post("/api/spark/workflows/runs/:runId/approve", ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const run = db.runs.find((r) => r.id === params.runId);
-		if (!run) return notFound("Run");
-		run.status = "approved";
-		run.updated_at = new Date().toISOString();
-		const approval = db.pendingApprovals.find((a) => a.run_id === run.id);
-		if (approval) approval.status = "approved";
-		audit(actor, "workflow.approve", "spark", "run", run.id);
-		return ok({ approved: true });
-	}),
+	http.post(
+		"/api/spark/workflows/runs/:runId/approve",
+		({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const run = db.runs.find((r) => r.id === params.runId);
+			if (!run) return notFound("Run");
+			run.status = "approved";
+			run.updated_at = new Date().toISOString();
+			const approval = db.pendingApprovals.find((a) => a.run_id === run.id);
+			if (approval) approval.status = "approved";
+			audit(actor, "workflow.approve", "spark", "run", run.id);
+			return ok({ approved: true });
+		},
+	),
 
 	http.get("/api/spark/dlq", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = [...db.dlq].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const rows = [...db.dlq].sort((a, b) =>
+			a.created_at < b.created_at ? 1 : -1,
+		);
 		return page(rows, listParams(request, 50));
 	}),
 
@@ -185,13 +219,24 @@ export const sparkHandlers: HttpHandler[] = [
 	}),
 ];
 
-function normalizeTrigger(t: { type: string; path?: string; cron?: string; event_type?: string }) {
+function normalizeTrigger(t: {
+	type: string;
+	path?: string;
+	cron?: string;
+	event_type?: string;
+}) {
 	switch (t.type) {
 		case "webhook":
-			return { type: "webhook" as const, path: t.path ?? `hook-${Math.floor(Math.random() * 10_000)}` };
+			return {
+				type: "webhook" as const,
+				path: t.path ?? `hook-${Math.floor(Math.random() * 10_000)}`,
+			};
 		case "schedule":
 			return { type: "schedule" as const, cron: t.cron ?? "0 * * * *" };
 		default:
-			return { type: "event" as const, event_type: t.event_type ?? "custom.event" };
+			return {
+				type: "event" as const,
+				event_type: t.event_type ?? "custom.event",
+			};
 	}
 }
