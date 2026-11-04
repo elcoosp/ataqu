@@ -1,0 +1,62 @@
+# Keep the Docker build context small and secret-free. Both Dockerfiles use
+# `COPY . .`, so anything not excluded here is uploaded to the daemon —
+# including secrets, the multi-GB Rust target dir and .git history.
+
+# --- Secrets / environment ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials*.json
+
+# --- Version control ---
+.git
+.gitignore
+.gitattributes
+.github
+
+# --- Rust build artifacts (multi-GB, rebuilt inside the image) ---
+target/
+**/target/
+
+# --- Node build artifacts & dependencies (reinstalled inside the image) ---
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+.vite/
+**/.vite/
+.turbo/
+
+# --- Test & tooling output ---
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+*.log
+logs/
+
+# --- Docs / CI metadata not needed inside the image ---
+docs/
+*.md
+!README.md
+AUDIT-REPORT.md
+
+# --- Editor / OS noise ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Local tooling state ---
+.cargo/
+docker-compose*.yml
+Justfile
+justfile
