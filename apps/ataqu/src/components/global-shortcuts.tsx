@@ -72,7 +72,6 @@ export function GlobalShortcuts() {
 	const targets = useMemo(() => Object.entries(GO_TO_TARGETS), []);
 	const go = useCallback((route: string) => navigate(route), []);
 	// Every iteration body is the same hook in the same order.
-	// biome-ignore lint/correctness/useHookAtTopLevel: fixed-length loop over module constant
 	return [
 		...targets.map(([letter, target]) => (
 			<GoShortcut key={letter} letter={letter} target={target} onGo={go} />
