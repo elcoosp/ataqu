@@ -1,11 +1,12 @@
 use axum::{
     Router,
-    extract::{Path, Query, State},
+    extract::{ConnectInfo, Path, Query, State},
     http::StatusCode,
     response::Json,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::net::SocketAddr;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -245,15 +246,19 @@ pub struct SubmitRequest {
 
 pub async fn submit_form(
     State(state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
     Path(form_id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Json(payload): Json<SubmitRequest>,
 ) -> ApiResult<StatusCode> {
-    let ip = headers
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| s.split(',').next())
-        .unwrap_or("unknown");
+    // Rate-limit key uses the trusted-proxy-aware client IP (fixed in audit:
+    // the raw first-XFF value was attacker-controlled, so the per-form limit
+    // was bypassable by rotating the header).
+    let ip = crate::middleware::client_ip::resolve_effective_client_ip(
+        peer_addr.ip(),
+        &headers,
+        &state.trusted_proxies,
+    );
     let rate_key = format!("sond_submit:{}:{}", form_id, ip);
     if !state.rate_limiter.check(&rate_key) {
         return Err(ApiResponseError::RateLimited);
@@ -269,11 +274,15 @@ pub async fn submit_form(
     if form.status != ataqu_domain_sond::form::FormStatus::Published {
         return Err(ApiResponseError::not_found("Form not found"));
     }
+    // SECURITY (fixed in audit): `respondent_id` came verbatim from the
+    // anonymous payload — anyone could submit answers attributed to another
+    // user's id. The public flow has no authenticated identity, so the field
+    // is always None here.
     let cmd = SubmitResponseCommand {
         tenant_id: form.tenant_id,
         form_id,
         answers: payload.answers,
-        respondent_id: payload.respondent_id,
+        respondent_id: None,
     };
     state
         .sond_service
@@ -300,8 +309,14 @@ pub async fn export_responses(
     for r in responses {
         let answers_json =
             serde_json::to_string(&r.answers).map_err(ApiResponseError::internal_err)?;
-        wtr.write_record(&[r.id.to_string(), r.submitted_at.to_rfc3339(), answers_json])
-            .map_err(ApiResponseError::internal_err)?;
+        // CSV injection defence (fixed in audit): answer text is untrusted
+        // input and must be defanged before it lands in a spreadsheet.
+        wtr.write_record(&[
+            r.id.to_string(),
+            r.submitted_at.to_rfc3339(),
+            crate::serializers::sanitize_csv_field(&answers_json),
+        ])
+        .map_err(ApiResponseError::internal_err)?;
     }
     let data = String::from_utf8(wtr.into_inner().map_err(ApiResponseError::internal_err)?)
         .map_err(ApiResponseError::internal_err)?;
