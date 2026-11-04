@@ -40,10 +40,17 @@ impl RateLimiter {
     }
 
     pub fn check(&self, key: &str) -> bool {
+        self.check_strict(key, self.max_requests, self.window)
+    }
+
+    /// Sliding-window check with an explicit budget, used for endpoint-specific
+    /// limits (e.g. login brute-force protection) that are tighter than the
+    /// global default.
+    pub fn check_strict(&self, key: &str, max_requests: usize, window: Duration) -> bool {
         let now = Instant::now();
         let mut entry = self.requests.entry(key.to_string()).or_default();
-        entry.retain(|t| now.duration_since(*t) < self.window);
-        if entry.len() >= self.max_requests {
+        entry.retain(|t| now.duration_since(*t) < window);
+        if entry.len() >= max_requests {
             false
         } else {
             entry.push(now);
