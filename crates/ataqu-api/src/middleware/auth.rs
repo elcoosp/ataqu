@@ -59,6 +59,15 @@ pub async fn auth_middleware(
     mut req: Request,
     next: Next,
 ) -> Result<Response, ApiResponseError> {
+    // The Dial WebSocket handshake cannot carry an Authorization header
+    // (browser WebSocket APIs forbid custom headers), so it authenticates via
+    // a `?token=` query parameter that `dial_ws::ws_handler` validates in
+    // full (signature, token type, active flag, token version). Exempt only
+    // that exact path; every other request must present credentials here.
+    if req.method() == axum::http::Method::GET && req.uri().path() == "/api/dial/ws" {
+        return Ok(next.run(req).await);
+    }
+
     if let Some(auth_header) = req
         .headers()
         .get("Authorization")
