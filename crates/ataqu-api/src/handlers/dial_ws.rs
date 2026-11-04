@@ -1,13 +1,14 @@
 use axum::{
     Router,
     extract::{
-        Query, State,
+        ConnectInfo, Query, State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
     response::Response,
 };
 use dashmap::DashMap;
 use futures::{SinkExt, StreamExt};
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::info;
@@ -24,6 +25,8 @@ pub type ConnectionIndex = Arc<DashMap<uuid::Uuid, Vec<(uuid::Uuid, uuid::Uuid)>
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Result<Response, ApiResponseError> {
     let token = params
@@ -69,6 +72,20 @@ pub async fn ws_handler(
         email: ataqu_security::Email::new(token_data.claims.email),
         roles: token_data.claims.roles,
     };
+
+    // The generic auth middleware exempts this path (the browser cannot send
+    // an Authorization header on a WS handshake), so the tenant IP allowlist
+    // must be enforced here instead.
+    crate::middleware::ip_allowlist::check_ip_allowlist(
+        &state,
+        auth.tenant_id,
+        Some(crate::middleware::client_ip::resolve_effective_client_ip(
+            peer_addr.ip(),
+            &headers,
+            &state.trusted_proxies,
+        )),
+    )
+    .await?;
 
     Ok(ws.on_upgrade(move |socket| handle_websocket(socket, state, auth)))
 }
@@ -244,6 +261,18 @@ async fn handle_websocket(socket: WebSocket, state: AppState, auth: AuthContext)
                                 .and_then(|v| v.as_str())
                                 .and_then(|s| uuid::Uuid::parse_str(s).ok())
                             {
+                                // Same participation check as `subscribe`: a
+                                // non-member must not be able to probe a
+                                // channel's existence / activity by emitting
+                                // typing events into it.
+                                if state
+                                    .dial_service
+                                    .get_channel(auth.tenant_id, channel_id, auth.user_id)
+                                    .await
+                                    .is_err()
+                                {
+                                    continue;
+                                }
                                 let key = (auth.tenant_id.as_uuid(), channel_id);
                                 let broadcast = serde_json::json!({
                                     "type": "typing",
