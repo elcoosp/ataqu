@@ -49,6 +49,7 @@ pub mod m20260913_000001_add_missing_columns;
 pub mod m20260913_000002_create_cross_app_support_sales;
 pub mod m20260913_000003_fix_schema_gaps;
 pub mod m20260913_000004_pause_onboarding_columns;
+pub mod m20260913_000005_outbox_operational_indexes;
 
 // ---- aegis ----
 pub mod m_aegis;
@@ -193,6 +194,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260913_000002_create_cross_app_support_sales::Migration),
             Box::new(m20260913_000003_fix_schema_gaps::Migration),
             Box::new(m20260913_000004_pause_onboarding_columns::Migration),
+            Box::new(m20260913_000005_outbox_operational_indexes::Migration),
         ]
     }
 }
