@@ -47,23 +47,37 @@ pub fn process_aggregation_event(
     payload: &Value,
     clock: &dyn Clock,
 ) -> AggregatedView {
+    // DATA BUG (fixed in audit): `rust_decimal` serializes Decimal as a JSON
+    // STRING ("1234.56"), so `as_f64()` never matched and revenue/pipeline
+    // totals were permanently zero. Parse numbers from either representation.
+    fn payload_f64(payload: &Value, key: &str) -> Option<f64> {
+        match payload.get(key) {
+            Some(Value::Number(n)) => n.as_f64(),
+            Some(Value::String(s)) => s.parse::<f64>().ok(),
+            _ => None,
+        }
+    }
+
     match (schema, event_type) {
         ("collab_crm", "ContactCreated") => state.total_contacts += 1,
         ("collab_crm", "DealCreated") => {
             state.total_deals += 1;
-            if let Some(amount) = payload.get("amount").and_then(|v| v.as_f64()) {
+            if let Some(amount) = payload_f64(payload, "amount") {
                 state.total_pipeline_value += Decimal::from_f64(amount).unwrap_or_default();
             }
         }
         ("collab_crm", "DealWon") => {
             state.total_deals_won += 1;
-            if let Some(amount) = payload.get("amount").and_then(|v| v.as_f64()) {
+            if let Some(amount) = payload_f64(payload, "amount") {
                 state.total_revenue += Decimal::from_f64(amount).unwrap_or_default();
             }
         }
         ("vault", "ProductCreated") => state.total_products += 1,
         ("vault", "LowStockAlert") => state.low_stock_variants += 1,
-        ("tempo", "BookingCreated") => state.total_bookings += 1,
+        // CONTRACT FIX (audit): tempo emits under schema "collab_ops", but
+        // this matcher only listened for "tempo" — bookings were never
+        // counted. Accept both spellings defensively.
+        ("tempo", "BookingCreated") | ("collab_ops", "BookingCreated") => state.total_bookings += 1,
         ("collab_ops", "LeaveRequestedEvent") => state.pending_leave_requests += 1,
         ("collab_ops", "LeaveStatusChanged")
             if payload.get("new_status").and_then(|v| v.as_str()) != Some("pending") =>
