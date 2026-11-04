@@ -9,7 +9,7 @@
  * Writes `apps/ataqu/e2e/.auth/demo.json` (git-ignored) and
  * `apps/ataqu/e2e/.auth/ids.json` for the screenshot sweep.
  */
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 
 const BASE = process.env.API_BASE ?? "http://localhost:5173/api";
 const EMAIL = "demo@ataqu.test";
