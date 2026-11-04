@@ -171,7 +171,7 @@ export const Shell: React.FC<ShellProps> = ({
 	extraSidebarItems = [],
 }) => {
 	const { sidebarOpen, toggleSidebar } = useUIStore();
-	const { user, logout } = useAuthStore();
+	const { user } = useAuthStore();
 	const [appsExpanded, setAppsExpanded] = useState(true);
 	const { data: health } = useHealth();
 	// Derive the active app from the current route so the shell highlights
@@ -311,37 +311,35 @@ export const Shell: React.FC<ShellProps> = ({
 						})}
 
 					{/* Per-app sub-navigation for the app currently in view (P3-7). */}
-					{subNav.length > 0 && subNavActive && (
-						<>
-							{sidebarOpen ? (
-								<div className="mt-2 border-t border-border pt-2">
-									<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-										{APP_NAMES[routeActiveApp] ?? routeActiveApp}
-									</div>
-									{subNav.map((item) => {
-										const isActive = item.href === subNavActive;
-										return (
-											<Link
-												key={item.href}
-												to={item.href}
-												className={`block px-4 py-2 text-sm transition-colors ${
-													isActive
-														? "text-amber border-r-2 border-amber"
-														: "text-muted-foreground hover:text-foreground hover:bg-background/5"
-												}`}
-												data-sub-nav={item.href}
-												aria-current={isActive ? "page" : undefined}
-											>
-												{item.label}
-											</Link>
-										);
-									})}
+					{subNav.length > 0 &&
+						subNavActive &&
+						(sidebarOpen ? (
+							<div className="mt-2 border-t border-border pt-2">
+								<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									{APP_NAMES[routeActiveApp] ?? routeActiveApp}
 								</div>
-							) : (
-								<div className="mt-2 border-t border-border pt-2" />
-							)}
-						</>
-					)}
+								{subNav.map((item) => {
+									const isActive = item.href === subNavActive;
+									return (
+										<Link
+											key={item.href}
+											to={item.href}
+											className={`block px-4 py-2 text-sm transition-colors ${
+												isActive
+													? "text-amber border-r-2 border-amber"
+													: "text-muted-foreground hover:text-foreground hover:bg-background/5"
+											}`}
+											data-sub-nav={item.href}
+											aria-current={isActive ? "page" : undefined}
+										>
+											{item.label}
+										</Link>
+									);
+								})}
+							</div>
+						) : (
+							<div className="mt-2 border-t border-border pt-2" />
+						))}
 
 					{/* Extra sidebar items – always shown, but only icons when collapsed */}
 					{extraSidebarItems.length > 0 && (
