@@ -29,8 +29,15 @@ pub async fn csrf_double_submit_middleware(
     req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    // Safe methods and webhooks need no CSRF token.
-    if req.method().is_safe() || req.uri().path().contains("/webhooks/") {
+    // Safe methods and third-party webhooks need no CSRF token. The webhook
+    // exemption is an exact prefix list (fixed in audit — the previous
+    // substring check on "/webhooks/" would have exempted any state-changing
+    // route whose path merely contained that string).
+    let path = req.uri().path();
+    if req.method().is_safe()
+        || path.starts_with("/api/spark/webhooks/")
+        || path.starts_with("/api/vault/shopify/")
+    {
         return Ok(next.run(req).await);
     }
 
