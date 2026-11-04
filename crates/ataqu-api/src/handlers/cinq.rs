@@ -55,25 +55,25 @@ pub async fn toggle_integration(
     use sqlx::Row;
     let pool = state.db.get_postgres_connection_pool();
     sqlx::query(
-		"INSERT INTO collab_crm.integrations (id, tenant_id, integration, enabled, settings, updated_at) VALUES ($1, $2, $3, $4, $5, now())
-		 ON CONFLICT (tenant_id, integration) DO UPDATE SET enabled = EXCLUDED.enabled, settings = EXCLUDED.settings, updated_at = now()",
-	)
-	.bind(Uuid::new_v4())
-	.bind(auth.tenant_id.as_uuid())
-	.bind(&req.integration)
-	.bind(req.enabled)
-	.bind(req.settings.unwrap_or_else(|| serde_json::json!({})))
-	.execute(pool)
-	.await
-	.map_err(|_| ApiResponseError::internal("Failed to toggle integration"))?;
+                "INSERT INTO collab_crm.integrations (id, tenant_id, integration, enabled, settings, updated_at) VALUES ($1, $2, $3, $4, $5, now())
+                 ON CONFLICT (tenant_id, integration) DO UPDATE SET enabled = EXCLUDED.enabled, settings = EXCLUDED.settings, updated_at = now()",
+        )
+        .bind(Uuid::new_v4())
+        .bind(auth.tenant_id.as_uuid())
+        .bind(&req.integration)
+        .bind(req.enabled)
+        .bind(req.settings.unwrap_or_else(|| serde_json::json!({})))
+        .execute(pool)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to toggle integration"))?;
     let row = sqlx::query(
-		"SELECT integration, enabled, updated_at FROM collab_crm.integrations WHERE tenant_id = $1 AND integration = $2",
-	)
-	.bind(auth.tenant_id.as_uuid())
-	.bind(&req.integration)
-	.fetch_one(pool)
-	.await
-	.map_err(|_| ApiResponseError::internal("Failed to read integration"))?;
+                "SELECT integration, enabled, updated_at FROM collab_crm.integrations WHERE tenant_id = $1 AND integration = $2",
+        )
+        .bind(auth.tenant_id.as_uuid())
+        .bind(&req.integration)
+        .fetch_one(pool)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to read integration"))?;
     Ok(Json(IntegrationStatus {
         integration: row.get::<String, _>("integration"),
         enabled: row.get::<bool, _>("enabled"),
@@ -1191,12 +1191,12 @@ pub async fn export_deals(
 ) -> ApiResult<impl axum::response::IntoResponse> {
     let pool = state.db.get_postgres_connection_pool();
     let rows = sqlx::query(
-		"SELECT id, title, status, amount, probability, owner_id, created_at FROM collab_crm.deals WHERE tenant_id = $1 ORDER BY created_at DESC",
-	)
-		.bind(auth.tenant_id.as_uuid())
-		.fetch_all(pool)
-		.await
-		.map_err(|_| ApiResponseError::internal("Failed to load deals"))?;
+                "SELECT id, title, status, amount, probability, owner_id, created_at FROM collab_crm.deals WHERE tenant_id = $1 ORDER BY created_at DESC",
+        )
+                .bind(auth.tenant_id.as_uuid())
+                .fetch_all(pool)
+                .await
+                .map_err(|_| ApiResponseError::internal("Failed to load deals"))?;
 
     let mut wtr = csv::Writer::from_writer(Vec::new());
     let _ = wtr.write_record([
@@ -1216,10 +1216,12 @@ pub async fn export_deals(
         let probability: i32 = row.get("probability");
         let owner_id: Uuid = row.get("owner_id");
         let created_at: chrono::DateTime<chrono::Utc> = row.get("created_at");
+        // CSV injection defence (fixed in audit): deal titles/status are
+        // tenant input and could carry spreadsheet formulas.
         let _ = wtr.write_record([
             id.to_string(),
-            title,
-            status,
+            crate::serializers::sanitize_csv_field(&title),
+            crate::serializers::sanitize_csv_field(&status),
             amount.to_string(),
             probability.to_string(),
             owner_id.to_string(),
