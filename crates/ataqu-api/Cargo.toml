@@ -41,6 +41,8 @@ ataqu-domain-spark = { path = "../ataqu-domain-spark" }
 ataqu-domain-tempo = { path = "../ataqu-domain-tempo" }
 ataqu-domain-vault = { path = "../ataqu-domain-vault" }
 ataqu-domain-vista = { path = "../ataqu-domain-vista" }
+ataqu-domain-onboarding = { path = "../ataqu-domain-onboarding" }
+ataqu-domain-changelog = { path = "../ataqu-domain-changelog" }
 ataqu-infra-repositories = { path = "../ataqu-infra-repositories" }
 ataqu-infra-idempotency = { path = "../ataqu-infra-idempotency" }
 sea-orm = { version = "2.0.0-rc.41", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
