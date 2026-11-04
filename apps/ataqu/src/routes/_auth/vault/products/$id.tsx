@@ -8,9 +8,5 @@ export const Route = createFileRoute("/_auth/vault/products/$id")({
 function ProductDetailPage() {
 	const { id } = Route.useParams();
 
-	return (
-		<>
-			<ProductDetail productId={id} />
-		</>
-	);
+	return <ProductDetail productId={id} />;
 }
