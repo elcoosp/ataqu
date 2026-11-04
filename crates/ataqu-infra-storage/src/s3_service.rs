@@ -54,8 +54,15 @@ impl S3Service {
         })
     }
 
+    /// Generate a presigned PUT URL.
+    ///
+    /// HARDENING (fixed in audit): the key shape is validated before signing
+    /// (`<domain>/<uuid>/<uuid>/<uuid>` — no traversal, no arbitrary
+    /// tenant-controlled paths), so the service cannot be talked into handing
+    /// out upload URLs for attacker-chosen object keys.
     pub async fn generate_upload_url(&self, key: &str) -> Result<String> {
         let object_key = key.strip_prefix('/').unwrap_or(key);
+        validate_object_key(object_key).map_err(S3Error::Presign)?;
         let presign_config = PresigningConfig::builder()
             .expires_in(Duration::from_secs(3600))
             .build()
@@ -66,6 +73,9 @@ impl S3Service {
             .put_object()
             .bucket(&self.bucket)
             .key(object_key)
+            // Pin the content type so a holder of the URL cannot upload an
+            // arbitrary type under this key within the expiry window.
+            .content_type("application/octet-stream")
             .presigned(presign_config)
             .await
             .map_err(|e| S3Error::Presign(e.to_string()))?;
@@ -158,5 +168,54 @@ mod tests {
         let svc = S3Service::new().await.unwrap();
         let url = svc.generate_upload_url("test/file.txt").await.unwrap();
         assert!(url.starts_with("https://"));
+    }
+}
+
+/// Validate an S3 object key used for uploads: `<domain>/<uuid>/<uuid>/<uuid>`
+/// segments, no traversal, no whitespace. The existing callers (dial file
+/// uploads, pause documents) construct keys exactly this way from
+/// server-generated UUIDs.
+pub fn validate_object_key(key: &str) -> std::result::Result<(), String> {
+    let segments: Vec<&str> = key.split('/').collect();
+    if segments.len() != 4 {
+        return Err(format!("invalid object key shape: {key:?}"));
+    }
+    for seg in &segments {
+        if seg.is_empty()
+            || *seg == "."
+            || *seg == ".."
+            || seg.contains(char::is_whitespace)
+            || seg.len() > 100
+        {
+            return Err(format!("invalid object key segment in {key:?}"));
+        }
+    }
+    // First segment is the app domain (dial, pause, ...), rest are UUIDs.
+    for seg in &segments[1..] {
+        if seg.parse::<uuid::Uuid>().is_err() {
+            return Err(format!("object key segments must be UUIDs: {key:?}"));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod key_tests {
+    use super::validate_object_key;
+
+    #[test]
+    fn accepts_server_shaped_keys() {
+        let u = uuid::Uuid::new_v4();
+        let key = format!("dial/{u}/{u}/{u}");
+        assert!(validate_object_key(&key).is_ok());
+    }
+
+    #[test]
+    fn rejects_traversal_and_foreign_shapes() {
+        assert!(validate_object_key("../../etc/passwd").is_err());
+        assert!(validate_object_key("dial/../../secret").is_err());
+        assert!(validate_object_key("dial/not-a-uuid/not-a-uuid/x").is_err());
+        assert!(validate_object_key("only/2").is_err());
+        assert!(validate_object_key("").is_err());
     }
 }
