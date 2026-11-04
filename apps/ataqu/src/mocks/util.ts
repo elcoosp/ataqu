@@ -47,7 +47,11 @@ export const errorBody = (
 	error: { code, message, details: details ?? null },
 });
 
-export const apiError = (code: ApiErrorCode, message: string, details?: unknown) =>
+export const apiError = (
+	code: ApiErrorCode,
+	message: string,
+	details?: unknown,
+) =>
 	HttpResponse.json(errorBody(code, message, details), {
 		status: STATUS_BY_CODE[code],
 	});
@@ -200,7 +204,11 @@ export const noContent = () =>
 export const q = (request: Request, name: string): string | null =>
 	new URL(request.url).searchParams.get(name);
 
-export const qInt = (request: Request, name: string, fallback: number): number => {
+export const qInt = (
+	request: Request,
+	name: string,
+	fallback: number,
+): number => {
 	const raw = q(request, name);
 	const n = raw === null ? NaN : Number(raw);
 	return Number.isFinite(n) ? n : fallback;
