@@ -85,7 +85,7 @@ pub async fn list_workflows(
     auth: AuthContext,
     Query(params): Query<ListWorkflowsParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<WorkflowResponse>>> {
-    let limit = params.limit.unwrap_or(100);
+    let limit = params.limit.unwrap_or(100).clamp(1, 1000);
     let offset = params.offset.unwrap_or(0);
     let (workflows, total) = state
         .spark_service
@@ -233,7 +233,7 @@ pub async fn approve_workflow_run(
 ) -> ApiResult<StatusCode> {
     state
         .spark_service
-        .approve_workflow_run(auth.tenant_id, run_id, auth.user_id)
+        .approve_workflow_run(auth.tenant_id, run_id, auth.user_id, &auth.roles)
         .await
         .map_err(|e| match e {
             ataqu_application::spark_service::SparkServiceError::Validation(msg) => {
@@ -350,17 +350,29 @@ pub struct ListDlqParams {
 
 pub async fn list_dlq(
     State(state): State<AppState>,
-    _auth: AuthContext,
+    auth: AuthContext,
     Query(params): Query<ListDlqParams>,
 ) -> ApiResult<Json<ataqu_contracts::PaginatedResponse<DlqEntryResponse>>> {
-    let limit = params.limit.unwrap_or(100).min(1000);
+    // SECURITY (fixed in audit): the DLQ spans the GLOBAL outbox — without the
+    // tenant filter any authenticated user could read every tenant's dead
+    // event payloads (PII, contact data) and replay/delete other tenants'
+    // events. Admin-only + scoped to the caller's tenant via the
+    // `payload->>'tenant_id'` column every event write populates.
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let limit = params.limit.unwrap_or(100).clamp(1, 1000);
     let offset = params.offset.unwrap_or(0);
 
     let pool = state.db.get_postgres_connection_pool();
     let rows = sqlx::query(
         "SELECT id, schema, event_type, aggregate_id, payload, attempts, created_at \
-         FROM core.outbox WHERE status = 'dlq' ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+         FROM core.outbox WHERE status = 'dlq' AND payload->>'tenant_id' = $1 \
+         ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     )
+    .bind(auth.tenant_id.as_uuid())
     .bind(limit as i64)
     .bind(offset as i64)
     .fetch_all(pool)
@@ -411,14 +423,20 @@ pub async fn list_dlq(
 
 pub async fn replay_dlq(
     State(state): State<AppState>,
-    _auth: AuthContext,
+    auth: AuthContext,
     Path(id): Path<i64>,
 ) -> ApiResult<StatusCode> {
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
     let res = sqlx::query(
         "UPDATE core.outbox SET status = 'pending', completed_at = NULL, locked_until = NULL \
-         WHERE id = $1 AND status = 'dlq'",
+         WHERE id = $1 AND status = 'dlq' AND payload->>'tenant_id' = $2",
     )
     .bind(id)
+    .bind(auth.tenant_id.as_uuid())
     .execute(state.db.get_postgres_connection_pool())
     .await
     .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
@@ -430,14 +448,22 @@ pub async fn replay_dlq(
 
 pub async fn delete_dlq(
     State(state): State<AppState>,
-    _auth: AuthContext,
+    auth: AuthContext,
     Path(id): Path<i64>,
 ) -> ApiResult<StatusCode> {
-    let res = sqlx::query("DELETE FROM core.outbox WHERE id = $1 AND status = 'dlq'")
-        .bind(id)
-        .execute(state.db.get_postgres_connection_pool())
-        .await
-        .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
+    let res = sqlx::query(
+        "DELETE FROM core.outbox WHERE id = $1 AND status = 'dlq' AND payload->>'tenant_id' = $2",
+    )
+    .bind(id)
+    .bind(auth.tenant_id.as_uuid())
+    .execute(state.db.get_postgres_connection_pool())
+    .await
+    .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
     if res.rows_affected() == 0 {
         return Err(ApiResponseError::not_found("DLQ entry not found"));
     }
