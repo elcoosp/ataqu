@@ -162,10 +162,9 @@ export function KanbanBoard<T>({
 
 		// Shallow copies so the caller can diff / roll back.
 		const newColumns = columns.map((c) => ({ ...c, items: [...c.items] }));
-		const [movedItem] = newColumns[src.colIndex]?.items.splice(
-			src.itemIndex,
-			1,
-		);
+		const srcColumn = newColumns[src.colIndex];
+		if (!srcColumn) return;
+		const [movedItem] = srcColumn.items.splice(src.itemIndex, 1);
 		if (movedItem === undefined) return;
 
 		// Dropped on a column body (the only way to hit an empty column).
