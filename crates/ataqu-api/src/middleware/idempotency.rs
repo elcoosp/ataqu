@@ -21,11 +21,34 @@ pub fn flush_idempotency_cache() {
 
 /// Idempotency middleware using Moka cache only for hot path.
 /// Note: Advisory lock and durable storage are handled by the IdempotencyContext extractor.
+///
+/// SECURITY/BEHAVIOUR NOTES (fixed in the audit):
+/// * This layer is mounted on the *private* router INSIDE auth, so the
+///   `AuthContext` extension is always available and the cache key is scoped
+///   per tenant. (It previously ran outermost/before auth, keying every entry
+///   as `global:{key}` — two tenants using the same key replayed each other's
+///   responses, and cached responses were reachable without credentials.)
+/// * The key is additionally scoped by method + matched route pattern, so a
+///   key reused across different endpoints cannot replay an unrelated
+///   response.
+/// * Public endpoints (webhooks, login, public form submission) are NOT
+///   routed through this middleware: they have no authenticated identity to
+///   scope a key by, and forcing `Idempotency-Key` on them broke every
+///   third-party integration (Shopify always got a 400).
 pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
     let method = req.method();
     let is_state_changing = method == axum::http::Method::POST
         || method == axum::http::Method::PUT
         || method == axum::http::Method::PATCH;
+
+    // Only apply to authenticated requests. Anonymous requests pass through:
+    // idempotency for public endpoints is the caller's responsibility (and
+    // webhooks carry their own event ids).
+    let auth = match req.extensions().get::<crate::middleware::AuthContext>() {
+        Some(a) => a.clone(),
+        None => return Ok(next.run(req).await),
+    };
+    let tenant_id = auth.tenant_id.as_uuid().to_string();
 
     let cache_key = if is_state_changing {
         let key_header = req
@@ -35,12 +58,24 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
             .to_str()
             .map_err(|_| StatusCode::BAD_REQUEST)?
             .to_string();
-        let tenant_id = req
+        // Bound the key length so a hostile client cannot bloat the cache.
+        let key_header = if key_header.len() > 200 {
+            key_header[..200].to_string()
+        } else {
+            key_header
+        };
+        let route = req
             .extensions()
-            .get::<crate::middleware::AuthContext>()
-            .map(|a| a.tenant_id.as_uuid().to_string())
-            .unwrap_or_else(|| "global".to_string());
-        Some(format!("{}:{}", tenant_id, key_header))
+            .get::<axum::extract::MatchedPath>()
+            .map(|p| p.as_str().to_string())
+            .unwrap_or_else(|| req.uri().path().to_string());
+        // FIXED IN AUDIT (L-5): the user id is part of the key — two users of
+        // the same tenant reusing a key must not replay each other's
+        // (potentially user-specific) responses.
+        Some(format!(
+            "{tenant_id}:{}:{method}:{route}:{key_header}",
+            auth.user_id
+        ))
     } else {
         None
     };
@@ -57,9 +92,11 @@ pub async fn idempotency_middleware(req: Request, next: Next) -> Result<Response
             }
         }
         let body_bytes = serde_json::to_vec(&cached.body).unwrap_or_default();
-        return resp
+        let resp = resp
+            .header("idempotency-replayed", "true")
             .body(axum::body::Body::from(body_bytes))
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        return Ok(resp);
     }
 
     let resp = next.run(req).await;
