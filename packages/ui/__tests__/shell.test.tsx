@@ -27,11 +27,14 @@ vi.mock("@ataqu/shared-stores", async () => {
 		isAuthenticated: true,
 		logout: vi.fn(),
 	};
-	const useAuthStoreMock = Object.assign(vi.fn(() => authState), {
-		getState: () => authState,
-		setState: vi.fn(),
-		subscribe: vi.fn(() => () => {}),
-	});
+	const useAuthStoreMock = Object.assign(
+		vi.fn(() => authState),
+		{
+			getState: () => authState,
+			setState: vi.fn(),
+			subscribe: vi.fn(() => () => {}),
+		},
+	);
 	return {
 		...actual,
 		useAuthStore: useAuthStoreMock,
