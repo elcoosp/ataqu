@@ -89,7 +89,11 @@ export function EmailTrackingTab({ contactId }: { contactId: UUID }) {
 									{format(new Date(e.created_at), "PPp")}
 								</td>
 								<td className="py-2 px-3">
-									<Badge variant={e.event_type === "bounce" ? "destructive" : "outline"}>
+									<Badge
+										variant={
+											e.event_type === "bounce" ? "destructive" : "outline"
+										}
+									>
 										{e.event_type === "open" ? (
 											<Trans>Opened</Trans>
 										) : e.event_type === "click" ? (
