@@ -96,7 +96,9 @@ function WarehouseRow({
 				<CardContent className="p-4">
 					<div className="flex items-center justify-between">
 						<div>
-							<h4 className="text-sm font-semibold text-foreground">{w.name}</h4>
+							<h4 className="text-sm font-semibold text-foreground">
+								{w.name}
+							</h4>
 							{w.location && (
 								<p className="text-xs text-muted-foreground mt-0.5">
 									{w.location}
