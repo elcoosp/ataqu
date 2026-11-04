@@ -242,8 +242,13 @@ impl TempoRepository for TempoRepositoryImpl {
         &self,
         slug: &str,
     ) -> Result<Option<EventType>, RepositoryError> {
+        // SECURITY (fixed in audit): this is the tenant-LESS lookup used by
+        // anonymous visitors — it must not reveal DEACTIVATED event types
+        // (their name/description/duration would leak after a tenant thought
+        // they were disabled).
         let model = event_type_entity::Entity::find()
             .filter(event_type_entity::Column::Slug.eq(slug))
+            .filter(event_type_entity::Column::IsActive.eq(true))
             .one(&self.db)
             .await
             .map_err(|e| RepositoryError::Database(e.to_string()))?;
