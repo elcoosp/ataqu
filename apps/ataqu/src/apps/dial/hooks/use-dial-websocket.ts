@@ -143,7 +143,7 @@ export function useDialWebSocket() {
 			"/api";
 		const proto = window.location.protocol === "https:" ? "wss" : "ws";
 		const ws = new WebSocket(
-			`${proto}://${window.location.host}${base}/dial/ws?token=${token}`,
+			`${proto}://${window.location.host}${base}/dial/ws?token=${encodeURIComponent(token)}`,
 		);
 		wsRef.current = ws;
 		ws.onopen = () => {
