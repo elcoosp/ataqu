@@ -2,11 +2,12 @@
 
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{ConnectInfo, Path, Query, State},
     http::StatusCode,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 use tracing::{error, info};
 use uuid::Uuid;
 
@@ -79,12 +80,12 @@ pub async fn list_roles(
     use sqlx::Row;
     let pool = state.db.get_postgres_connection_pool();
     let rows = sqlx::query(
-		"SELECT id, tenant_id, name, permissions, created_at FROM core.roles WHERE tenant_id = $1 ORDER BY created_at DESC",
-	)
-	.bind(auth.tenant_id.as_uuid())
-	.fetch_all(pool)
-	.await
-	.map_err(|_| ApiResponseError::internal("Failed to list roles"))?;
+                "SELECT id, tenant_id, name, permissions, created_at FROM core.roles WHERE tenant_id = $1 ORDER BY created_at DESC",
+        )
+        .bind(auth.tenant_id.as_uuid())
+        .fetch_all(pool)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to list roles"))?;
     let list = rows
         .into_iter()
         .map(|r| RoleResponse {
@@ -154,9 +155,27 @@ pub struct LoginResponse {
 
 pub async fn login(
     State(state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<LoginRequest>,
 ) -> ApiResult<Json<LoginResponse>> {
     info!("Login attempt");
+    // Dedicated brute-force limiter: the generic limiter allows 100 req/min
+    // which is far too permissive for password guessing. 10 attempts/min per
+    // (IP, email) pair — enough for humans retrying, useless for spraying.
+    let ip = crate::middleware::client_ip::resolve_effective_client_ip(
+        peer_addr.ip(),
+        &headers,
+        &state.trusted_proxies,
+    );
+    let rate_key = format!("login:{ip}:{}", req.email.trim().to_lowercase());
+    if !state
+        .rate_limiter
+        .check_strict(&rate_key, 10, std::time::Duration::from_secs(60))
+    {
+        metrics::counter!("ataqu_auth_failures_total", "reason" => "rate_limited").increment(1);
+        return Err(ApiResponseError::RateLimited);
+    }
     let cmd = AuthenticateCommand {
         email: Email::new(req.email),
         password: req.password,
@@ -279,13 +298,14 @@ pub async fn sso_login(
         SsoProvider::Google => "Google",
         SsoProvider::Microsoft => "Microsoft",
     };
-    // Validate return_to to prevent open redirects.
+    // Validate return_to to prevent open redirects. Tokens are appended to
+    // this URL after authentication, so an unrestricted value would leak the
+    // victim's session to an attacker-chosen host. Only same-app URLs are
+    // accepted: any port on localhost (dev), or an HTTPS URL whose host is
+    // exactly `ataqu.com` or a subdomain thereof (parsed, not substring).
     let return_to = req
         .return_to
-        .filter(|u| {
-            u.starts_with("http://localhost:")
-                || (u.starts_with("https://") && u.contains("ataqu.com"))
-        })
+        .filter(|u| is_allowed_return_to(u))
         .unwrap_or_else(|| "http://localhost:5173/login".to_string());
     // Store provider and return_to as JSON. The tenant is resolved later,
     // in the callback, from the IdP-verified email.
@@ -304,6 +324,26 @@ pub async fn sso_login(
         "url": redirect.url,
         "state": redirect.state,
     })))
+}
+
+/// Strict `return_to` validation for the SSO flow (open-redirect defence).
+fn is_allowed_return_to(raw: &str) -> bool {
+    let Ok(url) = url::Url::parse(raw) else {
+        return false;
+    };
+    // Reject embedded credentials (`https://user:pass@host`), non-HTTP(S)
+    // schemes and any path that would smuggle a different authority.
+    if url.username() != "" || url.password().is_some() {
+        return false;
+    }
+    let Some(host) = url.host_str() else {
+        return false;
+    };
+    match url.scheme() {
+        "http" => host == "localhost" || host == "127.0.0.1",
+        "https" => host == "ataqu.com" || host.ends_with(".ataqu.com"),
+        _ => false,
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -421,14 +461,28 @@ pub async fn sso_callback(
         .as_str()
         .unwrap_or("http://localhost:5173/login");
 
-    let sep = if return_to.contains('?') { '&' } else { '?' };
-    let target = format!(
-        "{}{sep}token={}&refreshToken={}&user_id={}",
-        return_to,
+    // SECURITY: tokens travel in the URL *fragment* (`#token=…`), never in the
+    // query string. Fragments are not sent to servers (no Referer leak, no
+    // proxy/CDN logs) and the SPA reads them client-side. The frontend
+    // (`routes/login.tsx`) parses this fragment and immediately strips it via
+    // history.replaceState.
+    let fragment = format!(
+        "token={}&refreshToken={}&user_id={}",
         urlencoding::encode(&resp.access_token),
         urlencoding::encode(&resp.refresh_token),
-        resp.user_id,
+        resp.user_id
     );
+    // Replace (never append to) any pre-existing fragment on return_to so the
+    // token fragment cannot be smuggled into another fragment's value.
+    // `Url::set_fragment` preserves the path and query.
+    let target = url::Url::parse(return_to)
+        .map(|mut u| {
+            u.set_fragment(Some(&fragment));
+            u.to_string()
+        })
+        // return_to was validated at sso_login time; parse cannot fail for a
+        // stored value, but fall back to the plain default rather than 500.
+        .unwrap_or_else(|_| format!("http://localhost:5173/login#{fragment}"));
 
     Ok(axum::response::Redirect::to(&target))
 }
@@ -643,9 +697,26 @@ pub struct RequestPasswordResetRequest {
 
 pub async fn request_password_reset(
     State(state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<RequestPasswordResetRequest>,
 ) -> ApiResult<StatusCode> {
-    let email = Email::new(req.email);
+    // Prevent this endpoint from being abused to flood a mailbox with reset
+    // emails (each request enqueues an email via the outbox).
+    let ip = crate::middleware::client_ip::resolve_effective_client_ip(
+        peer_addr.ip(),
+        &headers,
+        &state.trusted_proxies,
+    );
+    if !state.rate_limiter.check_strict(
+        &format!("pwreset:{ip}"),
+        5,
+        std::time::Duration::from_secs(3600),
+    ) {
+        return Err(ApiResponseError::RateLimited);
+    }
+    let email = Email::parse(&req.email)
+        .map_err(|_| ApiResponseError::validation("Invalid email address"))?;
     state
         .aegis_service
         .request_password_reset(email)
@@ -692,8 +763,8 @@ pub async fn get_audit_log(
             "Admin access required".to_string(),
         ));
     }
-    let limit = query.limit.unwrap_or(100);
-    let offset = query.offset.unwrap_or(0);
+    let limit = query.limit.unwrap_or(100).clamp(1, 500);
+    let offset = query.offset.unwrap_or(0).max(0);
     let logs = state
         .aegis_service
         .get_audit_logs(
@@ -738,8 +809,8 @@ pub async fn export_audit_log(
             "Admin access required".to_string(),
         ));
     }
-    let limit = query.limit.unwrap_or(1000); // allow larger for export
-    let offset = query.offset.unwrap_or(0);
+    let limit = query.limit.unwrap_or(1000).clamp(1, 5000); // allow larger for export
+    let offset = query.offset.unwrap_or(0).max(0);
     let logs = state
         .aegis_service
         .get_audit_logs(
@@ -775,20 +846,26 @@ pub async fn export_audit_log(
         wtr.write_record([
             &l.id.to_string(),
             &l.user_id.to_string(),
-            &l.action,
-            &l.app,
-            l.entity_type.as_deref().unwrap_or(""),
+            &crate::serializers::sanitize_csv_field(&l.action),
+            &crate::serializers::sanitize_csv_field(&l.app),
+            &l.entity_type
+                .as_deref()
+                .map(crate::serializers::sanitize_csv_field)
+                .unwrap_or_default(),
             &l.entity_id.map(|id| id.to_string()).unwrap_or_default(),
             &l.old_value
                 .as_ref()
-                .map(|v| v.to_string())
+                .map(|v| crate::serializers::sanitize_csv_field(&v.to_string()))
                 .unwrap_or_default(),
             &l.new_value
                 .as_ref()
-                .map(|v| v.to_string())
+                .map(|v| crate::serializers::sanitize_csv_field(&v.to_string()))
                 .unwrap_or_default(),
             &l.ip_address.map(|ip| ip.to_string()).unwrap_or_default(),
-            l.user_agent.as_deref().unwrap_or(""),
+            &l.user_agent
+                .as_deref()
+                .map(crate::serializers::sanitize_csv_field)
+                .unwrap_or_default(),
             &l.created_at.to_rfc3339(),
         ])
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
@@ -911,15 +988,22 @@ pub async fn get_tenant_settings(
     State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<TenantSettingsResponse>> {
+    // Tenant settings include the IP allowlist and other security-relevant
+    // configuration — admin-only, same as the update path.
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
     use sqlx::Row;
     let pool = state.db.get_postgres_connection_pool();
     let row = sqlx::query(
-		"SELECT id, tenant_id, name, settings, updated_at FROM core.tenant_settings WHERE tenant_id = $1",
-	)
-	.bind(auth.tenant_id.as_uuid())
-	.fetch_optional(pool)
-	.await
-	.map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
+                "SELECT id, tenant_id, name, settings, updated_at FROM core.tenant_settings WHERE tenant_id = $1",
+        )
+        .bind(auth.tenant_id.as_uuid())
+        .fetch_optional(pool)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
     let resp = match row {
         Some(r) => TenantSettingsResponse {
             id: r.get::<Uuid, _>("id"),
@@ -946,6 +1030,15 @@ pub async fn update_tenant_settings(
     auth: AuthContext,
     Json(req): Json<UpdateTenantSettingsRequest>,
 ) -> ApiResult<Json<TenantSettingsResponse>> {
+    // SECURITY: requires admin. This endpoint replaces the whole settings
+    // document — including `ip_allowlist` — so any authenticated member must
+    // NOT be able to call it (previously a member could silently strip the
+    // tenant's IP allowlist).
+    if !auth.has_role("admin") {
+        return Err(ApiResponseError::Forbidden(
+            "Admin access required".to_string(),
+        ));
+    }
     use sqlx::Row;
     let pool = state.db.get_postgres_connection_pool();
     let existing =
@@ -970,23 +1063,23 @@ pub async fn update_tenant_settings(
         ),
     };
     sqlx::query(
-		"INSERT INTO core.tenant_settings (id, tenant_id, name, settings, updated_at) VALUES ($1, $2, $3, $4, now())
-		 ON CONFLICT (tenant_id) DO UPDATE SET name = EXCLUDED.name, settings = EXCLUDED.settings, updated_at = now()",
-	)
-	.bind(id)
-	.bind(auth.tenant_id.as_uuid())
-	.bind(&name)
-	.bind(&settings)
-	.execute(pool)
-	.await
-	.map_err(|_| ApiResponseError::internal("Failed to update tenant settings"))?;
+                "INSERT INTO core.tenant_settings (id, tenant_id, name, settings, updated_at) VALUES ($1, $2, $3, $4, now())
+                 ON CONFLICT (tenant_id) DO UPDATE SET name = EXCLUDED.name, settings = EXCLUDED.settings, updated_at = now()",
+        )
+        .bind(id)
+        .bind(auth.tenant_id.as_uuid())
+        .bind(&name)
+        .bind(&settings)
+        .execute(pool)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to update tenant settings"))?;
     let row = sqlx::query(
-		"SELECT id, tenant_id, name, settings, updated_at FROM core.tenant_settings WHERE tenant_id = $1",
-	)
-	.bind(auth.tenant_id.as_uuid())
-	.fetch_one(pool)
-	.await
-	.map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
+                "SELECT id, tenant_id, name, settings, updated_at FROM core.tenant_settings WHERE tenant_id = $1",
+        )
+        .bind(auth.tenant_id.as_uuid())
+        .fetch_one(pool)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to read tenant settings"))?;
     Ok(Json(TenantSettingsResponse {
         id: row.get::<Uuid, _>("id"),
         tenant_id: row.get::<Uuid, _>("tenant_id"),
@@ -1084,6 +1177,17 @@ pub async fn update_ip_allowlist(
             "Admin access required".to_string(),
         ));
     }
+    // Validate every entry: an unparseable entry would silently deny *every*
+    // request (lockout) because `ip_matches` never succeeds.
+    for entry in &req.ip_allowlist {
+        if entry.parse::<ipnetwork::IpNetwork>().is_err()
+            && entry.parse::<std::net::IpAddr>().is_err()
+        {
+            return Err(ApiResponseError::validation(
+                "Invalid allowlist entry: expected an IP address or CIDR range",
+            ));
+        }
+    }
     let pool = state.db.get_postgres_connection_pool();
     let allowlist = serde_json::json!(req.ip_allowlist);
     sqlx::query(
@@ -1105,16 +1209,26 @@ pub async fn update_ip_allowlist(
 }
 
 pub async fn get_me(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     auth: AuthContext,
 ) -> ApiResult<Json<serde_json::Value>> {
+    // Return the real persisted user, not hardcoded placeholders — the
+    // previous implementation always reported `is_active: true` and
+    // `mfa_enabled: false` regardless of the account state.
+    let user = state
+        .aegis_service
+        .find_user_by_id(auth.user_id)
+        .await
+        .map_err(|_| ApiResponseError::internal("Failed to load user"))?
+        .ok_or_else(|| ApiResponseError::unauthorized("User not found"))?;
     Ok(Json(serde_json::json!({
         "id": auth.user_id,
         "email": auth.email.reveal(&PiiAccessKey::new()),
-        "name": null,
-        "role": auth.roles.first().cloned().unwrap_or_else(|| "member".to_string()),
-        "is_active": true,
-        "mfa_enabled": false,
+        "name": user.name,
+        "role": user.role,
+        "is_active": user.is_active,
+        "mfa_enabled": user.mfa_enabled,
+        "tenant_id": auth.tenant_id.as_uuid(),
     })))
 }
 
@@ -1127,12 +1241,34 @@ pub struct SignupRequest {
 
 pub async fn signup(
     State(state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<SignupRequest>,
 ) -> ApiResult<(StatusCode, Json<serde_json::Value>)> {
     use argon2::Argon2;
     use argon2::password_hash::{PasswordHasher, SaltString};
 
-    let email = Email::new(req.email);
+    // Validate the address (reject garbage like "x" or "a b@c") and normalize
+    // it (lowercase) so "Jane@X.com" and "jane@x.com" are the same account.
+    let email = Email::parse(&req.email)
+        .map_err(|_| ApiResponseError::validation("Invalid email address"))?;
+    ataqu_application::aegis_service::AegisService::validate_password(&req.password)
+        .map_err(map_aegis_error)?;
+
+    // Account-creation flood control, same budget as login.
+    let ip = crate::middleware::client_ip::resolve_effective_client_ip(
+        peer_addr.ip(),
+        &headers,
+        &state.trusted_proxies,
+    );
+    if !state.rate_limiter.check_strict(
+        &format!("signup:{ip}"),
+        5,
+        std::time::Duration::from_secs(3600),
+    ) {
+        return Err(ApiResponseError::RateLimited);
+    }
+
     let salt = SaltString::generate(&mut rand::thread_rng());
     let argon2 = Argon2::default();
     let password_hash = argon2
@@ -1161,19 +1297,27 @@ pub async fn signup(
 
     let user_id = uuid::Uuid::new_v4();
     sqlx::query(
-		"INSERT INTO core.users (id, tenant_id, email, password_hash, name, is_active, mfa_enabled, created_at, updated_at, version) \
-		 VALUES ($1, $2, $3, $4, $5, true, false, $6, $7, 1)",
-	)
-		.bind(user_id)
-		.bind(tenant_id)
-		.bind(email.reveal(&PiiAccessKey::new()))
-		.bind(password_hash)
-		.bind(req.name.clone())
-		.bind(now)
-		.bind(now)
-		.execute(&mut *tx)
-		.await
-		.map_err(|_| ApiResponseError::internal("User creation failed"))?;
+                "INSERT INTO core.users (id, tenant_id, email, password_hash, name, is_active, mfa_enabled, created_at, updated_at, version) \
+                 VALUES ($1, $2, $3, $4, $5, true, false, $6, $7, 1)",
+        )
+                .bind(user_id)
+                .bind(tenant_id)
+                .bind(email.reveal(&PiiAccessKey::new()))
+                .bind(password_hash)
+                .bind(req.name.clone())
+                .bind(now)
+                .bind(now)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| {
+                    // Unique-violation on (tenant_id, email) → a friendly 409,
+                    // not a bare 500. Normalized emails make this reliable.
+                    if e.to_string().contains("23505") {
+                        ApiResponseError::Conflict("An account with this email already exists".to_string())
+                    } else {
+                        ApiResponseError::internal("User creation failed")
+                    }
+                })?;
 
     tx.commit()
         .await
@@ -1229,6 +1373,38 @@ pub fn public_routes() -> axum::Router<crate::AppState> {
         .route("/sso/callback", get(sso_callback))
         .route("/login", post(login))
         .route("/refresh", post(refresh_token))
+}
+
+#[cfg(test)]
+mod sso_return_to_tests {
+    use super::is_allowed_return_to;
+
+    #[test]
+    fn localhost_any_port_allowed() {
+        assert!(is_allowed_return_to("http://localhost:5173/login"));
+        assert!(is_allowed_return_to("http://localhost:3000/login"));
+        assert!(is_allowed_return_to("http://127.0.0.1:5173/login"));
+    }
+
+    #[test]
+    fn production_domain_and_subdomains_allowed() {
+        assert!(is_allowed_return_to("https://ataqu.com/login"));
+        assert!(is_allowed_return_to("https://app.ataqu.com/login"));
+    }
+
+    #[test]
+    fn open_redirects_rejected() {
+        // The old substring check (`contains("ataqu.com")`) allowed these:
+        assert!(!is_allowed_return_to("https://evil.com?x=ataqu.com"));
+        assert!(!is_allowed_return_to("https://evil.com/ataqu.com"));
+        assert!(!is_allowed_return_to("https://ataqu.com.evil.com/"));
+        assert!(!is_allowed_return_to("https://notataqu.com/"));
+        assert!(!is_allowed_return_to("http://ataqu.com/")); // no plain-http in prod
+        assert!(!is_allowed_return_to("https://user@ataqu.com/"));
+        assert!(!is_allowed_return_to("javascript:alert(1)"));
+        assert!(!is_allowed_return_to("file:///etc/passwd"));
+        assert!(!is_allowed_return_to("not a url"));
+    }
 }
 
 // ============================================================================
@@ -1289,7 +1465,7 @@ pub async fn approve_workflow(
     // by the acting user. The service resumes the workflow on success.
     state
         .spark_service
-        .approve_workflow_run(auth.tenant_id, req.run_id, auth.user_id)
+        .approve_workflow_run(auth.tenant_id, req.run_id, auth.user_id, &auth.roles)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
@@ -1311,7 +1487,7 @@ pub async fn reject_workflow(
     // set the workflow run status to `Rejected`. The run is not resumed.
     state
         .spark_service
-        .reject_workflow_run(auth.tenant_id, req.run_id, auth.user_id)
+        .reject_workflow_run(auth.tenant_id, req.run_id, auth.user_id, &auth.roles)
         .await
         .map_err(|e| ApiResponseError::internal(&e.to_string()))?;
 
