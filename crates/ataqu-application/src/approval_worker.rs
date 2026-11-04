@@ -111,11 +111,14 @@ impl ApprovalWorker {
     }
 
     /// Approve a specific pending approval by run_id (called from the API).
+    /// `approved_by_roles` are the acting user's roles — the workflow's
+    /// required `approver_role` is enforced inside the service (fixed in audit).
     pub async fn approve_run(
         &self,
         tenant_id: TenantId,
         run_id: Uuid,
         approved_by: Uuid,
+        approved_by_roles: Vec<String>,
     ) -> Result<(), String> {
         let approval = self
             .approval_repo
@@ -128,8 +131,14 @@ impl ApprovalWorker {
         }
 
         // Delegate to the service: marks the row approved and resumes the run.
+        // The worker is the system actor: it only auto-approves runs whose
+        // required role is held by the request context it was created with —
+        // here the system acts with the workflow author's intent, so the
+        // required role is enforced upstream (the API gate). Passing an empty
+        // role list would deadlock every approval, so the caller supplies the
+        // acting user's roles.
         self.spark_service
-            .approve_workflow_run(tenant_id, run_id, approved_by)
+            .approve_workflow_run(tenant_id, run_id, approved_by, &approved_by_roles)
             .await
             .map_err(|e| format!("Failed to resume workflow: {}", e))?;
 
@@ -142,6 +151,7 @@ impl ApprovalWorker {
         tenant_id: TenantId,
         run_id: Uuid,
         rejected_by: Uuid,
+        rejected_by_roles: Vec<String>,
     ) -> Result<(), String> {
         let approval = self
             .approval_repo
@@ -155,7 +165,7 @@ impl ApprovalWorker {
 
         // Delegate to the service: marks the row rejected and sets the run status.
         self.spark_service
-            .reject_workflow_run(tenant_id, run_id, rejected_by)
+            .reject_workflow_run(tenant_id, run_id, rejected_by, &rejected_by_roles)
             .await
             .map_err(|e| format!("Failed to reject workflow: {}", e))?;
 
