@@ -24,7 +24,7 @@ import {
 } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { useQueryClient } from "@tanstack/react-query";
-import { measureElement, useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { formatDistanceToNow } from "date-fns";
 import { Reply } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
