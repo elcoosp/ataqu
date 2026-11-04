@@ -3,7 +3,7 @@
  * reactions, presence, search, export blobs, tickets and the CINQ context
  * side-panel. Mirrors crates/ataqu-api handlers/dial.rs.
  */
-import { http, type HttpHandler, type PathParams, HttpResponse } from "msw";
+import { type HttpHandler, HttpResponse, http, type PathParams } from "msw";
 import { ADMIN_ID, audit, bump, db, nextId } from "../db";
 import {
 	apiError,
@@ -24,7 +24,8 @@ import {
 export const dialHandlers: HttpHandler[] = [
 	// -------------------------------------------------------------- channels
 	http.get("/api/dial/channels", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		// The channel sidebar groups by `type` and renders unread badges — the
 		// list serializer therefore carries the extended summary fields.
 		const rows = [...db.channels]
@@ -64,12 +65,15 @@ export const dialHandlers: HttpHandler[] = [
 			archived_at: null,
 		};
 		db.channels.push(channel);
-		audit(actor, "channel.create", "dial", "channel", channel.id, { name: channel.name });
+		audit(actor, "channel.create", "dial", "channel", channel.id, {
+			name: channel.name,
+		});
 		return created(channel);
 	}),
 
 	http.get("/api/dial/channels/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const channel = db.channels.find((c) => c.id === params.id);
 		return channel ? ok(channel) : notFound("Channel");
 	}),
@@ -102,36 +106,41 @@ export const dialHandlers: HttpHandler[] = [
 
 	// -------------------------------------------------------------- messages
 	http.get("/api/dial/channels/:channelId/messages", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const rows = db.messages
 			.filter((m) => m.channel_id === params.channelId && !m.deleted_at)
 			.sort((a, b) => (a.sent_at < b.sent_at ? -1 : 1));
 		return page(rows, listParams(request, 100));
 	}),
 
-	http.post("/api/dial/channels/:channelId/messages", async ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ content: string }>(request);
-		if (!body.content?.trim()) return validationError("Message content is required");
-		const channel = db.channels.find((c) => c.id === params.channelId);
-		if (!channel) return notFound("Channel");
-		const message = {
-			id: nextId("msg"),
-			channel_id: channel.id,
-			author_id: actor,
-			version: 1,
-			content: body.content.trim(),
-			sent_at: new Date().toISOString(),
-			thread_id: null as string | null,
-			edited_at: null,
-			deleted_at: null,
-		};
-		db.messages.push(message);
-		channel.updated_at = message.sent_at;
-		audit(actor, "message.send", "dial", "message", message.id);
-		return created(message);
-	}),
+	http.post(
+		"/api/dial/channels/:channelId/messages",
+		async ({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const body = await jsonBody<{ content: string }>(request);
+			if (!body.content?.trim())
+				return validationError("Message content is required");
+			const channel = db.channels.find((c) => c.id === params.channelId);
+			if (!channel) return notFound("Channel");
+			const message = {
+				id: nextId("msg"),
+				channel_id: channel.id,
+				author_id: actor,
+				version: 1,
+				content: body.content.trim(),
+				sent_at: new Date().toISOString(),
+				thread_id: null as string | null,
+				edited_at: null,
+				deleted_at: null,
+			};
+			db.messages.push(message);
+			channel.updated_at = message.sent_at;
+			audit(actor, "message.send", "dial", "message", message.id);
+			return created(message);
+		},
+	),
 
 	http.put("/api/dial/messages/:messageId", async ({ request, params }) => {
 		const actor = callerId(request);
@@ -141,7 +150,8 @@ export const dialHandlers: HttpHandler[] = [
 		const conflictResp = checkVersion(request, message.version);
 		if (conflictResp) return conflictResp;
 		const body = await jsonBody<{ content: string }>(request);
-		if (!body.content?.trim()) return validationError("Message content is required");
+		if (!body.content?.trim())
+			return validationError("Message content is required");
 		message.content = body.content.trim();
 		message.edited_at = new Date().toISOString();
 		const v = bump(message);
@@ -170,7 +180,8 @@ export const dialHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/dial/search", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const qs = (new URL(request.url).searchParams.get("q") ?? "").toLowerCase();
 		const rows = db.messages
 			.filter((m) => !m.deleted_at && m.content.toLowerCase().includes(qs))
@@ -182,7 +193,10 @@ export const dialHandlers: HttpHandler[] = [
 	http.post("/api/dial/threads", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ channel_id: string; parent_message_id: string }>(request);
+		const body = await jsonBody<{
+			channel_id: string;
+			parent_message_id: string;
+		}>(request);
 		if (!body.channel_id || !body.parent_message_id) {
 			return validationError("channel_id and parent_message_id are required");
 		}
@@ -197,21 +211,29 @@ export const dialHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/dial/threads/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const thread = db.threads.find((t) => t.id === params.id);
 		return thread ? ok(thread) : notFound("Thread");
 	}),
 
 	http.get("/api/dial/threads/:threadId/messages", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		return bare(db.messages.filter((m) => m.thread_id === params.threadId && !m.deleted_at));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		return bare(
+			db.messages.filter(
+				(m) => m.thread_id === params.threadId && !m.deleted_at,
+			),
+		);
 	}),
 
 	// -------------------------------------------------------------- mentions
 	http.post("/api/dial/mentions", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ message_id: string; user_id: string }>(request);
+		const body = await jsonBody<{ message_id: string; user_id: string }>(
+			request,
+		);
 		const mention = {
 			id: nextId("mnt"),
 			message_id: body.message_id,
@@ -223,7 +245,8 @@ export const dialHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/dial/mentions", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return ok({ mentions: db.mentions.filter((m) => !m.read_at) });
 	}),
 
@@ -234,32 +257,39 @@ export const dialHandlers: HttpHandler[] = [
 	}),
 
 	// ------------------------------------------------------------- reactions
-	http.post("/api/dial/messages/:messageId/reactions", async ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ emoji: string }>(request);
-		if (!body.emoji) return validationError("emoji is required");
-		const reaction = {
-			id: nextId("rct"),
-			message_id: params.messageId as string,
-			user_id: actor,
-			emoji: body.emoji,
-			created_at: new Date().toISOString(),
-		};
-		db.reactions.push(reaction);
-		return created(reaction);
-	}),
+	http.post(
+		"/api/dial/messages/:messageId/reactions",
+		async ({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const body = await jsonBody<{ emoji: string }>(request);
+			if (!body.emoji) return validationError("emoji is required");
+			const reaction = {
+				id: nextId("rct"),
+				message_id: params.messageId as string,
+				user_id: actor,
+				emoji: body.emoji,
+				created_at: new Date().toISOString(),
+			};
+			db.reactions.push(reaction);
+			return created(reaction);
+		},
+	),
 
 	http.get("/api/dial/messages/:messageId/reactions", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return bare(db.reactions.filter((r) => r.message_id === params.messageId));
 	}),
 
-	http.delete("/api/dial/messages/:messageId/reactions/:reactionId", ({ params }) => {
-		const idx = db.reactions.findIndex((r) => r.id === params.reactionId);
-		if (idx !== -1) db.reactions.splice(idx, 1);
-		return noContent();
-	}),
+	http.delete(
+		"/api/dial/messages/:messageId/reactions/:reactionId",
+		({ params }) => {
+			const idx = db.reactions.findIndex((r) => r.id === params.reactionId);
+			if (idx !== -1) db.reactions.splice(idx, 1);
+			return noContent();
+		},
+	),
 
 	// ------------------------------------------------------------------ files
 	http.post("/api/dial/channels/:channelId/files", async ({ request }) => {
@@ -281,7 +311,8 @@ export const dialHandlers: HttpHandler[] = [
 
 	// -------------------------------------------------------------- presence
 	http.get("/api/dial/presence/online", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		// Demo presence: the admin is always online, others "most of the time".
 		const online = db.users
 			.filter((u) => u.is_active && (u.id === ADMIN_ID || u.id !== "usr-008"))
@@ -291,40 +322,61 @@ export const dialHandlers: HttpHandler[] = [
 
 	// ---------------------------------------------------------------- export
 	http.get("/api/dial/channels/:channelId/export", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = db.messages.filter((m) => m.channel_id === params.channelId && !m.deleted_at);
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const rows = db.messages.filter(
+			(m) => m.channel_id === params.channelId && !m.deleted_at,
+		);
 		const csv = [
 			"sent_at,author_id,content",
-			...rows.map((m) => `${m.sent_at},${m.author_id},"${m.content.replaceAll('"', '""')}"`),
+			...rows.map(
+				(m) =>
+					`${m.sent_at},${m.author_id},"${m.content.replaceAll('"', '""')}"`,
+			),
 		].join("\n");
-		return new HttpResponse(csv, { headers: { "Content-Type": "text/csv; charset=utf-8" } });
+		return new HttpResponse(csv, {
+			headers: { "Content-Type": "text/csv; charset=utf-8" },
+		});
 	}),
 
 	http.get("/api/dial/channels/:channelId/export/pdf", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		// Minimal but valid PDF: one page stating an export happened.
-		const pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\nxref\n0 4\n0000000000 65535 f \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n9\n%%EOF";
-		return new HttpResponse(pdf, { headers: { "Content-Type": "application/pdf" } });
+		const pdf =
+			"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\nxref\n0 4\n0000000000 65535 f \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n9\n%%EOF";
+		return new HttpResponse(pdf, {
+			headers: { "Content-Type": "application/pdf" },
+		});
 	}),
 
 	// --------------------------------------------------------------- tickets
 	http.get("/api/dial/tickets", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = [...db.tickets].sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const rows = [...db.tickets].sort((a, b) =>
+			a.updated_at < b.updated_at ? 1 : -1,
+		);
 		return page(rows, listParams(request, 50));
 	}),
 
 	http.post("/api/dial/tickets", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ subject: string; requester_name?: string; requester_email?: string; priority?: string }>(request);
+		const body = await jsonBody<{
+			subject: string;
+			requester_name?: string;
+			requester_email?: string;
+			priority?: string;
+		}>(request);
 		if (!body.subject?.trim()) return validationError("Subject is required");
 		const now = new Date().toISOString();
 		const ticket = {
 			id: nextId("tkt"),
 			subject: body.subject.trim(),
 			status: "open" as const,
-			priority: (body.priority as "low" | "medium" | "high" | "urgent") ?? "medium",
+			priority:
+				(body.priority as "low" | "medium" | "high" | "urgent") ?? "medium",
 			requester_name: body.requester_name ?? "Unknown",
 			requester_email: body.requester_email ?? "unknown@example.com",
 			assignee_id: null,
@@ -339,8 +391,11 @@ export const dialHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/dial/tickets/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const ticket = db.tickets.find((t) => t.id === (params as Record<string, string>).id);
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const ticket = db.tickets.find(
+			(t) => t.id === (params as Record<string, string>).id,
+		);
 		return ticket ? ok(ticket) : notFound("Ticket");
 	}),
 
@@ -356,7 +411,8 @@ export const dialHandlers: HttpHandler[] = [
 		const ticket = db.tickets.find((t) => t.id === params.id);
 		if (!ticket) return notFound("Ticket");
 		const body = await jsonBody<{ content: string }>(request);
-		if (!body.content?.trim()) return validationError("Reply content is required");
+		if (!body.content?.trim())
+			return validationError("Reply content is required");
 		const message = {
 			id: nextId("tmsg"),
 			ticket_id: ticket.id,
@@ -372,7 +428,8 @@ export const dialHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/dial/tickets/:id/messages", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return bare(
 			db.ticketMessages
 				.filter((m) => m.ticket_id === params.id)
@@ -381,29 +438,42 @@ export const dialHandlers: HttpHandler[] = [
 	}),
 
 	// ---------------------------------------------------------- cinq-context
-	http.get("/api/dial/channels/:channelId/cinq-context", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const channel = db.channels.find((c) => c.id === params.channelId);
-		if (!channel) return ok(null);
-		// Deterministic demo mapping: sales war-room ↔ the biggest open deal.
-		if (channel.name === "sales-war-room") {
-			const deal = [...db.deals].sort((a, b) => b.amount - a.amount).find((d) => d.status === "open");
-			if (!deal) return ok(null);
-			const contact = db.contacts.find((c) => c.id === deal.contact_id);
-			return ok({
-				deal_id: deal.id,
-				name: deal.title,
-				amount: deal.amount,
-				stage: db.stages.find((s) => s.id === deal.pipeline_stage_id)?.name ?? "",
-				contact_name: contact?.name ?? "",
-				contact_email: contact?.email ?? "",
-			});
-		}
-		return ok(null);
-	}),
+	http.get(
+		"/api/dial/channels/:channelId/cinq-context",
+		({ request, params }) => {
+			if (!callerId(request))
+				return apiError("UNAUTHORIZED", "Authentication required");
+			const channel = db.channels.find((c) => c.id === params.channelId);
+			if (!channel) return ok(null);
+			// Deterministic demo mapping: sales war-room ↔ the biggest open deal.
+			if (channel.name === "sales-war-room") {
+				const deal = [...db.deals]
+					.sort((a, b) => b.amount - a.amount)
+					.find((d) => d.status === "open");
+				if (!deal) return ok(null);
+				const contact = db.contacts.find((c) => c.id === deal.contact_id);
+				return ok({
+					deal_id: deal.id,
+					name: deal.title,
+					amount: deal.amount,
+					stage:
+						db.stages.find((s) => s.id === deal.pipeline_stage_id)?.name ?? "",
+					contact_name: contact?.name ?? "",
+					contact_email: contact?.email ?? "",
+				});
+			}
+			return ok(null);
+		},
+	),
 ];
 
-async function updateTicketHandler({ request, params }: { request: Request; params: PathParams }) {
+async function updateTicketHandler({
+	request,
+	params,
+}: {
+	request: Request;
+	params: PathParams;
+}) {
 	const actor = callerId(request);
 	if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 	const ticket = db.tickets.find((t) => t.id === params.id);
@@ -417,7 +487,8 @@ async function updateTicketHandler({ request, params }: { request: Request; para
 	if (body.status != null) ticket.status = body.status;
 	if (body.priority != null) ticket.priority = body.priority;
 	if (body.subject != null) ticket.subject = body.subject;
-	if (body.assignee_id !== undefined) ticket.assignee_id = body.assignee_id ?? null;
+	if (body.assignee_id !== undefined)
+		ticket.assignee_id = body.assignee_id ?? null;
 	ticket.updated_at = new Date().toISOString();
 	audit(actor, "ticket.update", "dial", "ticket", ticket.id, body);
 	return ok(ticket);
