@@ -3,7 +3,7 @@
  * reservations, warehouses, low-stock alerts, Shopify + Amazon integrations.
  * Mirrors handlers/vault.rs.
  */
-import { http, type HttpHandler } from "msw";
+import { type HttpHandler, http } from "msw";
 import { audit, bump, db, hoursAgo, nextId } from "../db";
 import {
 	apiError,
@@ -23,10 +23,13 @@ import {
 export const vaultHandlers: HttpHandler[] = [
 	// --------------------------------------------------------------- products
 	http.get("/api/vault/products", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const url = new URL(request.url);
 		const qs = url.searchParams.get("q");
-		let rows = [...db.products].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+		let rows = [...db.products].sort((a, b) =>
+			a.created_at < b.created_at ? 1 : -1,
+		);
 		if (qs) {
 			rows = rows.filter(
 				(p) =>
@@ -41,11 +44,17 @@ export const vaultHandlers: HttpHandler[] = [
 	http.post("/api/vault/products", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ name: string; description?: string; sku: string }>(request);
+		const body = await jsonBody<{
+			name: string;
+			description?: string;
+			sku: string;
+		}>(request);
 		if (!body.name?.trim() || !body.sku?.trim()) {
 			return validationError("Name and SKU are required");
 		}
-		if (db.products.some((p) => p.sku.toLowerCase() === body.sku.toLowerCase())) {
+		if (
+			db.products.some((p) => p.sku.toLowerCase() === body.sku.toLowerCase())
+		) {
 			return apiError("CONFLICT", "A product with this SKU already exists");
 		}
 		const now = new Date().toISOString();
@@ -59,12 +68,15 @@ export const vaultHandlers: HttpHandler[] = [
 			version: 1,
 		};
 		db.products.push(product);
-		audit(actor, "product.create", "vault", "product", product.id, { sku: product.sku });
+		audit(actor, "product.create", "vault", "product", product.id, {
+			sku: product.sku,
+		});
 		return created(product);
 	}),
 
 	http.get("/api/vault/products/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const product = db.products.find((p) => p.id === params.id);
 		return product ? ok(product) : notFound("Product");
 	}),
@@ -76,7 +88,11 @@ export const vaultHandlers: HttpHandler[] = [
 		if (!product) return notFound("Product");
 		const conflictResp = checkVersion(request, product.version);
 		if (conflictResp) return conflictResp;
-		const body = await jsonBody<{ name?: string; description?: string; sku?: string }>(request);
+		const body = await jsonBody<{
+			name?: string;
+			description?: string;
+			sku?: string;
+		}>(request);
 		if (body.name != null) product.name = body.name;
 		if (body.description != null) product.description = body.description;
 		if (body.sku != null) product.sku = body.sku;
@@ -103,13 +119,16 @@ export const vaultHandlers: HttpHandler[] = [
 		const { ids } = await jsonBody<{ ids: string[] }>(request);
 		db.products = db.products.filter((p) => !ids?.includes(p.id));
 		db.variants = db.variants.filter((v) => !ids?.includes(v.product_id));
-		audit(actor, "product.bulk_delete", "vault", "product", undefined, { count: ids?.length ?? 0 });
+		audit(actor, "product.bulk_delete", "vault", "product", undefined, {
+			count: ids?.length ?? 0,
+		});
 		return noContent();
 	}),
 
 	// --------------------------------------------------------------- variants
 	http.get("/api/vault/variants", ({ request, params: _p }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const productId = new URL(request.url).searchParams.get("product_id");
 		const rows = productId
 			? db.variants.filter((v) => v.product_id === productId)
@@ -120,11 +139,18 @@ export const vaultHandlers: HttpHandler[] = [
 	http.post("/api/vault/variants", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ product_id: string; sku: string; initial_stock: number; price: number }>(request);
+		const body = await jsonBody<{
+			product_id: string;
+			sku: string;
+			initial_stock: number;
+			price: number;
+		}>(request);
 		if (!body.product_id || !body.sku?.trim()) {
 			return validationError("product_id and SKU are required");
 		}
-		if (db.variants.some((v) => v.sku.toLowerCase() === body.sku.toLowerCase())) {
+		if (
+			db.variants.some((v) => v.sku.toLowerCase() === body.sku.toLowerCase())
+		) {
 			return apiError("CONFLICT", "A variant with this SKU already exists");
 		}
 		const now = new Date().toISOString();
@@ -149,12 +175,15 @@ export const vaultHandlers: HttpHandler[] = [
 				timestamp: now,
 			});
 		}
-		audit(actor, "variant.create", "vault", "variant", variant.id, { sku: variant.sku });
+		audit(actor, "variant.create", "vault", "variant", variant.id, {
+			sku: variant.sku,
+		});
 		return created(variant);
 	}),
 
 	http.get("/api/vault/variants/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const variant = db.variants.find((v) => v.id === params.id);
 		return variant ? ok(variant) : notFound("Variant");
 	}),
@@ -193,58 +222,80 @@ export const vaultHandlers: HttpHandler[] = [
 	}),
 
 	// ------------------------------------------------------------------ stock
-	http.put("/api/vault/variants/:variantId/stock", async ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const variant = db.variants.find((v) => v.id === params.variantId);
-		if (!variant) return notFound("Variant");
-		const conflictResp = checkVersion(request, variant.version);
-		if (conflictResp) return conflictResp;
-		const body = await jsonBody<{ delta: number; reason: string; reference?: string }>(request);
-		if (typeof body.delta !== "number" || !body.reason) {
-			return validationError("delta (number) and reason are required");
-		}
-		variant.stock_quantity = Math.max(0, variant.stock_quantity + body.delta);
-		variant.updated_at = new Date().toISOString();
-		const v = bump(variant);
-		db.movements.push({
-			id: nextId("mov"),
-			variant_id: variant.id,
-			quantity: body.delta,
-			reason: body.reason,
-			reference: body.reference,
-			timestamp: new Date().toISOString(),
-		});
-		audit(actor, "stock.adjust", "vault", "variant", variant.id, body);
-		return ok({ ...variant, version: v });
-	}),
+	http.put(
+		"/api/vault/variants/:variantId/stock",
+		async ({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const variant = db.variants.find((v) => v.id === params.variantId);
+			if (!variant) return notFound("Variant");
+			const conflictResp = checkVersion(request, variant.version);
+			if (conflictResp) return conflictResp;
+			const body = await jsonBody<{
+				delta: number;
+				reason: string;
+				reference?: string;
+			}>(request);
+			if (typeof body.delta !== "number" || !body.reason) {
+				return validationError("delta (number) and reason are required");
+			}
+			variant.stock_quantity = Math.max(0, variant.stock_quantity + body.delta);
+			variant.updated_at = new Date().toISOString();
+			const v = bump(variant);
+			db.movements.push({
+				id: nextId("mov"),
+				variant_id: variant.id,
+				quantity: body.delta,
+				reason: body.reason,
+				reference: body.reference,
+				timestamp: new Date().toISOString(),
+			});
+			audit(actor, "stock.adjust", "vault", "variant", variant.id, body);
+			return ok({ ...variant, version: v });
+		},
+	),
 
-	http.post("/api/vault/variants/:variantId/reserve", async ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const variant = db.variants.find((v) => v.id === params.variantId);
-		if (!variant) return notFound("Variant");
-		const conflictResp = checkVersion(request, variant.version);
-		if (conflictResp) return conflictResp;
-		const body = await jsonBody<{ quantity: number }>(request);
-		if (typeof body.quantity !== "number" || body.quantity <= 0) {
-			return validationError("quantity must be a positive number");
-		}
-		const available = variant.stock_quantity - variant.reserved_quantity;
-		if (body.quantity > available) {
-			return apiError("CONFLICT", `Only ${available} unit(s) available to reserve`);
-		}
-		variant.reserved_quantity += body.quantity;
-		const v = bump(variant);
-		audit(actor, "stock.reserve", "vault", "variant", variant.id, { quantity: body.quantity });
-		return created({ variant: { ...variant, version: v }, reservation_id: nextId("rsv") });
-	}),
+	http.post(
+		"/api/vault/variants/:variantId/reserve",
+		async ({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const variant = db.variants.find((v) => v.id === params.variantId);
+			if (!variant) return notFound("Variant");
+			const conflictResp = checkVersion(request, variant.version);
+			if (conflictResp) return conflictResp;
+			const body = await jsonBody<{ quantity: number }>(request);
+			if (typeof body.quantity !== "number" || body.quantity <= 0) {
+				return validationError("quantity must be a positive number");
+			}
+			const available = variant.stock_quantity - variant.reserved_quantity;
+			if (body.quantity > available) {
+				return apiError(
+					"CONFLICT",
+					`Only ${available} unit(s) available to reserve`,
+				);
+			}
+			variant.reserved_quantity += body.quantity;
+			const v = bump(variant);
+			audit(actor, "stock.reserve", "vault", "variant", variant.id, {
+				quantity: body.quantity,
+			});
+			return created({
+				variant: { ...variant, version: v },
+				reservation_id: nextId("rsv"),
+			});
+		},
+	),
 
 	http.post("/api/vault/variants/bulk-stock-adjust", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const body = await jsonBody<{
-			adjustments: Array<{ variant_id: string; delta: number; expected_version: number }>;
+			adjustments: Array<{
+				variant_id: string;
+				delta: number;
+				expected_version: number;
+			}>;
 			reason: string;
 		}>(request);
 		if (!Array.isArray(body.adjustments) || !body.reason) {
@@ -269,27 +320,37 @@ export const vaultHandlers: HttpHandler[] = [
 			});
 			updated.push({ ...variant, version: v });
 		}
-		audit(actor, "stock.bulk_adjust", "vault", "variant", undefined, { count: updated.length });
+		audit(actor, "stock.bulk_adjust", "vault", "variant", undefined, {
+			count: updated.length,
+		});
 		return ok(updated);
 	}),
 
-	http.get("/api/vault/variants/:variantId/movements", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = db.movements
-			.filter((m) => m.variant_id === params.variantId)
-			.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
-		return bare(rows);
-	}),
+	http.get(
+		"/api/vault/variants/:variantId/movements",
+		({ request, params }) => {
+			if (!callerId(request))
+				return apiError("UNAUTHORIZED", "Authentication required");
+			const rows = db.movements
+				.filter((m) => m.variant_id === params.variantId)
+				.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+			return bare(rows);
+		},
+	),
 
 	http.get("/api/vault/alerts/low-stock", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const threshold = Number(new URL(request.url).searchParams.get("threshold") ?? 5);
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const threshold = Number(
+			new URL(request.url).searchParams.get("threshold") ?? 5,
+		);
 		return bare(db.variants.filter((v) => v.stock_quantity <= threshold));
 	}),
 
 	// -------------------------------------------------------------- warehouses
 	http.get("/api/vault/warehouses", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return bare(db.warehouses);
 	}),
 
@@ -297,7 +358,8 @@ export const vaultHandlers: HttpHandler[] = [
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 		const body = await jsonBody<{ name: string; location?: string }>(request);
-		if (!body.name?.trim()) return validationError("Warehouse name is required");
+		if (!body.name?.trim())
+			return validationError("Warehouse name is required");
 		const warehouse = {
 			id: nextId("whs"),
 			name: body.name.trim(),
@@ -306,12 +368,15 @@ export const vaultHandlers: HttpHandler[] = [
 			version: 1,
 		};
 		db.warehouses.push(warehouse);
-		audit(actor, "warehouse.create", "vault", "warehouse", warehouse.id, { name: warehouse.name });
+		audit(actor, "warehouse.create", "vault", "warehouse", warehouse.id, {
+			name: warehouse.name,
+		});
 		return created(warehouse);
 	}),
 
 	http.get("/api/vault/warehouses/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const warehouse = db.warehouses.find((w) => w.id === params.id);
 		return warehouse ? ok(warehouse) : notFound("Warehouse");
 	}),
@@ -325,7 +390,8 @@ export const vaultHandlers: HttpHandler[] = [
 		if (conflictResp) return conflictResp;
 		const body = await jsonBody<{ name?: string; location?: string }>(request);
 		if (body.name != null) warehouse.name = body.name;
-		if (body.location !== undefined) warehouse.location = body.location ?? undefined;
+		if (body.location !== undefined)
+			warehouse.location = body.location ?? undefined;
 		const v = bump(warehouse);
 		return ok({ ...warehouse, version: v });
 	}),
@@ -342,7 +408,8 @@ export const vaultHandlers: HttpHandler[] = [
 
 	// ----------------------------------------------------------------- shopify
 	http.get("/api/vault/shopify/auth", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return ok({ url: "/vault/dashboard?shopify=mock-oauth" });
 	}),
 
@@ -366,7 +433,8 @@ export const vaultHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/vault/shopify/integrations", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return bare(db.shopify);
 	}),
 
@@ -379,27 +447,38 @@ export const vaultHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/vault/shopify/sync-logs", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return page(
-			[...db.shopifyLogs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)),
+			[...db.shopifyLogs].sort((a, b) =>
+				a.created_at < b.created_at ? 1 : -1,
+			),
 			listParams(request, 25),
 		);
 	}),
 
 	// ------------------------------------------------------------------ amazon
 	http.get("/api/vault/amazon/status", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return ok({ ...db.amazon });
 	}),
 
 	http.post("/api/vault/amazon/connect", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ marketplace_id: string; seller_id: string }>(request);
+		const body = await jsonBody<{ marketplace_id: string; seller_id: string }>(
+			request,
+		);
 		if (!body.marketplace_id || !body.seller_id) {
 			return validationError("marketplace_id and seller_id are required");
 		}
-		db.amazon = { connected: true, marketplace_id: body.marketplace_id, seller_id: body.seller_id, last_synced_at: hoursAgo(0) };
+		db.amazon = {
+			connected: true,
+			marketplace_id: body.marketplace_id,
+			seller_id: body.seller_id,
+			last_synced_at: hoursAgo(0),
+		};
 		audit(actor, "amazon.connect", "vault", "integration", "amazon");
 		return noContent();
 	}),
