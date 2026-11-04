@@ -79,6 +79,49 @@ export class ValidationError extends ApiError {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+/**
+ * Encode a single path segment so user-controlled ids/slugs cannot inject
+ * extra path segments (`..`, `/`), query fragments (`?`) or arbitrary bytes
+ * into the request URL. Decoding first keeps already-encoded values
+ * idempotent (`a%20b` → `a b` → `a%20b`) instead of double-encoding them.
+ */
+export function encodePathSegment(segment: string): string {
+	let decoded = segment;
+	try {
+		decoded = decodeURIComponent(segment);
+	} catch {
+		// Malformed escape (e.g. "100%"): keep the raw segment — the bare "%"
+		// is escaped to a harmless literal "%25" by encodeURIComponent below.
+	}
+	return encodeURIComponent(decoded);
+}
+
+/**
+ * Encode every segment of an API path. The query string (if any) is left
+ * untouched: it is either built via URLSearchParams upstream or already
+ * encoded by the caller. Encoded slashes (%2F) are split-safe because the
+ * path is split BEFORE decoding — a `%2F` inside a segment stays inside it.
+ */
+export function encodeApiPath(path: string): string {
+	const qIndex = path.indexOf("?");
+	const raw = qIndex === -1 ? path : path.slice(0, qIndex);
+	const query = qIndex === -1 ? "" : path.slice(qIndex);
+	const encoded = raw
+		.split("/")
+		.map((seg) => {
+			if (!seg) return seg;
+			const encodedSeg = encodePathSegment(seg);
+			// Never emit dot segments: the browser resolves `.`/`..` before the
+			// request leaves the client, turning a crafted id into a path
+			// traversal (e.g. /vault/products/../../admin → /api/admin).
+			if (encodedSeg === "." || encodedSeg === "..")
+				return encodedSeg.replace(/\./g, "%2E");
+			return encodedSeg;
+		})
+		.join("/");
+	return `${encoded}${query}`;
+}
+
 async function parseError(resp: Response): Promise<ApiError> {
 	let payload: {
 		code?: string;
@@ -143,7 +186,7 @@ async function request<T>(
 		headers.set("Content-Type", "application/json");
 	}
 
-	let url = `${BASE_URL}${path}`;
+	let url = `${BASE_URL}${encodeApiPath(path)}`;
 	if (options.params) {
 		const searchParams = new URLSearchParams();
 		for (const [key, val] of Object.entries(options.params)) {
