@@ -70,9 +70,18 @@ async fn main() -> anyhow::Result<()> {
     }
     let id_gen = Arc::new(SystemIdGenerator);
     let clock = Arc::new(SystemClock);
+    // HARDENING (fixed in audit): JWT_SECRET was accepted at ANY length — a
+    // 4-character secret made HS256 trivially brute-forceable. Require at
+    // least 32 bytes at boot.
     let jwt_secret_raw = std::env::var("JWT_SECRET")
         .expect("JWT_SECRET must be set")
         .into_bytes();
+    if jwt_secret_raw.len() < 32 {
+        anyhow::bail!(
+            "JWT_SECRET must be at least 32 bytes (got {}) — generate one with `openssl rand -base64 32`",
+            jwt_secret_raw.len()
+        );
+    }
     let jwt_secret = Arc::new(jwt_secret_raw.clone());
     let aegis_config = AegisConfig {
         jwt_secret: jwt_secret_raw,
@@ -220,6 +229,8 @@ async fn main() -> anyhow::Result<()> {
         cinq_service: Arc<CinqService>,
         vault_service: Arc<VaultService>,
         system_user_id: Uuid,
+        /// SSRF-guarded HTTP executor for tenant-configured webhook URLs.
+        http_guard: std::sync::Arc<ataqu_security::egress::GuardedHttpClient>,
     }
     #[async_trait::async_trait]
     impl ActionDispatcher for AtaquActionDispatcher {
@@ -386,49 +397,25 @@ async fn main() -> anyhow::Result<()> {
                     body,
                     headers,
                 } => {
-                    use reqwest::ClientBuilder;
-                    let parsed_url = reqwest::Url::parse(url).map_err(|e| e.to_string())?;
-                    let host = parsed_url.host_str().ok_or("Invalid URL")?.to_string();
-                    let port = parsed_url.port_or_known_default().unwrap_or(80);
-                    let mut addrs = tokio::net::lookup_host((host.as_str(), port))
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    let addr = addrs.next().ok_or("DNS resolution failed")?;
-                    let ip = addr.ip();
-                    let is_blocked = match ip {
-                        std::net::IpAddr::V4(v4) => {
-                            v4.is_loopback()
-                                || v4.is_private()
-                                || v4.is_link_local()
-                                || v4.is_unspecified()
-                                || v4.is_broadcast()
-                                || v4.is_documentation()
-                        }
-                        std::net::IpAddr::V6(v6) => v6.is_loopback() || v6.is_unspecified(),
-                    };
-                    if is_blocked {
-                        return Err(format!("SSRF attempt blocked: internal IP ({})", ip));
+                    // SECURITY (fixed in audit): shared SSRF-guarded executor.
+                    // The previous inline check (a) did not cover IPv6
+                    // unique-local/link-local or CGNAT, (b) followed up to 10
+                    // redirects (each re-resolved, unvalidated — a 302 to
+                    // http://169.254.169.254/ bypassed everything), and (c)
+                    // had no timeout.
+                    let header_vec: Vec<(String, String)> = headers
+                        .iter()
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect();
+                    let resp = self
+                        .http_guard
+                        .execute(method, url, Some(body), &header_vec)
+                        .await?;
+                    if !resp.status().is_success() {
+                        // Fixed in audit: non-2xx used to be swallowed (the
+                        // event was marked completed and never retried).
+                        return Err(format!("Webhook returned HTTP {}", resp.status()));
                     }
-                    // Build client with host resolution.
-                    let client = ClientBuilder::new()
-                        .resolve(host.as_str(), std::net::SocketAddr::new(ip, port))
-                        .build()
-                        .map_err(|e| e.to_string())?;
-                    let mut req = match method.to_uppercase().as_str() {
-                        "POST" => client.post(parsed_url.clone()),
-                        "PUT" => client.put(parsed_url.clone()),
-                        "PATCH" => client.patch(parsed_url.clone()),
-                        "DELETE" => client.delete(parsed_url.clone()),
-                        _ => client.get(parsed_url.clone()),
-                    };
-                    for (k, v) in headers {
-                        if k.eq_ignore_ascii_case("host") {
-                            continue;
-                        }
-                        req = req.header(k, v);
-                    }
-                    req = req.json(&body);
-                    req.send().await.map_err(|e| e.to_string())?;
                 }
                 Action::SendEmail { to, subject, body } => {
                     use lettre::transport::smtp::authentication::Credentials;
@@ -616,11 +603,18 @@ async fn main() -> anyhow::Result<()> {
     if let Err(e) = aegis_service.ensure_system_user(system_user_id).await {
         tracing::warn!(error = %e, "Failed to ensure system user exists");
     }
+    // SECURITY (fixed in audit): all tenant-controlled webhook egress goes
+    // through the SSRF-guarded client (no redirects, private-range blocked,
+    // DNS pinned, hard timeouts).
+    let http_guard = std::sync::Arc::new(
+        ataqu_security::egress::GuardedHttpClient::new().map_err(|e| anyhow::anyhow!(e))?,
+    );
     let action_dispatcher = Arc::new(AtaquActionDispatcher {
         dial_service: dial_service.clone(),
         cinq_service: cinq_service.clone(),
         vault_service: vault_service.clone(),
         system_user_id,
+        http_guard: http_guard.clone(),
     });
     let spark_outbox = Arc::new(ataqu_application::outbox::SeaOrmOutbox::new(
         pools.core.clone(),
@@ -1038,6 +1032,195 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // TEMPO public booking: TempoInviteeCreated -> create a CINQ contact.
+    // RELIABILITY (fixed in audit): this event was emitted by the public
+    // booking flow but had NO registered handler — combined with the
+    // dispatcher's previous error swallowing, every booking lead was silently
+    // dropped. Same payload shape as CreateLeadFromForm.
+    event_registry.register("collab_crm", "TempoInviteeCreated", {
+        let cinq = cinq_service.clone();
+        move |evt| {
+            let cinq = cinq.clone();
+            async move {
+                let payload = &evt.payload;
+                let tenant_id = payload
+                    .get("tenant_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .ok_or("Missing tenant_id")?;
+                let name = payload
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let email_str = payload
+                    .get("email")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let source = payload
+                    .get("source")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("tempo_booking")
+                    .to_string();
+                if name.is_empty() || email_str.is_empty() {
+                    tracing::warn!("TempoInviteeCreated: missing name or email, skipping");
+                    return Ok(());
+                }
+                let cmd = ataqu_application::cinq_service::CreateContactCommand {
+                    tenant_id: ataqu_kernel::TenantId::new(tenant_id),
+                    name,
+                    company: None,
+                    email: ataqu_security::Email::new(email_str),
+                    phone: None,
+                    custom_fields: serde_json::json!({ "source": source }),
+                    lead_score: None,
+                };
+                cinq.create_contact(system_user_id, cmd)
+                    .await
+                    .map_err(|e| format!("Failed to create booking contact: {}", e))?;
+                Ok(())
+            }
+        }
+    });
+
+    // DIAL: ReminderEvent (cron "reminder" tasks) -> send a channel message.
+    event_registry.register("dial", "ReminderEvent", {
+        let dial = dial_service.clone();
+        move |evt| {
+            let dial = dial.clone();
+            async move {
+                let payload = &evt.payload;
+                let tenant_id = payload
+                    .get("tenant_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .ok_or("Missing tenant_id")?;
+                let channel_id = payload
+                    .get("channel_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .ok_or("Missing channel_id")?;
+                let user_id = payload
+                    .get("user_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .unwrap_or(system_user_id);
+                let message = payload
+                    .get("message")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Reminder")
+                    .to_string();
+                dial.send_message(SendMessageCommand {
+                    tenant_id: ataqu_kernel::TenantId::new(tenant_id),
+                    channel_id,
+                    thread_id: None,
+                    author_id: user_id,
+                    content: message,
+                })
+                .await
+                .map_err(|e| format!("Failed to send reminder: {}", e))?;
+                Ok(())
+            }
+        }
+    });
+
+    // DIAL: ImportComplete -> DM the user who started the import.
+    event_registry.register("dial", "ImportComplete", {
+        let dial = dial_service.clone();
+        move |evt| {
+            let dial = dial.clone();
+            async move {
+                let payload = &evt.payload;
+                let tenant_id = payload
+                    .get("tenant_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .ok_or("Missing tenant_id")?;
+                let user_id = payload
+                    .get("user_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| uuid::Uuid::parse_str(s).ok())
+                    .ok_or("Missing user_id")?;
+                let message = payload
+                    .get("message")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Your import finished")
+                    .to_string();
+                dial.send_direct_message(
+                    ataqu_kernel::TenantId::new(tenant_id),
+                    system_user_id,
+                    user_id,
+                    message,
+                )
+                .await
+                .map_err(|e| format!("Failed to notify import completion: {}", e))?;
+                Ok(())
+            }
+        }
+    });
+
+    // CORE: ScheduledEmail (cron "send_email" tasks) -> deliver via SMTP.
+    event_registry.register("core", "ScheduledEmail", {
+        move |evt| async move {
+            let payload = &evt.payload;
+            let inner = payload
+                .get("payload")
+                .cloned()
+                .unwrap_or(serde_json::json!({}));
+            let to = inner
+                .get("to")
+                .and_then(|v| v.as_str())
+                .ok_or("ScheduledEmail missing 'to'")?
+                .to_string();
+            let subject = inner
+                .get("subject")
+                .and_then(|v| v.as_str())
+                .unwrap_or("(no subject)")
+                .to_string();
+            let body = inner
+                .get("body")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            send_smtp_email(&to, &subject, &body).await?;
+            Ok(())
+        }
+    });
+
+    // COLLAB_OPS: SendBookingReminder -> email the invitee.
+    event_registry.register("collab_ops", "SendBookingReminder", {
+        move |evt| {
+            async move {
+                let payload = &evt.payload;
+                let to = payload
+                    .get("email")
+                    .and_then(|v| v.as_str())
+                    .ok_or("SendBookingReminder missing 'email'")?
+                    .to_string();
+                let starts_at = payload
+                    .get("starts_at")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let timezone = payload
+                    .get("timezone")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("UTC")
+                    .to_string();
+                send_smtp_email(
+                    &to,
+                    "Upcoming booking reminder",
+                    &format!(
+                        "Your booking starts at {starts_at} ({timezone}). This is an automated reminder."
+                    ),
+                )
+                .await?;
+                Ok(())
+            }
+        }
+    });
+
     // SOND routing: FormRoutingNotification -> send DIAL message
     event_registry.register("dial", "FormRoutingNotification", {
         let dial = dial_service.clone();
@@ -1103,9 +1286,9 @@ async fn main() -> anyhow::Result<()> {
 
     // SOND routing: WebhookTrigger -> execute webhook
     event_registry.register("spark", "WebhookTrigger", {
-        let client = http_client.clone();
+        let http_guard = http_guard.clone();
         move |evt| {
-            let client = client.clone();
+            let http_guard = http_guard.clone();
             async move {
                 let payload = &evt.payload;
                 let url = payload
@@ -1121,27 +1304,21 @@ async fn main() -> anyhow::Result<()> {
                     .cloned()
                     .unwrap_or(serde_json::json!({}));
 
-                // Simple webhook execution with timeout and no retry
-                let request = match method.to_uppercase().as_str() {
-                    "POST" => client.post(url).json(&answers),
-                    "PUT" => client.put(url).json(&answers),
-                    "PATCH" => client.patch(url).json(&answers),
-                    "DELETE" => client.delete(url),
-                    _ => client.get(url).query(&answers),
-                };
-                let resp = request
-                    .send()
-                    .await
-                    .map_err(|e| format!("Webhook request failed: {}", e))?;
+                // SECURITY (fixed in audit): this handler executed ANY tenant
+                // supplied URL with zero SSRF checks (and no timeout). It now
+                // goes through the same guarded executor as `Action::Webhook`.
+                let resp = http_guard.execute(method, url, Some(&answers), &[]).await?;
                 if resp.status().is_success() {
                     tracing::info!(
                         "Webhook triggered for response {}",
                         evt.aggregate_id.unwrap_or_default()
                     );
+                    Ok(())
                 } else {
-                    tracing::warn!("Webhook returned error: {}", resp.status());
+                    // Non-2xx is an error so the dispatcher retries and, after
+                    // MAX_ATTEMPTS, dead-letters the event.
+                    Err(format!("Webhook returned HTTP {}", resp.status()))
                 }
-                Ok(())
             }
         }
     });
@@ -1395,5 +1572,44 @@ async fn main() -> anyhow::Result<()> {
     let listener = TcpListener::bind(addr).await?;
     info!("Server listening on {}", addr);
     axum::serve(listener, app).await?;
+    Ok(())
+}
+
+/// Send an email through the configured SMTP relay.
+///
+/// RELIABILITY (fixed in audit): `ScheduledEmail` and `SendBookingReminder`
+/// outbox events previously had no consumer at all — the emails were never
+/// sent and (with the old error-swallowing dispatcher) the events were marked
+/// completed. When SMTP is not configured the handler no-ops with an INFO log
+/// instead of failing forever: the mail feature is opt-in via `SMTP_USER`.
+async fn send_smtp_email(to: &str, subject: &str, body: &str) -> Result<(), String> {
+    use lettre::transport::smtp::authentication::Credentials;
+    use lettre::{Message, SmtpTransport, Transport};
+
+    let Ok(smtp_user) = std::env::var("SMTP_USER") else {
+        tracing::info!(
+            to = %to,
+            "SMTP_USER not configured — email suppressed (scheduled/reminder mail disabled)"
+        );
+        return Ok(());
+    };
+    let smtp_pass = std::env::var("SMTP_PASS").map_err(|_| "SMTP_PASS not set".to_string())?;
+    let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "smtp.gmail.com".to_string());
+
+    let email = Message::builder()
+        .to(to
+            .parse()
+            .map_err(|e: lettre::address::AddressError| e.to_string())?)
+        .subject(subject)
+        .body(body.to_string())
+        .map_err(|e| e.to_string())?;
+    let mailer = SmtpTransport::relay(&smtp_host)
+        .map_err(|e| e.to_string())?
+        .credentials(Credentials::new(smtp_user, smtp_pass))
+        .build();
+    tokio::task::spawn_blocking(move || mailer.send(&email).map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| e.to_string())??;
+    tracing::info!(to = %to, "Scheduled email sent");
     Ok(())
 }
