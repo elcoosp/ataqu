@@ -27,7 +27,7 @@ export interface TeamStatus {
 /** Fetch the current tenant's onboarding setup status (spec 2.10). */
 export const getOnboardingStatus = async (): Promise<OnboardingStatus> => {
 	const tenantId = useAuthStore.getState().tenantId;
-	const qs = tenantId ? `?tenant_id=${tenantId}` : "";
+	const qs = tenantId ? `?tenant_id=${encodeURIComponent(tenantId)}` : "";
 	return api.get<OnboardingStatus>(`/v1/onboarding/status${qs}`);
 };
 
