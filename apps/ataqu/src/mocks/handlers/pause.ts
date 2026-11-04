@@ -2,7 +2,7 @@
  * PAUSE (HR) handlers — employees, onboarding tasks, leave requests,
  * documents + presigned upload simulation. Mirrors handlers/pause.rs.
  */
-import { http, type HttpHandler } from "msw";
+import { type HttpHandler, http } from "msw";
 import { audit, bump, db, nextId } from "../db";
 import {
 	apiError,
@@ -22,8 +22,11 @@ import {
 export const pauseHandlers: HttpHandler[] = [
 	// -------------------------------------------------------------- employees
 	http.get("/api/pause/employees", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = [...db.employees].sort((a, b) => a.full_name.localeCompare(b.full_name));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const rows = [...db.employees].sort((a, b) =>
+			a.full_name.localeCompare(b.full_name),
+		);
 		return page(rows, listParams(request, 100));
 	}),
 
@@ -38,8 +41,15 @@ export const pauseHandlers: HttpHandler[] = [
 			department?: string;
 			hire_date: string;
 		}>(request);
-		if (!body.full_name?.trim() || !body.email?.includes("@") || !body.job_title?.trim() || !body.hire_date) {
-			return validationError("full_name, email, job_title and hire_date are required");
+		if (
+			!body.full_name?.trim() ||
+			!body.email?.includes("@") ||
+			!body.job_title?.trim() ||
+			!body.hire_date
+		) {
+			return validationError(
+				"full_name, email, job_title and hire_date are required",
+			);
 		}
 		const now = new Date().toISOString();
 		const employee = {
@@ -58,12 +68,15 @@ export const pauseHandlers: HttpHandler[] = [
 			version: 1,
 		};
 		db.employees.push(employee);
-		audit(actor, "employee.create", "pause", "employee", employee.id, { name: employee.full_name });
+		audit(actor, "employee.create", "pause", "employee", employee.id, {
+			name: employee.full_name,
+		});
 		return created(employee);
 	}),
 
 	http.get("/api/pause/employees/search", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const qs = (new URL(request.url).searchParams.get("q") ?? "").toLowerCase();
 		return bare(
 			db.employees.filter(
@@ -76,7 +89,8 @@ export const pauseHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/pause/employees/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const employee = db.employees.find((e) => e.id === params.id);
 		return employee ? ok(employee) : notFound("Employee");
 	}),
@@ -88,10 +102,15 @@ export const pauseHandlers: HttpHandler[] = [
 		if (!employee) return notFound("Employee");
 		const conflictResp = checkVersion(request, employee.version);
 		if (conflictResp) return conflictResp;
-		const body = await jsonBody<{ full_name?: string; job_title?: string; department?: string }>(request);
+		const body = await jsonBody<{
+			full_name?: string;
+			job_title?: string;
+			department?: string;
+		}>(request);
 		if (body.full_name != null) employee.full_name = body.full_name;
 		if (body.job_title != null) employee.job_title = body.job_title;
-		if (body.department !== undefined) employee.department = body.department ?? undefined;
+		if (body.department !== undefined)
+			employee.department = body.department ?? undefined;
 		employee.updated_at = new Date().toISOString();
 		const v = bump(employee);
 		audit(actor, "employee.update", "pause", "employee", employee.id, body);
@@ -117,30 +136,50 @@ export const pauseHandlers: HttpHandler[] = [
 			const employee = db.employees.find((e) => e.id === id);
 			if (employee) employee.is_active = false;
 		}
-		audit(actor, "employee.bulk_deactivate", "pause", "employee", undefined, { count: ids?.length ?? 0 });
+		audit(actor, "employee.bulk_deactivate", "pause", "employee", undefined, {
+			count: ids?.length ?? 0,
+		});
 		return noContent();
 	}),
 
-	http.post("/api/pause/employees/:id/onboarding/complete", async ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const employee = db.employees.find((e) => e.id === params.id);
-		if (!employee) return notFound("Employee");
-		const { task_id } = await jsonBody<{ task_id: string }>(request);
-		if (!task_id) return validationError("task_id is required");
-		if (!employee.onboarding_tasks.includes(task_id)) employee.onboarding_tasks.push(task_id);
-		if (["paperwork", "equipment", "training"].every((t) => employee.onboarding_tasks.includes(t))) {
-			employee.onboarding_completed_at = new Date().toISOString();
-		}
-		const v = bump(employee);
-		audit(actor, "employee.onboarding_complete", "pause", "employee", employee.id, { task_id });
-		return ok({ ...employee, version: v });
-	}),
+	http.post(
+		"/api/pause/employees/:id/onboarding/complete",
+		async ({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const employee = db.employees.find((e) => e.id === params.id);
+			if (!employee) return notFound("Employee");
+			const { task_id } = await jsonBody<{ task_id: string }>(request);
+			if (!task_id) return validationError("task_id is required");
+			if (!employee.onboarding_tasks.includes(task_id))
+				employee.onboarding_tasks.push(task_id);
+			if (
+				["paperwork", "equipment", "training"].every((t) =>
+					employee.onboarding_tasks.includes(t),
+				)
+			) {
+				employee.onboarding_completed_at = new Date().toISOString();
+			}
+			const v = bump(employee);
+			audit(
+				actor,
+				"employee.onboarding_complete",
+				"pause",
+				"employee",
+				employee.id,
+				{ task_id },
+			);
+			return ok({ ...employee, version: v });
+		},
+	),
 
 	// ------------------------------------------------------------------ leave
 	http.get("/api/pause/leave-requests", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = [...db.leaves].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const rows = [...db.leaves].sort((a, b) =>
+			a.created_at < b.created_at ? 1 : -1,
+		);
 		return page(rows, listParams(request, 100));
 	}),
 
@@ -154,8 +193,15 @@ export const pauseHandlers: HttpHandler[] = [
 			end_date: string;
 			reason?: string;
 		}>(request);
-		if (!body.employee_id || !body.leave_type || !body.start_date || !body.end_date) {
-			return validationError("employee_id, leave_type, start_date and end_date are required");
+		if (
+			!body.employee_id ||
+			!body.leave_type ||
+			!body.start_date ||
+			!body.end_date
+		) {
+			return validationError(
+				"employee_id, leave_type, start_date and end_date are required",
+			);
 		}
 		const employee = db.employees.find((e) => e.id === body.employee_id);
 		if (!employee) return notFound("Employee");
@@ -178,41 +224,73 @@ export const pauseHandlers: HttpHandler[] = [
 		return created(leave);
 	}),
 
-	http.patch("/api/pause/leave-requests/:id/approve", ({ request, params }) => reviewLeave(request, params.id as string, "approved")),
-	http.patch("/api/pause/leave-requests/:id/reject", ({ request, params }) => reviewLeave(request, params.id as string, "rejected")),
-	http.patch("/api/pause/leave-requests/:id/cancel", ({ request, params }) => reviewLeave(request, params.id as string, "cancelled")),
+	http.patch("/api/pause/leave-requests/:id/approve", ({ request, params }) =>
+		reviewLeave(request, params.id as string, "approved"),
+	),
+	http.patch("/api/pause/leave-requests/:id/reject", ({ request, params }) =>
+		reviewLeave(request, params.id as string, "rejected"),
+	),
+	http.patch("/api/pause/leave-requests/:id/cancel", ({ request, params }) =>
+		reviewLeave(request, params.id as string, "cancelled"),
+	),
 
 	// -------------------------------------------------------------- documents
-	http.post("/api/pause/employees/:employeeId/documents", async ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const employee = db.employees.find((e) => e.id === params.employeeId);
-		if (!employee) return notFound("Employee");
-		const body = await jsonBody<{ file_name: string; file_url: string; doc_type: string }>(request);
-		if (!body.file_name || !body.file_url) return validationError("file_name and file_url are required");
-		const document = {
-			id: nextId("hdoc"),
-			employee_id: employee.id,
-			file_name: body.file_name,
-			file_url: body.file_url,
-			doc_type: body.doc_type ?? "other",
-			created_at: new Date().toISOString(),
-		};
-		db.hrDocuments.push(document);
-		audit(actor, "document.upload", "pause", "document", document.id, { file: document.file_name });
-		return created({ id: document.id, file_name: document.file_name, file_url: document.file_url, doc_type: document.doc_type, created_at: document.created_at });
-	}),
+	http.post(
+		"/api/pause/employees/:employeeId/documents",
+		async ({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const employee = db.employees.find((e) => e.id === params.employeeId);
+			if (!employee) return notFound("Employee");
+			const body = await jsonBody<{
+				file_name: string;
+				file_url: string;
+				doc_type: string;
+			}>(request);
+			if (!body.file_name || !body.file_url)
+				return validationError("file_name and file_url are required");
+			const document = {
+				id: nextId("hdoc"),
+				employee_id: employee.id,
+				file_name: body.file_name,
+				file_url: body.file_url,
+				doc_type: body.doc_type ?? "other",
+				created_at: new Date().toISOString(),
+			};
+			db.hrDocuments.push(document);
+			audit(actor, "document.upload", "pause", "document", document.id, {
+				file: document.file_name,
+			});
+			return created({
+				id: document.id,
+				file_name: document.file_name,
+				file_url: document.file_url,
+				doc_type: document.doc_type,
+				created_at: document.created_at,
+			});
+		},
+	),
 
-	http.get("/api/pause/employees/:employeeId/documents", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		return bare(db.hrDocuments.filter((d) => d.employee_id === params.employeeId));
-	}),
+	http.get(
+		"/api/pause/employees/:employeeId/documents",
+		({ request, params }) => {
+			if (!callerId(request))
+				return apiError("UNAUTHORIZED", "Authentication required");
+			return bare(
+				db.hrDocuments.filter((d) => d.employee_id === params.employeeId),
+			);
+		},
+	),
 
 	// The S3 presigned upload: mock accepts a PUT anywhere under /api/pause/uploads.
 	http.put("/api/pause/uploads/:key", () => noContent()),
 ];
 
-function reviewLeave(request: Request, id: string, status: "approved" | "rejected" | "cancelled") {
+function reviewLeave(
+	request: Request,
+	id: string,
+	status: "approved" | "rejected" | "cancelled",
+) {
 	const actor = callerId(request);
 	if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 	const leave = db.leaves.find((l) => l.id === id);
