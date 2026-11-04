@@ -9,13 +9,14 @@ import {
 	Bone,
 	Button,
 	Input,
+	isConflictError,
 	Label,
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
+	useConflict,
 } from "@ataqu/ui";
-import { isConflictError, useConflict } from "@ataqu/ui";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { createFileRoute } from "@tanstack/react-router";
