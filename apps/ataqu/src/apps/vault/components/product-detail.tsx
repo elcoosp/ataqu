@@ -68,8 +68,8 @@ export function ProductDetail({ productId }: { productId: string }) {
 	const navigate = useNavigate();
 	const setSearch: (next: Record<string, unknown>) => void = (next) =>
 		navigate({ search: next as never });
-	const variantParam = looseSearch["variant"];
-	const createVariantParam = looseSearch["createVariant"];
+	const variantParam = looseSearch.variant;
+	const createVariantParam = looseSearch.createVariant;
 	const variantIdParam =
 		typeof variantParam === "string" && variantParam.length > 0
 			? variantParam
