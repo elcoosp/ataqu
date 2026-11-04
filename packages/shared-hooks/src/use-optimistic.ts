@@ -1,4 +1,3 @@
-import type { QueryKey } from "@tanstack/react-query";
 import {
 	type UseMutationResult,
 	useMutation,
