@@ -1,8 +1,6 @@
 use axum::{
     Json,
     extract::{Query, State},
-    http::StatusCode,
-    response::IntoResponse,
 };
 use serde::Deserialize;
 use uuid::Uuid;
@@ -11,47 +9,49 @@ use crate::AppState;
 use crate::error::{ApiResponseError, ApiResult};
 use crate::middleware::AuthContext;
 
+/// SECURITY (fixed in audit): the tenant is taken from the authenticated
+/// `AuthContext`, never from the query string. The previous version accepted
+/// `?tenant_id=…`, letting any authenticated user of tenant A read tenant B's
+/// onboarding state (IDOR). The field is still parsed (and ignored) so older
+/// clients that append it to the URL keep working.
 #[derive(Deserialize)]
 pub struct TenantQuery {
-    pub tenant_id: Uuid,
+    #[allow(dead_code)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Deserialize)]
 pub struct CompleteTaskRequest {
-    pub tenant_id: Uuid,
+    /// Ignored: the tenant always comes from the auth context.
+    #[allow(dead_code)]
+    pub tenant_id: Option<Uuid>,
     pub task_id: String,
 }
 
 pub async fn get_status(
     State(state): State<AppState>,
-    Query(query): Query<TenantQuery>,
-) -> impl IntoResponse {
-    match state.onboarding_service.get_status(query.tenant_id).await {
-        Ok(status) => (StatusCode::OK, Json(status)).into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": e.to_string() })),
-        )
-            .into_response(),
-    }
+    auth: AuthContext,
+    Query(_query): Query<TenantQuery>,
+) -> ApiResult<Json<ataqu_domain_onboarding::OnboardingStatus>> {
+    let status = state
+        .onboarding_service
+        .get_status(auth.tenant_id.as_uuid())
+        .await
+        .map_err(ApiResponseError::internal_err)?;
+    Ok(Json(status))
 }
 
 pub async fn complete_task(
     State(state): State<AppState>,
+    auth: AuthContext,
     Json(payload): Json<CompleteTaskRequest>,
-) -> impl IntoResponse {
-    match state
+) -> ApiResult<Json<ataqu_domain_onboarding::OnboardingStatus>> {
+    let status = state
         .onboarding_service
-        .complete_task(payload.tenant_id, payload.task_id)
+        .complete_task(auth.tenant_id.as_uuid(), payload.task_id)
         .await
-    {
-        Ok(status) => (StatusCode::OK, Json(status)).into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": e.to_string() })),
-        )
-            .into_response(),
-    }
+        .map_err(ApiResponseError::internal_err)?;
+    Ok(Json(status))
 }
 
 // New endpoint: team status
@@ -95,7 +95,7 @@ pub async fn team_status(
         .onboarding_service
         .get_status(auth.tenant_id.as_uuid())
         .await
-        .map_err(|_| ApiResponseError::internal("Failed to fetch onboarding status"))?;
+        .map_err(ApiResponseError::internal_err)?;
 
     let user_list = users
         .into_iter()
