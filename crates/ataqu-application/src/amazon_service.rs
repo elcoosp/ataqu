@@ -72,10 +72,12 @@ impl AmazonService {
         loop {
             let mut url = format!(
                 "https://sellingpartnerapi-na.amazon.com/fba/inventory/v1/summaries?marketplaceIds={}&details=true",
-                integration.marketplace_id
+                // ENCODE (fixed in audit): the marketplace id is tenant config
+                // and was interpolated raw into the query string.
+                urlencoding::encode(&integration.marketplace_id)
             );
             if let Some(token) = next_token.clone() {
-                url.push_str(&format!("&nextToken={}", token));
+                url.push_str(&format!("&nextToken={}", urlencoding::encode(&token)));
             }
 
             let resp = client
