@@ -118,12 +118,26 @@ pub fn validate_answers(
     Ok(validated)
 }
 
+/// Maximum stored length for free-text answers (fixed in audit: the public
+/// submission endpoint had no bounds, so a single answer could bloat the DB).
+pub const MAX_ANSWER_LEN: usize = 4_000;
+
+fn check_len(value: &str) -> Result<(), SondError> {
+    if value.len() > MAX_ANSWER_LEN {
+        return Err(SondError::ConditionError(format!(
+            "Answer exceeds the maximum length of {MAX_ANSWER_LEN} characters"
+        )));
+    }
+    Ok(())
+}
+
 fn validate_answer_value(value: &AnswerValue, question: &Question) -> Result<(), SondError> {
     match (&question.question_type, value) {
-        (crate::question::QuestionType::Text, AnswerValue::Text(_)) => Ok(()),
+        (crate::question::QuestionType::Text, AnswerValue::Text(t)) => check_len(t),
         (crate::question::QuestionType::Number, AnswerValue::Number(_)) => Ok(()),
         (crate::question::QuestionType::Date, AnswerValue::Date(_)) => Ok(()),
         (crate::question::QuestionType::Choice { options }, AnswerValue::Choice(selected)) => {
+            check_len(selected)?;
             if options.contains(selected) {
                 Ok(())
             } else {
@@ -134,6 +148,9 @@ fn validate_answer_value(value: &AnswerValue, question: &Question) -> Result<(),
             crate::question::QuestionType::MultipleChoice { options },
             AnswerValue::MultipleChoice(selected),
         ) => {
+            for s in selected {
+                check_len(s)?;
+            }
             if selected.iter().all(|s| options.contains(s)) {
                 Ok(())
             } else {
@@ -148,6 +165,7 @@ fn validate_answer_value(value: &AnswerValue, question: &Question) -> Result<(),
             }
         }
         (crate::question::QuestionType::Email, AnswerValue::Email(e)) => {
+            check_len(e)?;
             if e.contains('@') && e.contains('.') {
                 Ok(())
             } else {
@@ -156,7 +174,7 @@ fn validate_answer_value(value: &AnswerValue, question: &Question) -> Result<(),
                 ))
             }
         }
-        (crate::question::QuestionType::Phone, AnswerValue::Phone(_)) => Ok(()),
+        (crate::question::QuestionType::Phone, AnswerValue::Phone(p)) => check_len(p),
         _ => Err(SondError::TypeMismatch),
     }
 }
