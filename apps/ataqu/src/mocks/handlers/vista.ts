@@ -4,7 +4,7 @@
  * drill-down, cross-app views, combine, and a small demo query engine that
  * powers the Explore SQL editor. Mirrors handlers/vista.rs (+ demo extension).
  */
-import { http, type HttpHandler } from "msw";
+import { type HttpHandler, http } from "msw";
 import { computeKpis, db, type MockDashboard } from "../db";
 import {
 	apiError,
@@ -21,15 +21,20 @@ import {
 
 export const vistaHandlers: HttpHandler[] = [
 	http.get("/api/vista/dashboards", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return bare(db.dashboards);
 	}),
 
 	http.post("/api/vista/dashboards", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ name: string; config?: MockDashboard["config"] }>(request);
-		if (!body.name?.trim()) return validationError("Dashboard name is required");
+		const body = await jsonBody<{
+			name: string;
+			config?: MockDashboard["config"];
+		}>(request);
+		if (!body.name?.trim())
+			return validationError("Dashboard name is required");
 		const now = new Date().toISOString();
 		const dashboard = {
 			id: nextDashboardId(),
@@ -44,7 +49,8 @@ export const vistaHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/vista/dashboards/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const dashboard = db.dashboards.find((d) => d.id === params.id);
 		return dashboard ? ok(dashboard) : notFound("Dashboard");
 	}),
@@ -56,7 +62,10 @@ export const vistaHandlers: HttpHandler[] = [
 		if (!dashboard) return notFound("Dashboard");
 		const conflictResp = checkVersion(request, dashboard.version);
 		if (conflictResp) return conflictResp;
-		const body = await jsonBody<{ name?: string; config?: typeof dashboard.config }>(request);
+		const body = await jsonBody<{
+			name?: string;
+			config?: typeof dashboard.config;
+		}>(request);
 		if (body.name != null) dashboard.name = body.name;
 		if (body.config != null) dashboard.config = body.config;
 		dashboard.updated_at = new Date().toISOString();
@@ -74,24 +83,27 @@ export const vistaHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/vista/kpis", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return ok(computeKpis());
 	}),
 
 	http.get("/api/vista/data-points/:metric", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const limit = Number(new URL(request.url).searchParams.get("limit") ?? 30);
 		const alias = metricAlias(params.metric as string);
 		return bare(
-			db.dataPoints
-				.filter((p) => p.metric_name === alias)
-				.slice(-limit),
+			db.dataPoints.filter((p) => p.metric_name === alias).slice(-limit),
 		);
 	}),
 
 	http.post("/api/vista/drill-down", async ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ metric?: string; dimension?: string }>(request);
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const body = await jsonBody<{ metric?: string; dimension?: string }>(
+			request,
+		);
 		// Demo: drill into recent open deals / contacts / bookings by metric.
 		switch (body.metric) {
 			case "pipeline_value":
@@ -101,22 +113,38 @@ export const vistaHandlers: HttpHandler[] = [
 						title: d.title,
 						amount: d.amount,
 						status: d.status,
-						company: db.contacts.find((c) => c.id === d.contact_id)?.company ?? "",
+						company:
+							db.contacts.find((c) => c.id === d.contact_id)?.company ?? "",
 					})),
 				);
 			case "contacts":
-				return bare(db.contacts.slice(0, 12).map((c) => ({ name: c.name, company: c.company, lead_score: c.lead_score })));
+				return bare(
+					db.contacts.slice(0, 12).map((c) => ({
+						name: c.name,
+						company: c.company,
+						lead_score: c.lead_score,
+					})),
+				);
 			case "bookings":
-				return bare(db.bookings.slice(0, 12).map((b) => ({ starts_at: b.starts_at, status: b.status })));
+				return bare(
+					db.bookings
+						.slice(0, 12)
+						.map((b) => ({ starts_at: b.starts_at, status: b.status })),
+				);
 			default:
 				return bare(
-					db.activities.slice(0, 12).map((a) => ({ description: a.description, type: a.activity_type, created_at: a.created_at })),
+					db.activities.slice(0, 12).map((a) => ({
+						description: a.description,
+						type: a.activity_type,
+						created_at: a.created_at,
+					})),
 				);
 		}
 	}),
 
 	http.get("/api/vista/cross-app", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const view = new URL(request.url).searchParams.get("view") ?? "";
 		switch (view) {
 			case "revenue-inventory":
@@ -131,7 +159,9 @@ export const vistaHandlers: HttpHandler[] = [
 								amount: d.amount * (d.quantity ?? 1),
 								status: d.status,
 								units_requested: d.quantity ?? 1,
-								low_stock_variants: db.variants.filter((v) => v.stock_quantity <= 5).length,
+								low_stock_variants: db.variants.filter(
+									(v) => v.stock_quantity <= 5,
+								).length,
 								company: contact?.company ?? "",
 							};
 						}),
@@ -139,7 +169,9 @@ export const vistaHandlers: HttpHandler[] = [
 			case "support-sales":
 				return bare(
 					db.tickets.slice(0, 8).map((t) => {
-						const openDeals = db.deals.filter((d) => d.status === "open").length;
+						const openDeals = db.deals.filter(
+							(d) => d.status === "open",
+						).length;
 						return {
 							ticket: t.subject,
 							priority: t.priority,
@@ -158,13 +190,23 @@ export const vistaHandlers: HttpHandler[] = [
 	}),
 
 	http.post("/api/vista/combine", async ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ primary: string; secondary: string }>(request);
-		const pointsA = db.dataPoints.filter((p) => p.metric_name === metricAlias(body.primary ?? ""));
-		const pointsB = db.dataPoints.filter((p) => p.metric_name === metricAlias(body.secondary ?? ""));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const body = await jsonBody<{ primary: string; secondary: string }>(
+			request,
+		);
+		const pointsA = db.dataPoints.filter(
+			(p) => p.metric_name === metricAlias(body.primary ?? ""),
+		);
+		const pointsB = db.dataPoints.filter(
+			(p) => p.metric_name === metricAlias(body.secondary ?? ""),
+		);
 		const byDay = new Map<string, Record<string, number | string>>();
 		for (const p of pointsA) {
-			byDay.set(p.timestamp, { date: p.timestamp, [body.primary ?? "a"]: p.value });
+			byDay.set(p.timestamp, {
+				date: p.timestamp,
+				[body.primary ?? "a"]: p.value,
+			});
 		}
 		for (const p of pointsB) {
 			const row = byDay.get(p.timestamp) ?? { date: p.timestamp };
@@ -185,9 +227,10 @@ export const vistaHandlers: HttpHandler[] = [
 		const body = await jsonBody<{ query: string }>(request);
 		const sql = (body.query ?? "").trim();
 		if (!sql) return validationError("Enter a query");
-		const match = /^select\s+([\w*,\s]+?)\s+from\s+(contacts|deals|products|tickets|employees|workflows)(?:\s+limit\s+(\d+))?$/i.exec(
-			sql.replace(/;+$/, ""),
-		);
+		const match =
+			/^select\s+([\w*,\s]+?)\s+from\s+(contacts|deals|products|tickets|employees|workflows)(?:\s+limit\s+(\d+))?$/i.exec(
+				sql.replace(/;+$/, ""),
+			);
 		if (!match) {
 			return validationError(
 				"Demo engine supports: SELECT * FROM contacts|deals|products|tickets|employees|workflows [LIMIT n]",
@@ -197,8 +240,9 @@ export const vistaHandlers: HttpHandler[] = [
 		const cols = colsRaw.split(",").map((c) => c.trim().toLowerCase());
 		const limit = Math.min(Number(limitRaw ?? 25), 200);
 		const { rows, columns } = tableRows(table, limit);
-		const projected =
-			cols.includes("*") ? columns : columns.filter((c) => cols.includes(c.toLowerCase()));
+		const projected = cols.includes("*")
+			? columns
+			: columns.filter((c) => cols.includes(c.toLowerCase()));
 		return ok({
 			columns: projected,
 			rows: rows.map((r) =>
@@ -234,42 +278,63 @@ function tableRows(table: string, limit: number) {
 			return {
 				columns: ["id", "name", "email", "company", "lead_score"],
 				rows: db.contacts.slice(0, limit).map((c) => ({
-					id: c.id, name: c.name, email: c.email, company: c.company ?? "", lead_score: c.lead_score ?? 0,
+					id: c.id,
+					name: c.name,
+					email: c.email,
+					company: c.company ?? "",
+					lead_score: c.lead_score ?? 0,
 				})),
 			};
 		case "deals":
 			return {
 				columns: ["id", "title", "amount", "status", "company"],
 				rows: db.deals.slice(0, limit).map((d) => ({
-					id: d.id, title: d.title, amount: d.amount, status: d.status,
-					company: db.contacts.find((c) => c.id === d.contact_id)?.company ?? "",
+					id: d.id,
+					title: d.title,
+					amount: d.amount,
+					status: d.status,
+					company:
+						db.contacts.find((c) => c.id === d.contact_id)?.company ?? "",
 				})),
 			};
 		case "products":
 			return {
 				columns: ["id", "name", "sku", "variants"],
 				rows: db.products.slice(0, limit).map((p) => ({
-					id: p.id, name: p.name, sku: p.sku,
+					id: p.id,
+					name: p.name,
+					sku: p.sku,
 					variants: db.variants.filter((v) => v.product_id === p.id).length,
 				})),
 			};
 		case "tickets":
 			return {
 				columns: ["id", "subject", "status", "priority"],
-				rows: db.tickets.slice(0, limit).map((t) => ({ id: t.id, subject: t.subject, status: t.status, priority: t.priority })),
+				rows: db.tickets.slice(0, limit).map((t) => ({
+					id: t.id,
+					subject: t.subject,
+					status: t.status,
+					priority: t.priority,
+				})),
 			};
 		case "employees":
 			return {
 				columns: ["id", "full_name", "job_title", "department"],
 				rows: db.employees.slice(0, limit).map((e) => ({
-					id: e.id, full_name: e.full_name, job_title: e.job_title, department: e.department ?? "",
+					id: e.id,
+					full_name: e.full_name,
+					job_title: e.job_title,
+					department: e.department ?? "",
 				})),
 			};
 		default:
 			return {
 				columns: ["id", "name", "is_active", "trigger"],
 				rows: db.workflows.slice(0, limit).map((w) => ({
-					id: w.id, name: w.name, is_active: w.is_active, trigger: w.trigger.type,
+					id: w.id,
+					name: w.name,
+					is_active: w.is_active,
+					trigger: w.trigger.type,
 				})),
 			};
 	}
