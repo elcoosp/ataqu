@@ -11,14 +11,17 @@ use axum::{extract::Request, http::StatusCode, middleware::Next, response::Respo
 /// 1. `Sec-Fetch-Site` — present on all fetch/XHR/subresource requests made by
 ///    a browser. A cross-site request (`cross-site`) is rejected for unsafe
 ///    methods. (An attacker's page cannot suppress or alter this header.)
-/// 2. `Origin` — when present, must be same-origin (or a subdomain of) the
+/// 2. `Origin` — when present, it must be exactly same-origin with the
 ///    request `Host`. No `Origin` is allowed (non-browser clients such as curl,
 ///    mobile apps and server-to-server calls legitimately omit it).
 ///
-/// Webhook endpoints (`/webhooks/`) are excluded: they are authenticated by an
-/// HMAC signature, not by ambient credentials.
+/// Webhook endpoints are excluded: they are authenticated by an
+/// HMAC signature, not by ambient credentials. The exemption is an exact
+/// prefix match (`/api/spark/webhooks/`, `/api/vault/shopify/`) — the previous
+/// substring check on "/webhooks/" would have exempted ANY state-changing
+/// route whose path merely contained that string.
 pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
-    if req.method().is_safe() || req.uri().path().contains("/webhooks/") {
+    if req.method().is_safe() || path_is_public_webhook(req.uri().path()) {
         return Ok(next.run(req).await);
     }
 
@@ -49,13 +52,22 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Result<Response, Statu
         };
         let o = origin_authority.to_ascii_lowercase();
         let h = host.to_ascii_lowercase();
-        let same_origin = o == h || o.ends_with(&format!(".{h}"));
+        // Exact match only (fixed in audit): the previous
+        // `o.ends_with(".{h}")` accepted any *sibling* subdomain of the Host
+        // (e.g. evil.ataqu.com passing for Host ataqu.com). Same-origin is the
+        // deployment model (Caddy serves the SPA and proxies /api).
+        let same_origin = o == h;
         if !same_origin {
             return Err(StatusCode::FORBIDDEN);
         }
     }
 
     Ok(next.run(req).await)
+}
+
+/// Paths that carry third-party, HMAC-authenticated webhooks (CSRF-exempt).
+fn path_is_public_webhook(path: &str) -> bool {
+    path.starts_with("/api/spark/webhooks/") || path.starts_with("/api/vault/shopify/")
 }
 
 #[cfg(test)]
@@ -76,21 +88,22 @@ mod tests {
 
     fn allowed(origin: Option<&str>, host: Option<&str>) -> bool {
         let h = headers(origin, host);
-        if let Some(o) = h.get("origin").and_then(|v| v.to_str().ok()) {
-            if let Some(host) = h.get("host").and_then(|v| v.to_str().ok()) {
-                let Ok(url) = url::Url::parse(o) else {
-                    return false;
-                };
-                let Some(oh) = url.host_str() else {
-                    return false;
-                };
-                let auth = match url.port() {
-                    Some(p) => format!("{oh}:{p}"),
-                    None => oh.to_string(),
-                };
-                let (o, hh) = (auth.to_ascii_lowercase(), host.to_ascii_lowercase());
-                return o == hh || o.ends_with(&format!(".{hh}"));
-            }
+        if let (Some(o), Some(host)) = (
+            h.get("origin").and_then(|v| v.to_str().ok()),
+            h.get("host").and_then(|v| v.to_str().ok()),
+        ) {
+            let Ok(url) = url::Url::parse(o) else {
+                return false;
+            };
+            let Some(oh) = url.host_str() else {
+                return false;
+            };
+            let auth = match url.port() {
+                Some(p) => format!("{oh}:{p}"),
+                None => oh.to_string(),
+            };
+            let (o, hh) = (auth.to_ascii_lowercase(), host.to_ascii_lowercase());
+            return o == hh;
         }
         true
     }
@@ -119,5 +132,19 @@ mod tests {
     #[test]
     fn no_origin_allowed() {
         assert!(allowed(None, Some("localhost:5173")));
+    }
+
+    #[test]
+    fn sibling_subdomain_rejected() {
+        // Fixed in audit: a sibling subdomain of the Host must not pass.
+        assert!(!allowed(Some("https://evil.ataqu.com"), Some("ataqu.com")));
+    }
+
+    #[test]
+    fn webhook_prefixes_exempt() {
+        assert!(path_is_public_webhook("/api/spark/webhooks/123/456"));
+        assert!(path_is_public_webhook("/api/vault/shopify/callback"));
+        assert!(!path_is_public_webhook("/api/dial/webhooks-eval"));
+        assert!(!path_is_public_webhook("/api/cinq/webhooks"));
     }
 }
