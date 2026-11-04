@@ -9,22 +9,14 @@ import {
 	SegmentedControl,
 } from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
-import {
-	createFileRoute,
-	useNavigate,
-	useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { consumeSsoFragment } from "../lib/sso";
 
 export const Route = createFileRoute("/login")({
 	component: () => {
 		const navigate = useNavigate();
-		const search = useSearch({ from: "/login" }) as {
-			token?: string;
-			refreshToken?: string;
-			user_id?: string;
-		};
 		const { login, token } = useAuthStore();
 		const [email, setEmail] = useState("");
 		const [password, setPassword] = useState("");
@@ -51,16 +43,24 @@ export const Route = createFileRoute("/login")({
 			onError: () => toast.error("Signup failed"),
 		});
 
+		// SSO callback: the backend redirects back to /login with the tokens in
+		// the URL *fragment* (#token=…). Parse it once, validate it, and strip
+		// it from history immediately. Tokens are deliberately NOT accepted
+		// from the query string — query parameters leak via Referer headers,
+		// proxy/CDN logs and browser history (see lib/sso.ts).
 		useEffect(() => {
-			if (search.token && search.refreshToken && search.user_id) {
-				const user = { id: search.user_id, email: "", tenantId: "", roles: [] };
-				login(search.token, search.refreshToken, user);
+			const payload = consumeSsoFragment();
+			if (payload) {
+				const user = {
+					id: payload.userId,
+					email: "",
+					tenantId: "",
+					roles: [],
+				};
+				login(payload.token, payload.refreshToken, user);
 				navigate({ to: "/dashboard" });
 			}
-			// Depend on the primitive search fields, not the `search` object itself
-			// (useSearch returns a new object reference every render, which would
-			// re-run this effect on each render and loop on the SSO callback).
-		}, [search.token, search.refreshToken, search.user_id, login, navigate]);
+		}, [login, navigate]);
 
 		const handleSSO = async (provider: "google" | "microsoft") => {
 			try {
@@ -74,7 +74,7 @@ export const Route = createFileRoute("/login")({
 			}
 		};
 
-		const fillDemoCredentials = () => {
+		const _fillDemoCredentials = () => {
 			setMode("login");
 			setEmail("demo@ataqu.com");
 			setPassword("demo1234");
