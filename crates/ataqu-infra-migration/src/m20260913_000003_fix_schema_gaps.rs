@@ -15,11 +15,78 @@ impl MigrationTrait for Migration {
         // for the recorded deployment before continuing.
         db.execute_unprepared("CREATE SCHEMA IF NOT EXISTS vista;")
             .await?;
-        db.execute_unprepared("DROP TABLE IF EXISTS core.dashboards CASCADE;")
+
+        // DATA-PRESERVING SCHEMA DRIFT REPAIR (fixed in audit): the previous
+        // version DROPped `core.dashboards`, `core.aggregated_views` and
+        // `core.analytics_data_points` on EVERY run — live dashboard
+        // definitions and aggregate counters were destroyed on databases where
+        // those rows existed. The vista tables are created FIRST, the data is
+        // copied over (only into empty targets), and only then are the
+        // mis-placed `core.*` copies removed.
+        db.execute_unprepared(
+            r#"
+            CREATE TABLE IF NOT EXISTS vista.aggregated_views (
+                tenant_id UUID PRIMARY KEY,
+                total_events BIGINT NOT NULL DEFAULT 0,
+                total_contacts BIGINT NOT NULL DEFAULT 0,
+                total_deals BIGINT NOT NULL DEFAULT 0,
+                total_deals_won BIGINT NOT NULL DEFAULT 0,
+                total_pipeline_value NUMERIC NOT NULL DEFAULT 0,
+                total_revenue NUMERIC NOT NULL DEFAULT 0,
+                total_products BIGINT NOT NULL DEFAULT 0,
+                low_stock_variants BIGINT NOT NULL DEFAULT 0,
+                total_bookings BIGINT NOT NULL DEFAULT 0,
+                pending_leave_requests BIGINT NOT NULL DEFAULT 0,
+                last_updated_at TIMESTAMPTZ NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS vista.dashboards (
+                id UUID PRIMARY KEY,
+                tenant_id UUID NOT NULL,
+                name TEXT NOT NULL,
+                config JSONB NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL,
+                version INT NOT NULL DEFAULT 1
+            );
+            CREATE TABLE IF NOT EXISTS vista.data_points (
+                id UUID PRIMARY KEY,
+                tenant_id UUID NOT NULL,
+                metric_name TEXT NOT NULL,
+                value DOUBLE PRECISION NOT NULL,
+                timestamp TIMESTAMPTZ NOT NULL
+            );
+            "#,
+        )
+        .await?;
+
+        // Copy salvageable rows (targets are guaranteed fresh/empty only for
+        // their missing part; IF NOT EXISTS makes re-runs safe).
+        db.execute_unprepared(
+            r#"
+            INSERT INTO vista.aggregated_views
+            SELECT * FROM core.aggregated_views
+            WHERE true
+            ON CONFLICT (tenant_id) DO NOTHING;
+
+            INSERT INTO vista.dashboards
+            SELECT * FROM core.dashboards
+            WHERE true
+            ON CONFLICT (id) DO NOTHING;
+
+            INSERT INTO vista.data_points
+            SELECT * FROM core.analytics_data_points
+            WHERE true
+            ON CONFLICT (id) DO NOTHING;
+            "#,
+        )
+        .await
+        .ok(); // core.* copies may not exist on fresh databases
+
+        db.execute_unprepared("DROP TABLE IF EXISTS core.analytics_data_points CASCADE;")
             .await?;
         db.execute_unprepared("DROP TABLE IF EXISTS core.aggregated_views CASCADE;")
             .await?;
-        db.execute_unprepared("DROP TABLE IF EXISTS core.analytics_data_points CASCADE;")
+        db.execute_unprepared("DROP TABLE IF EXISTS core.dashboards CASCADE;")
             .await?;
 
         // collab_ops.bookings: the entity `booking_entity` (ataqu-infra-repositories
