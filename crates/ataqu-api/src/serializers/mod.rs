@@ -31,3 +31,37 @@ impl Serialize for ApiPhone {
         serializer.serialize_str(self.0.reveal(&key))
     }
 }
+
+/// Neutralize CSV formula injection (OWASP "CSV Injection").
+///
+/// Re-exported from [`ataqu_security::csv`] — the canonical implementation
+/// lives there so non-API crates (application services) can use it too.
+pub use ataqu_security::csv::sanitize_csv_field;
+
+#[cfg(test)]
+mod csv_sanitize_tests {
+    use super::sanitize_csv_field;
+
+    #[test]
+    fn dangerous_leading_characters_are_prefixed() {
+        for payload in [
+            "=HYPERLINK(\"http://evil\",\"x\")",
+            "+SUM(1,2)",
+            "-2+3+cmd|'/c calc'!A1",
+            "@SUM(1)",
+            "\t=x",
+            "\rx",
+        ] {
+            let out = sanitize_csv_field(payload);
+            assert!(out.starts_with('\''), "{payload:?} must be defanged");
+        }
+    }
+
+    #[test]
+    fn benign_values_are_untouched() {
+        assert_eq!(sanitize_csv_field("Jane Doe"), "Jane Doe");
+        assert_eq!(sanitize_csv_field("jane@example.com"), "jane@example.com");
+        assert_eq!(sanitize_csv_field(""), "");
+        assert_eq!(sanitize_csv_field("a=b"), "a=b");
+    }
+}
