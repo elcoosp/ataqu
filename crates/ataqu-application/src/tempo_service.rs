@@ -144,8 +144,27 @@ impl TempoService {
             ))?;
 
         let starts_at: std::time::SystemTime = cmd.starts_at.into();
-        let ends_at =
-            starts_at + std::time::Duration::from_secs((cmd.duration_minutes * 60) as u64);
+        // VALIDATION (fixed in audit): duration had no upper bound — huge
+        // values overflowed `*60` and panicked `SystemTime + Duration`.
+        if cmd.duration_minutes <= 0 || cmd.duration_minutes > tempo_domain::MAX_DURATION_MINUTES {
+            return Err(TempoServiceError::Validation(format!(
+                "duration_minutes must be between 1 and {}",
+                tempo_domain::MAX_DURATION_MINUTES
+            )));
+        }
+        // A booking in the past is never meaningful (fixed in audit).
+        if starts_at <= self.clock.now() {
+            return Err(TempoServiceError::Validation(
+                "Booking must start in the future".to_string(),
+            ));
+        }
+        let ends_at = starts_at
+            .checked_add(std::time::Duration::from_secs(
+                (cmd.duration_minutes.saturating_mul(60)) as u64,
+            ))
+            .ok_or(TempoServiceError::Validation(
+                "Booking end time overflow".to_string(),
+            ))?;
 
         if self
             .repo
@@ -674,6 +693,31 @@ impl TempoService {
                 "Version mismatch: expected {}, found {}",
                 expected_version, booking.version
             )));
+        }
+
+        // RESCHEDULE VALIDATION (fixed in audit): reschedule skipped BOTH the
+        // past-start check and the overlap check entirely — double bookings
+        // could be created by rescheduling on top of an existing one.
+        let new_start: std::time::SystemTime = new_starts_at.into();
+        if new_start <= self.clock.now() {
+            return Err(TempoServiceError::Validation(
+                "Booking must be rescheduled to a future time".to_string(),
+            ));
+        }
+        let new_end = new_start
+            + std::time::Duration::from_secs(
+                (booking.duration_minutes.saturating_mul(60).max(0) as u64)
+                    .min(tempo_domain::MAX_END_SECS),
+            );
+        if self
+            .repo
+            .check_overlap(&tenant_id, booking.event_type_id.0, new_start, new_end)
+            .await
+            .map_err(TempoServiceError::Repository)?
+        {
+            return Err(TempoServiceError::Validation(
+                "Booking overlaps with existing booking".to_string(),
+            ));
         }
 
         tempo_domain::reschedule_booking(&mut booking, new_starts_at.into());
