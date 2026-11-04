@@ -1,11 +1,12 @@
 use axum::{
     Router,
-    extract::{Path, Query, State},
+    extract::{ConnectInfo, Path, Query, State},
     http::StatusCode,
     response::Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -428,9 +429,26 @@ pub struct PublicBookingResponse {
 
 pub async fn public_create_booking(
     State(state): State<AppState>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
+    headers: axum::http::HeaderMap,
     Path(tenant_id): Path<Uuid>,
     Json(payload): Json<PublicBookingRequest>,
 ) -> ApiResult<(StatusCode, Json<PublicBookingResponse>)> {
+    // DoS HARDENING (fixed in audit): the public booking endpoint had NO
+    // endpoint-specific limit — an anonymous caller could flood a tenant's
+    // calendar (and the outbox with PII payloads) at the generic 100/min rate.
+    let ip = crate::middleware::client_ip::resolve_effective_client_ip(
+        peer_addr.ip(),
+        &headers,
+        &state.trusted_proxies,
+    );
+    if !state.rate_limiter.check_strict(
+        &format!("tempo_booking:{ip}"),
+        10,
+        std::time::Duration::from_secs(60),
+    ) {
+        return Err(ApiResponseError::RateLimited);
+    }
     let booking = state
         .tempo_service
         .public_create_booking(
