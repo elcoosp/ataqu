@@ -22,35 +22,88 @@ pub struct PublicTrackEmailRequest {
     pub contact_id: Uuid,
     pub event_type: String,
     pub tenant_id: Uuid,
+    /// Unix deadline after which the signed tracking URL is invalid.
+    pub expires: Option<i64>,
+    /// HMAC-SHA256(`tenant_id|contact_id|event_type|expires`) keyed with the
+    /// server's JWT secret.
+    pub sig: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct TrackingQueryParams {
-    pub limit: Option<u64>,
-    pub offset: Option<u64>,
+/// Compute the tracking-URL signature (exposed for tests and future email
+/// producers — email templates embed `/api/cinq/email/track/public?...&sig=…`).
+pub fn sign_tracking_params(
+    secret: &[u8],
+    tenant_id: &Uuid,
+    contact_id: &Uuid,
+    event_type: &str,
+    expires: i64,
+) -> String {
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+    let mut mac = Hmac::<Sha256>::new_from_slice(secret).expect("HMAC accepts any key length");
+    mac.update(format!("{tenant_id}|{contact_id}|{event_type}|{expires}").as_bytes());
+    hex::encode(mac.finalize().into_bytes())
 }
 
 pub async fn track_email_public(
     State(state): State<AppState>,
     axum::extract::Query(req): axum::extract::Query<PublicTrackEmailRequest>,
 ) -> ApiResult<impl axum::response::IntoResponse> {
+    // SECURITY (fixed in audit): this pixel was UNSIGNED — anyone could forge
+    // open/click/bounce events for any contact, and the contact validation
+    // leaked a contact-existence oracle (404 vs 200). The endpoint now
+    // requires a valid HMAC signature and a non-expired deadline; invalid or
+    // missing signatures still receive the 1x1 GIF (no oracle) but the event
+    // is NOT recorded.
+    let pixel = general_purpose::STANDARD
+        .decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
+        .unwrap();
+
+    let valid = (|| {
+        let expires = req.expires?;
+        if expires < Utc::now().timestamp() {
+            return None;
+        }
+        let sig = req.sig.as_deref()?;
+        let expected = sign_tracking_params(
+            &state.jwt_secret,
+            &req.tenant_id,
+            &req.contact_id,
+            &req.event_type,
+            expires,
+        );
+        // Constant-time comparison.
+        if sig.len() != expected.len() {
+            return None;
+        }
+        let mut diff = 0u8;
+        for (a, b) in sig.bytes().zip(expected.bytes()) {
+            diff |= a ^ b;
+        }
+        (diff == 0).then_some(())
+    })()
+    .is_some();
+
+    if !valid {
+        metrics::counter!("ataqu_email_tracking_unsigned_total").increment(1);
+        return Ok((
+            axum::http::StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "image/gif")],
+            pixel,
+        ));
+    }
+
     match req.event_type.as_str() {
         "open" | "click" | "bounce" | "send" | "deliver" => {}
         _ => return Err(ApiResponseError::validation("Invalid event_type")),
     }
 
-    // Validate tenant and contact exist
-    if state
-        .cinq_service
-        .get_contact(ataqu_kernel::TenantId::new(req.tenant_id), req.contact_id)
-        .await
-        .is_err()
-    {
-        return Err(ApiResponseError::not_found("Contact not found"));
-    }
+    // Existence check removed from the anonymous path (oracle). The tracking
+    // writer tolerates unknown contacts.
 
-    // Basic rate limiting to prevent abuse
-    let rate_key = format!("email_track_pub:{}", req.tenant_id);
+    // Rate limiting per contact (not per tenant — one attacker must not be
+    // able to exhaust another tenant's whole budget).
+    let rate_key = format!("email_track_pub:{}", req.contact_id);
     if !state.rate_limiter.check(&rate_key) {
         return Err(ApiResponseError::RateLimited);
     }
@@ -62,10 +115,6 @@ pub async fn track_email_public(
         metadata: serde_json::json!({}),
         occurred_at: Utc::now(),
     };
-
-    let pixel = general_purpose::STANDARD
-        .decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
-        .unwrap();
 
     match state.email_tracking_tx.send(tracking_event).await {
         Ok(()) => Ok((
@@ -83,6 +132,12 @@ pub async fn track_email_public(
             ))
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TrackingQueryParams {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
 }
 
 pub async fn track_email(
