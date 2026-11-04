@@ -82,7 +82,9 @@ function TeamStatusPage() {
 						<TableBody>
 							{users.map((u) => (
 								<TableRow key={u.user_id}>
-									<TableCell className="text-foreground">{u.name ?? "—"}</TableCell>
+									<TableCell className="text-foreground">
+										{u.name ?? "—"}
+									</TableCell>
 									<TableCell className="text-secondary-foreground">
 										{u.email}
 									</TableCell>
