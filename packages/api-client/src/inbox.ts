@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@ataqu/shared-stores";
+import { useQuery } from "@tanstack/react-query";
 
 import { api } from "./client";
 
