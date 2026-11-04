@@ -370,6 +370,20 @@ impl DialService {
         recipient_id: Uuid,
         content: String,
     ) -> DialResult<Message> {
+        // SECURITY (fixed in audit): the recipient was never verified to be a
+        // user of the calling tenant — channels/participants were created with
+        // arbitrary uuids (payload-controlled in the FormRoutingNotification
+        // path). Verify the recipient is an active tenant user first.
+        let recipient_exists = self
+            .repo
+            .user_exists(&tenant_id, &UserId::new(recipient_id))
+            .await
+            .map_err(DialServiceError::Domain)?;
+        if !recipient_exists {
+            return Err(DialServiceError::Validation(
+                "Recipient is not a member of this tenant".to_string(),
+            ));
+        }
         let author = UserId::new(author_id);
         let recipient = UserId::new(recipient_id);
 
@@ -703,13 +717,32 @@ impl DialService {
     pub async fn list_thread_messages(
         &self,
         tenant_id: TenantId,
+        requester_id: Uuid,
         thread_id: Uuid,
         limit: u64,
         offset: u64,
     ) -> DialResult<Vec<Message>> {
-        // This assumes repo has a method to list by thread_id. Let's add it to repo trait if missing, or filter in service.
-        // For now, let's filter via list_messages and filter. Better: add to repo trait.
-        // I will add `list_messages_for_thread` to DialRepository trait.
+        // PRIVACY (fixed in audit): any tenant member could read ANY thread's
+        // messages (including DM threads) given a thread uuid — the channel
+        // variant of this method checks participation, this one did not.
+        // Load the thread's channel and apply the same rule.
+        let thread = self
+            .repo
+            .get_thread(&tenant_id, &ThreadId::new(thread_id))
+            .await
+            .map_err(DialServiceError::Domain)?;
+        let channel = self
+            .repo
+            .get_channel(&tenant_id, &thread.channel_id)
+            .await?;
+        if (channel.channel_type == ChannelType::Private
+            || channel.channel_type == ChannelType::DirectMessage)
+            && !channel.participants.contains(&UserId::new(requester_id))
+        {
+            return Err(DialServiceError::Validation(
+                "User is not a participant in this thread".to_string(),
+            ));
+        }
         self.repo
             .list_messages_for_thread(&tenant_id, &ThreadId::new(thread_id), limit, offset)
             .await
