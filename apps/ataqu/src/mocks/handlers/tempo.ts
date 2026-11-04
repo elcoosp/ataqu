@@ -3,8 +3,8 @@
  * (incl. the public booking funnel). Booking ops require quoted If-Match from
  * the client; both forms are accepted. Mirrors handlers/tempo.rs.
  */
-import { http, type HttpHandler } from "msw";
-import { TENANT_ID, audit, bump, db, nextId } from "../db";
+import { type HttpHandler, http } from "msw";
+import { audit, bump, db, nextId, TENANT_ID } from "../db";
 import {
 	apiError,
 	bare,
@@ -19,7 +19,10 @@ import {
 	validationError,
 } from "../util";
 
-const tempoEnvelope = <T>(rows: T[], params: { limit: number; offset: number }) => ({
+const tempoEnvelope = <T>(
+	rows: T[],
+	params: { limit: number; offset: number },
+) => ({
 	items: rows.slice(params.offset, params.offset + params.limit),
 	total: rows.length,
 	limit: params.limit,
@@ -29,7 +32,8 @@ const tempoEnvelope = <T>(rows: T[], params: { limit: number; offset: number }) 
 export const tempoHandlers: HttpHandler[] = [
 	// ----------------------------------------------------------- event types
 	http.get("/api/tempo/event-types", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		return ok(tempoEnvelope(db.eventTypes, listParams(request, 50)));
 	}),
 
@@ -43,9 +47,13 @@ export const tempoHandlers: HttpHandler[] = [
 			duration_minutes: number;
 		}>(request);
 		if (!body.name?.trim()) return validationError("Name is required");
-		const slug = body.slug?.trim() || body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+		const slug =
+			body.slug?.trim() || body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 		if (db.eventTypes.some((e) => e.slug === slug)) {
-			return apiError("CONFLICT", "An event type with this slug already exists");
+			return apiError(
+				"CONFLICT",
+				"An event type with this slug already exists",
+			);
 		}
 		const now = new Date().toISOString();
 		const eventType = {
@@ -61,12 +69,15 @@ export const tempoHandlers: HttpHandler[] = [
 			version: 1,
 		};
 		db.eventTypes.push(eventType);
-		audit(actor, "event_type.create", "tempo", "event_type", eventType.id, { name: eventType.name });
+		audit(actor, "event_type.create", "tempo", "event_type", eventType.id, {
+			name: eventType.name,
+		});
 		return created(eventType);
 	}),
 
 	http.get("/api/tempo/event-types/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const eventType = db.eventTypes.find((e) => e.id === params.id);
 		return eventType ? ok(eventType) : notFound("Event type");
 	}),
@@ -81,12 +92,21 @@ export const tempoHandlers: HttpHandler[] = [
 		const body = await jsonBody<Record<string, unknown>>(request);
 		if (body.name != null) eventType.name = body.name as string;
 		if (body.slug != null) eventType.slug = body.slug as string;
-		if (body.description !== undefined) eventType.description = (body.description as string) ?? undefined;
-		if (body.duration_minutes != null) eventType.duration_minutes = body.duration_minutes as number;
+		if (body.description !== undefined)
+			eventType.description = (body.description as string) ?? undefined;
+		if (body.duration_minutes != null)
+			eventType.duration_minutes = body.duration_minutes as number;
 		if (body.is_active != null) eventType.is_active = body.is_active as boolean;
 		eventType.updated_at = new Date().toISOString();
 		const v = bump(eventType);
-		audit(actor, "event_type.update", "tempo", "event_type", eventType.id, body);
+		audit(
+			actor,
+			"event_type.update",
+			"tempo",
+			"event_type",
+			eventType.id,
+			body,
+		);
 		return ok({ ...eventType, version: v });
 	}),
 
@@ -96,32 +116,50 @@ export const tempoHandlers: HttpHandler[] = [
 		const idx = db.eventTypes.findIndex((e) => e.id === params.id);
 		if (idx === -1) return notFound("Event type");
 		db.eventTypes.splice(idx, 1);
-		audit(actor, "event_type.delete", "tempo", "event_type", params.id as string);
+		audit(
+			actor,
+			"event_type.delete",
+			"tempo",
+			"event_type",
+			params.id as string,
+		);
 		return noContent();
 	}),
 
 	// Public slug resolution (no auth) — used by /book/:slug
 	http.get("/api/tempo/public/event-types/:slug", ({ params }) => {
-		const eventType = db.eventTypes.find((e) => e.slug === params.slug && e.is_active);
+		const eventType = db.eventTypes.find(
+			(e) => e.slug === params.slug && e.is_active,
+		);
 		return eventType ? ok(eventType) : notFound("Event type");
 	}),
 
 	// ------------------------------------------------------------- availability
-	http.get("/api/tempo/availability-slots/:eventTypeId", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		return bare(
-			db.slots
-				.filter((s) => s.event_type_id === params.eventTypeId)
-				.sort((a, b) => (a.start_time < b.start_time ? -1 : 1)),
-		);
-	}),
+	http.get(
+		"/api/tempo/availability-slots/:eventTypeId",
+		({ request, params }) => {
+			if (!callerId(request))
+				return apiError("UNAUTHORIZED", "Authentication required");
+			return bare(
+				db.slots
+					.filter((s) => s.event_type_id === params.eventTypeId)
+					.sort((a, b) => (a.start_time < b.start_time ? -1 : 1)),
+			);
+		},
+	),
 
 	http.post("/api/tempo/availability-slots", async ({ request }) => {
 		const actor = callerId(request);
 		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const body = await jsonBody<{ event_type_id: string; start_time: string; end_time: string }>(request);
+		const body = await jsonBody<{
+			event_type_id: string;
+			start_time: string;
+			end_time: string;
+		}>(request);
 		if (!body.event_type_id || !body.start_time || !body.end_time) {
-			return validationError("event_type_id, start_time and end_time are required");
+			return validationError(
+				"event_type_id, start_time and end_time are required",
+			);
 		}
 		const slot = {
 			id: nextId("slt"),
@@ -145,8 +183,11 @@ export const tempoHandlers: HttpHandler[] = [
 
 	// ---------------------------------------------------------------- bookings
 	http.get("/api/tempo/bookings", ({ request }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
-		const rows = [...db.bookings].sort((a, b) => (a.starts_at < b.starts_at ? 1 : -1));
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
+		const rows = [...db.bookings].sort((a, b) =>
+			a.starts_at < b.starts_at ? 1 : -1,
+		);
 		return ok(tempoEnvelope(rows, listParams(request, 50)));
 	}),
 
@@ -168,7 +209,8 @@ export const tempoHandlers: HttpHandler[] = [
 			id: nextId("bkg"),
 			event_type_id: body.event_type_id,
 			starts_at: body.starts_at,
-			duration_minutes: body.duration_minutes ?? eventType?.duration_minutes ?? 30,
+			duration_minutes:
+				body.duration_minutes ?? eventType?.duration_minutes ?? 30,
 			timezone: body.timezone ?? "UTC",
 			status: "pending" as const,
 			created_at: now,
@@ -195,7 +237,7 @@ export const tempoHandlers: HttpHandler[] = [
 	}),
 
 	// Public booking funnel (no auth) — POST /tempo/public/:tenantId/bookings
-	http.post("/api/tempo/public/:tenantId/bookings", async ({ request, params }) => {
+	http.post("/api/tempo/public/:tenantId/bookings", async ({ request }) => {
 		const body = await jsonBody<{
 			slug: string;
 			starts_at: string;
@@ -227,38 +269,52 @@ export const tempoHandlers: HttpHandler[] = [
 	}),
 
 	http.get("/api/tempo/bookings/:id", ({ request, params }) => {
-		if (!callerId(request)) return apiError("UNAUTHORIZED", "Authentication required");
+		if (!callerId(request))
+			return apiError("UNAUTHORIZED", "Authentication required");
 		const booking = db.bookings.find((b) => b.id === params.id);
 		return booking ? ok(booking) : notFound("Booking");
 	}),
 
 	// Booking state transitions — client sends quoted If-Match; both accepted.
-	http.post("/api/tempo/bookings/:id/cancel", ({ request, params }) => transitionBooking(request, params.id as string, "cancelled")),
-	http.post("/api/tempo/bookings/:id/confirm", ({ request, params }) => transitionBooking(request, params.id as string, "confirmed")),
-	http.post("/api/tempo/bookings/:id/no-show", ({ request, params }) => transitionBooking(request, params.id as string, "no_show")),
-	http.post("/api/tempo/bookings/:id/joined", ({ request, params }) => {
+	http.post("/api/tempo/bookings/:id/cancel", ({ request, params }) =>
+		transitionBooking(request, params.id as string, "cancelled"),
+	),
+	http.post("/api/tempo/bookings/:id/confirm", ({ request, params }) =>
+		transitionBooking(request, params.id as string, "confirmed"),
+	),
+	http.post("/api/tempo/bookings/:id/no-show", ({ request, params }) =>
+		transitionBooking(request, params.id as string, "no_show"),
+	),
+	http.post("/api/tempo/bookings/:id/joined", ({ params }) => {
 		const booking = db.bookings.find((b) => b.id === params.id);
 		if (!booking) return notFound("Booking");
 		return noContent();
 	}),
 
-	http.post("/api/tempo/bookings/:id/reschedule", async ({ request, params }) => {
-		const actor = callerId(request);
-		if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
-		const booking = db.bookings.find((b) => b.id === params.id);
-		if (!booking) return notFound("Booking");
-		const conflictResp = checkVersion(request, booking.version);
-		if (conflictResp) return conflictResp;
-		const body = await jsonBody<{ starts_at: string }>(request);
-		if (!body.starts_at) return validationError("starts_at is required");
-		booking.starts_at = body.starts_at;
-		booking.updated_at = new Date().toISOString();
-		const v = bump(booking);
-		return ok({ ...booking, version: v });
-	}),
+	http.post(
+		"/api/tempo/bookings/:id/reschedule",
+		async ({ request, params }) => {
+			const actor = callerId(request);
+			if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
+			const booking = db.bookings.find((b) => b.id === params.id);
+			if (!booking) return notFound("Booking");
+			const conflictResp = checkVersion(request, booking.version);
+			if (conflictResp) return conflictResp;
+			const body = await jsonBody<{ starts_at: string }>(request);
+			if (!body.starts_at) return validationError("starts_at is required");
+			booking.starts_at = body.starts_at;
+			booking.updated_at = new Date().toISOString();
+			const v = bump(booking);
+			return ok({ ...booking, version: v });
+		},
+	),
 ];
 
-function transitionBooking(request: Request, id: string, status: "cancelled" | "confirmed" | "no_show") {
+function transitionBooking(
+	request: Request,
+	id: string,
+	status: "cancelled" | "confirmed" | "no_show",
+) {
 	const actor = callerId(request);
 	if (!actor) return apiError("UNAUTHORIZED", "Authentication required");
 	const booking = db.bookings.find((b) => b.id === id);
