@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 use chrono::{DateTime, Utc};
 use std::net::IpAddr;
 // AEGIS application service – orchestrates auth flows.
@@ -388,6 +387,7 @@ impl AegisService {
         &self,
         cmd: DomainCreateUserCommand,
     ) -> Result<CreateUserResponse, AegisServiceError> {
+        Self::validate_password(&cmd.password)?;
         let tenant_id = cmd.tenant_id;
         info!("Creating user");
         let (event, user) = self
@@ -461,23 +461,73 @@ impl AegisService {
         })
     }
 
+    /// Password policy floor: auth handlers and user creation share it.
+    /// 8 chars minimum (NIST 800-63B minimum), 128 maximum (DoS bound for
+    /// Argon2 hashing of unbounded input).
+    pub const MIN_PASSWORD_LEN: usize = 8;
+    pub const MAX_PASSWORD_LEN: usize = 128;
+
+    pub fn validate_password(password: &str) -> Result<(), AegisServiceError> {
+        if password.len() < Self::MIN_PASSWORD_LEN {
+            return Err(AegisServiceError::Validation(format!(
+                "Password must be at least {} characters",
+                Self::MIN_PASSWORD_LEN
+            )));
+        }
+        if password.len() > Self::MAX_PASSWORD_LEN {
+            return Err(AegisServiceError::Validation(format!(
+                "Password must be at most {} characters",
+                Self::MAX_PASSWORD_LEN
+            )));
+        }
+        Ok(())
+    }
+
+    /// Argon2 hash of a constant dummy password, used to equalize the cost of
+    /// the "user not found" path with the "wrong password" path so response
+    /// timing cannot be used to enumerate registered emails.
+    fn dummy_password_hash() -> &'static str {
+        use std::sync::OnceLock;
+        static DUMMY: OnceLock<String> = OnceLock::new();
+        DUMMY.get_or_init(|| {
+            let salt = SaltString::generate(&mut rand::thread_rng());
+            Argon2::default()
+                .hash_password(b"!timing-equalizer-dummy-password!", &salt)
+                .map(|h| h.to_string())
+                .unwrap_or_default()
+        })
+    }
+
     #[instrument(skip(self, cmd), fields(email = "[REDACTED]"))]
     pub async fn authenticate(
         &self,
         cmd: DomainAuthenticateCommand,
     ) -> Result<AuthenticateResponse, AegisServiceError> {
         info!("Authenticating user");
-        let user = self
-            .repo
-            .find_by_email(&cmd.email, cmd.tenant_id)
-            .await?
-            .ok_or(AegisServiceError::AuthenticationFailed)?;
+        let argon2 = Argon2::default();
+        let user = match self.repo.find_by_email(&cmd.email, cmd.tenant_id).await? {
+            Some(u) => u,
+            // Spend the same Argon2 cost as a real verification before failing
+            // so the two error paths are indistinguishable by timing.
+            None => {
+                if let Ok(parsed) = PasswordHash::new(Self::dummy_password_hash()) {
+                    let _ = argon2.verify_password(cmd.password.as_bytes(), &parsed);
+                }
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+        };
 
         if let Some(tenant_id) = cmd.tenant_id
             && user.tenant_id != tenant_id
         {
             return Err(AegisServiceError::AuthenticationFailed);
         }
+
+        // Deactivated accounts must not be able to obtain fresh tokens.
+        if !user.is_active {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+
         let email_str = user
             .email
             .reveal(&ataqu_security::PiiAccessKey::new())
@@ -487,7 +537,6 @@ impl AegisService {
             // Verify password using Argon2
             let parsed_hash =
                 PasswordHash::new(hash).map_err(|_| AegisServiceError::AuthenticationFailed)?;
-            let argon2 = Argon2::default();
             if argon2
                 .verify_password(cmd.password.as_bytes(), &parsed_hash)
                 .is_err()
@@ -498,6 +547,19 @@ impl AegisService {
             // No password set, cannot authenticate with password
             return Err(AegisServiceError::AuthenticationFailed);
         }
+
+        // MFA enforcement (was previously only in the unused domain helper —
+        // a user with MFA enabled could log in with the password alone).
+        if user.mfa_enabled {
+            let Some(totp_code) = cmd.totp_code.as_deref() else {
+                return Err(AegisServiceError::MfaRequired);
+            };
+            let secret = user.mfa_secret.as_deref().unwrap_or("");
+            if !verify_totp(secret, totp_code, self.clock.now()) {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
+        }
+
         // Update last_login_at
         let mut updated_user = user;
         updated_user.last_login_at = Some(self.clock.now());
@@ -555,7 +617,9 @@ impl AegisService {
         Ok(())
     }
 
-    #[instrument(skip(self), fields(token = %refresh_token))]
+    // SECURITY: never log tokens (not even truncated) — tracing fields would
+    // leak credentials into log files and aggregators.
+    #[instrument(skip(self, refresh_token))]
     pub async fn refresh_token(
         &self,
         refresh_token: &str,
@@ -980,6 +1044,15 @@ impl AegisService {
             .await?
             .ok_or(AegisServiceError::AuthenticationFailed)?;
 
+        // Single-use: the token embeds the user version at issue time. After a
+        // successful reset the version is bumped, so replaying the same token
+        // (valid for its full 1h TTL otherwise) must fail here.
+        if claims.token_version != user.version {
+            return Err(AegisServiceError::AuthenticationFailed);
+        }
+
+        Self::validate_password(&new_password)?;
+
         let salt = SaltString::generate(&mut rand::thread_rng());
         let argon2 = Argon2::default();
         let password_hash = argon2
@@ -1151,6 +1224,10 @@ impl AegisService {
     ) -> Result<AuthenticateResponse, AegisServiceError> {
         // Try to find existing user by email (across tenants)
         if let Some(user) = self.repo.find_by_email(&email, None).await? {
+            // Deactivated accounts must not be able to SSO back in.
+            if !user.is_active {
+                return Err(AegisServiceError::AuthenticationFailed);
+            }
             let email_str = user
                 .email
                 .reveal(&ataqu_security::PiiAccessKey::new())
