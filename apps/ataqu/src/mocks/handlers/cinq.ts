@@ -24,7 +24,6 @@ import {
 	notFound,
 	ok,
 	page,
-	paginated,
 	validationError,
 } from "../util";
 
