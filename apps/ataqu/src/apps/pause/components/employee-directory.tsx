@@ -95,7 +95,7 @@ export function EmployeeDirectory({
 						value={search}
 						onChange={setSearch}
 						placeholder={t`Search employees...`}
-						className="bg-deep-night/50"
+						className="bg-muted/60"
 					/>
 				</div>
 				<Button onClick={onAddEmployee}>
@@ -146,7 +146,7 @@ export function EmployeeDirectory({
 									)
 								}
 							/>
-							<div className="h-12 w-12 rounded-full bg-amber/20 flex items-center justify-center text-amber font-bold">
+							<div className="h-12 w-12 rounded-full bg-foreground/10 flex items-center justify-center text-foreground font-bold">
 								{emp.full_name.charAt(0)}
 							</div>
 							<div>
