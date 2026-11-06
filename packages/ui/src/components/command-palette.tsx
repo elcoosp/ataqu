@@ -19,34 +19,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { Home, LogOut, Plus, Search } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { APP_NAMES, APP_SHEET_NO, AppGlyph } from "../app-glyphs";
 import { type AppCommand, useAllCommands } from "../command-registry";
 import { APP_HOME } from "./shell";
-
-const APP_NAMES: Record<string, string> = {
-	aegis: "AEGIS",
-	cinq: "CINQ",
-	dial: "DIAL",
-	pivot: "PIVOT",
-	spark: "SPARK",
-	tempo: "TEMPO",
-	sond: "SOND",
-	vault: "VAULT",
-	pause: "PAUSE",
-	vista: "VISTA",
-};
-
-const APP_ICONS: Record<string, string> = {
-	aegis: "/apps/aegis.png",
-	cinq: "/apps/cinq.png",
-	dial: "/apps/dial.png",
-	pivot: "/apps/pivot.png",
-	spark: "/apps/spark.png",
-	tempo: "/apps/tempo.png",
-	sond: "/apps/sond.png",
-	vault: "/apps/vault.png",
-	pause: "/apps/pause.png",
-	vista: "/apps/vista.png",
-};
 
 export interface CommandPaletteProps {
 	searchFn?: (q: string) => Promise<unknown[]>;
@@ -165,15 +140,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 				onValueChange={setQuery}
 			/>
 			{/* Bump the default 300px cap: Recent + context + switch + commands
-			    + navigation otherwise overflow into scroll on first open (P2-1). */}
+                            + navigation otherwise overflow into scroll on first open (P2-1). */}
 			<CommandList className="max-h-[min(70vh,560px)]">
 				<CommandEmpty>
 					{loading ? "Searching..." : "No results found."}
 				</CommandEmpty>
 				{/* Recent (P2-1): shown while the query is empty so recents never
-				    compete with live search. A recent whose command is still
-				    registered replays the command; otherwise it navigates to the
-				    stored href. */}
+                                    compete with live search. A recent whose command is still
+                                    registered replays the command; otherwise it navigates to the
+                                    stored href. */}
 				{query.trim().length === 0 && recents.length > 0 && (
 					<CommandGroup heading={`Recent (${Math.min(recents.length, 5)})`}>
 						{recents.slice(0, 5).map((recent) => {
@@ -199,10 +174,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 									}
 								>
 									{cmd?.icon ?? (
-										<img
-											src={APP_ICONS[ownerApp ?? "aegis"]}
-											alt=""
-											className="h-4 w-4 mr-2 rounded-sm"
+										<AppGlyph
+											app={ownerApp ?? "aegis"}
+											className="h-4 w-4 mr-2 text-muted-foreground"
 										/>
 									)}
 									<span>{recent.label}</span>
@@ -215,8 +189,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 					</CommandGroup>
 				)}
 				{/* Context scope (P2-1): the current app's own commands lead, so
-				    "what can I do here" never requires scrolling past the other
-				    nine apps' commands. */}
+                                    "what can I do here" never requires scrolling past the other
+                                    nine apps' commands. */}
 				{scopedCommands.length > 0 && (
 					<CommandGroup
 						heading={`In ${APP_NAMES[currentApp]} (${scopedCommands.length})`}
@@ -233,10 +207,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 								}
 							>
 								{cmd.icon ?? (
-									<img
-										src={APP_ICONS[currentApp]}
-										alt=""
-										className="h-4 w-4 mr-2 rounded-sm"
+									<AppGlyph
+										app={currentApp}
+										className="h-4 w-4 mr-2 text-muted-foreground"
 									/>
 								)}
 								<span>{cmd.title}</span>
@@ -265,12 +238,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 								})
 							}
 						>
-							<img
-								src={APP_ICONS[app]}
-								alt={APP_NAMES[app]}
-								className="h-5 w-5 mr-2"
+							<AppGlyph
+								app={app}
+								className="h-4 w-4 mr-2 text-muted-foreground"
 							/>
 							<span>{APP_NAMES[app]}</span>
+							<span className="ml-auto meta text-[10px] text-muted-foreground/70 mr-2">
+								SHT {APP_SHEET_NO[app]}
+							</span>
 							{(() => {
 								const letter = toLetter(APP_NAMES[app]);
 								return letter ? (
@@ -290,10 +265,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 								value={`${item.appName} ${item.entity_type} ${item.title} ${item.subtitle ?? ""}`}
 								onSelect={() => handleSelect(() => openResult(item))}
 							>
-								<img
-									src={APP_ICONS[item.app]}
-									alt={item.appName}
-									className="h-4 w-4 mr-2 rounded-sm"
+								<AppGlyph
+									app={item.app}
+									className="h-4 w-4 mr-2 text-muted-foreground"
 								/>
 								<span className="font-medium">{item.title}</span>
 								{item.subtitle && (
@@ -333,8 +307,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ searchFn }) => {
 					</CommandGroup>
 				)}
 				{/* Cross-app creation (F3): every registered command tagged with
-				    `createName` surfaces here, scoped to the other apps so the
-				    current app's own creates stay in its context group. */}
+                                    `createName` surfaces here, scoped to the other apps so the
+                                    current app's own creates stay in its context group. */}
 				{createCommands.length > 0 && (
 					<CommandGroup heading={`Create (${createCommands.length})`}>
 						{createCommands.map((cmd) => (
