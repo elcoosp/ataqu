@@ -188,7 +188,7 @@ export function DealKanban() {
 
 	const renderItem = (deal: DealResponse) => (
 		<div
-			className="relative p-3 bg-deep-night/50 border border-border/40 rounded-lg cursor-pointer hover:border-amber/50 transition-colors"
+			className="relative p-3 bg-card border border-border rounded-lg cursor-pointer hover:border-primary/60 transition-colors"
 			onClick={() => navigate({ to: `/cinq/deals/${deal.id}` })}
 			data-tour="deal-card"
 		>
