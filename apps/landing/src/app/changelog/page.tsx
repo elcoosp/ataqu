@@ -33,96 +33,94 @@ const CHANGELOG = [
 ];
 
 const CATEGORY_STYLES: Record<string, string> = {
-	New: "bg-emerald-500/15 text-emerald-400",
-	Improved: "bg-amber-500/15 text-amber-400",
-	Fixed: "bg-sky-500/15 text-sky-400",
+	New: "text-stamp border-stamp/50",
+	Improved: "text-caution border-caution/50",
+	Fixed: "text-ink-soft border-hairline-strong",
 };
 
 export default function ChangelogPage() {
 	return (
 		<div className="container section-padding">
-			<h1 className="font-display text-4xl md:text-5xl font-bold text-center">
-				<Trans>Changelog & Stability Policy</Trans>
-			</h1>
-			<p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-				<Trans>
-					What's shipped, what's changing, and our promise on stability and
-					backwards compatibility.
-				</Trans>
-			</p>
+			<div className="max-w-4xl">
+				<h1 className="display text-4xl leading-tight text-ink-strong md:text-5xl">
+					<Trans>Changelog & Stability Policy</Trans>
+				</h1>
+				<p className="mt-4 max-w-[62ch] text-lg leading-relaxed text-ink-soft">
+					<Trans>
+						What's shipped, what's changing, and our promise on stability and
+						backwards compatibility.
+					</Trans>
+				</p>
 
-			<section className="mt-12 max-w-3xl mx-auto">
-				<h2 className="font-display text-2xl font-bold text-foreground">
-					<Trans>Recent changes</Trans>
-				</h2>
-				<ul className="mt-6 space-y-6">
-					{CHANGELOG.map((entry, idx) => (
-						<li
-							key={idx}
-							className="border-b border-border/50 pb-6 last:border-0"
-						>
-							<div className="flex items-center gap-2">
-								<span
-									className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${
-										CATEGORY_STYLES[entry.category] ?? ""
-									}`}
-								>
-									{entry.category}
-								</span>
-								<span className="text-xs text-muted-foreground">
-									v{entry.version} · {entry.date}
-								</span>
-								{entry.breaking && (
-									<span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase text-red-400">
-										<Trans>Breaking</Trans>
+				{/* Revision table */}
+				<section className="mt-14">
+					<h2 className="display border-b-2 border-ink-strong pb-3 text-xl text-ink-strong">
+						<Trans>Recent changes</Trans>
+					</h2>
+					<ul>
+						{CHANGELOG.map((entry, idx) => (
+							<li key={idx} className="border-b border-hairline py-6">
+								<div className="flex flex-wrap items-center gap-3">
+									<span
+										className={`meta rounded-[2px] border px-2 py-1 ${CATEGORY_STYLES[entry.category] ?? ""}`}
+									>
+										{entry.category}
 									</span>
-								)}
-							</div>
-							<p className="mt-2 text-lg font-medium text-foreground">
-								{entry.title}
-							</p>
-							<p className="text-sm text-muted-foreground">
-								{entry.description}
-							</p>
-						</li>
-					))}
-				</ul>
-			</section>
+									<span className="meta text-ink-soft">
+										v{entry.version} · {entry.date}
+									</span>
+									{entry.breaking && (
+										<span className="meta rounded-[2px] border border-reject/50 px-2 py-1 text-reject">
+											<Trans>Breaking</Trans>
+										</span>
+									)}
+								</div>
+								<p className="display mt-3 text-lg font-semibold tracking-tight text-ink-strong">
+									{entry.title}
+								</p>
+								<p className="mt-1 max-w-[68ch] leading-relaxed text-ink-soft">
+									{entry.description}
+								</p>
+							</li>
+						))}
+					</ul>
+				</section>
 
-			<section className="mt-12 max-w-3xl mx-auto">
-				<h2 className="font-display text-2xl font-bold text-foreground">
-					<Trans>Stability policy</Trans>
-				</h2>
-				<div className="mt-4 space-y-4 text-sm text-muted-foreground">
-					<p>
-						<Trans>
-							We target 99.9% monthly uptime across all 10 applications.
-							Scheduled maintenance is announced at least 48 hours in advance
-							and performed inside published windows.
-						</Trans>
-					</p>
-					<p>
-						<Trans>
-							Non-breaking changes (new endpoints, added fields, performance
-							improvements) ship continuously and require no action from you.
-						</Trans>
-					</p>
-					<p>
-						<Trans>
-							Breaking changes (removed fields, changed auth, schema migrations
-							with downtime) follow semantic-versioned major releases with a
-							minimum 90-day deprecation notice and a legacy compatibility
-							toggle where feasible.
-						</Trans>
-					</p>
-					<p>
-						<Trans>
-							Every change is recorded here and in the in-app changelog bell, so
-							your team always knows what changed.
-						</Trans>
-					</p>
-				</div>
-			</section>
+				<section className="mt-14">
+					<h2 className="display border-b-2 border-ink-strong pb-3 text-xl text-ink-strong">
+						<Trans>Stability policy</Trans>
+					</h2>
+					<div className="mt-6 max-w-[68ch] space-y-4 leading-relaxed text-ink-soft">
+						<p>
+							<Trans>
+								We target 99.9% monthly uptime across all 10 applications.
+								Scheduled maintenance is announced at least 48 hours in advance
+								and performed inside published windows.
+							</Trans>
+						</p>
+						<p>
+							<Trans>
+								Non-breaking changes (new endpoints, added fields, performance
+								improvements) ship continuously and require no action from you.
+							</Trans>
+						</p>
+						<p>
+							<Trans>
+								Breaking changes (removed fields, changed auth, schema
+								migrations with downtime) follow semantic-versioned major
+								releases with a minimum 90-day deprecation notice and a legacy
+								compatibility toggle where feasible.
+							</Trans>
+						</p>
+						<p>
+							<Trans>
+								Every change is recorded here and in the in-app changelog bell,
+								so your team always knows what changed.
+							</Trans>
+						</p>
+					</div>
+				</section>
+			</div>
 		</div>
 	);
 }
