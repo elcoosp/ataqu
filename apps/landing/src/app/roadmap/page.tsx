@@ -74,22 +74,20 @@ const PHASES = [
 ];
 
 function StatusBadge({ status }: { status: string }) {
-	const colors = {
-		done: "bg-success/20 text-success border-success/30",
-		"in-progress": "bg-primary/20 text-primary border-primary/30",
-		planned: "bg-muted/20 text-muted-foreground border-muted/30",
+	const styles = {
+		done: "text-stamp border-stamp/50",
+		"in-progress": "text-caution border-caution/50",
+		planned: "text-ink-soft border-hairline-strong",
 	};
 	const labels = {
 		done: "Done",
 		"in-progress": "In Progress",
 		planned: "Planned",
 	};
-	const color = colors[status as keyof typeof colors] || colors.planned;
+	const style = styles[status as keyof typeof styles] || styles.planned;
 	const label = labels[status as keyof typeof labels] || labels.planned;
 	return (
-		<span
-			className={`px-2 py-0.5 text-xs font-mono rounded-full border ${color}`}
-		>
+		<span className={`meta shrink-0 rounded-[2px] border px-2 py-1 ${style}`}>
 			{label}
 		</span>
 	);
@@ -98,38 +96,40 @@ function StatusBadge({ status }: { status: string }) {
 export default function RoadmapPage() {
 	return (
 		<div className="container section-padding">
-			<h1 className="font-display text-4xl md:text-5xl font-bold text-center">
-				<Trans>Public Roadmap</Trans>
-			</h1>
-			<p className="mt-4 text-center text-muted-foreground max-w-2xl mx-auto">
-				<Trans>
-					We're building the Unified SMB OS in the open. Here's what's done,
-					what's next, and what's planned.
-				</Trans>
-			</p>
-			<div className="mt-12 space-y-12 max-w-3xl mx-auto">
-				{PHASES.map((phase, idx) => (
-					<div key={idx} className="border-l-2 border-border pl-6">
-						<h2 className="font-display text-2xl font-bold text-foreground">
-							<Trans>{phase.name}</Trans>
-						</h2>
-						<ul className="mt-4 space-y-3">
-							{phase.tasks.map((task, tIdx) => (
-								<li
-									key={tIdx}
-									className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
-								>
-									<span className="text-sm text-foreground">
-										<Trans>{task.name}</Trans>
-									</span>
-									<StatusBadge status={task.status} />
-								</li>
-							))}
-						</ul>
-					</div>
-				))}
+			<div className="max-w-4xl">
+				<h1 className="display text-4xl leading-tight text-ink-strong md:text-5xl">
+					<Trans>Public Roadmap</Trans>
+				</h1>
+				<p className="mt-4 max-w-[62ch] text-lg leading-relaxed text-ink-soft">
+					<Trans>
+						We're building the Unified SMB OS in the open. Here's what's done,
+						what's next, and what's planned.
+					</Trans>
+				</p>
+
+				<div className="mt-14 space-y-14">
+					{PHASES.map((phase, idx) => (
+						<section key={idx}>
+							<h2 className="display border-b-2 border-ink-strong pb-3 text-xl text-ink-strong">
+								<Trans>{phase.name}</Trans>
+							</h2>
+							<ul className="mt-2">
+								{phase.tasks.map((task, tIdx) => (
+									<li
+										key={tIdx}
+										className="flex items-center justify-between gap-4 border-b border-hairline py-3"
+									>
+										<span className="text-sm text-ink">
+											<Trans>{task.name}</Trans>
+										</span>
+										<StatusBadge status={task.status} />
+									</li>
+								))}
+							</ul>
+						</section>
+					))}
+				</div>
 			</div>
-			<p className="mt-12 text-center text-sm text-muted-foreground"></p>
 		</div>
 	);
 }
