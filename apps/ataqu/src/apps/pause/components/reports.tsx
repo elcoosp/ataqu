@@ -43,7 +43,7 @@ export function ReportsView() {
 	return (
 		<div className="space-y-8">
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-				<div className="bg-deep-night/50 p-6 rounded-lg border border-border/40">
+				<div className="bg-card p-6 rounded-lg border border-border">
 					<h3 className="text-lg font-semibold mb-4">
 						<Trans>Headcount by Department</Trans>
 					</h3>
@@ -54,17 +54,17 @@ export function ReportsView() {
 						series={[{ key: "value", name: t`Headcount` }]}
 					/>
 				</div>
-				<div className="bg-deep-night/50 p-6 rounded-lg border border-border/40">
+				<div className="bg-card p-6 rounded-lg border border-border">
 					<h3 className="text-lg font-semibold mb-4">
 						<Trans>Turnover Rate</Trans>
 					</h3>
 					<div className="flex items-center justify-center h-64">
-						<span className="text-5xl font-bold text-amber">
+						<span className="text-5xl font-bold text-primary">
 							{turnoverRate.toFixed(1)}%
 						</span>
 					</div>
 				</div>
-				<div className="bg-deep-night/50 p-6 rounded-lg border border-border/40 md:col-span-2">
+				<div className="bg-card p-6 rounded-lg border border-border md:col-span-2">
 					<h3 className="text-lg font-semibold mb-4">
 						<Trans>Leave Usage Summary</Trans>
 					</h3>
