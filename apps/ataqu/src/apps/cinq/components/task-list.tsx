@@ -188,7 +188,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 								if (e.target.checked) setSelected((s) => [...s, task.id]);
 								else setSelected((s) => s.filter((id) => id !== task.id));
 							}}
-							className="h-4 w-4 rounded border-border bg-transparent text-amber focus:ring-amber"
+							className="h-4 w-4 rounded border-border bg-transparent text-primary focus:ring-primary"
 						/>
 						<input
 							type="checkbox"
@@ -201,7 +201,7 @@ export function TaskList({ dealId }: { dealId?: string } = {}) {
 									version: task.version,
 								});
 							}}
-							className="h-4 w-4 rounded border-border bg-transparent text-amber focus:ring-amber"
+							className="h-4 w-4 rounded border-border bg-transparent text-primary focus:ring-primary"
 						/>
 						<span
 							className={
