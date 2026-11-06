@@ -1,34 +1,31 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Unbounded } from "next/font/google";
+import { Archivo, Fragment_Mono } from "next/font/google";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { LinguiProvider } from "@/components/lingui-provider";
 import "./globals.css";
 
-const inter = Inter({
+const archivo = Archivo({
 	subsets: ["latin"],
-	variable: "--font-sans",
+	axes: ["wdth"],
+	variable: "--font-archivo",
 });
 
-const unbounded = Unbounded({
+const fragmentMono = Fragment_Mono({
 	subsets: ["latin"],
-	variable: "--font-display",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-	subsets: ["latin"],
-	variable: "--font-mono",
+	weight: "400",
+	variable: "--font-fragment-mono",
 });
 
 export const metadata: Metadata = {
-	title: "Ataqu – The Calm Predator of Productivity",
+	title: "Ataqu – 10 business apps. One binary. One price.",
 	description:
 		"10 essential apps, one unified price. No lock‑in, no per‑user fees. Join the waitlist.",
 	icons: {
 		icon: "/favicon.ico",
 	},
 	openGraph: {
-		title: "Ataqu – The Calm Predator of Productivity",
+		title: "Ataqu – 10 business apps. One binary. One price.",
 		description:
 			"10 essential apps, one unified price. No lock‑in, no per‑user fees.",
 		type: "website",
@@ -36,7 +33,7 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Ataqu – The Calm Predator of Productivity",
+		title: "Ataqu – 10 business apps. One binary. One price.",
 		description:
 			"10 essential apps, one unified price. No lock‑in, no per‑user fees.",
 	},
@@ -50,10 +47,10 @@ export default function RootLayout({
 	return (
 		<html
 			lang="en"
-			className={`${inter.variable} ${unbounded.variable} ${jetbrainsMono.variable}`}
+			className={`${archivo.variable} ${fragmentMono.variable}`}
 			data-scroll-behavior="smooth"
 		>
-			<body className="min-h-screen flex flex-col">
+			<body className="flex min-h-screen flex-col">
 				<LinguiProvider>
 					<Header />
 					<main className="flex-1">{children}</main>
