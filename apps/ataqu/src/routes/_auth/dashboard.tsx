@@ -1,11 +1,18 @@
 // apps/aegis/src/routes/_auth/dashboard.tsx
 
 import { api } from "@ataqu/api-client";
-import { Bone, Card, CardContent, CardHeader, CardTitle } from "@ataqu/ui";
+import {
+	APP_KEYS,
+	APP_LEGEND,
+	APP_NAMES,
+	APP_SHEET_NO,
+	AppGlyph,
+	Bone,
+} from "@ataqu/ui";
 import { Trans } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, Key, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/_auth/dashboard")({
 	component: () => {
@@ -27,7 +34,7 @@ export const Route = createFileRoute("/_auth/dashboard")({
 
 		if (isLoading) {
 			return (
-				<div className="p-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 					{[1, 2, 3, 4].map((i) => (
 						<Bone
 							key={i}
@@ -49,102 +56,125 @@ export const Route = createFileRoute("/_auth/dashboard")({
 		if (!tenant) return null;
 
 		return (
-			<div className="p-6">
-				<h1 className="text-3xl font-heading mb-6">
-					<Trans>Dashboard</Trans>
-				</h1>
-				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-sm font-medium text-muted-foreground">
-								<Trans>Tenant</Trans>
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="flex items-center">
-								<Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
-								<span className="text-2xl font-bold">{tenant.name}</span>
-							</div>
-							<p className="text-xs text-muted-foreground mt-1">
-								<Trans>Plan:</Trans> {tenant.plan}
-							</p>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-sm font-medium text-muted-foreground">
-								<Trans>Users</Trans>
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="flex items-center">
-								<Users className="mr-2 h-4 w-4 text-muted-foreground" />
-								<span className="text-2xl font-bold">{tenant.userCount}</span>
-							</div>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-sm font-medium text-muted-foreground">
-								<Trans>API Keys</Trans>
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="flex items-center">
-								<Key className="mr-2 h-4 w-4 text-muted-foreground" />
-								<span className="text-2xl font-bold">{tenant.apiKeyCount}</span>
-							</div>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-sm font-medium text-muted-foreground">
-								<Trans>Quick Links</Trans>
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-2">
+			<div>
+				{/* Title block */}
+				<div className="flex items-end justify-between gap-4 border-b border-border pb-5">
+					<div className="min-w-0">
+						<p className="meta text-muted-foreground">
+							Aegis · Control sheet · SHT 01
+						</p>
+						<h1 className="font-heading mt-2 text-3xl leading-tight">
+							<Trans>Dashboard</Trans>
+						</h1>
+					</div>
+					<div className="hidden sm:flex items-center gap-2 border border-border bg-card px-3 py-1.5">
+						<span className="meta text-muted-foreground">Plan</span>
+						<span className="meta text-foreground">{tenant.plan}</span>
+					</div>
+				</div>
+
+				{/* Figures */}
+				<div className="mt-6 grid gap-4 sm:grid-cols-3">
+					<div className="plate p-5">
+						<p className="meta text-muted-foreground">Tenant</p>
+						<p className="font-heading mt-3 truncate text-xl leading-tight">
+							{tenant.name}
+						</p>
+						<p className="mt-1 text-xs text-muted-foreground">
+							Workspace of record
+						</p>
+					</div>
+					<div className="plate p-5">
+						<p className="meta text-muted-foreground">Users</p>
+						<p className="font-heading tnum mt-3 text-4xl leading-none">
+							{tenant.userCount}
+						</p>
+						<p className="mt-2 text-xs text-muted-foreground">
+							Active workspace members
+						</p>
+					</div>
+					<div className="plate p-5">
+						<p className="meta text-muted-foreground">API keys</p>
+						<p className="font-heading tnum mt-3 text-4xl leading-none">
+							{tenant.apiKeyCount}
+						</p>
+						<p className="mt-2 text-xs text-muted-foreground">
+							Issued credentials
+						</p>
+					</div>
+				</div>
+
+				{/* The set — every app is a numbered sheet */}
+				<div className="mt-8 border border-border bg-card">
+					<div className="flex items-center justify-between border-b border-border px-5 py-3">
+						<span className="meta text-muted-foreground">
+							The set · {APP_KEYS.length} sheets
+						</span>
+						<span className="meta hidden text-muted-foreground/60 sm:inline">
+							Rev {new Date().getFullYear()}
+						</span>
+					</div>
+					{/* 1px gaps over a hairline field = perfect drafting rules */}
+					<div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-5">
+						{APP_KEYS.map((app) => (
 							<Link
-								to="/users"
-								search={{ inviteOpen: false, createOpen: false }}
-								className="text-sm text-primary hover:underline block"
+								key={app}
+								to={
+									{
+										aegis: "/dashboard",
+										cinq: "/cinq/contacts",
+										dial: "/dial",
+										pivot: "/pivot",
+										spark: "/spark",
+										tempo: "/tempo/dashboard",
+										sond: "/sond",
+										vault: "/vault/products",
+										pause: "/pause/directory",
+										vista: "/vista",
+									}[app] ?? "/dashboard"
+								}
+								className="group flex flex-col gap-3 bg-card p-5 transition-colors hover:bg-accent"
 							>
-								<Trans>Manage Users</Trans>
+								<div className="flex items-center justify-between">
+									<span className="text-foreground/80">
+										<AppGlyph app={app} className="h-5 w-5" />
+									</span>
+									<span className="meta text-[10px] text-muted-foreground/60 group-hover:text-primary">
+										SHT {APP_SHEET_NO[app]}
+									</span>
+								</div>
+								<div>
+									<p className="text-sm font-semibold tracking-wide">
+										{APP_NAMES[app]}
+									</p>
+									<p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+										{APP_LEGEND[app]}
+									</p>
+								</div>
 							</Link>
-							<Link
-								to="/roles"
-								search={{ createOpen: false }}
-								className="text-sm text-primary hover:underline block"
-							>
-								<Trans>Manage Roles</Trans>
-							</Link>
-							<Link
-								to="/api-keys"
-								search={{ createOpen: false }}
-								className="text-sm text-primary hover:underline block"
-							>
-								<Trans>API Keys</Trans>
-							</Link>
-							<Link
-								to="/admin/access-matrix"
-								className="text-sm text-primary hover:underline block"
-							>
-								<Trans>Access Matrix</Trans>
-							</Link>
-							<Link
-								to="/admin/audit"
-								search={{
-									action: "",
-									app: "",
-									from_date: "",
-									to_date: "",
-									offset: 0,
-								}}
-								className="text-sm text-primary hover:underline block"
-							>
-								<Trans>Audit Log</Trans>
-							</Link>
-						</CardContent>
-					</Card>
+						))}
+					</div>
+				</div>
+
+				{/* Related admin sheets */}
+				<div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-5">
+					<span className="meta text-muted-foreground">Related</span>
+					{[
+						{ label: "Users", to: "/users" },
+						{ label: "Roles", to: "/roles" },
+						{ label: "API keys", to: "/api-keys" },
+						{ label: "Access matrix", to: "/admin/access-matrix" },
+						{ label: "Audit log", to: "/admin/audit" },
+					].map((l) => (
+						<Link
+							key={l.to}
+							to={l.to}
+							className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
+						>
+							{l.label}
+							<ArrowRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+						</Link>
+					))}
 				</div>
 			</div>
 		);
