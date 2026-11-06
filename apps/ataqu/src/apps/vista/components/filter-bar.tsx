@@ -35,11 +35,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
 	return (
 		<div className="flex items-center gap-4 p-4 bg-card border-b border-border/40 flex-wrap">
-			<Input type="date" className="w-auto bg-deep-night/50" />
-			<Input type="date" className="w-auto bg-deep-night/50" />
+			<Input type="date" className="w-auto bg-background" />
+			<Input type="date" className="w-auto bg-background" />
 
 			<Select value={team} onValueChange={setTeam}>
-				<SelectTrigger className="w-[180px] bg-deep-night/50">
+				<SelectTrigger className="w-[180px] bg-background">
 					<SelectValue placeholder={t`Filter by Team`} />
 				</SelectTrigger>
 				<SelectContent>
@@ -49,7 +49,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 			</Select>
 
 			<Select value={product} onValueChange={setProduct}>
-				<SelectTrigger className="w-[180px] bg-deep-night/50">
+				<SelectTrigger className="w-[180px] bg-background">
 					<SelectValue placeholder={t`Filter by Product`} />
 				</SelectTrigger>
 				<SelectContent>
