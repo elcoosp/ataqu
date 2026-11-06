@@ -158,7 +158,7 @@ export function CsvImport() {
 						<HoldToConfirm
 							onConfirm={handleImport}
 							disabled={importMutation.isPending}
-							className="mt-4 bg-amber text-black hover:bg-amber/90"
+							className="mt-4"
 						>
 							<Trans>Import</Trans>
 						</HoldToConfirm>
