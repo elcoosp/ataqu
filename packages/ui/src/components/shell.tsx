@@ -3,9 +3,16 @@
 import { useHealth } from "@ataqu/api-client";
 import { useAuthStore, useRecentStore, useUIStore } from "@ataqu/shared-stores";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
+import {
+	ChevronDown,
+	ChevronRight,
+	Menu,
+	PanelLeftClose,
+	PanelLeftOpen,
+} from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { APP_KEYS, APP_NAMES, APP_SHEET_NO, AppGlyph } from "../app-glyphs";
 import { CommandRegistryProvider } from "../command-registry";
 import { Button } from "./button";
 import { ChangelogBell } from "./changelog-bell";
@@ -14,32 +21,6 @@ import { InboxBell } from "./inbox-bell";
 import { SetupProgressWidget } from "./setup-progress-widget";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
-
-const APP_ICONS: Record<string, string> = {
-	aegis: "/apps/aegis.png",
-	cinq: "/apps/cinq.png",
-	dial: "/apps/dial.png",
-	pivot: "/apps/pivot.png",
-	spark: "/apps/spark.png",
-	tempo: "/apps/tempo.png",
-	sond: "/apps/sond.png",
-	vault: "/apps/vault.png",
-	pause: "/apps/pause.png",
-	vista: "/apps/vista.png",
-};
-
-const APP_NAMES: Record<string, string> = {
-	aegis: "AEGIS",
-	cinq: "CINQ",
-	dial: "DIAL",
-	pivot: "PIVOT",
-	spark: "SPARK",
-	tempo: "TEMPO",
-	sond: "SOND",
-	vault: "VAULT",
-	pause: "PAUSE",
-	vista: "VISTA",
-};
 
 /** In-app home route for each app in the consolidated single-origin shell. */
 export const APP_HOME: Record<string, string> = {
@@ -85,18 +66,15 @@ export const APP_SUB_NAV: Record<string, SidebarItem[]> = {
 	cinq: [
 		{ label: "Dashboard", href: "/cinq/dashboard" },
 		{ label: "Contacts", href: "/cinq/contacts" },
+		{ label: "Establishments", href: "/cinq/establishments" },
 		{ label: "Deals", href: "/cinq/deals" },
 		{ label: "Tasks", href: "/cinq/tasks" },
-		{ label: "Establishments", href: "/cinq/establishments" },
-		{ label: "Import", href: "/cinq/import" },
 	],
 	dial: [
-		{ label: "Channels", href: "/dial" },
+		{ label: "Live desk", href: "/dial" },
 		{ label: "Tickets", href: "/dial/tickets" },
-		{ label: "Dashboard", href: "/dial/dashboard" },
 	],
 	pause: [
-		{ label: "Dashboard", href: "/pause/dashboard" },
 		{ label: "Directory", href: "/pause/directory" },
 		{ label: "Leave", href: "/pause/leave" },
 		{ label: "Onboarding", href: "/pause/onboarding" },
@@ -157,6 +135,26 @@ export function activeSubNavHref(
 	return best;
 }
 
+/** Registration mark: the drawing-set punchmark that anchors the wordmark. */
+function RegistrationMark({ className }: { className?: string }) {
+	return (
+		<svg
+			viewBox="0 0 16 16"
+			fill="none"
+			aria-hidden="true"
+			className={className}
+		>
+			<circle cx="8" cy="8" r="5" stroke="currentColor" strokeWidth="1.25" />
+			<path
+				d="M8 0.5V4M8 12V15.5M0.5 8H4M12 8H15.5"
+				stroke="currentColor"
+				strokeWidth="1.25"
+			/>
+			<circle cx="8" cy="8" r="1.4" fill="currentColor" />
+		</svg>
+	);
+}
+
 export interface ShellProps {
 	activeApp: string;
 	children: React.ReactNode;
@@ -170,9 +168,33 @@ export const Shell: React.FC<ShellProps> = ({
 	searchFn,
 	extraSidebarItems = [],
 }) => {
-	const { sidebarOpen, toggleSidebar } = useUIStore();
+	const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore();
 	const { user } = useAuthStore();
 	const [appsExpanded, setAppsExpanded] = useState(true);
+	// Off-canvas behaviour below the md breakpoint: the sidebar becomes an
+	// overlay drawer over the sheet instead of squeezing content to a sliver.
+	const [isCompact, setIsCompact] = useState(
+		() =>
+			typeof window !== "undefined" &&
+			window.matchMedia("(max-width: 767px)").matches,
+	);
+	useEffect(() => {
+		const mq = window.matchMedia("(max-width: 767px)");
+		const onChange = (e: MediaQueryListEvent) => setIsCompact(e.matches);
+		mq.addEventListener("change", onChange);
+		return () => mq.removeEventListener("change", onChange);
+	}, []);
+	// First load on a phone: the persisted sidebar state is a desktop
+	// preference — the drawer starts closed so the sheet leads.
+	useEffect(() => {
+		if (
+			typeof window !== "undefined" &&
+			window.matchMedia("(max-width: 767px)").matches &&
+			useUIStore.getState().sidebarOpen
+		) {
+			setSidebarOpen(false);
+		}
+	}, [setSidebarOpen]);
 	const { data: health } = useHealth();
 	// Derive the active app from the current route so the shell highlights
 	// the app being viewed even when the caller passes a stale value.
@@ -189,7 +211,7 @@ export const Shell: React.FC<ShellProps> = ({
 		else if (seg === "" || seg === "dashboard") routeActiveApp = "aegis";
 	}
 
-	const appKeys = Object.keys(APP_ICONS);
+	const appKeys = APP_KEYS;
 
 	// Recents in the app switcher (brainstorm F2). Derived from the palette's
 	// persisted recent store so the sidebar and ⌘K share one memory: take the
@@ -212,70 +234,137 @@ export const Shell: React.FC<ShellProps> = ({
 	const subNav = APP_SUB_NAV[routeActiveApp] ?? [];
 	const subNavActive = activeSubNavHref(subNav, pathname);
 
-	return (
-		<div className="flex h-screen bg-background text-foreground overflow-hidden">
-			{/* Sidebar */}
-			<aside
-				className={`${sidebarOpen ? "w-64" : "w-16"} flex-shrink-0 bg-background/80 border-r border-border transition-all duration-150 ease-out overflow-hidden flex flex-col`}
-			>
-				<div className="flex items-center justify-between h-16 px-4 border-b border-border">
-					{sidebarOpen ? (
-						<span className="font-heading text-xl text-foreground">Ataqu</span>
-					) : (
-						<span className="text-2xl font-heading text-amber">A</span>
-					)}
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={toggleSidebar}
-						className="text-muted-foreground hover:text-foreground"
-					>
-						{sidebarOpen ? (
-							<X className="h-5 w-5" />
-						) : (
-							<Menu className="h-5 w-5" />
-						)}
-					</Button>
-				</div>
+	const healthTone =
+		health?.status === "Nominal"
+			? "text-success border-success/40"
+			: health?.status === "Degraded"
+				? "text-warning border-warning/50"
+				: "text-destructive border-destructive/50";
 
-				<nav className="flex-1 py-4 overflow-y-auto">
+	return (
+		<div className="relative flex h-screen bg-background text-foreground overflow-hidden">
+			{/* Mobile drawer backdrop */}
+			{isCompact && sidebarOpen && (
+				<div
+					aria-hidden="true"
+					className="absolute inset-0 z-40 bg-deep-night/50 md:hidden"
+					onClick={toggleSidebar}
+				/>
+			)}
+			{/* Sidebar — the index sheet of the drawing set */}
+			<aside
+				className={`${
+					isCompact
+						? sidebarOpen
+							? "absolute inset-y-0 left-0 z-50 flex w-64 shadow-lg"
+							: "hidden"
+						: sidebarOpen
+							? "flex w-64 flex-shrink-0"
+							: "flex w-14 flex-shrink-0"
+				} bg-background border-r border-border transition-all duration-150 ease-out overflow-hidden flex-col`}
+			>
+				<div
+					className={`flex items-center h-14 border-b border-border ${sidebarOpen ? "px-4 justify-between" : "justify-center"}`}
+				>
+					{sidebarOpen && isCompact ? (
+						<>
+							<Link
+								to="/dashboard"
+								className="flex items-center gap-2.5 min-w-0"
+							>
+								<RegistrationMark className="h-4 w-4 text-primary flex-shrink-0" />
+								<span className="brand-mark text-sm text-foreground truncate">
+									ATAQU
+								</span>
+							</Link>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={toggleSidebar}
+								aria-label="Close menu"
+								className="h-7 w-7 text-muted-foreground hover:text-foreground"
+							>
+								<PanelLeftClose className="h-4 w-4" />
+							</Button>
+						</>
+					) : sidebarOpen ? (
+						<Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
+							<RegistrationMark className="h-4 w-4 text-primary flex-shrink-0" />
+							<span className="brand-mark text-sm text-foreground truncate">
+								ATAQU
+							</span>
+						</Link>
+					) : (
+						<Link to="/dashboard" aria-label="Ataqu" className="text-primary">
+							<RegistrationMark className="h-4.5 w-4.5" />
+						</Link>
+					)}
+					{sidebarOpen && (
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={toggleSidebar}
+							aria-label="Collapse sidebar"
+							className="h-7 w-7 text-muted-foreground hover:text-foreground"
+						>
+							<PanelLeftClose className="h-4 w-4" />
+						</Button>
+					)}
+				</div>
+				{!sidebarOpen && (
+					<div className="flex justify-center py-2">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={toggleSidebar}
+							aria-label="Expand sidebar"
+							className="h-7 w-7 text-muted-foreground hover:text-foreground"
+						>
+							<PanelLeftOpen className="h-4 w-4" />
+						</Button>
+					</div>
+				)}
+
+				<nav
+					className="flex-1 py-3 overflow-y-auto"
+					onClick={() => {
+						// Navigating from the phone drawer dismisses it.
+						if (isCompact && sidebarOpen) setSidebarOpen(false);
+					}}
+				>
 					{/* Recent apps (F2) — fastest path back to what you were doing. */}
 					{sidebarOpen && recentApps.length > 0 && (
-						<div className="mb-2">
-							<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+						<div className="mb-3">
+							<div className="px-4 pb-1.5 meta text-muted-foreground/80">
 								Recent
 							</div>
 							{recentApps.map((app) => (
 								<Link
 									key={app}
 									to={APP_HOME[app] ?? "/"}
-									className="flex items-center px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-background/5 hover:text-foreground"
+									className="flex items-center px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 									data-recent-app={app}
 								>
-									<img
-										src={APP_ICONS[app]}
-										alt=""
-										className="h-5 w-5 flex-shrink-0 object-contain"
-									/>
-									<span className="ml-3">{APP_NAMES[app]}</span>
+									<AppGlyph app={app} className="h-4 w-4 flex-shrink-0" />
+									<span className="ml-2.5">{APP_NAMES[app]}</span>
 								</Link>
 							))}
-							<div className="mx-4 mt-2 border-t border-border" />
+							<div className="mx-4 mt-3 border-t border-border" />
 						</div>
 					)}
 
 					{/* All Apps collapsible section – only when expanded */}
 					{sidebarOpen && (
-						<div className="px-4 mb-2">
+						<div className="px-4 mb-1.5">
 							<button
 								onClick={() => setAppsExpanded(!appsExpanded)}
-								className="flex items-center justify-between w-full text-left text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+								className="flex items-center justify-between w-full text-left meta text-muted-foreground/80 hover:text-foreground transition-colors"
 							>
-								<span>All Apps</span>
+								<span>Sheet index</span>
 								{appsExpanded ? (
-									<ChevronDown className="h-4 w-4" />
+									<ChevronDown className="h-3.5 w-3.5" />
 								) : (
-									<ChevronRight className="h-4 w-4" />
+									<ChevronRight className="h-3.5 w-3.5" />
 								)}
 							</button>
 						</div>
@@ -283,29 +372,38 @@ export const Shell: React.FC<ShellProps> = ({
 					{sidebarOpen &&
 						appsExpanded &&
 						appKeys.map((app) => {
-							const iconSrc = APP_ICONS[app];
 							const isActive = app === routeActiveApp;
 							const to = APP_HOME[app] ?? "/";
 							return (
 								<Link
 									key={app}
 									to={to}
-									className={`flex items-center px-4 py-3 transition-colors ${
+									className={`relative flex items-center px-4 py-2 transition-colors ${
 										isActive
-											? "bg-amber/10 text-amber border-r-2 border-amber"
-											: "text-muted-foreground hover:text-foreground hover:bg-background/5"
+											? "bg-card text-foreground"
+											: "text-muted-foreground hover:text-foreground hover:bg-accent"
 									}`}
 								>
-									<img
-										src={iconSrc}
-										alt={APP_NAMES[app]}
-										className="h-6 w-6 flex-shrink-0 object-contain"
-									/>
-									{sidebarOpen && (
-										<span className="ml-3 text-sm font-medium">
-											{APP_NAMES[app]}
-										</span>
+									{isActive && (
+										<span
+											aria-hidden="true"
+											className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary"
+											data-active-rule
+										/>
 									)}
+									<span
+										className={`flex-shrink-0 ${isActive ? "text-primary" : ""}`}
+									>
+										<AppGlyph app={app} className="h-4 w-4" />
+									</span>
+									<span className="ml-2.5 text-sm font-medium tracking-wide">
+										{APP_NAMES[app]}
+									</span>
+									<span
+										className={`ml-auto meta text-[10px] ${isActive ? "text-primary/80" : "text-muted-foreground/60"}`}
+									>
+										{APP_SHEET_NO[app]}
+									</span>
 								</Link>
 							);
 						})}
@@ -314,9 +412,10 @@ export const Shell: React.FC<ShellProps> = ({
 					{subNav.length > 0 &&
 						subNavActive &&
 						(sidebarOpen ? (
-							<div className="mt-2 border-t border-border pt-2">
-								<div className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-									{APP_NAMES[routeActiveApp] ?? routeActiveApp}
+							<div className="mt-3 border-t border-border pt-3">
+								<div className="px-4 pb-1.5 meta text-muted-foreground/80">
+									{APP_NAMES[routeActiveApp] ?? routeActiveApp} · SHT{" "}
+									{APP_SHEET_NO[routeActiveApp]}
 								</div>
 								{subNav.map((item) => {
 									const isActive = item.href === subNavActive;
@@ -324,37 +423,43 @@ export const Shell: React.FC<ShellProps> = ({
 										<Link
 											key={item.href}
 											to={item.href}
-											className={`block px-4 py-2 text-sm transition-colors ${
+											className={`relative block px-4 py-1.5 text-sm transition-colors ${
 												isActive
-													? "text-amber border-r-2 border-amber"
-													: "text-muted-foreground hover:text-foreground hover:bg-background/5"
+													? "text-primary font-medium"
+													: "text-muted-foreground hover:text-foreground hover:bg-accent"
 											}`}
 											data-sub-nav={item.href}
 											aria-current={isActive ? "page" : undefined}
 										>
+											{isActive && (
+												<span
+													aria-hidden="true"
+													className="absolute left-0 top-1 bottom-1 w-0.5 bg-primary"
+												/>
+											)}
 											{item.label}
 										</Link>
 									);
 								})}
 							</div>
 						) : (
-							<div className="mt-2 border-t border-border pt-2" />
+							<div className="mt-3 border-t border-border pt-3" />
 						))}
 
 					{/* Extra sidebar items – always shown, but only icons when collapsed */}
 					{extraSidebarItems.length > 0 && (
 						<>
-							{sidebarOpen && <div className="border-t border-border my-2" />}
+							{sidebarOpen && <div className="border-t border-border my-3" />}
 							{extraSidebarItems.map((item, idx) => (
 								<a
 									key={idx}
 									href={item.href}
-									className={`flex items-center px-4 py-3 transition-colors text-muted-foreground hover:text-foreground hover:bg-background/5 ${
+									className={`flex items-center px-4 py-2 transition-colors text-muted-foreground hover:text-foreground hover:bg-accent ${
 										sidebarOpen ? "text-sm" : "justify-center"
 									}`}
 								>
 									{item.icon && (
-										<span className={sidebarOpen ? "mr-3" : ""}>
+										<span className={sidebarOpen ? "mr-2.5" : ""}>
 											{item.icon}
 										</span>
 									)}
@@ -365,18 +470,21 @@ export const Shell: React.FC<ShellProps> = ({
 					)}
 				</nav>
 
-				{/* User footer */}
-				<div className="border-t border-border p-4">
+				{/* User footer — the drawn-by stamp */}
+				<div className="border-t border-border p-3">
 					<div className="flex items-center">
-						<div className="h-8 w-8 rounded-full bg-amber/20 text-amber flex items-center justify-center font-bold">
+						<div
+							className="h-8 w-8 flex-shrink-0 bg-foreground text-background flex items-center justify-center text-sm font-semibold"
+							aria-hidden="true"
+						>
 							{user?.name?.[0] || user?.email?.[0] || "U"}
 						</div>
 						{sidebarOpen && (
-							<div className="ml-3 flex-1 min-w-0">
-								<p className="text-sm font-medium truncate">
+							<div className="ml-2.5 flex-1 min-w-0">
+								<p className="text-sm font-medium truncate leading-tight">
 									{user?.name || "User"}
 								</p>
-								<p className="text-xs text-muted-foreground truncate">
+								<p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
 									{user?.email || ""}
 								</p>
 							</div>
@@ -385,14 +493,27 @@ export const Shell: React.FC<ShellProps> = ({
 				</div>
 			</aside>
 
-			{/* Main content */}
+			{/* Main content — title block strip above the sheet */}
 			<main className="flex-1 flex flex-col overflow-hidden">
-				{/* Header with app name - no avatar */}
-				<header className="h-16 flex items-center justify-between px-6 border-b border-border bg-background/50">
-					<span className="font-heading text-xl text-foreground">
-						{APP_NAMES[routeActiveApp] || "Ataqu"}
-					</span>
-					<div className="flex items-center gap-4">
+				<header className="h-14 flex items-center justify-between px-4 sm:px-6 border-b border-border bg-background">
+					<div className="flex items-baseline gap-3 min-w-0">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={toggleSidebar}
+							aria-label="Open menu"
+							className="h-8 w-8 self-center text-muted-foreground hover:text-foreground md:hidden"
+						>
+							<Menu className="h-4.5 w-4.5" />
+						</Button>
+						<span className="font-heading text-lg text-foreground truncate">
+							{APP_NAMES[routeActiveApp] || "Ataqu"}
+						</span>
+						<span className="meta text-muted-foreground/70 hidden sm:inline">
+							SHT {APP_SHEET_NO[routeActiveApp] ?? "00"}
+						</span>
+					</div>
+					<div className="flex items-center gap-3">
 						<SetupProgressWidget />
 						{health && (
 							<div
@@ -401,24 +522,20 @@ export const Shell: React.FC<ShellProps> = ({
 										? ` (outbox: ${health.components.outbox.status}, DLQ: ${health.components.spark_workflows.dlq_depth}, db pool: ${health.components.db_connection_pools.used}/${health.components.db_connection_pools.max})`
 										: ""
 								}`}
-								className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
-									health.status === "Nominal"
-										? "bg-success/15 text-success"
-										: health.status === "Degraded"
-											? "bg-amber/15 text-amber"
-											: "bg-destructive/15 text-destructive"
-								}`}
+								className={`hidden md:flex items-center gap-1.5 border px-2 py-0.5 text-xs font-medium ${healthTone}`}
 							>
 								<span
-									className={`h-2 w-2 rounded-full ${
+									className={`h-1.5 w-1.5 ${
 										health.status === "Nominal"
 											? "bg-success"
 											: health.status === "Degraded"
-												? "bg-amber"
+												? "bg-warning"
 												: "bg-destructive"
 									}`}
 								/>
-								{health.status}
+								<span className="meta text-[10px] leading-5">
+									{health.status}
+								</span>
 							</div>
 						)}
 						<Button
@@ -431,16 +548,16 @@ export const Shell: React.FC<ShellProps> = ({
 							}
 							className="text-muted-foreground hover:text-foreground text-sm hidden sm:flex items-center gap-2"
 						>
-							<span>⌘K</span>
-							<span className="text-xs border border-border rounded px-1">
+							<span className="meta">⌘K</span>
+							<span className="meta text-[10px] border border-border px-1 leading-4">
 								Search
 							</span>
 						</Button>
-						<div className="h-8 w-px bg-border hidden sm:block" />
+						<div className="h-6 w-px bg-border hidden sm:block" />
 						<InboxBell />
 						<ChangelogBell />
 						<ThemeToggle />
-						<div className="h-8 w-px bg-border hidden sm:block" />
+						<div className="h-6 w-px bg-border hidden sm:block" />
 						<UserMenu />
 					</div>
 				</header>
