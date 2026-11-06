@@ -7,29 +7,29 @@ import { WaitlistForm } from "@/components/waitlist-form";
 
 export default function SondPage() {
 	return (
-		<div className="container section-padding max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div className="container section-padding">
 			<Link
 				href="/"
-				className="text-primary hover:underline text-sm inline-block mb-6"
+				className="meta text-ink-soft transition-colors hover:text-redline-ink"
 			>
 				<Trans>← Back to home</Trans>
 			</Link>
 
-			<div className="flex justify-center my-4">
+			<div className="flex justify-center my-6">
 				<Image
 					src="/apps/sond.png"
 					alt="sond"
 					width={64}
 					height={64}
-					className="rounded-full border border-primary/20"
+					className="rounded-[2px] border border-hairline-strong"
 				/>
 			</div>
-			<h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold">
+			<h1 className="display text-3xl leading-tight text-ink-strong md:text-5xl">
 				<Trans>
 					Typeform taxes your success. SOND gives you unlimited responses.
 				</Trans>
 			</h1>
-			<p className="mt-4 text-lg text-muted-foreground">
+			<p className="mt-5 max-w-[62ch] text-lg leading-relaxed text-ink-soft">
 				<Trans>
 					SOND is a drag‑and‑drop form builder with unlimited responses, native
 					CRM integration, and no per‑response fees. Conditional logic, email
@@ -37,12 +37,12 @@ export default function SondPage() {
 				</Trans>
 			</p>
 
-			<div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-				<div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-					<h2 className="font-display text-xl font-bold text-primary">
+			<div className="mt-12 grid grid-cols-1 gap-px border border-hairline-strong bg-hairline-strong md:grid-cols-2">
+				<div className="bg-paper-raised p-6 sm:p-8">
+					<h2 className="display text-xl text-ink-strong">
 						<Trans>Features</Trans>
 					</h2>
-					<ul className="mt-4 space-y-2 text-muted-foreground">
+					<ul className="mt-4 space-y-2 text-ink-soft">
 						<li>
 							• <Trans>Visual drag‑and‑drop builder</Trans>
 						</li>
@@ -64,52 +64,52 @@ export default function SondPage() {
 					</ul>
 				</div>
 
-				<div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-					<h2 className="font-display text-xl font-bold text-primary">
+				<div className="bg-paper-raised p-6 sm:p-8">
+					<h2 className="display text-xl text-ink-strong">
 						<Trans>Why replace Typeform?</Trans>
 					</h2>
 					<div className="overflow-x-auto">
-						<table className="w-full text-sm border-collapse">
+						<table className="tnum w-full text-sm border-collapse">
 							<thead>
-								<tr className="border-b border-border">
-									<th className="text-left py-2 font-display text-muted-foreground">
+								<tr className="border-b border-hairline-strong">
+									<th className="meta px-3 py-2.5 text-left text-ink-soft">
 										<Trans>Typeform</Trans>
 									</th>
-									<th className="text-left py-2 font-display text-muted-foreground">
+									<th className="meta px-3 py-2.5 text-left text-ink-soft">
 										<Trans>SOND</Trans>
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr className="border-b border-border/50">
-									<td className="py-2 text-muted-foreground">
+								<tr className="border-b border-hairline">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>$40/mo (10 free responses)</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>$15/mo (unlimited)</Trans>
 									</td>
 								</tr>
-								<tr className="border-b border-border/50">
-									<td className="py-2 text-muted-foreground">
+								<tr className="border-b border-hairline">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>Email notifications are paid add‑on</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>Notifications included</Trans>
 									</td>
 								</tr>
-								<tr className="border-b border-border/50">
-									<td className="py-2 text-muted-foreground">
+								<tr className="border-b border-hairline">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>No CRM integration (requires Zapier)</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>Native CINQ lead creation</Trans>
 									</td>
 								</tr>
 								<tr>
-									<td className="py-2 text-muted-foreground">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>Support: 2.4/5 on Trustpilot</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>Human support, 24h SLA</Trans>
 									</td>
 								</tr>
@@ -119,11 +119,11 @@ export default function SondPage() {
 				</div>
 			</div>
 
-			<div className="mt-12 p-6 rounded-lg border border-primary/30 bg-card/50">
-				<h2 className="font-display text-2xl font-bold text-primary">
+			<div className="mt-12 border-l-2 border-redline bg-paper-raised p-6 sm:p-8">
+				<h2 className="display text-2xl text-ink-strong">
 					<Trans>Native integration across the OS</Trans>
 				</h2>
-				<p className="mt-2 text-muted-foreground">
+				<p className="mt-3 text-ink-soft">
 					<Trans>
 						When a form is submitted, SOND creates a CINQ lead, triggers a SPARK
 						workflow, and notifies the team in DIAL. No Zapier. No webhooks.
@@ -131,17 +131,17 @@ export default function SondPage() {
 				</p>
 			</div>
 
-			<div className="mt-12">
-				<h2 className="font-display text-2xl font-bold text-center">
+			<div className="mt-14">
+				<h2 className="display text-2xl text-center text-ink-strong">
 					<Trans>Ready to escape Typeform?</Trans>
 				</h2>
-				<p className="mt-2 text-center text-muted-foreground">
+				<p className="mt-3 text-center text-ink-soft">
 					<Trans>
 						Start with one app for $15/mo (or get all 10 for $79/mo). No credit
 						card required for the trial.
 					</Trans>
 				</p>
-				<div className="mt-6">
+				<div className="mt-8">
 					<WaitlistForm />
 				</div>
 			</div>
