@@ -18,7 +18,7 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
 					"h-6 w-11 appearance-none rounded-full transition-colors cursor-pointer",
 					"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 					"disabled:cursor-not-allowed disabled:opacity-50",
-					checked ? "bg-primary" : "bg-secondary",
+					checked ? "bg-success" : "bg-secondary",
 					className,
 				)}
 				ref={ref}
