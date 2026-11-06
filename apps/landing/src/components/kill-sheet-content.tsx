@@ -559,15 +559,15 @@ export function KillSheetContent({ slug }: Props) {
 	const migrationSteps = data.migrationSteps.map((s: any) => i18n._(s));
 
 	return (
-		<main className="container section-padding space-y-12 md:space-y-16">
-			<div className="max-w-4xl mx-auto">
-				{/* Navigation dropdown */}
-				<div className="mb-8 flex flex-col items-start space-y-3">
+		<main className="container section-padding">
+			<div className="max-w-4xl">
+				{/* Sheet navigation */}
+				<div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-hairline-strong pb-6">
 					<a
 						href="/"
-						className="text-sm font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+						className="meta text-ink-soft transition-colors hover:text-redline-ink"
 					>
-						<span className="text-primary">←</span> Back to Home
+						← <Trans>Back to home</Trans>
 					</a>
 					<Select
 						value={slug}
@@ -575,8 +575,8 @@ export function KillSheetContent({ slug }: Props) {
 							window.location.href = `/alternatives/${value}`;
 						}}
 					>
-						<SelectTrigger className="w-[180px] sm:w-[180px]">
-							<span className="text-sm font-medium truncate">{name}</span>
+						<SelectTrigger className="w-[200px] rounded-[2px]">
+							<span className="truncate text-sm font-medium">{name}</span>
 						</SelectTrigger>
 						<SelectContent>
 							{COMPETITOR_SLUGS.map((item) => (
@@ -588,30 +588,46 @@ export function KillSheetContent({ slug }: Props) {
 					</Select>
 				</div>
 
-				<h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
-					{name} vs Ataqu: The $79/mo Alternative to {name} Lock‑in
-				</h1>
-				<p className="mt-4 text-lg text-muted-foreground">{tagline}</p>
+				<header>
+					<h1 className="display text-3xl leading-[1.08] text-ink-strong md:text-5xl">
+						{name} vs Ataqu: The $79/mo Alternative to {name} Lock‑in
+					</h1>
+					<p className="mt-5 max-w-[62ch] text-lg leading-relaxed text-ink-soft">
+						{tagline}
+					</p>
+				</header>
 
-				{/* 3‑Year TCO Table - custom per competitor */}
-				<div className="mt-8">
-					<h2 className="font-display text-2xl font-bold">
+				{/* 3‑Year TCO — bill of materials */}
+				<section className="mt-14">
+					<h2 className="display text-2xl text-ink-strong">
 						<Trans>3‑year Total Cost of Ownership</Trans>
 					</h2>
-					<div className="mt-4 overflow-x-auto">
+					<div className="plate mt-6 overflow-x-auto">
 						<table className="w-full border-collapse">
 							<thead>
-								<tr className="border-b border-border">
-									<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
+								<tr className="border-b border-hairline-strong">
+									<th
+										scope="col"
+										className="meta px-4 py-3 text-left text-ink-soft"
+									>
 										<Trans>Tool</Trans>
 									</th>
-									<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-										<Trans>Monthly Cost</Trans>
+									<th
+										scope="col"
+										className="meta px-4 py-3 text-left text-ink-soft"
+									>
+										<Trans>Monthly cost</Trans>
 									</th>
-									<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
+									<th
+										scope="col"
+										className="meta px-4 py-3 text-left text-ink-soft"
+									>
 										<Trans>Contract</Trans>
 									</th>
-									<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
+									<th
+										scope="col"
+										className="meta px-4 py-3 text-left text-ink-soft"
+									>
 										<Trans>Notes</Trans>
 									</th>
 								</tr>
@@ -620,22 +636,22 @@ export function KillSheetContent({ slug }: Props) {
 								{tcoRows.map((row: any, idx: number) => (
 									<tr
 										key={idx}
-										className={`border-b border-border/50 ${row.highlight ? "bg-primary/5" : ""}`}
+										className={`border-b border-hairline last:border-b-0 ${row.highlight ? "bg-redline/5" : ""}`}
 									>
 										<td
-											className={`py-3 px-4 font-display text-sm ${row.highlight ? "text-primary font-bold" : "text-foreground"}`}
+											className={`px-4 py-3.5 text-sm ${row.highlight ? "font-semibold text-redline-ink" : "text-ink"}`}
 										>
 											{row.name}
 										</td>
 										<td
-											className={`py-3 px-4 font-mono text-sm ${row.highlight ? "text-primary" : "text-foreground"}`}
+											className={`tnum px-4 py-3.5 font-mono text-sm ${row.highlight ? "font-semibold text-redline-ink" : "text-ink"}`}
 										>
 											{row.price}
 										</td>
-										<td className="py-3 px-4 text-sm text-muted-foreground">
+										<td className="px-4 py-3.5 text-sm text-ink-soft">
 											{row.contract}
 										</td>
-										<td className="py-3 px-4 text-sm text-muted-foreground">
+										<td className="px-4 py-3.5 text-sm text-ink-soft">
 											{row.note}
 										</td>
 									</tr>
@@ -643,66 +659,89 @@ export function KillSheetContent({ slug }: Props) {
 							</tbody>
 						</table>
 					</div>
-				</div>
-
-				{/* Why [Competitor] Fails */}
-				<section className="mt-12">
-					<h2 className="font-display text-2xl font-bold">
-						<Trans>Why {name} Fails</Trans>
-					</h2>
-					<ul className="mt-4 space-y-3 list-disc list-inside text-muted-foreground">
-						{painPoints.map((p: string, i: number) => (
-							<li key={i}>{p}</li>
-						))}
-					</ul>
 				</section>
 
-				{/* How Ataqu Solves It */}
-				<section className="mt-12">
-					<h2 className="font-display text-2xl font-bold">
-						<Trans>How Ataqu Solves It</Trans>
-					</h2>
-					<ul className="mt-4 space-y-3 list-disc list-inside text-muted-foreground">
-						{ataquAdvantage.map((a: string, i: number) => (
-							<li key={i}>{a}</li>
-						))}
-					</ul>
+				{/* Defects noted */}
+				<section className="mt-14 grid gap-8 md:grid-cols-2">
+					<div>
+						<h2 className="display text-2xl text-ink-strong">
+							<Trans>Why {name} fails</Trans>
+						</h2>
+						<ul className="mt-5 border-t border-hairline-strong">
+							{painPoints.map((p: string, i: number) => (
+								<li
+									key={i}
+									className="flex items-start gap-3 border-b border-hairline py-3 text-ink-soft"
+								>
+									<span
+										aria-hidden="true"
+										className="mt-[0.65em] h-px w-3.5 shrink-0 bg-reject"
+									/>
+									{p}
+								</li>
+							))}
+						</ul>
+					</div>
+					<div>
+						<h2 className="display text-2xl text-ink-strong">
+							<Trans>How Ataqu solves it</Trans>
+						</h2>
+						<ul className="mt-5 border-t border-hairline-strong">
+							{ataquAdvantage.map((a: string, i: number) => (
+								<li
+									key={i}
+									className="flex items-start gap-3 border-b border-hairline py-3 text-ink"
+								>
+									<span
+										aria-hidden="true"
+										className="mt-[0.65em] h-px w-3.5 shrink-0 bg-stamp"
+									/>
+									{a}
+								</li>
+							))}
+						</ul>
+					</div>
 				</section>
 
-				{/* Migration Path */}
-				<section className="mt-12 p-6 rounded-lg border border-primary/30 bg-card/50">
-					<h2 className="font-display text-2xl font-bold text-primary">
-						<Trans>Your Escape Hatch</Trans>
+				{/* Migration procedure */}
+				<section className="plate mt-14 p-6 sm:p-8">
+					<h2 className="display text-2xl text-ink-strong">
+						<Trans>Your escape hatch</Trans>
 					</h2>
-					<p className="mt-2 text-muted-foreground">
+					<p className="mt-2 text-ink-soft">
 						<Trans>Migrating from {name} is 1 click away.</Trans>
 					</p>
-					<ol className="mt-4 space-y-2 list-decimal list-inside text-muted-foreground">
+					<ol className="mt-6">
 						{migrationSteps.map((step: string, i: number) => (
-							<li key={i}>{step}</li>
+							<li
+								key={i}
+								className="flex items-baseline gap-4 border-b border-hairline py-3 last:border-b-0"
+							>
+								<span className="tnum font-mono text-sm text-redline-ink">
+									{String(i + 1).padStart(2, "0")}
+								</span>
+								<span className="text-ink">{step}</span>
+							</li>
 						))}
 					</ol>
-					<div className="mt-6">
-						<a
-							href="#waitlist"
-							className="inline-block rounded-md bg-primary px-8 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-						>
+					<div className="mt-8">
+						<a href="#waitlist" className="btn btn-primary">
 							<Trans>Join the waitlist</Trans>
 						</a>
 					</div>
 				</section>
 
-				{/* Waitlist Form */}
-				<section id="waitlist" className="mt-12">
-					<h2 className="font-display text-2xl font-bold text-center">
+				{/* Waitlist form */}
+				<section id="waitlist" className="mt-16 scroll-mt-20">
+					<h2 className="display text-2xl text-ink-strong">
 						<Trans>Join the waitlist</Trans>
 					</h2>
-					<p className="mt-2 text-center text-muted-foreground">
+					<p className="mt-2 text-ink-soft">
 						<Trans>
 							Be first to access the suite. No credit card required.
 						</Trans>
 					</p>
-					<div className="mt-6">
+					<div className="mt-8 border border-hairline-strong bg-paper-raised p-6 sm:p-8">
 						<WaitlistForm />
 					</div>
 				</section>
