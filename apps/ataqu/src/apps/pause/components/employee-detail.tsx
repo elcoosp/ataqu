@@ -135,7 +135,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 		<div className="space-y-8">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center space-x-6">
-					<div className="h-24 w-24 rounded-full bg-amber/20 flex items-center justify-center text-amber font-bold text-4xl">
+					<div className="h-24 w-24 rounded-full bg-foreground/10 flex items-center justify-center text-foreground font-bold text-4xl">
 						{employee.full_name.charAt(0)}
 					</div>
 					<div>
