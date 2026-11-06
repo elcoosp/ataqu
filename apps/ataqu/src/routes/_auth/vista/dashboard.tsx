@@ -69,7 +69,7 @@ function DashboardRow({
 }) {
 	return (
 		<Link to="/vista/dashboard/$id" params={{ id: d.id }} className="block">
-			<Card className="mb-3 hover:border-amber/30 transition-colors cursor-pointer">
+			<Card className="mb-3 hover:border-primary/50 transition-colors cursor-pointer">
 				<CardContent className="p-4">
 					<div className="flex items-center justify-between">
 						<div>
@@ -176,7 +176,7 @@ function VistaDashboard() {
 						value={kpis.total_bookings}
 						sub={t`upcoming`}
 						icon={Calendar}
-						color="bg-amber/10 text-amber"
+						color="bg-info/10 text-info"
 					/>
 					<KpiCard
 						label={t`Products`}
@@ -225,12 +225,12 @@ function VistaDashboard() {
 					<CardHeader className="pb-3">
 						<div className="flex items-center justify-between">
 							<CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-								<BarChart3 className="h-4 w-4 text-amber" />
+								<BarChart3 className="h-4 w-4 text-primary" />
 								<Trans>Dashboards</Trans>
 							</CardTitle>
 							<Link
 								to="/vista"
-								className="text-xs text-amber hover:text-amber flex items-center gap-1"
+								className="text-xs text-primary hover:text-primary flex items-center gap-1"
 							>
 								View all <ArrowRight className="h-3 w-3" />
 							</Link>
