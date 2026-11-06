@@ -39,22 +39,30 @@ function TeamStatusPage() {
 	}
 
 	const users = data?.users ?? [];
-	const rate = Math.round((data?.tenant_progress ?? 0) * 100);
+	// tenant_progress is 0..1 in the contract, but some seeds already store a
+	// percentage — accept both and clamp to a sane 0..100 display.
+	const rawProgress = data?.tenant_progress ?? 0;
+	const rate = Math.round(
+		Math.min(100, rawProgress <= 1 ? rawProgress * 100 : rawProgress),
+	);
 
 	return (
 		<div className="space-y-4 p-6">
-			<div className="flex items-center justify-between">
-				<h1 className="text-lg font-semibold text-foreground">
-					<Trans>Team activation</Trans>
-				</h1>
-				<Card className="w-48">
-					<CardContent className="p-3">
-						<p className="text-xs uppercase text-muted-foreground">
-							<Trans>Activation rate</Trans>
-						</p>
-						<p className="text-2xl font-semibold text-success">{rate}%</p>
-					</CardContent>
-				</Card>
+			<div className="flex items-end justify-between gap-4">
+				<div>
+					<p className="meta text-muted-foreground">Aegis · SHT 01</p>
+					<h1 className="font-heading mt-1.5 text-2xl leading-tight">
+						<Trans>Team activation</Trans>
+					</h1>
+				</div>
+				<div className="plate px-4 py-3 text-right">
+					<p className="meta text-muted-foreground">
+						<Trans>Activation rate</Trans>
+					</p>
+					<p className="tnum mt-1 text-2xl font-semibold text-success">
+						{rate}%
+					</p>
+				</div>
 			</div>
 
 			<Card>
