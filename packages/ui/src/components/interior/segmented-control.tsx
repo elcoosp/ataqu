@@ -123,7 +123,7 @@ export function SegmentedControl({
 		<div
 			role="radiogroup"
 			aria-label={label}
-			className={`relative inline-block select-none rounded-[9px] border border-border bg-background/70 p-[3px] shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.16] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] ${className}`}
+			className={`relative inline-block select-none rounded-[3px] border border-input bg-background/60 p-[3px] dark:bg-card ${className}`}
 		>
 			<div
 				className="relative grid"
@@ -147,7 +147,7 @@ export function SegmentedControl({
 
 				<motion.div
 					aria-hidden
-					className="pointer-events-none absolute inset-y-0 left-0 overflow-hidden rounded-[6px] bg-card shadow-[0_1px_2px_rgba(28,25,23,0.28)] dark:bg-background dark:shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+					className="pointer-events-none absolute inset-y-0 left-0 overflow-hidden rounded-[2px] bg-card shadow-[0_1px_2px_rgba(28,25,23,0.22)] dark:bg-background dark:shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
 					style={{ width: `${100 / count}%`, x: thumbX }}
 					initial={false}
 				>
@@ -193,7 +193,7 @@ export function SegmentedControl({
 							onClick={() => !option.disabled && select(option.value)}
 							onKeyDown={(e) => onKeyDown(e, i)}
 							onPointerEnter={() => !option.disabled && setHovered(i)}
-							className="cursor-default rounded-[6px] outline-none focus-visible:bg-[var(--ring)]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:focus-visible:bg-[var(--ring)]/[0.08] dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]"
+							className="cursor-default rounded-[2px] outline-none focus-visible:bg-[var(--ring)]/[0.06] focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] dark:focus-visible:bg-[var(--ring)]/[0.08] dark:focus-visible:shadow-[inset_0_0_0_1px_var(--ring)]"
 						>
 							<span className="sr-only">{option.label}</span>
 						</button>
