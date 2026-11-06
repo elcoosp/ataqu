@@ -94,17 +94,12 @@ function OnboardingPage() {
 									steps={ONBOARDING_STEPS.map((s) => ({ ...s }))}
 									current={done}
 								/>
-								<div className="mt-3 flex items-center gap-3">
-									<div className="flex-1">
-										<ProgressBar
-											value={pct}
-											max={100}
-											label={t`Onboarding progress`}
-										/>
-									</div>
-									<span className="text-xs tabular-nums text-muted-foreground">
-										{pct}%
-									</span>
+								<div className="mt-3">
+									<ProgressBar
+										value={pct}
+										max={100}
+										label={t`Onboarding progress`}
+									/>
 								</div>
 								{!emp.onboarding_completed_at &&
 								done < ONBOARDING_STEPS.length ? (
