@@ -32,7 +32,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({
 						onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 							setWidgetType(e.target.value)
 						}
-						className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
+						className="col-span-3 bg-background p-2 rounded border border-border"
 					>
 						<option value="kpi">{t`KPI Card`}</option>
 						<option value="bar">{t`Bar Chart`}</option>
@@ -51,7 +51,7 @@ export const WidgetPicker: React.FC<WidgetPickerProps> = ({
 						onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 							setDataSource(e.target.value)
 						}
-						className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
+						className="col-span-3 bg-background p-2 rounded border border-border"
 					>
 						<option value="revenue">{t`Revenue`}</option>
 						<option value="pipeline">{t`Pipeline`}</option>
