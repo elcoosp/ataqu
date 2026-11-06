@@ -65,7 +65,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
 							{wf.webhook_secret && (
 								<>
 									<span>•</span>
-									<span className="text-amber">
+									<span className="text-success">
 										<Trans>Secured</Trans>
 									</span>
 								</>
