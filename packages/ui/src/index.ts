@@ -6,6 +6,9 @@ export { BoneSuspense, Skeleton as Bone } from "boneyard-js/react";
 // Apply boneyard global defaults once, for every consumer of @ataqu/ui.
 configureBoneyard({ animate: true });
 
+// Drawing-set app identity: names, sheet numbers, thin-line glyphs.
+export * from "./app-glyphs";
+
 // Full boneyard capture + layout API (snapshot, descriptor, registry, native scan).
 export * from "./bones";
 
