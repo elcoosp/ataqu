@@ -1,5 +1,7 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
+
 const ROWS = [
 	{
 		name: "HubSpot",
@@ -34,50 +36,64 @@ const ROWS = [
 export function PricingComparison() {
 	return (
 		<>
-			{/* Mobile: stacked cards */}
-			<div className="block md:hidden space-y-4">
+			{/* Mobile: ruled rows */}
+			<div className="block border-t border-hairline-strong md:hidden">
 				{ROWS.map((row) => (
 					<div
 						key={row.name}
-						className={`p-4 rounded-lg border ${row.highlight ? "border-primary bg-primary/5" : "border-border bg-card/30"}`}
+						className={`flex items-baseline justify-between gap-4 border-b border-hairline py-4 ${
+							row.highlight ? "bg-redline/5" : ""
+						}`}
 					>
-						<div className="flex justify-between items-start">
+						<div>
 							<span
-								className={`font-display text-lg ${row.highlight ? "text-primary font-bold" : "text-foreground"}`}
+								className={`display text-base ${row.highlight ? "text-redline-ink" : "text-ink-strong"}`}
 							>
 								{row.name}
 							</span>
-							<span
-								className={`font-mono text-lg ${row.highlight ? "text-primary" : "text-foreground"}`}
-							>
-								{row.price}
-							</span>
+							<div className="mt-1 text-sm text-ink-soft">
+								<span>{row.contract}</span>
+								<span className="mx-2">·</span>
+								<span>{row.note}</span>
+							</div>
 						</div>
-						<div className="mt-2 text-sm text-muted-foreground">
-							<span>{row.contract}</span>
-							<span className="mx-2">·</span>
-							<span>{row.note}</span>
-						</div>
+						<span
+							className={`tnum font-mono text-base ${row.highlight ? "font-semibold text-redline-ink" : "text-ink"}`}
+						>
+							{row.price}
+						</span>
 					</div>
 				))}
 			</div>
 
-			{/* Desktop: table */}
-			<div className="hidden md:block overflow-x-auto">
+			{/* Desktop: bill of materials */}
+			<div className="hidden overflow-x-auto md:block">
 				<table className="w-full border-collapse">
 					<thead>
-						<tr className="border-b border-border">
-							<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-								Tool
+						<tr className="border-b border-hairline-strong">
+							<th
+								scope="col"
+								className="meta px-4 py-3 text-left text-ink-soft"
+							>
+								<Trans>Tool</Trans>
 							</th>
-							<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-								Monthly Cost
+							<th
+								scope="col"
+								className="meta px-4 py-3 text-left text-ink-soft"
+							>
+								<Trans>Monthly cost</Trans>
 							</th>
-							<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-								Contract
+							<th
+								scope="col"
+								className="meta px-4 py-3 text-left text-ink-soft"
+							>
+								<Trans>Contract</Trans>
 							</th>
-							<th className="text-left py-3 px-4 text-sm font-display text-muted-foreground">
-								Notes
+							<th
+								scope="col"
+								className="meta px-4 py-3 text-left text-ink-soft"
+							>
+								<Trans>Notes</Trans>
 							</th>
 						</tr>
 					</thead>
@@ -85,22 +101,22 @@ export function PricingComparison() {
 						{ROWS.map((row) => (
 							<tr
 								key={row.name}
-								className={`border-b border-border/50 ${row.highlight ? "bg-primary/5" : ""}`}
+								className={`border-b border-hairline ${row.highlight ? "bg-redline/5" : ""}`}
 							>
 								<td
-									className={`py-3 px-4 font-display text-sm ${row.highlight ? "text-primary font-bold" : "text-foreground"}`}
+									className={`px-4 py-3.5 text-sm ${row.highlight ? "font-semibold text-redline-ink" : "text-ink"}`}
 								>
 									{row.name}
 								</td>
 								<td
-									className={`py-3 px-4 font-mono text-sm ${row.highlight ? "text-primary" : "text-foreground"}`}
+									className={`tnum px-4 py-3.5 font-mono text-sm ${row.highlight ? "font-semibold text-redline-ink" : "text-ink"}`}
 								>
 									{row.price}
 								</td>
-								<td className="py-3 px-4 text-sm text-muted-foreground">
+								<td className="px-4 py-3.5 text-sm text-ink-soft">
 									{row.contract}
 								</td>
-								<td className="py-3 px-4 text-sm text-muted-foreground">
+								<td className="px-4 py-3.5 text-sm text-ink-soft">
 									{row.note}
 								</td>
 							</tr>
