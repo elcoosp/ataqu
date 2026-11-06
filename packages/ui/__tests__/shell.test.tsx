@@ -77,9 +77,12 @@ describe("Shell", () => {
 		renderWithProviders(<RouterProvider router={router} />);
 		await router.load();
 		expect(await screen.findByText("Test Content")).toBeInTheDocument();
-		// Check that the sidebar highlights CINQ (the link with text CINQ)
+		// Check that the sidebar highlights CINQ (the link with text CINQ).
+		// The drawing-set shell marks the active sheet with a card
+		// background + redline rule (not the old amber text).
 		const links = screen.getAllByRole("link");
 		const cinqLink = links.find((l) => l.textContent?.includes("CINQ"));
-		expect(cinqLink).toHaveClass("text-amber");
+		expect(cinqLink).toHaveClass("bg-card");
+		expect(cinqLink?.querySelector("[data-active-rule]")).not.toBeNull();
 	});
 });
