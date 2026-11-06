@@ -77,7 +77,9 @@ export class ValidationError extends ApiError {
 	}
 }
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+// `import.meta.env` only exists under Vite; guard it so non-Vite consumers
+// (e.g. the Next.js landing) can import the client without crashing.
+const BASE_URL = import.meta.env?.VITE_API_BASE_URL || "/api";
 
 /**
  * Encode a single path segment so user-controlled ids/slugs cannot inject
