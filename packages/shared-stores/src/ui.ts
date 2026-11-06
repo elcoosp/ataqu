@@ -6,6 +6,7 @@ interface UIState {
 	focusMode: boolean;
 	theme: "dark" | "light";
 	toggleSidebar: () => void;
+	setSidebarOpen: (open: boolean) => void;
 	setFocusMode: (enabled: boolean) => void;
 	setTheme: (theme: "dark" | "light") => void;
 }
@@ -16,6 +17,7 @@ export const useUIStore = create<UIState>()(
 			focusMode: false,
 			theme: "dark",
 			toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+			setSidebarOpen: (open) => set({ sidebarOpen: open }),
 			setFocusMode: (enabled) => set({ focusMode: enabled }),
 			setTheme: (theme) => set({ theme }),
 		}),
