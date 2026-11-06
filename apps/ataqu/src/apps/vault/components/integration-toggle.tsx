@@ -66,7 +66,7 @@ export function IntegrationToggle({ entityId }: { entityId: UUID }) {
 					aria-checked={isChecked}
 					onClick={handleToggle}
 					className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-						isChecked ? "bg-primary" : "bg-input"
+						isChecked ? "bg-success" : "bg-input"
 					}`}
 				>
 					<span
