@@ -76,16 +76,16 @@ function ActionNode({ data }: { data: SparkNodeData }) {
 
 function ConditionNode({ data }: { data: SparkNodeData }) {
 	return (
-		<div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-amber-500 min-w-[200px] shadow-md">
+		<div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-primary min-w-[200px] shadow-md">
 			<Handle
 				type="target"
 				position={Position.Top}
-				className="!bg-amber !w-3 !h-3"
+				className="!bg-primary !w-3 !h-3"
 			/>
 			<Handle
 				type="source"
 				position={Position.Bottom}
-				className="!bg-amber !w-3 !h-3"
+				className="!bg-primary !w-3 !h-3"
 				id="true"
 				style={{ left: "30%" }}
 			/>
@@ -96,9 +96,7 @@ function ConditionNode({ data }: { data: SparkNodeData }) {
 				id="false"
 				style={{ left: "70%" }}
 			/>
-			<div className="text-xs font-semibold text-amber uppercase tracking-wider mb-1">
-				{data.subtype}
-			</div>
+			<div className="meta text-primary/80 mb-1">{data.subtype}</div>
 			<div className="font-medium text-foreground text-sm">{data.label}</div>
 			{data.description && (
 				<div className="text-xs text-muted-foreground mt-1">
