@@ -208,7 +208,7 @@ export function NodeSidebar() {
 			</div>
 
 			<div>
-				<h3 className="text-xs font-semibold text-amber uppercase tracking-wider mb-2">
+				<h3 className="meta text-muted-foreground mb-2">
 					<Trans>Conditions</Trans>
 				</h3>
 				<div className="space-y-1.5">
