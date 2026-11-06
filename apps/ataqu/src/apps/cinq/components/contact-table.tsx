@@ -499,7 +499,7 @@ function ContactTableBody({
 					>
 						{({ padTop, padBottom, items, measureElement }) => (
 							<table className="w-full text-sm">
-								<thead className="sticky top-0 bg-deep-night/90 z-10 border-b border-border">
+								<thead className="sticky top-0 bg-muted z-10 border-b border-border">
 									<tr>
 										<th className="w-10 py-2 px-3">
 											<SelectAllCheckbox scope={SCOPE} ids={ids} />
