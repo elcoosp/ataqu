@@ -91,7 +91,7 @@ export const Route = createFileRoute("/_auth/admin/access-matrix")({
 						<Table>
 							<TableHeader>
 								<TableRow>
-									<TableHead className="sticky left-0 bg-deep-night">
+									<TableHead className="sticky left-0 bg-card">
 										<Trans>User</Trans>
 									</TableHead>
 									{APPS.map((app) => (
@@ -104,7 +104,7 @@ export const Route = createFileRoute("/_auth/admin/access-matrix")({
 							<TableBody>
 								{matrix.map((entry) => (
 									<TableRow key={entry.user_id}>
-										<TableCell className="sticky left-0 bg-deep-night">
+										<TableCell className="sticky left-0 bg-card">
 											<div className="font-medium">
 												{entry.user_name || entry.user_email}
 											</div>
