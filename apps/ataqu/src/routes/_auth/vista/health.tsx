@@ -42,7 +42,7 @@ function MetricCard({
 				? "text-amber"
 				: "text-foreground";
 	return (
-		<div className="rounded-lg border border-border/40 bg-deep-night/60 p-4">
+		<div className="rounded-lg border border-border/40 bg-card p-4">
 			<p className="text-xs uppercase tracking-wide text-muted-foreground">
 				{label}
 			</p>
@@ -115,7 +115,7 @@ function HealthPage() {
 							/>
 						</div>
 
-						<div className="rounded-lg border border-border/40 bg-deep-night/60 p-4 text-xs text-muted-foreground">
+						<div className="rounded-lg border border-border/40 bg-card p-4 text-xs text-muted-foreground">
 							Last updated: {formatDateTime(data.timestamp)}
 						</div>
 					</div>
