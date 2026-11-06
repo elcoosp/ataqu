@@ -104,7 +104,7 @@ function CombineDataPanel() {
 					<select
 						value={primary}
 						onChange={(e) => setPrimary(e.target.value)}
-						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-foreground"
+						className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
 					>
 						<option value="cinq">CINQ</option>
 						<option value="vault">VAULT</option>
@@ -115,7 +115,7 @@ function CombineDataPanel() {
 					<select
 						value={secondary}
 						onChange={(e) => setSecondary(e.target.value)}
-						className="rounded border border-border bg-deep-night px-2 py-1 text-sm text-foreground"
+						className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
 					>
 						<option value="vault">VAULT</option>
 						<option value="cinq">CINQ</option>
