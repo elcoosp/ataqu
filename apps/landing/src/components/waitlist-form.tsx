@@ -91,7 +91,7 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
 		watch,
 		setValue,
 	} = useForm<FormData>({
-		resolver: zodResolver(schema as any),
+		resolver: zodResolver(schema as never),
 		defaultValues: { email: "", apps: [], name: "", role: "", companySize: "" },
 	});
 
@@ -143,29 +143,30 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
 	if (success) {
 		return (
 			<motion.div
-				initial={{ opacity: 0, scale: 0.95 }}
+				initial={{ opacity: 0, scale: 0.97 }}
 				animate={{ opacity: 1, scale: 1 }}
-				transition={{ duration: 0.3, ease: "easeOut" }}
-				className="p-6 rounded-lg border border-primary/30 bg-card/50 text-center"
+				transition={{ duration: 0.25, ease: "easeOut" }}
+				className="border border-stamp/40 bg-paper p-6 text-center"
 			>
 				<svg
 					width="64"
 					height="64"
 					viewBox="0 0 64 64"
 					className="mx-auto mb-4"
+					aria-hidden="true"
 				>
 					<circle
 						cx="32"
 						cy="32"
 						r="30"
 						fill="none"
-						stroke="#10B981"
-						strokeWidth="3"
+						stroke="var(--color-stamp)"
+						strokeWidth="2.5"
 					/>
 					<motion.path
 						d="M18 32 L28 42 L46 22"
 						fill="none"
-						stroke="#10B981"
+						stroke="var(--color-stamp)"
 						strokeWidth="4"
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -174,10 +175,10 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
 						variants={checkmarkDraw}
 					/>
 				</svg>
-				<h3 className="text-xl font-display text-primary">
-					<Trans>You're on the list!</Trans>
+				<h3 className="display text-xl text-ink-strong">
+					<Trans>You're on the list</Trans>
 				</h3>
-				<p className="mt-2 text-muted-foreground">
+				<p className="mt-2 text-ink-soft">
 					<Trans>We'll send you early access and exclusive updates.</Trans>
 				</p>
 			</motion.div>
@@ -187,30 +188,26 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
 	return (
 		<form
 			onSubmit={handleSubmit(onSubmit)}
-			className="max-w-md mx-auto space-y-4 text-left"
+			className="max-w-md space-y-5 text-left"
 		>
 			<div>
-				<label htmlFor="email" className="block text-sm font-medium">
+				<label htmlFor="email" className="meta mb-1.5 block text-ink-soft">
 					<Trans>Email address</Trans>
 				</label>
-				<motion.input
+				<input
 					id="email"
 					type="email"
 					{...register("email")}
-					whileFocus={{
-						boxShadow: "0 0 0 2px #F59E0B, 0 0 0 4px rgba(245, 158, 11, 0.15)",
-					}}
-					transition={{ duration: 0.15 }}
-					className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground transition-shadow focus:outline-none"
+					className="field"
 					placeholder={i18n._(t`you@company.com`)}
 				/>
 				<AnimatePresence>
 					{errors.email && (
 						<motion.p
-							initial={{ opacity: 0, y: -6 }}
+							initial={{ opacity: 0, y: -4 }}
 							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -6 }}
-							className="mt-1 text-sm text-error"
+							exit={{ opacity: 0, y: -4 }}
+							className="mt-1.5 text-sm text-reject"
 						>
 							{errors.email.message}
 						</motion.p>
@@ -218,27 +215,29 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
 				</AnimatePresence>
 			</div>
 
-			<div>
-				<span className="block text-sm font-medium">
+			<fieldset>
+				<legend className="meta mb-2 text-ink-soft">
 					<Trans>Which apps interest you?</Trans>
-				</span>
-				<div className="mt-2 flex flex-wrap gap-2">
+				</legend>
+				<div className="flex flex-wrap gap-2">
 					{APP_OPTIONS.map((app) => (
-						<div key={app.id} className="relative group">
-							<motion.button
+						<div key={app.id} className="group relative">
+							<button
 								type="button"
-								whileTap={{ scale: 0.93 }}
-								transition={{ duration: 0.08 }}
 								onClick={() => toggleApp(app.id)}
-								className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+								aria-pressed={selectedApps.includes(app.id)}
+								className={`rounded-[2px] border px-2.5 py-1 text-sm transition-colors ${
 									selectedApps.includes(app.id)
-										? "border-primary bg-primary/20 text-primary"
-										: "border-border text-muted-foreground hover:border-primary/50"
+										? "border-redline-ink bg-redline/10 font-medium text-redline-ink"
+										: "border-hairline-strong text-ink-soft hover:border-ink hover:text-ink"
 								}`}
 							>
 								{app.label}
-							</motion.button>
-							<div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-card border border-border rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+							</button>
+							<div
+								role="tooltip"
+								className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 rounded-[2px] border border-ink-strong bg-ink-strong px-2 py-1 text-xs text-paper opacity-0 shadow-[0_2px_8px_rgba(20,23,28,0.25)] transition-opacity duration-150 group-hover:opacity-100"
+							>
 								{app.description}
 							</div>
 						</div>
@@ -247,47 +246,39 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
 				<AnimatePresence>
 					{errors.apps && (
 						<motion.p
-							initial={{ opacity: 0, y: -6 }}
+							initial={{ opacity: 0, y: -4 }}
 							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -6 }}
-							className="mt-1 text-sm text-error"
+							exit={{ opacity: 0, y: -4 }}
+							className="mt-1.5 text-sm text-reject"
 						>
 							{errors.apps.message}
 						</motion.p>
 					)}
 				</AnimatePresence>
-			</div>
+			</fieldset>
 
 			<div>
-				<label htmlFor="name" className="block text-sm font-medium">
+				<label htmlFor="name" className="meta mb-1.5 block text-ink-soft">
 					<Trans>Name (optional)</Trans>
 				</label>
-				<motion.input
+				<input
 					id="name"
 					type="text"
 					{...register("name")}
-					whileFocus={{
-						boxShadow: "0 0 0 2px #F59E0B, 0 0 0 4px rgba(245, 158, 11, 0.15)",
-					}}
-					transition={{ duration: 0.15 }}
-					className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground transition-shadow focus:outline-none"
+					className="field"
 					placeholder={i18n._(t`Your name`)}
 				/>
 			</div>
 
 			<div>
-				<label htmlFor="role" className="block text-sm font-medium">
+				<label htmlFor="role" className="meta mb-1.5 block text-ink-soft">
 					<Trans>Role (optional)</Trans>
 				</label>
-				<motion.input
+				<input
 					id="role"
 					type="text"
 					{...register("role")}
-					whileFocus={{
-						boxShadow: "0 0 0 2px #F59E0B, 0 0 0 4px rgba(245, 158, 11, 0.15)",
-					}}
-					transition={{ duration: 0.15 }}
-					className="mt-1 w-full rounded-md border border-border bg-background px-4 py-2 text-foreground transition-shadow focus:outline-none"
+					className="field"
 					placeholder={i18n._(t`CEO, CTO, Head of Ops…`)}
 				/>
 			</div>
@@ -296,12 +287,12 @@ export function WaitlistForm({ preselectedApps = [] }: WaitlistFormProps) {
 				onAction={() => handleSubmit(onSubmit)()}
 				disabled={isSubmitting}
 				pendingLabel={i18n._(t`Submitting…`)}
-				className="w-full rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+				className="btn btn-primary w-full"
 			>
-				Join the waitlist
+				{i18n._(t`Join the waitlist`)}
 			</LoadingButton>
 
-			<p className="text-xs text-muted-foreground text-center">
+			<p className="meta text-center text-ink-soft">
 				<Trans>No credit card required. Early access only.</Trans>
 			</p>
 		</form>
