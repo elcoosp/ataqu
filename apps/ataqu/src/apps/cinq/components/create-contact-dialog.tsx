@@ -128,7 +128,7 @@ export function CreateContactDialog({
 									});
 								}}
 								disabled={submitting}
-								className="bg-amber text-black hover:bg-amber/90"
+								className=""
 							>
 								Create
 							</LoadingButton>
