@@ -258,40 +258,53 @@ export default function FAQPage() {
 	];
 
 	return (
-		<div className="container section-padding max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-			<Link
-				href="/"
-				className="text-primary hover:underline text-sm inline-block mb-6"
-			>
-				<Trans>← Back to home</Trans>
-			</Link>
+		<div className="container section-padding">
+			<div className="max-w-4xl">
+				<Link
+					href="/"
+					className="meta text-ink-soft transition-colors hover:text-redline-ink"
+				>
+					← <Trans>Back to home</Trans>
+				</Link>
 
-			<h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-12">
-				<Trans>Frequently Asked Questions</Trans>
-			</h1>
+				<h1 className="display mt-8 text-4xl leading-tight text-ink-strong md:text-5xl">
+					<Trans>Frequently Asked Questions</Trans>
+				</h1>
 
-			{faqSections.map((section, idx) => (
-				<div key={idx} className="mb-12">
-					<h2 className="font-display text-2xl font-bold text-primary mb-6">
-						{section.title}
-					</h2>
-					<div className="space-y-4">
-						{section.items.map((item, qIdx) => (
-							<div key={qIdx} className="border-b border-border pb-4">
-								<div className="font-display text-base font-semibold text-foreground mb-1">
-									{item.q}
-								</div>
-								<div className="text-muted-foreground leading-relaxed">
-									{item.a}
-								</div>
+				<div className="mt-14 space-y-14">
+					{faqSections.map((section, idx) => (
+						<section key={idx}>
+							<h2 className="display border-b-2 border-ink-strong pb-3 text-xl text-ink-strong">
+								{section.title}
+							</h2>
+							<div className="mt-2">
+								{section.items.map((item, qIdx) => (
+									<details
+										key={qIdx}
+										className="group border-b border-hairline"
+									>
+										<summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 py-4 font-medium text-ink transition-colors hover:text-redline-ink [&::-webkit-details-marker]:hidden">
+											{item.q}
+											<span
+												aria-hidden="true"
+												className="mt-1 shrink-0 font-mono text-ink-soft transition-transform duration-150 group-open:rotate-45"
+											>
+												+
+											</span>
+										</summary>
+										<div className="max-w-[68ch] pb-5 leading-relaxed text-ink-soft">
+											{item.a}
+										</div>
+									</details>
+								))}
 							</div>
-						))}
-					</div>
+						</section>
+					))}
 				</div>
-			))}
 
-			<div className="text-center text-sm text-muted-foreground mt-12">
-				<Trans>Last updated: August 2026</Trans>
+				<div className="meta mt-14 border-t border-hairline-strong pt-4 text-ink-soft">
+					<Trans>Last updated: August 2026</Trans>
+				</div>
 			</div>
 		</div>
 	);
