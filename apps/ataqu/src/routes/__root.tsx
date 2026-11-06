@@ -135,6 +135,10 @@ export const Route = createRootRoute({
 		} catch {
 			pathname = "/";
 		}
+		// Auth sheets render bare — the access screens are standalone
+		// drawing sheets, never framed by the app shell (a logged-out
+		// visitor must not see workspace navigation).
+		const isAuthSheet = pathname === "/login" || pathname === "/register";
 		return (
 			<QueryClientProvider client={queryClient}>
 				<DialLive />
@@ -154,19 +158,23 @@ export const Route = createRootRoute({
 							},
 						]}
 					>
-						<Shell activeApp={activeAppFor(pathname)}>
-							<AegisCommandRegistrar />
-							<CinqCommandRegistrar />
-							<DialCommandRegistrar />
-							<PauseCommandRegistrar />
-							<PivotCommandRegistrar />
-							<SondCommandRegistrar />
-							<SparkCommandRegistrar />
-							<TempoCommandRegistrar />
-							<VaultCommandRegistrar />
-							<VistaCommandRegistrar />
+						{isAuthSheet ? (
 							<Outlet />
-						</Shell>
+						) : (
+							<Shell activeApp={activeAppFor(pathname)}>
+								<AegisCommandRegistrar />
+								<CinqCommandRegistrar />
+								<DialCommandRegistrar />
+								<PauseCommandRegistrar />
+								<PivotCommandRegistrar />
+								<SondCommandRegistrar />
+								<SparkCommandRegistrar />
+								<TempoCommandRegistrar />
+								<VaultCommandRegistrar />
+								<VistaCommandRegistrar />
+								<Outlet />
+							</Shell>
+						)}
 					</OnboardTour>
 				</I18nProvider>
 			</QueryClientProvider>
