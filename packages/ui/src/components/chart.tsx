@@ -61,16 +61,18 @@ export interface ChartProps {
 
 /**
  * Categorical series palette (P3 #1 — token-derived so charts adapt to the
- * active theme instead of shipping hardcoded hexes).
+ * active theme instead of shipping hardcoded hexes). Order reads as the
+ * drawing set's inks: blueprint blue leads, stamp green follows, redline is
+ * reserved for the third series onward so it stays an annotation, not noise.
  */
 const CHART_COLORS = [
-	"var(--amber)",
-	"var(--success)",
 	"var(--info)",
-	"var(--destructive)",
+	"var(--success)",
+	"var(--primary)",
 	"var(--warning)",
-	"var(--accent-foreground)",
-	"var(--secondary-foreground)",
+	"var(--destructive)",
+	"var(--muted-foreground)",
+	"var(--foreground)",
 ];
 
 export function Chart({
@@ -102,7 +104,7 @@ export function Chart({
 						<p
 							key={index}
 							className="text-xs"
-							style={{ color: entry.color || "hsl(var(--foreground))" }}
+							style={{ color: entry.color || "var(--foreground)" }}
 						>
 							{entry.name}: {entry.value}
 						</p>
@@ -235,7 +237,7 @@ export function Chart({
 					</Pie>
 					{showTooltip && <Tooltip content={<TooltipContent />} />}
 					{showLegend && (
-						<Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
+						<Legend wrapperStyle={{ color: "var(--foreground)" }} />
 					)}
 				</PieChart>
 			);
@@ -266,9 +268,7 @@ export function Chart({
 					tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
 				/>
 				{showTooltip && <Tooltip content={<TooltipContent />} />}
-				{showLegend && (
-					<Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
-				)}
+				{showLegend && <Legend wrapperStyle={{ color: "var(--foreground)" }} />}
 				{seriesElements}
 			</ChartComponent>
 		);
