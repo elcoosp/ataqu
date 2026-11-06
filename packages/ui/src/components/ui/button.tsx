@@ -9,7 +9,11 @@ const buttonVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: "bg-primary text-primary-foreground hover:bg-primary/90",
+				/* The ink stamp: graphite block that turns redline on press.
+                                   Redline itself is reserved for the one true action per view
+                                   (see apps/landing DESIGN.md), so the workhorse button stays ink. */
+				default:
+					"border border-foreground bg-foreground text-background hover:border-primary hover:bg-primary hover:text-primary-foreground",
 				destructive:
 					"bg-destructive text-destructive-foreground hover:bg-destructive/90",
 				outline:
