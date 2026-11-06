@@ -189,12 +189,12 @@ export function FloatingLabelInput({
 		<div className={`w-full ${className}`}>
 			<div className="relative pt-[20px]">
 				<div
-					className={`relative h-10 rounded-[10px] border-2 transition-[background-color,border-color,box-shadow] duration-150 ${
+					className={`relative h-10 rounded-[2px] border transition-[background-color,border-color,box-shadow] duration-150 ${
 						invalid
-							? "border-destructive bg-white dark:border-destructive dark:bg-muted"
+							? "border-destructive bg-card"
 							: focused
-								? "border-[var(--ring)] bg-white dark:border-[var(--ring)] dark:bg-muted"
-								: "border-border bg-background/70 shadow-[inset_0_1px_2px_rgba(28,25,23,0.07)] dark:border-white/[0.08] dark:bg-card dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]"
+								? "border-[var(--ring)] bg-card shadow-[0_0_0_1px_var(--ring)]"
+								: "border-input bg-card shadow-[inset_0_1px_2px_rgba(28,25,23,0.05)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)]"
 					} ${disabled ? "opacity-55" : ""}`}
 				>
 					<input
@@ -225,7 +225,7 @@ export function FloatingLabelInput({
 							fieldProps.onChange(event);
 							onChange?.(event.currentTarget.value, event);
 						}}
-						className="absolute inset-0 h-full w-full rounded-[9px] bg-transparent px-3 py-0 text-[13px] leading-[20px] text-secondary-foreground outline-none focus-visible:outline-none disabled:cursor-not-allowed dark:text-secondary-foreground"
+						className="absolute inset-0 h-full w-full rounded-[1px] bg-transparent px-3 py-0 text-[13px] leading-[20px] text-foreground outline-none focus-visible:outline-none disabled:cursor-not-allowed"
 					/>
 				</div>
 
@@ -241,10 +241,10 @@ export function FloatingLabelInput({
 					style={{ originX: 0, originY: 0, willChange: "transform" }}
 					className={`absolute left-3 top-[32px] block cursor-text select-none text-[13px] leading-[16px] ${
 						invalid
-							? "text-destructive dark:text-destructive"
+							? "text-destructive"
 							: raised
-								? "text-secondary-foreground dark:text-secondary-foreground"
-								: "text-muted-foreground dark:text-muted-foreground"
+								? "text-foreground"
+								: "text-muted-foreground"
 					}`}
 				>
 					{label}
