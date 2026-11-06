@@ -11,7 +11,7 @@ import type { Post } from "@/lib/posts";
 const MarkdownComponents = {
 	h1: ({ children, ...props }: any) => (
 		<h1
-			className="font-display text-3xl md:text-4xl font-bold mt-8 mb-4 text-foreground"
+			className="display mt-10 mb-4 text-3xl leading-tight text-ink-strong md:text-4xl"
 			{...props}
 		>
 			{children}
@@ -19,7 +19,7 @@ const MarkdownComponents = {
 	),
 	h2: ({ children, ...props }: any) => (
 		<h2
-			className="font-display text-2xl font-bold mt-8 mb-3 text-foreground"
+			className="display mt-10 mb-3 border-b border-hairline-strong pb-2 text-2xl text-ink-strong"
 			{...props}
 		>
 			{children}
@@ -27,25 +27,25 @@ const MarkdownComponents = {
 	),
 	h3: ({ children, ...props }: any) => (
 		<h3
-			className="font-display text-xl font-semibold mt-6 mb-2 text-foreground"
+			className="display mt-8 mb-2 text-xl font-semibold tracking-tight text-ink-strong"
 			{...props}
 		>
 			{children}
 		</h3>
 	),
 	p: ({ children, ...props }: any) => (
-		<p className="text-muted-foreground leading-relaxed my-4" {...props}>
+		<p className="my-4 leading-relaxed text-ink-soft" {...props}>
 			{children}
 		</p>
 	),
 	a: ({ href, children, ...props }: any) => (
-		<a href={href} className="text-primary hover:underline" {...props}>
+		<a href={href} className="link-redline" {...props}>
 			{children}
 		</a>
 	),
 	ul: ({ children, ...props }: any) => (
 		<ul
-			className="list-disc list-inside space-y-1 text-muted-foreground my-4"
+			className="my-4 space-y-1.5 pl-5 leading-relaxed text-ink-soft [&>li]:list-disc"
 			{...props}
 		>
 			{children}
@@ -53,20 +53,20 @@ const MarkdownComponents = {
 	),
 	ol: ({ children, ...props }: any) => (
 		<ol
-			className="list-decimal list-inside space-y-1 text-muted-foreground my-4"
+			className="my-4 space-y-1.5 pl-5 leading-relaxed text-ink-soft [&>li]:list-decimal"
 			{...props}
 		>
 			{children}
 		</ol>
 	),
 	li: ({ children, ...props }: any) => (
-		<li className="text-muted-foreground" {...props}>
+		<li className="text-ink-soft" {...props}>
 			{children}
 		</li>
 	),
 	blockquote: ({ children, ...props }: any) => (
 		<blockquote
-			className="border-l-4 border-primary pl-4 py-2 my-4 text-muted-foreground italic"
+			className="my-4 border-l-2 border-redline py-1 pl-4 text-ink italic"
 			{...props}
 		>
 			{children}
@@ -77,7 +77,7 @@ const MarkdownComponents = {
 		if (isInline) {
 			return (
 				<code
-					className="bg-card/50 px-1.5 py-0.5 rounded text-sm font-mono text-foreground"
+					className="rounded-[2px] bg-paper-sunken px-1.5 py-0.5 font-mono text-[0.875em] text-ink"
 					{...props}
 				>
 					{children}
@@ -86,34 +86,33 @@ const MarkdownComponents = {
 		}
 		return (
 			<pre
-				className="bg-card/50 p-4 rounded-lg overflow-x-auto text-sm font-mono text-foreground my-4"
+				className="my-4 overflow-x-auto rounded-[2px] border border-hairline-strong bg-paper-sunken p-4 font-mono text-sm text-ink"
 				{...props}
 			>
 				<code className={className}>{children}</code>
 			</pre>
 		);
 	},
-	hr: (props: any) => <hr className="my-8 border-border" {...props} />,
+	hr: (props: any) => (
+		<hr className="my-10 border-hairline-strong" {...props} />
+	),
 	table: ({ children, ...props }: any) => (
-		<div className="overflow-x-auto my-4" {...props}>
-			<table className="w-full border-collapse border border-border text-sm">
+		<div className="my-4 overflow-x-auto" {...props}>
+			<table className="w-full border-collapse border border-hairline-strong text-sm">
 				{children}
 			</table>
 		</div>
 	),
 	th: ({ children, ...props }: any) => (
 		<th
-			className="border border-border px-4 py-2 text-left font-display text-muted-foreground bg-card/20"
+			className="meta border border-hairline-strong bg-paper-sunken px-4 py-2.5 text-left text-ink-soft"
 			{...props}
 		>
 			{children}
 		</th>
 	),
 	td: ({ children, ...props }: any) => (
-		<td
-			className="border border-border px-4 py-2 text-muted-foreground"
-			{...props}
-		>
+		<td className="border border-hairline px-4 py-2.5 text-ink" {...props}>
 			{children}
 		</td>
 	),
@@ -145,12 +144,12 @@ export default function BlogPostPage() {
 
 	if (loading) {
 		return (
-			<div className="container section-padding max-w-3xl mx-auto">
-				<div className="animate-pulse space-y-4">
-					<div className="h-6 bg-muted/30 rounded w-32"></div>
-					<div className="h-12 bg-muted/30 rounded w-3/4"></div>
-					<div className="h-4 bg-muted/20 rounded w-1/3"></div>
-					<div className="h-64 bg-muted/20 rounded"></div>
+			<div className="container section-padding">
+				<div className="mx-auto max-w-[68ch] animate-pulse space-y-4">
+					<div className="h-6 w-32 bg-hairline" />
+					<div className="h-12 w-3/4 bg-hairline" />
+					<div className="h-4 w-1/3 bg-hairline" />
+					<div className="h-64 bg-hairline" />
 				</div>
 			</div>
 		);
@@ -158,12 +157,9 @@ export default function BlogPostPage() {
 
 	if (!post) {
 		return (
-			<div className="container section-padding max-w-3xl mx-auto text-center">
-				<h1 className="font-display text-2xl font-bold">Post not found</h1>
-				<Link
-					href="/blog"
-					className="text-primary hover:underline mt-4 inline-block"
-				>
+			<div className="container section-padding text-center">
+				<h1 className="display text-2xl text-ink-strong">Post not found</h1>
+				<Link href="/blog" className="link-redline mt-4 inline-block">
 					← Back to blog
 				</Link>
 			</div>
@@ -171,30 +167,32 @@ export default function BlogPostPage() {
 	}
 
 	return (
-		<div className="container section-padding max-w-3xl mx-auto">
-			<Link
-				href="/blog"
-				className="text-primary hover:underline text-sm mb-4 inline-block"
-			>
-				← Back to blog
-			</Link>
-			<h1 className="font-display text-3xl md:text-4xl font-bold">
-				{post.title}
-			</h1>
-			<div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-				<time dateTime={post.date}>{post.date}</time>
-				<span>·</span>
-				<span>{post.readingTime}</span>
-			</div>
-			<hr className="my-8 border-border" />
-			<article className="prose prose-invert prose-sm max-w-none">
-				<ReactMarkdown
-					remarkPlugins={[remarkGfm]}
-					components={MarkdownComponents as any}
+		<div className="container section-padding">
+			<div className="mx-auto max-w-[68ch]">
+				<Link
+					href="/blog"
+					className="meta text-ink-soft transition-colors hover:text-redline-ink"
 				>
-					{post.content}
-				</ReactMarkdown>
-			</article>
+					← Back to blog
+				</Link>
+				<h1 className="display mt-8 text-3xl leading-tight text-ink-strong md:text-4xl">
+					{post.title}
+				</h1>
+				<div className="meta mt-3 flex items-center gap-3 text-ink-soft">
+					<time dateTime={post.date}>{post.date}</time>
+					<span aria-hidden="true">·</span>
+					<span>{post.readingTime}</span>
+				</div>
+				<hr className="mt-8 border-hairline-strong" />
+				<article className="max-w-none">
+					<ReactMarkdown
+						remarkPlugins={[remarkGfm]}
+						components={MarkdownComponents as any}
+					>
+						{post.content}
+					</ReactMarkdown>
+				</article>
+			</div>
 		</div>
 	);
 }
