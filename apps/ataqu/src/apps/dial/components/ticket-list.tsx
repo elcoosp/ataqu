@@ -105,11 +105,13 @@ export function TicketList() {
 	const statusColor = (status: string) => {
 		switch (status) {
 			case "open":
-				return "bg-warning/20 text-warning";
+				return "bg-info/15 text-info border border-info/30";
 			case "pending":
-				return "bg-info/20 text-info";
+				return "bg-warning/15 text-warning border border-warning/30";
+			case "resolved":
+				return "bg-success/15 text-success border border-success/30";
 			case "closed":
-				return "bg-success/20 text-success";
+				return "bg-muted text-muted-foreground border border-border";
 			default:
 				return "";
 		}
