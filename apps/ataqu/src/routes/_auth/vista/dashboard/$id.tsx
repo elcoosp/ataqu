@@ -243,7 +243,7 @@ const CombineDataModal: React.FC<{
 							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setPrimary(e.target.value)
 							}
-							className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
+							className="col-span-3 bg-background p-2 rounded border border-border"
 						>
 							<option value="revenue">{t`Revenue`}</option>
 							<option value="support">{t`Support`}</option>
@@ -259,7 +259,7 @@ const CombineDataModal: React.FC<{
 							onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
 								setSecondary(e.target.value)
 							}
-							className="col-span-3 bg-deep-night/50 p-2 rounded border border-border/40"
+							className="col-span-3 bg-background p-2 rounded border border-border"
 						>
 							<option value="inventory">{t`Inventory`}</option>
 							<option value="sales">{t`Sales`}</option>
