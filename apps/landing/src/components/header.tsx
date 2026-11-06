@@ -21,6 +21,30 @@ const COMPETITORS = [
 	{ slug: "tableau", label: "Tableau" },
 ];
 
+const NAV = [
+	{ href: "/pricing", label: <Trans>Pricing</Trans> },
+	{ href: "/alternatives", label: <Trans>Alternatives</Trans> },
+	{ href: "/about", label: <Trans>About</Trans> },
+	{ href: "/blog", label: <Trans>Blog</Trans> },
+	{ href: "/roadmap", label: <Trans>Roadmap</Trans> },
+	{ href: "/faq", label: <Trans>FAQ</Trans> },
+];
+
+function RegistrationMark({ className }: { className?: string }) {
+	return (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			aria-hidden="true"
+			className={className}
+		>
+			<circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+			<path d="M12 1v22M1 12h22" stroke="currentColor" strokeWidth="1.5" />
+			<circle cx="12" cy="12" r="2.5" fill="currentColor" />
+		</svg>
+	);
+}
+
 export function Header() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const [paletteOpen, setPaletteOpen] = useState(false);
@@ -102,154 +126,112 @@ export function Header() {
 	}, []);
 
 	return (
-		<header className="border-b border-border bg-background/90 backdrop-blur-sm sticky top-0 z-50">
-			<div className="container flex items-center justify-between h-16">
+		<header className="sticky top-0 z-50 border-b border-hairline-strong bg-paper/92 backdrop-blur-sm">
+			<div className="container flex h-16 items-center justify-between">
 				<Link
 					href="/"
-					className="flex items-center gap-0 font-display text-xl font-bold text-foreground"
+					className="flex items-center gap-2.5 text-ink-strong"
+					aria-label="Ataqu home"
 				>
-					<span className="text-primary">A</span>taqu
+					<RegistrationMark className="h-5 w-5 text-redline" />
+					<span className="display text-lg font-semibold tracking-tight">
+						ATAQU
+					</span>
 				</Link>
 
-				<nav className="hidden md:flex items-center gap-6 text-sm">
-					<Link
-						href="/"
-						className="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Trans>Home</Trans>
-					</Link>
+				<nav className="hidden items-center gap-6 text-sm md:flex">
+					{NAV.map((item) => (
+						<Link
+							key={item.href}
+							href={item.href}
+							className="text-ink-soft transition-colors hover:text-ink"
+						>
+							{item.label}
+						</Link>
+					))}
 
-					<Link
-						href="/pricing"
-						className="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Trans>Pricing</Trans>
-					</Link>
-
-					<Link
-						href="/about"
-						className="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Trans>About</Trans>
-					</Link>
-
-					<Link
-						href="/blog"
-						className="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Trans>Blog</Trans>
-					</Link>
-
-					<Link
-						href="/roadmap"
-						className="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Trans>Roadmap</Trans>
-					</Link>
-
-					<Link
-						href="/faq"
-						className="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						<Trans>FAQ</Trans>
-					</Link>
-
-					<Dropdown
-						label="Alternatives"
-						placeholder="Alternatives"
-						items={COMPETITORS.map((c) => ({ value: c.slug, label: c.label }))}
-						onChange={(value) => router.push(`/alternatives/${value}`)}
-					/>
+					<div className="[&>button]:h-8 [&>button]:rounded-[2px] [&>button]:border-hairline-strong [&>button]:bg-paper [&>button]:px-2.5 [&>button]:text-[13px] [&>button]:text-ink [&>button]:shadow-none">
+						<Dropdown
+							label="Compare"
+							placeholder="Compare"
+							items={COMPETITORS.map((c) => ({
+								value: c.slug,
+								label: c.label,
+							}))}
+							onChange={(value) => router.push(`/alternatives/${value}`)}
+						/>
+					</div>
 
 					<button
 						type="button"
 						onClick={() => setPaletteOpen(true)}
-						className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-xs border border-border rounded px-2 py-1"
+						className="meta flex items-center gap-1.5 rounded-[2px] border border-hairline-strong px-2 py-1 text-ink-soft transition-colors hover:border-ink hover:text-ink"
 						aria-label="Open command palette"
 					>
-						<Trans>Search</Trans>
-						<span className="text-[10px] opacity-60">⌘K</span>
+						<span>Search</span>
+						<span className="opacity-60">⌘K</span>
 					</button>
+
+					<Link
+						href="/#waitlist"
+						className="btn btn-primary !px-4 !py-2 text-sm"
+					>
+						<Trans>Join the waitlist</Trans>
+					</Link>
 				</nav>
 
 				<button
-					className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+					className="p-2 text-ink-soft hover:text-ink md:hidden"
 					onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
 					aria-label="Toggle menu"
+					aria-expanded={isMobileMenuOpen}
 				>
 					{isMobileMenuOpen ? (
-						<X className="w-6 h-6" />
+						<X className="h-6 w-6" />
 					) : (
-						<Menu className="w-6 h-6" />
+						<Menu className="h-6 w-6" />
 					)}
 				</button>
 			</div>
 
 			{isMobileMenuOpen && (
-				<div className="md:hidden border-t border-border bg-background/95 backdrop-blur-sm">
-					<div className="container py-4 space-y-3">
-						<Link
-							href="/"
-							className="block text-muted-foreground hover:text-foreground transition-colors"
-							onClick={() => setIsMobileMenuOpen(false)}
-						>
-							<Trans>Home</Trans>
-						</Link>
-
-						<Link
-							href="/pricing"
-							className="block text-muted-foreground hover:text-foreground transition-colors"
-							onClick={() => setIsMobileMenuOpen(false)}
-						>
-							<Trans>Pricing</Trans>
-						</Link>
-
-						<Link
-							href="/about"
-							className="block text-muted-foreground hover:text-foreground transition-colors"
-							onClick={() => setIsMobileMenuOpen(false)}
-						>
-							<Trans>About</Trans>
-						</Link>
-
-						<Link
-							href="/blog"
-							className="block text-muted-foreground hover:text-foreground transition-colors"
-							onClick={() => setIsMobileMenuOpen(false)}
-						>
-							<Trans>Blog</Trans>
-						</Link>
-
-						<Link
-							href="/roadmap"
-							className="block text-muted-foreground hover:text-foreground transition-colors"
-							onClick={() => setIsMobileMenuOpen(false)}
-						>
-							<Trans>Roadmap</Trans>
-						</Link>
-
-						<Link
-							href="/faq"
-							className="block text-muted-foreground hover:text-foreground transition-colors"
-							onClick={() => setIsMobileMenuOpen(false)}
-						>
-							<Trans>FAQ</Trans>
-						</Link>
-
-						<div className="pt-2 border-t border-border/50">
-							<p className="text-xs text-muted-foreground mb-2">
-								<Trans>Alternatives</Trans>
+				<div className="border-t border-hairline bg-paper md:hidden">
+					<div className="container space-y-1 py-4">
+						{NAV.map((item) => (
+							<Link
+								key={item.href}
+								href={item.href}
+								className="block py-2 text-ink transition-colors hover:text-redline-ink"
+								onClick={() => setIsMobileMenuOpen(false)}
+							>
+								{item.label}
+							</Link>
+						))}
+						<div className="mt-3 border-t border-hairline pt-3">
+							<p className="meta mb-2 text-ink-soft">
+								<Trans>Compare</Trans>
 							</p>
-							{COMPETITORS.map((c) => (
-								<Link
-									key={c.slug}
-									href={`/alternatives/${c.slug}`}
-									className="block text-sm text-muted-foreground hover:text-foreground py-1 transition-colors"
-									onClick={() => setIsMobileMenuOpen(false)}
-								>
-									{c.label}
-								</Link>
-							))}
+							<div className="grid grid-cols-2 gap-x-4">
+								{COMPETITORS.map((c) => (
+									<Link
+										key={c.slug}
+										href={`/alternatives/${c.slug}`}
+										className="block py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
+										onClick={() => setIsMobileMenuOpen(false)}
+									>
+										{c.label}
+									</Link>
+								))}
+							</div>
+						</div>
+						<div className="pt-4">
+							<Link
+								href="/#waitlist"
+								className="btn btn-primary w-full"
+								onClick={() => setIsMobileMenuOpen(false)}
+							>
+								<Trans>Join the waitlist</Trans>
+							</Link>
 						</div>
 					</div>
 				</div>
