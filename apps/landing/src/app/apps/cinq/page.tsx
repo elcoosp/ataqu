@@ -7,27 +7,27 @@ import { WaitlistForm } from "@/components/waitlist-form";
 
 export default function CinqPage() {
 	return (
-		<div className="container section-padding max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div className="container section-padding">
 			<Link
 				href="/"
-				className="text-primary hover:underline text-sm inline-block mb-6"
+				className="meta text-ink-soft transition-colors hover:text-redline-ink"
 			>
 				<Trans>← Back to home</Trans>
 			</Link>
 
-			<div className="flex justify-center my-4">
+			<div className="flex justify-center my-6">
 				<Image
 					src="/apps/cinq.png"
 					alt="cinq"
 					width={64}
 					height={64}
-					className="rounded-full border border-primary/20"
+					className="rounded-[2px] border border-hairline-strong"
 				/>
 			</div>
-			<h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold">
+			<h1 className="display text-3xl leading-tight text-ink-strong md:text-5xl">
 				<Trans>HubSpot charges $1,200/mo. CINQ does the same for $15.</Trans>
 			</h1>
-			<p className="mt-4 text-lg text-muted-foreground">
+			<p className="mt-5 max-w-[62ch] text-lg leading-relaxed text-ink-soft">
 				<Trans>
 					CINQ is a full CRM – contacts, deals, pipeline, activities, email
 					tracking, and custom fields. And it's natively connected to DIAL
@@ -35,12 +35,12 @@ export default function CinqPage() {
 				</Trans>
 			</p>
 
-			<div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-				<div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-					<h2 className="font-display text-xl font-bold text-primary">
+			<div className="mt-12 grid grid-cols-1 gap-px border border-hairline-strong bg-hairline-strong md:grid-cols-2">
+				<div className="bg-paper-raised p-6 sm:p-8">
+					<h2 className="display text-xl text-ink-strong">
 						<Trans>Features</Trans>
 					</h2>
-					<ul className="mt-4 space-y-2 text-muted-foreground">
+					<ul className="mt-4 space-y-2 text-ink-soft">
 						<li>
 							• <Trans>Contacts & Deals (visual pipeline)</Trans>
 						</li>
@@ -62,52 +62,52 @@ export default function CinqPage() {
 					</ul>
 				</div>
 
-				<div className="p-6 rounded-lg border border-border bg-card/30 overflow-x-auto">
-					<h2 className="font-display text-xl font-bold text-primary">
+				<div className="bg-paper-raised p-6 sm:p-8">
+					<h2 className="display text-xl text-ink-strong">
 						<Trans>Why replace HubSpot?</Trans>
 					</h2>
 					<div className="overflow-x-auto">
-						<table className="w-full text-sm border-collapse">
+						<table className="tnum w-full text-sm border-collapse">
 							<thead>
-								<tr className="border-b border-border">
-									<th className="text-left py-2 font-display text-muted-foreground">
+								<tr className="border-b border-hairline-strong">
+									<th className="meta px-3 py-2.5 text-left text-ink-soft">
 										<Trans>HubSpot</Trans>
 									</th>
-									<th className="text-left py-2 font-display text-muted-foreground">
+									<th className="meta px-3 py-2.5 text-left text-ink-soft">
 										<Trans>CINQ</Trans>
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr className="border-b border-border/50">
-									<td className="py-2 text-muted-foreground">
+								<tr className="border-b border-hairline">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>$20–$800/mo</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>$15/mo</Trans>
 									</td>
 								</tr>
-								<tr className="border-b border-border/50">
-									<td className="py-2 text-muted-foreground">
+								<tr className="border-b border-hairline">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>3‑year contract</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>1‑click cancel</Trans>
 									</td>
 								</tr>
-								<tr className="border-b border-border/50">
-									<td className="py-2 text-muted-foreground">
+								<tr className="border-b border-hairline">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>Integrations via Zapier (extra cost)</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>Native integrations included</Trans>
 									</td>
 								</tr>
 								<tr>
-									<td className="py-2 text-muted-foreground">
+									<td className="px-3 py-2.5 text-ink-soft">
 										<Trans>Support: 1.6/5 on Trustpilot</Trans>
 									</td>
-									<td className="py-2 text-primary font-bold">
+									<td className="px-3 py-2.5 font-semibold text-redline-ink">
 										<Trans>Human support, 24h SLA</Trans>
 									</td>
 								</tr>
@@ -117,11 +117,11 @@ export default function CinqPage() {
 				</div>
 			</div>
 
-			<div className="mt-12 p-6 rounded-lg border border-primary/30 bg-card/50">
-				<h2 className="font-display text-2xl font-bold text-primary">
+			<div className="mt-12 border-l-2 border-redline bg-paper-raised p-6 sm:p-8">
+				<h2 className="display text-2xl text-ink-strong">
 					<Trans>Native integration across the OS</Trans>
 				</h2>
-				<p className="mt-2 text-muted-foreground">
+				<p className="mt-3 text-ink-soft">
 					<Trans>
 						When a deal is won in CINQ, it automatically triggers DIAL channels,
 						PIVOT tasks, and VISTA dashboards. No Zapier. No webhooks. Just one
@@ -130,17 +130,17 @@ export default function CinqPage() {
 				</p>
 			</div>
 
-			<div className="mt-12">
-				<h2 className="font-display text-2xl font-bold text-center">
+			<div className="mt-14">
+				<h2 className="display text-2xl text-center text-ink-strong">
 					<Trans>Ready to escape HubSpot?</Trans>
 				</h2>
-				<p className="mt-2 text-center text-muted-foreground">
+				<p className="mt-3 text-center text-ink-soft">
 					<Trans>
 						Start with one app for $15/mo (or get all 10 for $79/mo). No credit
 						card required for the trial.
 					</Trans>
 				</p>
-				<div className="mt-6">
+				<div className="mt-8">
 					<WaitlistForm />
 				</div>
 			</div>
