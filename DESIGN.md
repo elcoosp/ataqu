@@ -1,59 +1,81 @@
 # Design — Ataqu Suite
 
-Premium software, rendered honestly. This document is written from the built
-world, not a wish list: every token, shadow, and interaction below is live in
-`packages/ui` and cascades to all 10 apps, the auth shell, and the landing page.
+**The Construction Document Set.** The whole suite is drawn, not decorated:
+every screen is a sheet of engineering drawings, set on drafting paper (light)
+or a cyanotype plate (dark). This document is written from the built world,
+not a wish list: every token, rule, and interaction below is live in
+`packages/ui/src/styles.css` and cascades to all 10 apps, the auth sheets, and
+the landing page.
 
-Canon anchors: **Craft bar** = Linear, Raycast, Vercel. **Identity accent** =
-amber, the brand anchor, used sparingly and always meaningfully. **Language** =
-dark-native, with a first-class light method — nothing is "the dark theme" and
-"the light theme" bolted on; the whole system is dual-theme by construction.
+Canon anchors: **Craft bar** = the drawing office, not the dashboard template.
+**Identity accent** = the redline — a mark you make on a drawing to command
+attention — used only for primary truth. **Language** = dual-native: light is
+the paper sheet, dark is the cyanotype print; neither is a converted afterthought.
 
 ---
 
 ## The theme system
 
 A single token engine in `packages/ui/src/styles.css` renders both themes from
-one set of design decisionsainer. No app palette, no per-app overrides.
+one set of design decisions. No per-app palettes, no per-app overrides.
 
-- **Color primitives** in Oklch, so both themes are perceptually consistent and
-  hue-stable when the accent moves. The scale is the same in dark and light;
-  only the L (and, at the very bottom of the scale, C) changes.
+- **Light = drafting paper.** Warm sheet `#F4F2EA`, raised paper `#FBFAF5`,
+  sunken paper `#ECE9DE`, graphite ink `#22262B` / `#14171C`, hairlines
+  `#D9D5C9` / `#B9B4A5`.
+- **Dark = cyanotype plate.** Deep blueprint `#0D2138` ground, plate cards
+  `#123156`, drafting lines `#E8F0F8` / `#9DB8D5`, hairlines `#2C4E7E`. Dark is
+  the app's native default; the app boots onto the plate.
 - **Dual-theme CSS custom properties** (`--background`, `--foreground`,
-  `--card`, `--border`, toned `--muted-*`, plus level-of-importance grays).
-  Apps write to the tokens, never to literals.
+  `--card`, `--border`, toned `--muted-*`). Apps write to the tokens, never to
+  literals.
+- **Redline is reserved.** `--primary` is redline `#B23A12` (paper) / `#F0764A`
+  (plate) and marks only: the active sheet in the index, key figures, links,
+  focus rings, and the hover state of the ink stamp button.
+- **Stamps carry semantics.** `--success` is the approval stamp `#276749`
+  (bright `#5CB98A` on plate), `--warning` the caution ochre `#8A6410`
+  (`#E0B45C`), `--destructive` the reject `#A1361B` (`#E56236`). Switches that
+  are ON read as a running stamp: green.
+- **Type.** Archivo Variable (expanded cut at 118% for the display voice via
+  `font-heading`/`brand-mark`), Fragment Mono for the meta voice (`.meta`:
+  mono, 11px, +0.08em, uppercase — sheet codes, labels, legends). Body is
+  Archivo at −0.005em.
+- **Radii are drafting squares.** 2/3/4/6/8px — sheets have corners.
 - `theme.ts` (`initTheme` / `onThemeChange`) reads a preference, applies the
   correct token set to `<html>`, and flips it live. Storage key `ataqu-theme`;
-  dark is the native default; the user's choice is remembered.
-- A no-FOUC start: `initTheme()` runs before first render in every app entry,
-  so there is no flash of the wrong theme. Optionally lock the theme early via
-  a tiny inline script in `index.html` for zero-flash on hard loads.
-- Full accessibility: both themes derive every color from a 4.5:1+ contrast
-  pass, focus rings are visible in both, and `prefers-reduced-motion` drops the
-  motion layer.
+  dark (cyanotype) is the default; the user's choice is remembered, with a
+  no-FOUC inline bootstrap in `index.html`.
+- Full accessibility: both themes pass 4.5:1 contrast on every text pair
+  (verified pair-by-pair), focus rings are redline in both, and
+  `prefers-reduced-motion` drops the motion layer.
 
 ### Tokens (excerpt)
 
-| Token            | Dark            | Light           | Used for                         |
-| ----------------- | --------------- | --------------- | -------------------------------- |
-| `--background`    | near-black      | near-white      | page                             |
-| `--foreground`    | high-contrast   | high-contrast   | primary text                     |
-| `--card`          | lifted surface  | card            | panels, notepads                 |
-| `--border`        | hairline        | hairline        | the 1px "premium edge"           |
-| `--primary`       | amber           | amber           | the identity accent              |
-| `--muted-foreground` | dimmed       | dimmed          | secondary text                   |
-| fonts             | Inter / JetBrains Mono / Unbounded (one set, both modes)               |
+| Token                | Light (paper)    | Dark (cyanotype) | Used for                          |
+| -------------------- | ---------------- | ---------------- | --------------------------------- |
+| `--background`       | `#F4F2EA` paper  | `#0D2138` plate  | page                              |
+| `--foreground`       | `#22262B` ink    | `#E8F0F8` line   | primary text                      |
+| `--card`             | `#FBFAF5` raised | `#123156` plate  | panels, tables, popovers          |
+| `--border`           | `#D9D5C9` hair   | `#2C4E7E` hair   | the 1px drafting rule             |
+| `--primary`          | `#B23A12` redine | `#F0764A` redine | active truth, key figures, links  |
+| `--muted-foreground` | `#686D75` soft   | `#9DB8D5` soft   | secondary text, meta labels       |
+| fonts                | Archivo Variable + Fragment Mono (one set, both modes)              |
 
-### Premium touches that are real
+### Drawing touches that are real
 
-- **Hairline borders** everywhere; the "card edge" is a subpixel line, not a
-  drop shadow. Feels precise, like a focused app.
-- **Layered shadows** on heads-up surfaces only (avatars, dialogs, dropdowns),
-  never on walls. The resting UI is flat; elevation is earned.
-- **`focus-visible` rings**, `hover:-translate-y-*` on interactive affordance,
-  `active:scale-[0.98]` on buttons — motion that answers the hand.
-- **Amber is directional**: CTAs, the active nav state, the brand mark. Not
-  painted across the chrome.
+- **Hairline rules everywhere**; containers are bordered sheets, not shadowed
+  cards. Elevation is earned only by heads-up surfaces (dialogs, dropdowns,
+  the phone drawer).
+- **The ink stamp button.** The default `Button` is graphite ink (paper text)
+  that turns redline on hover — the workhorse action. Destructive is the
+  reject stamp. Redline-solid is nobody's resting state.
+- **`.meta` voice** for labels, sheet codes, and legends; `.tnum` for every
+  number that lives in a column.
+- **Registration marks** (⌖) anchor the wordmark, the auth sheets' corners,
+  and the drawing grid; `plate-grid` draws the grid only where an actual
+  drawing sits (auth sheets), never behind working tables.
+- **App identity is linework**: `app-glyphs.tsx` ships thin-stroke SVG glyphs
+  and sheet numbers (AEGIS · SHT 01 … VISTA · SHT 10) shared by the sidebar,
+  ⌘K palette, and dashboard set-index. No illustrated bitmaps anywhere.
 
 ---
 
@@ -61,41 +83,56 @@ one set of design decisionsainer. No app palette, no per-app overrides.
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ ◆   breadcrumbs          search ⌘K            ★ status  ◐ theme │   topbar
-├─────────────────────────────────────────────┬─────────────────┤
-│  ●   [nav]                                 │                 │
-│  ●   [extra sidebar]                        │   content       │
-│  ·   [bottom nav: settings/help]            │                 │
-└─────────────────────────────────────────────┴─────────────────┘
+│ ⌖ ATAQU        AEGIS · SHT 01        ⌘K search  ● NOMINAL  ◐  │  title block
+├─────────────────────────────────────────────────┬─────────────┤
+│ SHEET INDEX          01 ──────────────────┐     │             │
+│ ▍AEGIS                                01 │     │  content    │
+│  CINQ … VISTA                          … │     │  (the sheet)│
+│ AEGIS · SHT 01 (sub-nav for app in view)  │     │             │
+│ [D] Dana Whitfield                        │     │             │
+└─────────────────────────────────────────────────┴─────────────┘
 ```
 
-One `Shell` powers every SPA: a slim sidebar (per-app nav + shared slots for
-deep-linking and utility entry points), a topbar with breadcrumb-backed
-navigation, a ⌘K command palette, a status row, a changelog bell, and the theme
-toggle. Runs the color tokens above, so the chrome is dual-theme by default.
+One `Shell` powers every SPA: the sidebar is the **sheet index** of the set
+(numbered apps with line glyphs, redline rule on the active sheet, per-app
+sub-nav beneath it), and the header is the **title block** (app name in the
+expanded display voice, sheet number, health stamp, ⌘K). Below `md` the index
+becomes an off-canvas drawer with a backdrop; the drawer starts closed on
+phones and dismisses on navigation. Runs the tokens above, so the chrome is
+dual-native by default.
+
+---
+
+## Auth sheets
+
+Login/register render **outside** the shell on a full drawing sheet: faint
+grid, corner registration marks, a framed access plate, and the title-block
+footer (`ATAQU · CONSTRUCTION DOCUMENT SET — ACCESS · SHT A-00`). Same fields
+and flows as before; new paper.
 
 ---
 
 ## Landing
 
-The marketing surface carries the same tokens and the same amber. Dark-native
-hero, Lightbox proof-of-architecture, an "escape hatch" with no-lock-in copy, a
-premium waitlist. No separate idea of "landing colors" — it reuses the shared
-token sets so the whole suite, apps and marketing, feels like one product made
-by one team.
+The marketing surface is the cover sheet of the same set — same paper, same
+ink, same redline discipline, its hero drawn as a dimensioned figure. No
+separate "landing colors" exist anywhere in the repo.
 
 ---
 
 ## Design rules (the short contract)
 
-1. **Write to tokens, never literals.** If you are tempted to type a hex color
-   or a gray, you are misusing the system. The token exists; use it.
-2. **Amber accent is earned.** One strong use per view. Don't multicolor.
-3. **Dark-native, light-able.** Every view is built and checked in both modes.
+1. **Write to tokens, never literals.** If you are tempted to type a hex color,
+   you are misusing the system. The token exists; use it.
+2. **Redline is earned.** It marks the active sheet, the key figure, the link,
+   and one commanding action per view — never decoration, never a row of it.
+3. **Dual-native.** Every view is built and checked on paper and on plate.
 4. **Hairline, not shadow, for containers.** Shadow only where the eye must
-   lift (popovers, dialogs, drpdwrwn).
-5. **Motion is an answer.** Hover/active/focus-visible transitions are fast
-   (100–200ms) and only where the hand asks.
+   lift (popovers, dialogs, the phone drawer).
+5. **Mono for metadata, tnum for data.** Labels speak `.meta`; figures align
+   in `.tnum`.
+6. **Motion is an answer.** Fast (100–200ms), reduced-motion safe, only where
+   the hand asks.
 
 ---
 
@@ -104,10 +141,11 @@ by one team.
 - Tokens live only in `packages/ui/src/styles.css`. Change a value there and
   every app inherits it — that is the entire surface of the system.
 - `theme.ts` owns theme state; `theme-toggle.tsx` owns the chrome; `Shell`
-  owns layout. Fix a bug where it lives; don't patch the symptom in one app.
+  owns layout; `app-glyphs.tsx` owns app identity. Fix a bug where it lives;
+  don't patch the symptom in one app.
 - Run `pnpm --filter @ataqu/ui typecheck` (and each app's `typecheck`) after
   touching the engine. Everything else is agriculture: the suite is coherent
   because the tokens are singular.
 
-*Written from the built world. Proven by a clean typecheck across the suite and
-a production build of the landing consumer.*
+*Written from the built world. Proven by a clean typecheck across the suite,
+665 green tests, and a production build of every workspace app.*
