@@ -21,7 +21,9 @@ jobs:
       - run: pnpm test
       - run: pnpm test:coverage
       - run: pnpm build
-      - run: pnpm test:e2e
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - run: npx playwright test apps/ataqu/e2e/app.spec.ts apps/ataqu/e2e/screenshots.spec.ts
       # --- Rust checks ---
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
