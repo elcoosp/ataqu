@@ -35,6 +35,35 @@ class IntersectionObserverMock {
 window.IntersectionObserver =
 	window.IntersectionObserver || IntersectionObserverMock;
 
+// happy-dom does not expose localStorage unless --localstorage-file is set.
+// Provide an in-memory store so zustand persist + theme code work in every env.
+const localStorageStore = (() => {
+	let store: Record<string, string> = {};
+	return {
+		get length() {
+			return Object.keys(store).length;
+		},
+		getItem: (key: string) => (key in store ? store[key] : null),
+		setItem: (key: string, value: string) => {
+			store[key] = String(value);
+		},
+		removeItem: (key: string) => {
+			delete store[key];
+		},
+		clear: () => {
+			store = {};
+		},
+		key: (index: number) => Object.keys(store)[index] ?? null,
+	};
+})();
+
+if (typeof window !== "undefined" && !window.localStorage) {
+	Object.defineProperty(window, "localStorage", {
+		value: localStorageStore,
+		configurable: true,
+	});
+}
+
 afterEach(() => {
 	cleanup();
 });
